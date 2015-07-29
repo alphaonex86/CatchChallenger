@@ -6,7 +6,7 @@
 
 using namespace CatchChallenger;
 
-void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char *data, const unsigned int &size)
+void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size)
 {
     Q_UNUSED(queryNumber);
     Q_UNUSED(size);
@@ -24,6 +24,7 @@ void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
             quint8 returnCode=data[0x00];
             if(returnCode>=0x04 && returnCode<=0x06)
             {
+                rewrite to send the ouput compression
                 switch(returnCode)
                 {
                     case 0x04:
@@ -69,7 +70,7 @@ void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
     }
 }
 
-void LinkToGameServer::parseMessage(const quint8 &mainCodeType,const char *data,const unsigned int &size)
+void LinkToGameServer::parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size)
 {
     if(stat!=Stat::ProtocolGood)
     {
@@ -82,7 +83,7 @@ void LinkToGameServer::parseMessage(const quint8 &mainCodeType,const char *data,
         client->packOutcommingData(mainCodeType,data,size);
 }
 
-void LinkToGameServer::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char *rawData,const unsigned int &size)
+void LinkToGameServer::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const rawData,const unsigned int &size)
 {
     if(stat!=Stat::ProtocolGood)
     {
@@ -103,7 +104,7 @@ void LinkToGameServer::parseFullMessage(const quint8 &mainCodeType,const quint8 
 }
 
 //have query with reply
-void LinkToGameServer::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+void LinkToGameServer::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     Q_UNUSED(data);
     if(stat!=Stat::ProtocolGood)
@@ -115,7 +116,7 @@ void LinkToGameServer::parseQuery(const quint8 &mainCodeType,const quint8 &query
         client->packOutcommingQuery(mainCodeType,queryNumber,data,size);
 }
 
-void LinkToGameServer::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *rawData,const unsigned int &size)
+void LinkToGameServer::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const rawData,const unsigned int &size)
 {
     (void)subCodeType;
     (void)queryNumber;
@@ -127,7 +128,7 @@ void LinkToGameServer::parseFullQuery(const quint8 &mainCodeType,const quint8 &s
 }
 
 //send reply
-void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     if(mainCodeType==0x03 && stat==Stat::Connected)
     {
@@ -141,13 +142,41 @@ void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &q
     /* intercept part here */
     if(mainCodeType==0x04)
     {
+        if(size>14 && data[0x00]==0x01)//all is good, change the reply
+        {
+            unsigned int pos=14;
+            if(reply04inWait!=NULL)
+            {
+                delete reply04inWait;
+                reply04inWait=NULL;
+                parseNetworkReadError("another reply04inWait in suspend");
+                return;
+            }
+            unsigned int remainingSize=size-14-1-data[pos];
+            pos+=data[pos];
+            unsigned int reply04inWaitSize=14+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
+            reply04inWait=new char[reply04inWaitSize];
+            memcpy(reply04inWait,data,14);
+            memcpy(reply04inWait,LinkToGameServer::httpDatapackMirrorRewriteBase.constData(),LinkToGameServer::httpDatapackMirrorRewriteBase.size());
+            memcpy(reply04inWait,data+pos,remainingSize);
+
+            if()//checksum never done
+            {
+            }
+            else if()//need download the datapack content
+            {
+            }
+            else
+                client->postReply(queryNumber,reply04inWait,reply04inWaitSize);
+            return;
+        }
     }
 
     if(client!=NULL)
         client->postReply(queryNumber,data,size);
 }
 
-void LinkToGameServer::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+void LinkToGameServer::parseFullReplyData(const quint8 &mainCodeType, const quint8 &subCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size)
 {
     (void)mainCodeType;
     (void)subCodeType;

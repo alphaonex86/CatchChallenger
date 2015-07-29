@@ -1,7 +1,8 @@
 #QMAKE_CFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math"
 #QMAKE_CXXFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math"
 
-QT       -= gui widgets network sql xml
+QT       -= gui widgets sql xml
+QT       += network
 
 DEFINES += SERVERNOBUFFER
 #DEFINES += SERVERSSL
@@ -45,10 +46,10 @@ SOURCES += \
     LinkToGameServer.cpp \
     TimerDdos.cpp \
     ../epoll/EpollTimer.cpp \
-    Api_client_real.cpp \
-    Api_client_real_base.cpp \
-    Api_client_real_main.cpp \
-    Api_client_real_sub.cpp
+    DatapackDownloaderBase.cpp \
+    DatapackDownloader_sub.cpp \
+    DatapackDownloader_main.cpp \
+    DatapackDownloaderMainSub.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \
@@ -70,4 +71,5 @@ HEADERS += \
     LinkToGameServer.h \
     TimerDdos.h \
     ../epoll/EpollTimer.h \
-    Api_client_real.h
+    DatapackDownloaderBase.h \
+    DatapackDownloaderMainSub.h

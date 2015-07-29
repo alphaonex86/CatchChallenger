@@ -1,4 +1,4 @@
-#include "Api_client_real.h"
+#include "DatapackDownloaderMainSub.h"
 
 using namespace CatchChallenger;
 
@@ -15,10 +15,10 @@ using namespace CatchChallenger;
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/FacilityLibGeneral.h"
-#include "qt-tar-xz/QTarDecode.h"
+#include "../../client/base/qt-tar-xz/QTarDecode.h"
 #include "../../general/base/GeneralVariable.h"
 
-void Api_client_real::writeNewFileSub(const QString &fileName,const QByteArray &data)
+void DatapackDownloaderMainSub::writeNewFileSub(const QString &fileName,const QByteArray &data)
 {
     const QString &fullPath=mDatapackSub+text_slash+fileName;
     //to be sure the QFile is destroyed
@@ -58,7 +58,7 @@ void Api_client_real::writeNewFileSub(const QString &fileName,const QByteArray &
     }
 }
 
-void Api_client_real::getHttpFileSub(const QString &url, const QString &fileName)
+void DatapackDownloaderMainSub::getHttpFileSub(const QString &url, const QString &fileName)
 {
     if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
     {
@@ -78,16 +78,16 @@ void Api_client_real::getHttpFileSub(const QString &url, const QString &fileName
     UrlInWaiting urlInWaiting;
     urlInWaiting.fileName=fileName;
     urlInWaitingListSub[reply]=urlInWaiting;
-    connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedSub);
+    connect(reply, &QNetworkReply::finished, this, &DatapackDownloaderMainSub::httpFinishedSub);
 }
 
-void Api_client_real::datapackDownloadFinishedSub()
+void DatapackDownloaderMainSub::datapackDownloadFinishedSub()
 {
     haveTheDatapackMainSub();
     datapackStatus=DatapackStatus::Finished;
 }
 
-void Api_client_real::httpFinishedSub()
+void DatapackDownloaderMainSub::httpFinishedSub()
 {
     if(httpError)
         return;
@@ -150,7 +150,7 @@ void Api_client_real::httpFinishedSub()
         datapackDownloadFinishedSub();
 }
 
-void Api_client_real::datapackChecksumDoneSub(const QStringList &datapackFilesList,const QByteArray &hash,const QList<quint32> &partialHashList)
+void DatapackDownloaderMainSub::datapackChecksumDoneSub(const QStringList &datapackFilesList,const QByteArray &hash,const QList<quint32> &partialHashList)
 {
     if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
     {
@@ -226,15 +226,15 @@ void Api_client_real::datapackChecksumDoneSub(const QStringList &datapackFilesLi
                 abort();
             }
             qDebug() << "Datapack don't match with server hash, get from mirror";
-            QNetworkRequest networkRequest(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_sub)+QStringLiteral("pack/diff/datapack-sub-")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("-")+CommonSettingsServer::commonSettingsServer.subDatapackCode+QStringLiteral("-%1.tar.xz").arg(QString(hash.toHex())));
+            QNetworkRequest networkRequest(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_sub)+QStringLiteral("pack/diff/datapack-sub-")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("-")+CommonSettingsServer::commonSettingsServer.subDatapackCode+QStringLiteral("-%1.tar.xz").arg(QString(hash.toHex())));
             QNetworkReply *reply = qnam4.get(networkRequest);
-            connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListSub);
-            connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackSub);
+            connect(reply, &QNetworkReply::finished, this, &DatapackDownloaderMainSub::httpFinishedForDatapackListSub);
+            connect(reply, &QNetworkReply::downloadProgress, this, &DatapackDownloaderMainSub::downloadProgressDatapackSub);
         }
     }
 }
 
-void Api_client_real::test_mirror_sub()
+void DatapackDownloaderMainSub::test_mirror_sub()
 {
     if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
     {
@@ -242,13 +242,13 @@ void Api_client_real::test_mirror_sub()
         abort();
     }
     QNetworkReply *reply;
-    const QStringList &httpDatapackMirrorList=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
+    const QStringList &httpDatapackMirrorList=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,QString::SkipEmptyParts);
     if(!datapackTarXzSub)
     {
         QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_sub)+QStringLiteral("pack/datapack-sub-")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("-")+CommonSettingsServer::commonSettingsServer.subDatapackCode+QStringLiteral(".tar.xz"));
         reply = qnam4.get(networkRequest);
         if(reply->error()==QNetworkReply::NoError)
-            connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListSub);//fix it, put httpFinished* broke it
+            connect(reply, &QNetworkReply::finished, this, &DatapackDownloaderMainSub::httpFinishedForDatapackListSub);//fix it, put httpFinished* broke it
     }
     else
     {
@@ -259,12 +259,12 @@ void Api_client_real::test_mirror_sub()
         QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_sub)+QStringLiteral("datapack-list/sub-")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("-")+CommonSettingsServer::commonSettingsServer.subDatapackCode+QStringLiteral(".txt"));
         reply = qnam4.get(networkRequest);
         if(reply->error()==QNetworkReply::NoError)
-            connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListSub);
+            connect(reply, &QNetworkReply::finished, this, &DatapackDownloaderMainSub::httpFinishedForDatapackListSub);
     }
     if(reply->error()==QNetworkReply::NoError)
     {
-        connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &Api_client_real::httpErrorEventSub);
-        connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackSub);
+        connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &DatapackDownloaderMainSub::httpErrorEventSub);
+        connect(reply, &QNetworkReply::downloadProgress, this, &DatapackDownloaderMainSub::downloadProgressDatapackSub);
     }
     else
     {
@@ -274,7 +274,7 @@ void Api_client_real::test_mirror_sub()
     }
 }
 
-void Api_client_real::decodedIsFinishSub()
+void DatapackDownloaderMainSub::decodedIsFinishSub()
 {
     if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
     {
@@ -289,7 +289,7 @@ void Api_client_real::decodedIsFinishSub()
         QTarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
-            QSet<QString> extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(Api_client_real::text_dotcoma).toSet();
+            QSet<QString> extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(DatapackDownloaderMainSub::text_dotcoma).toSet();
             QDir dir;
             const QStringList &fileList=tarDecode.getFileList();
             const QList<QByteArray> &dataList=tarDecode.getDataList();
@@ -328,7 +328,7 @@ void Api_client_real::decodedIsFinishSub()
     }
 }
 
-bool Api_client_real::mirrorTryNextSub()
+bool DatapackDownloaderMainSub::mirrorTryNextSub()
 {
     if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
     {
@@ -344,7 +344,7 @@ bool Api_client_real::mirrorTryNextSub()
     {
         datapackTarXzSub=false;
         index_mirror_sub++;
-        if(index_mirror_sub>=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).size())
+        if(index_mirror_sub>=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,QString::SkipEmptyParts).size())
         {
             newError(tr("Unable to download the datapack"),QStringLiteral("Get the list failed"));
             return false;
@@ -355,7 +355,7 @@ bool Api_client_real::mirrorTryNextSub()
     return true;
 }
 
-void Api_client_real::httpFinishedForDatapackListSub()
+void DatapackDownloaderMainSub::httpFinishedForDatapackListSub()
 {
     if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
     {
@@ -416,7 +416,7 @@ void Api_client_real::httpFinishedForDatapackListSub()
                 abort();
                 return;
             }
-            /*ref crash here*/const QString selectedMirror=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_sub)+"map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/sub/"+CommonSettingsServer::commonSettingsServer.subDatapackCode+"/";
+            /*ref crash here*/const QString selectedMirror=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_sub)+"map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/sub/"+CommonSettingsServer::commonSettingsServer.subDatapackCode+"/";
             int correctContent=0;
             while(index<content.size())
             {
@@ -482,7 +482,7 @@ void Api_client_real::httpFinishedForDatapackListSub()
     }
 }
 
-const QStringList Api_client_real::listDatapackSub(QString suffix)
+const QStringList DatapackDownloaderMainSub::listDatapackSub(QString suffix)
 {
     QStringList returnFile;
     QDir finalDatapackFolder(mDatapackSub+suffix);
@@ -496,7 +496,7 @@ const QStringList Api_client_real::listDatapackSub(QString suffix)
         else
         {
             //if match with correct file name, considere as valid
-            if((suffix+fileInfo.fileName()).contains(Api_client_real::regex_DATAPACK_FILE_REGEX) && extensionAllowed.contains(fileInfo.suffix()))
+            if((suffix+fileInfo.fileName()).contains(DatapackDownloaderMainSub::regex_DATAPACK_FILE_REGEX) && extensionAllowed.contains(fileInfo.suffix()))
                 returnFile << suffix+fileInfo.fileName();
             //is invalid
             else
@@ -512,7 +512,7 @@ const QStringList Api_client_real::listDatapackSub(QString suffix)
     return returnFile;
 }
 
-void Api_client_real::cleanDatapackSub(QString suffix)
+void DatapackDownloaderMainSub::cleanDatapackSub(QString suffix)
 {
     QDir finalDatapackFolder(mDatapackSub+suffix);
     QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
@@ -530,7 +530,7 @@ void Api_client_real::cleanDatapackSub(QString suffix)
         finalDatapackFolder.rmpath(mDatapackSub+suffix);
 }
 
-void Api_client_real::downloadProgressDatapackSub(qint64 bytesReceived, qint64 bytesTotal)
+void DatapackDownloaderMainSub::downloadProgressDatapackSub(qint64 bytesReceived, qint64 bytesTotal)
 {
     if(!datapackTarXzMain && !datapackTarXzSub)
     {
@@ -540,7 +540,7 @@ void Api_client_real::downloadProgressDatapackSub(qint64 bytesReceived, qint64 b
     emit progressingDatapackFileSub(bytesReceived);
 }
 
-void Api_client_real::httpErrorEventSub()
+void DatapackDownloaderMainSub::httpErrorEventSub()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     if(reply==NULL)
@@ -555,7 +555,7 @@ void Api_client_real::httpErrorEventSub()
     return;
 }
 
-void Api_client_real::sendDatapackContentSub()
+void DatapackDownloaderMainSub::sendDatapackContentSub()
 {
     if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
     {
