@@ -6,7 +6,7 @@
 
 using namespace CatchChallenger;
 
-void LinkToMaster::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char *data, const unsigned int &size)
+void LinkToMaster::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size)
 {
     Q_UNUSED(queryNumber);
     Q_UNUSED(size);
@@ -19,7 +19,7 @@ void LinkToMaster::parseInputBeforeLogin(const quint8 &mainCodeType, const quint
     }
 }
 
-void LinkToMaster::parseMessage(const quint8 &mainCodeType,const char *data,const unsigned int &size)
+void LinkToMaster::parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size)
 {
     (void)data;
     (void)size;
@@ -32,7 +32,7 @@ void LinkToMaster::parseMessage(const quint8 &mainCodeType,const char *data,cons
     }
 }
 
-void LinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char *rawData,const unsigned int &size)
+void LinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const rawData,const unsigned int &size)
 {
     if(stat!=Stat::Logged)
     {
@@ -82,7 +82,7 @@ void LinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
 }
 
 //have query with reply
-void LinkToMaster::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+void LinkToMaster::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     Q_UNUSED(data);
     if(stat!=Stat::Logged)
@@ -99,7 +99,7 @@ void LinkToMaster::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumb
     }
 }
 
-void LinkToMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *rawData,const unsigned int &size)
+void LinkToMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const rawData,const unsigned int &size)
 {
     (void)subCodeType;
     (void)queryNumber;
@@ -167,7 +167,7 @@ void LinkToMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCo
 }
 
 //send reply
-void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     queryNumberList.push_back(queryNumber);
     Q_UNUSED(data);
@@ -314,7 +314,7 @@ void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &query
     return;
 }
 
-void LinkToMaster::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+void LinkToMaster::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     if(stat!=Stat::Logged)
     {

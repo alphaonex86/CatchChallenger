@@ -76,10 +76,20 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
     if(!settings.contains(QStringLiteral("httpDatapackMirrorRewriteBase")))
         settings.setValue(QStringLiteral("httpDatapackMirrorRewriteBase"),QString());
-    httpDatapackMirrorRewriteBase=httpMirrorFix(settings.value(QStringLiteral("httpDatapackMirrorRewriteBase")).toString());
+    httpDatapackMirrorRewriteBase=toUTF8WithHeader(httpMirrorFix(settings.value(QStringLiteral("httpDatapackMirrorRewriteBase")).toString()));
+    if(httpDatapackMirrorRewriteBase.isEmpty())
+    {
+        std::cerr << "httpDatapackMirrorRewriteBase.isEmpty() abort" << std::endl;
+        abort();
+    }
     if(!settings.contains(QStringLiteral("httpDatapackMirrorRewriteMainAndSub")))
         settings.setValue(QStringLiteral("httpDatapackMirrorRewriteMainAndSub"),QString());
-    httpDatapackMirrorRewriteMainAndSub=httpMirrorFix(settings.value(QStringLiteral("httpDatapackMirrorRewriteMainAndSub")).toString());
+    httpDatapackMirrorRewriteMainAndSub=toUTF8WithHeader(httpMirrorFix(settings.value(QStringLiteral("httpDatapackMirrorRewriteMainAndSub")).toString()));
+    if(httpDatapackMirrorRewriteMainAndSub.isEmpty())
+    {
+        std::cerr << "httpDatapackMirrorRewriteMainAndSub.isEmpty() abort" << std::endl;
+        abort();
+    }
 
     //connection
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
