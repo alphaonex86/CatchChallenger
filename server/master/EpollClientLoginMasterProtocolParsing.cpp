@@ -29,7 +29,7 @@ void EpollClientLoginMaster::parseInputBeforeLogin(const quint8 &mainCodeType,co
                         }
                         tokenForAuth.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         const int &returnedSize=fread(tokenForAuth.data(),1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,EpollClientLoginMaster::fpRandomFile);
-                        if(returnedSize!=TOKEN_SIZE_FOR_MASTERAUTH)
+                        if(returnedSize!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
                         {
                             std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from /dev/urandom" << std::endl;
                             abort();
@@ -229,6 +229,7 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                     errorParsingLayer("Wrong protocol token");
                     return;
                 }
+                pos+=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE;
             }
 
             QString charactersGroup;
@@ -561,7 +562,7 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
             int index=0;
             while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
             {
-                *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToRegisterLoginServer+EpollClientLoginMaster::replyToRegisterLoginServerBaseOffset+index*4/*size of int*/)=(quint32)htole32(maxAccountId+1+index);
+                *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToRegisterLoginServer+pos+index*4/*size of int*/)=(quint32)htole32(maxAccountId+1+index);
                 index++;
             }
             pos+=4*CATCHCHALLENGER_SERVER_MAXIDBLOCK;

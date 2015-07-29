@@ -211,7 +211,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             sizeOnlyMainCodePacketClientToServer[0x01]=9;
             sizeOnlyMainCodePacketClientToServer[0x40]=2;
             sizeOnlyMainCodePacketClientToServer[0x03]=5;
-            sizeOnlyMainCodePacketClientToServer[0x08]=0;
+            sizeOnlyMainCodePacketClientToServer[0x08]=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE;
             sizeOnlyMainCodePacketClientToServer[0x04]=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE*2;
             sizeOnlyMainCodePacketClientToServer[0x05]=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE*2;
             sizeOnlyMainCodePacketClientToServer[0x61]=2;
