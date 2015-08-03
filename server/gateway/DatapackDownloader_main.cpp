@@ -17,6 +17,7 @@ using namespace CatchChallenger;
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../client/base/qt-tar-xz/QTarDecode.h"
 #include "../../general/base/GeneralVariable.h"
+#include "LinkToGameServer.h"
 
 void DatapackDownloaderMainSub::writeNewFileMain(const QString &fileName,const QByteArray &data)
 {
@@ -100,16 +101,16 @@ void DatapackDownloaderMainSub::httpFinishedMain()
     if(urlInWaitingListMain.isEmpty())
     {
         httpError=true;
-        newError(tr("Datapack downloading error"),QStringLiteral("no more reply in waiting"));
-        socket->disconnectFromHost();
+        qDebug() << (QStringLiteral("no more reply in waiting"));
+        datapackDownloadError();
         return;
     }
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     if(reply==NULL)
     {
         httpError=true;
-        newError(tr("Datapack downloading error"),QStringLiteral("reply for http is NULL"));
-        socket->disconnectFromHost();
+        qDebug() << (QStringLiteral("reply for http is NULL"));
+        datapackDownloadError();
         return;
     }
     //remove to queue count
@@ -128,30 +129,30 @@ void DatapackDownloaderMainSub::httpFinishedMain()
     if(!reply->isFinished())
     {
         httpError=true;
-        newError(tr("Unable to download the datapack"),QStringLiteral("get the new update failed: not finished"));
-        socket->disconnectFromHost();
+        qDebug() << (QStringLiteral("get the new update failed: not finished"));
+        datapackDownloadError();
         reply->deleteLater();
         return;
     }
     else if(reply->error())
     {
         httpError=true;
-        newError(tr("Unable to download the datapack"),QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
-        socket->disconnectFromHost();
+        qDebug() << (QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
+        datapackDownloadError();
         reply->deleteLater();
         return;
     } else if(!redirectionTarget.isNull()) {
         httpError=true;
-        newError(tr("Unable to download the datapack"),QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()));
-        socket->disconnectFromHost();
+        qDebug() << (QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()));
+        datapackDownloadError();
         reply->deleteLater();
         return;
     }
     if(!urlInWaitingListMain.contains(reply))
     {
         httpError=true;
-        newError(tr("Datapack downloading error"),QStringLiteral("reply of unknown query"));
-        socket->disconnectFromHost();
+        qDebug() << (QStringLiteral("reply of unknown query"));
+        datapackDownloadError();
         reply->deleteLater();
         return;
     }
@@ -193,9 +194,10 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const QStringList &data
         }
     }
 
+    hashMain=hash;
     this->datapackFilesListMain=datapackFilesList;
     this->partialHashListMain=partialHashList;
-    if(!datapackFilesListMain.isEmpty() && hash==CommonSettingsServer::commonSettingsServer.datapackHashServerMain)
+    if(!datapackFilesListMain.isEmpty() && hash==sendedHashMain)
     {
         qDebug() << "Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote";
         wait_datapack_content_main=false;
@@ -205,13 +207,33 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const QStringList &data
 
     if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.isEmpty())
     {
-        if(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.isEmpty())
+        if(sendedHashMain.isEmpty())
         {
             qDebug() << "Datapack checksum done but not send by the server";
             return;//need CommonSettings::commonSettings.datapackHash send by the server
         }
+        quint8 datapack_content_query_number=0;
+        LinkToGameServer * client=NULL;
+        {
+            unsigned int indexForClient=0;
+            while(indexForClient<clientInSuspend.size())
+            {
+                if(clientInSuspend.at(indexForClient)!=NULL)
+                {
+                    client=static_cast<LinkToGameServer *>(clientInSuspend.at(0));
+                    datapack_content_query_number=client->freeQueryNumberToServer();
+                    break;
+                }
+                indexForClient++;
+            }
+            if(indexForClient>=clientInSuspend.size())
+            {
+                qDebug() << "no client in suspend to do the query to do in protocol datapack download";
+                resetAll();
+                return;//need CommonSettings::commonSettings.datapackHash send by the server
+            }
+        }
         qDebug() << "Datapack is empty or hash don't match, get from server, hash local: " << QString(hash.toHex()) << ", hash on server: " << QString(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.toHex());
-        quint8 datapack_content_query_number=queryNumber();
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
@@ -267,7 +289,6 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const QStringList &data
             QNetworkRequest networkRequest(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+QStringLiteral("pack/diff/datapack-main-")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("-%1.tar.xz").arg(QString(hash.toHex())));
             QNetworkReply *reply = qnam.get(networkRequest);
             connect(reply, &QNetworkReply::finished, this, &DatapackDownloaderMainSub::httpFinishedForDatapackListMain);
-            connect(reply, &QNetworkReply::downloadProgress, this, &DatapackDownloaderMainSub::downloadProgressDatapackMain);
         }
     }
 }
@@ -297,7 +318,6 @@ void DatapackDownloaderMainSub::test_mirror_main()
     if(reply->error()==QNetworkReply::NoError)
     {
         connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &DatapackDownloaderMainSub::httpErrorEventMain);
-        connect(reply, &QNetworkReply::downloadProgress, this, &DatapackDownloaderMainSub::downloadProgressDatapackMain);
     }
     else
     {
@@ -336,13 +356,13 @@ void DatapackDownloaderMainSub::decodedIsFinishMain()
                     }
                     else
                     {
-                        newError(tr("Disk error"),QStringLiteral("unable to write file of datapack %1: %2").arg(file.fileName()).arg(file.errorString()));
+                        qDebug() << (QStringLiteral("unable to write file of datapack %1: %2").arg(file.fileName()).arg(file.errorString()));
                         return;
                     }
                 }
                 else
                 {
-                    newError(tr("Security error, file not allowed: %1").arg(file.fileName()),QStringLiteral("file not allowed: %1").arg(file.fileName()));
+                    qDebug() << (QStringLiteral("file not allowed: %1").arg(file.fileName()));
                     return;
                 }
                 index++;
@@ -368,7 +388,7 @@ bool DatapackDownloaderMainSub::mirrorTryNextMain()
         index_mirror_main++;
         if(index_mirror_main>=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,QString::SkipEmptyParts).size())
         {
-            newError(tr("Unable to download the datapack"),QStringLiteral("Get the list failed"));
+            qDebug() << (QStringLiteral("Get the list failed"));
             return false;
         }
         else
@@ -383,8 +403,8 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain()
     if(reply==NULL)
     {
         httpError=true;
-        newError(tr("Datapack downloading error"),QStringLiteral("reply for http is NULL"));
-        socket->disconnectFromHost();
+        qDebug() << (QStringLiteral("reply for http is NULL"));
+        datapackDownloadError();
         return;
     }
     QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
@@ -559,24 +579,14 @@ void DatapackDownloaderMainSub::datapackDownloadFinishedMain()
 
 }
 
-void DatapackDownloaderMainSub::downloadProgressDatapackMain(qint64 bytesReceived, qint64 bytesTotal)
-{
-    if(!datapackTarXzMain && !datapackTarXzSub)
-    {
-        if(bytesReceived>0)
-            datapackSizeMain(1,bytesTotal);
-    }
-    emit progressingDatapackFileMain(bytesReceived);
-}
-
 void DatapackDownloaderMainSub::httpErrorEventMain()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     if(reply==NULL)
     {
         httpError=true;
-        newError(tr("Datapack downloading error"),QStringLiteral("reply for http is NULL"));
-        socket->disconnectFromHost();
+        qDebug() << (QStringLiteral("reply for http is NULL"));
+        datapackDownloadError();
         return;
     }
     qDebug() << reply->url().toString() << reply->errorString();

@@ -26,14 +26,17 @@
 #include "../../client/base/qt-tar-xz/QXzDecodeThread.h"
 
 namespace CatchChallenger {
-class DatapackDownloaderBase : public Api_protocol
+class DatapackDownloaderBase : public QObject
 {
     Q_OBJECT
 public:
-    explicit DatapackDownloaderBase();
-    ~DatapackDownloaderBase();
-    static DatapackDownloaderBase *datapackDownloaderBaseBase;
+    explicit DatapackDownloaderBase(const QString &mDatapackBase);
+    virtual ~DatapackDownloaderBase();
+    static DatapackDownloaderBase *datapackDownloaderBase;
     std::vector<void *> clientInSuspend;
+    void datapackDownloadError();
+    void resetAll();
+    void datapackFileList(const char * const data,const unsigned int &size);
 
     //datapack related
     void sendDatapackContentBase();
@@ -44,8 +47,10 @@ public:
     void httpFinishedForDatapackListBase();
     const QStringList listDatapackBase(QString suffix);
     void cleanDatapackBase(QString suffix);
-protected:
-    void datapackFileList(const char * const data,const unsigned int &size);
+
+    QByteArray hashBase;
+    QByteArray sendedHashBase;
+    static QSet<QString> extensionAllowed;
 private:
     static QRegularExpression regex_DATAPACK_FILE_REGEX;
     /// \todo group into one thread by change for queue
@@ -73,6 +78,7 @@ private:
     QNetworkAccessManager qnam2;
     QNetworkAccessManager qnam3;
     QNetworkAccessManager qnam4;
+    const QString mDatapackBase;
     struct UrlInWaiting
     {
         QString fileName;
@@ -85,6 +91,7 @@ private slots:
     void httpFinishedBase();
     void datapackDownloadFinishedBase();
     void datapackChecksumDoneBase(const QStringList &datapackFilesList,const QByteArray &hash, const QList<quint32> &partialHash);
+    void haveTheDatapack();
 signals:
     void doDifferedChecksumBase(const QString &datapackPath);
 };

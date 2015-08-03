@@ -49,7 +49,8 @@ SOURCES += \
     DatapackDownloaderBase.cpp \
     DatapackDownloader_sub.cpp \
     DatapackDownloader_main.cpp \
-    DatapackDownloaderMainSub.cpp
+    DatapackDownloaderMainSub.cpp \
+    ../../client/base/DatapackChecksum.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \
@@ -72,4 +73,5 @@ HEADERS += \
     TimerDdos.h \
     ../epoll/EpollTimer.h \
     DatapackDownloaderBase.h \
-    DatapackDownloaderMainSub.h
+    DatapackDownloaderMainSub.h \
+    ../../client/base/DatapackChecksum.h
