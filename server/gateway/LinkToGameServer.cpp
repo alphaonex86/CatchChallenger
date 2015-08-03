@@ -3,6 +3,8 @@
 #include "../epoll/Epoll.h"
 #include "../epoll/EpollSocket.h"
 #include "EpollServerLoginSlave.h"
+#include "DatapackDownloaderBase.h"
+#include "DatapackDownloaderMainSub.h"
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
@@ -19,6 +21,7 @@ const unsigned char protocolHeaderToMatchLogin[] = PROTOCOL_HEADER_LOGIN;
 QByteArray LinkToGameServer::httpDatapackMirrorRewriteBase;
 QByteArray LinkToGameServer::httpDatapackMirrorRewriteMainAndSub;
 bool LinkToGameServer::compressionSet=false;
+QString LinkToGameServer::mDatapackBase;
 
 LinkToGameServer::LinkToGameServer(
         #ifdef SERVERSSL
@@ -43,7 +46,11 @@ LinkToGameServer::LinkToGameServer(
         protocolQueryNumber(0),
         socketFd(infd),
         reply04inWait(NULL),
-        reply0205inWait(NULL)
+        reply04inWaitSize(0),
+        reply04inWaitQueryNumber(0),
+        reply0205inWait(NULL),
+        reply0205inWaitSize(0),
+        reply0205inWaitQueryNumber(0)
 {
 }
 
@@ -58,13 +65,29 @@ LinkToGameServer::~LinkToGameServer()
     }
     if(reply04inWait!=NULL)
     {
+        unsigned int index=0;
+        while(index<DatapackDownloaderBase::datapackDownloaderBase->clientInSuspend.size())
+        {
+            if(DatapackDownloaderBase::datapackDownloaderBase->clientInSuspend.at(index)==this)
+            {
+                DatapackDownloaderBase::datapackDownloaderBase->clientInSuspend[index]=NULL;
+                break;
+            }
+            index++;
+        }
         delete reply04inWait;
         reply04inWait=NULL;
     }
     if(reply0205inWait!=NULL)
     {
+        //todo
         delete reply0205inWait;
         reply0205inWait=NULL;
+    }
+    if(DatapackDownloaderBase::datapackDownloaderBase==NULL)
+    {
+        delete DatapackDownloaderBase::datapackDownloaderBase;
+        DatapackDownloaderBase::datapackDownloaderBase=NULL;
     }
 }
 
@@ -227,6 +250,14 @@ void LinkToGameServer::disconnectClient()
     messageParsingLayer("Disconnected client");
 }
 
+quint8 LinkToGameServer::freeQueryNumberToServer()
+{
+    quint8 index=0;
+    while(waitedReply_mainCodeType.contains(index))
+        index++;
+    return index;
+}
+
 //input/ouput layer
 void LinkToGameServer::errorParsingLayer(const QString &error)
 {
@@ -266,4 +297,24 @@ void LinkToGameServer::parseIncommingData()
 void LinkToGameServer::sendProtocolHeader()
 {
     packOutcommingQuery(0x03,protocolQueryNumber/*queryNumber()*/,reinterpret_cast<const char *>(protocolHeaderToMatchLogin),sizeof(protocolHeaderToMatchLogin));
+}
+
+void LinkToGameServer::sendDiffered04Reply()
+{
+    if(client!=NULL)
+    {
+        parseNetworkReadError("client not connected");
+        return;
+    }
+    if(reply04inWait==NULL)
+    {
+        parseNetworkReadError("LinkToGameServer::sendDiffered04Reply() reply04inWait==NULL");
+        return;
+    }
+    client->postReply(reply04inWaitQueryNumber,reply04inWait,reply04inWaitSize);
+    delete reply04inWait;
+    reply04inWait=NULL;
+    reply04inWaitSize=0;
+    reply04inWaitQueryNumber=0;
+
 }

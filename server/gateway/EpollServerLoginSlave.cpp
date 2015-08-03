@@ -14,8 +14,11 @@ using namespace CatchChallenger;
 #include <iostream>
 
 #include "EpollClientLoginSlave.h"
+#include "DatapackDownloaderBase.h"
+#include "DatapackDownloaderMainSub.h"
 #include "../base/DictionaryLogin.h"
 #include "../../general/base/ProtocolParsing.h"
+#include "../../general/base/FacilityLibGeneral.h"
 
 EpollServerLoginSlave *EpollServerLoginSlave::epollServerLoginSlave=NULL;
 
@@ -76,16 +79,16 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
     if(!settings.contains(QStringLiteral("httpDatapackMirrorRewriteBase")))
         settings.setValue(QStringLiteral("httpDatapackMirrorRewriteBase"),QString());
-    httpDatapackMirrorRewriteBase=toUTF8WithHeader(httpMirrorFix(settings.value(QStringLiteral("httpDatapackMirrorRewriteBase")).toString()));
-    if(httpDatapackMirrorRewriteBase.isEmpty())
+    LinkToGameServer::httpDatapackMirrorRewriteBase=FacilityLibGeneral::toUTF8WithHeader(httpMirrorFix(settings.value(QStringLiteral("httpDatapackMirrorRewriteBase")).toString()));
+    if(LinkToGameServer::httpDatapackMirrorRewriteBase.isEmpty())
     {
         std::cerr << "httpDatapackMirrorRewriteBase.isEmpty() abort" << std::endl;
         abort();
     }
     if(!settings.contains(QStringLiteral("httpDatapackMirrorRewriteMainAndSub")))
         settings.setValue(QStringLiteral("httpDatapackMirrorRewriteMainAndSub"),QString());
-    httpDatapackMirrorRewriteMainAndSub=toUTF8WithHeader(httpMirrorFix(settings.value(QStringLiteral("httpDatapackMirrorRewriteMainAndSub")).toString()));
-    if(httpDatapackMirrorRewriteMainAndSub.isEmpty())
+    LinkToGameServer::httpDatapackMirrorRewriteMainAndSub=FacilityLibGeneral::toUTF8WithHeader(httpMirrorFix(settings.value(QStringLiteral("httpDatapackMirrorRewriteMainAndSub")).toString()));
+    if(LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.isEmpty())
     {
         std::cerr << "httpDatapackMirrorRewriteMainAndSub.isEmpty() abort" << std::endl;
         abort();
@@ -114,6 +117,9 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     settings.sync();
 
     tryListen();
+
+    DatapackDownloaderMainSub::extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
+    DatapackDownloaderBase::extensionAllowed=DatapackDownloaderMainSub::extensionAllowed;
 }
 
 EpollServerLoginSlave::~EpollServerLoginSlave()

@@ -26,14 +26,17 @@
 #include "../../client/base/qt-tar-xz/QXzDecodeThread.h"
 
 namespace CatchChallenger {
-class DatapackDownloaderMainSub : public Api_protocol
+class DatapackDownloaderMainSub : public QObject
 {
     Q_OBJECT
 public:
-    explicit DatapackDownloaderMainSub();
-    ~DatapackDownloaderMainSub();
+    explicit DatapackDownloaderMainSub(const QString &mDatapackBase, const QString &main, const QString &sub);
+    virtual ~DatapackDownloaderMainSub();
     static QHash<QString,QHash<QString,DatapackDownloaderMainSub *> > datapackDownloaderMainSub;
     std::vector<void *> clientInSuspend;
+    void datapackDownloadError();
+    void resetAll();
+    void datapackFileList(const char * const data,const unsigned int &size);
 
     //datapack related
     void sendDatapackContentMainSub();
@@ -53,8 +56,12 @@ public:
     const QStringList listDatapackSub(QString suffix);
     void cleanDatapackMain(QString suffix);
     void cleanDatapackSub(QString suffix);
-protected:
-    void datapackFileList(const char * const data,const unsigned int &size);
+
+    QByteArray hashMain;
+    QByteArray hashSub;
+    QByteArray sendedHashMain;
+    QByteArray sendedHashSub;
+    static QSet<QString> extensionAllowed;
 private:
     static QRegularExpression regex_DATAPACK_FILE_REGEX;
     /// \todo group into one thread by change for queue
@@ -98,6 +105,8 @@ private:
     QNetworkAccessManager qnam2;
     QNetworkAccessManager qnam3;
     QNetworkAccessManager qnam4;
+    const QString mDatapackMain;
+    QString mDatapackSub;
     struct UrlInWaiting
     {
         QString fileName;

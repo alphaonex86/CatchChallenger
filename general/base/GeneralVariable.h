@@ -12,6 +12,7 @@
 #define CATCHCHALLENGER_RSS_URL "http://catchchallenger.first-world.info/rss_global.xml"
 
 #define CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE 28
+#define CATCHCHALLENGER_SHA224HASH_SIZE 28
 
 #define CATCHCHALLENGER_EXTRA_CHECK
 
