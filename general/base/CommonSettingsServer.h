@@ -18,8 +18,10 @@ public:
     int waitBeforeConnectAfterKick;
     QByteArray datapackHashServerMain;
     QByteArray datapackHashServerSub;
+    #ifndef CATCHCHALLENGER_CLASS_GATEWAY
     QString mainDatapackCode;
     QString subDatapackCode;
+    #endif
     QString exportedXml;
 
     //rates

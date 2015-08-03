@@ -35,6 +35,7 @@ public:
     static QByteArray httpDatapackMirrorRewriteBase;
     static QByteArray httpDatapackMirrorRewriteMainAndSub;
     static bool compressionSet;
+    static QString mDatapackBase;
 
     void setConnexionSettings();
     BaseClassSwitch::EpollObjectType getType() const;
@@ -42,9 +43,11 @@ public:
     static int tryConnect(const char * const host,const quint16 &port,const quint8 &tryInterval=1,const quint8 &considerDownAfterNumberOfTry=30);
     bool trySelectCharacter(void * const client,const quint8 &client_query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId);
     void sendProtocolHeader();
+    void sendDiffered04Reply();
     void readTheFirstSslHeader();
-protected:
     void disconnectClient();
+    quint8 freeQueryNumberToServer();
+protected:
     void errorParsingLayer(const QString &error);
     void messageParsingLayer(const QString &message) const;
     void errorParsingLayer(const char * const error);
@@ -65,7 +68,13 @@ protected:
 private:
     int socketFd;
     char *reply04inWait;
+    unsigned int reply04inWaitSize;
+    quint8 reply04inWaitQueryNumber;
     char *reply0205inWait;
+    unsigned int reply0205inWaitSize;
+    quint8 reply0205inWaitQueryNumber;
+    QString main;
+    QString sub;
 };
 }
 
