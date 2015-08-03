@@ -8,6 +8,7 @@
 #include <ctime>
 #include <vector>
 #include <QCoreApplication>
+#include <QFileInfo>
 
 #include "../epoll/EpollSocket.h"
 #include "../epoll/Epoll.h"
@@ -26,6 +27,8 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
     Q_UNUSED(a);
+
+    LinkToGameServer::mDatapackBase=QFileInfo(QCoreApplication::applicationDirPath()+"/datapack/").absoluteFilePath();
 
     (void)argc;
     (void)argv;
