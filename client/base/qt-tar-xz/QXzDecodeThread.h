@@ -10,28 +10,40 @@
 #include "QXzDecode.h"
 
 /// \brief to decode the xz via a thread
-class QXzDecodeThread : public QThread
+class QXzDecodeThread
+        #ifndef QT_NO_EMIT
+        : public QThread
+        #endif
 {
-	Q_OBJECT
-	public:
-		QXzDecodeThread();
-		~QXzDecodeThread();
-		/// \brief to return if the error have been found
-		bool errorFound();
-		/// \brief to return the error string
-		QString errorString();
-		/// \brief to get the decoded data
-		QByteArray decodedData();
-		/// \brief to send the data
-		void setData(QByteArray data,quint64 maxSize=0);
-	protected:
-		void run();
-	private:
-		/// \brief to have temporary storage
-		QXzDecode *DataToDecode;
-		bool error;
-	signals:
-		void decodedIsFinish();
+    #ifndef QT_NO_EMIT
+    Q_OBJECT
+    #endif
+    public:
+        QXzDecodeThread();
+        ~QXzDecodeThread();
+        /// \brief to return if the error have been found
+        bool errorFound();
+        /// \brief to return the error string
+        QString errorString();
+        /// \brief to get the decoded data
+        QByteArray decodedData();
+        /// \brief to send the data
+        void setData(QByteArray data,quint64 maxSize=0);
+    #ifndef QT_NO_EMIT
+    protected:
+        void run();
+    #else
+    public:
+        void run();
+    #endif
+    private:
+        /// \brief to have temporary storage
+        QXzDecode *DataToDecode;
+        bool error;
+    #ifndef QT_NO_EMIT
+    signals:
+        void decodedIsFinish();
+    #endif
 };
 
 #endif // QXZDECODETHREAD_H

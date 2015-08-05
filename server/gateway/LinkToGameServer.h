@@ -44,6 +44,7 @@ public:
     bool trySelectCharacter(void * const client,const quint8 &client_query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId);
     void sendProtocolHeader();
     void sendDiffered04Reply();
+    void sendDiffered0205Reply();
     void readTheFirstSslHeader();
     void disconnectClient();
     quint8 freeQueryNumberToServer();

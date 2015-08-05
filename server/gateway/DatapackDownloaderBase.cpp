@@ -39,10 +39,6 @@ DatapackDownloaderBase::DatapackDownloaderBase(const QString &mDatapackBase) :
     datapackTarXzBase=false;
     index_mirror_base=0;
     wait_datapack_content_base=false;
-
-    connect(this,   &DatapackDownloaderBase::doDifferedChecksumBase,&datapackChecksum,&CatchChallenger::DatapackChecksum::doDifferedChecksumBase);
-    connect(&datapackChecksum,&CatchChallenger::DatapackChecksum::datapackChecksumDoneBase,this,&DatapackDownloaderBase::datapackChecksumDoneBase);
-    connect(&xzDecodeThreadBase,&QXzDecodeThread::decodedIsFinish,this,&DatapackDownloaderBase::decodedIsFinishBase);
 }
 
 DatapackDownloaderBase::~DatapackDownloaderBase()
@@ -524,7 +520,8 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase()
             qDebug() << "datapack.tar.xz size:" << QString("%1KB").arg(reply->size()/1000);
             datapackTarXzBase=true;
             xzDecodeThreadBase.setData(reply->readAll(),100*1024*1024);
-            xzDecodeThreadBase.start(QThread::LowestPriority);
+            xzDecodeThreadBase.run();
+            decodedIsFinishBase();
             return;
         }
         else
@@ -704,5 +701,6 @@ void DatapackDownloaderBase::sendDatapackContentBase()
     wait_datapack_content_base=true;
     datapackFilesListBase=listDatapackBase(QString());
     datapackFilesListBase.sort();
-    doDifferedChecksumBase(mDatapackBase);
+    const DatapackChecksum::FullDatapackChecksumReturn &fullDatapackChecksumReturn=DatapackChecksum::doFullSyncChecksumBase(mDatapackBase);
+    datapackChecksumDoneBase(fullDatapackChecksumReturn.datapackFilesList,fullDatapackChecksumReturn.hash,fullDatapackChecksumReturn.partialHashList);
 }
