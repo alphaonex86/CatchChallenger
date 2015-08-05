@@ -16,6 +16,7 @@ using namespace CatchChallenger;
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../client/base/qt-tar-xz/QTarDecode.h"
 #include "../../general/base/GeneralVariable.h"
+#include "LinkToGameServer.h"
 
 //need host + port here to have datapack base
 
@@ -23,17 +24,18 @@ QString DatapackDownloaderMainSub::text_slash=QLatin1Literal("/");
 QString DatapackDownloaderMainSub::text_dotcoma=QLatin1Literal(";");
 QRegularExpression DatapackDownloaderMainSub::regex_DATAPACK_FILE_REGEX=QRegularExpression(DATAPACK_FILE_REGEX);
 QSet<QString> DatapackDownloaderMainSub::extensionAllowed;
-QRegularExpression DatapackDownloaderMainSub::excludePathBase("^map[/\\\\]main[/\\\\]");
 QRegularExpression DatapackDownloaderMainSub::excludePathMain("^sub[/\\\\]");
 
-DatapackDownloaderMainSub * DatapackDownloaderMainSub::datapackDownloaderMainSub=NULL;
+QHash<QString,QHash<QString,DatapackDownloaderMainSub *> > DatapackDownloaderMainSub::datapackDownloaderMainSub;
 
-DatapackDownloaderMainSub::DatapackDownloaderMainSub(const QString &mDatapackBase, const QString &main, const QString &sub) :
+DatapackDownloaderMainSub::DatapackDownloaderMainSub(const QString &mDatapackBase, const QString &mainDatapackCode, const QString &subDatapackCode) :
     qnamQueueCount(0),
     qnamQueueCount2(0),
     qnamQueueCount3(0),
     qnamQueueCount4(0),
-    mDatapackMain(mDatapackBase+"map/main/"+main+"/")
+    mDatapackMain(mDatapackBase+"map/main/"+mainDatapackCode+"/"),
+    mainDatapackCode(mainDatapackCode),
+    subDatapackCode(subDatapackCode)
 {
     datapackStatus=DatapackStatus::Main;
     datapackTarXzMain=false;
@@ -42,15 +44,8 @@ DatapackDownloaderMainSub::DatapackDownloaderMainSub(const QString &mDatapackBas
     index_mirror_sub=0;
     wait_datapack_content_main=false;
     wait_datapack_content_sub=false;
-    if(!sub.isEmpty())
-        mDatapackSub=mDatapackBase+"map/main/"+main+"/sub/"+sub+"/";
-
-    connect(this,   &DatapackDownloaderMainSub::doDifferedChecksumMain,&datapackChecksum,&CatchChallenger::DatapackChecksum::doDifferedChecksumMain);
-    connect(this,   &DatapackDownloaderMainSub::doDifferedChecksumSub,&datapackChecksum,&CatchChallenger::DatapackChecksum::doDifferedChecksumSub);
-    connect(&datapackChecksum,&CatchChallenger::DatapackChecksum::datapackChecksumDoneMain,this,&DatapackDownloaderMainSub::datapackChecksumDoneMain);
-    connect(&datapackChecksum,&CatchChallenger::DatapackChecksum::datapackChecksumDoneSub,this,&DatapackDownloaderMainSub::datapackChecksumDoneSub);
-    connect(&xzDecodeThreadMain,&QXzDecodeThread::decodedIsFinish,this,&DatapackDownloaderMainSub::decodedIsFinishMain);
-    connect(&xzDecodeThreadSub,&QXzDecodeThread::decodedIsFinish,this,&DatapackDownloaderMainSub::decodedIsFinishSub);
+    if(!subDatapackCode.isEmpty())
+        mDatapackSub=mDatapackBase+"map/main/"+mainDatapackCode+"/sub/"+subDatapackCode+"/";
 }
 
 DatapackDownloaderMainSub::~DatapackDownloaderMainSub()
@@ -130,17 +125,17 @@ void DatapackDownloaderMainSub::datapackFileList(const char * const data,const u
         break;
         case DatapackStatus::Sub:
         {
-            if(datapackFilesListSub.isEmpty() && data.size()==1)
+            if(datapackFilesListSub.isEmpty() && size==1)
             {
                 if(!httpModeSub)
                     datapackDownloadFinishedSub();
                 return;
             }
+            unsigned int pos=0;
             QList<bool> boolList;
             while((size-pos)>0)
             {
-                quint8 returnCode;
-                in >> returnCode;
+                const quint8 &returnCode=data[pos];
                 boolList.append(returnCode&0x01);
                 boolList.append(returnCode&0x02);
                 boolList.append(returnCode&0x04);
@@ -149,6 +144,7 @@ void DatapackDownloaderMainSub::datapackFileList(const char * const data,const u
                 boolList.append(returnCode&0x20);
                 boolList.append(returnCode&0x40);
                 boolList.append(returnCode&0x80);
+                pos++;
             }
             if(boolList.size()<datapackFilesListSub.size())
             {
@@ -178,7 +174,6 @@ void DatapackDownloaderMainSub::datapackFileList(const char * const data,const u
             }
             if(!httpModeSub)
                 datapackDownloadFinishedSub();
-            datapackStatus=DatapackStatus::Finished;
         }
         break;
         default:
@@ -203,3 +198,19 @@ void DatapackDownloaderMainSub::sendDatapackContentMainSub()
 {
     sendDatapackContentMain();
 }
+
+void DatapackDownloaderMainSub::haveTheDatapackMainSub()
+{
+    unsigned int index=0;
+    while(index<clientInSuspend.size())
+    {
+        LinkToGameServer * const clientLink=static_cast<LinkToGameServer * const>(clientInSuspend.at(index));
+        if(clientLink!=NULL)
+            clientLink->sendDiffered0205Reply();
+        index++;
+    }
+    clientInSuspend.clear();
+
+    resetAll();
+}
+

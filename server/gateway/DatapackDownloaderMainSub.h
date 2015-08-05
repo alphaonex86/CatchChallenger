@@ -30,7 +30,7 @@ class DatapackDownloaderMainSub : public QObject
 {
     Q_OBJECT
 public:
-    explicit DatapackDownloaderMainSub(const QString &mDatapackBase, const QString &main, const QString &sub);
+    explicit DatapackDownloaderMainSub(const QString &mDatapackBase, const QString &mainDatapackCode, const QString &subDatapackCode);
     virtual ~DatapackDownloaderMainSub();
     static QHash<QString,QHash<QString,DatapackDownloaderMainSub *> > datapackDownloaderMainSub;
     std::vector<void *> clientInSuspend;
@@ -76,8 +76,7 @@ private:
     enum DatapackStatus
     {
         Main=0x02,
-        Sub=0x03,
-        Finished=0x04
+        Sub=0x03
     };
     DatapackStatus datapackStatus;
 
@@ -107,6 +106,8 @@ private:
     QNetworkAccessManager qnam4;
     const QString mDatapackMain;
     QString mDatapackSub;
+    const QString mainDatapackCode;
+    const QString subDatapackCode;
     struct UrlInWaiting
     {
         QString fileName;
@@ -120,6 +121,7 @@ private slots:
     void getHttpFileSub(const QString &url, const QString &fileName);
     void httpFinishedMain();
     void httpFinishedSub();
+    void haveTheDatapackMainSub();
     void datapackDownloadFinishedMain();
     void datapackDownloadFinishedSub();
     void datapackChecksumDoneMain(const QStringList &datapackFilesList,const QByteArray &hash, const QList<quint32> &partialHash);

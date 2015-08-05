@@ -50,7 +50,17 @@ SOURCES += \
     DatapackDownloader_sub.cpp \
     DatapackDownloader_main.cpp \
     DatapackDownloaderMainSub.cpp \
-    ../../client/base/DatapackChecksum.cpp
+    ../../client/base/DatapackChecksum.cpp \
+    ../../client/base/qt-tar-xz/QTarDecode.cpp \
+    ../../client/base/qt-tar-xz/QXzDecode.cpp \
+    ../../client/base/qt-tar-xz/QXzDecodeThread.cpp \
+    ../../client/base/qt-tar-xz/xz_crc32.c \
+    ../../client/base/qt-tar-xz/xz_dec_bcj.c \
+    ../../client/base/qt-tar-xz/xz_dec_lzma2.c \
+    ../../client/base/qt-tar-xz/xz_dec_stream.c \
+    ../../general/base/DebugClass.cpp \
+    ../../general/base/CommonSettingsCommon.cpp \
+    ../../general/base/CommonSettingsServer.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \
@@ -74,4 +84,15 @@ HEADERS += \
     ../epoll/EpollTimer.h \
     DatapackDownloaderBase.h \
     DatapackDownloaderMainSub.h \
-    ../../client/base/DatapackChecksum.h
+    ../../client/base/DatapackChecksum.h \
+    ../../client/base/qt-tar-xz/QTarDecode.h \
+    ../../client/base/qt-tar-xz/xz.h \
+    ../../client/base/qt-tar-xz/xz_config.h \
+    ../../client/base/qt-tar-xz/QXzDecode.h \
+    ../../client/base/qt-tar-xz/QXzDecodeThread.h \
+    ../../client/base/qt-tar-xz/xz_lzma2.h \
+    ../../client/base/qt-tar-xz/xz_private.h \
+    ../../client/base/qt-tar-xz/xz_stream.h \
+    ../../general/base/DebugClass.h \
+    ../../general/base/CommonSettingsCommon.h \
+    ../../general/base/CommonSettingsServer.h

@@ -9,7 +9,9 @@
 
 QXzDecodeThread::QXzDecodeThread()
 {
+    #ifndef QT_NO_EMIT
     moveToThread(this);
+    #endif
     DataToDecode=NULL;
     error=false;
 }
@@ -48,6 +50,8 @@ void QXzDecodeThread::run()
         error=!DataToDecode->decode();
     else
         error=true;
+    #ifndef QT_NO_EMIT
     emit decodedIsFinish();
+    #endif
 }
 
