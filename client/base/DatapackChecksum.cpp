@@ -15,13 +15,17 @@
 
 using namespace CatchChallenger;
 
+#ifndef QT_NO_EMIT
 QThread DatapackChecksum::thread;
+#endif
 
 DatapackChecksum::DatapackChecksum()
 {
+    #ifndef QT_NO_EMIT
     if(!thread.isRunning())
         thread.start();
     moveToThread(&thread);
+    #endif
 }
 
 DatapackChecksum::~DatapackChecksum()
@@ -68,55 +72,57 @@ QByteArray DatapackChecksum::doChecksumBase(const QString &datapackPath)
     return hash.result();
 }
 
+#ifndef QT_NO_EMIT
 void DatapackChecksum::doDifferedChecksumBase(const QString &datapackPath)
 {
+    const FullDatapackChecksumReturn &fullDatapackChecksumReturn=doFullSyncChecksumMain(datapackPath);
+    emit datapackChecksumDoneBase(fullDatapackChecksumReturn.datapackFilesList,fullDatapackChecksumReturn.hash,fullDatapackChecksumReturn.partialHashList);
+}
+#endif
+
+DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksumBase(const QString &datapackPath)
+{
+    DatapackChecksum::FullDatapackChecksumReturn fullDatapackChecksumReturn;
     QRegularExpression excludePath("^map[/\\\\]main[/\\\\]");
-    QList<quint32> partialHashList;
-    QStringList datapackFilesList;
-
-    //do the by file partial hash
+    const QSet<QString> &extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
+    QRegularExpression datapack_rightFileName=QRegularExpression(DATAPACK_FILE_REGEX);
+    QStringList returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
+    returnList.sort();
+    int index=0;
+    const int &size=returnList.size();
+    while(index<size)
     {
-        const QSet<QString> &extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
-        QRegularExpression datapack_rightFileName=QRegularExpression(DATAPACK_FILE_REGEX);
-        QStringList returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
-        returnList.sort();
-        int index=0;
-        const int &size=returnList.size();
-        while(index<size)
+        const QString &fileName=returnList.at(index);
+        if(fileName.contains(datapack_rightFileName) && !fileName.contains(excludePath))
         {
-            const QString &fileName=returnList.at(index);
-            if(fileName.contains(datapack_rightFileName) && !fileName.contains(excludePath))
+            if(!QFileInfo(fileName).suffix().isEmpty() && extensionAllowed.contains(QFileInfo(fileName).suffix()))
             {
-                if(!QFileInfo(fileName).suffix().isEmpty() && extensionAllowed.contains(QFileInfo(fileName).suffix()))
+                QFile file(datapackPath+returnList.at(index));
+                if(file.size()<=8*1024*1024)
                 {
-                    QFile file(datapackPath+returnList.at(index));
-                    if(file.size()<=8*1024*1024)
+                    fullDatapackChecksumReturn.datapackFilesList << returnList.at(index);
+                    if(file.open(QIODevice::ReadOnly))
                     {
-                        if(file.open(QIODevice::ReadOnly))
+                        const QByteArray &data=file.readAll();
                         {
-                            datapackFilesList << returnList.at(index);
-
-                            const QByteArray &data=file.readAll();
-                            {
-                                QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                                hashFile.addData(data);
-                                partialHashList << *reinterpret_cast<const int *>(hashFile.result().constData());
-                            }
-                            file.close();
+                            QCryptographicHash hashFile(QCryptographicHash::Sha224);
+                            hashFile.addData(data);
+                            fullDatapackChecksumReturn.partialHashList << *reinterpret_cast<const int *>(hashFile.result().constData());
                         }
-                        else
-                        {
-                            partialHashList << 0;
-                            qDebug() << QStringLiteral("Unable to open the file to do the checksum: %1").arg(file.fileName());
-                        }
+                        file.close();
+                    }
+                    else
+                    {
+                        fullDatapackChecksumReturn.partialHashList << 0;
+                        qDebug() << QStringLiteral("Unable to open the file to do the checksum: %1").arg(file.fileName());
                     }
                 }
             }
-            index++;
         }
+        index++;
     }
-
-    emit datapackChecksumDoneBase(datapackFilesList,doChecksumBase(datapackPath),partialHashList);
+    fullDatapackChecksumReturn.hash=doChecksumBase(datapackPath);
+    return fullDatapackChecksumReturn;
 }
 
 QByteArray DatapackChecksum::doChecksumMain(const QString &datapackPath)
@@ -159,68 +165,57 @@ QByteArray DatapackChecksum::doChecksumMain(const QString &datapackPath)
     return hash.result();
 }
 
+#ifndef QT_NO_EMIT
 void DatapackChecksum::doDifferedChecksumMain(const QString &datapackPath)
 {
-    {
-        if(CommonSettingsServer::commonSettingsServer.mainDatapackCode=="[main]")
-        {
-            qDebug() << "CommonSettingsServer::commonSettingsServer.mainDatapackCode==[main]";
-            abort();
-        }
-        if(CommonSettingsServer::commonSettingsServer.subDatapackCode=="[sub]")
-        {
-            qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode==[sub]";
-            abort();
-        }
-    }
+    const FullDatapackChecksumReturn &fullDatapackChecksumReturn=doFullSyncChecksumMain(datapackPath);
+    emit datapackChecksumDoneMain(fullDatapackChecksumReturn.datapackFilesList,fullDatapackChecksumReturn.hash,fullDatapackChecksumReturn.partialHashList);
+}
+#endif
 
+DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksumMain(const QString &datapackPath)
+{
+    DatapackChecksum::FullDatapackChecksumReturn fullDatapackChecksumReturn;
     QRegularExpression excludePath("^sub[/\\\\]");
-    QList<quint32> partialHashList;
-    QStringList datapackFilesList;
-
-    //do the by file partial hash
+    const QSet<QString> &extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
+    QRegularExpression datapack_rightFileName=QRegularExpression(DATAPACK_FILE_REGEX);
+    QStringList returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
+    returnList.sort();
+    int index=0;
+    const int &size=returnList.size();
+    while(index<size)
     {
-        const QSet<QString> &extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
-        QRegularExpression datapack_rightFileName=QRegularExpression(DATAPACK_FILE_REGEX);
-        QStringList returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
-        returnList.sort();
-        int index=0;
-        const int &size=returnList.size();
-        while(index<size)
+        const QString &fileName=returnList.at(index);
+        if(fileName.contains(datapack_rightFileName) && !fileName.contains(excludePath))
         {
-            const QString &fileName=returnList.at(index);
-            if(fileName.contains(datapack_rightFileName) && !fileName.contains(excludePath))
+            if(!QFileInfo(fileName).suffix().isEmpty() && extensionAllowed.contains(QFileInfo(fileName).suffix()))
             {
-                if(!QFileInfo(fileName).suffix().isEmpty() && extensionAllowed.contains(QFileInfo(fileName).suffix()))
+                QFile file(datapackPath+returnList.at(index));
+                if(file.size()<=8*1024*1024)
                 {
-                    QFile file(datapackPath+returnList.at(index));
-                    if(file.size()<=8*1024*1024)
+                    fullDatapackChecksumReturn.datapackFilesList << returnList.at(index);
+                    if(file.open(QIODevice::ReadOnly))
                     {
-                        if(file.open(QIODevice::ReadOnly))
+                        const QByteArray &data=file.readAll();
                         {
-                            datapackFilesList << returnList.at(index);
-
-                            const QByteArray &data=file.readAll();
-                            {
-                                QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                                hashFile.addData(data);
-                                partialHashList << *reinterpret_cast<const int *>(hashFile.result().constData());
-                            }
-                            file.close();
+                            QCryptographicHash hashFile(QCryptographicHash::Sha224);
+                            hashFile.addData(data);
+                            fullDatapackChecksumReturn.partialHashList << *reinterpret_cast<const int *>(hashFile.result().constData());
                         }
-                        else
-                        {
-                            partialHashList << 0;
-                            qDebug() << QStringLiteral("Unable to open the file to do the checksum: %1").arg(file.fileName());
-                        }
+                        file.close();
+                    }
+                    else
+                    {
+                        fullDatapackChecksumReturn.partialHashList << 0;
+                        qDebug() << QStringLiteral("Unable to open the file to do the checksum: %1").arg(file.fileName());
                     }
                 }
             }
-            index++;
         }
+        index++;
     }
-
-    emit datapackChecksumDoneMain(datapackFilesList,doChecksumMain(datapackPath),partialHashList);
+    fullDatapackChecksumReturn.hash=doChecksumMain(datapackPath);
+    return fullDatapackChecksumReturn;
 }
 
 QByteArray DatapackChecksum::doChecksumSub(const QString &datapackPath)
@@ -263,52 +258,54 @@ QByteArray DatapackChecksum::doChecksumSub(const QString &datapackPath)
     return hash.result();
 }
 
+#ifndef QT_NO_EMIT
 void DatapackChecksum::doDifferedChecksumSub(const QString &datapackPath)
 {
-    QList<quint32> partialHashList;
-    QStringList datapackFilesList;
+    const FullDatapackChecksumReturn &fullDatapackChecksumReturn=doFullSyncChecksumMain(datapackPath);
+    emit datapackChecksumDoneSub(fullDatapackChecksumReturn.datapackFilesList,fullDatapackChecksumReturn.hash,fullDatapackChecksumReturn.partialHashList);
+}
+#endif
 
-    //do the by file partial hash
+DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksumSub(const QString &datapackPath)
+{
+    DatapackChecksum::FullDatapackChecksumReturn fullDatapackChecksumReturn;
+    const QSet<QString> &extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
+    QRegularExpression datapack_rightFileName=QRegularExpression(DATAPACK_FILE_REGEX);
+    QStringList returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
+    returnList.sort();
+    int index=0;
+    const int &size=returnList.size();
+    while(index<size)
     {
-        const QSet<QString> &extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
-        QRegularExpression datapack_rightFileName=QRegularExpression(DATAPACK_FILE_REGEX);
-        QStringList returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
-        returnList.sort();
-        int index=0;
-        const int &size=returnList.size();
-        while(index<size)
+        const QString &fileName=returnList.at(index);
+        if(fileName.contains(datapack_rightFileName))
         {
-            const QString &fileName=returnList.at(index);
-            if(fileName.contains(datapack_rightFileName))
+            if(!QFileInfo(fileName).suffix().isEmpty() && extensionAllowed.contains(QFileInfo(fileName).suffix()))
             {
-                if(!QFileInfo(fileName).suffix().isEmpty() && extensionAllowed.contains(QFileInfo(fileName).suffix()))
+                QFile file(datapackPath+returnList.at(index));
+                if(file.size()<=8*1024*1024)
                 {
-                    QFile file(datapackPath+returnList.at(index));
-                    if(file.size()<=8*1024*1024)
+                    fullDatapackChecksumReturn.datapackFilesList << returnList.at(index);
+                    if(file.open(QIODevice::ReadOnly))
                     {
-                        if(file.open(QIODevice::ReadOnly))
+                        const QByteArray &data=file.readAll();
                         {
-                            datapackFilesList << returnList.at(index);
-
-                            const QByteArray &data=file.readAll();
-                            {
-                                QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                                hashFile.addData(data);
-                                partialHashList << *reinterpret_cast<const int *>(hashFile.result().constData());
-                            }
-                            file.close();
+                            QCryptographicHash hashFile(QCryptographicHash::Sha224);
+                            hashFile.addData(data);
+                            fullDatapackChecksumReturn.partialHashList << *reinterpret_cast<const int *>(hashFile.result().constData());
                         }
-                        else
-                        {
-                            partialHashList << 0;
-                            qDebug() << QStringLiteral("Unable to open the file to do the checksum: %1").arg(file.fileName());
-                        }
+                        file.close();
+                    }
+                    else
+                    {
+                        fullDatapackChecksumReturn.partialHashList << 0;
+                        qDebug() << QStringLiteral("Unable to open the file to do the checksum: %1").arg(file.fileName());
                     }
                 }
             }
-            index++;
         }
+        index++;
     }
-
-    emit datapackChecksumDoneSub(datapackFilesList,doChecksumSub(datapackPath),partialHashList);
+    fullDatapackChecksumReturn.hash=doChecksumSub(datapackPath);
+    return fullDatapackChecksumReturn;
 }
