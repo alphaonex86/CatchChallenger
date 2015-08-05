@@ -62,6 +62,8 @@ public:
     QByteArray sendedHashMain;
     QByteArray sendedHashSub;
     static QSet<QString> extensionAllowed;
+    static QString commandUpdateDatapackMain;
+    static QString commandUpdateDatapackSub;
 private:
     static QRegularExpression regex_DATAPACK_FILE_REGEX;
     /// \todo group into one thread by change for queue
@@ -104,6 +106,7 @@ private:
     QNetworkAccessManager qnam2;
     QNetworkAccessManager qnam3;
     QNetworkAccessManager qnam4;
+    const QString mDatapackBase;
     const QString mDatapackMain;
     QString mDatapackSub;
     const QString mainDatapackCode;

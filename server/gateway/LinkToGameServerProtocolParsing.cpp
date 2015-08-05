@@ -8,6 +8,8 @@
 
 using namespace CatchChallenger;
 
+file income
+
 void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size)
 {
     Q_UNUSED(queryNumber);

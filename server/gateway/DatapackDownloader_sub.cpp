@@ -173,6 +173,11 @@ void DatapackDownloaderMainSub::datapackChecksumDoneSub(const QStringList &datap
 
     if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.isEmpty())
     {
+        if(!QFile(mDatapackBase+QString("/pack/datapack-sub-%1-%2.tar.xz").arg(mainDatapackCode).arg(subDatapackCode)).remove())
+        {
+            qDebug() << "Unable to remove "+mDatapackBase+QString("/pack/datapack-sub-%1-%2.tar.xz").arg(mainDatapackCode).arg(subDatapackCode);
+            return;
+        }
         if(sendedHashSub.isEmpty())
         {
             qDebug() << "Datapack checksum done but not send by the server";

@@ -51,6 +51,7 @@ public:
     QByteArray hashBase;
     QByteArray sendedHashBase;
     static QSet<QString> extensionAllowed;
+    static QString commandUpdateDatapackBase;
 private:
     static QRegularExpression regex_DATAPACK_FILE_REGEX;
     /// \todo group into one thread by change for queue
