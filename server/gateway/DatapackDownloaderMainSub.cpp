@@ -11,6 +11,7 @@ using namespace CatchChallenger;
 #include <cmath>
 #include <QRegularExpression>
 #include <QNetworkReply>
+#include <QProcess>
 
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
@@ -25,6 +26,8 @@ QString DatapackDownloaderMainSub::text_dotcoma=QLatin1Literal(";");
 QRegularExpression DatapackDownloaderMainSub::regex_DATAPACK_FILE_REGEX=QRegularExpression(DATAPACK_FILE_REGEX);
 QSet<QString> DatapackDownloaderMainSub::extensionAllowed;
 QRegularExpression DatapackDownloaderMainSub::excludePathMain("^sub[/\\\\]");
+QString DatapackDownloaderMainSub::commandUpdateDatapackMain;
+QString DatapackDownloaderMainSub::commandUpdateDatapackSub;
 
 QHash<QString,QHash<QString,DatapackDownloaderMainSub *> > DatapackDownloaderMainSub::datapackDownloaderMainSub;
 
@@ -33,6 +36,7 @@ DatapackDownloaderMainSub::DatapackDownloaderMainSub(const QString &mDatapackBas
     qnamQueueCount2(0),
     qnamQueueCount3(0),
     qnamQueueCount4(0),
+    mDatapackBase(mDatapackBase),
     mDatapackMain(mDatapackBase+"map/main/"+mainDatapackCode+"/"),
     mainDatapackCode(mainDatapackCode),
     subDatapackCode(subDatapackCode)
@@ -212,5 +216,16 @@ void DatapackDownloaderMainSub::haveTheDatapackMainSub()
     clientInSuspend.clear();
 
     resetAll();
+
+    if(!DatapackDownloaderMainSub::commandUpdateDatapackMain.isEmpty())
+    {
+        if(QProcess::execute(DatapackDownloaderMainSub::commandUpdateDatapackMain,QStringList() << mDatapackMain)<0)
+            qDebug() << "Unable to execute " << DatapackDownloaderMainSub::commandUpdateDatapackMain << " " << mDatapackMain;
+    }
+    if(!DatapackDownloaderMainSub::commandUpdateDatapackSub.isEmpty() && !mDatapackSub.isEmpty())
+    {
+        if(QProcess::execute(DatapackDownloaderMainSub::commandUpdateDatapackSub,QStringList() << mDatapackSub)<0)
+            qDebug() << "Unable to execute " << DatapackDownloaderMainSub::commandUpdateDatapackSub << " " << mDatapackSub;
+    }
 }
 

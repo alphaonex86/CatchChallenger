@@ -114,6 +114,19 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     tcpCork=settings.value(QStringLiteral("tcpCork")).toBool();
     tcpNodelay=settings.value(QStringLiteral("tcpNodelay")).toBool();
     settings.endGroup();
+
+    settings.beginGroup(QStringLiteral("commandUpdateDatapack"));
+    if(!settings.contains(QStringLiteral("base")))
+        settings.setValue(QStringLiteral("base"),QString());
+    if(!settings.contains(QStringLiteral("main")))
+        settings.setValue(QStringLiteral("main"),QString());
+    if(!settings.contains(QStringLiteral("sub")))
+        settings.setValue(QStringLiteral("sub"),QString());
+    DatapackDownloaderBase::commandUpdateDatapackBase=settings.value(QStringLiteral("base")).toString();
+    DatapackDownloaderMainSub::commandUpdateDatapackMain=settings.value(QStringLiteral("main")).toString();
+    DatapackDownloaderMainSub::commandUpdateDatapackSub=settings.value(QStringLiteral("sub")).toString();
+    settings.endGroup();
+
     settings.sync();
 
     tryListen();
