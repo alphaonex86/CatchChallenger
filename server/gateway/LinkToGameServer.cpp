@@ -303,7 +303,7 @@ void LinkToGameServer::sendDiffered04Reply()
 {
     if(client!=NULL)
     {
-        parseNetworkReadError("client not connected");
+        parseNetworkReadError("client not connected 04");
         return;
     }
     if(reply04inWait==NULL)
@@ -316,5 +316,23 @@ void LinkToGameServer::sendDiffered04Reply()
     reply04inWait=NULL;
     reply04inWaitSize=0;
     reply04inWaitQueryNumber=0;
+}
 
+void LinkToGameServer::sendDiffered0205Reply()
+{
+    if(client!=NULL)
+    {
+        parseNetworkReadError("client not connected 0205");
+        return;
+    }
+    if(reply0205inWait==NULL)
+    {
+        parseNetworkReadError("LinkToGameServer::sendDiffered0205Reply() reply0205inWait==NULL");
+        return;
+    }
+    client->postReply(reply0205inWaitQueryNumber,reply0205inWait,reply0205inWaitSize);
+    delete reply0205inWait;
+    reply0205inWait=NULL;
+    reply0205inWaitSize=0;
+    reply0205inWaitQueryNumber=0;
 }

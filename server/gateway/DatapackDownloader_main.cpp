@@ -49,14 +49,6 @@ void DatapackDownloaderMainSub::writeNewFileMain(const QString &fileName,const Q
         file.flush();
         file.close();
     }
-
-    //send size
-    {
-        if(httpModeMain)
-            newDatapackFileMain(ceil((float)data.size()/1000)*1000);
-        else
-            newDatapackFileMain(data.size());
-    }
 }
 
 void DatapackDownloaderMainSub::getHttpFileMain(const QString &url, const QString &fileName)
@@ -177,19 +169,14 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const QStringList &data
         abort();
     }
     {
-        if(CommonSettingsServer::commonSettingsServer.mainDatapackCode=="[main]")
+        if(mainDatapackCode=="[main]")
         {
-            qDebug() << "CommonSettingsServer::commonSettingsServer.mainDatapackCode==[main]";
+            qDebug() << "mainDatapackCode==[main]";
             abort();
         }
-        if(CommonSettingsServer::commonSettingsServer.subDatapackCode=="[sub]")
+        if(subDatapackCode=="[sub]")
         {
-            qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode==[sub]";
-            abort();
-        }
-        if(mDatapackMain==(mDatapackBase+"map/main/[main]/"))
-        {
-            qDebug() << "mDatapackMain==(mDatapackBase+\"map/main/[main]/\")";
+            qDebug() << "subDatapackCode==[sub]";
             abort();
         }
     }
@@ -256,26 +243,21 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const QStringList &data
             out << (quint32)partialHashList.at(index);
             index++;
         }
-        packFullOutcommingQuery(0x02,0x0C,datapack_content_query_number,outputData.constData(),outputData.size());
+        client->packFullOutcommingQuery(0x02,0x0C,datapack_content_query_number,outputData.constData(),outputData.size());
     }
     else
     {
         if(datapackFilesListMain.isEmpty())
         {
             {
-                if(CommonSettingsServer::commonSettingsServer.mainDatapackCode=="[main]")
+                if(mainDatapackCode=="[main]")
                 {
-                    qDebug() << "CommonSettingsServer::commonSettingsServer.mainDatapackCode==[main]";
+                    qDebug() << "mainDatapackCode==[main]";
                     abort();
                 }
-                if(CommonSettingsServer::commonSettingsServer.subDatapackCode=="[sub]")
+                if(subDatapackCode=="[sub]")
                 {
-                    qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode==[sub]";
-                    abort();
-                }
-                if(mDatapackMain==(mDatapackBase+"map/main/[main]/"))
-                {
-                    qDebug() << "mDatapackMain==(mDatapackBase+\"map/main/[main]/\")";
+                    qDebug() << "subDatapackCode==[sub]";
                     abort();
                 }
             }
@@ -286,7 +268,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const QStringList &data
         else
         {
             qDebug() << "Datapack don't match with server hash, get from mirror";
-            QNetworkRequest networkRequest(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+QStringLiteral("pack/diff/datapack-main-")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("-%1.tar.xz").arg(QString(hash.toHex())));
+            QNetworkRequest networkRequest(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+QStringLiteral("pack/diff/datapack-main-")+mainDatapackCode+QStringLiteral("-%1.tar.xz").arg(QString(hash.toHex())));
             QNetworkReply *reply = qnam.get(networkRequest);
             connect(reply, &QNetworkReply::finished, this, &DatapackDownloaderMainSub::httpFinishedForDatapackListMain);
         }
@@ -299,7 +281,7 @@ void DatapackDownloaderMainSub::test_mirror_main()
     const QStringList &httpDatapackMirrorList=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,QString::SkipEmptyParts);
     if(!datapackTarXzMain)
     {
-        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("pack/datapack-main-")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral(".tar.xz"));
+        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("pack/datapack-main-")+mainDatapackCode+QStringLiteral(".tar.xz"));
         reply = qnam.get(networkRequest);
         if(reply->error()==QNetworkReply::NoError)
             connect(reply, &QNetworkReply::finished, this, &DatapackDownloaderMainSub::httpFinishedForDatapackListMain);//fix it, put httpFinished* broke it
@@ -310,7 +292,7 @@ void DatapackDownloaderMainSub::test_mirror_main()
             /* here and not above because at last mirror you need try the tar.xz and after the datapack-list/main-XXXX.txt, and only after that's quit */
             return;
 
-        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("datapack-list/main-")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral(".txt"));
+        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("datapack-list/main-")+mainDatapackCode+QStringLiteral(".txt"));
         reply = qnam.get(networkRequest);
         if(reply->error()==QNetworkReply::NoError)
             connect(reply, &QNetworkReply::finished, this, &DatapackDownloaderMainSub::httpFinishedForDatapackListMain);
@@ -435,7 +417,8 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain()
             qDebug() << "datapack.tar.xz size:" << QString("%1KB").arg(reply->size()/1000);
             datapackTarXzMain=true;
             xzDecodeThreadMain.setData(reply->readAll(),100*1024*1024);
-            xzDecodeThreadMain.start(QThread::LowestPriority);
+            xzDecodeThreadMain.run();
+            decodedIsFinishMain();
             return;
         }
         else
@@ -453,7 +436,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain()
                 abort();
                 return;
             }
-            /*ref crash here*/const QString selectedMirror=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+"map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/";
+            /*ref crash here*/const QString selectedMirror=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+"map/main/"+mainDatapackCode+"/";
             int correctContent=0;
             while(index<content.size())
             {
@@ -517,8 +500,6 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain()
             }
             if(fileToGet==0)
                 checkIfContinueOrFinished();
-            else
-                datapackSizeMain(fileToGet,sizeToGet*1000);
         }
     }
 }
@@ -597,19 +578,14 @@ void DatapackDownloaderMainSub::httpErrorEventMain()
 void DatapackDownloaderMainSub::sendDatapackContentMain()
 {
     {
-        if(CommonSettingsServer::commonSettingsServer.mainDatapackCode=="[main]")
+        if(mainDatapackCode=="[main]")
         {
-            qDebug() << "CommonSettingsServer::commonSettingsServer.mainDatapackCode==[main]";
+            qDebug() << "mainDatapackCode==[main]";
             abort();
         }
-        if(CommonSettingsServer::commonSettingsServer.subDatapackCode=="[sub]")
+        if(subDatapackCode=="[sub]")
         {
-            qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode==[sub]";
-            abort();
-        }
-        if(mDatapackMain==(mDatapackBase+"map/main/[main]/"))
-        {
-            qDebug() << "mDatapackMain==(mDatapackBase+\"map/main/[main]/\")";
+            qDebug() << "subDatapackCode==[sub]";
             abort();
         }
     }
@@ -639,17 +615,15 @@ void DatapackDownloaderMainSub::sendDatapackContentMain()
     wait_datapack_content_main=true;
     datapackFilesListMain=listDatapackMain(QString());
     datapackFilesListMain.sort();
-    emit doDifferedChecksumMain(mDatapackMain);
+    const DatapackChecksum::FullDatapackChecksumReturn &fullDatapackChecksumReturn=DatapackChecksum::doFullSyncChecksumMain(mDatapackMain);
+    datapackChecksumDoneMain(fullDatapackChecksumReturn.datapackFilesList,fullDatapackChecksumReturn.hash,fullDatapackChecksumReturn.partialHashList);
 }
 
 void DatapackDownloaderMainSub::checkIfContinueOrFinished()
 {
     wait_datapack_content_main=false;
-    if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
-    {
-        datapackStatus=DatapackStatus::Finished;
+    if(subDatapackCode.isEmpty())
         haveTheDatapackMainSub();
-    }
     else
     {
         datapackStatus=DatapackStatus::Sub;

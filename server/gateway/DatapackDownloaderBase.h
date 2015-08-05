@@ -86,7 +86,6 @@ private:
     QHash<QNetworkReply *,UrlInWaiting> urlInWaitingListBase;
 private slots:
     void writeNewFileBase(const QString &fileName, const QByteArray &data);
-    void checkIfContinueOrFinished();
     void getHttpFileBase(const QString &url, const QString &fileName);
     void httpFinishedBase();
     void datapackDownloadFinishedBase();
