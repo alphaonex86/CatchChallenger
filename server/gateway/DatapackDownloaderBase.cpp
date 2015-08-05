@@ -11,6 +11,7 @@ using namespace CatchChallenger;
 #include <cmath>
 #include <QRegularExpression>
 #include <QNetworkReply>
+#include <QProcess>
 
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
@@ -21,11 +22,14 @@ using namespace CatchChallenger;
 
 //need host + port here to have datapack base
 
+sync http download
+
 QString DatapackDownloaderBase::text_slash=QLatin1Literal("/");
 QString DatapackDownloaderBase::text_dotcoma=QLatin1Literal(";");
 QRegularExpression DatapackDownloaderBase::regex_DATAPACK_FILE_REGEX=QRegularExpression(DATAPACK_FILE_REGEX);
 QSet<QString> DatapackDownloaderBase::extensionAllowed;
-QRegularExpression DatapackDownloaderBase::excludePathBase("^map[/\\\\]main[/\\\\]");
+QRegularExpression DatapackDownloaderBase::excludePathBase("^(map[/\\\\]main[/\\\\]|pack[/\\\\])");
+QString DatapackDownloaderBase::commandUpdateDatapackBase;
 
 DatapackDownloaderBase * DatapackDownloaderBase::datapackDownloaderBase=NULL;
 
@@ -58,6 +62,10 @@ void DatapackDownloaderBase::haveTheDatapack()
     clientInSuspend.clear();
 
     resetAll();
+
+    if(!DatapackDownloaderBase::commandUpdateDatapackBase.isEmpty())
+        if(QProcess::execute(DatapackDownloaderBase::commandUpdateDatapackBase,QStringList() << mDatapackBase)<0)
+            qDebug() << "Unable to execute " << DatapackDownloaderBase::commandUpdateDatapackBase << " " << mDatapackBase;
 }
 
 void DatapackDownloaderBase::resetAll()
@@ -309,6 +317,11 @@ void DatapackDownloaderBase::datapackChecksumDoneBase(const QStringList &datapac
 
     if(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.isEmpty())
     {
+        if(!QFile(mDatapackBase+"/pack/datapack.tar.xz").remove())
+        {
+            qDebug() << "Unable to remove "+mDatapackBase+"/pack/datapack.tar.xz";
+            return;
+        }
         if(sendedHashBase.isEmpty())
         {
             qDebug() << "Datapack checksum done but not send by the server";
