@@ -37,6 +37,7 @@ public:
     void datapackDownloadError();
     void resetAll();
     void datapackFileList(const char * const data,const unsigned int &size);
+    void writeNewFileToRoute(const QString &fileName, const QByteArray &data);
 
     //datapack related
     void sendDatapackContentMainSub();
@@ -101,11 +102,6 @@ private:
     bool httpError;
     bool httpModeMain;
     bool httpModeSub;
-    int qnamQueueCount,qnamQueueCount2,qnamQueueCount3,qnamQueueCount4;
-    QNetworkAccessManager qnam;
-    QNetworkAccessManager qnam2;
-    QNetworkAccessManager qnam3;
-    QNetworkAccessManager qnam4;
     const QString mDatapackBase;
     const QString mDatapackMain;
     QString mDatapackSub;

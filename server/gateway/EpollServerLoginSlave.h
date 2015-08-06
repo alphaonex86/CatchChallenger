@@ -10,6 +10,7 @@
 #include <QSettings>
 #include <string>
 #include <vector>
+#include <curl/curl.h>
 
 namespace CatchChallenger {
 class EpollServerLoginSlave : public EpollGenericServer
@@ -22,6 +23,7 @@ public:
     static QString httpMirrorFix(QString mirrors);
 public:
     static EpollServerLoginSlave *epollServerLoginSlave;
+    static CURL *curl;
 
     char * destination_server_ip;
     quint16 destination_server_port;

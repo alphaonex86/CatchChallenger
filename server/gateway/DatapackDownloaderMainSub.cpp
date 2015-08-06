@@ -32,10 +32,6 @@ QString DatapackDownloaderMainSub::commandUpdateDatapackSub;
 QHash<QString,QHash<QString,DatapackDownloaderMainSub *> > DatapackDownloaderMainSub::datapackDownloaderMainSub;
 
 DatapackDownloaderMainSub::DatapackDownloaderMainSub(const QString &mDatapackBase, const QString &mainDatapackCode, const QString &subDatapackCode) :
-    qnamQueueCount(0),
-    qnamQueueCount2(0),
-    qnamQueueCount3(0),
-    qnamQueueCount4(0),
     mDatapackBase(mDatapackBase),
     mDatapackMain(mDatapackBase+"map/main/"+mainDatapackCode+"/"),
     mainDatapackCode(mainDatapackCode),
@@ -67,6 +63,21 @@ void DatapackDownloaderMainSub::datapackDownloadError()
         index++;
     }
     clientInSuspend.clear();
+}
+
+void DatapackDownloaderMainSub::writeNewFileToRoute(const QString &fileName, const QByteArray &data)
+{
+    switch(datapackStatus)
+    {
+        case DatapackStatus::Main:
+            writeNewFileMain(fileName,data);
+        break;
+        case DatapackStatus::Sub:
+            writeNewFileSub(fileName,data);
+        break;
+        default:
+        return;
+    }
 }
 
 void DatapackDownloaderMainSub::datapackFileList(const char * const data,const unsigned int &size)
