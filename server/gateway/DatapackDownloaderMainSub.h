@@ -26,9 +26,8 @@
 #include "../../client/base/qt-tar-xz/QXzDecodeThread.h"
 
 namespace CatchChallenger {
-class DatapackDownloaderMainSub : public QObject
+class DatapackDownloaderMainSub
 {
-    Q_OBJECT
 public:
     explicit DatapackDownloaderMainSub(const QString &mDatapackBase, const QString &mainDatapackCode, const QString &subDatapackCode);
     virtual ~DatapackDownloaderMainSub();
@@ -51,8 +50,8 @@ public:
     void decodedIsFinishSub();
     bool mirrorTryNextMain();
     bool mirrorTryNextSub();
-    void httpFinishedForDatapackListMain();
-    void httpFinishedForDatapackListSub();
+    void httpFinishedForDatapackListMain(const QByteArray data=QByteArray());
+    void httpFinishedForDatapackListSub(const QByteArray data=QByteArray());
     const QStringList listDatapackMain(QString suffix);
     const QStringList listDatapackSub(QString suffix);
     void cleanDatapackMain(QString suffix);
@@ -112,22 +111,18 @@ private:
         QString fileName;
     };
     QHash<QNetworkReply *,UrlInWaiting> urlInWaitingListMain,urlInWaitingListSub;
+private:
+    bool getHttpFileMain(const QString &url, const QString &fileName);
+    bool getHttpFileSub(const QString &url, const QString &fileName);
 private slots:
     void writeNewFileMain(const QString &fileName, const QByteArray &data);
     void writeNewFileSub(const QString &fileName, const QByteArray &data);
     void checkIfContinueOrFinished();
-    void getHttpFileMain(const QString &url, const QString &fileName);
-    void getHttpFileSub(const QString &url, const QString &fileName);
-    void httpFinishedMain();
-    void httpFinishedSub();
     void haveTheDatapackMainSub();
     void datapackDownloadFinishedMain();
     void datapackDownloadFinishedSub();
     void datapackChecksumDoneMain(const QStringList &datapackFilesList,const QByteArray &hash, const QList<quint32> &partialHash);
     void datapackChecksumDoneSub(const QStringList &datapackFilesList,const QByteArray &hash, const QList<quint32> &partialHash);
-signals:
-    void doDifferedChecksumMain(const QString &datapackPath);
-    void doDifferedChecksumSub(const QString &datapackPath);
 };
 }
 
