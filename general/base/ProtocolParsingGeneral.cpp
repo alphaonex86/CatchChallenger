@@ -284,7 +284,6 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
             compressionMultipleCodePacketClientToServer[0x02] << 0x0C;
             compressionMultipleCodePacketServerToClient[0xC2] << 0x04;
-            compressionMultipleCodePacketServerToClient[0xC2] << 0x0D;
             compressionMultipleCodePacketServerToClient[0xC2] << 0x0E;
             compressionMultipleCodePacketServerToClient[0xC2] << 0x0F;
             compressionMultipleCodePacketServerToClient[0xC2] << 0x10;

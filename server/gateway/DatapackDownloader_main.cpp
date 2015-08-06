@@ -324,7 +324,6 @@ void DatapackDownloaderMainSub::decodedIsFinishMain()
         QTarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
-            QSet<QString> extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(DatapackDownloaderMainSub::text_dotcoma).toSet();
             QDir dir;
             const QStringList &fileList=tarDecode.getFileList();
             const QList<QByteArray> &dataList=tarDecode.getDataList();
