@@ -37,6 +37,7 @@ public:
     void datapackDownloadError();
     void resetAll();
     void datapackFileList(const char * const data,const unsigned int &size);
+    void writeNewFileBase(const QString &fileName, const QByteArray &data);
 
     //datapack related
     void sendDatapackContentBase();
@@ -74,11 +75,6 @@ private:
     static QString text_dotcoma;
     bool httpError;
     bool httpModeBase;
-    int qnamQueueCount,qnamQueueCount2,qnamQueueCount3,qnamQueueCount4;
-    QNetworkAccessManager qnam;
-    QNetworkAccessManager qnam2;
-    QNetworkAccessManager qnam3;
-    QNetworkAccessManager qnam4;
     const QString mDatapackBase;
     struct UrlInWaiting
     {
@@ -86,7 +82,6 @@ private:
     };
     QHash<QNetworkReply *,UrlInWaiting> urlInWaitingListBase;
 private slots:
-    void writeNewFileBase(const QString &fileName, const QByteArray &data);
     void getHttpFileBase(const QString &url, const QString &fileName);
     void httpFinishedBase();
     void datapackDownloadFinishedBase();

@@ -18,10 +18,6 @@
 using namespace CatchChallenger;
 
 const unsigned char protocolHeaderToMatchLogin[] = PROTOCOL_HEADER_LOGIN;
-QByteArray LinkToGameServer::httpDatapackMirrorRewriteBase;
-QByteArray LinkToGameServer::httpDatapackMirrorRewriteMainAndSub;
-bool LinkToGameServer::compressionSet=false;
-QString LinkToGameServer::mDatapackBase;
 
 LinkToGameServer::LinkToGameServer(
         #ifdef SERVERSSL
