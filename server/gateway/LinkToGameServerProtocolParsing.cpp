@@ -8,8 +8,6 @@
 
 using namespace CatchChallenger;
 
-file income
-
 void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size)
 {
     Q_UNUSED(queryNumber);
@@ -148,8 +146,99 @@ void LinkToGameServer::parseFullMessage(const quint8 &mainCodeType,const quint8 
             return;
         }
     }
-    (void)rawData;
-    (void)size;
+    switch(mainCodeType)
+    {
+        case 0xC2:
+        {
+            switch(subCodeType)
+            {
+                //file as input
+                case 0x03://raw
+                case 0x04://compressed
+                {
+                    unsigned int pos=0;
+                    if((size-pos)<(int)(sizeof(quint8)))
+                    {
+                        parseNetworkReadError(QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                        return;
+                    }
+                    quint8 fileListSize=rawData[pos];
+                    pos++;
+                    int index=0;
+                    while(index<fileListSize)
+                    {
+                        if((size-pos)<(int)(sizeof(quint8)))
+                        {
+                            parseNetworkReadError(QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                            return;
+                        }
+                        QString fileName;
+                        quint8 fileNameSize=rawData[pos];
+                        pos++;
+                        if(fileNameSize>0)
+                        {
+                            if((size-pos)<(int)fileNameSize)
+                            {
+                                parseNetworkReadError(QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                                return;
+                            }
+                            fileName=QString::fromUtf8(rawData+pos,fileNameSize);
+                            pos+=fileNameSize;
+                        }
+                        if(!DatapackDownloaderBase::extensionAllowed.contains(QFileInfo(fileName).suffix()))
+                        {
+                            parseNetworkReadError(QStringLiteral("extension not allowed: %4 with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)).arg(QFileInfo(fileName).suffix()));
+                            return;
+                        }
+                        if((size-pos)<(int)(sizeof(quint32)))
+                        {
+                            parseNetworkReadError(QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                            return;
+                        }
+                        const quint32 &size=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+pos)));
+                        pos+=4;
+                        if((size-pos)<size)
+                        {
+                            parseNetworkReadError(QStringLiteral("wrong file data size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                            return;
+                        }
+                        const QByteArray dataFile(rawData+pos,size);
+                        pos+=size;
+                        if(subCodeType==0x03)
+                            DebugClass::debugConsole(QStringLiteral("Raw file to create: %1").arg(fileName));
+                        else
+                            DebugClass::debugConsole(QStringLiteral("Compressed file to create: %1").arg(fileName));
+
+                        if(reply04inWait!=NULL)
+                            DatapackDownloaderBase::datapackDownloaderBase->writeNewFileBase(fileName,dataFile);
+                        else if(reply0205inWait!=NULL)
+                        {
+                            if(DatapackDownloaderMainSub::datapackDownloaderMainSub.contains(main))
+                            {
+                                if(DatapackDownloaderMainSub::datapackDownloaderMainSub.value(main).contains(sub))
+                                    DatapackDownloaderMainSub::datapackDownloaderMainSub.value(main).value(sub)->writeNewFileToRoute(fileName,dataFile);
+                                else
+                                    parseNetworkReadError("unable to route mainCodeType==0xC2 && subCodeType==0x03 return, sub datapack code is not found: "+sub);
+                            }
+                            else
+                                parseNetworkReadError("unable to route mainCodeType==0xC2 && subCodeType==0x03 return, main datapack code is not found: "+main);
+                        }
+                        else
+                            parseNetworkReadError("unable to route mainCodeType==0xC2 && subCodeType==0x03 return");
+
+                        index++;
+                    }
+                    return;//no remaining data, because all remaing is used as file data
+                }
+                break;
+                default:
+                break;
+            }
+        }
+        break;
+        default:
+        break;
+    }
     if(client!=NULL)
         client->packFullOutcommingData(mainCodeType,subCodeType,rawData,size);
 }
