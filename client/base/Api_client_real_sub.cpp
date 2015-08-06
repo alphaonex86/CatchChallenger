@@ -161,8 +161,8 @@ void Api_client_real::datapackChecksumDoneSub(const QStringList &datapackFilesLi
     if(datapackFilesListSub.size()!=partialHashList.size())
     {
         qDebug() << "datapackFilesListSub.size()!=partialHash.size():" << datapackFilesListSub.size() << "!=" << partialHashList.size();
-        qDebug() << "this->datapackFilesList:" << this->datapackFilesListSub.join("\n");
-        qDebug() << "datapackFilesList:" << datapackFilesListSub.join("\n");
+        qDebug() << "datapackFilesListSub:" << datapackFilesListSub.join("\n");
+        qDebug() << "datapackFilesList:" << datapackFilesList.join("\n");
         abort();
     }
 

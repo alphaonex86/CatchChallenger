@@ -13,6 +13,7 @@ DEFINES += CATCHCHALLENGER_CLASS_GATEWAY
 
 #LIBS += -lssl -lcrypto
 LIBS    += -llzma
+LIBS += -lcurl
 
 CONFIG += c++11
 

@@ -83,10 +83,16 @@ void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
                         parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
                     return;
                 }
+                qDebug() << "Transmit the token: " << QString(QByteArray(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT).toHex());
                 memcpy(newData+1,data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                 //send token to game server
                 if(client!=NULL)
                     client->postReply(queryNumber,newData,size);
+                else
+                {
+                    parseNetworkReadError("Protocol initialised but client already disconnected");
+                    return;
+                }
                 stat=ProtocolGood;
                 return;
             }
@@ -111,7 +117,7 @@ void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
 
 void LinkToGameServer::parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size)
 {
-    if(client!=NULL)
+    if(client==NULL)
     {
         parseNetworkReadError("client not connected");
         return;
@@ -123,13 +129,12 @@ void LinkToGameServer::parseMessage(const quint8 &mainCodeType,const char * cons
     }
     (void)data;
     (void)size;
-    if(client!=NULL)
-        client->packOutcommingData(mainCodeType,data,size);
+    client->packOutcommingData(mainCodeType,data,size);
 }
 
 void LinkToGameServer::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const rawData,const unsigned int &size)
 {
-    if(client!=NULL)
+    if(client==NULL)
     {
         parseNetworkReadError("client not connected");
         return;
@@ -239,14 +244,13 @@ void LinkToGameServer::parseFullMessage(const quint8 &mainCodeType,const quint8 
         default:
         break;
     }
-    if(client!=NULL)
-        client->packFullOutcommingData(mainCodeType,subCodeType,rawData,size);
+    client->packFullOutcommingData(mainCodeType,subCodeType,rawData,size);
 }
 
 //have query with reply
 void LinkToGameServer::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
-    if(client!=NULL)
+    if(client==NULL)
     {
         parseNetworkReadError("client not connected");
         return;
@@ -262,7 +266,7 @@ void LinkToGameServer::parseQuery(const quint8 &mainCodeType,const quint8 &query
 
 void LinkToGameServer::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const rawData,const unsigned int &size)
 {
-    if(client!=NULL)
+    if(client==NULL)
     {
         parseNetworkReadError("client not connected");
         return;
@@ -299,7 +303,7 @@ void LinkToGameServer::parseFullQuery(const quint8 &mainCodeType,const quint8 &s
 //send reply
 void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
-    if(client!=NULL)
+    if(client==NULL)
     {
         parseNetworkReadError("client not connected");
         return;
@@ -330,10 +334,13 @@ void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &q
                 if(DatapackDownloaderBase::datapackDownloaderBase==NULL)
                     DatapackDownloaderBase::datapackDownloaderBase=new DatapackDownloaderBase(LinkToGameServer::mDatapackBase);
             }
-            DatapackDownloaderBase::datapackDownloaderBase->sendedHashBase=QByteArray(data[pos],CATCHCHALLENGER_SHA224HASH_SIZE);
+            DatapackDownloaderBase::datapackDownloaderBase->sendedHashBase=QByteArray(data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
             pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
+            const quint8 &stringSize=data[pos];
+            pos+=1;
+            CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase=QString::fromLatin1(data+pos,stringSize);
+            pos+=stringSize;
             unsigned int remainingSize=size-pos-1-data[pos];
-            pos+=data[pos];
             reply04inWaitSize=14+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
             reply04inWait=new char[reply04inWaitSize];
             memcpy(reply04inWait,data,14);
@@ -370,7 +377,7 @@ void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &q
 
 void LinkToGameServer::parseFullReplyData(const quint8 &mainCodeType, const quint8 &subCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size)
 {
-    if(client!=NULL)
+    if(client==NULL)
     {
         parseNetworkReadError("client not connected");
         return;

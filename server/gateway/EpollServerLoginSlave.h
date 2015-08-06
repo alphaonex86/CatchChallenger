@@ -13,6 +13,11 @@
 #include <curl/curl.h>
 
 namespace CatchChallenger {
+struct MemoryStruct {
+  char *memory;
+  size_t size;
+};
+
 class EpollServerLoginSlave : public EpollGenericServer
 {
 public:
@@ -21,6 +26,7 @@ public:
     bool tryListen();
     void close();
     static QString httpMirrorFix(QString mirrors);
+    static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp);
 public:
     static EpollServerLoginSlave *epollServerLoginSlave;
     static CURL *curl;
