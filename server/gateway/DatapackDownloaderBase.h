@@ -26,9 +26,8 @@
 #include "../../client/base/qt-tar-xz/QXzDecodeThread.h"
 
 namespace CatchChallenger {
-class DatapackDownloaderBase : public QObject
+class DatapackDownloaderBase
 {
-    Q_OBJECT
 public:
     explicit DatapackDownloaderBase(const QString &mDatapackBase);
     virtual ~DatapackDownloaderBase();
@@ -42,10 +41,9 @@ public:
     //datapack related
     void sendDatapackContentBase();
     void test_mirror_base();
-    void httpErrorEventBase();
     void decodedIsFinishBase();
     bool mirrorTryNextBase();
-    void httpFinishedForDatapackListBase();
+    void httpFinishedForDatapackListBase(const QByteArray data=QByteArray());
     const QStringList listDatapackBase(QString suffix);
     void cleanDatapackBase(QString suffix);
 
@@ -81,14 +79,12 @@ private:
         QString fileName;
     };
     QHash<QNetworkReply *,UrlInWaiting> urlInWaitingListBase;
+private:
+    bool getHttpFileBase(const QString &url, const QString &fileName);
 private slots:
-    void getHttpFileBase(const QString &url, const QString &fileName);
-    void httpFinishedBase();
     void datapackDownloadFinishedBase();
     void datapackChecksumDoneBase(const QStringList &datapackFilesList,const QByteArray &hash, const QList<quint32> &partialHash);
     void haveTheDatapack();
-signals:
-    void doDifferedChecksumBase(const QString &datapackPath);
 };
 }
 
