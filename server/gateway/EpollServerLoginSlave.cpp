@@ -30,7 +30,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     server_ip(NULL),
     server_port(NULL)
 {
-    QSettings settings(QCoreApplication::applicationDirPath()+"/login.conf",QSettings::IniFormat);
+    QSettings settings(QCoreApplication::applicationDirPath()+"/gateway.conf",QSettings::IniFormat);
 
     srand(time(NULL));
 
@@ -68,17 +68,25 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             destination_server_ip=new char[destination_server_ip_data.size()+1];
             strcpy(destination_server_ip,destination_server_ip_data.constData());
         }
+        else
+        {
+            settings.sync();
+            std::cerr << "destination_ip is empty (abort)" << std::endl;
+            abort();
+        }
         if(!settings.contains(QStringLiteral("destination_port")))
             settings.setValue(QStringLiteral("destination_port"),rand()%40000+10000);
         bool ok;
         unsigned int tempPort=settings.value(QStringLiteral("destination_port")).toUInt(&ok);
         if(!ok)
         {
+            settings.sync();
             std::cerr << "destination_port not number: " << settings.value(QStringLiteral("destination_port")).toString().toStdString() << std::endl;
             abort();
         }
         if(tempPort==0 || tempPort>65535)
         {
+            settings.sync();
             std::cerr << "destination_port ==0 || >65535: " << tempPort << std::endl;
             abort();
         }
@@ -90,6 +98,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     LinkToGameServer::httpDatapackMirrorRewriteBase=FacilityLibGeneral::toUTF8WithHeader(httpMirrorFix(settings.value(QStringLiteral("httpDatapackMirrorRewriteBase")).toString()));
     if(LinkToGameServer::httpDatapackMirrorRewriteBase.isEmpty())
     {
+        settings.sync();
         std::cerr << "httpDatapackMirrorRewriteBase.isEmpty() abort" << std::endl;
         abort();
     }
@@ -98,6 +107,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     LinkToGameServer::httpDatapackMirrorRewriteMainAndSub=FacilityLibGeneral::toUTF8WithHeader(httpMirrorFix(settings.value(QStringLiteral("httpDatapackMirrorRewriteMainAndSub")).toString()));
     if(LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.isEmpty())
     {
+        settings.sync();
         std::cerr << "httpDatapackMirrorRewriteMainAndSub.isEmpty() abort" << std::endl;
         abort();
     }
@@ -155,6 +165,25 @@ EpollServerLoginSlave::~EpollServerLoginSlave()
         delete server_port;
         server_port=NULL;
     }
+}
+
+size_t EpollServerLoginSlave::WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
+{
+  size_t realsize = size * nmemb;
+  struct MemoryStruct *mem = (struct MemoryStruct *)userp;
+
+  mem->memory = static_cast<char *>(realloc(mem->memory, mem->size + realsize + 1));
+  if(mem->memory == NULL) {
+    /* out of memory! */
+    printf("not enough memory (realloc returned NULL)\n");
+    return 0;
+  }
+
+  memcpy(&(mem->memory[mem->size]), contents, realsize);
+  mem->size += realsize;
+  mem->memory[mem->size] = 0;
+
+  return realsize;
 }
 
 QString EpollServerLoginSlave::httpMirrorFix(QString mirrors)

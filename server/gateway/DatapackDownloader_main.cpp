@@ -11,6 +11,8 @@ using namespace CatchChallenger;
 #include <cmath>
 #include <QRegularExpression>
 #include <QNetworkReply>
+#include <QProcess>
+#include <QDebug>
 
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
@@ -18,6 +20,7 @@ using namespace CatchChallenger;
 #include "../../client/base/qt-tar-xz/QTarDecode.h"
 #include "../../general/base/GeneralVariable.h"
 #include "LinkToGameServer.h"
+#include "EpollServerLoginSlave.h"
 
 void DatapackDownloaderMainSub::writeNewFileMain(const QString &fileName,const QByteArray &data)
 {
@@ -51,112 +54,37 @@ void DatapackDownloaderMainSub::writeNewFileMain(const QString &fileName,const Q
     }
 }
 
-void DatapackDownloaderMainSub::getHttpFileMain(const QString &url, const QString &fileName)
+bool DatapackDownloaderMainSub::getHttpFileMain(const QString &url, const QString &fileName)
 {
     if(httpError)
-        return;
+        return false;
     if(!httpModeMain)
         httpModeMain=true;
-    QNetworkRequest networkRequest(url);
-    QNetworkReply *reply;
-    //choice the right queue
-    {
-        if(qnamQueueCount3 < qnamQueueCount2 && qnamQueueCount3 < qnamQueueCount)
-            reply = qnam3.get(networkRequest);
-        else if(qnamQueueCount2 < qnamQueueCount)
-            reply = qnam2.get(networkRequest);
-        else
-            reply = qnam.get(networkRequest);
-    }
-    //add to queue count
-    {
-        QNetworkAccessManager * manager=reply->manager();
-        if(manager==&qnam)
-            qnamQueueCount++;
-        else if(manager==&qnam2)
-            qnamQueueCount2++;
-        else if(manager==&qnam3)
-            qnamQueueCount3++;
-        else
-            qDebug() << "queue detection bug to add";
-    }
-    UrlInWaiting urlInWaiting;
-    urlInWaiting.fileName=fileName;
-    urlInWaitingListMain[reply]=urlInWaiting;
-    connect(reply, &QNetworkReply::finished, this, &DatapackDownloaderMainSub::httpFinishedMain);
-}
 
-void DatapackDownloaderMainSub::httpFinishedMain()
-{
-    if(httpError)
-        return;
-    if(urlInWaitingListMain.isEmpty())
+    FILE *fp = fopen(fileName.toLocal8Bit().constData(),"wb");
+    if(fp!=NULL)
     {
-        httpError=true;
-        qDebug() << (QStringLiteral("no more reply in waiting"));
-        datapackDownloadError();
-        return;
-    }
-    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    if(reply==NULL)
-    {
-        httpError=true;
-        qDebug() << (QStringLiteral("reply for http is NULL"));
-        datapackDownloadError();
-        return;
-    }
-    //remove to queue count
-    {
-        QNetworkAccessManager * manager=reply->manager();
-        if(manager==&qnam)
-            qnamQueueCount--;
-        else if(manager==&qnam2)
-            qnamQueueCount2--;
-        else if(manager==&qnam3)
-            qnamQueueCount3--;
+        curl_easy_setopt(EpollServerLoginSlave::curl, CURLOPT_URL, url.toUtf8().constData());
+        curl_easy_setopt(EpollServerLoginSlave::curl, CURLOPT_WRITEDATA, fp);
+        const CURLcode res = curl_easy_perform(EpollServerLoginSlave::curl);
+        /* always cleanup */
+        curl_easy_cleanup(EpollServerLoginSlave::curl);
+        fclose(fp);
+        if(res!=CURLE_OK)
+        {
+            httpError=true;
+            qDebug() << (QStringLiteral("get url %1: %2").arg(url).arg(res));
+            datapackDownloadError();
+            return false;
+        }
         else
-            qDebug() << "queue detection bug to remove";
+            return true;
     }
-    QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
-    if(!reply->isFinished())
+    else
     {
-        httpError=true;
-        qDebug() << (QStringLiteral("get the new update failed: not finished"));
-        datapackDownloadError();
-        reply->deleteLater();
-        return;
+        qDebug() << "unable to open file to write:" << fileName;
+        return false;
     }
-    else if(reply->error())
-    {
-        httpError=true;
-        qDebug() << (QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
-        datapackDownloadError();
-        reply->deleteLater();
-        return;
-    } else if(!redirectionTarget.isNull()) {
-        httpError=true;
-        qDebug() << (QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()));
-        datapackDownloadError();
-        reply->deleteLater();
-        return;
-    }
-    if(!urlInWaitingListMain.contains(reply))
-    {
-        httpError=true;
-        qDebug() << (QStringLiteral("reply of unknown query"));
-        datapackDownloadError();
-        reply->deleteLater();
-        return;
-    }
-
-    const UrlInWaiting &urlInWaiting=urlInWaitingListMain.value(reply);
-    writeNewFileMain(urlInWaiting.fileName,reply->readAll());
-
-    if(urlInWaitingListMain.remove(reply)!=1)
-        DebugClass::debugConsole(QStringLiteral("[Bug] Remain %1 file to download").arg(urlInWaitingListMain.size()));
-    reply->deleteLater();
-    if(urlInWaitingListMain.isEmpty())
-        checkIfContinueOrFinished();
 }
 
 void DatapackDownloaderMainSub::datapackChecksumDoneMain(const QStringList &datapackFilesList,const QByteArray &hash,const QList<quint32> &partialHashList)
@@ -194,15 +122,28 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const QStringList &data
 
     if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.isEmpty())
     {
-        if(!QFile(mDatapackBase+QString("/pack/datapack-main-%1.tar.xz").arg(mainDatapackCode)).remove())
         {
-            qDebug() << "Unable to remove "+mDatapackBase+QString("/pack/datapack-main-%1.tar.xz").arg(mainDatapackCode);
-            return;
+            QFile file(mDatapackBase+QString("/pack/datapack-main-%1.tar.xz").arg(mainDatapackCode));
+            if(file.exists())
+                if(!file.remove())
+                {
+                    qDebug() << "Unable to remove "+file.fileName();
+                    return;
+                }
+        }
+        {
+            QFile file(mDatapackBase+QString("/datapack-list/main-%1.txt").arg(mainDatapackCode));
+            if(file.exists())
+                if(!file.remove())
+                {
+                    qDebug() << "Unable to remove "+file.fileName();
+                    return;
+                }
         }
         if(sendedHashMain.isEmpty())
         {
             qDebug() << "Datapack checksum done but not send by the server";
-            return;//need CommonSettings::commonSettings.datapackHash send by the server
+            abort();//need CommonSettings::commonSettings.datapackHash send by the server
         }
         quint8 datapack_content_query_number=0;
         LinkToGameServer * client=NULL;
@@ -273,23 +214,48 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const QStringList &data
         else
         {
             qDebug() << "Datapack don't match with server hash, get from mirror";
-            QNetworkRequest networkRequest(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+QStringLiteral("pack/diff/datapack-main-")+mainDatapackCode+QStringLiteral("-%1.tar.xz").arg(QString(hash.toHex())));
-            QNetworkReply *reply = qnam.get(networkRequest);
-            connect(reply, &QNetworkReply::finished, this, &DatapackDownloaderMainSub::httpFinishedForDatapackListMain);
+
+            const QString url=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+QStringLiteral("pack/diff/datapack-main-")+mainDatapackCode+QStringLiteral("-%1.tar.xz").arg(QString(hash.toHex()));
+
+            struct MemoryStruct chunk;
+            chunk.memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
+            chunk.size = 0;    /* no data at this point */
+            curl_easy_setopt(EpollServerLoginSlave::curl, CURLOPT_URL, url.toUtf8().constData());
+            curl_easy_setopt(EpollServerLoginSlave::curl, CURLOPT_WRITEDATA, (void *)&chunk);
+            const CURLcode res = curl_easy_perform(EpollServerLoginSlave::curl);
+            curl_easy_cleanup(EpollServerLoginSlave::curl);
+            if(res!=CURLE_OK)
+            {
+                qDebug() << (QStringLiteral("get url %1: %2").arg(url).arg(res));
+                httpFinishedForDatapackListMain();
+                return;
+            }
+            httpFinishedForDatapackListMain(QByteArray(chunk.memory,chunk.size));
         }
     }
 }
 
 void DatapackDownloaderMainSub::test_mirror_main()
 {
-    QNetworkReply *reply;
     const QStringList &httpDatapackMirrorList=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,QString::SkipEmptyParts);
     if(!datapackTarXzMain)
     {
-        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("pack/datapack-main-")+mainDatapackCode+QStringLiteral(".tar.xz"));
-        reply = qnam.get(networkRequest);
-        if(reply->error()==QNetworkReply::NoError)
-            connect(reply, &QNetworkReply::finished, this, &DatapackDownloaderMainSub::httpFinishedForDatapackListMain);//fix it, put httpFinished* broke it
+        const QString url=httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("pack/datapack-main-")+mainDatapackCode+QStringLiteral(".tar.xz");
+
+        struct MemoryStruct chunk;
+        chunk.memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
+        chunk.size = 0;    /* no data at this point */
+        curl_easy_setopt(EpollServerLoginSlave::curl, CURLOPT_URL, url.toUtf8().constData());
+        curl_easy_setopt(EpollServerLoginSlave::curl, CURLOPT_WRITEDATA, (void *)&chunk);
+        const CURLcode res = curl_easy_perform(EpollServerLoginSlave::curl);
+        curl_easy_cleanup(EpollServerLoginSlave::curl);
+        if(res!=CURLE_OK)
+        {
+            qDebug() << (QStringLiteral("get url %1: %2").arg(url).arg(res));
+            httpFinishedForDatapackListMain();
+            return;
+        }
+        httpFinishedForDatapackListMain(QByteArray(chunk.memory,chunk.size));
     }
     else
     {
@@ -297,20 +263,22 @@ void DatapackDownloaderMainSub::test_mirror_main()
             /* here and not above because at last mirror you need try the tar.xz and after the datapack-list/main-XXXX.txt, and only after that's quit */
             return;
 
-        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("datapack-list/main-")+mainDatapackCode+QStringLiteral(".txt"));
-        reply = qnam.get(networkRequest);
-        if(reply->error()==QNetworkReply::NoError)
-            connect(reply, &QNetworkReply::finished, this, &DatapackDownloaderMainSub::httpFinishedForDatapackListMain);
-    }
-    if(reply->error()==QNetworkReply::NoError)
-    {
-        connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &DatapackDownloaderMainSub::httpErrorEventMain);
-    }
-    else
-    {
-        qDebug() << reply->url().toString() << reply->errorString();
-        mirrorTryNextMain();
-        return;
+        const QString url=httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("datapack-list/main-")+mainDatapackCode+QStringLiteral(".txt");
+
+        struct MemoryStruct chunk;
+        chunk.memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
+        chunk.size = 0;    /* no data at this point */
+        curl_easy_setopt(EpollServerLoginSlave::curl, CURLOPT_URL, url.toUtf8().constData());
+        curl_easy_setopt(EpollServerLoginSlave::curl, CURLOPT_WRITEDATA, (void *)&chunk);
+        const CURLcode res = curl_easy_perform(EpollServerLoginSlave::curl);
+        curl_easy_cleanup(EpollServerLoginSlave::curl);
+        if(res!=CURLE_OK)
+        {
+            qDebug() << (QStringLiteral("get url %1: %2").arg(url).arg(res));
+            httpFinishedForDatapackListMain();
+            return;
+        }
+        httpFinishedForDatapackListMain(QByteArray(chunk.memory,chunk.size));
     }
 }
 
@@ -383,34 +351,10 @@ bool DatapackDownloaderMainSub::mirrorTryNextMain()
     return true;
 }
 
-void DatapackDownloaderMainSub::httpFinishedForDatapackListMain()
+void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const QByteArray data)
 {
-    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    if(reply==NULL)
+    if(data.isEmpty())
     {
-        httpError=true;
-        qDebug() << (QStringLiteral("reply for http is NULL"));
-        datapackDownloadError();
-        return;
-    }
-    QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
-    if(!reply->isFinished() || reply->error() || !redirectionTarget.isNull())
-    {
-        const QNetworkProxy &proxy=qnam.proxy();
-        if(proxy==QNetworkProxy::NoProxy)
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Main Problem with the datapack list reply:%1 %2 (try next)")
-                                                  .arg(reply->url().toString())
-                                                  .arg(reply->errorString())
-                                                  );
-        else
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Main Problem with the datapack list reply:%1 %2 with proxy: %3 %4 type %5 (try next)")
-                                                  .arg(reply->url().toString())
-                                                  .arg(reply->errorString())
-                                                  .arg(proxy.hostName())
-                                                  .arg(proxy.port())
-                                                  .arg(proxy.type())
-                                                  );
-        reply->deleteLater();
         mirrorTryNextMain();
         return;
     }
@@ -418,19 +362,17 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain()
     {
         if(!datapackTarXzMain)
         {
-            qDebug() << "datapack.tar.xz size:" << QString("%1KB").arg(reply->size()/1000);
+            qDebug() << "datapack.tar.xz size:" << QString("%1KB").arg(data.size()/1000);
             datapackTarXzMain=true;
-            xzDecodeThreadMain.setData(reply->readAll(),100*1024*1024);
+            xzDecodeThreadMain.setData(data,16*1024*1024);
             xzDecodeThreadMain.run();
             decodedIsFinishMain();
             return;
         }
         else
         {
-            int sizeToGet=0;
-            int fileToGet=0;
             httpError=false;
-            const QStringList &content=QString::fromUtf8(reply->readAll()).split(QRegularExpression("[\n\r]+"));
+            const QStringList &content=QString::fromUtf8(data).split(QRegularExpression("[\n\r]+"));
             int index=0;
             QRegularExpression splitReg("^(.*) (([0-9a-f][0-9a-f])+) ([0-9]+)$");
             QRegularExpression fileMatchReg(DATAPACK_FILE_REGEX);
@@ -462,22 +404,19 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain()
                             QFileInfo file(mDatapackMain+fileString);
                             if(!file.exists())
                             {
-                                getHttpFileMain(selectedMirror+fileString,fileString);
-                                fileToGet++;
-                                sizeToGet+=sizeString.toUInt();
+                                if(!getHttpFileMain(selectedMirror+fileString,fileString))
+                                    return;
                             }
                             else if(hashFileOnDisk!=*reinterpret_cast<const quint32 *>(QByteArray::fromHex(partialHashString.toLatin1()).constData()))
                             {
-                                getHttpFileMain(selectedMirror+fileString,fileString);
-                                fileToGet++;
-                                sizeToGet+=sizeString.toUInt();
+                                if(!getHttpFileMain(selectedMirror+fileString,fileString))
+                                    return;
                             }
                         }
                         else
                         {
-                            getHttpFileMain(selectedMirror+fileString,fileString);
-                            fileToGet++;
-                            sizeToGet+=sizeString.toUInt();
+                            if(!getHttpFileMain(selectedMirror+fileString,fileString))
+                                return;
                         }
                         partialHashListMain.removeAt(indexInDatapackList);
                         datapackFilesListMain.removeAt(indexInDatapackList);
@@ -498,12 +437,11 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain()
             datapackFilesListMain.clear();
             if(correctContent==0)
             {
-                qDebug() << "Error, no valid content: correctContent==0\n" << content.join("\n") << "\nFor:" << reply->url().toString();
+                qDebug() << "Error, no valid content: correctContent==0\n" << content.join("\n");
                 abort();
                 return;
             }
-            if(fileToGet==0)
-                checkIfContinueOrFinished();
+            checkIfContinueOrFinished();
         }
     }
 }
@@ -562,21 +500,6 @@ void DatapackDownloaderMainSub::cleanDatapackMain(QString suffix)
 void DatapackDownloaderMainSub::datapackDownloadFinishedMain()
 {
 
-}
-
-void DatapackDownloaderMainSub::httpErrorEventMain()
-{
-    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    if(reply==NULL)
-    {
-        httpError=true;
-        qDebug() << (QStringLiteral("reply for http is NULL"));
-        datapackDownloadError();
-        return;
-    }
-    qDebug() << reply->url().toString() << reply->errorString();
-    //mirrorTryNextMain();//mirrorTryNextBase();-> double mirrorTryNext*() call due to httpFinishedForDatapackList*()
-    return;
 }
 
 void DatapackDownloaderMainSub::sendDatapackContentMain()

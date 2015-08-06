@@ -75,7 +75,7 @@ QByteArray DatapackChecksum::doChecksumBase(const QString &datapackPath)
 #ifndef QT_NO_EMIT
 void DatapackChecksum::doDifferedChecksumBase(const QString &datapackPath)
 {
-    const FullDatapackChecksumReturn &fullDatapackChecksumReturn=doFullSyncChecksumMain(datapackPath);
+    const FullDatapackChecksumReturn &fullDatapackChecksumReturn=doFullSyncChecksumBase(datapackPath);
     emit datapackChecksumDoneBase(fullDatapackChecksumReturn.datapackFilesList,fullDatapackChecksumReturn.hash,fullDatapackChecksumReturn.partialHashList);
 }
 #endif
@@ -261,7 +261,7 @@ QByteArray DatapackChecksum::doChecksumSub(const QString &datapackPath)
 #ifndef QT_NO_EMIT
 void DatapackChecksum::doDifferedChecksumSub(const QString &datapackPath)
 {
-    const FullDatapackChecksumReturn &fullDatapackChecksumReturn=doFullSyncChecksumMain(datapackPath);
+    const FullDatapackChecksumReturn &fullDatapackChecksumReturn=doFullSyncChecksumSub(datapackPath);
     emit datapackChecksumDoneSub(fullDatapackChecksumReturn.datapackFilesList,fullDatapackChecksumReturn.hash,fullDatapackChecksumReturn.partialHashList);
 }
 #endif
