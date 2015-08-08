@@ -23,6 +23,7 @@ EpollClientLoginSlave::EpollClientLoginSlave(
             #endif
             ),
         stat(EpollClientLoginStat::None),
+        datapackStatus(DatapackStatus::Base),
         linkToGameServer(NULL),
         socketString(NULL),
         socketStringSize(0),

@@ -200,15 +200,15 @@ void LinkToGameServer::parseFullMessage(const quint8 &mainCodeType,const quint8 
                             parseNetworkReadError(QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                             return;
                         }
-                        const quint32 &size=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+pos)));
+                        const quint32 &fileSize=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+pos)));
                         pos+=4;
-                        if((size-pos)<size)
+                        if((size-pos)<fileSize)
                         {
                             parseNetworkReadError(QStringLiteral("wrong file data size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                             return;
                         }
-                        const QByteArray dataFile(rawData+pos,size);
-                        pos+=size;
+                        const QByteArray dataFile(rawData+pos,fileSize);
+                        pos+=fileSize;
                         if(subCodeType==0x03)
                             DebugClass::debugConsole(QStringLiteral("Raw file to create: %1").arg(fileName));
                         else
@@ -340,12 +340,12 @@ void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &q
             pos+=1;
             CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase=QString::fromLatin1(data+pos,stringSize);
             pos+=stringSize;
-            unsigned int remainingSize=size-pos-1-data[pos];
-            reply04inWaitSize=14+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
+            unsigned int remainingSize=size-pos;
+            reply04inWaitSize=14+CATCHCHALLENGER_SHA224HASH_SIZE+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
             reply04inWait=new char[reply04inWaitSize];
-            memcpy(reply04inWait,data,14);
-            memcpy(reply04inWait,LinkToGameServer::httpDatapackMirrorRewriteBase.constData(),LinkToGameServer::httpDatapackMirrorRewriteBase.size());
-            memcpy(reply04inWait,data+pos,remainingSize);
+            memcpy(reply04inWait+0,data,14+CATCHCHALLENGER_SHA224HASH_SIZE);
+            memcpy(reply04inWait+14+CATCHCHALLENGER_SHA224HASH_SIZE,LinkToGameServer::httpDatapackMirrorRewriteBase.constData(),LinkToGameServer::httpDatapackMirrorRewriteBase.size());
+            memcpy(reply04inWait+14+CATCHCHALLENGER_SHA224HASH_SIZE+LinkToGameServer::httpDatapackMirrorRewriteBase.size(),data+pos,remainingSize);
 
             if(DatapackDownloaderBase::datapackDownloaderBase->hashBase.isEmpty())//checksum never done
             {

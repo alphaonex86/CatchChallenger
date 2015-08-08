@@ -123,6 +123,11 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
         return;
     }
     otherPacketKickNewValue++;
+    if(linkToGameServer==NULL)
+    {
+        parseNetworkReadError("linkToGameServer==NULL");
+        return;
+    }
     Q_UNUSED(size);
     switch(mainCodeType)
     {
@@ -175,6 +180,11 @@ void EpollClientLoginSlave::parseMessage(const quint8 &mainCodeType,const char *
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {
         parseNetworkReadError("main ident while game server connecting: "+QString::number(mainCodeType));
+        return;
+    }
+    if(linkToGameServer==NULL)
+    {
+        parseNetworkReadError("linkToGameServer==NULL");
         return;
     }
     switch(mainCodeType)
@@ -241,6 +251,11 @@ void EpollClientLoginSlave::parseFullMessage(const quint8 &mainCodeType,const qu
         return;
     }
     otherPacketKickNewValue++;
+    if(linkToGameServer==NULL)
+    {
+        parseNetworkReadError("linkToGameServer==NULL");
+        return;
+    }
     if(stat==EpollClientLoginStat::GameServerConnected)
     {
         if(Q_LIKELY(linkToGameServer))
@@ -276,6 +291,11 @@ void EpollClientLoginSlave::parseQuery(const quint8 &mainCodeType,const quint8 &
     }
     otherPacketKickNewValue++;
     Q_UNUSED(data);
+    if(linkToGameServer==NULL)
+    {
+        parseNetworkReadError("linkToGameServer==NULL");
+        return;
+    }
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {
         parseNetworkReadError("main ident while game server connecting: "+QString::number(mainCodeType));
@@ -305,6 +325,11 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
         parseNetworkReadError("main ident while game server connecting: "+QString::number(mainCodeType));
         return;
     }
+    if(linkToGameServer==NULL)
+    {
+        parseNetworkReadError("linkToGameServer==NULL");
+        return;
+    }
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
         parseNetworkReadError("Too many packet in sort time, check DDOS limit");
@@ -313,6 +338,181 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
     otherPacketKickNewValue++;
     if(stat==EpollClientLoginStat::GameServerConnected)
     {
+        switch(mainCodeType)
+        {
+            case 0x02:
+            switch(subCodeType)
+            {
+                //Send datapack file list
+                case 0x0C:
+                {
+                    switch(datapackStatus)
+                    {
+                        case DatapackStatus::Base:
+                            if(!LinkToGameServer::httpDatapackMirrorRewriteBase.isEmpty())
+                            {
+                                if(!LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.isEmpty())
+                                {
+                                    parseNetworkReadError("Can't use because mirror is defined");
+                                    return;
+                                }
+                                else
+                                    datapackStatus=DatapackStatus::Main;
+                            }
+                        break;
+                        case DatapackStatus::Sub:
+                            if(linkToGameServer->sub.isEmpty())
+                            {
+                                parseNetworkReadError("linkToGameServer->sub.isEmpty()");
+                                return;
+                            }
+                        case DatapackStatus::Main:
+                            if(!LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.isEmpty())
+                            {
+                                parseNetworkReadError("Can't use because mirror is defined");
+                                return;
+                            }
+                        break;
+                        default:
+                            parseNetworkReadError("Double datapack send list");
+                        return;
+                    }
+
+                    QByteArray data(rawData,size);
+                    QDataStream in(data);
+                    in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
+
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                    {
+                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        return;
+                    }
+                    quint8 stepToSkip;
+                    in >> stepToSkip;
+                    switch(stepToSkip)
+                    {
+                        case 0x01:
+                            if(datapackStatus==DatapackStatus::Base)
+                            {}
+                            else
+                            {
+                                parseNetworkReadError(QStringLiteral("step out of range to get datapack base but already in highter level"));
+                                return;
+                            }
+                        break;
+                        case 0x02:
+                            if(datapackStatus==DatapackStatus::Base)
+                                datapackStatus=DatapackStatus::Main;
+                            else if(datapackStatus==DatapackStatus::Main)
+                            {}
+                            else
+                            {
+                                parseNetworkReadError(QStringLiteral("step out of range to get datapack base but already in highter level"));
+                                return;
+                            }
+                        break;
+                        case 0x03:
+                            if(datapackStatus==DatapackStatus::Base)
+                                datapackStatus=DatapackStatus::Sub;
+                            else if(datapackStatus==DatapackStatus::Main)
+                                datapackStatus=DatapackStatus::Sub;
+                            else if(datapackStatus==DatapackStatus::Sub)
+                            {}
+                            else
+                            {
+                                parseNetworkReadError(QStringLiteral("step out of range to get datapack base but already in highter level"));
+                                return;
+                            }
+                        break;
+                        default:
+                            parseNetworkReadError(QStringLiteral("step out of range to get datapack: %1").arg(stepToSkip));
+                        return;
+                    }
+
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        return;
+                    }
+                    quint8 textSize;
+                    quint32 number_of_file;
+                    in >> number_of_file;
+                    QStringList files;
+                    QList<quint32> partialHashList;
+                    QString tempFileName;
+                    quint32 partialHash;
+                    quint32 index=0;
+                    while(index<number_of_file)
+                    {
+                        {
+                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                            {
+                                parseNetworkReadError("wrong utf8 to QString size in PM for text size");
+                                return;
+                            }
+                            in >> textSize;
+                            //control the regex file into Client::datapackList()
+                            if(textSize>0)
+                            {
+                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
+                                {
+                                    parseNetworkReadError(QStringLiteral("wrong utf8 to QString size for file name: parseQuery(%1,%2,%3): %4 %5")
+                                               .arg(mainCodeType)
+                                               .arg(subCodeType)
+                                               .arg(queryNumber)
+                                               .arg(QString(data.mid(0,in.device()->pos()).toHex()))
+                                               .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                                               );
+                                    return;
+                                }
+                                const QByteArray &rawText=data.mid(in.device()->pos(),textSize);
+                                tempFileName=QString::fromUtf8(rawText.data(),rawText.size());
+                                in.device()->seek(in.device()->pos()+rawText.size());
+                            }
+                        }
+                        if((in.device()->size()-in.device()->pos())<1)
+                        {
+                            parseNetworkReadError(QStringLiteral("missing header utf8 datapack file list query"));
+                            return;
+                        }
+                        files << tempFileName;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseNetworkReadError(QStringLiteral("wrong size for id with main ident: %1, subIdent: %2, remaining: %3, lower than: %4")
+                                .arg(mainCodeType)
+                                .arg(subCodeType)
+                                .arg(in.device()->size()-in.device()->pos())
+                                .arg((int)sizeof(quint32))
+                                );
+                            return;
+                        }
+                        in >> partialHash;
+                        partialHashList << partialHash;
+                        index++;
+                    }
+                    datapackList(queryNumber,files,partialHashList);
+                    if((in.device()->size()-in.device()->pos())!=0)
+                    {
+                        parseNetworkReadError(QStringLiteral("remaining data: parseQuery(%1,%2,%3): %4 %5")
+                                   .arg(mainCodeType)
+                                   .arg(subCodeType)
+                                   .arg(queryNumber)
+                                   .arg(QString(data.mid(0,in.device()->pos()).toHex()))
+                                   .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                                   );
+                        return;
+                    }
+                    return;
+                }
+                break;
+                default:
+                break;
+            }
+            break;
+            default:
+            break;
+        }
+
         linkToGameServer->packFullOutcommingQuery(mainCodeType,subCodeType,queryNumber,rawData,size);
         return;
     }
@@ -337,6 +537,11 @@ void EpollClientLoginSlave::parseReplyData(const quint8 &mainCodeType,const quin
         return;
     }
     otherPacketKickNewValue++;
+    if(linkToGameServer==NULL)
+    {
+        parseNetworkReadError("linkToGameServer==NULL");
+        return;
+    }
     if(stat==EpollClientLoginStat::GameServerConnected)
     {
         if(Q_LIKELY(linkToGameServer))
@@ -370,6 +575,11 @@ void EpollClientLoginSlave::parseFullReplyData(const quint8 &mainCodeType,const 
         return;
     }
     otherPacketKickNewValue++;
+    if(linkToGameServer==NULL)
+    {
+        parseNetworkReadError("linkToGameServer==NULL");
+        return;
+    }
     if(stat==EpollClientLoginStat::GameServerConnected)
     {
         if(Q_LIKELY(linkToGameServer))
