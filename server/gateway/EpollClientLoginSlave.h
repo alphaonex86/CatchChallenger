@@ -9,6 +9,7 @@
 #include "LinkToGameServer.h"
 
 #include <QString>
+#include <QSet>
 #include <vector>
 #include <QRegularExpression>
 
@@ -39,6 +40,14 @@
 #define CATCHCHALLENGER_DDOS_KICKLIMITOTHER 30
 
 namespace CatchChallenger {
+
+struct FileToSend
+{
+    //not QFile * to prevent too many file open
+    QString file;
+};
+bool operator<(const FileToSend &fileToSend1,const FileToSend &fileToSend2);
+
 class EpollClientLoginSlave : public BaseClassSwitch, public ProtocolParsingInputOutput
 {
 public:
@@ -66,11 +75,6 @@ public:
         Finished=0x04
     };
     DatapackStatus datapackStatus;
-    struct FileToSend
-    {
-        //not QFile * to prevent too many file open
-        QString file;
-    };
 
     void parseIncommingData();
     void doDDOSCompute();
@@ -122,7 +126,7 @@ private:
     void parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size);
     void disconnectClient();
 
-    bool sendFile(const QString &fileName);
+    bool sendFile(const QString &datapackPath, const QString &fileName);
     void datapackList(const quint8 &query_id, const QStringList &files, const QList<quint32> &partialHashList);
 
     void addDatapackListReply(const bool &fileRemove);
@@ -169,6 +173,7 @@ private:
 
     static QRegularExpression fileNameStartStringRegex;
     static QRegularExpression datapack_rightFileName;
+    static QSet<QString> compressedExtension;
 };
 }
 
