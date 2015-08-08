@@ -1589,7 +1589,7 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
         int index=0;
         while(index<fileToSendList.size())
         {
-            if(!sendFile(fileToSendList.at(index).file))
+            if(!sendFile(datapackPath,fileToSendList.at(index).file))
                 return;
             index++;
         }
@@ -1761,23 +1761,8 @@ void Client::sendCompressedFileContent()
     }
 }
 
-bool Client::sendFile(const QString &fileName)
+bool Client::sendFile(const QString &datapackPath,const QString &fileName)
 {
-    QString datapackPath;
-    switch(datapackStatus)
-    {
-        case DatapackStatus::Base:
-            datapackPath=GlobalServerData::serverSettings.datapack_basePath;
-        break;
-        case DatapackStatus::Main:
-            datapackPath=GlobalServerData::serverPrivateVariables.mainDatapackFolder;
-        break;
-        case DatapackStatus::Sub:
-            datapackPath=GlobalServerData::serverPrivateVariables.subDatapackFolder;
-        break;
-        default:
-        return false;
-    }
     if(fileName.size()>255 || fileName.isEmpty())
     {
         errorOutput("Unable to open into CatchChallenger::sendFile(): fileName.size()>255 || fileName.isEmpty()");

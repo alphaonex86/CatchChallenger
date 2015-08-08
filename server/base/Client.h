@@ -713,7 +713,7 @@ private:
     void parseNetworkReadError(const QString &errorString);
 
     // ------------------------------
-    bool sendFile(const QString &fileName);
+    bool sendFile(const QString &datapackPath,const QString &fileName);
 
     void characterIsRight(const quint8 &query_id, quint32 characterId, CommonMap* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation);
     void characterIsRightWithParsedRescue(const quint8 &query_id, quint32 characterId, CommonMap* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation,
