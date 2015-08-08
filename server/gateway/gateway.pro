@@ -61,7 +61,8 @@ SOURCES += \
     ../../client/base/qt-tar-xz/xz_dec_stream.c \
     ../../general/base/DebugClass.cpp \
     ../../general/base/CommonSettingsCommon.cpp \
-    ../../general/base/CommonSettingsServer.cpp
+    ../../general/base/CommonSettingsServer.cpp \
+    EpollClientLoginSlaveDatapack.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \

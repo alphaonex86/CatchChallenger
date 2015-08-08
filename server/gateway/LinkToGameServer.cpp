@@ -297,7 +297,7 @@ void LinkToGameServer::sendProtocolHeader()
 
 void LinkToGameServer::sendDiffered04Reply()
 {
-    if(client!=NULL)
+    if(client==NULL)
     {
         parseNetworkReadError("client not connected 04");
         return;
@@ -316,7 +316,7 @@ void LinkToGameServer::sendDiffered04Reply()
 
 void LinkToGameServer::sendDiffered0205Reply()
 {
-    if(client!=NULL)
+    if(client==NULL)
     {
         parseNetworkReadError("client not connected 0205");
         return;

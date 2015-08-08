@@ -57,6 +57,9 @@ public:
     void cleanDatapackMain(QString suffix);
     void cleanDatapackSub(QString suffix);
 
+    const QString mDatapackBase;
+    const QString mDatapackMain;
+    QString mDatapackSub;
     QByteArray hashMain;
     QByteArray hashSub;
     QByteArray sendedHashMain;
@@ -82,14 +85,6 @@ private:
     };
     DatapackStatus datapackStatus;
 
-    //file list
-    struct query_files
-    {
-        quint8 id;
-        QStringList filesName;
-    };
-    QList<query_files> query_files_list_main;
-    QList<query_files> query_files_list_sub;
     bool wait_datapack_content_main;
     bool wait_datapack_content_sub;
     QStringList datapackFilesListMain;
@@ -101,16 +96,8 @@ private:
     bool httpError;
     bool httpModeMain;
     bool httpModeSub;
-    const QString mDatapackBase;
-    const QString mDatapackMain;
-    QString mDatapackSub;
     const QString mainDatapackCode;
     const QString subDatapackCode;
-    struct UrlInWaiting
-    {
-        QString fileName;
-    };
-    QHash<QNetworkReply *,UrlInWaiting> urlInWaitingListMain,urlInWaitingListSub;
 private:
     bool getHttpFileMain(const QString &url, const QString &fileName);
     bool getHttpFileSub(const QString &url, const QString &fileName);

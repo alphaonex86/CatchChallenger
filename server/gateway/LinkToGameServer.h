@@ -36,6 +36,8 @@ public:
     static QByteArray httpDatapackMirrorRewriteMainAndSub;
     static bool compressionSet;
     static QString mDatapackBase;
+    QString main;
+    QString sub;
 
     void setConnexionSettings();
     BaseClassSwitch::EpollObjectType getType() const;
@@ -74,8 +76,6 @@ private:
     char *reply0205inWait;
     unsigned int reply0205inWaitSize;
     quint8 reply0205inWaitQueryNumber;
-    QString main;
-    QString sub;
 };
 }
 
