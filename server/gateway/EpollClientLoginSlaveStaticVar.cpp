@@ -24,3 +24,8 @@ QString EpollClientLoginSlave::text_slash=QStringLiteral("/");
 
 QRegularExpression EpollClientLoginSlave::fileNameStartStringRegex=QRegularExpression(QLatin1String("^[a-zA-Z]:/"));
 QRegularExpression EpollClientLoginSlave::datapack_rightFileName = QRegularExpression(DATAPACK_FILE_REGEX);
+QSet<QString> EpollClientLoginSlave::compressedExtension = QString(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(";").toSet();
+
+EpollClientLoginSlave::DatapackData EpollClientLoginSlave::datapack_file_base;
+QHash<QString,EpollClientLoginSlave::DatapackData> EpollClientLoginSlave::datapack_file_main;
+QHash<QString,QHash<QString,EpollClientLoginSlave::DatapackData> > EpollClientLoginSlave::datapack_file_sub;

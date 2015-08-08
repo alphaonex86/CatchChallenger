@@ -232,7 +232,7 @@ void EpollClientLoginSlave::datapackList(const quint8 &query_id,const QStringLis
         int index=0;
         while(index<fileToSendList.size())
         {
-            if(!sendFile(fileToSendList.at(index).file))
+            if(!sendFile(datapackPath,fileToSendList.at(index).file))
                 return;
             index++;
         }
@@ -257,7 +257,7 @@ void EpollClientLoginSlave::datapackList(const quint8 &query_id,const QStringLis
     }
 }
 
-bool CatchChallenger::operator<(const CatchChallenger::FileToSend &fileToSend1,const CatchChallenger::FileToSend &fileToSend2)
+bool CatchChallenger::operator<(const FileToSend &fileToSend1,const FileToSend &fileToSend2)
 {
     if(fileToSend1.file<fileToSend2.file)
         return false;
@@ -373,23 +373,8 @@ void EpollClientLoginSlave::sendCompressedFileContent()
     }
 }
 
-bool EpollClientLoginSlave::sendFile(const QString &fileName)
+bool EpollClientLoginSlave::sendFile(const QString &datapackPath,const QString &fileName)
 {
-    QString datapackPath;
-    switch(datapackStatus)
-    {
-        case DatapackStatus::Base:
-            datapackPath=GlobalServerData::serverSettings.datapack_basePath;
-        break;
-        case DatapackStatus::Main:
-            datapackPath=GlobalServerData::serverPrivateVariables.mainDatapackFolder;
-        break;
-        case DatapackStatus::Sub:
-            datapackPath=GlobalServerData::serverPrivateVariables.subDatapackFolder;
-        break;
-        default:
-        return false;
-    }
     if(fileName.size()>255 || fileName.isEmpty())
     {
         std::cerr << "Unable to open into CatchChallenger::sendFile(): fileName.size()>255 || fileName.isEmpty()" << std::endl;
@@ -442,13 +427,14 @@ bool EpollClientLoginSlave::sendFile(const QString &fileName)
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if((1+fileNameRaw.size()+outputData.size()+contentsize)>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                 {
-                    normalOutput(QString("Error: outputData2(%1)+fileNameRaw(%2)+outputData(%3)+content(%4)>CATCHCHALLENGER_MAX_PACKET_SIZE for file %5")
+                    std::cerr << "Unable to open into CatchChallenger::sendFile(): " << file.errorString().toStdString() << std::endl;
+                    std::cerr << QString("Error: outputData2(%1)+fileNameRaw(%2)+outputData(%3)+content(%4)>CATCHCHALLENGER_MAX_PACKET_SIZE for file %5")
                                  .arg(1)
                                  .arg(fileNameRaw.size())
                                  .arg(outputData.size())
                                  .arg(contentsize)
                                  .arg(fileName)
-                                 );
+                                 .toStdString() << std::endl;
                 }
                 #endif
                 QByteArray outputData2;
@@ -469,7 +455,7 @@ bool EpollClientLoginSlave::sendFile(const QString &fileName)
     }
     else
     {
-        std::cerr << "Unable to open into CatchChallenger::sendFile(): " << file.errorString() << std::endl;
+        std::cerr << "Unable to open into CatchChallenger::sendFile(): " << file.errorString().toStdString() << std::endl;
         return false;
     }
 }
