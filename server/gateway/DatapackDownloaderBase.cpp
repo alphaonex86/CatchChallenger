@@ -57,6 +57,10 @@ void DatapackDownloaderBase::haveTheDatapack()
     }
     clientInSuspend.clear();
 
+    //regen the datapack cache
+    if(LinkToGameServer::httpDatapackMirrorRewriteBase.size()<=1)
+        EpollClientLoginSlave::datapack_file_base.datapack_file_hash_cache=EpollClientLoginSlave::datapack_file_list(mDatapackBase);
+
     resetAll();
 
     if(!DatapackDownloaderBase::commandUpdateDatapackBase.isEmpty())
