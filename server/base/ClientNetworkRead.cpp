@@ -1446,8 +1446,13 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                                 datapackStatus=DatapackStatus::Main;
                         }
                     break;
-                    case DatapackStatus::Main:
                     case DatapackStatus::Sub:
+                        if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+                        {
+                            errorOutput("CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty()");
+                            return;
+                        }
+                    case DatapackStatus::Main:
                         if(!CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.isEmpty())
                         {
                             errorOutput("Can't use because mirror is defined");

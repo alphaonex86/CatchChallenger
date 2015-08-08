@@ -18,6 +18,7 @@ using namespace CatchChallenger;
 #include "../../client/base/qt-tar-xz/QTarDecode.h"
 #include "../../general/base/GeneralVariable.h"
 #include "LinkToGameServer.h"
+#include "EpollClientLoginSlave.h"
 
 //need host + port here to have datapack base
 
@@ -201,10 +202,6 @@ void DatapackDownloaderMainSub::resetAll()
     httpModeMain=false;
     httpModeSub=false;
     httpError=false;
-    query_files_list_main.clear();
-    query_files_list_sub.clear();
-    urlInWaitingListMain.clear();
-    urlInWaitingListSub.clear();
     wait_datapack_content_main=false;
     wait_datapack_content_sub=false;
 }
@@ -225,6 +222,13 @@ void DatapackDownloaderMainSub::haveTheDatapackMainSub()
         index++;
     }
     clientInSuspend.clear();
+
+    //regen the datapack cache
+    if(LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.size()<=1)
+    {
+        EpollClientLoginSlave::datapack_file_main[mainDatapackCode].datapack_file_hash_cache=EpollClientLoginSlave::datapack_file_list(mDatapackMain);
+        EpollClientLoginSlave::datapack_file_sub[mainDatapackCode][subDatapackCode].datapack_file_hash_cache=EpollClientLoginSlave::datapack_file_list(mDatapackSub);
+    }
 
     resetAll();
 
