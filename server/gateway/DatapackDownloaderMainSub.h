@@ -21,6 +21,8 @@
 #include <QNetworkProxy>
 #include <QRegularExpression>
 
+#include <curl/curl.h>
+
 #include "../../general/base/DebugClass.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../../client/base/qt-tar-xz/QXzDecodeThread.h"
@@ -98,6 +100,7 @@ private:
     bool httpModeSub;
     const QString mainDatapackCode;
     const QString subDatapackCode;
+    CURL *curl;
 private:
     bool getHttpFileMain(const QString &url, const QString &fileName);
     bool getHttpFileSub(const QString &url, const QString &fileName);
