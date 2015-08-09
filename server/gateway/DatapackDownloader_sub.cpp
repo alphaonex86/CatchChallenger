@@ -2,12 +2,7 @@
 
 using namespace CatchChallenger;
 
-#ifdef Q_CC_GNU
-//this next header is needed to change file time/date under gcc
-#include <utime.h>
-#include <sys/stat.h>
-#endif
-
+#include <iostream>
 #include <cmath>
 #include <QRegularExpression>
 #include <QNetworkReply>
@@ -69,16 +64,16 @@ bool DatapackDownloaderMainSub::getHttpFileSub(const QString &url, const QString
     FILE *fp = fopen(fileName.toLocal8Bit().constData(),"wb");
     if(fp!=NULL)
     {
-        curl_easy_setopt(EpollServerLoginSlave::curl, CURLOPT_URL, url.toUtf8().constData());
-        curl_easy_setopt(EpollServerLoginSlave::curl, CURLOPT_WRITEDATA, fp);
-        const CURLcode res = curl_easy_perform(EpollServerLoginSlave::curl);
-        /* always cleanup */
-        curl_easy_cleanup(EpollServerLoginSlave::curl);
+        curl_easy_setopt(curl, CURLOPT_URL, url.toUtf8().constData());
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+        const CURLcode res = curl_easy_perform(curl);
+        long http_code = 0;
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
         fclose(fp);
-        if(res!=CURLE_OK)
+        if(res!=CURLE_OK || http_code!=200)
         {
             httpError=true;
-            qDebug() << (QStringLiteral("get url %1: %2").arg(url).arg(res));
+            qDebug() << (QStringLiteral("get url %1: %2 failed with code %3").arg(url).arg(res).arg(http_code));
             datapackDownloadError();
             return false;
         }
@@ -219,17 +214,20 @@ void DatapackDownloaderMainSub::datapackChecksumDoneSub(const QStringList &datap
             struct MemoryStruct chunk;
             chunk.memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
             chunk.size = 0;    /* no data at this point */
-            curl_easy_setopt(EpollServerLoginSlave::curl, CURLOPT_URL, url.toUtf8().constData());
-            curl_easy_setopt(EpollServerLoginSlave::curl, CURLOPT_WRITEDATA, (void *)&chunk);
-            const CURLcode res = curl_easy_perform(EpollServerLoginSlave::curl);
-            curl_easy_cleanup(EpollServerLoginSlave::curl);
-            if(res!=CURLE_OK)
+            curl_easy_setopt(curl, CURLOPT_URL, url.toUtf8().constData());
+            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EpollServerLoginSlave::WriteMemoryCallback);
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
+            const CURLcode res = curl_easy_perform(curl);
+            long http_code = 0;
+            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+            if(res!=CURLE_OK || http_code!=200)
             {
-                qDebug() << (QStringLiteral("get url %1: %2").arg(url).arg(res));
+                qDebug() << (QStringLiteral("get url %1: %2 failed with code %3").arg(url).arg(res).arg(http_code));
                 httpFinishedForDatapackListSub();
                 return;
             }
             httpFinishedForDatapackListSub(QByteArray(chunk.memory,chunk.size));
+            free(chunk.memory);
         }
     }
 }
@@ -249,17 +247,20 @@ void DatapackDownloaderMainSub::test_mirror_sub()
         struct MemoryStruct chunk;
         chunk.memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
         chunk.size = 0;    /* no data at this point */
-        curl_easy_setopt(EpollServerLoginSlave::curl, CURLOPT_URL, url.toUtf8().constData());
-        curl_easy_setopt(EpollServerLoginSlave::curl, CURLOPT_WRITEDATA, (void *)&chunk);
-        const CURLcode res = curl_easy_perform(EpollServerLoginSlave::curl);
-        curl_easy_cleanup(EpollServerLoginSlave::curl);
-        if(res!=CURLE_OK)
+        curl_easy_setopt(curl, CURLOPT_URL, url.toUtf8().constData());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EpollServerLoginSlave::WriteMemoryCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
+        const CURLcode res = curl_easy_perform(curl);
+        long http_code = 0;
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+        if(res!=CURLE_OK || http_code!=200)
         {
-            qDebug() << (QStringLiteral("get url %1: %2").arg(url).arg(res));
+            qDebug() << (QStringLiteral("get url %1: %2 failed with code %3").arg(url).arg(res).arg(http_code));
             httpFinishedForDatapackListSub();
             return;
         }
         httpFinishedForDatapackListSub(QByteArray(chunk.memory,chunk.size));
+        free(chunk.memory);
     }
     else
     {
@@ -272,17 +273,20 @@ void DatapackDownloaderMainSub::test_mirror_sub()
         struct MemoryStruct chunk;
         chunk.memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
         chunk.size = 0;    /* no data at this point */
-        curl_easy_setopt(EpollServerLoginSlave::curl, CURLOPT_URL, url.toUtf8().constData());
-        curl_easy_setopt(EpollServerLoginSlave::curl, CURLOPT_WRITEDATA, (void *)&chunk);
-        const CURLcode res = curl_easy_perform(EpollServerLoginSlave::curl);
-        curl_easy_cleanup(EpollServerLoginSlave::curl);
-        if(res!=CURLE_OK)
+        curl_easy_setopt(curl, CURLOPT_URL, url.toUtf8().constData());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EpollServerLoginSlave::WriteMemoryCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
+        const CURLcode res = curl_easy_perform(curl);
+        long http_code = 0;
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+        if(res!=CURLE_OK || http_code!=200)
         {
-            qDebug() << (QStringLiteral("get url %1: %2").arg(url).arg(res));
+            qDebug() << (QStringLiteral("get url %1: %2 failed with code %3").arg(url).arg(res).arg(http_code));
             httpFinishedForDatapackListSub();
             return;
         }
         httpFinishedForDatapackListSub(QByteArray(chunk.memory,chunk.size));
+        free(chunk.memory);
     }
 }
 
