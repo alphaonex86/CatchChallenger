@@ -123,11 +123,6 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
         return;
     }
     otherPacketKickNewValue++;
-    if(linkToGameServer==NULL)
-    {
-        parseNetworkReadError("linkToGameServer==NULL");
-        return;
-    }
     Q_UNUSED(size);
     switch(mainCodeType)
     {
@@ -291,7 +286,7 @@ void EpollClientLoginSlave::parseQuery(const quint8 &mainCodeType,const quint8 &
     }
     otherPacketKickNewValue++;
     Q_UNUSED(data);
-    if(linkToGameServer==NULL)
+    if(linkToGameServer==NULL && mainCodeType!=0x03)
     {
         parseNetworkReadError("linkToGameServer==NULL");
         return;
@@ -349,9 +344,9 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
                     switch(datapackStatus)
                     {
                         case DatapackStatus::Base:
-                            if(!LinkToGameServer::httpDatapackMirrorRewriteBase.isEmpty())
+                            if(LinkToGameServer::httpDatapackMirrorRewriteBase.size()>1)
                             {
-                                if(!LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.isEmpty())
+                                if(LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.size()>1)
                                 {
                                     parseNetworkReadError("Can't use because mirror is defined");
                                     return;
@@ -367,7 +362,7 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
                                 return;
                             }
                         case DatapackStatus::Main:
-                            if(!LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.isEmpty())
+                            if(LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.size()>1)
                             {
                                 parseNetworkReadError("Can't use because mirror is defined");
                                 return;

@@ -2,12 +2,7 @@
 
 using namespace CatchChallenger;
 
-#ifdef Q_CC_GNU
-//this next header is needed to change file time/date under gcc
-#include <utime.h>
-#include <sys/stat.h>
-#endif
-
+#include <iostream>
 #include <cmath>
 #include <QRegularExpression>
 #include <QNetworkReply>
@@ -36,7 +31,8 @@ DatapackDownloaderMainSub::DatapackDownloaderMainSub(const QString &mDatapackBas
     mDatapackBase(mDatapackBase),
     mDatapackMain(mDatapackBase+"map/main/"+mainDatapackCode+"/"),
     mainDatapackCode(mainDatapackCode),
-    subDatapackCode(subDatapackCode)
+    subDatapackCode(subDatapackCode),
+    curl(NULL)
 {
     datapackStatus=DatapackStatus::Main;
     datapackTarXzMain=false;
@@ -213,6 +209,15 @@ void DatapackDownloaderMainSub::sendDatapackContentMainSub()
 
 void DatapackDownloaderMainSub::haveTheDatapackMainSub()
 {
+    if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.isEmpty())
+    {
+        if(curl!=NULL)
+        {
+            curl_easy_cleanup(curl);
+            curl=NULL;
+        }
+    }
+
     unsigned int index=0;
     while(index<clientInSuspend.size())
     {
