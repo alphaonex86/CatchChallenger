@@ -21,6 +21,8 @@
 #include <QNetworkProxy>
 #include <QRegularExpression>
 
+#include <curl/curl.h>
+
 #include "../../general/base/DebugClass.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../../client/base/qt-tar-xz/QXzDecodeThread.h"
@@ -79,6 +81,7 @@ private:
         QString fileName;
     };
     QHash<QNetworkReply *,UrlInWaiting> urlInWaitingListBase;
+    CURL *curl;
 private:
     bool getHttpFileBase(const QString &url, const QString &fileName);
 private slots:

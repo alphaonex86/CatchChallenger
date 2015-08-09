@@ -21,7 +21,6 @@ using namespace CatchChallenger;
 #include "../../general/base/FacilityLibGeneral.h"
 
 EpollServerLoginSlave *EpollServerLoginSlave::epollServerLoginSlave=NULL;
-CURL *EpollServerLoginSlave::curl=NULL;
 
 EpollServerLoginSlave::EpollServerLoginSlave() :
     tcpNodelay(false),
@@ -33,13 +32,6 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     QSettings settings(QCoreApplication::applicationDirPath()+"/gateway.conf",QSettings::IniFormat);
 
     srand(time(NULL));
-
-    EpollServerLoginSlave::curl=curl_easy_init();
-    if(!EpollServerLoginSlave::curl)
-    {
-        std::cerr << "curl_easy_init() failed abort" << std::endl;
-        abort();
-    }
 
     {
         if(!settings.contains(QStringLiteral("ip")))
