@@ -553,6 +553,9 @@ void MainWindow::displayServerList()
         connect(newEntry,&ListEntryEnvolued::clicked,this,&MainWindow::serverListEntryEnvoluedClicked,Qt::QueuedConnection);
         connect(newEntry,&ListEntryEnvolued::doubleClicked,this,&MainWindow::serverListEntryEnvoluedDoubleClicked,Qt::QueuedConnection);
         const ConnexionInfo &connexionInfo=mergedConnexionInfoList.at(index);
+        QString connexionInfoHost=connexionInfo.host;
+        if(connexionInfoHost.size()>32)
+            connexionInfoHost=connexionInfoHost.left(15)+"..."+connexionInfoHost.right(15);
         QString name;
         QString star;
         if(connexionInfo.connexionCounter>0)
@@ -564,7 +567,7 @@ void MainWindow::displayServerList()
         if(connexionInfo.unique_code.isEmpty())
         {
             custom=QStringLiteral(" (%1)").arg(tr("Custom"));
-            if(unique_code==QString("%1:%2").arg(connexionInfo.host).arg(connexionInfo.port))
+            if(unique_code==QString("%1:%2").arg(connexionInfoHost).arg(connexionInfo.port))
                 selectedServer=newEntry;
         }
         else
@@ -574,9 +577,9 @@ void MainWindow::displayServerList()
         }
         if(connexionInfo.name.isEmpty())
         {
-            name=QStringLiteral("%1:%2").arg(connexionInfo.host).arg(connexionInfo.port);
+            name=QStringLiteral("%1:%2").arg(connexionInfoHost).arg(connexionInfo.port);
             newEntry->setText(QStringLiteral("%3<span style=\"font-size:12pt;font-weight:600;\">%1:%2</span><br/><span style=\"color:#909090;\">%4%5</span>")
-                              .arg(connexionInfo.host)
+                              .arg(connexionInfoHost)
                               .arg(connexionInfo.port)
                               .arg(star)
                               .arg(lastConnexion)
@@ -588,7 +591,7 @@ void MainWindow::displayServerList()
             name=connexionInfo.name;
             newEntry->setText(QStringLiteral("%4<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2:%3 %5%6</span>")
                               .arg(connexionInfo.name)
-                              .arg(connexionInfo.host)
+                              .arg(connexionInfoHost)
                               .arg(connexionInfo.port)
                               .arg(star)
                               .arg(lastConnexion)

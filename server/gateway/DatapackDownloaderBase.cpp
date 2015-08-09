@@ -157,7 +157,11 @@ void DatapackDownloaderBase::writeNewFileBase(const QString &fileName,const QByt
         QFile file(fullPath);
         QFileInfo fileInfo(file);
 
-        QDir(fileInfo.absolutePath()).mkpath(fileInfo.absolutePath());
+        if(!QDir(fileInfo.absolutePath()).mkpath(fileInfo.absolutePath()))
+        {
+            qDebug() << "unable to make the path: " << fileInfo.absolutePath();
+            abort();
+        }
 
         if(file.exists())
             if(!file.remove())
@@ -188,10 +192,23 @@ bool DatapackDownloaderBase::getHttpFileBase(const QString &url, const QString &
     if(!httpModeBase)
         httpModeBase=true;
 
-    FILE *fp = fopen(fileName.toLocal8Bit().constData(),"wb");
+    const QString &fullPath=mDatapackBase+text_slash+fileName;
+    {
+        QFile file(fullPath);
+        QFileInfo fileInfo(file);
+
+        if(!QDir(fileInfo.absolutePath()).mkpath(fileInfo.absolutePath()))
+        {
+            qDebug() << "unable to make the path: " << fileInfo.absolutePath();
+            abort();
+        }
+    }
+
+    FILE *fp = fopen(fullPath.toLocal8Bit().constData(),"wb");
     if(fp!=NULL)
     {
         curl_easy_setopt(curl, CURLOPT_URL, url.toUtf8().constData());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &fwrite);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
         const CURLcode res = curl_easy_perform(curl);
         long http_code = 0;
@@ -527,18 +544,27 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const QByteArray da
                             if(!file.exists())
                             {
                                 if(!getHttpFileBase(selectedMirror+fileString,fileString))
+                                {
+                                    datapackDownloadError();
                                     return;
+                                }
                             }
                             else if(hashFileOnDisk!=*reinterpret_cast<const quint32 *>(QByteArray::fromHex(partialHashString.toLatin1()).constData()))
                             {
                                 if(!getHttpFileBase(selectedMirror+fileString,fileString))
+                                {
+                                    datapackDownloadError();
                                     return;
+                                }
                             }
                         }
                         else
                         {
                             if(!getHttpFileBase(selectedMirror+fileString,fileString))
+                            {
+                                datapackDownloadError();
                                 return;
+                            }
                         }
                         partialHashListBase.removeAt(indexInDatapackList);
                         datapackFilesListBase.removeAt(indexInDatapackList);
