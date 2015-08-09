@@ -300,6 +300,8 @@ void LinkToGameServer::parseFullQuery(const quint8 &mainCodeType,const quint8 &s
     client->packFullOutcommingQuery(mainCodeType,subCodeType,queryNumber,rawData,size);
 }
 
+do the sub data pack, not only base
+
 //send reply
 void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
