@@ -3,10 +3,13 @@
 #include <iostream>
 #include "EpollServerLoginSlave.h"
 #include "../../general/base/CommonSettingsCommon.h"
+#include "../../general/base/CommonSettingsServer.h"
 #include "DatapackDownloaderBase.h"
 #include "DatapackDownloaderMainSub.h"
 
 using namespace CatchChallenger;
+
+do the switch from login to game server
 
 void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size)
 {
@@ -280,17 +283,131 @@ void LinkToGameServer::parseFullQuery(const quint8 &mainCodeType,const quint8 &s
     {
         if(reply04inWait!=NULL)
             DatapackDownloaderBase::datapackDownloaderBase->datapackFileList(rawData,size);
-        else if(reply0205inWait!=NULL)
+        else if(reply0205inWait==NULL)
         {
-            if(DatapackDownloaderMainSub::datapackDownloaderMainSub.contains(main))
+            if(size>39 && rawData[0x00]==0x01)//all is good, change the reply
             {
-                if(DatapackDownloaderMainSub::datapackDownloaderMainSub.value(main).contains(sub))
-                    DatapackDownloaderMainSub::datapackDownloaderMainSub.value(main).value(sub)->datapackFileList(rawData,size);
+                unsigned int pos=39;
+
+                {
+                    if((size-pos)<1)
+                    {
+                        delete reply0205inWait;
+                        reply0205inWait=NULL;
+                        parseNetworkReadError("need more size");
+                        return;
+                    }
+                    const quint8 &stringSize=rawData[pos];
+                    pos+=1;
+                    if((size-pos)<stringSize)
+                    {
+                        delete reply0205inWait;
+                        reply0205inWait=NULL;
+                        parseNetworkReadError("need more size");
+                        return;
+                    }
+                    main=QString::fromLatin1(rawData+pos,stringSize);
+                    pos+=stringSize;
+                }
+                {
+                    if((size-pos)<1)
+                    {
+                        delete reply0205inWait;
+                        reply0205inWait=NULL;
+                        parseNetworkReadError("need more size");
+                        return;
+                    }
+                    const quint8 &stringSize=rawData[pos];
+                    pos+=1;
+                    if((size-pos)<stringSize)
+                    {
+                        delete reply0205inWait;
+                        reply0205inWait=NULL;
+                        parseNetworkReadError("need more size");
+                        return;
+                    }
+                    sub=QString::fromLatin1(rawData+pos,stringSize);
+                    pos+=stringSize;
+                }
+
+                DatapackDownloaderMainSub *downloader=NULL;
+                {
+                    if(!DatapackDownloaderMainSub::datapackDownloaderMainSub.contains(main))
+                        DatapackDownloaderMainSub::datapackDownloaderMainSub[main][sub]=new DatapackDownloaderMainSub(LinkToGameServer::mDatapackBase,main,sub);
+                    else if(!DatapackDownloaderMainSub::datapackDownloaderMainSub.value(main).contains(sub))
+                        DatapackDownloaderMainSub::datapackDownloaderMainSub[main][sub]=new DatapackDownloaderMainSub(LinkToGameServer::mDatapackBase,main,sub);
+                    downloader=DatapackDownloaderMainSub::datapackDownloaderMainSub.value(main).value(sub);
+                }
+                if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
+                {
+                    delete reply0205inWait;
+                    reply0205inWait=NULL;
+                    parseNetworkReadError("need more size");
+                    return;
+                }
+                downloader->sendedHashMain=QByteArray(rawData+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
+                pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
+                if(!sub.isEmpty())
+                {
+                    if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
+                    {
+                        delete reply0205inWait;
+                        reply0205inWait=NULL;
+                        parseNetworkReadError("need more size");
+                        return;
+                    }
+                    downloader->sendedHashSub=QByteArray(rawData+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
+                    pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
+                }
+                if((size-pos)<1)
+                {
+                    delete reply0205inWait;
+                    reply0205inWait=NULL;
+                    parseNetworkReadError("need more size");
+                    return;
+                }
+                const quint16 startString=pos;
+                const quint8 &stringSize=rawData[pos];
+                pos+=1;
+                if((size-pos)<stringSize)
+                {
+                    delete reply0205inWait;
+                    reply0205inWait=NULL;
+                    parseNetworkReadError("need more size");
+                    return;
+                }
+                CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=QString::fromLatin1(rawData+pos,stringSize);
+                pos+=stringSize;
+                unsigned int remainingSize=size-pos;
+                reply0205inWaitSize=startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
+                reply0205inWait=new char[reply0205inWaitSize];
+                memcpy(reply0205inWait+0,rawData,startString);
+                memcpy(reply0205inWait+startString,LinkToGameServer::httpDatapackMirrorRewriteBase.constData(),LinkToGameServer::httpDatapackMirrorRewriteBase.size());
+                memcpy(reply0205inWait+startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size(),rawData+pos,remainingSize);
+
+                if(downloader->hashMain.isEmpty() || (!sub.isEmpty() && downloader->hashSub.isEmpty()))//checksum never done
+                {
+                    reply0205inWaitQueryNumber=queryNumber;
+                    downloader->clientInSuspend.push_back(this);
+                    if(downloader->clientInSuspend.size()==1)
+                        downloader->sendDatapackContentMainSub();
+                }
+                else if(downloader->hashMain!=downloader->sendedHashMain || (!sub.isEmpty() && downloader->hashSub!=downloader->sendedHashSub))//need download the datapack content
+                {
+                    reply0205inWaitQueryNumber=queryNumber;
+                    downloader->clientInSuspend.push_back(this);
+                    if(downloader->clientInSuspend.size()==1)
+                        downloader->sendDatapackContentMainSub();
+                }
                 else
-                    parseNetworkReadError("unable to route mainCodeType==0x02 && subCodeType==0x0C return, sub datapack code is not found: "+sub);
+                {
+                    client->postReply(queryNumber,reply0205inWait,reply0205inWaitSize);
+                    delete reply0205inWait;
+                    reply0205inWait=NULL;
+                    reply0205inWaitSize=0;
+                }
+                return;
             }
-            else
-                parseNetworkReadError("unable to route mainCodeType==0x02 && subCodeType==0x0C return, main datapack code is not found: "+main);
         }
         else
             parseNetworkReadError("unable to route mainCodeType==0x02 && subCodeType==0x0C return");
@@ -299,8 +416,6 @@ void LinkToGameServer::parseFullQuery(const quint8 &mainCodeType,const quint8 &s
     //do the work here
     client->packFullOutcommingQuery(mainCodeType,subCodeType,queryNumber,rawData,size);
 }
-
-do the sub data pack, not only base
 
 //send reply
 void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
@@ -338,16 +453,38 @@ void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &q
             }
             DatapackDownloaderBase::datapackDownloaderBase->sendedHashBase=QByteArray(data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
             pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
+            if((size-pos)<1)
+            {
+                delete reply04inWait;
+                reply04inWait=NULL;
+                parseNetworkReadError("need more size");
+                return;
+            }
+            const quint16 startString=pos;
             const quint8 &stringSize=data[pos];
             pos+=1;
+            if((size-pos)<stringSize)
+            {
+                delete reply04inWait;
+                reply04inWait=NULL;
+                parseNetworkReadError("need more size");
+                return;
+            }
             CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase=QString::fromLatin1(data+pos,stringSize);
             pos+=stringSize;
             unsigned int remainingSize=size-pos;
-            reply04inWaitSize=14+CATCHCHALLENGER_SHA224HASH_SIZE+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
+            if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
+            {
+                delete reply0205inWait;
+                reply0205inWait=NULL;
+                parseNetworkReadError("need more size");
+                return;
+            }
+            reply04inWaitSize=startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
             reply04inWait=new char[reply04inWaitSize];
-            memcpy(reply04inWait+0,data,14+CATCHCHALLENGER_SHA224HASH_SIZE);
-            memcpy(reply04inWait+14+CATCHCHALLENGER_SHA224HASH_SIZE,LinkToGameServer::httpDatapackMirrorRewriteBase.constData(),LinkToGameServer::httpDatapackMirrorRewriteBase.size());
-            memcpy(reply04inWait+14+CATCHCHALLENGER_SHA224HASH_SIZE+LinkToGameServer::httpDatapackMirrorRewriteBase.size(),data+pos,remainingSize);
+            memcpy(reply04inWait+0,data,startString);
+            memcpy(reply04inWait+startString,LinkToGameServer::httpDatapackMirrorRewriteBase.constData(),LinkToGameServer::httpDatapackMirrorRewriteBase.size());
+            memcpy(reply04inWait+startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size(),data+pos,remainingSize);
 
             if(DatapackDownloaderBase::datapackDownloaderBase->hashBase.isEmpty())//checksum never done
             {
