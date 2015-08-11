@@ -209,7 +209,7 @@ QByteArray ProtocolParsingBase::lzmaCompress(QByteArray data)
 QByteArray ProtocolParsingBase::lzmaUncompress(QByteArray data)
 {
     lzma_stream strm = LZMA_STREAM_INIT; /* alloc and init lzma_stream struct */
-    const uint32_t flags = LZMA_TELL_UNSUPPORTED_CHECK | LZMA_CONCATENATED;
+    const uint32_t flags = LZMA_TELL_UNSUPPORTED_CHECK;
     const uint64_t memory_limit = UINT64_MAX; /* no memory limit */
     quint8 *in_buf;
     uint8_t out_buf [OUT_BUF_MAX];
