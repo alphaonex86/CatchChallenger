@@ -66,6 +66,8 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const QStr
         settings->setValue(QLatin1Literal("tolerantMode"),false);
     if(!settings->contains(QLatin1Literal("compression")))
         settings->setValue(QLatin1Literal("compression"),QLatin1Literal("zlib"));
+    if(!settings->contains(QLatin1Literal("compressionLevel")))
+        settings->setValue(QLatin1Literal("compressionLevel"),6);
     if(!settings->contains(QLatin1Literal("anonymous")))
         settings->setValue(QLatin1Literal("anonymous"),false);
     if(!settings->contains(QLatin1Literal("server_message")))

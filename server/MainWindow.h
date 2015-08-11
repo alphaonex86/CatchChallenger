@@ -139,6 +139,8 @@ private slots:
     void on_considerDownAfterNumberOfTry_editingFinished();
     void on_announce_toggled(bool checked);
 
+    void on_compressionLevel_valueChanged(int value);
+
 signals:
     void record_latency();
 };

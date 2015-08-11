@@ -40,8 +40,11 @@ void ProcessControler::send_settings()
         formatedServerSettings.compressionType                                = CompressionType_None;
     else if(settings->value(QLatin1Literal("compression")).toString()==QStringLiteral("xz"))
         formatedServerSettings.compressionType                                = CompressionType_Xz;
+    else if(settings->value(QLatin1Literal("compression")).toString()==QStringLiteral("lz4"))
+        formatedServerSettings.compressionType                                = CompressionType_Lz4;
     else
         formatedServerSettings.compressionType                                = CompressionType_Zlib;
+    formatedServerSettings.compressionLevel                                     = settings->value(QLatin1Literal("compressionLevel")).toUInt();
     CommonSettingsServer::commonSettingsServer.useSP                            = settings->value(QLatin1Literal("useSP")).toBool();
     CommonSettingsServer::commonSettingsServer.autoLearn                        = settings->value(QLatin1Literal("autoLearn")).toBool() && !CommonSettingsServer::commonSettingsServer.useSP;
     CommonSettingsServer::commonSettingsServer.forcedSpeed                      = settings->value(QLatin1Literal("forcedSpeed")).toUInt();

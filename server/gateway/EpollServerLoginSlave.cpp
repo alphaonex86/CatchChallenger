@@ -112,8 +112,11 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::None;
     else if(settings.value(QStringLiteral("compression")).toString()==QStringLiteral("xz"))
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Xz;
+    else if(settings.value(QStringLiteral("compression")).toString()==QStringLiteral("lz4"))
+        ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Lz4;
     else
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Zlib;
+    ProtocolParsing::compressionLevel          = settings.value(QStringLiteral("compressionLevel")).toUInt();
     #endif
 
     settings.beginGroup(QStringLiteral("Linux"));

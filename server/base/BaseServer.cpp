@@ -3787,6 +3787,8 @@ void BaseServer::loadAndFixSettings()
         GlobalServerData::serverSettings.city.capture.minute=0;
     }
 
+    if(GlobalServerData::serverSettings.compressionLevel<1 || GlobalServerData::serverSettings.compressionLevel>9)
+        GlobalServerData::serverSettings.compressionLevel=6;
     switch(GlobalServerData::serverSettings.compressionType)
     {
         case CatchChallenger::CompressionType_None:
@@ -3801,6 +3803,10 @@ void BaseServer::loadAndFixSettings()
         case CatchChallenger::CompressionType_Xz:
             GlobalServerData::serverSettings.compressionType      = CompressionType_Xz;
             ProtocolParsing::compressionTypeServer=ProtocolParsing::CompressionType::Xz;
+        break;
+        case CatchChallenger::CompressionType_Lz4:
+            GlobalServerData::serverSettings.compressionType      = CompressionType_Lz4;
+            ProtocolParsing::compressionTypeServer=ProtocolParsing::CompressionType::Lz4;
         break;
     }
 }

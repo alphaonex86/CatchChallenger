@@ -34,7 +34,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>2</number>
+       <number>4</number>
       </property>
       <widget class="QWidget" name="starting">
        <attribute name="title">
@@ -549,14 +549,14 @@
         <property name="fieldGrowthPolicy">
          <enum>QFormLayout::ExpandingFieldsGrow</enum>
         </property>
-        <item row="0" column="0">
+        <item row="1" column="0">
          <widget class="QLabel" name="label_27">
           <property name="text">
            <string>Compression</string>
           </property>
          </widget>
         </item>
-        <item row="0" column="1">
+        <item row="1" column="1">
          <widget class="QComboBox" name="compression">
           <property name="minimumSize">
            <size>
@@ -579,23 +579,28 @@
             <string>Xz (Lot of cpu, lot of compression)</string>
            </property>
           </item>
+          <item>
+           <property name="text">
+            <string>Lz4 (Very few cpu, very few compression)</string>
+           </property>
+          </item>
          </widget>
         </item>
-        <item row="1" column="0">
+        <item row="3" column="0">
          <widget class="QCheckBox" name="sendPlayerNumber">
           <property name="text">
            <string>Send player number</string>
           </property>
          </widget>
         </item>
-        <item row="2" column="0">
+        <item row="4" column="0">
          <widget class="QCheckBox" name="forceSpeed">
           <property name="text">
            <string>Force the speed to:</string>
           </property>
          </widget>
         </item>
-        <item row="2" column="1">
+        <item row="4" column="1">
          <widget class="QSpinBox" name="speed">
           <property name="enabled">
            <bool>false</bool>
@@ -611,42 +616,42 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="0" colspan="2">
+        <item row="5" column="0" colspan="2">
          <widget class="QCheckBox" name="dontSendPseudo">
           <property name="text">
            <string>Don't send pseudo for player on map</string>
           </property>
          </widget>
         </item>
-        <item row="4" column="0">
+        <item row="6" column="0">
          <widget class="QLabel" name="label_39">
           <property name="text">
            <string>Http datapack mirror:</string>
           </property>
          </widget>
         </item>
-        <item row="4" column="1">
+        <item row="6" column="1">
          <widget class="QLineEdit" name="httpDatapackMirror">
           <property name="placeholderText">
            <string>Empty if don't use, else http://serverprimary/datapack/;http://serversecondary/datapack/</string>
           </property>
          </widget>
         </item>
-        <item row="5" column="0">
+        <item row="7" column="0">
          <widget class="QCheckBox" name="datapack_cache">
           <property name="text">
            <string>Datapack cache</string>
           </property>
          </widget>
         </item>
-        <item row="6" column="0">
+        <item row="8" column="0">
          <widget class="QCheckBox" name="datapack_cache_timeout_checkbox">
           <property name="text">
            <string>Datapack cache timeout:</string>
           </property>
          </widget>
         </item>
-        <item row="6" column="1">
+        <item row="8" column="1">
          <widget class="QSpinBox" name="datapack_cache_timeout">
           <property name="suffix">
            <string>s</string>
@@ -662,17 +667,37 @@
           </property>
          </widget>
         </item>
-        <item row="7" column="0">
+        <item row="9" column="0">
          <widget class="QCheckBox" name="linux_socket_cork">
           <property name="text">
            <string>Socket cork (linux only)</string>
           </property>
          </widget>
         </item>
-        <item row="8" column="0">
+        <item row="10" column="0">
          <widget class="QCheckBox" name="tcpNodelay">
           <property name="text">
            <string>Tcp no delay (linux only)</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QSlider" name="compressionLevel">
+          <property name="minimum">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <number>9</number>
+          </property>
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_51">
+          <property name="text">
+           <string>Compression level</string>
           </property>
          </widget>
         </item>
