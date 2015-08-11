@@ -76,10 +76,13 @@ void send_settings()
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters       = settings->value(QLatin1Literal("maxWarehousePlayerMonsters")).toUInt();
     CommonSettingsCommon::commonSettingsCommon.maxPlayerItems                   = settings->value(QLatin1Literal("maxPlayerItems")).toUInt();
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems          = settings->value(QLatin1Literal("maxWarehousePlayerItems")).toUInt();
+    formatedServerSettings.compressionLevel                                     = settings->value(QLatin1Literal("compressionLevel")).toUInt();
     if(settings->value(QLatin1Literal("compression")).toString()==QStringLiteral("none"))
         formatedServerSettings.compressionType                                = CompressionType_None;
     else if(settings->value(QLatin1Literal("compression")).toString()==QStringLiteral("xz"))
         formatedServerSettings.compressionType                                = CompressionType_Xz;
+    else if(settings->value(QLatin1Literal("compression")).toString()==QStringLiteral("lz4"))
+        formatedServerSettings.compressionType                                = CompressionType_Lz4;
     else
         formatedServerSettings.compressionType                                = CompressionType_Zlib;
 

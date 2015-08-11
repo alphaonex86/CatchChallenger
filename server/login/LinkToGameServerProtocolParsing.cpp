@@ -36,6 +36,9 @@ void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
                     case 0x06:
                         ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Xz;
                     break;
+                    case 0x07:
+                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Lz4;
+                    break;
                     default:
                         parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
                     return;

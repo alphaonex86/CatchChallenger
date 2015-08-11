@@ -54,7 +54,8 @@ enum CompressionType
 {
     CompressionType_None = 0x00,
     CompressionType_Zlib = 0x01,
-    CompressionType_Xz = 0x02
+    CompressionType_Xz = 0x02,
+    CompressionType_Lz4 = 0x03
 };
 
 enum ActionAllow

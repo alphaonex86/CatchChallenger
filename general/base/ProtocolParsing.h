@@ -49,7 +49,8 @@ public:
     {
         None,
         Zlib,
-        Xz
+        Xz,
+        Lz4
     };
     #endif
     enum InitialiseTheVariableType
@@ -64,6 +65,7 @@ public:
     static CompressionType compressionTypeClient;
     #endif
     static CompressionType compressionTypeServer;
+    static quint8 compressionLevel;
     #endif
     ProtocolParsing();
     static void initialiseTheVariable(const InitialiseTheVariableType &initialiseTheVariableType=InitialiseTheVariableType::AllInOne);
