@@ -320,8 +320,11 @@ void MainWindow::load_settings()
         ui->compression->setCurrentIndex(0);
     else if(settings->value(QLatin1Literal("compression")).toString()==QLatin1Literal("xz"))
         ui->compression->setCurrentIndex(2);
+    else if(settings->value(QLatin1Literal("compression")).toString()==QLatin1Literal("lz4"))
+        ui->compression->setCurrentIndex(3);
     else
         ui->compression->setCurrentIndex(1);
+    ui->compressionLevel->setValue(settings->value(QLatin1Literal("compressionLevel")).toUInt());
     ui->maxPlayerMonsters->setValue(settings->value(QLatin1Literal("maxPlayerMonsters")).toUInt());
     ui->maxWarehousePlayerMonsters->setValue(settings->value(QLatin1Literal("maxWarehousePlayerMonsters")).toUInt());
     ui->maxPlayerItems->setValue(settings->value(QLatin1Literal("maxPlayerItems")).toUInt());
@@ -716,7 +719,11 @@ void MainWindow::send_settings()
         case 2:
         formatedServerSettings.compressionType=CatchChallenger::CompressionType_Xz;
         break;
+        case 3:
+        formatedServerSettings.compressionType=CatchChallenger::CompressionType_Lz4;
+        break;
     }
+    formatedServerSettings.compressionLevel                     = ui->compressionLevel->value();
 
     //rates
     CommonSettingsServer::commonSettingsServer.rates_xp			= ui->rates_xp_normal->value();
@@ -1117,6 +1124,9 @@ void MainWindow::on_compression_currentIndexChanged(int index)
         case 2:
         settings->setValue(QLatin1Literal("compression"),QLatin1Literal("xz"));
         break;
+        case 3:
+        settings->setValue(QLatin1Literal("compression"),QLatin1Literal("lz4"));
+        break;
     }
 }
 
@@ -1509,4 +1519,9 @@ void CatchChallenger::MainWindow::on_considerDownAfterNumberOfTry_editingFinishe
 void CatchChallenger::MainWindow::on_announce_toggled(bool checked)
 {
     //settings->setValue(QLatin1Literal("announce"),ui->announce->value());
+}
+
+void CatchChallenger::MainWindow::on_compressionLevel_valueChanged(int value)
+{
+    settings->setValue(QLatin1Literal("compressionLevel"),value);
 }

@@ -125,6 +125,7 @@ struct LoginServerSettings
 struct GameServerSettings
 {
     CompressionType compressionType;
+    quint8 compressionLevel;
     bool sendPlayerNumber;
     bool anonymous;
     bool benchmark;

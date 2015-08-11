@@ -247,7 +247,7 @@ QByteArray ProtocolParsingBase::computeCompression(const QByteArray &data,const 
         break;
         case CompressionType::Zlib:
         default:
-            return qCompress(data,9);
+            return qCompress(data,ProtocolParsing::compressionLevel);
         break;
         case CompressionType::None:
             return data;

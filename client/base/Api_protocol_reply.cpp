@@ -66,6 +66,9 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                     case 0x06:
                         ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Xz;
                     break;
+                    case 0x07:
+                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Lz4;
+                    break;
                     default:
                         newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
                     return;

@@ -41,6 +41,9 @@ void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
                         case 0x06:
                             ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Xz;
                         break;
+                        case 0x07:
+                            ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Lz4;
+                        break;
                         default:
                             parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
                         return;
@@ -58,6 +61,9 @@ void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
                         break;
                         case 0x06:
                             tempCompression=ProtocolParsing::CompressionType::Xz;
+                        break;
+                        case 0x07:
+                            tempCompression=ProtocolParsing::CompressionType::Lz4;
                         break;
                         default:
                             parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
@@ -81,6 +87,9 @@ void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
                     break;
                     case ProtocolParsing::CompressionType::Xz:
                         newData[0x00]=0x06;
+                    break;
+                    case ProtocolParsing::CompressionType::Lz4:
+                        newData[0x00]=0x07;
                     break;
                     default:
                         parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
