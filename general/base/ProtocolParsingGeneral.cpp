@@ -9,9 +9,6 @@
 #include "lz4/lz4.h"
 #endif
 
-do the compression level
-support for lz4
-
 using namespace CatchChallenger;
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
@@ -122,17 +119,9 @@ QByteArray ProtocolParsingBase::lzmaCompress(QByteArray data)
         strm.avail_out = OUT_BUF_MAX;
         ret_xz = lzma_code (&strm, LZMA_FINISH);
 
-        if (ret_xz != LZMA_OK) {
+        if (ret_xz != LZMA_OK && ret_xz != LZMA_STREAM_END) {
             // Once everything has been decoded successfully, the
             // return value of lzma_code() will be LZMA_STREAM_END.
-            //
-            // It is important to check for LZMA_STREAM_END. Do not
-            // assume that getting ret != LZMA_OK would mean that
-            // everything has gone well or that when you aren't
-            // getting more output it must have successfully
-            // decoded everything.
-            if (ret == LZMA_STREAM_END)
-                return arr;
 
             // It's not LZMA_OK nor LZMA_STREAM_END,
             // so it must be an error code. See lzma/base.h
@@ -144,7 +133,7 @@ QByteArray ProtocolParsingBase::lzmaCompress(QByteArray data)
             // can be made possible by enabling memory usage limit
             // or adding flags to the decoder initialization.
             const char *msg;
-            switch (ret) {
+            switch (ret_xz) {
             case LZMA_MEM_ERROR:
                 msg = "Memory allocation failed";
                 break;
@@ -193,9 +182,9 @@ QByteArray ProtocolParsingBase::lzmaCompress(QByteArray data)
                 break;
             }
 
-            fprintf(stderr, "%s: Decoder error: "
+            fprintf(stderr, "Decoder error: "
                     "%s (error code %u)\n",
-                    inname, msg, ret);
+                    msg, ret_xz);
             return QByteArray();
         }
 
@@ -234,17 +223,9 @@ QByteArray ProtocolParsingBase::lzmaUncompress(QByteArray data)
         strm.avail_out = OUT_BUF_MAX;
         ret_xz = lzma_code (&strm, LZMA_FINISH);
 
-        if (ret_xz != LZMA_OK) {
+        if (ret_xz != LZMA_OK && ret_xz != LZMA_STREAM_END) {
             // Once everything has been decoded successfully, the
             // return value of lzma_code() will be LZMA_STREAM_END.
-            //
-            // It is important to check for LZMA_STREAM_END. Do not
-            // assume that getting ret != LZMA_OK would mean that
-            // everything has gone well or that when you aren't
-            // getting more output it must have successfully
-            // decoded everything.
-            if (ret == LZMA_STREAM_END)
-                return arr;
 
             // It's not LZMA_OK nor LZMA_STREAM_END,
             // so it must be an error code. See lzma/base.h
@@ -256,7 +237,7 @@ QByteArray ProtocolParsingBase::lzmaUncompress(QByteArray data)
             // can be made possible by enabling memory usage limit
             // or adding flags to the decoder initialization.
             const char *msg;
-            switch (ret) {
+            switch (ret_xz) {
             case LZMA_MEM_ERROR:
                 msg = "Memory allocation failed";
                 break;
@@ -305,9 +286,9 @@ QByteArray ProtocolParsingBase::lzmaUncompress(QByteArray data)
                 break;
             }
 
-            fprintf(stderr, "%s: Decoder error: "
+            fprintf(stderr, "Decoder error: "
                     "%s (error code %u)\n",
-                    inname, msg, ret);
+                    msg, ret_xz);
             return QByteArray();
         }
 
