@@ -26,6 +26,7 @@ SOURCES += $$PWD/base/DebugClass.cpp \
     $$PWD/base/CommonDatapackServerSpec.cpp \
     $$PWD/fight/CommonFightEngine.cpp \
     $$PWD/fight/CommonFightEngineBase.cpp \
+    $$PWD/base/lz4/lz4.c \
     $$PWD/base/CommonSettingsCommon.cpp \
     $$PWD/base/CommonSettingsServer.cpp
 
@@ -50,6 +51,7 @@ HEADERS  += $$PWD/base/DebugClass.h \
     $$PWD/base/CommonDatapackServerSpec.h \
     $$PWD/fight/CommonFightEngine.h \
     $$PWD/fight/CommonFightEngineBase.h \
+    $$PWD/base/lz4/lz4.h \
     $$PWD/base/CommonSettingsCommon.h \
     $$PWD/base/CommonSettingsServer.h \
     $$PWD/base/GeneralType.h

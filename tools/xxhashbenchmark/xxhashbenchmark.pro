@@ -4,8 +4,8 @@
 #
 #-------------------------------------------------
 
-QMAKE_CFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -funroll-loops -ffast-math -funsafe-loop-optimizations"
-QMAKE_CXXFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -funroll-loops -ffast-math -funsafe-loop-optimizations"
+QMAKE_CFLAGS="-pipe -march=native -mtune=native -O3 -fomit-frame-pointer -floop-block -funroll-loops -ffast-math -funsafe-loop-optimizations"
+QMAKE_CXXFLAGS="-pipe -march=native -mtune=native -O3 -fomit-frame-pointer -floop-block -funroll-loops -ffast-math -funsafe-loop-optimizations"
 
 CONFIG += c++11
 

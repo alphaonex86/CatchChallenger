@@ -6,6 +6,7 @@
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 #include <lzma.h>
+#include "lz4/lz4.h"
 #endif
 
 do the compression level
