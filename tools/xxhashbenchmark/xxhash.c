@@ -59,7 +59,7 @@ You can contact the author at :
  * It will improve speed for Big-endian CPU.
  * This option has no impact on Little_Endian CPU.
  */
-#define XXH_FORCE_NATIVE_FORMAT 0
+#define XXH_FORCE_NATIVE_FORMAT 1
 
 
 /**************************************
@@ -243,7 +243,8 @@ FORCE_INLINE U32 XXH32_endian_align(const void* input, size_t len, U32 seed, XXH
     const BYTE* p = (const BYTE*)input;
     const BYTE* bEnd = p + len;
     U32 h32;
-#define XXH_get32bits(p) XXH_readLE32_align(p, endian, align)
+//#define XXH_get32bits(p) XXH_readLE32_align(p, endian, align)
+    #define XXH_get32bits(p) *(const U32*)p
 
 #ifdef XXH_ACCEPT_NULL_INPUT_POINTER
     if (p==NULL)

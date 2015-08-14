@@ -3,6 +3,11 @@
 #include "DebugClass.h"
 #include "GeneralVariable.h"
 
+#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+#include <lzma.h>
+#include "lz4/lz4.h"
+#endif
+
 using namespace CatchChallenger;
 
 ssize_t ProtocolParsingInputOutput::read(char * data, const size_t &size)
@@ -966,16 +971,8 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                     {
                         switch(getCompressType())
                         {
-                            case CompressionType::Xz:
-                            {
-                                const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
-                                if(newData.isEmpty())
-                                {
-                                    errorParsingLayer("Compressed data corrupted");
-                                    return false;
-                                }
-                                parseFullMessage(mainCodeType,subCodeType,newData.constData(),newData.size());
-                            }
+                            case CompressionType::None:
+                                parseFullMessage(mainCodeType,subCodeType,data,size);
                             break;
                             case CompressionType::Zlib:
                             default:
@@ -989,8 +986,30 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                                 parseFullMessage(mainCodeType,subCodeType,newData.constData(),newData.size());
                             }
                             break;
-                            case CompressionType::None:
-                                parseFullMessage(mainCodeType,subCodeType,data,size);
+                            case CompressionType::Xz:
+                            {
+                                const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
+                                if(newData.isEmpty())
+                                {
+                                    errorParsingLayer("Compressed data corrupted");
+                                    return false;
+                                }
+                                parseFullMessage(mainCodeType,subCodeType,newData.constData(),newData.size());
+                            }
+                            break;
+                            case CompressionType::Lz4:
+                            {
+                                QByteArray newData;
+                                newData.resize(size*4);
+                                const int &newSize=LZ4_decompress_safe(data,newData.data(),size,newData.size());
+                                if(newSize<0)
+                                {
+                                    errorParsingLayer("Compressed data corrupted");
+                                    return false;
+                                }
+                                newData.resize(newSize);
+                                parseFullMessage(mainCodeType,subCodeType,newData.constData(),newData.size());
+                            }
                             break;
                         }
                         return true;
@@ -1011,16 +1030,8 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                     {
                         switch(getCompressType())
                         {
-                            case CompressionType::Xz:
-                            {
-                                const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
-                                if(newData.isEmpty())
-                                {
-                                    errorParsingLayer("Compressed data corrupted");
-                                    return false;
-                                }
-                                parseFullMessage(mainCodeType,subCodeType,newData.constData(),newData.size());
-                            }
+                            case CompressionType::None:
+                                parseFullMessage(mainCodeType,subCodeType,data,size);
                             break;
                             case CompressionType::Zlib:
                             default:
@@ -1034,8 +1045,30 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                                 parseFullMessage(mainCodeType,subCodeType,newData.constData(),newData.size());
                             }
                             break;
-                            case CompressionType::None:
-                                parseFullMessage(mainCodeType,subCodeType,data,size);
+                            case CompressionType::Xz:
+                            {
+                                const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
+                                if(newData.isEmpty())
+                                {
+                                    errorParsingLayer("Compressed data corrupted");
+                                    return false;
+                                }
+                                parseFullMessage(mainCodeType,subCodeType,newData.constData(),newData.size());
+                            }
+                            break;
+                            case CompressionType::Lz4:
+                            {
+                                QByteArray newData;
+                                newData.resize(size*4);
+                                const int &newSize=LZ4_decompress_safe(data,newData.data(),size,newData.size());
+                                if(newSize<0)
+                                {
+                                    errorParsingLayer("Compressed data corrupted");
+                                    return false;
+                                }
+                                newData.resize(newSize);
+                                parseFullMessage(mainCodeType,subCodeType,newData.constData(),newData.size());
+                            }
                             break;
                         }
                         return true;
@@ -1083,16 +1116,8 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                         {
                             switch(getCompressType())
                             {
-                                case CompressionType::Xz:
-                                {
-                                    const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
-                                    if(newData.isEmpty())
-                                    {
-                                        errorParsingLayer("Compressed data corrupted");
-                                        return false;
-                                    }
-                                    parseFullQuery(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
-                                }
+                                case CompressionType::None:
+                                    parseFullQuery(mainCodeType,subCodeType,queryNumber,data,size);
                                 break;
                                 case CompressionType::Zlib:
                                 default:
@@ -1106,8 +1131,30 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                                     parseFullQuery(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
                                 }
                                 break;
-                                case CompressionType::None:
-                                    parseFullQuery(mainCodeType,subCodeType,queryNumber,data,size);
+                                case CompressionType::Xz:
+                                {
+                                    const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
+                                    if(newData.isEmpty())
+                                    {
+                                        errorParsingLayer("Compressed data corrupted");
+                                        return false;
+                                    }
+                                    parseFullQuery(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
+                                }
+                                break;
+                                case CompressionType::Lz4:
+                                {
+                                    QByteArray newData;
+                                    newData.resize(size*4);
+                                    const int &newSize=LZ4_decompress_safe(data,newData.data(),size,newData.size());
+                                    if(newSize<0)
+                                    {
+                                        errorParsingLayer("Compressed data corrupted");
+                                        return false;
+                                    }
+                                    newData.resize(newSize);
+                                    parseFullQuery(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
+                                }
                                 break;
                             }
                             return true;
@@ -1128,16 +1175,8 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                         {
                             switch(getCompressType())
                             {
-                                case CompressionType::Xz:
-                                {
-                                    const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
-                                    if(newData.isEmpty())
-                                    {
-                                        errorParsingLayer("Compressed data corrupted");
-                                        return false;
-                                    }
-                                    parseFullQuery(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
-                                }
+                                case CompressionType::None:
+                                    parseFullQuery(mainCodeType,subCodeType,queryNumber,data,size);
                                 break;
                                 case CompressionType::Zlib:
                                 default:
@@ -1151,8 +1190,30 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                                     parseFullQuery(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
                                 }
                                 break;
-                                case CompressionType::None:
-                                    parseFullQuery(mainCodeType,subCodeType,queryNumber,data,size);
+                                case CompressionType::Xz:
+                                {
+                                    const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
+                                    if(newData.isEmpty())
+                                    {
+                                        errorParsingLayer("Compressed data corrupted");
+                                        return false;
+                                    }
+                                    parseFullQuery(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
+                                }
+                                break;
+                                case CompressionType::Lz4:
+                                {
+                                    QByteArray newData;
+                                    newData.resize(size*4);
+                                    const int &newSize=LZ4_decompress_safe(data,newData.data(),size,newData.size());
+                                    if(newSize<0)
+                                    {
+                                        errorParsingLayer("Compressed data corrupted");
+                                        return false;
+                                    }
+                                    newData.resize(newSize);
+                                    parseFullQuery(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
+                                }
                                 break;
                             }
                             return true;
@@ -1185,16 +1246,8 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                     {
                         switch(getCompressType())
                         {
-                            case CompressionType::Xz:
-                            {
-                                const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
-                                if(newData.isEmpty())
-                                {
-                                    errorParsingLayer("Compressed data corrupted");
-                                    return false;
-                                }
-                                parseReplyData(mainCodeType,queryNumber,newData.constData(),newData.size());
-                            }
+                            case CompressionType::None:
+                                parseReplyData(mainCodeType,queryNumber,data,size);
                             break;
                             case CompressionType::Zlib:
                             default:
@@ -1208,8 +1261,30 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                                 parseReplyData(mainCodeType,queryNumber,newData.constData(),newData.size());
                             }
                             break;
-                            case CompressionType::None:
-                                parseReplyData(mainCodeType,queryNumber,data,size);
+                            case CompressionType::Xz:
+                            {
+                                const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
+                                if(newData.isEmpty())
+                                {
+                                    errorParsingLayer("Compressed data corrupted");
+                                    return false;
+                                }
+                                parseReplyData(mainCodeType,queryNumber,newData.constData(),newData.size());
+                            }
+                            break;
+                            case CompressionType::Lz4:
+                            {
+                                QByteArray newData;
+                                newData.resize(size*4);
+                                const int &newSize=LZ4_decompress_safe(data,newData.data(),size,newData.size());
+                                if(newSize<0)
+                                {
+                                    errorParsingLayer("Compressed data corrupted");
+                                    return false;
+                                }
+                                newData.resize(newSize);
+                                parseReplyData(mainCodeType,queryNumber,newData.constData(),newData.size());
+                            }
                             break;
                         }
                         return true;
@@ -1229,16 +1304,8 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                     {
                         switch(getCompressType())
                         {
-                            case CompressionType::Xz:
-                            {
-                                const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
-                                if(newData.isEmpty())
-                                {
-                                    errorParsingLayer("Compressed data corrupted");
-                                    return false;
-                                }
-                                parseReplyData(mainCodeType,queryNumber,newData.constData(),newData.size());
-                            }
+                            case CompressionType::None:
+                                parseReplyData(mainCodeType,queryNumber,data,size);
                             break;
                             case CompressionType::Zlib:
                             default:
@@ -1252,8 +1319,30 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                                 parseReplyData(mainCodeType,queryNumber,newData.constData(),newData.size());
                             }
                             break;
-                            case CompressionType::None:
-                                parseReplyData(mainCodeType,queryNumber,data,size);
+                            case CompressionType::Xz:
+                            {
+                                const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
+                                if(newData.isEmpty())
+                                {
+                                    errorParsingLayer("Compressed data corrupted");
+                                    return false;
+                                }
+                                parseReplyData(mainCodeType,queryNumber,newData.constData(),newData.size());
+                            }
+                            break;
+                            case CompressionType::Lz4:
+                            {
+                                QByteArray newData;
+                                newData.resize(size*4);
+                                const int &newSize=LZ4_decompress_safe(data,newData.data(),size,newData.size());
+                                if(newSize<0)
+                                {
+                                    errorParsingLayer("Compressed data corrupted");
+                                    return false;
+                                }
+                                newData.resize(newSize);
+                                parseReplyData(mainCodeType,queryNumber,newData.constData(),newData.size());
+                            }
                             break;
                         }
                         return true;
@@ -1284,16 +1373,8 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                         {
                             switch(getCompressType())
                             {
-                                case CompressionType::Xz:
-                                {
-                                    const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
-                                    if(newData.isEmpty())
-                                    {
-                                        errorParsingLayer("Compressed data is buggy");
-                                        return false;
-                                    }
-                                    parseFullReplyData(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
-                                }
+                                case CompressionType::None:
+                                    parseFullReplyData(mainCodeType,subCodeType,queryNumber,data,size);
                                 break;
                                 case CompressionType::Zlib:
                                 default:
@@ -1307,8 +1388,30 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                                     parseFullReplyData(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
                                 }
                                 break;
-                                case CompressionType::None:
-                                    parseFullReplyData(mainCodeType,subCodeType,queryNumber,data,size);
+                                case CompressionType::Xz:
+                                {
+                                    const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
+                                    if(newData.isEmpty())
+                                    {
+                                        errorParsingLayer("Compressed data is buggy");
+                                        return false;
+                                    }
+                                    parseFullReplyData(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
+                                }
+                                break;
+                                case CompressionType::Lz4:
+                                {
+                                    QByteArray newData;
+                                    newData.resize(size*4);
+                                    const int &newSize=LZ4_decompress_safe(data,newData.data(),size,newData.size());
+                                    if(newSize<0)
+                                    {
+                                        errorParsingLayer("Compressed data corrupted");
+                                        return false;
+                                    }
+                                    newData.resize(newSize);
+                                    parseFullReplyData(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
+                                }
                                 break;
                             }
                             return true;
@@ -1329,16 +1432,8 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                         {
                             switch(getCompressType())
                             {
-                                case CompressionType::Xz:
-                                {
-                                    const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
-                                    if(newData.isEmpty())
-                                    {
-                                        errorParsingLayer("Compressed data is buggy");
-                                        return false;
-                                    }
-                                    parseFullReplyData(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
-                                }
+                                case CompressionType::None:
+                                    parseFullReplyData(mainCodeType,subCodeType,queryNumber,data,size);
                                 break;
                                 case CompressionType::Zlib:
                                 default:
@@ -1352,8 +1447,30 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                                     parseFullReplyData(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
                                 }
                                 break;
-                                case CompressionType::None:
-                                    parseFullReplyData(mainCodeType,subCodeType,queryNumber,data,size);
+                                case CompressionType::Xz:
+                                {
+                                    const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
+                                    if(newData.isEmpty())
+                                    {
+                                        errorParsingLayer("Compressed data is buggy");
+                                        return false;
+                                    }
+                                    parseFullReplyData(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
+                                }
+                                break;
+                                case CompressionType::Lz4:
+                                {
+                                    QByteArray newData;
+                                    newData.resize(size*4);
+                                    const int &newSize=LZ4_decompress_safe(data,newData.data(),size,newData.size());
+                                    if(newSize<0)
+                                    {
+                                        errorParsingLayer("Compressed data corrupted");
+                                        return false;
+                                    }
+                                    newData.resize(newSize);
+                                    parseFullReplyData(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
+                                }
                                 break;
                             }
                             return true;
