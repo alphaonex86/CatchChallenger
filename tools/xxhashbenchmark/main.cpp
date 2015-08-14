@@ -1,15 +1,17 @@
 #include "xxhash.h"
 #include <iostream>
 #include <chrono>
+#include <string.h>
 
 int main()
 {
     unsigned long long int count=0;
     char inputdata[4096];
+    memset(inputdata,0,sizeof(inputdata));
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    int loop=2000000;
+    int loop=20000000;
 int index=0;
 while(index<loop)
 {

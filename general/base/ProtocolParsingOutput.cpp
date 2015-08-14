@@ -3,6 +3,11 @@
 #include "GeneralVariable.h"
 #include "ProtocolParsingCheck.h"
 
+#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+#include <lzma.h>
+#include "lz4/lz4.h"
+#endif
+
 using namespace CatchChallenger;
 
 void ProtocolParsingBase::newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
@@ -242,15 +247,21 @@ QByteArray ProtocolParsingBase::computeCompression(const QByteArray &data,const 
 {
     switch(compressionType)
     {
-        case CompressionType::Xz:
-            return lzmaCompress(data);
+        case CompressionType::None:
+            return data;
         break;
         case CompressionType::Zlib:
         default:
             return qCompress(data,ProtocolParsing::compressionLevel);
         break;
-        case CompressionType::None:
-            return data;
+        case CompressionType::Xz:
+            return lzmaCompress(data);
+        break;
+        case CompressionType::Lz4:
+            QByteArray dest;
+            dest.resize(LZ4_compressBound(data.size()));
+            dest.resize(LZ4_compress_default(data.constData(),dest.data(),data.size(),dest.size()));
+            return dest;
         break;
     }
 }
