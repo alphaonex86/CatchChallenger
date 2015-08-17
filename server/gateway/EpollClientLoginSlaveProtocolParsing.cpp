@@ -338,6 +338,23 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
             case 0x02:
             switch(subCodeType)
             {
+                //Select the character
+                case 0x05:
+                {
+                    if(size!=(1+4+4))
+                    {
+                        parseNetworkReadError("Select character: wrong size");
+                        return;
+                    }
+                    const quint32 &uniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+1)));
+                    if(!linkToGameServer->serverReconnectList.contains(uniqueKey))
+                    {
+                        parseNetworkReadError("Select character: unique key not found");
+                        return;
+                    }
+                    linkToGameServer->selectedServer=linkToGameServer->serverReconnectList.value(uniqueKey);
+                }
+                break;
                 //Send datapack file list
                 case 0x0C:
                 {

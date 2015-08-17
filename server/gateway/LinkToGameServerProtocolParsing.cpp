@@ -156,7 +156,115 @@ void LinkToGameServer::parseFullMessage(const quint8 &mainCodeType,const quint8 
         if(mainCodeType==0xC2 && subCodeType==0x0F)//send Logical group
         {}
         else if(mainCodeType==0xC2 && subCodeType==0x0E)//send Send server list to real player
-        {}
+        {
+            if(size>0)
+            {
+                switch(data[0x00])
+                {
+                    case 0x01:
+                    break;
+                    case 0x02:
+                        gameServerMode=GameServerMode::Proxy;
+                    return;
+                    default:
+                        parseNetworkReadError("parseFullMessage() wrong server list mode: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                    return;
+                }
+                char newOutputBuffer[size];
+                newOutputBuffer[0x00]=0x02;
+                unsigned int posOutputBuffer=1;
+                rewrite this output
+
+                unsigned int pos=1;
+                if((size-pos)<1)
+                {
+                    parseNetworkReadError("parseFullMessage() missing data for server list size: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                    return;
+                }
+                const quint8 &serverListSize=data[pos];
+                pos+=1;
+                quint8 serverListIndex=0;
+                while(serverListIndex<serverListSize)
+                {
+                    if((size-pos)<(1+4+1))
+                    {
+                        parseNetworkReadError("parseFullMessage() missing data for server unique key size: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        return;
+                    }
+                    //charactersgroup
+                    newOutputBuffer[posOutputBuffer]=data[pos];
+                    posOutputBuffer+=1;
+                    pos+=1;
+                    //unique key
+                    const quint32 &uniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+pos)));
+                    memcpy(newOutputBuffer+posOutputBuffer,data+pos,4);
+                    posOutputBuffer+=4;
+                    pos+=4;
+                    ServerReconnect serverReconnect;
+                    //host
+                    {
+                        const quint8 &stringSize=data[pos];
+                        pos+=1;
+                        if((size-pos)<stringSize)
+                        {
+                            parseNetworkReadError("parseFullMessage() missing data for server host string size: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                            return;
+                        }
+                        serverReconnect.host=QString::fromUtf8(data,stringSize);
+                        if(serverReconnect.host.isEmpty())
+                        {
+                            parseNetworkReadError("parseFullMessage() server list, host can't be empty: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                            return;
+                        }
+                        pos+=stringSize;
+                    }
+                    if((size-pos)<(2+2))
+                    {
+                        parseNetworkReadError("parseFullMessage() missing data for server port start description size: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        return;
+                    }
+                    //port
+                    serverReconnect.port=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data+pos)));
+                    pos+=2;
+                    //skip description
+                    {
+                        const quint16 &stringSize=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data+pos)));
+                        pos+=2;
+                        if((size-pos)<stringSize)
+                        {
+                            parseNetworkReadError("parseFullMessage() missing data for server host string size: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                            return;
+                        }
+                        memcpy(newOutputBuffer+posOutputBuffer,data+pos-2,2+stringSize);
+                        posOutputBuffer+=2+stringSize;
+
+                        pos+=stringSize;
+                    }
+                    //skip Logical group and max player
+                    if((size-pos)<(1+2))
+                    {
+                        parseNetworkReadError("parseFullMessage() missing data for server port start description size: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        return;
+                    }
+                    memcpy(newOutputBuffer+posOutputBuffer,data+pos,1+2);
+                    posOutputBuffer+=1+2;
+
+                    pos+=1+2;
+
+                    serverReconnectList[uniqueKey]=serverReconnect;
+                    serverListIndex++;
+                }
+
+                //Second list part with same size
+                memcpy(newOutputBuffer+posOutputBuffer,data+pos,2*serverListSize);
+                posOutputBuffer+=2*serverListSize;
+
+                gameServerMode=GameServerMode::Reconnect;
+
+                client->packFullOutcommingData(mainCodeType,subCodeType,newOutputBuffer,posOutputBuffer);
+                return;
+            }
+        }
         else
         {
             parseNetworkReadError("parseFullMessage() not logged to send: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
@@ -535,6 +643,101 @@ void LinkToGameServer::parseFullReplyData(const quint8 &mainCodeType, const quin
     (void)data;
     (void)size;
     //do the work here
+    switch(mainCodeType)
+    {
+        case 0x02:
+            switch(subCodeType)
+            {
+                case 0x05:
+                {
+                gameServerMode=GameServerMode::Reconnect
+                linkToGameServer->selectedServer
+                }
+                break;
+                case 0x07:
+                {
+                    if(selectCharacterClients.contains(queryNumber))
+                    {
+                        const DataForSelectedCharacterReturn &dataForSelectedCharacterReturn=selectCharacterClients.value(queryNumber);
+                        if(dataForSelectedCharacterReturn.client!=NULL)
+                        {
+                            if(size==CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
+                            {
+                                if(dataForSelectedCharacterReturn.client!=NULL)
+                                {
+                                    if(static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)->stat!=EpollClientLoginSlave::EpollClientLoginStat::CharacterSelecting)
+                                    {
+                                        static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                        ->parseNetworkReadError("client in wrong state main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+", reply size for 0207 wrong");
+                                        return;
+                                    }
+                                    //check again if the game server is not disconnected, don't check charactersGroupIndex because previously checked at EpollClientLoginSlave::selectCharacter()
+                                    const quint8 &charactersGroupIndex=static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)->charactersGroupIndex;
+                                    const quint32 &serverUniqueKey=static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)->serverUniqueKey;
+                                    if(!CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
+                                    {
+                                        static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                        ->parseNetworkReadError("client server not found to proxy it main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+", reply size for 0207 wrong");
+                                        return;
+                                    }
+                                    const CharactersGroupForLogin::InternalGameServer &server=CharactersGroupForLogin::list.at(charactersGroupIndex)->getServerInformation(serverUniqueKey);
+
+                                    static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                    ->stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnecting;
+                                    /// \todo do the async connect
+                                    /// linkToGameServer->stat=Stat::Connecting;
+                                    const int &socketFd=LinkToGameServer::tryConnect(server.host.toLatin1(),server.port,5,1);
+                                    if(Q_LIKELY(socketFd>=0))
+                                    {
+                                        static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                        ->stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnected;
+                                        LinkToGameServer *linkToGameServer=new LinkToGameServer(socketFd);
+                                        static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                        ->linkToGameServer=linkToGameServer;
+                                        linkToGameServer->queryIdToLog=dataForSelectedCharacterReturn.client_query_id;
+                                        linkToGameServer->stat=LinkToGameServer::Stat::Connected;
+                                        linkToGameServer->client=static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client);
+                                        memcpy(linkToGameServer->tokenForGameServer,data,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                                        //send the protocol
+                                        //wait readTheFirstSslHeader() to sendProtocolHeader();
+                                        linkToGameServer->setConnexionSettings();
+                                        linkToGameServer->parseIncommingData();
+                                    }
+                                    else
+                                    {
+                                        static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                        ->parseNetworkReadError(QStringLiteral("not able to connect on the game server as proxy, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
+                                        return;
+                                    }
+                                }
+                            }
+                            else if(size==1)
+                            {
+                                if(dataForSelectedCharacterReturn.client!=NULL)
+                                {
+                                    static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                    ->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,data[0]);
+                                    static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                    ->closeSocket();
+                                }
+                            }
+                            else
+                                parseNetworkReadError("main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+", reply size for 0207 wrong");
+                        }
+                        selectCharacterClients.remove(queryNumber);
+                    }
+                    else
+                        std::cerr << "parseFullReplyData() !selectCharacterClients.contains(queryNumber): mainCodeType: " << mainCodeType << ", subCodeType: " << subCodeType << ", queryNumber: " << queryNumber << std::endl;
+                }
+                return;
+                default:
+                break;
+            }
+        break;
+        default:
+        break;
+    }
+
     client->postReply(queryNumber,data,size);
 }
 
