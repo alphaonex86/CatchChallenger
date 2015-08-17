@@ -28,6 +28,20 @@ public:
         ProtocolGood,
     };
     Stat stat;
+    enum GameServerMode
+    {
+        None,
+        Proxy,
+        Reconnect,
+    };
+    GameServerMode gameServerMode;
+    struct ServerReconnect
+    {
+        QString host;
+        quint16 port;
+    };
+    QHash<quint32/*unique key*/,ServerReconnect> serverReconnectList;
+    ServerReconnect selectedServer;
 
     EpollClientLoginSlave *client;
     bool haveTheFirstSslHeader;
@@ -43,7 +57,6 @@ public:
     BaseClassSwitch::EpollObjectType getType() const;
     void parseIncommingData();
     static int tryConnect(const char * const host,const quint16 &port,const quint8 &tryInterval=1,const quint8 &considerDownAfterNumberOfTry=30);
-    bool trySelectCharacter(void * const client,const quint8 &client_query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId);
     void sendProtocolHeader();
     void sendDiffered04Reply();
     void sendDiffered0205Reply();
