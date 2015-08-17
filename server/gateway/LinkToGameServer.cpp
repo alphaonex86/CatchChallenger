@@ -37,6 +37,7 @@ LinkToGameServer::LinkToGameServer(
             #endif
             ),
         stat(Stat::Connected),
+        gameServerMode(GameServerMode::None),
         client(NULL),
         haveTheFirstSslHeader(false),
         protocolQueryNumber(0),
