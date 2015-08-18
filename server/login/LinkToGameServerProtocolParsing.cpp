@@ -49,15 +49,15 @@ void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
                     return;
                 }
                 //send token to game server
-                packFullOutcommingQuery(0x02,0x06,queryIdToLog/*query number*/,tokenForGameServer,sizeof(tokenForGameServer));
+                packFullOutcommingQuery(0x02,0x06,queryIdToReconnect/*query number*/,tokenForGameServer,sizeof(tokenForGameServer));
                 stat=ProtocolGood;
                 return;
             }
             else
             {
-                if(returnCode==0x02)
-                    parseNetworkReadError("Protocol not supported");
-                else if(returnCode==0x03)
+                if(client!=NULL)
+                    client->postReply(queryIdToReconnect,data,size);
+                if(returnCode==0x03)
                     parseNetworkReadError("Server full");
                 else
                     parseNetworkReadError(QStringLiteral("Unknown error %1").arg(returnCode));
