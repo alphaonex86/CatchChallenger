@@ -26,6 +26,7 @@ public:
         Connecting,
         Connected,
         ProtocolGood,
+        Reconnecting,
     };
     Stat stat;
     enum GameServerMode
@@ -40,7 +41,7 @@ public:
         QString host;
         quint16 port;
     };
-    QHash<quint32/*unique key*/,ServerReconnect> serverReconnectList;
+    QHash<quint8/*charactersGroupIndex*/,QHash<quint32/*unique key*/,ServerReconnect> > serverReconnectList;
     ServerReconnect selectedServer;
 
     EpollClientLoginSlave *client;
@@ -58,6 +59,7 @@ public:
     void parseIncommingData();
     static int tryConnect(const char * const host,const quint16 &port,const quint8 &tryInterval=1,const quint8 &considerDownAfterNumberOfTry=30);
     void sendProtocolHeader();
+    void sendProtocolHeaderGameServer();
     void sendDiffered04Reply();
     void sendDiffered0205Reply();
     void readTheFirstSslHeader();
@@ -89,6 +91,8 @@ private:
     char *reply0205inWait;
     unsigned int reply0205inWaitSize;
     quint8 reply0205inWaitQueryNumber;
+    quint8 queryIdToReconnect;
+    char tokenForGameServer[CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
 };
 }
 
