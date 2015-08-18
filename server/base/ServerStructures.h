@@ -6,15 +6,13 @@
 #endif
 
 #include <QObject>
-#include <QList>
+#include <vector>
 #include <QStringList>
 #include <QString>
 #include <QMutex>
-#include <QHash>
 #include <QVariant>
-#include <QSet>
-#include <QDataStream>
-#include <QMultiHash>
+#include <unordered_set>
+#include <unordered_map>
 #include <QRegularExpression>
 #include <QDateTime>
 #include <QProcess>
@@ -220,7 +218,7 @@ struct GameServerSettings
         quint16 cycle;//mins
         quint16 offset;//mins
     };
-    QHash<QString,QHash<QString,ProgrammedEvent> > programmedEventList;
+    std::unordered_map<QString,std::unordered_map<QString,ProgrammedEvent> > programmedEventList;
 };
 
 struct CityStatus
@@ -249,7 +247,7 @@ struct Clan
     QString captureCityInProgress;
     QString capturedCity;
     quint32 clanId;
-    QList<Client *> players;
+    std::vector<Client *> players;
 
     //the db info
     QString name;
@@ -258,11 +256,11 @@ struct Clan
 
 struct CaptureCityValidated
 {
-    QList<Client *> players;
-    QList<Client *> playersInFight;
-    QList<quint16> bots;
-    QList<quint16> botsInFight;
-    QHash<quint32,quint16> clanSize;
+    std::vector<Client *> players;
+    std::vector<Client *> playersInFight;
+    std::vector<quint16> bots;
+    std::vector<quint16> botsInFight;
+    std::unordered_map<quint32,quint16> clanSize;
 };
 
 struct ServerProfileInternal
@@ -288,16 +286,16 @@ struct ServerPrivateVariables
     CatchChallenger::DatabaseBase *db_base;
     CatchChallenger::DatabaseBase *db_common;
     CatchChallenger::DatabaseBase *db_server;//pointer to don't change the code for below preprocessor code
-    QList<TimerEvents *> timerEvents;
+    std::vector<TimerEvents *> timerEvents;
     #else
     QtDatabase *db_login;
     QtDatabase *db_base;
     QtDatabase *db_common;
     QtDatabase *db_server;
-    QList<QtTimerEvents *> timerEvents;
+    std::vector<QtTimerEvents *> timerEvents;
     #endif
 
-    QList<ServerProfileInternal> serverProfileInternalList;
+    std::vector<ServerProfileInternal> serverProfileInternalList;
 
     //datapack
     QString datapack_mapPath;
@@ -307,7 +305,7 @@ struct ServerPrivateVariables
     QRegularExpression datapack_rightFolderName;
 
     //fight
-    QMultiHash<quint16,MonsterDrops> monsterDrops;
+    std::unordered_multimap<quint16,MonsterDrops> monsterDrops;
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     std::vector<quint32> maxMonsterId;
     std::vector<quint32> maxClanId;
@@ -315,15 +313,15 @@ struct ServerPrivateVariables
     std::atomic<unsigned int> maxClanId;
     std::atomic<unsigned int> maxMonsterId;
     #endif
-    QHash<QString,QList<quint16> > captureFightIdList;
-    QHash<QString,CityStatus> cityStatusList;
-    QHash<quint32,QString> cityStatusListReverse;
-    QSet<quint32> tradedMonster;
+    std::unordered_map<QString,std::vector<quint16> > captureFightIdList;
+    std::unordered_map<QString,CityStatus> cityStatusList;
+    std::unordered_map<quint32,QString> cityStatusListReverse;
+    std::unordered_set<quint32> tradedMonster;
     QByteArray randomData;
 
     //market
-    QList<MarketItem> marketItemList;
-    QList<MarketPlayerMonster> marketPlayerMonsterList;
+    std::vector<MarketItem> marketItemList;
+    std::vector<MarketPlayerMonster> marketPlayerMonsterList;
 
     //timer and thread
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -345,12 +343,12 @@ struct ServerPrivateVariables
     quint32 maxCharacterId;
     #endif
     QDateTime time_city_capture;
-    QHash<quint32,Clan *> clanList;
+    std::unordered_map<quint32,Clan *> clanList;
 
     //map
-    QHash<QString,CommonMap *> map_list;
+    std::unordered_map<QString,CommonMap *> map_list;
     CommonMap ** flat_map_list;
-    QHash<quint32,QString> id_map_to_map;
+    std::unordered_map<quint32,QString> id_map_to_map;
     qint8 sizeofInsertRequest;
 
     //connection
@@ -359,17 +357,17 @@ struct ServerPrivateVariables
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     PlayerUpdaterToMaster player_updater_to_master;
     #endif
-    QSet<quint32> connected_players_id_list;
+    std::unordered_set<quint32> connected_players_id_list;
     QStringList server_message;
 
     quint32 number_of_bots_logged;
     int botSpawnIndex;
-    QHash<quint32,IndustryStatus> industriesStatus;
-    QList<quint8> events;
+    std::unordered_map<quint32,IndustryStatus> industriesStatus;
+    std::vector<quint8> events;
 
     //plant
-    QList<quint32> plantUsedId;
-    QList<quint32> plantUnusedId;
+    std::vector<quint32> plantUsedId;
+    std::vector<quint32> plantUnusedId;
     quint32 maxPlantId;
 
     //xp rate at form for level to xp: a*exp(x*b+c)+d
@@ -384,7 +382,7 @@ struct ServerPrivateVariables
     };
 
     //datapack
-    QHash<QString,quint8> skinList;
+    std::unordered_map<QString,quint8> skinList;
 };
 
 bool operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchChallenger::MonsterDrops &monsterDrops2);

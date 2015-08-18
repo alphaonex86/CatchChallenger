@@ -2,14 +2,13 @@
 #define CATCHCHALLENGER_GENERAL_STRUCTURES_H
 
 #include <QObject>
-#include <QList>
+#include <vector>
 #include <QByteArray>
 #include <QStringList>
 #include <QString>
-#include <QHash>
-#include <QSet>
+#include <unordered_map>
+#include <unordered_set>
 #include <QVariant>
-#include <QMultiHash>
 
 #include "GeneralType.h"
 #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
@@ -104,7 +103,7 @@ enum Plant_collect
 
 struct Reputation
 {
-    QList<qint32> reputation_positive/*start with 0*/,reputation_negative;
+    std::vector<qint32> reputation_positive/*start with 0*/,reputation_negative;
     /*server only*/
     int reverse_database_id;
     QString name;
@@ -142,12 +141,12 @@ struct Plant
     quint16 flowering_seconds;
     struct Requirements
     {
-        QList<ReputationRequirements> reputation;
+        std::vector<ReputationRequirements> reputation;
     };
     Requirements requirements;
     struct Rewards
     {
-        QList<ReputationRewards> reputation;
+        std::vector<ReputationRewards> reputation;
     };
     Rewards rewards;
 };
@@ -177,13 +176,13 @@ struct MonsterItemEffectOutOfFight
 
 struct ItemFull
 {
-    QMultiHash<quint16, MonsterItemEffect> monsterItemEffect;
-    QMultiHash<quint16, MonsterItemEffectOutOfFight> monsterItemEffectOutOfFight;
-    QHash<CATCHCHALLENGER_TYPE_ITEM/*item*/, QHash<quint16/*monster*/,quint16/*evolveTo*/> > evolutionItem;
-    QHash<CATCHCHALLENGER_TYPE_ITEM/*item*/, QSet<quint16/*monster*/> > itemToLearn;
-    QHash<quint16, quint32> repel;
-    QHash<CATCHCHALLENGER_TYPE_ITEM, Item> item;
-    QHash<quint16, Trap> trap;
+    std::unordered_multimap<quint16, MonsterItemEffect> monsterItemEffect;
+    std::unordered_multimap<quint16, MonsterItemEffectOutOfFight> monsterItemEffectOutOfFight;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM/*item*/, std::unordered_map<quint16/*monster*/,quint16/*evolveTo*/> > evolutionItem;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM/*item*/, std::unordered_set<quint16/*monster*/> > itemToLearn;
+    std::unordered_map<quint16, quint32> repel;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, Item> item;
+    std::unordered_map<quint16, Trap> trap;
 };
 
 struct LayersOptions
@@ -196,12 +195,12 @@ struct IndustryLink
     quint32 industry;
     struct Requirements
     {
-        QList<ReputationRequirements> reputation;
+        std::vector<ReputationRequirements> reputation;
     };
     Requirements requirements;
     struct Rewards
     {
-        QList<ReputationRewards> reputation;
+        std::vector<ReputationRewards> reputation;
     };
     Rewards rewards;
 };
@@ -220,8 +219,8 @@ struct Industry
         CATCHCHALLENGER_TYPE_ITEM item;
         quint32 quantity;
     };
-    QList<Resource> resources;
-    QList<Product> products;
+    std::vector<Resource> resources;
+    std::vector<Product> products;
 };
 
 struct Event
@@ -270,7 +269,7 @@ struct map_management_movement
 struct map_management_move
 {
     quint32 id;
-    QList<map_management_movement> movement_list;
+    std::vector<map_management_movement> movement_list;
 };
 
 struct Player_public_informations
@@ -303,7 +302,7 @@ class PublicPlayerMonster
     quint32 hp;
     quint16 catched_with;
     Gender gender;
-    QList<PlayerBuff> buffs;
+    std::vector<PlayerBuff> buffs;
 };
 
 class PlayerMonster : public PublicPlayerMonster
@@ -319,7 +318,7 @@ class PlayerMonster : public PublicPlayerMonster
     quint32 sp;
     quint32 egg_step;
     //in form of list to get random into the list
-    QList<PlayerSkill> skills;
+    std::vector<PlayerSkill> skills;
     quint32 id;//id into the db
     quint32 character_origin;
 };
@@ -348,27 +347,27 @@ struct Player_private_and_public_informations
 {
     Player_public_informations public_informations;
     quint64 cash,warehouse_cash;
-    QHash<CATCHCHALLENGER_TYPE_ITEM,quint32/*quantity*/> items,warehouse_items;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,quint32/*quantity*/> items,warehouse_items;
     //crafting
-    QSet<quint16> recipes;
+    std::unordered_set<quint16> recipes;
     QMap<quint8,PlayerReputation> reputation;
     //fight
-    QSet<quint16> bot_already_beaten;
+    std::unordered_set<quint16> bot_already_beaten;
     /// \todo put out of here to have mutalised engine
-    QList<PlayerMonster> playerMonster,warehouse_playerMonster;
-    QHash<quint16, PlayerQuest> quests;
+    std::vector<PlayerMonster> playerMonster,warehouse_playerMonster;
+    std::unordered_map<quint16, PlayerQuest> quests;
     CLAN_ID_TYPE clan;
     bool clan_leader;
-    QSet<ActionAllow> allow;
+    std::unordered_set<ActionAllow> allow;
     quint32 repel_step;
     //here to send at character login
-    QSet<quint8> itemOnMap;
+    std::unordered_set<quint8> itemOnMap;
     #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
         #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-        QHash<quint8/*dirtOnMap*/,PlayerPlant> plantOnMap;
+        std::unordered_map<quint8/*dirtOnMap*/,PlayerPlant> plantOnMap;
         #endif
     #else
-        QHash<quint8/*dirtOnMap*/,PlayerPlant> plantOnMap;
+        std::unordered_map<quint8/*dirtOnMap*/,PlayerPlant> plantOnMap;
     #endif
 };
 
@@ -437,30 +436,30 @@ enum ParsedLayerLedges
 
 struct MonstersCollisionValue
 {
-    QList<quint32/*index into CatchChallenger::CommonDatapack::commonDatapack.monstersCollision*/> walkOn;
-    QList<quint32/*index into CatchChallenger::CommonDatapack::commonDatapack.monstersCollision*/> actionOn;
+    std::vector<quint32/*index into CatchChallenger::CommonDatapack::commonDatapack.monstersCollision*/> walkOn;
+    std::vector<quint32/*index into CatchChallenger::CommonDatapack::commonDatapack.monstersCollision*/> actionOn;
     //it's the dynamic part
     struct MonstersCollisionValueOnCondition
     {
         quint8 event;
         quint8 event_value;
-        QList<MapMonster> monsters;
+        std::vector<MapMonster> monsters;
     };
     //static part pre-computed
     struct MonstersCollisionContent
     {
-        QList<MapMonster> defaultMonsters;
-        QList<MonstersCollisionValueOnCondition> conditions;
+        std::vector<MapMonster> defaultMonsters;
+        std::vector<MonstersCollisionValueOnCondition> conditions;
     };
-    QList<MonstersCollisionContent> walkOnMonsters;
-    QList<QList<MapMonster> > actionOnMonsters;
+    std::vector<MonstersCollisionContent> walkOnMonsters;
+    std::vector<std::vector<MapMonster> > actionOnMonsters;
 };
 
 struct ParsedLayer
 {
     bool *walkable;
     quint8 *monstersCollisionMap;
-    QList<MonstersCollisionValue> monstersCollisionList;
+    std::vector<MonstersCollisionValue> monstersCollisionList;
     //bool *grass;
     bool *dirt;
     //not stored as ParsedLayerLedges to prevent memory space unused
@@ -480,23 +479,23 @@ struct CrafingRecipe
         CATCHCHALLENGER_TYPE_ITEM item;
         quint32 quantity;
     };
-    QList<Material> materials;
+    std::vector<Material> materials;
     struct Requirements
     {
-        QList<ReputationRequirements> reputation;
+        std::vector<ReputationRequirements> reputation;
     };
     Requirements requirements;
     struct Rewards
     {
-        QList<ReputationRewards> reputation;
+        std::vector<ReputationRewards> reputation;
     };
     Rewards rewards;
 };
 
 struct Shop
 {
-    QList<quint32> prices;
-    QList<CATCHCHALLENGER_TYPE_ITEM> items;
+    std::vector<quint32> prices;
+    std::vector<CATCHCHALLENGER_TYPE_ITEM> items;
 };
 
 enum QuantityType
@@ -532,13 +531,13 @@ struct Buff
     };
     struct GeneralEffect
     {
-        QList<EffectInWalk> walk;
-        QList<Effect> fight;
+        std::vector<EffectInWalk> walk;
+        std::vector<Effect> fight;
         float capture_bonus;
         Duration duration;
         quint8 durationNumberOfTurn;
     };
-    QList<GeneralEffect> level;//first entry is buff level 1
+    std::vector<GeneralEffect> level;//first entry is buff level 1
 };
 
 enum ApplyOn
@@ -584,9 +583,9 @@ struct Skill
         //normal attack
         bool success;
         quint16 attack;
-        QList<BuffEffect> addBuffEffectMonster,removeBuffEffectMonster;
-        QList<LifeEffectReturn> lifeEffectMonster;
-        QList<LifeEffectReturn> buffLifeEffectMonster;
+        std::vector<BuffEffect> addBuffEffectMonster,removeBuffEffectMonster;
+        std::vector<LifeEffectReturn> lifeEffectMonster;
+        std::vector<LifeEffectReturn> buffLifeEffectMonster;
         //change monster if monsterPlace !=0
         quint8 monsterPlace;
         PublicPlayerMonster publicPlayerMonster;
@@ -606,12 +605,12 @@ struct Skill
     };
     struct SkillList
     {
-        QList<Buff> buff;
-        QList<Life> life;
+        std::vector<Buff> buff;
+        std::vector<Life> life;
         quint8 endurance;
         quint32 sp_to_learn;
     };
-    QList<Skill::SkillList> level;//first is level 1
+    std::vector<Skill::SkillList> level;//first is level 1
     quint8 type;
 };
 
@@ -637,7 +636,7 @@ struct Monster
         quint32 evolveTo;
     };
 
-    QList<quint8> type;
+    std::vector<quint8> type;
     qint8 ratio_gender;///< -1 for no gender, 0 only male, 100 only female
     quint8 catch_rate;///< 0 to 255 (255 = very easy)
     quint32 egg_step;///< step to hatch, 0 to no egg and never hatch
@@ -654,7 +653,7 @@ struct Monster
         quint32 speed;
     };
     Stat stat;
-    QList<quint32> level_to_xp;//first is xp to level 1
+    std::vector<quint32> level_to_xp;//first is xp to level 1
 
     struct AttackToLearn
     {
@@ -667,9 +666,9 @@ struct Monster
         quint16 learnSkill;
         quint8 learnSkillLevel;
     };
-    QList<AttackToLearn> learn;
-    QHash<CATCHCHALLENGER_TYPE_ITEM/*item*/,AttackToLearnByItem/*skill*/> learnByItem;
-    QList<Evolution> evolutions;
+    std::vector<AttackToLearn> learn;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM/*item*/,AttackToLearnByItem/*skill*/> learnByItem;
+    std::vector<Evolution> evolutions;
 };
 
 struct ItemToSellOrBuy
@@ -689,37 +688,37 @@ struct Quest
     struct ItemMonster
     {
         CATCHCHALLENGER_TYPE_ITEM item;
-        QList<quint16> monsters;
+        std::vector<quint16> monsters;
         quint8 rate;
     };
     struct Requirements
     {
-        QList<QuestRequirements> quests;
-        QList<ReputationRequirements> reputation;
+        std::vector<QuestRequirements> quests;
+        std::vector<ReputationRequirements> reputation;
     };
     struct Rewards
     {
-        QList<Item> items;
-        QList<ReputationRewards> reputation;
-        QList<ActionAllow> allow;
+        std::vector<Item> items;
+        std::vector<ReputationRewards> reputation;
+        std::vector<ActionAllow> allow;
     };
     struct StepRequirements
     {
-        QList<Item> items;
-        QList<quint16> fightId;
+        std::vector<Item> items;
+        std::vector<quint16> fightId;
     };
     struct Step
     {
-        QList<ItemMonster> itemsMonster;
+        std::vector<ItemMonster> itemsMonster;
         StepRequirements requirements;
-        QList<quint16> bots;
+        std::vector<quint16> bots;
     };
 
     quint16 id;
     bool repeatable;
     Requirements requirements;
     Rewards rewards;
-    QList<Step> steps;
+    std::vector<Step> steps;
 };
 
 struct City
@@ -754,16 +753,16 @@ struct BotFight
     {
         quint32 id;
         quint8 level;
-        QList<PlayerMonster::PlayerSkill> attacks;
+        std::vector<PlayerMonster::PlayerSkill> attacks;
     };
-    QList<BotFightMonster> monsters;
+    std::vector<BotFightMonster> monsters;
     quint32 cash;
     struct Item
     {
         CATCHCHALLENGER_TYPE_ITEM id;
         quint32 quantity;
     };
-    QList<Item> items;
+    std::vector<Item> items;
 };
 
 struct MarketObject
@@ -784,8 +783,8 @@ struct MarketMonster
 struct IndustryStatus
 {
     quint32 last_update;
-    QHash<quint32,quint32> resources;
-    QHash<quint32,quint32> products;
+    std::unordered_map<quint32,quint32> resources;
+    std::unordered_map<quint32,quint32> products;
 };
 
 struct Profile
@@ -807,11 +806,11 @@ struct Profile
         CATCHCHALLENGER_TYPE_ITEM id;
         quint32 quantity;
     };
-    QList<quint8> forcedskin;
+    std::vector<quint8> forcedskin;
     quint64 cash;
-    QList<Monster> monsters;
-    QList<Reputation> reputation;
-    QList<Item> items;
+    std::vector<Monster> monsters;
+    std::vector<Reputation> reputation;
+    std::vector<Item> items;
     QString id;
 };
 
@@ -846,13 +845,13 @@ struct MonstersCollision
         quint8 event_value;
         QStringList monsterTypeList;
     };
-    QList<MonstersCollisionEvent> events;
+    std::vector<MonstersCollisionEvent> events;
 };
 
 struct Type
 {
     QString name;
-    QHash<quint8,qint8> multiplicator;//negative = divide, not multiply
+    std::unordered_map<quint8,qint8> multiplicator;//negative = divide, not multiply
 };
 
 }

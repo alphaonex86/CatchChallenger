@@ -4,8 +4,8 @@
 #include "../MapServer.h"
 #include "MapVisibilityAlgorithm_WithBorder_StoreOnSender.h"
 
-#include <QSet>
-#include <QList>
+#include <set>
+#include <vector>
 
 namespace CatchChallenger {
 class MapVisibilityAlgorithm_WithBorder_StoreOnSender;
@@ -14,9 +14,9 @@ class Map_server_MapVisibility_WithBorder_StoreOnSender : public MapServer
 public:
     Map_server_MapVisibility_WithBorder_StoreOnSender();
     void purgeBuffer();
-    QList<MapVisibilityAlgorithm_WithBorder_StoreOnSender *> clients;//manipulated by thread of ClientMapManagement()
+    std::vector<MapVisibilityAlgorithm_WithBorder_StoreOnSender *> clients;//manipulated by thread of ClientMapManagement()
 
-    QSet<SIMPLIFIED_PLAYER_ID_TYPE>     to_send_remove;
+    std::set<SIMPLIFIED_PLAYER_ID_TYPE>     to_send_remove;
     quint16 clientsOnBorder;
     bool showWithBorder;
     bool show;

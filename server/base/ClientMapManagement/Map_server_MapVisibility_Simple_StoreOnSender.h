@@ -4,8 +4,7 @@
 #include "../MapServer.h"
 #include "MapVisibilityAlgorithm_Simple_StoreOnSender.h"
 
-#include <QSet>
-#include <QList>
+#include <vector>
 
 #ifndef CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER
 #define CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER 128*1024
@@ -19,10 +18,10 @@ class Map_server_MapVisibility_Simple_StoreOnSender : public MapServer
 public:
     Map_server_MapVisibility_Simple_StoreOnSender();
     void purgeBuffer();
-    QList<MapVisibilityAlgorithm_Simple_StoreOnSender *> clients;//manipulated by thread of ClientMapManagement()
+    std::vector<MapVisibilityAlgorithm_Simple_StoreOnSender *> clients;//manipulated by thread of ClientMapManagement()
 
     //mostly less remove than don't remove
-    QList<quint16> to_send_remove;
+    std::vector<quint16> to_send_remove;
     int to_send_remove_size;
     bool show;
     bool to_send_insert;

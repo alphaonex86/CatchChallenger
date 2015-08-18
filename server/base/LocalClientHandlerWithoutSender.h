@@ -2,6 +2,7 @@
 #define CATCHCHALLENGER_LOCALCLIENBTHANDLERWITHOUTSENDER_H
 
 #include <QObject>
+#include <vector>
 #include "../VariableServer.h"
 
 namespace CatchChallenger {
@@ -17,7 +18,7 @@ public:
     explicit LocalClientHandlerWithoutSender();
     virtual ~LocalClientHandlerWithoutSender();
     static LocalClientHandlerWithoutSender localClientHandlerWithoutSender;
-    QList<void*> allClient;
+    std::vector<void*> allClient;
 public:
     void doAllAction();
     void doDDOSChat();
