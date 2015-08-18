@@ -19,13 +19,13 @@ const quint16 ProtocolParsingBase::sizeHeaderNullquint16=0;
 char ProtocolParsingBase::tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
 #endif
 
-QSet<quint8>                        ProtocolParsing::mainCodeWithoutSubCodeTypeServerToClient;//if need sub code or not
+std::unordered_set<quint8>                        ProtocolParsing::mainCodeWithoutSubCodeTypeServerToClient;//if need sub code or not
 //if is a query
-QSet<quint8>                        ProtocolParsing::mainCode_IsQueryClientToServer;
+std::unordered_set<quint8>                        ProtocolParsing::mainCode_IsQueryClientToServer;
 
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-QSet<quint8> ProtocolParsing::toDebugValidMainCodeServerToClient;//if need sub code or not
-QSet<quint8> ProtocolParsing::toDebugValidMainCodeClientToServer;//if need sub code or not
+std::unordered_set<quint8> ProtocolParsing::toDebugValidMainCodeServerToClient;//if need sub code or not
+std::unordered_set<quint8> ProtocolParsing::toDebugValidMainCodeClientToServer;//if need sub code or not
 #endif
 
 quint8                              ProtocolParsing::replyCodeClientToServer;
@@ -37,28 +37,28 @@ ProtocolParsing::CompressionType    ProtocolParsing::compressionTypeServer=Compr
 quint8 ProtocolParsing::compressionLevel=6;
 #endif
 //predefined size
-QHash<quint8,quint16>                   ProtocolParsing::sizeOnlyMainCodePacketClientToServer;
-QHash<quint8,QHash<quint16,quint16> >	ProtocolParsing::sizeMultipleCodePacketClientToServer;
-QHash<quint8,quint16>                   ProtocolParsing::replySizeOnlyMainCodePacketClientToServer;
-QHash<quint8,QHash<quint16,quint16> >	ProtocolParsing::replySizeMultipleCodePacketClientToServer;
+std::unordered_map<quint8,quint16>                   ProtocolParsing::sizeOnlyMainCodePacketClientToServer;
+std::unordered_map<quint8,std::unordered_map<quint16,quint16> >	ProtocolParsing::sizeMultipleCodePacketClientToServer;
+std::unordered_map<quint8,quint16>                   ProtocolParsing::replySizeOnlyMainCodePacketClientToServer;
+std::unordered_map<quint8,std::unordered_map<quint16,quint16> >	ProtocolParsing::replySizeMultipleCodePacketClientToServer;
 
-QSet<quint8>                            ProtocolParsing::mainCodeWithoutSubCodeTypeClientToServer;//if need sub code or not
+std::unordered_set<quint8>                            ProtocolParsing::mainCodeWithoutSubCodeTypeClientToServer;//if need sub code or not
 //if is a query
-QSet<quint8>                            ProtocolParsing::mainCode_IsQueryServerToClient;
+std::unordered_set<quint8>                            ProtocolParsing::mainCode_IsQueryServerToClient;
 quint8                                  ProtocolParsing::replyCodeServerToClient;
 //predefined size
-QHash<quint8,quint16>                   ProtocolParsing::sizeOnlyMainCodePacketServerToClient;
-QHash<quint8,QHash<quint16,quint16> >	ProtocolParsing::sizeMultipleCodePacketServerToClient;
-QHash<quint8,quint16>                   ProtocolParsing::replySizeOnlyMainCodePacketServerToClient;
-QHash<quint8,QHash<quint16,quint16> >	ProtocolParsing::replySizeMultipleCodePacketServerToClient;
+std::unordered_map<quint8,quint16>                   ProtocolParsing::sizeOnlyMainCodePacketServerToClient;
+std::unordered_map<quint8,std::unordered_map<quint16,quint16> >	ProtocolParsing::sizeMultipleCodePacketServerToClient;
+std::unordered_map<quint8,quint16>                   ProtocolParsing::replySizeOnlyMainCodePacketServerToClient;
+std::unordered_map<quint8,std::unordered_map<quint16,quint16> >	ProtocolParsing::replySizeMultipleCodePacketServerToClient;
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-QHash<quint8,QSet<quint16> >    ProtocolParsing::compressionMultipleCodePacketClientToServer;
-QHash<quint8,QSet<quint16> >    ProtocolParsing::compressionMultipleCodePacketServerToClient;
-QHash<quint8,QSet<quint16> >    ProtocolParsing::replyComressionMultipleCodePacketClientToServer;
-QHash<quint8,QSet<quint16> >    ProtocolParsing::replyComressionMultipleCodePacketServerToClient;
-QSet<quint8>                    ProtocolParsing::replyComressionOnlyMainCodePacketClientToServer;
-QSet<quint8>                    ProtocolParsing::replyComressionOnlyMainCodePacketServerToClient;
+std::unordered_map<quint8,std::unordered_set<quint16> >    ProtocolParsing::compressionMultipleCodePacketClientToServer;
+std::unordered_map<quint8,std::unordered_set<quint16> >    ProtocolParsing::compressionMultipleCodePacketServerToClient;
+std::unordered_map<quint8,std::unordered_set<quint16> >    ProtocolParsing::replyComressionMultipleCodePacketClientToServer;
+std::unordered_map<quint8,std::unordered_set<quint16> >    ProtocolParsing::replyComressionMultipleCodePacketServerToClient;
+std::unordered_set<quint8>                    ProtocolParsing::replyComressionOnlyMainCodePacketClientToServer;
+std::unordered_set<quint8>                    ProtocolParsing::replyComressionOnlyMainCodePacketServerToClient;
 #endif
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
@@ -439,11 +439,15 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             //register meta type
             #ifndef EPOLLCATCHCHALLENGERSERVER
             qRegisterMetaType<CatchChallenger::PlayerMonster >("CatchChallenger::PlayerMonster");//for Api_protocol::tradeAddTradeMonster()
-            qRegisterMetaType<QList<quint8> >("QList<quint8>");//for battleAcceptedByOther(stat,publicPlayerMonster);
             qRegisterMetaType<PublicPlayerMonster >("PublicPlayerMonster");//for battleAcceptedByOther(stat,publicPlayerMonster);
+            qRegisterMetaType<QList<quint8> >("QList<quint8>");//for battleAcceptedByOther(stat,publicPlayerMonster);
             qRegisterMetaType<QList<Skill::AttackReturn> >("QList<Skill::AttackReturn>");//for battleAcceptedByOther(stat,publicPlayerMonster);
             qRegisterMetaType<QList<MarketMonster> >("QList<MarketMonster>");
             qRegisterMetaType<QList<CharacterEntry> >("QList<CharacterEntry>");
+            qRegisterMetaType<std::vector<quint8> >("std::vector<quint8>");//for battleAcceptedByOther(stat,publicPlayerMonster);
+            qRegisterMetaType<std::vector<Skill::AttackReturn> >("std::vector<Skill::AttackReturn>");//for battleAcceptedByOther(stat,publicPlayerMonster);
+            qRegisterMetaType<std::vector<MarketMonster> >("std::vector<MarketMonster>");
+            qRegisterMetaType<std::vector<CharacterEntry> >("std::vector<CharacterEntry>");
             qRegisterMetaType<QSslSocket::SslMode>("QSslSocket::SslMode");
             #endif
         break;

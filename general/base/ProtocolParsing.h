@@ -1,8 +1,8 @@
 #ifndef CATCHCHALLENGER_PROTOCOLPARSING_H
 #define CATCHCHALLENGER_PROTOCOLPARSING_H
 
-#include <QSet>
-#include <QHash>
+#include <unordered_set>
+#include <unordered_map>
 #include <QByteArray>
 #include <QDebug>
 
@@ -73,35 +73,35 @@ public:
 protected:
     /********************** static *********************/
     //connexion parameters
-    static QSet<quint8> mainCodeWithoutSubCodeTypeServerToClient;//if need sub code or not
-    static QSet<quint8> mainCodeWithoutSubCodeTypeClientToServer;//if need sub code or not
+    static std::unordered_set<quint8> mainCodeWithoutSubCodeTypeServerToClient;//if need sub code or not
+    static std::unordered_set<quint8> mainCodeWithoutSubCodeTypeClientToServer;//if need sub code or not
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    static QSet<quint8> toDebugValidMainCodeServerToClient;//if need sub code or not
-    static QSet<quint8> toDebugValidMainCodeClientToServer;//if need sub code or not
+    static std::unordered_set<quint8> toDebugValidMainCodeServerToClient;//if need sub code or not
+    static std::unordered_set<quint8> toDebugValidMainCodeClientToServer;//if need sub code or not
     #endif
     //if is a query
-    static QSet<quint8> mainCode_IsQueryClientToServer;
+    static std::unordered_set<quint8> mainCode_IsQueryClientToServer;
     static quint8 replyCodeClientToServer;
-    static QSet<quint8> mainCode_IsQueryServerToClient;
+    static std::unordered_set<quint8> mainCode_IsQueryServerToClient;
     static quint8 replyCodeServerToClient;
     //predefined size
-    static QHash<quint8,quint16> sizeOnlyMainCodePacketClientToServer;
-    static QHash<quint8,QHash<quint16,quint16> > sizeMultipleCodePacketClientToServer;
-    static QHash<quint8,quint16> replySizeOnlyMainCodePacketClientToServer;
-    static QHash<quint8,QHash<quint16,quint16> > replySizeMultipleCodePacketClientToServer;
-    static QHash<quint8,quint16> sizeOnlyMainCodePacketServerToClient;
-    static QHash<quint8,QHash<quint16,quint16> > sizeMultipleCodePacketServerToClient;
-    static QHash<quint8,quint16> replySizeOnlyMainCodePacketServerToClient;
-    static QHash<quint8,QHash<quint16,quint16> > replySizeMultipleCodePacketServerToClient;
+    static std::unordered_map<quint8,quint16> sizeOnlyMainCodePacketClientToServer;
+    static std::unordered_map<quint8,std::unordered_map<quint16,quint16> > sizeMultipleCodePacketClientToServer;
+    static std::unordered_map<quint8,quint16> replySizeOnlyMainCodePacketClientToServer;
+    static std::unordered_map<quint8,std::unordered_map<quint16,quint16> > replySizeMultipleCodePacketClientToServer;
+    static std::unordered_map<quint8,quint16> sizeOnlyMainCodePacketServerToClient;
+    static std::unordered_map<quint8,std::unordered_map<quint16,quint16> > sizeMultipleCodePacketServerToClient;
+    static std::unordered_map<quint8,quint16> replySizeOnlyMainCodePacketServerToClient;
+    static std::unordered_map<quint8,std::unordered_map<quint16,quint16> > replySizeMultipleCodePacketServerToClient;
 
     //compression not found single main code because is reserved to fast/small message
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    static QHash<quint8,QSet<quint16> > compressionMultipleCodePacketClientToServer;
-    static QHash<quint8,QSet<quint16> > compressionMultipleCodePacketServerToClient;
-    static QHash<quint8,QSet<quint16> > replyComressionMultipleCodePacketClientToServer;
-    static QHash<quint8,QSet<quint16> > replyComressionMultipleCodePacketServerToClient;
-    static QSet<quint8> replyComressionOnlyMainCodePacketClientToServer;
-    static QSet<quint8> replyComressionOnlyMainCodePacketServerToClient;
+    static std::unordered_map<quint8,std::unordered_set<quint16> > compressionMultipleCodePacketClientToServer;
+    static std::unordered_map<quint8,std::unordered_set<quint16> > compressionMultipleCodePacketServerToClient;
+    static std::unordered_map<quint8,std::unordered_set<quint16> > replyComressionMultipleCodePacketClientToServer;
+    static std::unordered_map<quint8,std::unordered_set<quint16> > replyComressionMultipleCodePacketServerToClient;
+    static std::unordered_set<quint8> replyComressionOnlyMainCodePacketClientToServer;
+    static std::unordered_set<quint8> replyComressionOnlyMainCodePacketServerToClient;
     #endif
 protected:
     virtual void errorParsingLayer(const QString &error) = 0;
@@ -166,12 +166,12 @@ private:
     void dataClear();
 public:
     //reply to the query
-    QHash<quint8,quint8> waitedReply_mainCodeType;
-    QHash<quint8,quint8> waitedReply_subCodeType;
+    std::unordered_map<quint8,quint8> waitedReply_mainCodeType;
+    std::unordered_map<quint8,quint8> waitedReply_subCodeType;
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    QSet<quint8> replyOutputCompression;
+    std::unordered_set<quint8> replyOutputCompression;
     #endif
-    QHash<quint8,quint16> replyOutputSize;
+    std::unordered_map<quint8,quint16> replyOutputSize;
 public:
     void newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
     void newFullOutputQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber);
@@ -244,7 +244,7 @@ protected:
     //reply to the query
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     bool removeFromQueryReceived(const quint8 &queryNumber);
-    QSet<quint8> queryReceived;
+    std::unordered_set<quint8> queryReceived;
     #endif
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     static char tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
