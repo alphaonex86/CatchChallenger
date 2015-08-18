@@ -2,8 +2,8 @@
 
 using namespace CatchChallenger;
 
-QHash<QString,Client *> Client::playerByPseudo;
-QList<Client *> Client::clientBroadCastList;
+std::unordered_map<QString,Client *> Client::playerByPseudo;
+std::vector<Client *> Client::clientBroadCastList;
 
 const QString Client::text_chat=QLatin1Literal("chat");
 const QString Client::text_space=QLatin1Literal(" ");
@@ -58,27 +58,27 @@ const unsigned char Client::protocolHeaderToMatch[] = PROTOCOL_HEADER_LOGIN;
 const unsigned char Client::protocolHeaderToMatch[] = PROTOCOL_HEADER_GAMESERVER;
 #endif
 
-QList<int> Client::generalChatDrop;
+std::vector<int> Client::generalChatDrop;
 int Client::generalChatDropTotalCache=0;
 int Client::generalChatDropNewValue=0;
-QList<int> Client::clanChatDrop;
+std::vector<int> Client::clanChatDrop;
 int Client::clanChatDropTotalCache=0;
 int Client::clanChatDropNewValue=0;
-QList<int> Client::privateChatDrop;
+std::vector<int> Client::privateChatDrop;
 int Client::privateChatDropTotalCache=0;
 int Client::privateChatDropNewValue=0;
-QList<quint16> Client::marketObjectIdList;
+std::vector<quint16> Client::marketObjectIdList;
 #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-QList<Client::PlantInWaiting> Client::plant_list_in_waiting;
+std::vector<Client::PlantInWaiting> Client::plant_list_in_waiting;
 #endif
 quint8 Client::indexOfItemOnMap;
 #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
 quint8 Client::indexOfDirtOnMap;//index of plant on map, ordened by map and x,y ordened into the xml file, less bandwith than send map,x,y
 #endif
 
-QList<quint8> Client::selectCharacterQueryId;
+std::vector<quint8> Client::selectCharacterQueryId;
 
-QList<quint16> Client::simplifiedIdList;
+std::vector<quint16> Client::simplifiedIdList;
 quint8 Client::tempDatapackListReplySize=0;
 quint8 Client::tempDatapackListReply=0;
 QByteArray Client::tempDatapackListReplyArray;
@@ -86,9 +86,9 @@ int Client::tempDatapackListReplyTestCount;
 quint64 Client::datapack_list_cache_timestamp_base;
 quint64 Client::datapack_list_cache_timestamp_main;
 quint64 Client::datapack_list_cache_timestamp_sub;
-QHash<QString,Client::DatapackCacheFile> Client::datapack_file_hash_cache_base;
-QHash<QString,Client::DatapackCacheFile> Client::datapack_file_hash_cache_main;
-QHash<QString,Client::DatapackCacheFile> Client::datapack_file_hash_cache_sub;
+std::unordered_map<QString,Client::DatapackCacheFile> Client::datapack_file_hash_cache_base;
+std::unordered_map<QString,Client::DatapackCacheFile> Client::datapack_file_hash_cache_main;
+std::unordered_map<QString,Client::DatapackCacheFile> Client::datapack_file_hash_cache_sub;
 QRegularExpression Client::fileNameStartStringRegex=QRegularExpression(QLatin1String("^[a-zA-Z]:/"));
 QString Client::single_quote=QLatin1Literal("'");
 QString Client::antislash_single_quote=QLatin1Literal("\\'");
@@ -131,10 +131,10 @@ const QString Client::text_unknown_send_command_slash=QLatin1String("unknown sen
 const QString Client::text_commands_seem_not_right=QLatin1String("commands seem not right: /");
 
 Direction Client::temp_direction;
-QHash<quint32,Client *> Client::playerById;
-QHash<QString,QList<Client *> > Client::captureCity;
-QHash<QString,CaptureCityValidated> Client::captureCityValidatedList;
-QHash<quint32,Clan *> Client::clanList;
+std::unordered_map<quint32,Client *> Client::playerById;
+std::unordered_map<QString,std::vector<Client *> > Client::captureCity;
+std::unordered_map<QString,CaptureCityValidated> Client::captureCityValidatedList;
+std::unordered_map<quint32,Clan *> Client::clanList;
 
 const QString Client::text_0=QLatin1Literal("0");
 const QString Client::text_1=QLatin1Literal("1");
