@@ -4,7 +4,6 @@
 #include <QObject>
 #include <QByteArray>
 #include <QTimer>
-#include <QHash>
 
 #include "../../general/base/DebugClass.h"
 #include "ServerStructures.h"
@@ -21,6 +20,8 @@
 #else
 #include <QObject>
 #endif
+#include <unordered_map>
+#include <vector>
 
 namespace CatchChallenger {
 class Client :
@@ -80,21 +81,21 @@ public:
     void sendPacket(const quint8 &mainIdent);
     void sendRawSmallPacket(const char * const data,const unsigned int &size);
 
-    static QList<int> generalChatDrop;
+    static std::vector<int> generalChatDrop;
     static int generalChatDropTotalCache;
     static int generalChatDropNewValue;
-    static QList<int> clanChatDrop;
+    static std::vector<int> clanChatDrop;
     static int clanChatDropTotalCache;
     static int clanChatDropNewValue;
-    static QList<int> privateChatDrop;
+    static std::vector<int> privateChatDrop;
     static int privateChatDropTotalCache;
     static int privateChatDropNewValue;
-    static QList<quint16> marketObjectIdList;
+    static std::vector<quint16> marketObjectIdList;
     static quint64 datapack_list_cache_timestamp_base,datapack_list_cache_timestamp_main,datapack_list_cache_timestamp_sub;
-    static QList<quint16> simplifiedIdList;
-    static QHash<QString,Client *> playerByPseudo;
-    static QHash<quint32,Clan *> clanList;
-    static QList<Client *> clientBroadCastList;
+    static std::vector<quint16> simplifiedIdList;
+    static std::unordered_map<QString,Client *> playerByPseudo;
+    static std::unordered_map<quint32,Clan *> clanList;
+    static std::vector<Client *> clientBroadCastList;
     static quint8 indexOfItemOnMap;
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     static quint8 indexOfDirtOnMap;//index of plant on map, ordened by map and x,y ordened into the xml file, less bandwith than send map,x,y
@@ -120,7 +121,7 @@ public:
 protected:
     QByteArray rawPseudo;
     bool character_loaded,character_loaded_in_progress;
-    QList<CatchChallenger::DatabaseBase::CallBack *> callbackRegistred;
+    std::vector<CatchChallenger::DatabaseBase::CallBack *> callbackRegistred;
 
     struct ClanActionParam
     {
@@ -184,7 +185,7 @@ private:
             quint8 eventValue;
         };
         QDateTime time;
-        QList<OldEventEntry> oldEventList;
+        std::vector<OldEventEntry> oldEventList;
     };
     OldEvents oldEvents;
 
@@ -198,11 +199,11 @@ private:
     DatapackStatus datapackStatus;
 
     qint32 connected_players;//it's th last number of connected player send
-    QList<void *> paramToPassToCallBack;
+    std::vector<void *> paramToPassToCallBack;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     QStringList paramToPassToCallBackType;
     #endif
-    static QList<quint8> selectCharacterQueryId;
+    static std::vector<quint8> selectCharacterQueryId;
 
     // for status
     bool have_send_protocol;
@@ -223,8 +224,8 @@ private:
     quint8 otherPacketKickNewValue;
     #endif
     quint8 profileIndex;
-    QList<PlayerOnMap> lastTeleportation;
-    QList<quint8> queryNumberList;
+    std::vector<PlayerOnMap> lastTeleportation;
+    std::vector<quint8> queryNumberList;
 
     Client *otherPlayerBattle;
     bool battleIsValidated;
@@ -233,8 +234,8 @@ private:
     quint32 botFightCash;
     quint32 botFightId;
     bool isInCityCapture;
-    QList<Skill::AttackReturn> attackReturn;
-    QHash<quint32, QHash<quint32,quint32> > deferedEndurance;
+    std::vector<Skill::AttackReturn> attackReturn;
+    std::unordered_map<quint32, std::unordered_map<quint32,quint32> > deferedEndurance;
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     struct TokenAuth
     {
@@ -300,8 +301,8 @@ private:
         //quint32 mtime;
         quint32 partialHash;
     };
-    //static QHash<QString,quint32> datapack_file_list_cache_base,datapack_file_list_cache_main,datapack_file_list_cache_sub;//same than above
-    static QHash<QString,DatapackCacheFile> datapack_file_hash_cache_base,datapack_file_hash_cache_main,datapack_file_hash_cache_sub;
+    //static std::unordered_map<QString,quint32> datapack_file_list_cache_base,datapack_file_list_cache_main,datapack_file_list_cache_sub;//same than above
+    static std::unordered_map<QString,DatapackCacheFile> datapack_file_hash_cache_base,datapack_file_hash_cache_main,datapack_file_hash_cache_sub;
     static QRegularExpression fileNameStartStringRegex;
     static QString single_quote;
     static QString antislash_single_quote;
@@ -323,9 +324,9 @@ private:
 
     //info linked
     static Direction	temp_direction;
-    static QHash<quint32,Client *> playerById;
-    static QHash<QString,QList<Client *> > captureCity;
-    static QHash<QString,CaptureCityValidated> captureCityValidatedList;
+    static std::unordered_map<quint32,Client *> playerById;
+    static std::unordered_map<QString,std::vector<Client *> > captureCity;
+    static std::unordered_map<QString,CaptureCityValidated> captureCityValidatedList;
 
     static const QString text_0;
     static const QString text_1;
@@ -376,11 +377,11 @@ private:
     void deleteCharacterNow_return(const quint32 &characterId);
     #endif
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
-    void datapackList(const quint8 &query_id, const QStringList &files, const QList<quint32> &partialHashList);
-    static QHash<QString,DatapackCacheFile> datapack_file_list(const QString &path,const bool withHash=true);
-    QHash<QString,Client::DatapackCacheFile> datapack_file_list_cached_base();
-    QHash<QString,Client::DatapackCacheFile> datapack_file_list_cached_main();
-    QHash<QString,Client::DatapackCacheFile> datapack_file_list_cached_sub();
+    void datapackList(const quint8 &query_id, const QStringList &files, const std::vector<quint32> &partialHashList);
+    static std::unordered_map<QString,DatapackCacheFile> datapack_file_list(const QString &path,const bool withHash=true);
+    std::unordered_map<QString,Client::DatapackCacheFile> datapack_file_list_cached_base();
+    std::unordered_map<QString,Client::DatapackCacheFile> datapack_file_list_cached_main();
+    std::unordered_map<QString,Client::DatapackCacheFile> datapack_file_list_cached_sub();
     void addDatapackListReply(const bool &fileRemove);
     void purgeDatapackListReply(const quint8 &query_id);
     void sendFileContent();
@@ -459,12 +460,12 @@ private:
     void removeCash(const quint64 &cash);
     void addWarehouseCash(const quint64 &cash,const bool &forceSave=false);
     void removeWarehouseCash(const quint64 &cash);
-    void wareHouseStore(const qint64 &cash, const QList<QPair<quint16, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters);
-    bool wareHouseStoreCheck(const qint64 &cash, const QList<QPair<quint16, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters);
+    void wareHouseStore(const qint64 &cash, const std::vector<QPair<quint16, qint32> > &items, const std::vector<quint32> &withdrawMonsters, const std::vector<quint32> &depositeMonsters);
+    bool wareHouseStoreCheck(const qint64 &cash, const std::vector<QPair<quint16, qint32> > &items, const std::vector<quint32> &withdrawMonsters, const std::vector<quint32> &depositeMonsters);
     void addWarehouseObject(const quint16 &item,const quint32 &quantity=1);
     quint32 removeWarehouseObject(const quint16 &item,const quint32 &quantity=1);
 
-    bool haveReputationRequirements(const QList<ReputationRequirements> &reputationList) const;
+    bool haveReputationRequirements(const std::vector<ReputationRequirements> &reputationList) const;
     void confirmEvolution(const quint32 &monsterId);
     void sendHandlerCommand(const QString &command,const QString &extraText);
     void addEventInQueue(const quint8 &event, const quint8 &event_value, const QDateTime &currentDateTime);
@@ -497,7 +498,7 @@ private:
     void removeAllow(const ActionAllow &allow);
     //reputation
     void appendReputationPoint(const quint8 &reputationId, const qint32 &point);
-    void appendReputationRewards(const QList<ReputationRewards> &reputationList);
+    void appendReputationRewards(const std::vector<ReputationRewards> &reputationList);
     //battle
     void battleCanceled();
     void battleAccepted();
@@ -624,9 +625,9 @@ private:
     bool tradeIsValidated;
     bool tradeIsFreezed;
     quint64 tradeCash;
-    QHash<quint32,quint32> tradeObjects;
-    QList<PlayerMonster> tradeMonster;
-    QList<quint32> inviteToClanList;
+    std::unordered_map<quint32,quint32> tradeObjects;
+    std::vector<PlayerMonster> tradeMonster;
+    std::vector<quint32> inviteToClanList;
     Clan *clan;
 public:
     #ifdef EPOLLCATCHCHALLENGERSERVER
@@ -653,10 +654,10 @@ private:
     void registerTradeRequest(Client * otherPlayerTrade);
     bool getIsFreezed();
     quint64 getTradeCash();
-    QHash<quint32,quint32> getTradeObjects();
-    QList<PlayerMonster> getTradeMonster();
+    std::unordered_map<quint32,quint32> getTradeObjects();
+    std::vector<PlayerMonster> getTradeMonster();
     void resetTheTrade();
-    void addExistingMonster(QList<PlayerMonster> tradeMonster);
+    void addExistingMonster(std::vector<PlayerMonster> tradeMonster);
     PlayerMonster &getSelectedMonster();
     quint8 getSelectedMonsterNumber();
     PlayerMonster& getEnemyMonster();
@@ -694,9 +695,9 @@ private:
         quint8 x,y;
     };
     #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-    static QList<PlantInWaiting> plant_list_in_waiting;
+    static std::vector<PlantInWaiting> plant_list_in_waiting;
     #else
-    QList<PlantInWaiting> plant_list_in_waiting;
+    std::vector<PlantInWaiting> plant_list_in_waiting;
     #endif
 
     void parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data,const unsigned int &size);
