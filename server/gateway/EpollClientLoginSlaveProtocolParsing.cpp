@@ -340,19 +340,27 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
             {
                 //Select the character
                 case 0x05:
+                if(linkToGameServer->gameServerMode==LinkToGameServer::GameServerMode::Reconnect)
                 {
                     if(size!=(1+4+4))
                     {
                         parseNetworkReadError("Select character: wrong size");
                         return;
                     }
-                    const quint32 &uniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+1)));
-                    if(!linkToGameServer->serverReconnectList.contains(uniqueKey))
+                    const quint8 &charactersGroupIndex=rawData[0x00];
+                    const quint32 &uniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+1)));
+                    if(!linkToGameServer->serverReconnectList.contains(charactersGroupIndex))
+                    {
+                        parseNetworkReadError("Select character: charactersGroupIndex not found");
+                        return;
+                    }
+                    if(!linkToGameServer->serverReconnectList.value(charactersGroupIndex).contains(uniqueKey))
                     {
                         parseNetworkReadError("Select character: unique key not found");
                         return;
                     }
-                    linkToGameServer->selectedServer=linkToGameServer->serverReconnectList.value(uniqueKey);
+                    linkToGameServer->selectedServer=linkToGameServer->serverReconnectList.value(charactersGroupIndex).value(uniqueKey);
+                    linkToGameServer->serverReconnectList.clear();
                 }
                 break;
                 //Send datapack file list
