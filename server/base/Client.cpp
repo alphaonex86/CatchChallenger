@@ -499,15 +499,17 @@ quint32 Client::getClanId(bool * const ok)
     return clanId;
 }
 #else
-quint32 Client::getMonsterId(bool * const)
+quint32 Client::getMonsterId(bool * const ok)
 {
+    *ok=true;
     const quint32 monsterId=GlobalServerData::serverPrivateVariables.maxMonsterId;
     GlobalServerData::serverPrivateVariables.maxMonsterId++;
     return monsterId;
 }
 
-quint32 Client::getClanId(bool * const)
+quint32 Client::getClanId(bool * const ok)
 {
+    *ok=true;
     const quint32 clanId=GlobalServerData::serverPrivateVariables.maxClanId;
     GlobalServerData::serverPrivateVariables.maxClanId++;
     return clanId;
