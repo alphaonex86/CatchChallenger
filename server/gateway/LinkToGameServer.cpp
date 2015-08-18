@@ -18,6 +18,7 @@
 using namespace CatchChallenger;
 
 const unsigned char protocolHeaderToMatchLogin[] = PROTOCOL_HEADER_LOGIN;
+const unsigned char protocolHeaderToMatchGameServer[] = PROTOCOL_HEADER_GAMESERVER;
 
 LinkToGameServer::LinkToGameServer(
         #ifdef SERVERSSL
@@ -47,7 +48,8 @@ LinkToGameServer::LinkToGameServer(
         reply04inWaitQueryNumber(0),
         reply0205inWait(NULL),
         reply0205inWaitSize(0),
-        reply0205inWaitQueryNumber(0)
+        reply0205inWaitQueryNumber(0),
+        queryIdToReconnect(0)
 {
 }
 
@@ -230,8 +232,13 @@ void LinkToGameServer::readTheFirstSslHeader()
     }
     #endif
     haveTheFirstSslHeader=true;
-    stat=Stat::Connected;
-    sendProtocolHeader();
+    if(stat!=Stat::Reconnecting)
+    {
+        stat=Stat::Connected;
+        sendProtocolHeader();
+    }
+    else
+        sendProtocolHeaderGameServer();
 }
 
 void LinkToGameServer::disconnectClient()
@@ -294,6 +301,11 @@ void LinkToGameServer::parseIncommingData()
 void LinkToGameServer::sendProtocolHeader()
 {
     packOutcommingQuery(0x03,protocolQueryNumber/*queryNumber()*/,reinterpret_cast<const char *>(protocolHeaderToMatchLogin),sizeof(protocolHeaderToMatchLogin));
+}
+
+void LinkToGameServer::sendProtocolHeaderGameServer()
+{
+    packOutcommingQuery(0x03,protocolQueryNumber/*queryNumber()*/,reinterpret_cast<const char *>(protocolHeaderToMatchGameServer),sizeof(protocolHeaderToMatchGameServer));
 }
 
 void LinkToGameServer::sendDiffered04Reply()

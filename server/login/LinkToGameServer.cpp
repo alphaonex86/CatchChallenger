@@ -35,7 +35,7 @@ LinkToGameServer::LinkToGameServer(
         stat(Stat::Connected),
         client(NULL),
         haveTheFirstSslHeader(false),
-        queryIdToLog(0),
+        queryIdToReconnect(0),
         socketFd(infd)
 {
 }

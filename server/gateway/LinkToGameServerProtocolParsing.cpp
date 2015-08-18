@@ -6,10 +6,9 @@
 #include "../../general/base/CommonSettingsServer.h"
 #include "DatapackDownloaderBase.h"
 #include "DatapackDownloaderMainSub.h"
+#include "../epoll/Epoll.h"
 
 using namespace CatchChallenger;
-
-do the switch from login to game server
 
 void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size)
 {
@@ -20,103 +19,188 @@ void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
     {
         case 0x03:
         {
-            //Protocol initialization
-            if(size!=(sizeof(quint8)+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+            if(stat==Stat::Reconnecting)
             {
-                parseNetworkReadError(QStringLiteral("compression type wrong size (stage 3) with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
-                return;
-            }
-            quint8 returnCode=data[0x00];
-            if(returnCode>=0x04 && returnCode<=0x06)
-            {
-                if(!LinkToGameServer::compressionSet)
-                    switch(returnCode)
-                    {
-                        case 0x04:
-                            ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::None;
-                        break;
-                        case 0x05:
-                            ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Zlib;
-                        break;
-                        case 0x06:
-                            ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Xz;
-                        break;
-                        case 0x07:
-                            ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Lz4;
-                        break;
-                        default:
-                            parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
-                        return;
-                    }
-                else
+                //Protocol initialization
+                if(size!=(sizeof(quint8)))
                 {
-                    ProtocolParsing::CompressionType tempCompression;
-                    switch(returnCode)
-                    {
-                        case 0x04:
-                            tempCompression=ProtocolParsing::CompressionType::None;
-                        break;
-                        case 0x05:
-                            tempCompression=ProtocolParsing::CompressionType::Zlib;
-                        break;
-                        case 0x06:
-                            tempCompression=ProtocolParsing::CompressionType::Xz;
-                        break;
-                        case 0x07:
-                            tempCompression=ProtocolParsing::CompressionType::Lz4;
-                        break;
-                        default:
-                            parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
-                        return;
-                    }
-                    if(tempCompression!=ProtocolParsing::compressionTypeClient)
-                    {
-                        parseNetworkReadError(QStringLiteral("compression change main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
-                        return;
-                    }
-                }
-                char newData[size];
-                //the gateway can different compression than server connected
-                switch(ProtocolParsing::compressionTypeServer)
-                {
-                    case ProtocolParsing::CompressionType::None:
-                        newData[0x00]=0x04;
-                    break;
-                    case ProtocolParsing::CompressionType::Zlib:
-                        newData[0x00]=0x05;
-                    break;
-                    case ProtocolParsing::CompressionType::Xz:
-                        newData[0x00]=0x06;
-                    break;
-                    case ProtocolParsing::CompressionType::Lz4:
-                        newData[0x00]=0x07;
-                    break;
-                    default:
-                        parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                    parseNetworkReadError(QStringLiteral("compression type wrong size (stage 3) with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
                     return;
                 }
-                qDebug() << "Transmit the token: " << QString(QByteArray(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT).toHex());
-                memcpy(newData+1,data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                //send token to game server
-                if(client!=NULL)
-                    client->postReply(queryNumber,newData,size);
-                else
+                const quint8 &returnCode=data[0x00];
+                if(returnCode>=0x04 && returnCode<=0x07)
                 {
-                    parseNetworkReadError("Protocol initialised but client already disconnected");
+                    if(!LinkToGameServer::compressionSet)
+                        switch(returnCode)
+                        {
+                            case 0x04:
+                                ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::None;
+                            break;
+                            case 0x05:
+                                ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Zlib;
+                            break;
+                            case 0x06:
+                                ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Xz;
+                            break;
+                            case 0x07:
+                                ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Lz4;
+                            break;
+                            default:
+                                parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                            return;
+                        }
+                    else
+                    {
+                        ProtocolParsing::CompressionType tempCompression;
+                        switch(returnCode)
+                        {
+                            case 0x04:
+                                tempCompression=ProtocolParsing::CompressionType::None;
+                            break;
+                            case 0x05:
+                                tempCompression=ProtocolParsing::CompressionType::Zlib;
+                            break;
+                            case 0x06:
+                                tempCompression=ProtocolParsing::CompressionType::Xz;
+                            break;
+                            case 0x07:
+                                tempCompression=ProtocolParsing::CompressionType::Lz4;
+                            break;
+                            default:
+                                parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                            return;
+                        }
+                        if(tempCompression!=ProtocolParsing::compressionTypeClient)
+                        {
+                            parseNetworkReadError(QStringLiteral("compression change main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                            return;
+                        }
+                    }
+
+                    //send token to game server
+                    packFullOutcommingQuery(0x02,0x06,queryIdToReconnect/*query number*/,tokenForGameServer,sizeof(tokenForGameServer));
                     return;
                 }
-                stat=ProtocolGood;
-                return;
+                else
+                {
+                    if(client!=NULL)
+                        client->postReply(queryIdToReconnect,data,size);
+                    if(returnCode==0x03)
+                        parseNetworkReadError("Server full");
+                    else
+                        parseNetworkReadError(QStringLiteral("Unknown error %1").arg(returnCode));
+                    return;
+                }
             }
             else
             {
-                if(returnCode==0x02)
-                    parseNetworkReadError("Protocol not supported");
-                else if(returnCode==0x03)
-                    parseNetworkReadError("Server full");
+                //Protocol initialization
+                if(size==(sizeof(quint8)))
+                {
+                    if(client!=NULL)
+                    {
+                        client->postReply(queryNumber,data,size);
+                        if(data[0x00]==0x03)
+                            parseNetworkReadError("Server full");
+                        else
+                            parseNetworkReadError(QStringLiteral("Unknown error %1").arg(data[0x00]));
+                    }
+                    else
+                        parseNetworkReadError(QStringLiteral("size==(sizeof(quint8)) and client null with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                    return;
+                }
+                if(size!=(sizeof(quint8)+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+                {
+                    parseNetworkReadError(QStringLiteral("compression type wrong size (stage 3) with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                    return;
+                }
+                const quint8 &returnCode=data[0x00];
+                if(returnCode>=0x04 && returnCode<=0x07)
+                {
+                    if(!LinkToGameServer::compressionSet)
+                        switch(returnCode)
+                        {
+                            case 0x04:
+                                ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::None;
+                            break;
+                            case 0x05:
+                                ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Zlib;
+                            break;
+                            case 0x06:
+                                ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Xz;
+                            break;
+                            case 0x07:
+                                ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Lz4;
+                            break;
+                            default:
+                                parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                            return;
+                        }
+                    else
+                    {
+                        ProtocolParsing::CompressionType tempCompression;
+                        switch(returnCode)
+                        {
+                            case 0x04:
+                                tempCompression=ProtocolParsing::CompressionType::None;
+                            break;
+                            case 0x05:
+                                tempCompression=ProtocolParsing::CompressionType::Zlib;
+                            break;
+                            case 0x06:
+                                tempCompression=ProtocolParsing::CompressionType::Xz;
+                            break;
+                            case 0x07:
+                                tempCompression=ProtocolParsing::CompressionType::Lz4;
+                            break;
+                            default:
+                                parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                            return;
+                        }
+                        if(tempCompression!=ProtocolParsing::compressionTypeClient)
+                        {
+                            parseNetworkReadError(QStringLiteral("compression change main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                            return;
+                        }
+                    }
+                    char newData[size];
+                    //the gateway can different compression than server connected
+                    switch(ProtocolParsing::compressionTypeServer)
+                    {
+                        case ProtocolParsing::CompressionType::None:
+                            newData[0x00]=0x04;
+                        break;
+                        case ProtocolParsing::CompressionType::Zlib:
+                            newData[0x00]=0x05;
+                        break;
+                        case ProtocolParsing::CompressionType::Xz:
+                            newData[0x00]=0x06;
+                        break;
+                        case ProtocolParsing::CompressionType::Lz4:
+                            newData[0x00]=0x07;
+                        break;
+                        default:
+                            parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                        return;
+                    }
+                    qDebug() << "Transmit the token: " << QString(QByteArray(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT).toHex());
+                    memcpy(newData+1,data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                    //send token to game server
+                    if(client!=NULL)
+                        client->postReply(queryNumber,newData,size);
+                    else
+                    {
+                        parseNetworkReadError("Protocol initialised but client already disconnected");
+                        return;
+                    }
+                    stat=ProtocolGood;
+                    return;
+                }
                 else
+                {
                     parseNetworkReadError(QStringLiteral("Unknown error %1").arg(returnCode));
-                return;
+                    return;
+                }
             }
         }
         break;
@@ -159,7 +243,7 @@ void LinkToGameServer::parseFullMessage(const quint8 &mainCodeType,const quint8 
         {
             if(size>0)
             {
-                switch(data[0x00])
+                switch(rawData[0x00])
                 {
                     case 0x01:
                     break;
@@ -173,7 +257,6 @@ void LinkToGameServer::parseFullMessage(const quint8 &mainCodeType,const quint8 
                 char newOutputBuffer[size];
                 newOutputBuffer[0x00]=0x02;
                 unsigned int posOutputBuffer=1;
-                rewrite this output
 
                 unsigned int pos=1;
                 if((size-pos)<1)
@@ -181,7 +264,7 @@ void LinkToGameServer::parseFullMessage(const quint8 &mainCodeType,const quint8 
                     parseNetworkReadError("parseFullMessage() missing data for server list size: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
                     return;
                 }
-                const quint8 &serverListSize=data[pos];
+                const quint8 &serverListSize=rawData[pos];
                 pos+=1;
                 quint8 serverListIndex=0;
                 while(serverListIndex<serverListSize)
@@ -192,25 +275,26 @@ void LinkToGameServer::parseFullMessage(const quint8 &mainCodeType,const quint8 
                         return;
                     }
                     //charactersgroup
-                    newOutputBuffer[posOutputBuffer]=data[pos];
+                    const quint8 &charactersGroupIndex=rawData[pos];
+                    newOutputBuffer[posOutputBuffer]=rawData[pos];
                     posOutputBuffer+=1;
                     pos+=1;
                     //unique key
-                    const quint32 &uniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+pos)));
-                    memcpy(newOutputBuffer+posOutputBuffer,data+pos,4);
+                    const quint32 &uniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+pos)));
+                    memcpy(newOutputBuffer+posOutputBuffer,rawData+pos,4);
                     posOutputBuffer+=4;
                     pos+=4;
                     ServerReconnect serverReconnect;
                     //host
                     {
-                        const quint8 &stringSize=data[pos];
+                        const quint8 &stringSize=rawData[pos];
                         pos+=1;
                         if((size-pos)<stringSize)
                         {
                             parseNetworkReadError("parseFullMessage() missing data for server host string size: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
                             return;
                         }
-                        serverReconnect.host=QString::fromUtf8(data,stringSize);
+                        serverReconnect.host=QString::fromUtf8(rawData,stringSize);
                         if(serverReconnect.host.isEmpty())
                         {
                             parseNetworkReadError("parseFullMessage() server list, host can't be empty: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
@@ -224,18 +308,18 @@ void LinkToGameServer::parseFullMessage(const quint8 &mainCodeType,const quint8 
                         return;
                     }
                     //port
-                    serverReconnect.port=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data+pos)));
+                    serverReconnect.port=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+pos)));
                     pos+=2;
                     //skip description
                     {
-                        const quint16 &stringSize=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data+pos)));
+                        const quint16 &stringSize=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+pos)));
                         pos+=2;
                         if((size-pos)<stringSize)
                         {
                             parseNetworkReadError("parseFullMessage() missing data for server host string size: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
                             return;
                         }
-                        memcpy(newOutputBuffer+posOutputBuffer,data+pos-2,2+stringSize);
+                        memcpy(newOutputBuffer+posOutputBuffer,rawData+pos-2,2+stringSize);
                         posOutputBuffer+=2+stringSize;
 
                         pos+=stringSize;
@@ -246,17 +330,17 @@ void LinkToGameServer::parseFullMessage(const quint8 &mainCodeType,const quint8 
                         parseNetworkReadError("parseFullMessage() missing data for server port start description size: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
                         return;
                     }
-                    memcpy(newOutputBuffer+posOutputBuffer,data+pos,1+2);
+                    memcpy(newOutputBuffer+posOutputBuffer,rawData+pos,1+2);
                     posOutputBuffer+=1+2;
 
                     pos+=1+2;
 
-                    serverReconnectList[uniqueKey]=serverReconnect;
+                    serverReconnectList[charactersGroupIndex][uniqueKey]=serverReconnect;
                     serverListIndex++;
                 }
 
                 //Second list part with same size
-                memcpy(newOutputBuffer+posOutputBuffer,data+pos,2*serverListSize);
+                memcpy(newOutputBuffer+posOutputBuffer,rawData+pos,2*serverListSize);
                 posOutputBuffer+=2*serverListSize;
 
                 gameServerMode=GameServerMode::Reconnect;
@@ -649,87 +733,52 @@ void LinkToGameServer::parseFullReplyData(const quint8 &mainCodeType, const quin
             switch(subCodeType)
             {
                 case 0x05:
+                if(gameServerMode==GameServerMode::Reconnect)
                 {
-                gameServerMode=GameServerMode::Reconnect
-                linkToGameServer->selectedServer
-                }
-                break;
-                case 0x07:
-                {
-                    if(selectCharacterClients.contains(queryNumber))
+                    if(selectedServer.host.isEmpty())
                     {
-                        const DataForSelectedCharacterReturn &dataForSelectedCharacterReturn=selectCharacterClients.value(queryNumber);
-                        if(dataForSelectedCharacterReturn.client!=NULL)
-                        {
-                            if(size==CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
-                            {
-                                if(dataForSelectedCharacterReturn.client!=NULL)
-                                {
-                                    if(static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)->stat!=EpollClientLoginSlave::EpollClientLoginStat::CharacterSelecting)
-                                    {
-                                        static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
-                                        ->parseNetworkReadError("client in wrong state main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+", reply size for 0207 wrong");
-                                        return;
-                                    }
-                                    //check again if the game server is not disconnected, don't check charactersGroupIndex because previously checked at EpollClientLoginSlave::selectCharacter()
-                                    const quint8 &charactersGroupIndex=static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)->charactersGroupIndex;
-                                    const quint32 &serverUniqueKey=static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)->serverUniqueKey;
-                                    if(!CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
-                                    {
-                                        static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
-                                        ->parseNetworkReadError("client server not found to proxy it main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+", reply size for 0207 wrong");
-                                        return;
-                                    }
-                                    const CharactersGroupForLogin::InternalGameServer &server=CharactersGroupForLogin::list.at(charactersGroupIndex)->getServerInformation(serverUniqueKey);
+                        parseNetworkReadError("Reply of 0205 with empty host");
+                        return;
+                    }
+                    if(size!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
+                        break;
 
-                                    static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
-                                    ->stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnecting;
-                                    /// \todo do the async connect
-                                    /// linkToGameServer->stat=Stat::Connecting;
-                                    const int &socketFd=LinkToGameServer::tryConnect(server.host.toLatin1(),server.port,5,1);
-                                    if(Q_LIKELY(socketFd>=0))
-                                    {
-                                        static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
-                                        ->stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnected;
-                                        LinkToGameServer *linkToGameServer=new LinkToGameServer(socketFd);
-                                        static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
-                                        ->linkToGameServer=linkToGameServer;
-                                        linkToGameServer->queryIdToLog=dataForSelectedCharacterReturn.client_query_id;
-                                        linkToGameServer->stat=LinkToGameServer::Stat::Connected;
-                                        linkToGameServer->client=static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client);
-                                        memcpy(linkToGameServer->tokenForGameServer,data,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
-                                        //send the protocol
-                                        //wait readTheFirstSslHeader() to sendProtocolHeader();
-                                        linkToGameServer->setConnexionSettings();
-                                        linkToGameServer->parseIncommingData();
-                                    }
-                                    else
-                                    {
-                                        static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
-                                        ->parseNetworkReadError(QStringLiteral("not able to connect on the game server as proxy, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
-                                        return;
-                                    }
-                                }
-                            }
-                            else if(size==1)
+                    const int &socketFd=LinkToGameServer::tryConnect(selectedServer.host.toLatin1(),selectedServer.port,5,1);
+                    if(Q_LIKELY(socketFd>=0))
+                    {
+                        epollSocket.reopen(socketFd);
+                        this->socketFd=socketFd;
+
+                        epoll_event event;
+                        event.data.ptr = this;
+                        event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
+                        {
+                            const int &s = Epoll::epoll.ctl(EPOLL_CTL_ADD, socketFd, &event);
+                            if(s == -1)
                             {
-                                if(dataForSelectedCharacterReturn.client!=NULL)
-                                {
-                                    static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
-                                    ->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,data[0]);
-                                    static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
-                                    ->closeSocket();
-                                }
+                                std::cerr << "epoll_ctl on socket error" << std::endl;
+                                disconnectClient();
+                                return;
                             }
-                            else
-                                parseNetworkReadError("main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+", reply size for 0207 wrong");
                         }
-                        selectCharacterClients.remove(queryNumber);
+
+                        queryIdToReconnect=queryNumber;
+                        stat=Stat::Reconnecting;
+                        memcpy(tokenForGameServer,data,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                        //send the protocol
+                        //wait readTheFirstSslHeader() to sendProtocolHeader();
+                        haveTheFirstSslHeader=false;
+                        setConnexionSettings();
+                        parseIncommingData();
                     }
                     else
-                        std::cerr << "parseFullReplyData() !selectCharacterClients.contains(queryNumber): mainCodeType: " << mainCodeType << ", subCodeType: " << subCodeType << ", queryNumber: " << queryNumber << std::endl;
+                    {
+                        static_cast<EpollClientLoginSlave * const>(client)
+                        ->parseNetworkReadError(QStringLiteral("not able to connect on the game server as proxy, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
+                    }
+                    selectedServer.host.clear();
                 }
-                return;
+                break;
                 default:
                 break;
             }
