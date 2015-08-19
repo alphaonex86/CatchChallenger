@@ -2,8 +2,7 @@
 #define CATCHCHALLENGER_FACILITYLIB_H
 
 #include <QByteArray>
-#include <QString>
-#include <QStringList>
+#include <string>
 #include <QRect>
 #include <QDir>
 #include <QDateTime>
@@ -18,7 +17,7 @@ public:
     static QByteArray playerMonsterToBinary(const PlayerMonster &playerMonster);
     static QByteArray publicPlayerMonsterToBinary(const PublicPlayerMonster &publicPlayerMonster);
     static PlayerMonster botFightMonsterToPlayerMonster(const BotFight::BotFightMonster &botFightMonster, const Monster::Stat &stat);
-    static QString genderToString(const Gender &gender);
+    static std::basic_string<char> genderToString(const Gender &gender);
     static QDateTime nextCaptureTime(const City &city);
     static QByteArray privateMonsterToBinary(const PlayerMonster &monster);
     static IndustryStatus industryStatusWithCurrentTime(const IndustryStatus &industryStatus, const Industry &industry);
@@ -29,12 +28,12 @@ public:
     static void appendReputationPoint(PlayerReputation *playerReputation, const qint32 &point, const Reputation &reputation);
 private:
     static QByteArray UTF8EmptyData;
-    static QString text_slash;
-    static QString text_male;
-    static QString text_female;
-    static QString text_unknown;
-    static QString text_clan;
-    static QString text_dotcomma;
+    static std::basic_string<char> text_slash;
+    static std::basic_string<char> text_male;
+    static std::basic_string<char> text_female;
+    static std::basic_string<char> text_unknown;
+    static std::basic_string<char> text_clan;
+    static std::basic_string<char> text_dotcomma;
 };
 }
 

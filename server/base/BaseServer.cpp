@@ -107,7 +107,7 @@ BaseServer::BaseServer() :
 
     GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm       = CatchChallenger::MapVisibilityAlgorithmSelection_None;
     GlobalServerData::serverSettings.datapackCache                              = -1;
-    GlobalServerData::serverSettings.datapack_basePath                          = QCoreApplication::applicationDirPath()+QLatin1String("/datapack/");
+    GlobalServerData::serverSettings.datapack_basePath                          = (QCoreApplication::applicationDirPath()+QLatin1String("/datapack/")).toStdString();
     GlobalServerData::serverSettings.compressionType                            = CompressionType_Zlib;
     GlobalServerData::serverSettings.dontSendPlayerType                         = false;
     CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange = true;
@@ -306,27 +306,28 @@ void BaseServer::SQL_common_load_finish()
 void BaseServer::preload_the_events()
 {
     GlobalServerData::serverPrivateVariables.events.clear();
-    int index=0;
+    unsigned int index=0;
     while(index<CommonDatapack::commonDatapack.events.size())
     {
-        GlobalServerData::serverPrivateVariables.events << 0;
+        GlobalServerData::serverPrivateVariables.events.push_back(0);
         index++;
     }
     {
-        QHashIterator<QString,QHash<QString,GameServerSettings::ProgrammedEvent> > i(GlobalServerData::serverSettings.programmedEventList);
-        while (i.hasNext()) {
-            i.next();
-            int index=0;
+        auto i = GlobalServerData::serverSettings.programmedEventList.begin();
+        while(i!=GlobalServerData::serverSettings.programmedEventList.end())
+        {
+            unsigned int index=0;
             while(index<CommonDatapack::commonDatapack.events.size())
             {
                 const Event &event=CommonDatapack::commonDatapack.events.at(index);
-                if(event.name==i.key())
+                if(event.name==i->first)
                 {
-                    QHashIterator<QString,GameServerSettings::ProgrammedEvent> j(i.value());
-                    while (j.hasNext()) {
-                        j.next();
-                        const int &sub_index=event.values.indexOf(j.value().value);
-                        if(sub_index!=-1)
+                    auto j = i->second.begin();
+                    while (j!=i->second.end())
+                    {
+                        std::vector<std::basic_string<char> >::iterator iter = std::find(event.values.begin(), event.values.end(), j->second.value);
+                        size_t sub_index = std::distance(event.values.begin(), iter);
+                        if(sub_index<vec.size())
                         {
                             #ifdef EPOLLCATCHCHALLENGERSERVER
                             GlobalServerData::serverPrivateVariables.timerEvents << new TimerEvents(index,sub_index);
@@ -337,6 +338,7 @@ void BaseServer::preload_the_events()
                         }
                         else
                             GlobalServerData::serverSettings.programmedEventList[i.key()].remove(i.key());
+                        ++j;
                     }
                     break;
                 }
@@ -344,6 +346,7 @@ void BaseServer::preload_the_events()
             }
             if(index==CommonDatapack::commonDatapack.events.size())
                 GlobalServerData::serverSettings.programmedEventList.remove(i.key());
+            ++i;
         }
     }
 }
@@ -416,7 +419,7 @@ bool BaseServer::preload_zone_init()
             CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
         #endif
-        if(GlobalServerData::serverPrivateVariables.captureFightIdList.contains(zoneCodeName))
+        if(GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.contains(zoneCodeName))
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, zone code name already found");
             index++;
@@ -454,7 +457,7 @@ bool BaseServer::preload_zone_init()
                     sub_index++;
                 }
                 if(sub_index==listsize && !fightIdList.isEmpty())
-                    GlobalServerData::serverPrivateVariables.captureFightIdList[zoneCodeName]=fightIdList;
+                    GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity[zoneCodeName]=fightIdList;
                 break;
             }
             else
@@ -463,7 +466,7 @@ bool BaseServer::preload_zone_init()
         index++;
     }
 
-    qDebug() << QStringLiteral("%1 zone(s) loaded").arg(GlobalServerData::serverPrivateVariables.captureFightIdList.size());
+    qDebug() << QStringLiteral("%1 zone(s) loaded").arg(GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.size());
     return true;
 }
 
@@ -3230,7 +3233,7 @@ void BaseServer::unload_the_static_data()
 
 void BaseServer::unload_zone()
 {
-    GlobalServerData::serverPrivateVariables.captureFightIdList.clear();
+    GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.clear();
     GlobalServerData::serverPrivateVariables.plantUsedId.clear();
 }
 

@@ -16,7 +16,7 @@ public:
     void purgeBuffer();
     std::vector<MapVisibilityAlgorithm_WithBorder_StoreOnSender *> clients;//manipulated by thread of ClientMapManagement()
 
-    std::set<SIMPLIFIED_PLAYER_ID_TYPE>     to_send_remove;
+    std::unordered_set<SIMPLIFIED_PLAYER_ID_TYPE>     to_send_remove;
     quint16 clientsOnBorder;
     bool showWithBorder;
     bool show;

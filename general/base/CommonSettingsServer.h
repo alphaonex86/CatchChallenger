@@ -2,12 +2,12 @@
 #define COMMMONSETTINGSSERVER_H
 
 #include <QtGlobal>
-#include <QString>
+#include <string>
 
 class CommonSettingsServer
 {
 public:
-    QString httpDatapackMirrorServer;
+    std::basic_string<char> httpDatapackMirrorServer;
     bool plantOnlyVisibleByPlayer;
     quint8 forcedSpeed;
     bool tcpCork;
@@ -19,10 +19,10 @@ public:
     QByteArray datapackHashServerMain;
     QByteArray datapackHashServerSub;
     #ifndef CATCHCHALLENGER_CLASS_GATEWAY
-    QString mainDatapackCode;
-    QString subDatapackCode;
+    std::basic_string<char> mainDatapackCode;
+    std::basic_string<char> subDatapackCode;
     #endif
-    QString exportedXml;
+    std::basic_string<char> exportedXml;
 
     //rates
     float rates_xp;
