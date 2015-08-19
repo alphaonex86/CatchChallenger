@@ -2,22 +2,15 @@
 #define CATCHCHALLENGER_GENERAL_STRUCTURES_XML_H
 
 #include <QObject>
-#include <QList>
+#include <vector>
 #include <QByteArray>
-#include <QStringList>
-#include <QString>
-#include <QHash>
-#include <QSet>
+#include <string>
+#include <unordered_map>
 #include <QVariant>
 #include <QDomElement>
-#include <QMultiHash>
 
 #include "GeneralType.h"
-
-#define COORD_TYPE quint8
-#define SIMPLIFIED_PLAYER_ID_TYPE quint16
-#define CLAN_ID_TYPE quint32
-#define SPEED_TYPE quint8
+#include "GeneralStructures.h"
 
 namespace CatchChallenger {
 
@@ -25,7 +18,7 @@ struct Map_semi_teleport
 {
     COORD_TYPE source_x,source_y;
     COORD_TYPE destination_x,destination_y;
-    QString map;
+    std::basic_string<char> map;
     QDomElement conditionUnparsed;
     MapCondition condition;
 };
@@ -33,32 +26,32 @@ struct Map_semi_teleport
 struct Map_to_send
 {
     Map_semi_border border;
-    //QStringList other_map;//border and not
+    //std::basic_string<char>List other_map;//border and not
 
-    //quint32 because the format allow it, checked into tryLoadMap()
-    quint32 width;
-    quint32 height;
+    //uint32_t because the format allow it, checked into tryLoadMap()
+    uint32_t width;
+    uint32_t height;
 
-    QHash<QString,QVariant> property;
+    std::unordered_map<std::basic_string<char>,QVariant> property;
 
     ParsedLayer parsed_layer;
 
-    QList<Map_semi_teleport> teleport;
+    std::vector<Map_semi_teleport> teleport;
 
     struct Map_Point
     {
         COORD_TYPE x,y;
     };
-    QList<Map_Point> rescue_points;
+    std::vector<Map_Point> rescue_points;
 
     struct Bot_Semi
     {
         Map_Point point;
-        QString file;
+        std::basic_string<char> file;
         quint16 id;
-        QHash<QString,QVariant> property_text;
+        std::unordered_map<std::basic_string<char>,QVariant> property_text;
     };
-    QList<Bot_Semi> bots;
+    std::vector<Bot_Semi> bots;
 
     struct ItemOnMap_Semi
     {
@@ -67,16 +60,16 @@ struct Map_to_send
         bool visible;
         bool infinite;
     };
-    QList<ItemOnMap_Semi> items;//list to keep to keep the order to do the indexOfItemOnMap to send to player, use less bandwith due to send quint8 not map,x,y
+    std::vector<ItemOnMap_Semi> items;//list to keep to keep the order to do the indexOfItemOnMap to send to player, use less bandwith due to send quint8 not map,x,y
     //used only on server
     struct DirtOnMap_Semi
     {
         Map_Point point;
     };
-    QList<DirtOnMap_Semi> dirts;//list to keep to keep the order to do the indexOfDirtsOnMap to send to player, use less bandwith due to send quint8 not map,x,y
+    std::vector<DirtOnMap_Semi> dirts;//list to keep to keep the order to do the indexOfDirtsOnMap to send to player, use less bandwith due to send quint8 not map,x,y
 
     quint8 *monstersCollisionMap;
-    QList<MonstersCollisionValue> monstersCollisionList;
+    std::vector<MonstersCollisionValue> monstersCollisionList;
 
     QDomElement xmlRoot;
 };
@@ -84,11 +77,11 @@ struct Map_to_send
 //permanent bot on client, temp to parse on the server
 struct Bot
 {
-    QHash<quint8,QDomElement> step;
-    QHash<QString,QString> properties;
-    quint32 botId;//id need be unique for the quests, then 32Bits
-    QString skin;
-    QString name;
+    std::unordered_map<quint8,QDomElement> step;
+    std::unordered_map<std::basic_string<char>,std::basic_string<char>> properties;
+    uint32_t botId;//id need be unique for the quests, then 32Bits
+    std::basic_string<char> skin;
+    std::basic_string<char> name;
 };
 
 }

@@ -3,11 +3,8 @@
 
 #include <QObject>
 #include <QMutex>
-#include <QHash>
-#include <QSet>
-#include <QString>
-#include <QStringList>
-#include <QMultiHash>
+#include <unordered_map>
+#include <string>
 
 #include "GeneralStructures.h"
 #include "CommonDatapack.h"
@@ -19,18 +16,18 @@ public:
     explicit CommonDatapackServerSpec();
 public:
     void unload();
-    void parseDatapack(const QString &datapackPath, const QString &mainDatapackCode);
+    void parseDatapack(const std::basic_string<char> &datapackPath, const std::basic_string<char> &mainDatapackCode);
 public:
-    QHash<quint16,BotFight> botFights;
-    QHash<quint16,Quest> quests;
-    QHash<quint32,Shop> shops;
-    QList<ServerProfile> serverProfileList;
+    std::unordered_map<quint16,BotFight> botFights;
+    std::unordered_map<quint16,Quest> quests;
+    std::unordered_map<quint32,Shop> shops;
+    std::vector<ServerProfile> serverProfileList;
     static CommonDatapackServerSpec commonDatapackServerSpec;
 private:
     QMutex inProgressSpec;
     bool isParsedSpec;
-    QString datapackPath;
-    QString mainDatapackCode;
+    std::basic_string<char> datapackPath;
+    std::basic_string<char> mainDatapackCode;
 private:
     void parseQuests();
     void parseBotFights();

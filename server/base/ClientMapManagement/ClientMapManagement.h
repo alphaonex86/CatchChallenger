@@ -2,7 +2,6 @@
 #define CATCHCHALLENGER_CLIENTMAPMANAGEMENT_H
 
 #include <QObject>
-#include <QList>
 #include <QString>
 
 #include "../../../general/base/DebugClass.h"

@@ -7,8 +7,7 @@
 
 #include <QObject>
 #include <vector>
-#include <QStringList>
-#include <QString>
+#include <string>
 #include <QMutex>
 #include <QVariant>
 #include <unordered_set>
@@ -63,13 +62,13 @@ struct Map_player_info
 {
     CommonMap *map;
     int x,y;
-    QString skin;
+    std::basic_string<char> skin;
 };
 
 struct FileToSend
 {
     //not QFile * to prevent too many file open
-    QString file;
+    std::basic_string<char> file;
 };
 
 enum MapVisibilityAlgorithmSelection
@@ -106,8 +105,8 @@ struct PlayerOnMap
 struct NormalServerSettings
 {
     quint16 server_port;
-    QString server_ip;
-    QString proxy;
+    std::basic_string<char> server_ip;
+    std::basic_string<char> proxy;
     quint16 proxy_port;
     bool useSsl;
     #ifdef Q_OS_LINUX
@@ -132,8 +131,8 @@ struct GameServerSettings
     quint16 max_players;//not common because if null info not send
 
     //the listen, implicit on the client
-    QString datapack_basePath;
-    QString server_message;
+    std::basic_string<char> datapack_basePath;
+    std::basic_string<char> server_message;
     bool dontSendPlayerType;
     qint32 datapackCache;//-1 = disable, 0 = no timeout, else it's the timeout in s
 
@@ -149,11 +148,11 @@ struct GameServerSettings
 
     struct Database
     {
-        QString file;
-        QString host;
-        QString db;
-        QString login;
-        QString pass;
+        std::basic_string<char> file;
+        std::basic_string<char> host;
+        std::basic_string<char> db;
+        std::basic_string<char> login;
+        std::basic_string<char> pass;
 
         DatabaseBase::DatabaseType tryOpenType;
         unsigned int tryInterval;//second
@@ -214,11 +213,11 @@ struct GameServerSettings
 
     struct ProgrammedEvent
     {
-        QString value;
+        std::basic_string<char> value;
         quint16 cycle;//mins
         quint16 offset;//mins
     };
-    std::unordered_map<QString,std::unordered_map<QString,ProgrammedEvent> > programmedEventList;
+    std::unordered_map<std::basic_string<char>/*type, example: day*/,std::unordered_map<std::basic_string<char>/*groupName, example: day/night*/,ProgrammedEvent> > programmedEventList;
 };
 
 struct CityStatus
@@ -244,13 +243,13 @@ struct MarketItem
 
 struct Clan
 {
-    QString captureCityInProgress;
-    QString capturedCity;
+    std::basic_string<char> captureCityInProgress;
+    std::basic_string<char> capturedCity;
     quint32 clanId;
     std::vector<Client *> players;
 
     //the db info
-    QString name;
+    std::basic_string<char> name;
     quint64 cash;
 };
 
@@ -271,8 +270,8 @@ struct ServerProfileInternal
     Orientation orientation;
 
     //only to add
-    QStringList preparedQueryAdd;
-    QStringList preparedQuerySelect;
+    std::vector<std::basic_string<char> > preparedQueryAdd;
+    std::vector<std::basic_string<char> > preparedQuerySelect;
     bool valid;
 };
 
@@ -298,9 +297,9 @@ struct ServerPrivateVariables
     std::vector<ServerProfileInternal> serverProfileInternalList;
 
     //datapack
-    QString datapack_mapPath;
-    QString mainDatapackFolder;
-    QString subDatapackFolder;
+    std::basic_string<char> datapack_mapPath;
+    std::basic_string<char> mainDatapackFolder;
+    std::basic_string<char> subDatapackFolder;
     QRegularExpression datapack_rightFileName;
     QRegularExpression datapack_rightFolderName;
 
@@ -313,9 +312,9 @@ struct ServerPrivateVariables
     std::atomic<unsigned int> maxClanId;
     std::atomic<unsigned int> maxMonsterId;
     #endif
-    std::unordered_map<QString,std::vector<quint16> > captureFightIdList;
-    std::unordered_map<QString,CityStatus> cityStatusList;
-    std::unordered_map<quint32,QString> cityStatusListReverse;
+    std::unordered_map<std::basic_string<char>,std::vector<quint16> > captureFightIdListByZoneToCaptureCity;
+    std::unordered_map<std::basic_string<char>,CityStatus> cityStatusList;
+    std::unordered_map<quint32,std::basic_string<char> > cityStatusListReverse;
     std::unordered_set<quint32> tradedMonster;
     QByteArray randomData;
 
@@ -346,9 +345,9 @@ struct ServerPrivateVariables
     std::unordered_map<quint32,Clan *> clanList;
 
     //map
-    std::unordered_map<QString,CommonMap *> map_list;
+    std::unordered_map<std::basic_string<char>,CommonMap *> map_list;
     CommonMap ** flat_map_list;
-    std::unordered_map<quint32,QString> id_map_to_map;
+    std::unordered_map<quint32,std::basic_string<char> > id_map_to_map;
     qint8 sizeofInsertRequest;
 
     //connection
@@ -358,7 +357,7 @@ struct ServerPrivateVariables
     PlayerUpdaterToMaster player_updater_to_master;
     #endif
     std::unordered_set<quint32> connected_players_id_list;
-    QStringList server_message;
+    std::vector<std::basic_string<char> > server_message;
 
     quint32 number_of_bots_logged;
     int botSpawnIndex;
@@ -382,7 +381,7 @@ struct ServerPrivateVariables
     };
 
     //datapack
-    std::unordered_map<QString,quint8> skinList;
+    std::unordered_map<std::basic_string<char>,quint8> skinList;
 };
 
 bool operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchChallenger::MonsterDrops &monsterDrops2);

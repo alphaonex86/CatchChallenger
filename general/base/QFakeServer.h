@@ -5,8 +5,7 @@
 #include <QObject>
 #include <QMutex>
 #include <QMutexLocker>
-#include <QList>
-#include <QPair>
+#include <vector>
 
 namespace CatchChallenger {
 class QFakeSocket;
@@ -30,8 +29,8 @@ signals:
 private:
     QMutex mutex;
     bool m_isListening;
-    QList<QPair<QFakeSocket *,QFakeSocket *> > m_listOfConnexion;
-    QList<QPair<QFakeSocket *,QFakeSocket *> > m_pendingConnection;
+    std::vector<std::pair<QFakeSocket *,QFakeSocket *> > m_listOfConnexion;
+    std::vector<std::pair<QFakeSocket *,QFakeSocket *> > m_pendingConnection;
 protected:
     //from the server
     void addPendingConnection(QFakeSocket * socket);

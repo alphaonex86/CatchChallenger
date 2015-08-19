@@ -2,15 +2,14 @@
 #define CATCHCHALLENGER_BASESERVER_H
 
 #include <QObject>
-#include <QSettings>
 #include <QDebug>
 #include <QTimer>
 #include <QCoreApplication>
-#include <QList>
+#include <vector>
 #include <QByteArray>
 #include <QDir>
 #include <QSemaphore>
-#include <QString>
+#include <std::basic_string<char>>
 #include <QRegularExpression>
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -59,7 +58,7 @@ protected:
     bool load_next_city_capture();
     void SQL_common_load_finish();
 protected:
-    virtual void parseJustLoadedMap(const Map_to_send &,const QString &);
+    virtual void parseJustLoadedMap(const Map_to_send &,const std::basic_string<char> &);
     void closeDB();
     //starting function
     void loadAndFixSettings();
@@ -105,7 +104,7 @@ protected:
     void preload_the_players();
     void preload_profile();
     virtual void preload_the_visibility_algorithm();
-    void preload_the_bots(const QList<Map_semi> &semi_loaded_map);
+    void preload_the_bots(const std::vector<Map_semi> &semi_loaded_map);
     virtual void preload_finish();
     void preload_plant_on_map_sql();
     static void preload_plant_on_map_static(void *object);
@@ -114,7 +113,7 @@ protected:
     void load_sql_monsters_max_id();
     static void load_monsters_max_id_static(void *object);
     void load_monsters_max_id_return();
-    QHash<quint16,MonsterDrops> loadMonsterDrop(const QString &file, QHash<quint16,Item> items,const QHash<quint16,Monster> &monsters);
+    std::unordered_map<quint16,MonsterDrops> loadMonsterDrop(const std::basic_string<char> &file, std::unordered_map<quint16,Item> items,const std::unordered_map<quint16,Monster> &monsters);
     virtual void criticalDatabaseQueryFailed();
     virtual void quitForCriticalDatabaseQueryFailed() = 0;
 
@@ -168,70 +167,70 @@ protected:
     void loadMonsterSkills_return();
 
     bool initialize_the_database();
-    void loadBotFile(const QString &mapfile, const QString &fileName);
+    void loadBotFile(const std::basic_string<char> &mapfile, const std::basic_string<char> &fileName);
     //FakeServer server;//wrong, create another object, here need use the global static object
 
-    //to keep client list, QSet because it will have lot of more disconnecion than server closing
+    //to keep client list, std::unordered_set because it will have lot of more disconnecion than server closing
     bool dataLoaded;
 
-    QHash<QString/*name*/,QHash<quint8/*bot id*/,CatchChallenger::Bot> > botFiles;
-    QSet<quint32> botIdLoaded;
+    std::unordered_map<std::basic_string<char>/*file name*/,std::unordered_map<quint8/*bot id*/,CatchChallenger::Bot> > botFiles;
+    std::unordered_set<quint32> botIdLoaded;
     QTime timeDatapack;
     unsigned int dictionary_pointOnMap_maxId;
     BaseServerMasterSendDatapack baseServerMasterSendDatapack;
-    QList<Monster_Semi_Market> monsterSemiMarketList;
+    std::vector<Monster_Semi_Market> monsterSemiMarketList;
 
     QFileInfoList entryListZone;
     int entryListIndex;
     int plant_on_the_map;
-    QList<Map_semi> semi_loaded_map;
+    std::vector<Map_semi> semi_loaded_map;
 
     static QRegularExpression regexXmlFile;
-    static const QString text_dotxml;
-    static const QString text_zone;
-    static const QString text_capture;
-    static const QString text_fightId;
-    static const QString text_dotcomma;
-    static const QString text_male;
-    static const QString text_female;
-    static const QString text_unknown;
-    static const QString text_slash;
-    static const QString text_antislash;
-    static const QString text_type;
-    static const QString text_shop;
-    static const QString text_learn;
-    static const QString text_heal;
-    static const QString text_market;
-    static const QString text_zonecapture;
-    static const QString text_fight;
-    static const QString text_fightid;
-    static const QString text_lookAt;
-    static const QString text_left;
-    static const QString text_right;
-    static const QString text_top;
-    static const QString text_bottom;
-    static const QString text_fightRange;
-    static const QString text_bots;
-    static const QString text_bot;
-    static const QString text_id;
-    static const QString text_name;
-    static const QString text_step;
-    static const QString text_arrow;
-    static const QString text_dottmx;
-    static const QString text_shops;
-    static const QString text_product;
-    static const QString text_itemId;
-    static const QString text_overridePrice;
-    static const QString text_list;
-    static const QString text_monster;
-    static const QString text_monsters;
-    static const QString text_drops;
-    static const QString text_drop;
-    static const QString text_item;
-    static const QString text_quantity_min;
-    static const QString text_quantity_max;
-    static const QString text_luck;
-    static const QString text_percent;
+    static const std::basic_string<char> text_dotxml;
+    static const std::basic_string<char> text_zone;
+    static const std::basic_string<char> text_capture;
+    static const std::basic_string<char> text_fightId;
+    static const std::basic_string<char> text_dotcomma;
+    static const std::basic_string<char> text_male;
+    static const std::basic_string<char> text_female;
+    static const std::basic_string<char> text_unknown;
+    static const std::basic_string<char> text_slash;
+    static const std::basic_string<char> text_antislash;
+    static const std::basic_string<char> text_type;
+    static const std::basic_string<char> text_shop;
+    static const std::basic_string<char> text_learn;
+    static const std::basic_string<char> text_heal;
+    static const std::basic_string<char> text_market;
+    static const std::basic_string<char> text_zonecapture;
+    static const std::basic_string<char> text_fight;
+    static const std::basic_string<char> text_fightid;
+    static const std::basic_string<char> text_lookAt;
+    static const std::basic_string<char> text_left;
+    static const std::basic_string<char> text_right;
+    static const std::basic_string<char> text_top;
+    static const std::basic_string<char> text_bottom;
+    static const std::basic_string<char> text_fightRange;
+    static const std::basic_string<char> text_bots;
+    static const std::basic_string<char> text_bot;
+    static const std::basic_string<char> text_id;
+    static const std::basic_string<char> text_name;
+    static const std::basic_string<char> text_step;
+    static const std::basic_string<char> text_arrow;
+    static const std::basic_string<char> text_dottmx;
+    static const std::basic_string<char> text_shops;
+    static const std::basic_string<char> text_product;
+    static const std::basic_string<char> text_itemId;
+    static const std::basic_string<char> text_overridePrice;
+    static const std::basic_string<char> text_list;
+    static const std::basic_string<char> text_monster;
+    static const std::basic_string<char> text_monsters;
+    static const std::basic_string<char> text_drops;
+    static const std::basic_string<char> text_drop;
+    static const std::basic_string<char> text_item;
+    static const std::basic_string<char> text_quantity_min;
+    static const std::basic_string<char> text_quantity_max;
+    static const std::basic_string<char> text_luck;
+    static const std::basic_string<char> text_percent;
 };
 }
 

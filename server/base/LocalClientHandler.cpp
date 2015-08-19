@@ -3024,8 +3024,8 @@ void Client::startTheCityCapture()
             if(!GlobalServerData::serverPrivateVariables.cityStatusList.contains(i.key()))
                 GlobalServerData::serverPrivateVariables.cityStatusList[i.key()].clan=0;
             if(GlobalServerData::serverPrivateVariables.cityStatusList.value(i.key()).clan==0)
-                if(GlobalServerData::serverPrivateVariables.captureFightIdList.contains(i.key()))
-                    tempCaptureCityValidated.bots=GlobalServerData::serverPrivateVariables.captureFightIdList.value(i.key());
+                if(GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.contains(i.key()))
+                    tempCaptureCityValidated.bots=GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.value(i.key());
             tempCaptureCityValidated.players=i.value();
             int index;
             int sub_index;

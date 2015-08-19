@@ -1,7 +1,8 @@
 #ifndef CATCHCHALLENGER_MAP_SERVER_CRAFTING_H
 #define CATCHCHALLENGER_MAP_SERVER_CRAFTING_H
 
-#include <QHash>
+#include <unordered_map>
+#include "../general/base/GeneralStructures.h"
 
 namespace CatchChallenger {
 
@@ -20,7 +21,7 @@ public:
         quint64 player_owned_expire_at;//timestamp when is mature
         #endif
     };
-    QHash<QPair<quint8,quint8>,PlantOnMap> plants;//position, plant id
+    std::unordered_map<std::pair<quint8,quint8>,PlantOnMap,pairhash> plants;//position, plant id
 };
 }
 

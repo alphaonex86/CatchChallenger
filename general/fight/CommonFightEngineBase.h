@@ -4,6 +4,7 @@
 #include <QByteArray>
 #include <QHash>
 #include <QString>
+#include <vector>
 
 #include "../base/GeneralStructures.h"
 #include "../base/ClientBase.h"
@@ -14,7 +15,7 @@ namespace CatchChallenger {
 class CommonFightEngineBase
 {
 public:
-    static QList<PlayerMonster::PlayerSkill> generateWildSkill(const Monster &monster, const quint8 &level);
+    static std::vector<PlayerMonster::PlayerSkill> generateWildSkill(const Monster &monster, const quint8 &level);
     static Monster::Stat getStat(const Monster &monster, const quint8 &level);
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     static bool buffIsValid(const Skill::BuffEffect &buffEffect);
