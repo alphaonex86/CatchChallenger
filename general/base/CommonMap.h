@@ -1,9 +1,11 @@
 #ifndef CATCHCHALLENGER_MAP_H
 #define CATCHCHALLENGER_MAP_H
 
-#include <QString>
-#include <QHash>
-#include <QList>
+#include <string>
+#include <unordered_map>
+#include <vector>
+#include <vector>
+#include <utility>
 #include <QByteArray>
 
 #include "GeneralStructures.h"
@@ -34,33 +36,33 @@ public:
     };
     Map_Border border;
 
-    QList<CommonMap *> near_map,border_map;//not only the border
+    std::vector<CommonMap *> near_map,border_map;//not only the border
     struct Teleporter
     {
         quint32 x,y;
         CommonMap *map;
         MapCondition condition;
     };
-    QHash<quint32,Teleporter> teleporter;//the int (x+y*width) is position
+    std::unordered_map<quint32,Teleporter> teleporter;//the int (x+y*width) is position
 
-    QString map_file;
+    std::basic_string<char> map_file;
     quint16 width;
     quint16 height;
     quint32 group;
     quint32 id;
 
-    QMultiHash<QPair<quint8,quint8>,quint32> shops;
-    QSet<QPair<quint8,quint8> > learn;
-    QSet<QPair<quint8,quint8> > heal;
-    QSet<QPair<quint8,quint8> > market;
-    QHash<QPair<quint8,quint8>,QString> zonecapture;
-    QMultiHash<QPair<quint8,quint8>,quint32> botsFight;
+    std::unordered_multimap<std::pair<uint8_t,uint8_t>,uint32_t, pairhash> shops;
+    std::unordered_set<std::pair<quint8,quint8>,pairhash> learn;
+    std::unordered_set<std::pair<quint8,quint8>,pairhash> heal;
+    std::unordered_set<std::pair<quint8,quint8>,pairhash> market;
+    std::unordered_map<std::pair<quint8,quint8>,std::basic_string<char>,pairhash> zonecapture;
+    std::unordered_multimap<std::pair<quint8,quint8>,quint32,pairhash> botsFight;
 
-    /*QList<MapMonster> grassMonster;
-    QList<MapMonster> waterMonster;
-    QList<MapMonster> caveMonster;*/
+    /*std::vector<MapMonster> grassMonster;
+    std::vector<MapMonster> waterMonster;
+    std::vector<MapMonster> caveMonster;*/
 
-    QMultiHash<QPair<quint8,quint8>,quint32> botsFightTrigger;//trigger line in front of bot fight
+    std::unordered_multimap<std::pair<quint8,quint8>,quint32,pairhash> botsFightTrigger;//trigger line in front of bot fight
 
     static void removeParsedLayer(const ParsedLayer &parsed_layer);
 };

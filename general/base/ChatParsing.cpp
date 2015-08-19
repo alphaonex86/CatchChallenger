@@ -2,9 +2,9 @@
 
 using namespace CatchChallenger;
 
-QString ChatParsing::new_chat_message(QString pseudo,Player_type player_type,Chat_type chat_type,QString text)
+std::basic_string<char> ChatParsing::new_chat_message(std::basic_string<char> pseudo, Player_type player_type, Chat_type chat_type, std::basic_string<char> text)
 {
-    QString returned_html;
+    std::basic_string<char> returned_html;
     returned_html+=QLatin1Literal("<div style=\"");
     switch(chat_type)
     {
@@ -70,13 +70,13 @@ QString ChatParsing::new_chat_message(QString pseudo,Player_type player_type,Cha
         if(pseudo.isEmpty())
             returned_html+=toSmilies(toHtmlEntities(text));
         else
-            returned_html+=QStringLiteral("%1: %2").arg(pseudo).arg(toSmilies(toHtmlEntities(text)));
+            returned_html+=std::basic_string<char>Literal("%1: %2").arg(pseudo).arg(toSmilies(toHtmlEntities(text)));
     }
     returned_html+=QLatin1Literal("</div>");
     return returned_html;
 }
 
-QString ChatParsing::toHtmlEntities(QString text)
+std::basic_string<char> ChatParsing::toHtmlEntities(std::basic_string<char> text)
 {
     text.replace(QLatin1Literal("&"),QLatin1Literal("&amp;"));
     text.replace(QLatin1Literal("\""),QLatin1Literal("&quot;"));
@@ -86,7 +86,7 @@ QString ChatParsing::toHtmlEntities(QString text)
     return text;
 }
 
-QString ChatParsing::toSmilies(QString text)
+std::basic_string<char> ChatParsing::toSmilies(std::basic_string<char> text)
 {
     text.replace(QLatin1Literal(":)"),QLatin1Literal("<img src=\":/images/smiles/face-smile.png\" alt=\"\" style=\"vertical-align:middle;\" />"));
     text.replace(QLatin1Literal(":|"),QLatin1Literal("<img src=\":/images/smiles/face-plain.png\" alt=\"\" style=\"vertical-align:middle;\" />"));

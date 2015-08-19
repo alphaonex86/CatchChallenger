@@ -3,11 +3,8 @@
 
 #include <QObject>
 #include <QMutex>
-#include <QHash>
-#include <QSet>
-#include <QString>
-#include <QStringList>
-#include <QMultiHash>
+#include <unordered_map>
+#include <string>
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QDomDocument>
 #endif
@@ -28,39 +25,39 @@ public:
     static CommonDatapack commonDatapack;
 public:
     void unload();
-    void parseDatapack(const QString &datapackPath);
+    void parseDatapack(const std::basic_string<char> &datapackPath);
 public:
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    QHash<quint8,Plant> plants;
-    QHash<quint16,CrafingRecipe> crafingRecipes;
-    QHash<quint16,quint16> itemToCrafingRecipes;
+    std::unordered_map<quint8,Plant> plants;
+    std::unordered_map<quint16,CrafingRecipe> crafingRecipes;
+    std::unordered_map<quint16,quint16> itemToCrafingRecipes;
     #endif
-    QList<Reputation> reputation;
-    QHash<quint16,Monster> monsters;
-    QHash<quint16,Skill> monsterSkills;
+    std::vector<Reputation> reputation;
+    std::unordered_map<quint16,Monster> monsters;
+    std::unordered_map<quint16,Skill> monsterSkills;
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    QHash<quint8,Buff> monsterBuffs;
+    std::unordered_map<quint8,Buff> monsterBuffs;
     ItemFull items;
-    QHash<quint16,Industry> industries;
-    QHash<quint16,IndustryLink> industriesLink;
-    QList<MonstersCollision> monstersCollision;
+    std::unordered_map<quint16,Industry> industries;
+    std::unordered_map<quint16,IndustryLink> industriesLink;
+    std::vector<MonstersCollision> monstersCollision;
     #endif
-    QList<Profile> profileList;
+    std::vector<Profile> profileList;
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    QList<Type> types;
+    std::vector<Type> types;
     #endif
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    QHash<QString/*file*/, QDomDocument> xmlLoadedFile;
+    std::unordered_map<std::basic_string<char>/*file*/, QDomDocument> xmlLoadedFile;
     #endif
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     LayersOptions layersOptions;
-    QList<Event> events;
+    std::vector<Event> events;
     #endif
-    QList<QString> skins;
+    std::vector<std::basic_string<char> > skins;
 private:
     QMutex inProgress;
     bool isParsed;
-    QString datapackPath;
+    std::basic_string<char> datapackPath;
 private:
     void parseTypes();
     void parseItems();

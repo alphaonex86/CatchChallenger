@@ -2,13 +2,13 @@
 #define COMMMONSETTINGSCOMMON_H
 
 #include <QtGlobal>
-#include <QString>
+#include <string>
 
 class CommonSettingsCommon
 {
 public:
     bool automatic_account_creation;
-    QString httpDatapackMirrorBase;
+    std::basic_string<char> httpDatapackMirrorBase;
     QByteArray datapackHashBase;
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

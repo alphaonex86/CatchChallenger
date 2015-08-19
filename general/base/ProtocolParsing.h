@@ -104,8 +104,8 @@ protected:
     static std::unordered_set<quint8> replyComressionOnlyMainCodePacketServerToClient;
     #endif
 protected:
-    virtual void errorParsingLayer(const QString &error) = 0;
-    virtual void messageParsingLayer(const QString &message) const = 0;
+    virtual void errorParsingLayer(const std::basic_string<char> &error) = 0;
+    virtual void messageParsingLayer(const std::basic_string<char> &message) const = 0;
 private:
     virtual void reset() = 0;
 };
@@ -128,7 +128,7 @@ public:
 public:
     bool parseIncommingDataRaw(const char * const commonBuffer, const quint32 &size,quint32 &cursor);
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    QStringList getQueryRunningList();
+    std::basic_string<char>List getQueryRunningList();
     #endif
 protected:
     bool parseHeader(const char * const commonBuffer, const quint32 &size, quint32 &cursor);

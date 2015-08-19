@@ -22,7 +22,7 @@ CommonDatapack::CommonDatapack()
     isParsed=false;
 }
 
-void CommonDatapack::parseDatapack(const QString &datapackPath)
+void CommonDatapack::parseDatapack(const std::basic_string<char> &datapackPath)
 {
     if(isParsed)
         return;

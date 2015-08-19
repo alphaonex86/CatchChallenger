@@ -1,9 +1,8 @@
 #ifndef FIGHTLOADER_H
 #define FIGHTLOADER_H
 
-#include <QHash>
+#include <unordered_map>
 #include <QString>
-#include <QMultiHash>
 
 #include "../base/GeneralStructures.h"
 #include "../base/DatapackGeneralLoader.h"
@@ -15,24 +14,24 @@ public:
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     static QList<Type> loadTypes(const QString &file);
     #endif
-    static QHash<quint16,Monster> loadMonster(const QString &folder, const QHash<quint16,Skill> &monsterSkills
+    static std::unordered_map<quint16,Monster> loadMonster(const QString &folder, const std::unordered_map<quint16,Skill> &monsterSkills
                                               #ifndef CATCHCHALLENGER_CLASS_MASTER
-                                              , const QList<Type> &types, const QHash<quint16, Item> &items
+                                              , const QList<Type> &types, const std::unordered_map<quint16, Item> &items
                                               #endif
                                               );
-    static QHash<quint16,Skill> loadMonsterSkill(const QString &folder
+    static std::unordered_map<quint16,Skill> loadMonsterSkill(const QString &folder
                                                  #ifndef CATCHCHALLENGER_CLASS_MASTER
-                                                 , const QHash<quint8,Buff> &monsterBuffs
+                                                 , const std::unordered_map<quint8,Buff> &monsterBuffs
                                                  , const QList<Type> &types
                                                  #endif
                                                  );
     #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
-    static QHash<quint16/*item*/, QHash<quint16/*monster*/,quint16/*evolveTo*/> > loadMonsterEvolutionItems(const QHash<quint16,Monster> &monsters);
-    static QHash<quint16/*item*/, QSet<quint16/*monster*/> > loadMonsterItemToLearn(const QHash<quint16,Monster> &monsters, const QHash<quint16/*item*/, QHash<quint16/*monster*/,quint16/*evolveTo*/> > &evolutionItem);
-    static QHash<quint8,Buff> loadMonsterBuff(const QString &folder);
-    static QHash<quint16,BotFight> loadFight(const QString &folder, const QHash<quint16,Monster> &monsters, const QHash<quint16, Skill> &monsterSkills, const QHash<quint16, Item> &items);
+    static std::unordered_map<quint16/*item*/, std::unordered_map<quint16/*monster*/,quint16/*evolveTo*/> > loadMonsterEvolutionItems(const std::unordered_map<quint16,Monster> &monsters);
+    static std::unordered_map<quint16/*item*/, QSet<quint16/*monster*/> > loadMonsterItemToLearn(const std::unordered_map<quint16,Monster> &monsters, const std::unordered_map<quint16/*item*/, std::unordered_map<quint16/*monster*/,quint16/*evolveTo*/> > &evolutionItem);
+    static std::unordered_map<quint8,Buff> loadMonsterBuff(const QString &folder);
+    static std::unordered_map<quint16,BotFight> loadFight(const QString &folder, const std::unordered_map<quint16,Monster> &monsters, const std::unordered_map<quint16, Skill> &monsterSkills, const std::unordered_map<quint16, Item> &items);
     #endif
-    static QList<PlayerMonster::PlayerSkill> loadDefaultAttack(const quint16 &monsterId, const quint8 &level, const QHash<quint16,Monster> &monsters, const QHash<quint16, Skill> &monsterSkills);
+    static QList<PlayerMonster::PlayerSkill> loadDefaultAttack(const quint16 &monsterId, const quint8 &level, const std::unordered_map<quint16,Monster> &monsters, const std::unordered_map<quint16, Skill> &monsterSkills);
     static QString text_type;
     static QString text_name;
     static QString text_id;
