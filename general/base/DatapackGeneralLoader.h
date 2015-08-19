@@ -1,10 +1,10 @@
 #ifndef DATAPACKGENERALLOADER_H
 #define DATAPACKGENERALLOADER_H
 
-#include <QHash>
-#include <QString>
-#include <QPair>
-#include <QList>
+#include <unordered_map>
+#include <string>
+#include <utility>
+#include <vector>
 #include <QDomElement>
 #include <QDomDocument>
 #include "GeneralStructures.h"
@@ -13,118 +13,118 @@ namespace CatchChallenger {
 class DatapackGeneralLoader
 {
 public:
-    static QList<QString> loadSkins(const QString &folder);
-    static QList<Reputation> loadReputation(const QString &file);
+    static std::vector<std::basic_string<char>> loadSkins(const std::basic_string<char> &folder);
+    static std::vector<Reputation> loadReputation(const std::basic_string<char> &file);
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    static QHash<quint16, Quest> loadQuests(const QString &folder);
-    static QPair<bool,Quest> loadSingleQuest(const QString &file);
-    static QHash<quint8,Plant> loadPlants(const QString &file);
-    static QPair<QHash<quint16,CrafingRecipe>,QHash<quint16,quint16> > loadCraftingRecipes(const QString &file, const QHash<quint16, Item> &items);
-    static ItemFull loadItems(const QString &folder, const QHash<quint8, Buff> &monsterBuffs);
-    static QHash<quint16,Industry> loadIndustries(const QString &folder,const QHash<quint16, Item> &items);
-    static QHash<quint16,IndustryLink> loadIndustriesLink(const QString &file,const QHash<quint16,Industry> &industries);
+    static std::unordered_map<quint16, Quest> loadQuests(const std::basic_string<char> &folder);
+    static std::pair<bool,Quest> loadSingleQuest(const std::basic_string<char> &file);
+    static std::unordered_map<quint8,Plant> loadPlants(const std::basic_string<char> &file);
+    static std::pair<std::unordered_map<quint16,CrafingRecipe>,std::unordered_map<quint16,quint16> > loadCraftingRecipes(const std::basic_string<char> &file, const std::unordered_map<quint16, Item> &items);
+    static ItemFull loadItems(const std::basic_string<char> &folder, const std::unordered_map<quint8, Buff> &monsterBuffs);
+    static std::unordered_map<quint16,Industry> loadIndustries(const std::basic_string<char> &folder,const std::unordered_map<quint16, Item> &items);
+    static std::unordered_map<quint16,IndustryLink> loadIndustriesLink(const std::basic_string<char> &file,const std::unordered_map<quint16,Industry> &industries);
     #endif
-    static QPair<QList<QDomElement>, QList<Profile> > loadProfileList(const QString &datapackPath, const QString &file,
+    static std::pair<std::vector<QDomElement>, std::vector<Profile> > loadProfileList(const std::basic_string<char> &datapackPath, const std::basic_string<char> &file,
                                                                       #ifndef CATCHCHALLENGER_CLASS_MASTER
-                                                                      const QHash<quint16, Item> &items,
+                                                                      const std::unordered_map<quint16, Item> &items,
                                                                       #endif // CATCHCHALLENGER_CLASS_MASTER
-                                                                      const QHash<quint16,Monster> &monsters,const QList<Reputation> &reputations);
-    static QList<ServerProfile> loadServerProfileList(const QString &datapackPath, const QString &mainDatapackCode, const QString &file, const QList<Profile> &profileCommon);
-    static QList<ServerProfile> loadServerProfileListInternal(const QString &datapackPath, const QString &mainDatapackCode, const QString &file);
+                                                                      const std::unordered_map<quint16,Monster> &monsters,const std::vector<Reputation> &reputations);
+    static std::vector<ServerProfile> loadServerProfileList(const std::basic_string<char> &datapackPath, const std::basic_string<char> &mainDatapackCode, const std::basic_string<char> &file, const std::vector<Profile> &profileCommon);
+    static std::vector<ServerProfile> loadServerProfileListInternal(const std::basic_string<char> &datapackPath, const std::basic_string<char> &mainDatapackCode, const std::basic_string<char> &file);
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    static QList<MonstersCollision> loadMonstersCollision(const QString &file, const QHash<quint16, Item> &items, const QList<Event> &events);
-    static LayersOptions loadLayersOptions(const QString &file);
-    static QList<Event> loadEvents(const QString &file);
-    static QHash<quint32,Shop> preload_shop(const QString &file, const QHash<quint16, Item> &items);
+    static std::vector<MonstersCollision> loadMonstersCollision(const std::basic_string<char> &file, const std::unordered_map<quint16, Item> &items, const std::vector<Event> &events);
+    static LayersOptions loadLayersOptions(const std::basic_string<char> &file);
+    static std::vector<Event> loadEvents(const std::basic_string<char> &file);
+    static std::unordered_map<quint32,Shop> preload_shop(const std::basic_string<char> &file, const std::unordered_map<quint16, Item> &items);
     #endif
 protected:
-    static const QString text_list;
-    static const QString text_dotxml;
-    static const QString text_dottmx;
-    static const QString text_reputation;
-    static const QString text_type;
-    static const QString text_level;
-    static const QString text_point;
-    static const QString text_slashdefinitionxml;
-    static const QString text_quest;
-    static const QString text_repeatable;
-    static const QString text_yes;
-    static const QString text_true;
-    static const QString text_bot;
-    static const QString text_dotcomma;
-    static const QString text_requirements;
-    static const QString text_less;
-    static const QString text_id;
-    static const QString text_rewards;
-    static const QString text_allow;
-    static const QString text_clan;
-    static const QString text_step;
-    static const QString text_item;
-    static const QString text_quantity;
-    static const QString text_monster;
-    static const QString text_rate;
-    static const QString text_percent;
-    static const QString text_fight;
-    static const QString text_plants;
-    static const QString text_plant;
-    static const QString text_itemUsed;
-    static const QString text_grow;
-    static const QString text_fruits;
-    static const QString text_sprouted;
-    static const QString text_taller;
-    static const QString text_flowering;
-    static const QString text_recipes;
-    static const QString text_recipe;
-    static const QString text_itemToLearn;
-    static const QString text_doItemId;
-    static const QString text_success;
-    static const QString text_material;
-    static const QString text_industries;
-    static const QString text_industrialrecipe;
-    static const QString text_time;
-    static const QString text_cycletobefull;
-    static const QString text_resource;
-    static const QString text_product;
-    static const QString text_link;
-    static const QString text_price;
-    static const QString text_consumeAtUse;
-    static const QString text_false;
-    static const QString text_trap;
-    static const QString text_bonus_rate;
-    static const QString text_repel;
-    static const QString text_hp;
-    static const QString text_add;
-    static const QString text_all;
-    static const QString text_buff;
-    static const QString text_remove;
-    static const QString text_up;
-    static const QString text_start;
-    static const QString text_map;
-    static const QString text_file;
-    static const QString text_x;
-    static const QString text_y;
-    static const QString text_forcedskin;
-    static const QString text_cash;
-    static const QString text_itemId;
-    static const QString text_industry;
-    static const QString text_items;
-    static const QString text_value;
-    static const QString text_captured_with;
-    static const QString text_monstersCollision;
-    static const QString text_monsterType;
-    static const QString text_walkOn;
-    static const QString text_actionOn;
-    static const QString text_layer;
-    static const QString text_tile;
-    static const QString text_background;
-    static const QString text_slash;
-    static const QString text_layers;
-    static const QString text_events;
-    static const QString text_event;
-    static const QString text_shop;
-    static const QString text_shops;
-    static const QString text_overridePrice;
-    static const QString text_inverse;
+    static const std::basic_string<char> text_list;
+    static const std::basic_string<char> text_dotxml;
+    static const std::basic_string<char> text_dottmx;
+    static const std::basic_string<char> text_reputation;
+    static const std::basic_string<char> text_type;
+    static const std::basic_string<char> text_level;
+    static const std::basic_string<char> text_point;
+    static const std::basic_string<char> text_slashdefinitionxml;
+    static const std::basic_string<char> text_quest;
+    static const std::basic_string<char> text_repeatable;
+    static const std::basic_string<char> text_yes;
+    static const std::basic_string<char> text_true;
+    static const std::basic_string<char> text_bot;
+    static const std::basic_string<char> text_dotcomma;
+    static const std::basic_string<char> text_requirements;
+    static const std::basic_string<char> text_less;
+    static const std::basic_string<char> text_id;
+    static const std::basic_string<char> text_rewards;
+    static const std::basic_string<char> text_allow;
+    static const std::basic_string<char> text_clan;
+    static const std::basic_string<char> text_step;
+    static const std::basic_string<char> text_item;
+    static const std::basic_string<char> text_quantity;
+    static const std::basic_string<char> text_monster;
+    static const std::basic_string<char> text_rate;
+    static const std::basic_string<char> text_percent;
+    static const std::basic_string<char> text_fight;
+    static const std::basic_string<char> text_plants;
+    static const std::basic_string<char> text_plant;
+    static const std::basic_string<char> text_itemUsed;
+    static const std::basic_string<char> text_grow;
+    static const std::basic_string<char> text_fruits;
+    static const std::basic_string<char> text_sprouted;
+    static const std::basic_string<char> text_taller;
+    static const std::basic_string<char> text_flowering;
+    static const std::basic_string<char> text_recipes;
+    static const std::basic_string<char> text_recipe;
+    static const std::basic_string<char> text_itemToLearn;
+    static const std::basic_string<char> text_doItemId;
+    static const std::basic_string<char> text_success;
+    static const std::basic_string<char> text_material;
+    static const std::basic_string<char> text_industries;
+    static const std::basic_string<char> text_industrialrecipe;
+    static const std::basic_string<char> text_time;
+    static const std::basic_string<char> text_cycletobefull;
+    static const std::basic_string<char> text_resource;
+    static const std::basic_string<char> text_product;
+    static const std::basic_string<char> text_link;
+    static const std::basic_string<char> text_price;
+    static const std::basic_string<char> text_consumeAtUse;
+    static const std::basic_string<char> text_false;
+    static const std::basic_string<char> text_trap;
+    static const std::basic_string<char> text_bonus_rate;
+    static const std::basic_string<char> text_repel;
+    static const std::basic_string<char> text_hp;
+    static const std::basic_string<char> text_add;
+    static const std::basic_string<char> text_all;
+    static const std::basic_string<char> text_buff;
+    static const std::basic_string<char> text_remove;
+    static const std::basic_string<char> text_up;
+    static const std::basic_string<char> text_start;
+    static const std::basic_string<char> text_map;
+    static const std::basic_string<char> text_file;
+    static const std::basic_string<char> text_x;
+    static const std::basic_string<char> text_y;
+    static const std::basic_string<char> text_forcedskin;
+    static const std::basic_string<char> text_cash;
+    static const std::basic_string<char> text_itemId;
+    static const std::basic_string<char> text_industry;
+    static const std::basic_string<char> text_items;
+    static const std::basic_string<char> text_value;
+    static const std::basic_string<char> text_captured_with;
+    static const std::basic_string<char> text_monstersCollision;
+    static const std::basic_string<char> text_monsterType;
+    static const std::basic_string<char> text_walkOn;
+    static const std::basic_string<char> text_actionOn;
+    static const std::basic_string<char> text_layer;
+    static const std::basic_string<char> text_tile;
+    static const std::basic_string<char> text_background;
+    static const std::basic_string<char> text_slash;
+    static const std::basic_string<char> text_layers;
+    static const std::basic_string<char> text_events;
+    static const std::basic_string<char> text_event;
+    static const std::basic_string<char> text_shop;
+    static const std::basic_string<char> text_shops;
+    static const std::basic_string<char> text_overridePrice;
+    static const std::basic_string<char> text_inverse;
 };
 }
 

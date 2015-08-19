@@ -1,8 +1,8 @@
 #ifndef CATCHCHALLENGER_DEBUGCLASS_H
 #define CATCHCHALLENGER_DEBUGCLASS_H
 
-#include <QString>
-#include <QStringList>
+#include <string>
+#include <vector>
 #include <QDebug>
 #include <QMutex>
 #include <QMutexLocker>
@@ -11,10 +11,10 @@ namespace CatchChallenger {
 class DebugClass
 {
 public:
-    static void debugConsole(const QString &errorString);
-    static QStringList getLog();
+    static void debugConsole(const std::basic_string<char> &errorString);
+    static std::vector<std::basic_string<char> > getLog();
     static bool redirection;
-    static QStringList log;
+    static std::vector<std::basic_string<char> > log;
 };
 }
 

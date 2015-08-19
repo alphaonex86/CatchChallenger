@@ -5,8 +5,8 @@
 #include "Map_server_MapVisibility_WithBorder_StoreOnSender.h"
 #include "../../../general/base/CommonMap.h"
 
-#include <QHash>
-#include <QSet>
+#include <unordered_map>
+#include <unordered_set>
 #include <QByteArray>
 
 namespace CatchChallenger {
@@ -73,12 +73,12 @@ private:
     static int purgeBuffer_indexMovement;
     static bool mapHaveChanged;
     static map_management_move purgeBuffer_move;
-    static QHash<SIMPLIFIED_PLAYER_ID_TYPE, QList<map_management_movement> >::const_iterator i_move;
-    static QHash<SIMPLIFIED_PLAYER_ID_TYPE, QList<map_management_movement> >::const_iterator i_move_end;
-    static QHash<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_WithBorder_StoreOnSender *>::const_iterator i_insert;
-    static QHash<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_WithBorder_StoreOnSender *>::const_iterator i_insert_end;
-    static QSet<SIMPLIFIED_PLAYER_ID_TYPE>::const_iterator i_remove;
-    static QSet<SIMPLIFIED_PLAYER_ID_TYPE>::const_iterator i_remove_end;
+    static std::unordered_map<SIMPLIFIED_PLAYER_ID_TYPE, std::vector<map_management_movement> >::const_iterator i_move;
+    static std::unordered_map<SIMPLIFIED_PLAYER_ID_TYPE, std::vector<map_management_movement> >::const_iterator i_move_end;
+    static std::unordered_map<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_WithBorder_StoreOnSender *>::const_iterator i_insert;
+    static std::unordered_map<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_WithBorder_StoreOnSender *>::const_iterator i_insert_end;
+    static std::unordered_set<SIMPLIFIED_PLAYER_ID_TYPE>::const_iterator i_remove;
+    static std::unordered_set<SIMPLIFIED_PLAYER_ID_TYPE>::const_iterator i_remove_end;
     static CommonMap*			old_map;
     bool haveBufferToPurge;
 
@@ -90,10 +90,10 @@ private:
     static map_management_movement moveClient_tempMov;
 
     // stuff to send
-    QHash<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_WithBorder_StoreOnSender *>			to_send_insert;
-    QHash<SIMPLIFIED_PLAYER_ID_TYPE, QList<map_management_movement> >	to_send_move;
-    QSet<SIMPLIFIED_PLAYER_ID_TYPE>						to_send_remove;
-    QHash<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_WithBorder_StoreOnSender *>			to_send_reinsert;
+    std::unordered_map<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_WithBorder_StoreOnSender *>			to_send_insert;
+    std::unordered_map<SIMPLIFIED_PLAYER_ID_TYPE, std::vector<map_management_movement> >	to_send_move;
+    std::unordered_set<SIMPLIFIED_PLAYER_ID_TYPE>						to_send_remove;
+    std::unordered_map<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_WithBorder_StoreOnSender *>			to_send_reinsert;
 public:
     void purgeBuffer();
     //map, transmited by the current ClientNetworkRead

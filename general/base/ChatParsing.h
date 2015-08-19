@@ -9,9 +9,9 @@ namespace CatchChallenger {
 class ChatParsing
 {
 public:
-    static QString new_chat_message(QString pseudo,Player_type player_type,Chat_type chat_type,QString text);
-    static QString toHtmlEntities(QString text);
-    static QString toSmilies(QString text);
+    static std::basic_string<char> new_chat_message(std::basic_string<char> pseudo,Player_type player_type,Chat_type chat_type,std::basic_string<char> text);
+    static std::basic_string<char> toHtmlEntities(std::basic_string<char> text);
+    static std::basic_string<char> toSmilies(std::basic_string<char> text);
 };
 }
 
