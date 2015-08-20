@@ -6,8 +6,7 @@ LIBS += -lz -llzma
 
 TEMPLATE = app
 
-SOURCES += $$PWD/base/DebugClass.cpp \
-    $$PWD/base/ChatParsing.cpp \
+SOURCES += $$PWD/base/ChatParsing.cpp \
     $$PWD/base/QFakeSocket.cpp \
     $$PWD/base/QFakeServer.cpp \
     $$PWD/base/ProtocolParsingGeneral.cpp \
@@ -30,8 +29,7 @@ SOURCES += $$PWD/base/DebugClass.cpp \
     $$PWD/base/CommonSettingsCommon.cpp \
     $$PWD/base/CommonSettingsServer.cpp
 
-HEADERS  += $$PWD/base/DebugClass.h \
-    $$PWD/base/GeneralStructures.h \
+HEADERS  += $$PWD/base/GeneralStructures.h \
     $$PWD/base/ClientBase.h \
     $$PWD/base/ChatParsing.h \
     $$PWD/base/QFakeServer.h \
@@ -54,7 +52,8 @@ HEADERS  += $$PWD/base/DebugClass.h \
     $$PWD/base/lz4/lz4.h \
     $$PWD/base/CommonSettingsCommon.h \
     $$PWD/base/CommonSettingsServer.h \
-    $$PWD/base/GeneralType.h
+    $$PWD/base/GeneralType.h \
+    $$PWD/base/cpp11addition.h
 
 win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc
 mac:INCLUDEPATH += /usr/local/include/
