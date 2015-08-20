@@ -6,7 +6,6 @@
 #include <string>
 #include <QDomElement>
 
-#include "DebugClass.h"
 #include "GeneralStructures.h"
 #include "GeneralStructuresXml.h"
 #include "CommonMap.h"

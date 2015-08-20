@@ -9,6 +9,8 @@
 #include <unordered_set>
 #include <QVariant>
 
+#include "cpp11addition.h"
+
 #include "GeneralType.h"
 #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
 #include "../../server/VariableServer.h"
@@ -18,16 +20,6 @@
 #define SIMPLIFIED_PLAYER_ID_TYPE uint16_t
 #define CLAN_ID_TYPE uint32_t
 #define SPEED_TYPE uint8_t
-
-struct pairhash {
-public:
-  template <typename T, typename U>
-  std::size_t operator()(const std::pair<T, U> &x) const
-  {
-      return (x.first << 8) + x.second;
-    //return std::hash<T>()(x.first) ^ std::hash<U>()(x.second);
-  }
-};
 
 namespace CatchChallenger {
 
