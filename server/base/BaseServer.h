@@ -9,14 +9,13 @@
 #include <QByteArray>
 #include <QDir>
 #include <QSemaphore>
-#include <std::basic_string<char>>
+#include <string>
 #include <QRegularExpression>
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QSqlDatabase>
 #endif
 
-#include "../../general/base/DebugClass.h"
 #include "../../general/base/Map_loader.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/QFakeServer.h"
