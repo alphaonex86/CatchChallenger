@@ -5,7 +5,6 @@
 #include <QByteArray>
 #include <QTimer>
 
-#include "../../general/base/DebugClass.h"
 #include "ServerStructures.h"
 #include "ClientMapManagement/ClientMapManagement.h"
 #include "BroadCastWithoutSender.h"

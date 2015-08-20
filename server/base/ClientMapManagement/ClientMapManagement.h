@@ -4,7 +4,6 @@
 #include <QObject>
 #include <QString>
 
-#include "../../../general/base/DebugClass.h"
 #include "../ServerStructures.h"
 #include "../EventThreader.h"
 #include "../../VariableServer.h"

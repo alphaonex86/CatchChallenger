@@ -6,6 +6,9 @@ SOURCES += \
     $$PWD/base/GlobalServerData.cpp \
     $$PWD/base/SqlFunction.cpp \
     $$PWD/base/BaseServer.cpp \
+    $$PWD/base/BaseServerLoad.cpp \
+    $$PWD/base/BaseServerLoadSQL.cpp \
+    $$PWD/base/BaseServerUnload.cpp \
     $$PWD/base/BaseServerMasterLoadDictionary.cpp \
     $$PWD/base/BaseServerMasterSendDatapack.cpp \
     $$PWD/base/LocalClientHandler.cpp \
