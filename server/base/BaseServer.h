@@ -57,7 +57,7 @@ protected:
     bool load_next_city_capture();
     void SQL_common_load_finish();
 protected:
-    virtual void parseJustLoadedMap(const Map_to_send &,const std::basic_string<char> &);
+    virtual void parseJustLoadedMap(const Map_to_send &,const std::string &);
     void closeDB();
     //starting function
     void loadAndFixSettings();
@@ -112,7 +112,7 @@ protected:
     void load_sql_monsters_max_id();
     static void load_monsters_max_id_static(void *object);
     void load_monsters_max_id_return();
-    std::unordered_map<quint16,MonsterDrops> loadMonsterDrop(const std::basic_string<char> &file, std::unordered_map<quint16,Item> items,const std::unordered_map<quint16,Monster> &monsters);
+    std::unordered_map<quint16,MonsterDrops> loadMonsterDrop(const std::string &file, std::unordered_map<quint16,Item> items,const std::unordered_map<quint16,Monster> &monsters);
     virtual void criticalDatabaseQueryFailed();
     virtual void quitForCriticalDatabaseQueryFailed() = 0;
 
@@ -166,13 +166,13 @@ protected:
     void loadMonsterSkills_return();
 
     bool initialize_the_database();
-    void loadBotFile(const std::basic_string<char> &mapfile, const std::basic_string<char> &fileName);
+    void loadBotFile(const std::string &mapfile, const std::string &fileName);
     //FakeServer server;//wrong, create another object, here need use the global static object
 
     //to keep client list, std::unordered_set because it will have lot of more disconnecion than server closing
     bool dataLoaded;
 
-    std::unordered_map<std::basic_string<char>/*file name*/,std::unordered_map<quint8/*bot id*/,CatchChallenger::Bot> > botFiles;
+    std::unordered_map<std::string/*file name*/,std::unordered_map<quint8/*bot id*/,CatchChallenger::Bot> > botFiles;
     std::unordered_set<quint32> botIdLoaded;
     QTime timeDatapack;
     unsigned int dictionary_pointOnMap_maxId;
@@ -185,51 +185,51 @@ protected:
     std::vector<Map_semi> semi_loaded_map;
 
     static QRegularExpression regexXmlFile;
-    static const std::basic_string<char> text_dotxml;
-    static const std::basic_string<char> text_zone;
-    static const std::basic_string<char> text_capture;
-    static const std::basic_string<char> text_fightId;
-    static const std::basic_string<char> text_dotcomma;
-    static const std::basic_string<char> text_male;
-    static const std::basic_string<char> text_female;
-    static const std::basic_string<char> text_unknown;
-    static const std::basic_string<char> text_slash;
-    static const std::basic_string<char> text_antislash;
-    static const std::basic_string<char> text_type;
-    static const std::basic_string<char> text_shop;
-    static const std::basic_string<char> text_learn;
-    static const std::basic_string<char> text_heal;
-    static const std::basic_string<char> text_market;
-    static const std::basic_string<char> text_zonecapture;
-    static const std::basic_string<char> text_fight;
-    static const std::basic_string<char> text_fightid;
-    static const std::basic_string<char> text_lookAt;
-    static const std::basic_string<char> text_left;
-    static const std::basic_string<char> text_right;
-    static const std::basic_string<char> text_top;
-    static const std::basic_string<char> text_bottom;
-    static const std::basic_string<char> text_fightRange;
-    static const std::basic_string<char> text_bots;
-    static const std::basic_string<char> text_bot;
-    static const std::basic_string<char> text_id;
-    static const std::basic_string<char> text_name;
-    static const std::basic_string<char> text_step;
-    static const std::basic_string<char> text_arrow;
-    static const std::basic_string<char> text_dottmx;
-    static const std::basic_string<char> text_shops;
-    static const std::basic_string<char> text_product;
-    static const std::basic_string<char> text_itemId;
-    static const std::basic_string<char> text_overridePrice;
-    static const std::basic_string<char> text_list;
-    static const std::basic_string<char> text_monster;
-    static const std::basic_string<char> text_monsters;
-    static const std::basic_string<char> text_drops;
-    static const std::basic_string<char> text_drop;
-    static const std::basic_string<char> text_item;
-    static const std::basic_string<char> text_quantity_min;
-    static const std::basic_string<char> text_quantity_max;
-    static const std::basic_string<char> text_luck;
-    static const std::basic_string<char> text_percent;
+    static const std::string text_dotxml;
+    static const std::string text_zone;
+    static const std::string text_capture;
+    static const std::string text_fightId;
+    static const std::string text_dotcomma;
+    static const std::string text_male;
+    static const std::string text_female;
+    static const std::string text_unknown;
+    static const std::string text_slash;
+    static const std::string text_antislash;
+    static const std::string text_type;
+    static const std::string text_shop;
+    static const std::string text_learn;
+    static const std::string text_heal;
+    static const std::string text_market;
+    static const std::string text_zonecapture;
+    static const std::string text_fight;
+    static const std::string text_fightid;
+    static const std::string text_lookAt;
+    static const std::string text_left;
+    static const std::string text_right;
+    static const std::string text_top;
+    static const std::string text_bottom;
+    static const std::string text_fightRange;
+    static const std::string text_bots;
+    static const std::string text_bot;
+    static const std::string text_id;
+    static const std::string text_name;
+    static const std::string text_step;
+    static const std::string text_arrow;
+    static const std::string text_dottmx;
+    static const std::string text_shops;
+    static const std::string text_product;
+    static const std::string text_itemId;
+    static const std::string text_overridePrice;
+    static const std::string text_list;
+    static const std::string text_monster;
+    static const std::string text_monsters;
+    static const std::string text_drops;
+    static const std::string text_drop;
+    static const std::string text_item;
+    static const std::string text_quantity_min;
+    static const std::string text_quantity_max;
+    static const std::string text_luck;
+    static const std::string text_percent;
 };
 }
 

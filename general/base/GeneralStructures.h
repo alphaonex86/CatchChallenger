@@ -107,7 +107,7 @@ struct Reputation
     std::vector<qint32> reputation_positive/*start with 0*/,reputation_negative;
     /*server only*/
     int reverse_database_id;
-    std::basic_string<char> name;
+    std::string name;
 };
 
 struct ReputationRewards
@@ -226,8 +226,8 @@ struct Industry
 
 struct Event
 {
-    std::basic_string<char> name;
-    std::vector<std::basic_string<char> > values;
+    std::string name;
+    std::vector<std::string > values;
 };
 
 enum ObjectUsage
@@ -254,7 +254,7 @@ enum SoldStat
 
 struct map_management_insert
 {
-    std::basic_string<char> fileName;
+    std::string fileName;
     COORD_TYPE x;
     COORD_TYPE y;
     Direction direction;//can be insert as direction when changing of map
@@ -276,7 +276,7 @@ struct map_management_move
 struct Player_public_informations
 {
     SIMPLIFIED_PLAYER_ID_TYPE simplifiedId;
-    std::basic_string<char> pseudo;
+    std::string pseudo;
     Player_type type;
     uint8_t skinId;
     SPEED_TYPE speed;
@@ -375,7 +375,7 @@ struct Player_private_and_public_informations
 struct CharacterEntry
 {
     uint32_t character_id;
-    std::basic_string<char> pseudo;
+    std::string pseudo;
     uint8_t skinId;
     uint32_t delete_time_left;
     uint32_t played_time;
@@ -385,13 +385,13 @@ struct CharacterEntry
 /* mpa related */
 struct Map_semi_border_content_top_bottom
 {
-    std::basic_string<char> fileName;
+    std::string fileName;
     qint16 x_offset;//can be negative, it's an offset!
 };
 
 struct Map_semi_border_content_left_right
 {
-    std::basic_string<char> fileName;
+    std::string fileName;
     qint16 y_offset;//can be negative, it's an offset!
 };
 
@@ -812,17 +812,17 @@ struct Profile
     std::vector<Monster> monsters;
     std::vector<Reputation> reputation;
     std::vector<Item> items;
-    std::basic_string<char> id;
+    std::string id;
 };
 
 struct ServerProfile
 {
-    std::basic_string<char> mapString;
+    std::string mapString;
     /*COORD_TYPE*/ uint8_t x;
     /*COORD_TYPE*/ uint8_t y;
     Orientation orientation;
 
-    std::basic_string<char> id;
+    std::string id;
 };
 
 enum MonstersCollisionType
@@ -835,23 +835,23 @@ struct MonstersCollision
 {
     MonstersCollisionType type;
     CATCHCHALLENGER_TYPE_ITEM item;
-    std::basic_string<char> tile;
-    std::basic_string<char> layer;
-    std::vector<std::basic_string<char> > monsterTypeList;
-    std::vector<std::basic_string<char> > defautMonsterTypeList;
-    std::basic_string<char> background;
+    std::string tile;
+    std::string layer;
+    std::vector<std::string > monsterTypeList;
+    std::vector<std::string > defautMonsterTypeList;
+    std::string background;
     struct MonstersCollisionEvent
     {
         uint8_t event;
         uint8_t event_value;
-        std::vector<std::basic_string<char> > monsterTypeList;
+        std::vector<std::string > monsterTypeList;
     };
     std::vector<MonstersCollisionEvent> events;
 };
 
 struct Type
 {
-    std::basic_string<char> name;
+    std::string name;
     std::unordered_map<uint8_t,qint8> multiplicator;//negative = divide, not multiply
 };
 

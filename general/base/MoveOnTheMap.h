@@ -22,7 +22,7 @@ public:
     virtual void newDirection(const Direction &the_direction);
     virtual void setLastDirection(const Direction &the_direction);
     //debug function
-    static std::basic_string<char> directionToString(const Direction &direction);
+    static std::string directionToString(const Direction &direction);
     static Orientation directionToOrientation(const Direction &direction);
     static Direction directionToDirectionLook(const Direction &direction);
 
