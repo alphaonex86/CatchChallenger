@@ -3,14 +3,14 @@
 
 using namespace CatchChallenger;
 
-std::basic_string<char> SqlFunction::text_antislash="\\";
-std::basic_string<char> SqlFunction::text_double_antislash="\\\\";
-std::basic_string<char> SqlFunction::text_antislash_quote="\"";
-std::basic_string<char> SqlFunction::text_double_antislash_quote="\\\"";
-std::basic_string<char> SqlFunction::text_single_quote="'";
-std::basic_string<char> SqlFunction::text_antislash_single_quote="\\'";
+std::string SqlFunction::text_antislash="\\";
+std::string SqlFunction::text_double_antislash="\\\\";
+std::string SqlFunction::text_antislash_quote="\"";
+std::string SqlFunction::text_double_antislash_quote="\\\"";
+std::string SqlFunction::text_single_quote="'";
+std::string SqlFunction::text_antislash_single_quote="\\'";
 
-std::basic_string<char> SqlFunction::quoteSqlVariable(std::basic_string<char> variable)
+std::string SqlFunction::quoteSqlVariable(std::string variable)
 {
     replaceAll(variable,SqlFunction::text_antislash,SqlFunction::text_double_antislash);
     replaceAll(variable,SqlFunction::text_antislash_quote,SqlFunction::text_double_antislash_quote);

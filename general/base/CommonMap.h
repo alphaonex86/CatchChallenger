@@ -45,7 +45,7 @@ public:
     };
     std::unordered_map<quint32,Teleporter> teleporter;//the int (x+y*width) is position
 
-    std::basic_string<char> map_file;
+    std::string map_file;
     quint16 width;
     quint16 height;
     quint32 group;
@@ -55,7 +55,7 @@ public:
     std::unordered_set<std::pair<quint8,quint8>,pairhash> learn;
     std::unordered_set<std::pair<quint8,quint8>,pairhash> heal;
     std::unordered_set<std::pair<quint8,quint8>,pairhash> market;
-    std::unordered_map<std::pair<quint8,quint8>,std::basic_string<char>,pairhash> zonecapture;
+    std::unordered_map<std::pair<quint8,quint8>,std::string,pairhash> zonecapture;
     std::unordered_multimap<std::pair<quint8,quint8>,quint32,pairhash> botsFight;
 
     /*std::vector<MapMonster> grassMonster;

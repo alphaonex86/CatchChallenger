@@ -25,7 +25,7 @@ public:
     static CommonDatapack commonDatapack;
 public:
     void unload();
-    void parseDatapack(const std::basic_string<char> &datapackPath);
+    void parseDatapack(const std::string &datapackPath);
 public:
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     std::unordered_map<quint8,Plant> plants;
@@ -47,17 +47,17 @@ public:
     std::vector<Type> types;
     #endif
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    std::unordered_map<std::basic_string<char>/*file*/, QDomDocument> xmlLoadedFile;
+    std::unordered_map<std::string/*file*/, QDomDocument> xmlLoadedFile;
     #endif
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     LayersOptions layersOptions;
     std::vector<Event> events;
     #endif
-    std::vector<std::basic_string<char> > skins;
+    std::vector<std::string > skins;
 private:
     QMutex inProgress;
     bool isParsed;
-    std::basic_string<char> datapackPath;
+    std::string datapackPath;
 private:
     void parseTypes();
     void parseItems();

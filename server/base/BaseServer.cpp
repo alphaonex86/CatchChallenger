@@ -18,8 +18,10 @@
 #include "PreparedDBQuery.h"
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
+#include "../../general/base/cpp11addition.h"
 
 #include <QFile>
+#include <QDir>
 #include <QByteArray>
 #include <QDateTime>
 #include <QTime>
@@ -33,51 +35,51 @@
 using namespace CatchChallenger;
 
 QRegularExpression BaseServer::regexXmlFile=QRegularExpression(QLatin1String("^[a-zA-Z0-9\\- _]+\\.xml$"));
-const std::basic_string<char> BaseServer::text_dotxml=".xml";
-const std::basic_string<char> BaseServer::text_zone="zone";
-const std::basic_string<char> BaseServer::text_capture="capture";
-const std::basic_string<char> BaseServer::text_fightId="fightId";
-const std::basic_string<char> BaseServer::text_dotcomma=";";
-const std::basic_string<char> BaseServer::text_male="male";
-const std::basic_string<char> BaseServer::text_female="female";
-const std::basic_string<char> BaseServer::text_unknown="unknown";
-const std::basic_string<char> BaseServer::text_slash="/";
-const std::basic_string<char> BaseServer::text_antislash="\\";
-const std::basic_string<char> BaseServer::text_type="type";
-const std::basic_string<char> BaseServer::text_shop="shop";
-const std::basic_string<char> BaseServer::text_learn="learn";
-const std::basic_string<char> BaseServer::text_heal="heal";
-const std::basic_string<char> BaseServer::text_market="market";
-const std::basic_string<char> BaseServer::text_zonecapture="zonecapture";
-const std::basic_string<char> BaseServer::text_fight="fight";
-const std::basic_string<char> BaseServer::text_fightid="fightid";
-const std::basic_string<char> BaseServer::text_lookAt="lookAt";
-const std::basic_string<char> BaseServer::text_left="left";
-const std::basic_string<char> BaseServer::text_right="right";
-const std::basic_string<char> BaseServer::text_top="top";
-const std::basic_string<char> BaseServer::text_bottom="bottom";
-const std::basic_string<char> BaseServer::text_fightRange="fightRange";
-const std::basic_string<char> BaseServer::text_bots="bots";
-const std::basic_string<char> BaseServer::text_bot="bot";
-const std::basic_string<char> BaseServer::text_id="id";
-const std::basic_string<char> BaseServer::text_name="name";
-const std::basic_string<char> BaseServer::text_step="step";
-const std::basic_string<char> BaseServer::text_arrow="->";
-const std::basic_string<char> BaseServer::text_dottmx=".tmx";
-const std::basic_string<char> BaseServer::text_shops="shops";
-const std::basic_string<char> BaseServer::text_product="product";
-const std::basic_string<char> BaseServer::text_itemId="itemId";
-const std::basic_string<char> BaseServer::text_overridePrice="overridePrice";
-const std::basic_string<char> BaseServer::text_list="list";
-const std::basic_string<char> BaseServer::text_monster="monster";
-const std::basic_string<char> BaseServer::text_monsters="monsters";
-const std::basic_string<char> BaseServer::text_drops="drops";
-const std::basic_string<char> BaseServer::text_drop="drop";
-const std::basic_string<char> BaseServer::text_item="item";
-const std::basic_string<char> BaseServer::text_quantity_min="quantity_min";
-const std::basic_string<char> BaseServer::text_quantity_max="quantity_max";
-const std::basic_string<char> BaseServer::text_luck="luck";
-const std::basic_string<char> BaseServer::text_percent="percent";
+const std::string BaseServer::text_dotxml=".xml";
+const std::string BaseServer::text_zone="zone";
+const std::string BaseServer::text_capture="capture";
+const std::string BaseServer::text_fightId="fightId";
+const std::string BaseServer::text_dotcomma=";";
+const std::string BaseServer::text_male="male";
+const std::string BaseServer::text_female="female";
+const std::string BaseServer::text_unknown="unknown";
+const std::string BaseServer::text_slash="/";
+const std::string BaseServer::text_antislash="\\";
+const std::string BaseServer::text_type="type";
+const std::string BaseServer::text_shop="shop";
+const std::string BaseServer::text_learn="learn";
+const std::string BaseServer::text_heal="heal";
+const std::string BaseServer::text_market="market";
+const std::string BaseServer::text_zonecapture="zonecapture";
+const std::string BaseServer::text_fight="fight";
+const std::string BaseServer::text_fightid="fightid";
+const std::string BaseServer::text_lookAt="lookAt";
+const std::string BaseServer::text_left="left";
+const std::string BaseServer::text_right="right";
+const std::string BaseServer::text_top="top";
+const std::string BaseServer::text_bottom="bottom";
+const std::string BaseServer::text_fightRange="fightRange";
+const std::string BaseServer::text_bots="bots";
+const std::string BaseServer::text_bot="bot";
+const std::string BaseServer::text_id="id";
+const std::string BaseServer::text_name="name";
+const std::string BaseServer::text_step="step";
+const std::string BaseServer::text_arrow="->";
+const std::string BaseServer::text_dottmx=".tmx";
+const std::string BaseServer::text_shops="shops";
+const std::string BaseServer::text_product="product";
+const std::string BaseServer::text_itemId="itemId";
+const std::string BaseServer::text_overridePrice="overridePrice";
+const std::string BaseServer::text_list="list";
+const std::string BaseServer::text_monster="monster";
+const std::string BaseServer::text_monsters="monsters";
+const std::string BaseServer::text_drops="drops";
+const std::string BaseServer::text_drop="drop";
+const std::string BaseServer::text_item="item";
+const std::string BaseServer::text_quantity_min="quantity_min";
+const std::string BaseServer::text_quantity_max="quantity_max";
+const std::string BaseServer::text_luck="luck";
+const std::string BaseServer::text_percent="percent";
 
 BaseServer::BaseServer() :
     stat(Down),
@@ -309,7 +311,7 @@ bool BaseServer::load_next_city_capture()
     return true;
 }
 
-void BaseServer::parseJustLoadedMap(const Map_to_send &,const std::basic_string<char> &)
+void BaseServer::parseJustLoadedMap(const Map_to_send &,const std::string &)
 {
 }
 
@@ -610,11 +612,11 @@ GameServerSettings BaseServer::getSettings() const
 
 void BaseServer::loadAndFixSettings()
 {
-    GlobalServerData::serverPrivateVariables.server_message=GlobalServerData::serverSettings.server_message.split(QRegularExpression("[\n\r]+"));
+    GlobalServerData::serverPrivateVariables.server_message=stringregexsplit(GlobalServerData::serverSettings.server_message,std::regex("[\n\r]+"));
     while(GlobalServerData::serverPrivateVariables.server_message.size()>16)
     {
-        qDebug() << std::basic_string<char>Literal("GlobalServerData::serverPrivateVariables.server_message too big, remove: ")+GlobalServerData::serverPrivateVariables.server_message.last();
-        GlobalServerData::serverPrivateVariables.server_message.removeLast();
+        std::cerr << "GlobalServerData::serverPrivateVariables.server_message too big, remove: " << GlobalServerData::serverPrivateVariables.server_message.at(GlobalServerData::serverPrivateVariables.server_message.size()-1) << std::endl;
+        GlobalServerData::serverPrivateVariables.server_message.pop_back();
     }
     int index=0;
     const int &listsize=GlobalServerData::serverPrivateVariables.server_message.size();
@@ -622,37 +624,35 @@ void BaseServer::loadAndFixSettings()
     {
         if(GlobalServerData::serverPrivateVariables.server_message.at(index).size()>128)
         {
-            qDebug() << std::basic_string<char>Literal("GlobalServerData::serverPrivateVariables.server_message too big, truncate: ")+GlobalServerData::serverPrivateVariables.server_message.at(index);
-            GlobalServerData::serverPrivateVariables.server_message[index].truncate(128);
+            std::cerr << "GlobalServerData::serverPrivateVariables.server_message too big, truncate: " << GlobalServerData::serverPrivateVariables.server_message.at(index) << std::endl;
+            GlobalServerData::serverPrivateVariables.server_message[index].resize(128);
         }
         index++;
     }
 
-    //drop the empty \n
+    //drop the empty \n at the begin
     bool removeTheLastList;
     do
     {
-        removeTheLastList=!GlobalServerData::serverPrivateVariables.server_message.isEmpty();
+        removeTheLastList=GlobalServerData::serverPrivateVariables.server_message.size()>0 && GlobalServerData::serverPrivateVariables.server_message.back().size()==0;
         if(removeTheLastList)
-            removeTheLastList=GlobalServerData::serverPrivateVariables.server_message.last().isEmpty();
-        if(removeTheLastList)
-            GlobalServerData::serverPrivateVariables.server_message.removeLast();
+            GlobalServerData::serverPrivateVariables.server_message.pop_back();
     } while(removeTheLastList);
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     if(GlobalServerData::serverSettings.database_login.tryInterval<1)
     {
-        qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.database_login.tryInterval<1");
+        std::cerr << "GlobalServerData::serverSettings.database_login.tryInterval<1" << std::endl;
         GlobalServerData::serverSettings.database_login.tryInterval=5;
     }
     if(GlobalServerData::serverSettings.database_login.considerDownAfterNumberOfTry<1)
     {
-        qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.database_login.considerDownAfterNumberOfTry<1");
+        std::cerr << "GlobalServerData::serverSettings.database_login.considerDownAfterNumberOfTry<1" << std::endl;
         GlobalServerData::serverSettings.database_login.considerDownAfterNumberOfTry=3;
     }
     if(GlobalServerData::serverSettings.database_login.tryInterval*GlobalServerData::serverSettings.database_login.considerDownAfterNumberOfTry>(60*10)/*10mins*/)
     {
-        qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.database_login.tryInterval*GlobalServerData::serverSettings.database_login.considerDownAfterNumberOfTry>(60*10)");
+        std::cerr << "GlobalServerData::serverSettings.database_login.tryInterval*GlobalServerData::serverSettings.database_login.considerDownAfterNumberOfTry>(60*10)" << std::endl;
         GlobalServerData::serverSettings.database_login.tryInterval=5;
         GlobalServerData::serverSettings.database_login.considerDownAfterNumberOfTry=3;
     }
@@ -660,124 +660,123 @@ void BaseServer::loadAndFixSettings()
 
     if(GlobalServerData::serverSettings.database_base.tryInterval<1)
     {
-        qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.database_base.tryInterval<1");
+        std::cerr << "GlobalServerData::serverSettings.database_base.tryInterval<1" << std::endl;
         GlobalServerData::serverSettings.database_base.tryInterval=5;
     }
     if(GlobalServerData::serverSettings.database_base.considerDownAfterNumberOfTry<1)
     {
-        qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.database_base.considerDownAfterNumberOfTry<1");
+        std::cerr << "GlobalServerData::serverSettings.database_base.considerDownAfterNumberOfTry<1" << std::endl;
         GlobalServerData::serverSettings.database_base.considerDownAfterNumberOfTry=3;
     }
     if(GlobalServerData::serverSettings.database_base.tryInterval*GlobalServerData::serverSettings.database_base.considerDownAfterNumberOfTry>(60*10)/*10mins*/)
     {
-        qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.database_base.tryInterval*GlobalServerData::serverSettings.database_base.considerDownAfterNumberOfTry>(60*10)");
+        std::cerr << "GlobalServerData::serverSettings.database_base.tryInterval*GlobalServerData::serverSettings.database_base.considerDownAfterNumberOfTry>(60*10)" << std::endl;
         GlobalServerData::serverSettings.database_base.tryInterval=5;
         GlobalServerData::serverSettings.database_base.considerDownAfterNumberOfTry=3;
     }
 
     if(GlobalServerData::serverSettings.database_common.tryInterval<1)
     {
-        qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.database_common.tryInterval<1");
+        std::cerr << "GlobalServerData::serverSettings.database_common.tryInterval<1" << std::endl;
         GlobalServerData::serverSettings.database_common.tryInterval=5;
     }
     if(GlobalServerData::serverSettings.database_common.considerDownAfterNumberOfTry<1)
     {
-        qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.database_common.considerDownAfterNumberOfTry<1");
+        std::cerr << "GlobalServerData::serverSettings.database_common.considerDownAfterNumberOfTry<1" << std::endl;
         GlobalServerData::serverSettings.database_common.considerDownAfterNumberOfTry=3;
     }
     if(GlobalServerData::serverSettings.database_common.tryInterval*GlobalServerData::serverSettings.database_common.considerDownAfterNumberOfTry>(60*10)/*10mins*/)
     {
-        qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.database_common.tryInterval*GlobalServerData::serverSettings.database_common.considerDownAfterNumberOfTry>(60*10)");
+        std::cerr << "GlobalServerData::serverSettings.database_common.tryInterval*GlobalServerData::serverSettings.database_common.considerDownAfterNumberOfTry>(60*10)" << std::endl;
         GlobalServerData::serverSettings.database_common.tryInterval=5;
         GlobalServerData::serverSettings.database_common.considerDownAfterNumberOfTry=3;
     }
 
     if(GlobalServerData::serverSettings.database_server.tryInterval<1)
     {
-        qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.database_server.tryInterval<1");
+        std::cerr << "GlobalServerData::serverSettings.database_server.tryInterval<1" << std::endl;
         GlobalServerData::serverSettings.database_server.tryInterval=5;
     }
     if(GlobalServerData::serverSettings.database_server.considerDownAfterNumberOfTry<1)
     {
-        qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.database_server.considerDownAfterNumberOfTry<1");
+        std::cerr << "GlobalServerData::serverSettings.database_server.considerDownAfterNumberOfTry<1" << std::endl;
         GlobalServerData::serverSettings.database_server.considerDownAfterNumberOfTry=3;
     }
     if(GlobalServerData::serverSettings.database_server.tryInterval*GlobalServerData::serverSettings.database_server.considerDownAfterNumberOfTry>(60*10)/*10mins*/)
     {
-        qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.database_server.tryInterval*GlobalServerData::serverSettings.database_server.considerDownAfterNumberOfTry>(60*10)");
+        std::cerr << "GlobalServerData::serverSettings.database_server.tryInterval*GlobalServerData::serverSettings.database_server.considerDownAfterNumberOfTry>(60*10)" << std::endl;
         GlobalServerData::serverSettings.database_server.tryInterval=5;
         GlobalServerData::serverSettings.database_server.considerDownAfterNumberOfTry=3;
     }
 
-    if(CommonSettingsServer::commonSettingsServer.mainDatapackCode.isEmpty())
+    if(CommonSettingsServer::commonSettingsServer.mainDatapackCode.size()==0)
     {
-        DebugClass::debugConsole(std::basic_string<char>Literal("mainDatapackCode is empty, please put it into the settings"));
+        std::cerr << "mainDatapackCode is empty, please put it into the settings" << std::endl;
         abort();
     }
-    if(!CommonSettingsServer::commonSettingsServer.mainDatapackCode.contains(QRegularExpression(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE)))
+    if(!std::regex_match(CommonSettingsServer::commonSettingsServer.mainDatapackCode, std::regex(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE)))
     {
-        DebugClass::debugConsole(
-                    std::basic_string<char>Literal("CommonSettingsServer::commonSettingsServer.mainDatapackCode not match CATCHCHALLENGER_CHECK_MAINDATAPACKCODE %1 not contain %2")
-                    .arg(CommonSettingsServer::commonSettingsServer.mainDatapackCode)
-                    .arg(std::basic_string<char>Literal(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE))
-                    );
+        std::cerr << "CommonSettingsServer::commonSettingsServer.mainDatapackCode not match CATCHCHALLENGER_CHECK_MAINDATAPACKCODE "
+                  << CommonSettingsServer::commonSettingsServer.mainDatapackCode
+                  << " not contain "
+                  << CATCHCHALLENGER_CHECK_MAINDATAPACKCODE << std::endl;
         abort();
     }
-    if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+    if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.size()==0)
     {
-        if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.contains(QRegularExpression(CATCHCHALLENGER_CHECK_SUBDATAPACKCODE)))
+        if(!std::regex_match(CommonSettingsServer::commonSettingsServer.subDatapackCode,std::regex(CATCHCHALLENGER_CHECK_SUBDATAPACKCODE)))
         {
-            DebugClass::debugConsole(std::basic_string<char>Literal("CommonSettingsServer::commonSettingsServer.subDatapackCode not match CATCHCHALLENGER_CHECK_SUBDATAPACKCODE"));
+            std::cerr << "CommonSettingsServer::commonSettingsServer.subDatapackCode not match CATCHCHALLENGER_CHECK_SUBDATAPACKCODE" << std::endl;
             abort();
         }
     }
-    const std::basic_string<char> &mainDir=GlobalServerData::serverSettings.datapack_basePath+std::basic_string<char>Literal("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+std::basic_string<char>Literal("/");
-    if(!QDir(mainDir).exists())
+    const std::string &mainDir=GlobalServerData::serverSettings.datapack_basePath+std::string("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+std::string("/");
+    if(!QDir(mainDir.c_str()).exists())
     {
-        DebugClass::debugConsole(mainDir+std::basic_string<char>Literal(" don't exists"));
+        std::cerr << mainDir << " don't exists" << std::endl;
         abort();
     }
-    if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+    if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.size()==0)
     {
-        const std::basic_string<char> &subDatapackFolder=GlobalServerData::serverSettings.datapack_basePath+std::basic_string<char>Literal("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+std::basic_string<char>Literal("/")+
-                std::basic_string<char>Literal("sub/")+CommonSettingsServer::commonSettingsServer.subDatapackCode+std::basic_string<char>Literal("/");
-        if(!QDir(subDatapackFolder).exists())
+        const std::string &subDatapackFolder=GlobalServerData::serverSettings.datapack_basePath+std::string("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+std::string("/")+
+                std::string("sub/")+CommonSettingsServer::commonSettingsServer.subDatapackCode+std::string("/");
+        if(!QDir(subDatapackFolder.c_str()).exists())
         {
-            DebugClass::debugConsole(subDatapackFolder+std::basic_string<char>Literal(" don't exists, drop spec"));
+            std::cerr << subDatapackFolder << " don't exists, drop spec" << std::endl;
             CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
         }
     }
 
     if(GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue>9)
     {
-        qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue>9");
+        std::cerr << "GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue>9" << std::endl;
         GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue=9;
     }
     if(GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval<1)
     {
-        qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval<1");
+        std::cerr << "GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval<1" << std::endl;
         GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval=1;
     }
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     /*if(CommonSettingsCommon::commonSettingsCommon.min_character<0)
     {
-        qDebug() << std::basic_string<char>Literal("CommonSettingsCommon::commonSettingsCommon.min_character<0");
+        std::cerr << "CommonSettingsCommon::commonSettingsCommon.min_character<0" << std::endl;
         CommonSettingsCommon::commonSettingsCommon.min_character=0;
     }*/
     if(CommonSettingsCommon::commonSettingsCommon.max_character<1)
     {
-        qDebug() << std::basic_string<char>Literal("CommonSettingsCommon::commonSettingsCommon.max_character<1");
+        std::cerr << "CommonSettingsCommon::commonSettingsCommon.max_character<1" << std::endl;
         CommonSettingsCommon::commonSettingsCommon.max_character=1;
     }
     if(CommonSettingsCommon::commonSettingsCommon.max_character<CommonSettingsCommon::commonSettingsCommon.min_character)
     {
-        qDebug() << std::basic_string<char>Literal("CommonSettingsCommon::commonSettingsCommon.max_character<CommonSettingsCommon::commonSettingsCommon.min_character");
+        std::cerr << "CommonSettingsCommon::commonSettingsCommon.max_character<CommonSettingsCommon::commonSettingsCommon.min_character" << std::endl;
         CommonSettingsCommon::commonSettingsCommon.max_character=CommonSettingsCommon::commonSettingsCommon.min_character;
     }
     if(CommonSettingsCommon::commonSettingsCommon.character_delete_time<=0)
     {
-        qDebug() << std::basic_string<char>Literal("CommonSettingsCommon::commonSettingsCommon.character_delete_time<=0");
+        std::cerr << "CommonSettingsCommon::commonSettingsCommon.character_delete_time<=0" << std::endl;
         CommonSettingsCommon::commonSettingsCommon.character_delete_time=7*24*3600;
     }
     #endif
@@ -785,43 +784,43 @@ void BaseServer::loadAndFixSettings()
     {
         if(CommonSettingsServer::commonSettingsServer.autoLearn)
         {
-            qDebug() << "Auto-learn disable when SP enabled";
+            std::cerr << "Auto-learn disable when SP enabled" << std::endl;
             CommonSettingsServer::commonSettingsServer.autoLearn=false;
         }
     }
 
     if(GlobalServerData::serverSettings.datapackCache<-1)
     {
-        qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.datapackCache<-1");
+        std::cerr << "GlobalServerData::serverSettings.datapackCache<-1" << std::endl;
         GlobalServerData::serverSettings.datapackCache=-1;
     }
     {
-        std::basic_string<char>List newMirrorList;
-        QRegularExpression httpMatch("^https?://.+$");
-        const std::basic_string<char>List &mirrorList=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(BaseServer::text_dotcomma);
-        int index=0;
+        std::vector<std::string> newMirrorList;
+        std::regex httpMatch("^https?://.+$");
+        const std::vector<std::string> &mirrorList=stringsplit(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer,';');
+        unsigned int index=0;
         while(index<mirrorList.size())
         {
-            const std::basic_string<char> &mirror=mirrorList.at(index);
-            if(!mirror.contains(httpMatch))
-            {}//qDebug() << "Mirror wrong: " << mirror.toLocal8Bit(); -> single player
+            const std::string &mirror=mirrorList.at(index);
+            if(!std::regex_match(mirror,httpMatch))
+            {}//std::cerr << "Mirror wrong: " << mirror.toLocal8Bit() << std::endl; -> single player
             else
             {
-                if(mirror.endsWith(BaseServer::text_slash))
-                    newMirrorList << mirror;
+                if(stringEndsWith(mirror,BaseServer::text_slash))
+                    newMirrorList.push_back(mirror);
                 else
-                    newMirrorList << mirror+BaseServer::text_slash;
+                    newMirrorList.push_back(mirror+BaseServer::text_slash);
             }
             index++;
         }
-        CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=newMirrorList.join(BaseServer::text_dotcomma);
+        CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=stringimplode(newMirrorList,';');
         CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer;
     }
 
     //check the settings here
     if(GlobalServerData::serverSettings.max_players<1)
     {
-        qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.max_players<1");
+        std::cerr << "GlobalServerData::serverSettings.max_players<1" << std::endl;
         GlobalServerData::serverSettings.max_players=200;
     }
     ProtocolParsing::setMaxPlayers(GlobalServerData::serverSettings.max_players);
@@ -847,28 +846,28 @@ void BaseServer::loadAndFixSettings()
     {
         if(GlobalServerData::serverSettings.mapVisibility.simple.max<5)
         {
-            qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.mapVisibility.simple.max<5");
+            std::cerr << "GlobalServerData::serverSettings.mapVisibility.simple.max<5" << std::endl;
             GlobalServerData::serverSettings.mapVisibility.simple.max=5;
         }
         if(GlobalServerData::serverSettings.mapVisibility.simple.reshow<3)
         {
-            qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.mapVisibility.simple.reshow<3");
+            std::cerr << "GlobalServerData::serverSettings.mapVisibility.simple.reshow<3" << std::endl;
             GlobalServerData::serverSettings.mapVisibility.simple.reshow=3;
         }
 
         if(GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.max_players)
         {
-            qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.max_players");
+            std::cerr << "GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.max_players" << std::endl;
             GlobalServerData::serverSettings.mapVisibility.simple.reshow=GlobalServerData::serverSettings.max_players;
         }
         if(GlobalServerData::serverSettings.mapVisibility.simple.max>GlobalServerData::serverSettings.max_players)
         {
-            qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.mapVisibility.simple.max>GlobalServerData::serverSettings.max_players");
+            std::cerr << "GlobalServerData::serverSettings.mapVisibility.simple.max>GlobalServerData::serverSettings.max_players" << std::endl;
             GlobalServerData::serverSettings.mapVisibility.simple.max=GlobalServerData::serverSettings.max_players;
         }
         if(GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.mapVisibility.simple.max)
         {
-            qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.mapVisibility.simple.max");
+            std::cerr << "GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.mapVisibility.simple.max" << std::endl;
             GlobalServerData::serverSettings.mapVisibility.simple.reshow=GlobalServerData::serverSettings.mapVisibility.simple.max;
         }
 
@@ -879,64 +878,64 @@ void BaseServer::loadAndFixSettings()
     {
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder<3)
         {
-            qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder<3");
+            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder<3" << std::endl;
             GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder=3;
         }
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder<2)
         {
-            qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder<2");
+            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder<2" << std::endl;
             GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder=2;
         }
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.max<5)
         {
-            qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.mapVisibility.withBorder.max<5");
+            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.max<5" << std::endl;
             GlobalServerData::serverSettings.mapVisibility.withBorder.max=5;
         }
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshow<3)
         {
-            qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.mapVisibility.withBorder.reshow<3");
+            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.reshow<3" << std::endl;
             GlobalServerData::serverSettings.mapVisibility.withBorder.reshow=3;
         }
 
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.max_players)
         {
-            qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.max_players");
+            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.max_players" << std::endl;
             GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder=GlobalServerData::serverSettings.max_players;
         }
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder>GlobalServerData::serverSettings.max_players)
         {
-            qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder>GlobalServerData::serverSettings.max_players");
+            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder>GlobalServerData::serverSettings.max_players" << std::endl;
             GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder=GlobalServerData::serverSettings.max_players;
         }
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshow>GlobalServerData::serverSettings.max_players)
         {
-            qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.mapVisibility.withBorder.reshow>GlobalServerData::serverSettings.max_players");
+            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.reshow>GlobalServerData::serverSettings.max_players" << std::endl;
             GlobalServerData::serverSettings.mapVisibility.withBorder.reshow=GlobalServerData::serverSettings.max_players;
         }
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.max>GlobalServerData::serverSettings.max_players)
         {
-            qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.mapVisibility.withBorder.max>GlobalServerData::serverSettings.max_players");
+            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.max>GlobalServerData::serverSettings.max_players" << std::endl;
             GlobalServerData::serverSettings.mapVisibility.withBorder.max=GlobalServerData::serverSettings.max_players;
         }
 
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshow>GlobalServerData::serverSettings.mapVisibility.withBorder.max)
         {
-            qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.mapVisibility.withBorder.reshow>GlobalServerData::serverSettings.mapVisibility.withBorder.max");
+            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.reshow>GlobalServerData::serverSettings.mapVisibility.withBorder.max" << std::endl;
             GlobalServerData::serverSettings.mapVisibility.withBorder.reshow=GlobalServerData::serverSettings.mapVisibility.withBorder.max;
         }
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder)
         {
-            qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder");
+            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder" << std::endl;
             GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder=GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder;
         }
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.max)
         {
-            qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.max");
+            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.max" << std::endl;
             GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder=GlobalServerData::serverSettings.mapVisibility.withBorder.max;
         }
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.reshow)
         {
-            qDebug() << std::basic_string<char>Literal("GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.reshow");
+            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.reshow" << std::endl;
             GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder=GlobalServerData::serverSettings.mapVisibility.withBorder.reshow;
         }
     }
@@ -961,7 +960,7 @@ void BaseServer::loadAndFixSettings()
         case CatchChallenger::DatabaseBase::DatabaseType::PostgreSQL:
         break;
         default:
-            qDebug() << "Wrong db type";
+            std::cerr << "Wrong db type" << std::endl;
             GlobalServerData::serverSettings.database_login.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Mysql;
         break;
     }
@@ -973,7 +972,7 @@ void BaseServer::loadAndFixSettings()
         case CatchChallenger::DatabaseBase::DatabaseType::PostgreSQL:
         break;
         default:
-            qDebug() << "Wrong db type";
+            std::cerr << "Wrong db type" << std::endl;
             GlobalServerData::serverSettings.database_base.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Mysql;
         break;
     }
@@ -984,7 +983,7 @@ void BaseServer::loadAndFixSettings()
         case CatchChallenger::DatabaseBase::DatabaseType::PostgreSQL:
         break;
         default:
-            qDebug() << "Wrong db type";
+            std::cerr << "Wrong db type" << std::endl;
             GlobalServerData::serverSettings.database_common.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Mysql;
         break;
     }
@@ -995,7 +994,7 @@ void BaseServer::loadAndFixSettings()
         case CatchChallenger::DatabaseBase::DatabaseType::PostgreSQL:
         break;
         default:
-            qDebug() << "Wrong db type";
+            std::cerr << "Wrong db type" << std::endl;
             GlobalServerData::serverSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Mysql;
         break;
     }
@@ -1007,7 +1006,7 @@ void BaseServer::loadAndFixSettings()
         break;
         default:
             GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm=CatchChallenger::MapVisibilityAlgorithmSelection_Simple;
-            qDebug() << "Wrong visibility algorithm";
+            std::cerr << "Wrong visibility algorithm" << std::endl;
         break;
     }
 
@@ -1018,7 +1017,7 @@ void BaseServer::loadAndFixSettings()
         break;
         default:
             GlobalServerData::serverSettings.city.capture.frenquency=City::Capture::Frequency_week;
-            qDebug() << "Wrong City::Capture::Frequency";
+            std::cerr << "Wrong City::Capture::Frequency";
         break;
     }
     switch(GlobalServerData::serverSettings.city.capture.day)
@@ -1033,17 +1032,17 @@ void BaseServer::loadAndFixSettings()
         break;
         default:
             GlobalServerData::serverSettings.city.capture.day=City::Capture::Monday;
-            qDebug() << "Wrong City::Capture::Day";
+            std::cerr << "Wrong City::Capture::Day" << std::endl;
         break;
     }
     if(GlobalServerData::serverSettings.city.capture.hour>24)
     {
-        qDebug() << "GlobalServerData::serverSettings.city.capture.hours out of range";
+        std::cerr << "GlobalServerData::serverSettings.city.capture.hours out of range" << std::endl;
         GlobalServerData::serverSettings.city.capture.hour=0;
     }
     if(GlobalServerData::serverSettings.city.capture.minute>60)
     {
-        qDebug() << "GlobalServerData::serverSettings.city.capture.minutes out of range";
+        std::cerr << "GlobalServerData::serverSettings.city.capture.minutes out of range" << std::endl;
         GlobalServerData::serverSettings.city.capture.minute=0;
     }
 

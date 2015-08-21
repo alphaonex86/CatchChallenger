@@ -116,8 +116,8 @@ void BaseServer::unload_the_bots()
 void BaseServer::unload_the_map()
 {
     semi_loaded_map.clear();
-    QHash<std::basic_string<char>,CommonMap *>::const_iterator i = GlobalServerData::serverPrivateVariables.map_list.constBegin();
-    QHash<std::basic_string<char>,CommonMap *>::const_iterator i_end = GlobalServerData::serverPrivateVariables.map_list.constEnd();
+    QHash<std::string,CommonMap *>::const_iterator i = GlobalServerData::serverPrivateVariables.map_list.constBegin();
+    QHash<std::string,CommonMap *>::const_iterator i_end = GlobalServerData::serverPrivateVariables.map_list.constEnd();
     while (i != i_end)
     {
         CommonMap::removeParsedLayer(i.value()->parsed_layer);
