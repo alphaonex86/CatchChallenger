@@ -67,20 +67,21 @@ void BaseServer::preload_the_events()
                     auto j = i->second.begin();
                     while (j!=i->second.end())
                     {
-                        // event.values is std::vector<std::basic_string<char> >
+                        // event.values is std::vector<std::string >
                         const auto &iter = std::find(event.values.begin(), event.values.end(), j->second.value);
                         const size_t &sub_index = std::distance(event.values.begin(), iter);
                         if(sub_index<event.values.size())
                         {
                             #ifdef EPOLLCATCHCHALLENGERSERVER
-                            GlobalServerData::serverPrivateVariables.timerEvents << new TimerEvents(index,sub_index);
-                            GlobalServerData::serverPrivateVariables.timerEvents.last()->start(j.value().cycle*1000*60,j.value().offset*1000*60);
+                            TimerEvents * const timer=new TimerEvents(index,sub_index);
+                            GlobalServerData::serverPrivateVariables.timerEvents.push_back(timer);
+                            timer->start(j->second.cycle*1000*60,j->second.offset*1000*60);
                             #else
-                            GlobalServerData::serverPrivateVariables.timerEvents << new QtTimerEvents(j.value().offset*1000*60,j.value().cycle*1000*60,index,sub_index);
+                            GlobalServerData::serverPrivateVariables.timerEvents.push_back(new QtTimerEvents(j.value().offset*1000*60,j.value().cycle*1000*60,index,sub_index));
                             #endif
                         }
                         else
-                            GlobalServerData::serverSettings.programmedEventList[i.key()].remove(i.key());
+                            GlobalServerData::serverSettings.programmedEventList[i->first].erase(i->first);
                         ++j;
                     }
                     break;
@@ -88,7 +89,7 @@ void BaseServer::preload_the_events()
                 index++;
             }
             if(index==CommonDatapack::commonDatapack.events.size())
-                GlobalServerData::serverSettings.programmedEventList.remove(i.key());
+                GlobalServerData::serverSettings.programmedEventList.erase(i->first);
             ++i;
         }
     }
@@ -100,9 +101,9 @@ void BaseServer::preload_the_ddos()
     int index=0;
     while(index<CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
     {
-        Client::generalChatDrop << 0;
-        Client::clanChatDrop << 0;
-        Client::privateChatDrop << 0;
+        Client::generalChatDrop.push_back(0);
+        Client::clanChatDrop.push_back(0);
+        Client::privateChatDrop.push_back(0);
         index++;
     }
     Client::generalChatDropTotalCache=0;
@@ -126,14 +127,14 @@ bool BaseServer::preload_zone_init()
         }
         if(!entryListZone.at(index).fileName().contains(regexXmlFile))
         {
-            qDebug() << std::basic_string<char>Literal("%1 the zone file name not match").arg(entryListZone.at(index).fileName());
+            qDebug() << std::stringLiteral("%1 the zone file name not match").arg(entryListZone.at(index).fileName());
             index++;
             continue;
         }
-        std::basic_string<char> zoneCodeName=entryListZone.at(index).fileName();
+        std::string zoneCodeName=entryListZone.at(index).fileName();
         zoneCodeName.remove(BaseServer::text_dotxml);
         QDomDocument domDocument;
-        const std::basic_string<char> &file=entryListZone.at(index).absoluteFilePath();
+        const std::string &file=entryListZone.at(index).absoluteFilePath();
         #ifndef EPOLLCATCHCHALLENGERSERVER
         if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
             domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
@@ -144,17 +145,17 @@ bool BaseServer::preload_zone_init()
             QByteArray xmlContent;
             if(!itemsFile.open(QIODevice::ReadOnly))
             {
-                qDebug() << std::basic_string<char>Literal("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString());
+                qDebug() << std::stringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString());
                 index++;
                 continue;
             }
             xmlContent=itemsFile.readAll();
             itemsFile.close();
-            std::basic_string<char> errorStr;
+            std::string errorStr;
             int errorLine,errorColumn;
             if(!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
             {
-                qDebug() << std::basic_string<char>Literal("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
+                qDebug() << std::stringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
                 index++;
                 continue;
             }
@@ -164,14 +165,14 @@ bool BaseServer::preload_zone_init()
         #endif
         if(GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.contains(zoneCodeName))
         {
-            qDebug() << std::basic_string<char>Literal("Unable to open the file: %1, zone code name already found");
+            qDebug() << std::stringLiteral("Unable to open the file: %1, zone code name already found");
             index++;
             continue;
         }
         QDomElement root(domDocument.documentElement());
         if(root.tagName()!=BaseServer::text_zone)
         {
-            qDebug() << std::basic_string<char>Literal("Unable to open the file: %1, \"zone\" root balise not found for the xml file").arg(file);
+            qDebug() << std::stringLiteral("Unable to open the file: %1, \"zone\" root balise not found for the xml file").arg(file);
             index++;
             continue;
         }
@@ -184,7 +185,7 @@ bool BaseServer::preload_zone_init()
             if(capture.isElement() && capture.hasAttribute(BaseServer::text_fightId))
             {
                 bool ok;
-                const std::basic_string<char>List &fightIdStringList=capture.attribute(BaseServer::text_fightId).split(BaseServer::text_dotcomma);
+                const std::stringList &fightIdStringList=capture.attribute(BaseServer::text_fightId).split(BaseServer::text_dotcomma);
                 int sub_index=0;
                 const int &listsize=fightIdStringList.size();
                 while(sub_index<listsize)
@@ -193,7 +194,7 @@ bool BaseServer::preload_zone_init()
                     if(ok)
                     {
                         if(!CommonDatapackServerSpec::commonDatapackServerSpec.botFights.contains(fightId))
-                            qDebug() << std::basic_string<char>Literal("bot fightId %1 not found for capture zone %2").arg(fightId).arg(zoneCodeName);
+                            qDebug() << std::stringLiteral("bot fightId %1 not found for capture zone %2").arg(fightId).arg(zoneCodeName);
                         else
                             fightIdList << fightId;
                     }
@@ -204,12 +205,12 @@ bool BaseServer::preload_zone_init()
                 break;
             }
             else
-                qDebug() << std::basic_string<char>Literal("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(capture.tagName()).arg(capture.lineNumber());
+                qDebug() << std::stringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(capture.tagName()).arg(capture.lineNumber());
         }
         index++;
     }
 
-    qDebug() << std::basic_string<char>Literal("%1 zone(s) loaded").arg(GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.size());
+    qDebug() << std::stringLiteral("%1 zone(s) loaded").arg(GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.size());
     return true;
 }
 
@@ -229,7 +230,7 @@ void BaseServer::preload_map_semi_after_db_id()
     {
         const Map_semi &map_semi=semi_loaded_map.at(indexMapSemi);
         MapServer * const mapServer=static_cast<MapServer *>(map_semi.map);
-        const std::basic_string<char> &sortFileName=mapServer->map_file;
+        const std::string &sortFileName=mapServer->map_file;
         //item on map
         {
             int index=0;
@@ -247,12 +248,12 @@ void BaseServer::preload_map_semi_after_db_id()
                 else
                 {
                     dictionary_pointOnMap_maxId++;
-                    std::basic_string<char> queryText;
+                    std::string queryText;
                     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
                     {
                         default:
                         case DatabaseBase::DatabaseType::Mysql:
-                            queryText=std::basic_string<char>Literal("INSERT INTO `dictionary_pointonmap`(`id`,`map`,`x`,`y`) VALUES(%1,'%2',%3,%4);")
+                            queryText=std::stringLiteral("INSERT INTO `dictionary_pointonmap`(`id`,`map`,`x`,`y`) VALUES(%1,'%2',%3,%4);")
                                     .arg(dictionary_pointOnMap_maxId)
                                     .arg(mapServer->reverse_db_id)
                                     .arg(item.point.x)
@@ -260,7 +261,7 @@ void BaseServer::preload_map_semi_after_db_id()
                                     ;
                         break;
                         case DatabaseBase::DatabaseType::SQLite:
-                            queryText=std::basic_string<char>Literal("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
+                            queryText=std::stringLiteral("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
                                     .arg(dictionary_pointOnMap_maxId)
                                     .arg(mapServer->reverse_db_id)
                                     .arg(item.point.x)
@@ -268,7 +269,7 @@ void BaseServer::preload_map_semi_after_db_id()
                                     ;
                         break;
                         case DatabaseBase::DatabaseType::PostgreSQL:
-                            queryText=std::basic_string<char>Literal("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
+                            queryText=std::stringLiteral("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
                                     .arg(dictionary_pointOnMap_maxId)
                                     .arg(mapServer->reverse_db_id)
                                     .arg(item.point.x)
@@ -278,7 +279,7 @@ void BaseServer::preload_map_semi_after_db_id()
                     }
                     if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText.toLatin1()))
                     {
-                        qDebug() << std::basic_string<char>Literal("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
+                        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
                         criticalDatabaseQueryFailed();abort();//stop because can't resolv the name
                     }
                     DictionaryServer::dictionary_pointOnMap_internal_to_database[sortFileName][QPair<quint8,quint8>(item.point.x,item.point.y)]=dictionary_pointOnMap_maxId;
@@ -343,12 +344,12 @@ void BaseServer::preload_map_semi_after_db_id()
                 else
                 {
                     dictionary_pointOnMap_maxId++;
-                    std::basic_string<char> queryText;
+                    std::string queryText;
                     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
                     {
                         default:
                         case DatabaseBase::DatabaseType::Mysql:
-                            queryText=std::basic_string<char>Literal("INSERT INTO `dictionary_pointonmap`(`id`,`map`,`x`,`y`) VALUES(%1,'%2',%3,%4);")
+                            queryText=std::stringLiteral("INSERT INTO `dictionary_pointonmap`(`id`,`map`,`x`,`y`) VALUES(%1,'%2',%3,%4);")
                                     .arg(dictionary_pointOnMap_maxId)
                                     .arg(mapServer->reverse_db_id)
                                     .arg(dirt.point.x)
@@ -356,7 +357,7 @@ void BaseServer::preload_map_semi_after_db_id()
                                     ;
                         break;
                         case DatabaseBase::DatabaseType::SQLite:
-                            queryText=std::basic_string<char>Literal("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
+                            queryText=std::stringLiteral("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
                                     .arg(dictionary_pointOnMap_maxId)
                                     .arg(mapServer->reverse_db_id)
                                     .arg(dirt.point.x)
@@ -364,7 +365,7 @@ void BaseServer::preload_map_semi_after_db_id()
                                     ;
                         break;
                         case DatabaseBase::DatabaseType::PostgreSQL:
-                            queryText=std::basic_string<char>Literal("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
+                            queryText=std::stringLiteral("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
                                     .arg(dictionary_pointOnMap_maxId)
                                     .arg(mapServer->reverse_db_id)
                                     .arg(dirt.point.x)
@@ -374,7 +375,7 @@ void BaseServer::preload_map_semi_after_db_id()
                     }
                     if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText.toLatin1()))
                     {
-                        qDebug() << std::basic_string<char>Literal("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
+                        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
                         criticalDatabaseQueryFailed();abort();//stop because can't resolv the name
                     }
                     DictionaryServer::dictionary_pointOnMap_internal_to_database[sortFileName][QPair<quint8,quint8>(dirt.point.x,dirt.point.y)]=dictionary_pointOnMap_maxId;
@@ -442,17 +443,17 @@ void BaseServer::preload_map_semi_after_db_id()
  * */
 void BaseServer::preload_profile()
 {
-    DebugClass::debugConsole(std::basic_string<char>Literal("%1 SQL skin dictionary").arg(DictionaryLogin::dictionary_skin_internal_to_database.size()));
+    DebugClass::debugConsole(std::stringLiteral("%1 SQL skin dictionary").arg(DictionaryLogin::dictionary_skin_internal_to_database.size()));
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     /*if(CommonDatapack::commonDatapack.profileList.size()!=GlobalServerData::serverPrivateVariables.serverProfileList.size())
     {
-        DebugClass::debugConsole(std::basic_string<char>Literal("profile common and server don't match"));
+        DebugClass::debugConsole(std::stringLiteral("profile common and server don't match"));
         return;
     }*/
     if(CommonDatapack::commonDatapack.profileList.size()!=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.size())
     {
-        DebugClass::debugConsole(std::basic_string<char>Literal("profile common and server don't match"));
+        DebugClass::debugConsole(std::stringLiteral("profile common and server don't match"));
         return;
     }
     #endif
@@ -481,62 +482,62 @@ void BaseServer::preload_profile()
             serverProfileInternal.y=serverProfile.y;
             serverProfileInternal.orientation=serverProfile.orientation;
             const quint32 &mapId=serverProfileInternal.map->reverse_db_id;
-            const std::basic_string<char> &mapQuery=std::basic_string<char>::number(mapId)+
+            const std::string &mapQuery=std::string::number(mapId)+
                     QLatin1String(",")+
-                    std::basic_string<char>::number(serverProfile.x)+
+                    std::string::number(serverProfile.x)+
                     QLatin1String(",")+
-                    std::basic_string<char>::number(serverProfile.y)+
+                    std::string::number(serverProfile.y)+
                     QLatin1String(",")+
-                    std::basic_string<char>::number(Orientation_bottom);
+                    std::string::number(Orientation_bottom);
             switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
             {
                 default:
                 case DatabaseBase::DatabaseType::Mysql:
-                    serverProfileInternal.preparedQueryAdd << std::basic_string<char>Literal("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(");
+                    serverProfileInternal.preparedQueryAdd << std::stringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(");
                     serverProfileInternal.preparedQueryAdd << /*id*/ QLatin1String(",");
                     serverProfileInternal.preparedQueryAdd << /*account*/ QLatin1String(",'");
                     serverProfileInternal.preparedQueryAdd << /*pseudo*/ QLatin1String("',");
                     serverProfileInternal.preparedQueryAdd << /*skin*/QLatin1String(",0,0,")+
-                            std::basic_string<char>::number(profile.cash)+QLatin1String(",");
+                            std::string::number(profile.cash)+QLatin1String(",");
                     serverProfileInternal.preparedQueryAdd << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0,0,0,0,0,")+
-                            std::basic_string<char>::number(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+QLatin1String(");");
+                            std::string::number(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+QLatin1String(");");
                 break;
                 case DatabaseBase::DatabaseType::SQLite:
-                    serverProfileInternal.preparedQueryAdd << std::basic_string<char>Literal("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
+                    serverProfileInternal.preparedQueryAdd << std::stringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
                     serverProfileInternal.preparedQueryAdd << /*id*/ QLatin1String(",");
                     serverProfileInternal.preparedQueryAdd << /*account*/ QLatin1String(",'");
                     serverProfileInternal.preparedQueryAdd << /*pseudo*/ QLatin1String("',");
                     serverProfileInternal.preparedQueryAdd << /*skin*/QLatin1String(",0,0,")+
-                            std::basic_string<char>::number(profile.cash)+QLatin1String(",");
+                            std::string::number(profile.cash)+QLatin1String(",");
                     serverProfileInternal.preparedQueryAdd << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0,0,0,0,0,")+
-                            std::basic_string<char>::number(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+QLatin1String(");");
+                            std::string::number(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+QLatin1String(");");
                 break;
                 case DatabaseBase::DatabaseType::PostgreSQL:
-                    serverProfileInternal.preparedQueryAdd << std::basic_string<char>Literal("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
+                    serverProfileInternal.preparedQueryAdd << std::stringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
                     serverProfileInternal.preparedQueryAdd << /*id*/ QLatin1String(",");
                     serverProfileInternal.preparedQueryAdd << /*account*/ QLatin1String(",'");
                     serverProfileInternal.preparedQueryAdd << /*pseudo*/ QLatin1String("',");
                     serverProfileInternal.preparedQueryAdd << /*skin*/QLatin1String(",0,0,")+
-                            std::basic_string<char>::number(profile.cash)+QLatin1String(",");
+                            std::string::number(profile.cash)+QLatin1String(",");
                     serverProfileInternal.preparedQueryAdd << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0,FALSE,0,0,0,")+
-                            std::basic_string<char>::number(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+QLatin1String(");");
+                            std::string::number(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+QLatin1String(");");
                 break;
             }
             switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
             {
                 default:
                 case DatabaseBase::DatabaseType::Mysql:
-                    serverProfileInternal.preparedQuerySelect << std::basic_string<char>Literal("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`) VALUES(");
+                    serverProfileInternal.preparedQuerySelect << std::stringLiteral("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`) VALUES(");
                     serverProfileInternal.preparedQuerySelect << /*id*/ QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",");
                     serverProfileInternal.preparedQuerySelect << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0);");
                 break;
                 case DatabaseBase::DatabaseType::SQLite:
-                    serverProfileInternal.preparedQuerySelect << std::basic_string<char>Literal("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
+                    serverProfileInternal.preparedQuerySelect << std::stringLiteral("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
                     serverProfileInternal.preparedQuerySelect << /*id*/ QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",");
                     serverProfileInternal.preparedQuerySelect << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0);");
                 break;
                 case DatabaseBase::DatabaseType::PostgreSQL:
-                    serverProfileInternal.preparedQuerySelect << std::basic_string<char>Literal("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
+                    serverProfileInternal.preparedQuerySelect << std::stringLiteral("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
                     serverProfileInternal.preparedQuerySelect << /*id*/ QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",");
                     serverProfileInternal.preparedQuerySelect << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0);");
                 break;
@@ -547,7 +548,7 @@ void BaseServer::preload_profile()
         index++;
     }
 
-    DebugClass::debugConsole(std::basic_string<char>Literal("%1 profile loaded").arg(GlobalServerData::serverPrivateVariables.serverProfileInternalList.size()));
+    DebugClass::debugConsole(std::stringLiteral("%1 profile loaded").arg(GlobalServerData::serverPrivateVariables.serverProfileInternalList.size()));
 }
 
 bool BaseServer::preload_zone()
@@ -568,9 +569,9 @@ void BaseServer::preload_zone_return()
     if(GlobalServerData::serverPrivateVariables.db_server->next())
     {
         bool ok;
-        std::basic_string<char> zoneCodeName=entryListZone.at(entryListIndex).fileName();
+        std::string zoneCodeName=entryListZone.at(entryListIndex).fileName();
         zoneCodeName.remove(BaseServer::text_dotxml);
-        const std::basic_string<char> &tempString=std::basic_string<char>(GlobalServerData::serverPrivateVariables.db_server->value(0));
+        const std::string &tempString=std::string(GlobalServerData::serverPrivateVariables.db_server->value(0));
         const quint32 &clanId=tempString.toUInt(&ok);
         if(ok)
         {
@@ -578,7 +579,7 @@ void BaseServer::preload_zone_return()
             GlobalServerData::serverPrivateVariables.cityStatusListReverse[clanId]=zoneCodeName;
         }
         else
-            DebugClass::debugConsole(std::basic_string<char>Literal("clan id is failed to convert to number for city status"));
+            DebugClass::debugConsole(std::stringLiteral("clan id is failed to convert to number for city status"));
     }
     GlobalServerData::serverPrivateVariables.db_server->clear();
     entryListIndex++;
@@ -598,14 +599,14 @@ bool BaseServer::preload_the_city_capture()
 
 bool BaseServer::preload_the_map()
 {
-    GlobalServerData::serverPrivateVariables.datapack_mapPath=GlobalServerData::serverSettings.datapack_basePath+std::basic_string<char>Literal(DATAPACK_BASE_PATH_MAPMAIN).arg(CommonSettingsServer::commonSettingsServer.mainDatapackCode);
+    GlobalServerData::serverPrivateVariables.datapack_mapPath=GlobalServerData::serverSettings.datapack_basePath+std::stringLiteral(DATAPACK_BASE_PATH_MAPMAIN).arg(CommonSettingsServer::commonSettingsServer.mainDatapackCode);
     #ifdef DEBUG_MESSAGE_MAP_LOAD
-    DebugClass::debugConsole(std::basic_string<char>Literal("start preload the map, into: %1").arg(GlobalServerData::serverPrivateVariables.datapack_mapPath));
+    DebugClass::debugConsole(std::stringLiteral("start preload the map, into: %1").arg(GlobalServerData::serverPrivateVariables.datapack_mapPath));
     #endif
     Map_loader map_temp;
-    std::basic_string<char>List map_name;
-    std::basic_string<char>List map_name_to_do_id;
-    std::basic_string<char>List returnList=FacilityLibGeneral::listFolder(GlobalServerData::serverPrivateVariables.datapack_mapPath);
+    std::stringList map_name;
+    std::stringList map_name_to_do_id;
+    std::stringList returnList=FacilityLibGeneral::listFolder(GlobalServerData::serverPrivateVariables.datapack_mapPath);
     returnList.sort();
 
     if(returnList.isEmpty())
@@ -622,20 +623,20 @@ bool BaseServer::preload_the_map()
     int size=returnList.size();
     int index=0;
     int sub_index;
-    std::basic_string<char> tmxRemove(".tmx");
+    std::string tmxRemove(".tmx");
     QRegularExpression mapFilter(QLatin1String("\\.tmx$"));
     QRegularExpression mapExclude(QLatin1String("[\"']"));
     QList<CommonMap *> flat_map_list_temp;
     while(index<size)
     {
-        std::basic_string<char> fileName=returnList.at(index);
+        std::string fileName=returnList.at(index);
         fileName.replace(BaseServer::text_antislash,BaseServer::text_slash);
         if(fileName.contains(mapFilter) && !fileName.contains(mapExclude))
         {
             #ifdef DEBUG_MESSAGE_MAP_LOAD
-            DebugClass::debugConsole(std::basic_string<char>Literal("load the map: %1").arg(fileName));
+            DebugClass::debugConsole(std::stringLiteral("load the map: %1").arg(fileName));
             #endif
-            std::basic_string<char> sortFileName=fileName;
+            std::string sortFileName=fileName;
             sortFileName.remove(tmxRemove);
             map_name_to_do_id << sortFileName;
             if(map_temp.tryLoadMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName))
@@ -707,7 +708,7 @@ bool BaseServer::preload_the_map()
                 semi_loaded_map << map_semi;
             }
             else
-                DebugClass::debugConsole(std::basic_string<char>Literal("error at loading: %1, error: %2").arg(fileName).arg(map_temp.errorString()));
+                DebugClass::debugConsole(std::stringLiteral("error at loading: %1, error: %2").arg(fileName).arg(map_temp.errorString()));
         }
         index++;
     }
@@ -759,7 +760,7 @@ bool BaseServer::preload_the_map()
         int sub_index=0;
         while(sub_index<semi_loaded_map.value(index).old_map.teleport.size())
         {
-            std::basic_string<char> teleportString=semi_loaded_map.value(index).old_map.teleport.at(sub_index).map;
+            std::string teleportString=semi_loaded_map.value(index).old_map.teleport.at(sub_index).map;
             teleportString.remove(BaseServer::text_dottmx);
             if(GlobalServerData::serverPrivateVariables.map_list.contains(teleportString))
             {
@@ -769,7 +770,7 @@ bool BaseServer::preload_the_map()
                     int virtual_position=semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_x+semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_y*semi_loaded_map.value(index).map->width;
                     if(semi_loaded_map.value(index).map->teleporter.contains(virtual_position))
                     {
-                        DebugClass::debugConsole(std::basic_string<char>Literal("already found teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
+                        DebugClass::debugConsole(std::stringLiteral("already found teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
                              .arg(semi_loaded_map.value(index).map->map_file)
                              .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_x)
                              .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_y)
@@ -780,7 +781,7 @@ bool BaseServer::preload_the_map()
                     else
                     {
                         #ifdef DEBUG_MESSAGE_MAP_LOAD
-                        DebugClass::debugConsole(std::basic_string<char>Literal("teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
+                        DebugClass::debugConsole(std::stringLiteral("teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
                                      .arg(semi_loaded_map.value(index).map->map_file)
                                      .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_x)
                                      .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_y)
@@ -796,7 +797,7 @@ bool BaseServer::preload_the_map()
                     }
                 }
                 else
-                    DebugClass::debugConsole(std::basic_string<char>Literal("wrong teleporter on the map: %1(%2,%3), to %4 (%5,%6) because the tp is out of range")
+                    DebugClass::debugConsole(std::stringLiteral("wrong teleporter on the map: %1(%2,%3), to %4 (%5,%6) because the tp is out of range")
                          .arg(semi_loaded_map.value(index).map->map_file)
                          .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_x)
                          .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_y)
@@ -805,7 +806,7 @@ bool BaseServer::preload_the_map()
                          .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y));
             }
             else
-                DebugClass::debugConsole(std::basic_string<char>Literal("wrong teleporter on the map: %1(%2,%3), to %4 (%5,%6) because the map is not found")
+                DebugClass::debugConsole(std::stringLiteral("wrong teleporter on the map: %1(%2,%3), to %4 (%5,%6) because the map is not found")
                      .arg(semi_loaded_map.value(index).map->map_file)
                      .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_x)
                      .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_y)
@@ -826,33 +827,33 @@ bool BaseServer::preload_the_map()
         if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map!=NULL && GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map->border.top.map!=GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index)))
         {
             if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map->border.top.map==NULL)
-                DebugClass::debugConsole(std::basic_string<char>Literal("the map %1 have bottom map: %2, the map %2 have not a top map").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map->map_file));
+                DebugClass::debugConsole(std::stringLiteral("the map %1 have bottom map: %2, the map %2 have not a top map").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map->map_file));
             else
-                DebugClass::debugConsole(std::basic_string<char>Literal("the map %1 have bottom map: %2, the map %2 have this top map: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map->border.top.map->map_file));
+                DebugClass::debugConsole(std::stringLiteral("the map %1 have bottom map: %2, the map %2 have this top map: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map->border.top.map->map_file));
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map=NULL;
         }
         if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map!=NULL && GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map->border.bottom.map!=GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index)))
         {
             if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map->border.bottom.map==NULL)
-                DebugClass::debugConsole(std::basic_string<char>Literal("the map %1 have top map: %2, the map %2 have not a bottom map").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map->map_file));
+                DebugClass::debugConsole(std::stringLiteral("the map %1 have top map: %2, the map %2 have not a bottom map").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map->map_file));
             else
-                DebugClass::debugConsole(std::basic_string<char>Literal("the map %1 have top map: %2, the map %2 have this bottom map: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map->border.bottom.map->map_file));
+                DebugClass::debugConsole(std::stringLiteral("the map %1 have top map: %2, the map %2 have this bottom map: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map->border.bottom.map->map_file));
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map=NULL;
         }
         if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map!=NULL && GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map->border.right.map!=GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index)))
         {
             if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map->border.right.map==NULL)
-                DebugClass::debugConsole(std::basic_string<char>Literal("the map %1 have left map: %2, the map %2 have not a right map").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map->map_file));
+                DebugClass::debugConsole(std::stringLiteral("the map %1 have left map: %2, the map %2 have not a right map").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map->map_file));
             else
-                DebugClass::debugConsole(std::basic_string<char>Literal("the map %1 have left map: %2, the map %2 have this right map: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map->border.right.map->map_file));
+                DebugClass::debugConsole(std::stringLiteral("the map %1 have left map: %2, the map %2 have this right map: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map->border.right.map->map_file));
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map=NULL;
         }
         if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map!=NULL && GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map->border.left.map!=GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index)))
         {
             if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map->border.left.map==NULL)
-                DebugClass::debugConsole(std::basic_string<char>Literal("the map %1 have right map: %2, the map %2 have not a left map").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map->map_file));
+                DebugClass::debugConsole(std::stringLiteral("the map %1 have right map: %2, the map %2 have not a left map").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map->map_file));
             else
-                DebugClass::debugConsole(std::basic_string<char>Literal("the map %1 have right map: %2, the map %2 have this left map: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->border.left.map->map_file));
+                DebugClass::debugConsole(std::stringLiteral("the map %1 have right map: %2, the map %2 have this left map: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->border.left.map->map_file));
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map=NULL;
         }
         index++;
@@ -963,7 +964,7 @@ bool BaseServer::preload_the_map()
         index++;
     }
 
-    DebugClass::debugConsole(std::basic_string<char>Literal("%1 map(s) loaded").arg(GlobalServerData::serverPrivateVariables.map_list.size()));
+    DebugClass::debugConsole(std::stringLiteral("%1 map(s) loaded").arg(GlobalServerData::serverPrivateVariables.map_list.size()));
 
     DictionaryServer::dictionary_pointOnMap_internal_to_database.clear();
     botFiles.clear();
@@ -978,7 +979,7 @@ void BaseServer::criticalDatabaseQueryFailed()
 
 void BaseServer::preload_the_skin()
 {
-    std::basic_string<char>List skinFolderList=FacilityLibGeneral::skinIdList(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_SKIN);
+    std::stringList skinFolderList=FacilityLibGeneral::skinIdList(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_SKIN);
     int index=0;
     const int &listsize=skinFolderList.size();
     while(index<listsize)
@@ -987,50 +988,50 @@ void BaseServer::preload_the_skin()
         index++;
     }
 
-    DebugClass::debugConsole(std::basic_string<char>Literal("%1 skin(s) loaded").arg(listsize));
+    DebugClass::debugConsole(std::stringLiteral("%1 skin(s) loaded").arg(listsize));
 }
 
 void BaseServer::preload_the_datapack()
 {
-    std::basic_string<char>List extensionAllowedTemp=std::basic_string<char>(CATCHCHALLENGER_EXTENSION_ALLOWED+BaseServer::text_dotcomma+CATCHCHALLENGER_EXTENSION_COMPRESSED).split(BaseServer::text_dotcomma);
+    std::stringList extensionAllowedTemp=std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+BaseServer::text_dotcomma+CATCHCHALLENGER_EXTENSION_COMPRESSED).split(BaseServer::text_dotcomma);
     BaseServerMasterSendDatapack::extensionAllowed=extensionAllowedTemp.toSet();
-    std::basic_string<char>List compressedExtensionAllowedTemp=std::basic_string<char>(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(BaseServer::text_dotcomma);
+    std::stringList compressedExtensionAllowedTemp=std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(BaseServer::text_dotcomma);
     BaseServerMasterSendDatapack::compressedExtension=compressedExtensionAllowedTemp.toSet();
     Client::datapack_list_cache_timestamp_base=0;
     Client::datapack_list_cache_timestamp_main=0;
     Client::datapack_list_cache_timestamp_sub=0;
 
-    GlobalServerData::serverPrivateVariables.mainDatapackFolder=GlobalServerData::serverSettings.datapack_basePath+std::basic_string<char>Literal("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+std::basic_string<char>Literal("/");
+    GlobalServerData::serverPrivateVariables.mainDatapackFolder=GlobalServerData::serverSettings.datapack_basePath+std::stringLiteral("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+std::stringLiteral("/");
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
         if(CommonSettingsServer::commonSettingsServer.mainDatapackCode.isEmpty())
         {
-            DebugClass::debugConsole(std::basic_string<char>Literal("CommonSettingsServer::commonSettingsServer.mainDatapackCode.isEmpty"));
+            DebugClass::debugConsole(std::stringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode.isEmpty"));
             abort();
         }
         if(!CommonSettingsServer::commonSettingsServer.mainDatapackCode.contains(QRegularExpression(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE)))
         {
             DebugClass::debugConsole(
-                        std::basic_string<char>Literal("CommonSettingsServer::commonSettingsServer.mainDatapackCode not match CATCHCHALLENGER_CHECK_MAINDATAPACKCODE %1 not contain %2")
+                        std::stringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode not match CATCHCHALLENGER_CHECK_MAINDATAPACKCODE %1 not contain %2")
                          .arg(CommonSettingsServer::commonSettingsServer.mainDatapackCode)
-                         .arg(std::basic_string<char>Literal(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE))
+                         .arg(std::stringLiteral(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE))
                          );
             abort();
         }
         if(!QDir(GlobalServerData::serverPrivateVariables.mainDatapackFolder).exists())
         {
-            DebugClass::debugConsole(GlobalServerData::serverPrivateVariables.mainDatapackFolder+std::basic_string<char>Literal(" don't exists"));
+            DebugClass::debugConsole(GlobalServerData::serverPrivateVariables.mainDatapackFolder+std::stringLiteral(" don't exists"));
             abort();
         }
     }
     #endif
     if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
     {
-        GlobalServerData::serverPrivateVariables.subDatapackFolder=GlobalServerData::serverSettings.datapack_basePath+std::basic_string<char>Literal("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+std::basic_string<char>Literal("/")+
-                std::basic_string<char>Literal("sub/")+CommonSettingsServer::commonSettingsServer.subDatapackCode+std::basic_string<char>Literal("/");
+        GlobalServerData::serverPrivateVariables.subDatapackFolder=GlobalServerData::serverSettings.datapack_basePath+std::stringLiteral("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+std::stringLiteral("/")+
+                std::stringLiteral("sub/")+CommonSettingsServer::commonSettingsServer.subDatapackCode+std::stringLiteral("/");
         if(!QDir(GlobalServerData::serverPrivateVariables.subDatapackFolder).exists())
         {
-            DebugClass::debugConsole(GlobalServerData::serverPrivateVariables.subDatapackFolder+std::basic_string<char>Literal(" don't exists, drop spec"));
+            DebugClass::debugConsole(GlobalServerData::serverPrivateVariables.subDatapackFolder+std::stringLiteral(" don't exists, drop spec"));
             GlobalServerData::serverPrivateVariables.subDatapackFolder.clear();
             CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
         }
@@ -1040,8 +1041,8 @@ void BaseServer::preload_the_datapack()
     //do the base
     {
         QCryptographicHash hashBase(QCryptographicHash::Sha224);
-        const QHash<std::basic_string<char>,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,false);
-        std::basic_string<char>List datapack_file_temp=pair.keys();
+        const QHash<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,false);
+        std::stringList datapack_file_temp=pair.keys();
         datapack_file_temp.sort();
         const QRegularExpression mainDatapackBaseFilter("^map[/\\\\]main[/\\\\]");
         int index=0;
@@ -1060,13 +1061,13 @@ void BaseServer::preload_the_datapack()
                         {
                             if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
                             {
-                                DebugClass::debugConsole(std::basic_string<char>Literal("The file %1 is over the maximum packet size, but can be compressed, try enable the compression").arg(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index)));
+                                DebugClass::debugConsole(std::stringLiteral("The file %1 is over the maximum packet size, but can be compressed, try enable the compression").arg(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index)));
                                 abort();
                             }
                         }
                         else
                         {
-                            DebugClass::debugConsole(std::basic_string<char>Literal("The file %1 is over the maximum packet size").arg(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index)));
+                            DebugClass::debugConsole(std::stringLiteral("The file %1 is over the maximum packet size").arg(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index)));
                             abort();
                         }
                     }
@@ -1089,12 +1090,12 @@ void BaseServer::preload_the_datapack()
                 }
                 else
                 {
-                    DebugClass::debugConsole(std::basic_string<char>Literal("Stop now! Unable to open the file %1 to do the datapack checksum for the mirror").arg(file.fileName()));
+                    DebugClass::debugConsole(std::stringLiteral("Stop now! Unable to open the file %1 to do the datapack checksum for the mirror").arg(file.fileName()));
                     abort();
                 }
             }
             else
-                DebugClass::debugConsole(std::basic_string<char>Literal("File excluded because don't match the regex: %1").arg(file.fileName()));
+                DebugClass::debugConsole(std::stringLiteral("File excluded because don't match the regex: %1").arg(file.fileName()));
             index++;
         }
         CommonSettingsCommon::commonSettingsCommon.datapackHashBase=hashBase.result();
@@ -1103,8 +1104,8 @@ void BaseServer::preload_the_datapack()
     //do the main
     {
         QCryptographicHash hashMain(QCryptographicHash::Sha224);
-        const QHash<std::basic_string<char>,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,false);
-        std::basic_string<char>List datapack_file_temp=pair.keys();
+        const QHash<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,false);
+        std::stringList datapack_file_temp=pair.keys();
         datapack_file_temp.sort();
         const QRegularExpression mainDatapackFolderFilter("^sub[/\\\\]");
         int index=0;
@@ -1123,13 +1124,13 @@ void BaseServer::preload_the_datapack()
                         {
                             if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
                             {
-                                DebugClass::debugConsole(std::basic_string<char>Literal("The file %1 is over the maximum packet size, but can be compressed, try enable the compression").arg(GlobalServerData::serverPrivateVariables.mainDatapackFolder+datapack_file_temp.at(index)));
+                                DebugClass::debugConsole(std::stringLiteral("The file %1 is over the maximum packet size, but can be compressed, try enable the compression").arg(GlobalServerData::serverPrivateVariables.mainDatapackFolder+datapack_file_temp.at(index)));
                                 abort();
                             }
                         }
                         else
                         {
-                            DebugClass::debugConsole(std::basic_string<char>Literal("The file %1 is over the maximum packet size").arg(GlobalServerData::serverPrivateVariables.mainDatapackFolder+datapack_file_temp.at(index)));
+                            DebugClass::debugConsole(std::stringLiteral("The file %1 is over the maximum packet size").arg(GlobalServerData::serverPrivateVariables.mainDatapackFolder+datapack_file_temp.at(index)));
                             abort();
                         }
                     }
@@ -1153,12 +1154,12 @@ void BaseServer::preload_the_datapack()
                 }
                 else
                 {
-                    DebugClass::debugConsole(std::basic_string<char>Literal("Stop now! Unable to open the file %1 to do the datapack checksum for the mirror").arg(file.fileName()));
+                    DebugClass::debugConsole(std::stringLiteral("Stop now! Unable to open the file %1 to do the datapack checksum for the mirror").arg(file.fileName()));
                     abort();
                 }
             }
             else
-                DebugClass::debugConsole(std::basic_string<char>Literal("File excluded because don't match the regex: %1").arg(file.fileName()));
+                DebugClass::debugConsole(std::stringLiteral("File excluded because don't match the regex: %1").arg(file.fileName()));
             index++;
         }
         CommonSettingsServer::commonSettingsServer.datapackHashServerMain=hashMain.result();
@@ -1167,8 +1168,8 @@ void BaseServer::preload_the_datapack()
     if(!GlobalServerData::serverPrivateVariables.subDatapackFolder.isEmpty())
     {
         QCryptographicHash hashSub(QCryptographicHash::Sha224);
-        const QHash<std::basic_string<char>,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,false);
-        std::basic_string<char>List datapack_file_temp=pair.keys();
+        const QHash<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,false);
+        std::stringList datapack_file_temp=pair.keys();
         datapack_file_temp.sort();
         int index=0;
         while(index<datapack_file_temp.size()) {
@@ -1186,13 +1187,13 @@ void BaseServer::preload_the_datapack()
                         {
                             if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
                             {
-                                DebugClass::debugConsole(std::basic_string<char>Literal("The file %1 is over the maximum packet size, but can be compressed, try enable the compression").arg(GlobalServerData::serverPrivateVariables.subDatapackFolder+datapack_file_temp.at(index)));
+                                DebugClass::debugConsole(std::stringLiteral("The file %1 is over the maximum packet size, but can be compressed, try enable the compression").arg(GlobalServerData::serverPrivateVariables.subDatapackFolder+datapack_file_temp.at(index)));
                                 abort();
                             }
                         }
                         else
                         {
-                            DebugClass::debugConsole(std::basic_string<char>Literal("The file %1 is over the maximum packet size").arg(GlobalServerData::serverPrivateVariables.subDatapackFolder+datapack_file_temp.at(index)));
+                            DebugClass::debugConsole(std::stringLiteral("The file %1 is over the maximum packet size").arg(GlobalServerData::serverPrivateVariables.subDatapackFolder+datapack_file_temp.at(index)));
                             abort();
                         }
                     }
@@ -1210,25 +1211,25 @@ void BaseServer::preload_the_datapack()
                 }
                 else
                 {
-                    DebugClass::debugConsole(std::basic_string<char>Literal("Stop now! Unable to open the file %1 to do the datapack checksum for the mirror").arg(file.fileName()));
+                    DebugClass::debugConsole(std::stringLiteral("Stop now! Unable to open the file %1 to do the datapack checksum for the mirror").arg(file.fileName()));
                     abort();
                 }
             }
             else
-                DebugClass::debugConsole(std::basic_string<char>Literal("File excluded because don't match the regex: %1").arg(file.fileName()));
+                DebugClass::debugConsole(std::stringLiteral("File excluded because don't match the regex: %1").arg(file.fileName()));
             index++;
         }
         CommonSettingsServer::commonSettingsServer.datapackHashServerSub=hashSub.result();
     }
 
-    DebugClass::debugConsole(std::basic_string<char>Literal("%1 file for datapack loaded, base hash: %2, main hash: %3, sub hash: %4").arg(
+    DebugClass::debugConsole(std::stringLiteral("%1 file for datapack loaded, base hash: %2, main hash: %3, sub hash: %4").arg(
                                  Client::datapack_file_hash_cache_base.size()+
                                  Client::datapack_file_hash_cache_main.size()+
                                  Client::datapack_file_hash_cache_sub.size()
                                  )
-                             .arg(std::basic_string<char>(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.toHex()))
-                             .arg(std::basic_string<char>(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.toHex()))
-                             .arg(std::basic_string<char>(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.toHex()))
+                             .arg(std::string(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.toHex()))
+                             .arg(std::string(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.toHex()))
+                             .arg(std::string(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.toHex()))
                              );
 }
 
@@ -1285,13 +1286,13 @@ void BaseServer::preload_the_visibility_algorithm()
     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
     {
         case MapVisibilityAlgorithmSelection_Simple:
-            DebugClass::debugConsole(std::basic_string<char>Literal("Visibility: MapVisibilityAlgorithmSelection_Simple"));
+            DebugClass::debugConsole(std::stringLiteral("Visibility: MapVisibilityAlgorithmSelection_Simple"));
         break;
         case MapVisibilityAlgorithmSelection_WithBorder:
-            DebugClass::debugConsole(std::basic_string<char>Literal("Visibility: MapVisibilityAlgorithmSelection_WithBorder"));
+            DebugClass::debugConsole(std::stringLiteral("Visibility: MapVisibilityAlgorithmSelection_WithBorder"));
         break;
         case MapVisibilityAlgorithmSelection_None:
-            DebugClass::debugConsole(std::basic_string<char>Literal("Visibility: MapVisibilityAlgorithmSelection_None"));
+            DebugClass::debugConsole(std::stringLiteral("Visibility: MapVisibilityAlgorithmSelection_None"));
         break;
     }
 }
@@ -1325,7 +1326,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                 if(botFiles.value(bot_Semi.file).contains(bot_Semi.id))
                 {
                     #ifdef DEBUG_MESSAGE_MAP_LOAD
-                    CatchChallenger::DebugClass::debugConsole(std::basic_string<char>Literal("Bot %1 (%2) at %3 (%4,%5)").arg(bot_Semi.file).arg(bot_Semi.id).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                    CatchChallenger::DebugClass::debugConsole(std::stringLiteral("Bot %1 (%2) at %3 (%4,%5)").arg(bot_Semi.file).arg(bot_Semi.id).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                     #endif
                     QHashIterator<quint8,QDomElement> i(botFiles.value(bot_Semi.file).value(bot_Semi.id).step);
                     while (i.hasNext()) {
@@ -1334,21 +1335,21 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                         if(step.attribute(BaseServer::text_type)==BaseServer::text_shop)
                         {
                             if(!step.hasAttribute(BaseServer::text_shop))
-                                CatchChallenger::DebugClass::debugConsole(std::basic_string<char>Literal("Has not attribute \"shop\": for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("Has not attribute \"shop\": for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
                                 quint32 shop=step.attribute(BaseServer::text_shop).toUInt(&ok);
                                 if(!ok)
-                                    CatchChallenger::DebugClass::debugConsole(std::basic_string<char>Literal("shop is not a number: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                    CatchChallenger::DebugClass::debugConsole(std::stringLiteral("shop is not a number: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                         .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                                 else if(!CommonDatapackServerSpec::commonDatapackServerSpec.shops.contains(shop))
-                                    CatchChallenger::DebugClass::debugConsole(std::basic_string<char>Literal("shop number is not valid shop: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                    CatchChallenger::DebugClass::debugConsole(std::stringLiteral("shop number is not valid shop: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                         .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                                 else
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP_LOAD
-                                    CatchChallenger::DebugClass::debugConsole(std::basic_string<char>Literal("shop put at: %1 (%2,%3)")
+                                    CatchChallenger::DebugClass::debugConsole(std::stringLiteral("shop put at: %1 (%2,%3)")
                                         .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                     #endif
                                     static_cast<MapServer *>(semi_loaded_map.value(index).map)->shops.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y),shop);
@@ -1359,12 +1360,12 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                         else if(step.attribute(BaseServer::text_type)==BaseServer::text_learn)
                         {
                             if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->learn.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
-                                CatchChallenger::DebugClass::debugConsole(std::basic_string<char>Literal("learn point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("learn point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
                                 #ifdef DEBUG_MESSAGE_MAP_LOAD
-                                CatchChallenger::DebugClass::debugConsole(std::basic_string<char>Literal("learn point put at: %1 (%2,%3)")
+                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("learn point put at: %1 (%2,%3)")
                                     .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                 #endif
                                 static_cast<MapServer *>(semi_loaded_map.value(index).map)->learn.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
@@ -1374,12 +1375,12 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                         else if(step.attribute(BaseServer::text_type)==BaseServer::text_heal)
                         {
                             if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->heal.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
-                                CatchChallenger::DebugClass::debugConsole(std::basic_string<char>Literal("heal point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("heal point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
                                 #ifdef DEBUG_MESSAGE_MAP_LOAD
-                                CatchChallenger::DebugClass::debugConsole(std::basic_string<char>Literal("heal point put at: %1 (%2,%3)")
+                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("heal point put at: %1 (%2,%3)")
                                     .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                 #endif
                                 static_cast<MapServer *>(semi_loaded_map.value(index).map)->heal.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
@@ -1389,12 +1390,12 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                         else if(step.attribute(BaseServer::text_type)==BaseServer::text_market)
                         {
                             if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->market.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
-                                CatchChallenger::DebugClass::debugConsole(std::basic_string<char>Literal("market point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("market point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
                                 #ifdef DEBUG_MESSAGE_MAP_LOAD
-                                CatchChallenger::DebugClass::debugConsole(std::basic_string<char>Literal("market point put at: %1 (%2,%3)")
+                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("market point put at: %1 (%2,%3)")
                                     .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                 #endif
                                 static_cast<MapServer *>(semi_loaded_map.value(index).map)->market.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
@@ -1404,15 +1405,15 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                         else if(step.attribute(BaseServer::text_type)==BaseServer::text_zonecapture)
                         {
                             if(!step.hasAttribute(BaseServer::text_zone))
-                                CatchChallenger::DebugClass::debugConsole(std::basic_string<char>Literal("zonecapture point have not the zone attribute: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("zonecapture point have not the zone attribute: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->zonecapture.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
-                                CatchChallenger::DebugClass::debugConsole(std::basic_string<char>Literal("zonecapture point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("zonecapture point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
                                 #ifdef DEBUG_MESSAGE_MAP_LOAD
-                                CatchChallenger::DebugClass::debugConsole(std::basic_string<char>Literal("zonecapture point put at: %1 (%2,%3)")
+                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("zonecapture point put at: %1 (%2,%3)")
                                     .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                 #endif
                                 static_cast<MapServer *>(semi_loaded_map[index].map)->zonecapture[QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)]=step.attribute(BaseServer::text_zone);
@@ -1422,7 +1423,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                         else if(step.attribute(BaseServer::text_type)==BaseServer::text_fight)
                         {
                             if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->botsFight.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
-                                CatchChallenger::DebugClass::debugConsole(std::basic_string<char>Literal("botsFight point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("botsFight point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
@@ -1443,12 +1444,12 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                             else
                                             {
                                                 if(bot_Semi.property_text.value(BaseServer::text_lookAt)!=BaseServer::text_bottom)
-                                                    CatchChallenger::DebugClass::debugConsole(std::basic_string<char>Literal("Wrong direction for the bot at %1 (%2,%3)")
+                                                    CatchChallenger::DebugClass::debugConsole(std::stringLiteral("Wrong direction for the bot at %1 (%2,%3)")
                                                         .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                                 direction=CatchChallenger::Direction_move_at_bottom;
                                             }
                                             #ifdef DEBUG_MESSAGE_MAP_LOAD
-                                            CatchChallenger::DebugClass::debugConsole(std::basic_string<char>Literal("botsFight point put at: %1 (%2,%3)")
+                                            CatchChallenger::DebugClass::debugConsole(std::stringLiteral("botsFight point put at: %1 (%2,%3)")
                                                 .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                             #endif
                                             static_cast<MapServer *>(semi_loaded_map[index].map)->botsFight.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y),fightid);
@@ -1460,7 +1461,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                                 fightRange=bot_Semi.property_text.value(BaseServer::text_fightRange).toUInt(&ok);
                                                 if(!ok)
                                                 {
-                                                    CatchChallenger::DebugClass::debugConsole(std::basic_string<char>Literal("fightRange is not a number at %1 (%2,%3): %4")
+                                                    CatchChallenger::DebugClass::debugConsole(std::stringLiteral("fightRange is not a number at %1 (%2,%3): %4")
                                                         .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y)
                                                         .arg(bot_Semi.property_text.value(BaseServer::text_fightRange).toString()));
                                                     fightRange=5;
@@ -1469,7 +1470,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                                 {
                                                     if(fightRange>10)
                                                     {
-                                                        CatchChallenger::DebugClass::debugConsole(std::basic_string<char>Literal("fightRange is greater than 10 at %1 (%2,%3): %4")
+                                                        CatchChallenger::DebugClass::debugConsole(std::stringLiteral("fightRange is greater than 10 at %1 (%2,%3): %4")
                                                             .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y)
                                                             .arg(fightRange)
                                                             );
@@ -1479,7 +1480,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                             }
                                             //load the botsFightTrigger
                                             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT_BOT
-                                            CatchChallenger::DebugClass::debugConsole(std::basic_string<char>Literal("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(direction));
+                                            CatchChallenger::DebugClass::debugConsole(std::stringLiteral("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(direction));
                                             #endif
                                             quint8 temp_x=bot_Semi.point.x,temp_y=bot_Semi.point.y;
                                             quint32 index_botfight_range=0;
@@ -1499,13 +1500,13 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                             }
                                         }
                                         else
-                                            DebugClass::debugConsole(std::basic_string<char>Literal("lookAt not found: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                            DebugClass::debugConsole(std::stringLiteral("lookAt not found: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                     }
                                     else
-                                        DebugClass::debugConsole(std::basic_string<char>Literal("fightid not found into the list: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                        DebugClass::debugConsole(std::stringLiteral("fightid not found into the list: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                 }
                                 else
-                                    DebugClass::debugConsole(std::basic_string<char>Literal("botsFight point have wrong fightid: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                    DebugClass::debugConsole(std::stringLiteral("botsFight point have wrong fightid: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                             }
                         }
                     }
@@ -1516,12 +1517,12 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
     }
     botIdLoaded.clear();
 
-    DebugClass::debugConsole(std::basic_string<char>Literal("%1 learn point(s) on map loaded").arg(learnpoint_number));
-    DebugClass::debugConsole(std::basic_string<char>Literal("%1 zonecapture point(s) on map loaded").arg(zonecapturepoint_number));
-    DebugClass::debugConsole(std::basic_string<char>Literal("%1 heal point(s) on map loaded").arg(healpoint_number));
-    DebugClass::debugConsole(std::basic_string<char>Literal("%1 market point(s) on map loaded").arg(marketpoint_number));
-    DebugClass::debugConsole(std::basic_string<char>Literal("%1 bot fight(s) on map loaded").arg(botfights_number));
-    DebugClass::debugConsole(std::basic_string<char>Literal("%1 bot fights tigger(s) on map loaded").arg(botfightstigger_number));
-    DebugClass::debugConsole(std::basic_string<char>Literal("%1 shop(s) on map loaded").arg(shops_number));
-    DebugClass::debugConsole(std::basic_string<char>Literal("%1 bots(s) on map loaded").arg(bots_number));
+    DebugClass::debugConsole(std::stringLiteral("%1 learn point(s) on map loaded").arg(learnpoint_number));
+    DebugClass::debugConsole(std::stringLiteral("%1 zonecapture point(s) on map loaded").arg(zonecapturepoint_number));
+    DebugClass::debugConsole(std::stringLiteral("%1 heal point(s) on map loaded").arg(healpoint_number));
+    DebugClass::debugConsole(std::stringLiteral("%1 market point(s) on map loaded").arg(marketpoint_number));
+    DebugClass::debugConsole(std::stringLiteral("%1 bot fight(s) on map loaded").arg(botfights_number));
+    DebugClass::debugConsole(std::stringLiteral("%1 bot fights tigger(s) on map loaded").arg(botfightstigger_number));
+    DebugClass::debugConsole(std::stringLiteral("%1 shop(s) on map loaded").arg(shops_number));
+    DebugClass::debugConsole(std::stringLiteral("%1 bots(s) on map loaded").arg(bots_number));
 }

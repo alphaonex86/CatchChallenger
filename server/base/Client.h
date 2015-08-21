@@ -52,7 +52,7 @@ public:
     BaseClassSwitch::EpollObjectType getType() const;
     #endif
     //to get some info
-    std::basic_string<char> getPseudo();
+    std::string getPseudo();
     void savePosition();
     static bool characterConnected(const quint32 &characterId);
     void disconnectClient();
@@ -92,7 +92,7 @@ public:
     static std::vector<quint16> marketObjectIdList;
     static quint64 datapack_list_cache_timestamp_base,datapack_list_cache_timestamp_main,datapack_list_cache_timestamp_sub;
     static std::vector<quint16> simplifiedIdList;
-    static std::unordered_map<std::basic_string<char>,Client *> playerByPseudo;
+    static std::unordered_map<std::string,Client *> playerByPseudo;
     static std::unordered_map<quint32,Clan *> clanList;
     static std::vector<Client *> clientBroadCastList;
     static quint8 indexOfItemOnMap;
@@ -126,13 +126,13 @@ protected:
     {
         quint8 query_id;
         quint8 action;
-        std::basic_string<char> text;
+        std::string text;
     };
     struct AddCharacterParam
     {
         quint8 query_id;
         quint8 profileIndex;
-        std::basic_string<char> pseudo;
+        std::string pseudo;
         quint8 skinId;
     };
     struct RemoveCharacterParam
@@ -200,7 +200,7 @@ private:
     qint32 connected_players;//it's th last number of connected player send
     std::vector<void *> paramToPassToCallBack;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    std::vector<std::basic_string<char> > paramToPassToCallBackType;
+    std::vector<std::string > paramToPassToCallBackType;
     #endif
     static std::vector<quint8> selectCharacterQueryId;
 
@@ -247,50 +247,50 @@ private:
     #endif
 
     //player indexed list
-    static const std::basic_string<char> text_chat;
-    static const std::basic_string<char> text_space;
-    static const std::basic_string<char> text_system;
-    static const std::basic_string<char> text_system_important;
-    static const std::basic_string<char> text_setrights;
-    static const std::basic_string<char> text_normal;
-    static const std::basic_string<char> text_premium;
-    static const std::basic_string<char> text_gm;
-    static const std::basic_string<char> text_dev;
-    static const std::basic_string<char> text_playerlist;
-    static const std::basic_string<char> text_startbold;
-    static const std::basic_string<char> text_stopbold;
-    static const std::basic_string<char> text_playernumber;
-    static const std::basic_string<char> text_kick;
-    static const std::basic_string<char> text_Youarealoneontheserver;
-    static const std::basic_string<char> text_playersconnected;
-    static const std::basic_string<char> text_playersconnectedspace;
-    static const std::basic_string<char> text_havebeenkickedby;
-    static const std::basic_string<char> text_unknowcommand;
-    static const std::basic_string<char> text_commandnotunderstand;
-    static const std::basic_string<char> text_command;
-    static const std::basic_string<char> text_commaspace;
-    static const std::basic_string<char> text_unabletofoundtheconnectedplayertokick;
-    static const std::basic_string<char> text_unabletofoundthisrightslevel;
+    static const std::string text_chat;
+    static const std::string text_space;
+    static const std::string text_system;
+    static const std::string text_system_important;
+    static const std::string text_setrights;
+    static const std::string text_normal;
+    static const std::string text_premium;
+    static const std::string text_gm;
+    static const std::string text_dev;
+    static const std::string text_playerlist;
+    static const std::string text_startbold;
+    static const std::string text_stopbold;
+    static const std::string text_playernumber;
+    static const std::string text_kick;
+    static const std::string text_Youarealoneontheserver;
+    static const std::string text_playersconnected;
+    static const std::string text_playersconnectedspace;
+    static const std::string text_havebeenkickedby;
+    static const std::string text_unknowcommand;
+    static const std::string text_commandnotunderstand;
+    static const std::string text_command;
+    static const std::string text_commaspace;
+    static const std::string text_unabletofoundtheconnectedplayertokick;
+    static const std::string text_unabletofoundthisrightslevel;
 
     static const QRegularExpression commandRegExp;
     static const QRegularExpression commandRegExpWithArgs;
     static const QRegularExpression isolateTheMainCommand;
-    static const std::basic_string<char> text_server_full;
-    static const std::basic_string<char> text_slashpmspace;
-    static const std::basic_string<char> text_slash;
-    static const std::basic_string<char> text_regexresult1;
-    static const std::basic_string<char> text_regexresult2;
-    static const std::basic_string<char> text_send_command_slash;
-    static const std::basic_string<char> text_trade;
-    static const std::basic_string<char> text_battle;
-    static const std::basic_string<char> text_give;
-    static const std::basic_string<char> text_setevent;
-    static const std::basic_string<char> text_take;
-    static const std::basic_string<char> text_tp;
-    static const std::basic_string<char> text_stop;
-    static const std::basic_string<char> text_restart;
-    static const std::basic_string<char> text_unknown_send_command_slash;
-    static const std::basic_string<char> text_commands_seem_not_right;
+    static const std::string text_server_full;
+    static const std::string text_slashpmspace;
+    static const std::string text_slash;
+    static const std::string text_regexresult1;
+    static const std::string text_regexresult2;
+    static const std::string text_send_command_slash;
+    static const std::string text_trade;
+    static const std::string text_battle;
+    static const std::string text_give;
+    static const std::string text_setevent;
+    static const std::string text_take;
+    static const std::string text_tp;
+    static const std::string text_stop;
+    static const std::string text_restart;
+    static const std::string text_unknown_send_command_slash;
+    static const std::string text_commands_seem_not_right;
     static quint8 tempDatapackListReplySize;
     static QByteArray tempDatapackListReplyArray;
     static quint8 tempDatapackListReply;
@@ -300,38 +300,38 @@ private:
         //quint32 mtime;
         quint32 partialHash;
     };
-    //static std::unordered_map<std::basic_string<char>,quint32> datapack_file_list_cache_base,datapack_file_list_cache_main,datapack_file_list_cache_sub;//same than above
-    static std::unordered_map<std::basic_string<char>,DatapackCacheFile> datapack_file_hash_cache_base,datapack_file_hash_cache_main,datapack_file_hash_cache_sub;
+    //static std::unordered_map<std::string,quint32> datapack_file_list_cache_base,datapack_file_list_cache_main,datapack_file_list_cache_sub;//same than above
+    static std::unordered_map<std::string,DatapackCacheFile> datapack_file_hash_cache_base,datapack_file_hash_cache_main,datapack_file_hash_cache_sub;
     static QRegularExpression fileNameStartStringRegex;
-    static std::basic_string<char> single_quote;
-    static std::basic_string<char> antislash_single_quote;
-    static const std::basic_string<char> text_dotslash;
-    static const std::basic_string<char> text_dotcomma;
-    static const std::basic_string<char> text_double_slash;
-    static const std::basic_string<char> text_antislash;
-    static const std::basic_string<char> text_top;
-    static const std::basic_string<char> text_bottom;
-    static const std::basic_string<char> text_left;
-    static const std::basic_string<char> text_right;
-    static const std::basic_string<char> text_dottmx;
-    static const std::basic_string<char> text_unknown;
-    static const std::basic_string<char> text_female;
-    static const std::basic_string<char> text_male;
-    static const std::basic_string<char> text_warehouse;
-    static const std::basic_string<char> text_wear;
-    static const std::basic_string<char> text_market;
+    static std::string single_quote;
+    static std::string antislash_single_quote;
+    static const std::string text_dotslash;
+    static const std::string text_dotcomma;
+    static const std::string text_double_slash;
+    static const std::string text_antislash;
+    static const std::string text_top;
+    static const std::string text_bottom;
+    static const std::string text_left;
+    static const std::string text_right;
+    static const std::string text_dottmx;
+    static const std::string text_unknown;
+    static const std::string text_female;
+    static const std::string text_male;
+    static const std::string text_warehouse;
+    static const std::string text_wear;
+    static const std::string text_market;
 
     //info linked
     static Direction	temp_direction;
     static std::unordered_map<quint32,Client *> playerById;
-    static std::unordered_map<std::basic_string<char>,std::vector<Client *> > captureCity;
-    static std::unordered_map<std::basic_string<char>,CaptureCityValidated> captureCityValidatedList;
+    static std::unordered_map<std::string,std::vector<Client *> > captureCity;
+    static std::unordered_map<std::string,CaptureCityValidated> captureCityValidatedList;
 
-    static const std::basic_string<char> text_0;
-    static const std::basic_string<char> text_1;
-    static const std::basic_string<char> text_false;
-    static const std::basic_string<char> text_true;
-    static const std::basic_string<char> text_to;
+    static const std::string text_0;
+    static const std::string text_1;
+    static const std::string text_false;
+    static const std::string text_true;
+    static const std::string text_to;
 
     //socket related
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -343,14 +343,14 @@ private:
     void fake_receive_data(QByteArray data);
     #endif
     //global slot
-    void sendPM(const std::basic_string<char> &text,const std::basic_string<char> &pseudo);
-    void receiveChatText(const Chat_type &chatType, const std::basic_string<char> &text, const Client *sender_informations);
-    void receiveSystemText(const std::basic_string<char> &text,const bool &important=false);
-    void sendChatText(const Chat_type &chatType,const std::basic_string<char> &text);
-    void sendBroadCastCommand(const std::basic_string<char> &command,const std::basic_string<char> &extraText);
+    void sendPM(const std::string &text,const std::string &pseudo);
+    void receiveChatText(const Chat_type &chatType, const std::string &text, const Client *sender_informations);
+    void receiveSystemText(const std::string &text,const bool &important=false);
+    void sendChatText(const Chat_type &chatType,const std::string &text);
+    void sendBroadCastCommand(const std::string &command,const std::string &extraText);
     void setRights(const Player_type& type);
     //normal slots
-    void sendSystemMessage(const std::basic_string<char> &text,const bool &important=false);
+    void sendSystemMessage(const std::string &text,const bool &important=false);
     //clan
     void clanChangeWithoutDb(const quint32 &clanId);
 
@@ -376,26 +376,26 @@ private:
     void deleteCharacterNow_return(const quint32 &characterId);
     #endif
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
-    void datapackList(const quint8 &query_id, const std::vector<std::basic_string<char> > &files, const std::vector<quint32> &partialHashList);
-    static std::unordered_map<std::basic_string<char>,DatapackCacheFile> datapack_file_list(const std::basic_string<char> &path,const bool withHash=true);
-    std::unordered_map<std::basic_string<char>,Client::DatapackCacheFile> datapack_file_list_cached_base();
-    std::unordered_map<std::basic_string<char>,Client::DatapackCacheFile> datapack_file_list_cached_main();
-    std::unordered_map<std::basic_string<char>,Client::DatapackCacheFile> datapack_file_list_cached_sub();
+    void datapackList(const quint8 &query_id, const std::vector<std::string > &files, const std::vector<quint32> &partialHashList);
+    static std::unordered_map<std::string,DatapackCacheFile> datapack_file_list(const std::string &path,const bool withHash=true);
+    std::unordered_map<std::string,Client::DatapackCacheFile> datapack_file_list_cached_base();
+    std::unordered_map<std::string,Client::DatapackCacheFile> datapack_file_list_cached_main();
+    std::unordered_map<std::string,Client::DatapackCacheFile> datapack_file_list_cached_sub();
     void addDatapackListReply(const bool &fileRemove);
     void purgeDatapackListReply(const quint8 &query_id);
     void sendFileContent();
     void sendCompressedFileContent();
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    void dbQueryWriteLogin(const std::basic_string<char> &queryText);
+    void dbQueryWriteLogin(const std::string &queryText);
     #endif
-    void dbQueryWriteCommon(const std::basic_string<char> &queryText);
-    void dbQueryWriteServer(const std::basic_string<char> &queryText);
+    void dbQueryWriteCommon(const std::string &queryText);
+    void dbQueryWriteServer(const std::string &queryText);
     //character
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    void addCharacter(const quint8 &query_id, const quint8 &profileIndex, const std::basic_string<char> &pseudo, const quint8 &skinId);
+    void addCharacter(const quint8 &query_id, const quint8 &profileIndex, const std::string &pseudo, const quint8 &skinId);
     static void addCharacter_static(void *object);
     void addCharacter_object();
-    void addCharacter_return(const quint8 &query_id, const quint8 &profileIndex, const std::basic_string<char> &pseudo, const quint8 &skinId);
+    void addCharacter_return(const quint8 &query_id, const quint8 &profileIndex, const std::string &pseudo, const quint8 &skinId);
     void removeCharacterLater(const quint8 &query_id, const quint32 &characterId);
     static void removeCharacterLater_static(void *object);
     void removeCharacterLater_object();
@@ -426,7 +426,7 @@ private:
     void sendBattleRequest(const QByteArray &data);
 
     //chat
-    void sendLocalChatText(const std::basic_string<char> &text);
+    void sendLocalChatText(const std::string &text);
     //seed
     void seedValidated();
     void plantSeed(
@@ -466,7 +466,7 @@ private:
 
     bool haveReputationRequirements(const std::vector<ReputationRequirements> &reputationList) const;
     void confirmEvolution(const quint32 &monsterId);
-    void sendHandlerCommand(const std::basic_string<char> &command,const std::basic_string<char> &extraText);
+    void sendHandlerCommand(const std::string &command,const std::string &extraText);
     void addEventInQueue(const quint8 &event, const quint8 &event_value, const QDateTime &currentDateTime);
     void removeFirstEventInQueue();
     //inventory
@@ -507,11 +507,11 @@ private:
     bool learnSkill(const quint32 &monsterId,const quint16 &skill);
     Client * getLocalClientHandlerFight();
     //clan
-    void clanAction(const quint8 &query_id,const quint8 &action,const std::basic_string<char> &text);
-    void addClan_return(const quint8 &query_id, const quint8 &action, const std::basic_string<char> &text);
+    void clanAction(const quint8 &query_id,const quint8 &action,const std::string &text);
+    void addClan_return(const quint8 &query_id, const quint8 &action, const std::string &text);
     void addClan_object();
     static void addClan_static(void *object);
-    void haveClanInfo(const quint32 &clanId, const std::basic_string<char> &clanName, const quint64 &cash);
+    void haveClanInfo(const quint32 &clanId, const std::string &clanName, const quint64 &cash);
     void sendClanInfo();
     void clanInvite(const bool &accept);
     void waitingForCityCaputre(const bool &cancel);
@@ -538,8 +538,8 @@ private:
     void withdrawMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity);
     void withdrawMarketMonster(const quint32 &query_id, const quint32 &monsterId);
 
-    static std::basic_string<char> directionToStringToSave(const Direction &direction);
-    static std::basic_string<char> orientationToStringToSave(const Orientation &orientation);
+    static std::string directionToStringToSave(const Direction &direction);
+    static std::string orientationToStringToSave(const Orientation &orientation);
     //quest
     bool haveNextStepQuestRequirements(const CatchChallenger::Quest &quest);
     bool haveStartQuestRequirement(const CatchChallenger::Quest &quest);
@@ -681,8 +681,8 @@ private:
     void removeNearPlant();
     #endif
 
-    void errorFightEngine(const std::basic_string<char> &error);
-    void messageFightEngine(const std::basic_string<char> &message) const;
+    void errorFightEngine(const std::string &error);
+    void messageFightEngine(const std::string &message) const;
 
     struct PlantInWaiting
     {
@@ -710,10 +710,10 @@ private:
     void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
     void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
 
-    void parseNetworkReadError(const std::basic_string<char> &errorString);
+    void parseNetworkReadError(const std::string &errorString);
 
     // ------------------------------
-    bool sendFile(const std::basic_string<char> &datapackPath,const std::basic_string<char> &fileName);
+    bool sendFile(const std::string &datapackPath,const std::string &fileName);
 
     void characterIsRight(const quint8 &query_id, quint32 characterId, CommonMap* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation);
     void characterIsRightWithParsedRescue(const quint8 &query_id, quint32 characterId, CommonMap* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation,
@@ -726,9 +726,9 @@ private:
                       );
     void characterIsRightFinalStep();
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    void loginIsWrong(const quint8 &query_id,const quint8 &returnCode,const std::basic_string<char> &debugMessage);
+    void loginIsWrong(const quint8 &query_id,const quint8 &returnCode,const std::string &debugMessage);
     #endif
-    void characterSelectionIsWrong(const quint8 &query_id,const quint8 &returnCode,const std::basic_string<char> &debugMessage);
+    void characterSelectionIsWrong(const quint8 &query_id,const quint8 &returnCode,const std::string &debugMessage);
     //load linked data (like item, quests, ...)
     void loadLinkedData();
     void loadItems();
@@ -788,15 +788,15 @@ private:
 protected:
     bool loadTheRawUTF8String();//virtual to load dynamic max to_send_move
     //normal management related
-    void errorOutput(const std::basic_string<char> &errorString);
+    void errorOutput(const std::string &errorString);
     void kick();
-    void normalOutput(const std::basic_string<char> &message) const;
+    void normalOutput(const std::string &message) const;
     //drop all clients
     void dropAllClients();
     void dropAllBorderClients();
     //input/ouput layer
-    void errorParsingLayer(const std::basic_string<char> &error);
-    void messageParsingLayer(const std::basic_string<char> &message) const;
+    void errorParsingLayer(const std::string &error);
+    void messageParsingLayer(const std::string &message) const;
     //map move
     virtual bool singleMove(const Direction &direction);
     virtual void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);

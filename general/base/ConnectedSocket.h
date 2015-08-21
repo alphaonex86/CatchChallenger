@@ -23,7 +23,7 @@ public:
     explicit ConnectedSocket(QTcpSocket *socket);
     ~ConnectedSocket();
     void	abort();
-    void	connectToHost(const std::basic_string<char> & hostName,quint16 port);
+    void	connectToHost(const std::string & hostName,quint16 port);
     void	connectToHost(const QHostAddress & address,quint16 port);
     void	disconnectFromHost();
     QAbstractSocket::SocketError error() const;
@@ -33,14 +33,14 @@ public:
     QHostAddress localAddress() const;
     quint16	localPort() const;
     QHostAddress peerAddress() const;
-    std::basic_string<char>	peerName() const;
+    std::string	peerName() const;
     quint16	peerPort() const;
     QAbstractSocket::SocketState state() const;
     bool	waitForConnected(int msecs = 30000);
     bool	waitForDisconnected(int msecs = 30000);
     qint64	bytesAvailable() const;
     OpenMode openMode() const;
-    std::basic_string<char> errorString() const;
+    std::string errorString() const;
     qint64	readData(char * data, qint64 maxSize);
     qint64	writeData(const char * data, qint64 maxSize);
     void	close();

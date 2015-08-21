@@ -16,7 +16,7 @@ public:
     explicit CommonDatapackServerSpec();
 public:
     void unload();
-    void parseDatapack(const std::basic_string<char> &datapackPath, const std::basic_string<char> &mainDatapackCode);
+    void parseDatapack(const std::string &datapackPath, const std::string &mainDatapackCode);
 public:
     std::unordered_map<quint16,BotFight> botFights;
     std::unordered_map<quint16,Quest> quests;
@@ -26,8 +26,8 @@ public:
 private:
     QMutex inProgressSpec;
     bool isParsedSpec;
-    std::basic_string<char> datapackPath;
-    std::basic_string<char> mainDatapackCode;
+    std::string datapackPath;
+    std::string mainDatapackCode;
 private:
     void parseQuests();
     void parseBotFights();

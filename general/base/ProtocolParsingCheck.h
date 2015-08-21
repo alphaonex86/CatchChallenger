@@ -27,8 +27,8 @@ class ProtocolParsingCheck : public ProtocolParsingBase
         void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
         void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
         //message
-        void errorParsingLayer(const std::basic_string<char> &error);
-        void messageParsingLayer(const std::basic_string<char> &message) const;
+        void errorParsingLayer(const std::string &error);
+        void messageParsingLayer(const std::string &message) const;
 
         #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
         ProtocolParsing::CompressionType getCompressType() const; /// if client get server because it's check then mirror

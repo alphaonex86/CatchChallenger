@@ -7,7 +7,7 @@
 class CommonSettingsServer
 {
 public:
-    std::basic_string<char> httpDatapackMirrorServer;
+    std::string httpDatapackMirrorServer;
     bool plantOnlyVisibleByPlayer;
     quint8 forcedSpeed;
     bool tcpCork;
@@ -19,10 +19,10 @@ public:
     QByteArray datapackHashServerMain;
     QByteArray datapackHashServerSub;
     #ifndef CATCHCHALLENGER_CLASS_GATEWAY
-    std::basic_string<char> mainDatapackCode;
-    std::basic_string<char> subDatapackCode;
+    std::string mainDatapackCode;
+    std::string subDatapackCode;
     #endif
-    std::basic_string<char> exportedXml;
+    std::string exportedXml;
 
     //rates
     float rates_xp;

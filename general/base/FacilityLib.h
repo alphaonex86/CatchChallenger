@@ -17,7 +17,7 @@ public:
     static QByteArray playerMonsterToBinary(const PlayerMonster &playerMonster);
     static QByteArray publicPlayerMonsterToBinary(const PublicPlayerMonster &publicPlayerMonster);
     static PlayerMonster botFightMonsterToPlayerMonster(const BotFight::BotFightMonster &botFightMonster, const Monster::Stat &stat);
-    static std::basic_string<char> genderToString(const Gender &gender);
+    static std::string genderToString(const Gender &gender);
     static QDateTime nextCaptureTime(const City &city);
     static QByteArray privateMonsterToBinary(const PlayerMonster &monster);
     static IndustryStatus industryStatusWithCurrentTime(const IndustryStatus &industryStatus, const Industry &industry);
@@ -28,12 +28,12 @@ public:
     static void appendReputationPoint(PlayerReputation *playerReputation, const qint32 &point, const Reputation &reputation);
 private:
     static QByteArray UTF8EmptyData;
-    static std::basic_string<char> text_slash;
-    static std::basic_string<char> text_male;
-    static std::basic_string<char> text_female;
-    static std::basic_string<char> text_unknown;
-    static std::basic_string<char> text_clan;
-    static std::basic_string<char> text_dotcomma;
+    static std::string text_slash;
+    static std::string text_male;
+    static std::string text_female;
+    static std::string text_unknown;
+    static std::string text_clan;
+    static std::string text_dotcomma;
 };
 }
 

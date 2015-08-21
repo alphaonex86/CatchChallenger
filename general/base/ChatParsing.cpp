@@ -2,9 +2,9 @@
 
 using namespace CatchChallenger;
 
-std::basic_string<char> ChatParsing::new_chat_message(std::basic_string<char> pseudo, Player_type player_type, Chat_type chat_type, std::basic_string<char> text)
+std::string ChatParsing::new_chat_message(std::string pseudo, Player_type player_type, Chat_type chat_type, std::string text)
 {
-    std::basic_string<char> returned_html;
+    std::string returned_html;
     returned_html+=QLatin1Literal("<div style=\"");
     switch(chat_type)
     {
@@ -70,13 +70,13 @@ std::basic_string<char> ChatParsing::new_chat_message(std::basic_string<char> ps
         if(pseudo.isEmpty())
             returned_html+=toSmilies(toHtmlEntities(text));
         else
-            returned_html+=std::basic_string<char>Literal("%1: %2").arg(pseudo).arg(toSmilies(toHtmlEntities(text)));
+            returned_html+=std::stringLiteral("%1: %2").arg(pseudo).arg(toSmilies(toHtmlEntities(text)));
     }
     returned_html+=QLatin1Literal("</div>");
     return returned_html;
 }
 
-std::basic_string<char> ChatParsing::toHtmlEntities(std::basic_string<char> text)
+std::string ChatParsing::toHtmlEntities(std::string text)
 {
     text.replace(QLatin1Literal("&"),QLatin1Literal("&amp;"));
     text.replace(QLatin1Literal("\""),QLatin1Literal("&quot;"));
@@ -86,7 +86,7 @@ std::basic_string<char> ChatParsing::toHtmlEntities(std::basic_string<char> text
     return text;
 }
 
-std::basic_string<char> ChatParsing::toSmilies(std::basic_string<char> text)
+std::string ChatParsing::toSmilies(std::string text)
 {
     text.replace(QLatin1Literal(":)"),QLatin1Literal("<img src=\":/images/smiles/face-smile.png\" alt=\"\" style=\"vertical-align:middle;\" />"));
     text.replace(QLatin1Literal(":|"),QLatin1Literal("<img src=\":/images/smiles/face-plain.png\" alt=\"\" style=\"vertical-align:middle;\" />"));

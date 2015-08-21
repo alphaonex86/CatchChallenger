@@ -18,7 +18,7 @@ struct Map_semi_teleport
 {
     COORD_TYPE source_x,source_y;
     COORD_TYPE destination_x,destination_y;
-    std::basic_string<char> map;
+    std::string map;
     QDomElement conditionUnparsed;
     MapCondition condition;
 };
@@ -26,13 +26,13 @@ struct Map_semi_teleport
 struct Map_to_send
 {
     Map_semi_border border;
-    //std::basic_string<char>List other_map;//border and not
+    //std::stringList other_map;//border and not
 
     //uint32_t because the format allow it, checked into tryLoadMap()
     uint32_t width;
     uint32_t height;
 
-    std::unordered_map<std::basic_string<char>,QVariant> property;
+    std::unordered_map<std::string,QVariant> property;
 
     ParsedLayer parsed_layer;
 
@@ -47,9 +47,9 @@ struct Map_to_send
     struct Bot_Semi
     {
         Map_Point point;
-        std::basic_string<char> file;
+        std::string file;
         quint16 id;
-        std::unordered_map<std::basic_string<char>,QVariant> property_text;
+        std::unordered_map<std::string,QVariant> property_text;
     };
     std::vector<Bot_Semi> bots;
 
@@ -78,10 +78,10 @@ struct Map_to_send
 struct Bot
 {
     std::unordered_map<quint8,QDomElement> step;
-    std::unordered_map<std::basic_string<char>,std::basic_string<char>> properties;
+    std::unordered_map<std::string,std::string> properties;
     uint32_t botId;//id need be unique for the quests, then 32Bits
-    std::basic_string<char> skin;
-    std::basic_string<char> name;
+    std::string skin;
+    std::string name;
 };
 
 }
