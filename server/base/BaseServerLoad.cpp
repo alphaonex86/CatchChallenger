@@ -27,6 +27,8 @@
 #include <QCryptographicHash>
 #include <time.h>
 #include <iostream>
+#include <algorithm>
+#include <regex>
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QTimer>
 #endif
@@ -628,16 +630,16 @@ bool BaseServer::preload_the_map()
     std::vector<std::string> map_name;
     std::vector<std::string> map_name_to_do_id;
     std::vector<std::string> returnList=FacilityLibGeneral::listFolder(GlobalServerData::serverPrivateVariables.datapack_mapPath);
-    returnList.sort();
+    std::sort(returnList.begin(), returnList.end());
 
-    if(returnList.isEmpty())
+    if(returnList.size()==0)
     {
-        qDebug() << "No file map to list";
+        std::cerr << "No file map to list" << std::endl;;
         abort();
     }
-    if(!semi_loaded_map.isEmpty() || GlobalServerData::serverPrivateVariables.flat_map_list!=NULL)
+    if(!semi_loaded_map.size()==0 || GlobalServerData::serverPrivateVariables.flat_map_list!=NULL)
     {
-        qDebug() << "preload_the_map() already call";
+        std::cerr << "preload_the_map() already call" << std::endl;;
         abort();
     }
     //load the map
@@ -645,37 +647,37 @@ bool BaseServer::preload_the_map()
     int index=0;
     int sub_index;
     std::string tmxRemove(".tmx");
-    QRegularExpression mapFilter(QLatin1String("\\.tmx$"));
-    QRegularExpression mapExclude(QLatin1String("[\"']"));
-    QList<CommonMap *> flat_map_list_temp;
+    std::regex mapFilter("\\.tmx$");
+    std::regex mapExclude("[\"']");
+    std::vector<CommonMap *> flat_map_list_temp;
     while(index<size)
     {
         std::string fileName=returnList.at(index);
-        fileName.replace(BaseServer::text_antislash,BaseServer::text_slash);
-        if(fileName.contains(mapFilter) && !fileName.contains(mapExclude))
+        stringreplaceAll(fileName,BaseServer::text_antislash,BaseServer::text_slash);
+        if(std::regex_match(fileName,mapFilter) && !std::regex_match(fileName,mapExclude))
         {
             #ifdef DEBUG_MESSAGE_MAP_LOAD
             DebugClass::debugConsole(std::stringLiteral("load the map: %1").arg(fileName));
             #endif
             std::string sortFileName=fileName;
-            sortFileName.remove(tmxRemove);
-            map_name_to_do_id << sortFileName;
+            stringreplace(sortFileName,tmxRemove,"");
+            map_name_to_do_id.push_back(sortFileName);
             if(map_temp.tryLoadMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName))
             {
                 switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
                 {
                     case MapVisibilityAlgorithmSelection_Simple:
-                        flat_map_list_temp << new Map_server_MapVisibility_Simple_StoreOnSender;
+                        flat_map_list_temp.push_back(new Map_server_MapVisibility_Simple_StoreOnSender);
                     break;
                     case MapVisibilityAlgorithmSelection_WithBorder:
-                        flat_map_list_temp << new Map_server_MapVisibility_WithBorder_StoreOnSender;
+                        flat_map_list_temp.push_back(new Map_server_MapVisibility_WithBorder_StoreOnSender);
                     break;
                     case MapVisibilityAlgorithmSelection_None:
                     default:
-                        flat_map_list_temp << new MapServer;
+                        flat_map_list_temp.push_back(new MapServer);
                     break;
                 }
-                MapServer *mapServer=static_cast<MapServer *>(flat_map_list_temp.last());
+                MapServer *mapServer=static_cast<MapServer *>(flat_map_list_temp.back());
                 GlobalServerData::serverPrivateVariables.map_list[sortFileName]=mapServer;
 
                 mapServer->width			= map_temp.map_to_send.width;
@@ -683,35 +685,35 @@ bool BaseServer::preload_the_map()
                 mapServer->parsed_layer	= map_temp.map_to_send.parsed_layer;
                 mapServer->map_file		= sortFileName;
 
-                map_name << sortFileName;
+                map_name.push_back(sortFileName);
 
                 parseJustLoadedMap(map_temp.map_to_send,fileName);
 
                 Map_semi map_semi;
-                map_semi.map				= GlobalServerData::serverPrivateVariables.map_list.value(sortFileName);
+                map_semi.map				= GlobalServerData::serverPrivateVariables.map_list.at(sortFileName);
 
-                if(!map_temp.map_to_send.border.top.fileName.isEmpty())
+                if(map_temp.map_to_send.border.top.fileName.size()>0)
                 {
                     map_semi.border.top.fileName		= Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.top.fileName,GlobalServerData::serverPrivateVariables.datapack_mapPath);
-                    map_semi.border.top.fileName.remove(BaseServer::text_dottmx);
+                    stringreplace(map_semi.border.top.fileName,BaseServer::text_dottmx,"");
                     map_semi.border.top.x_offset		= map_temp.map_to_send.border.top.x_offset;
                 }
-                if(!map_temp.map_to_send.border.bottom.fileName.isEmpty())
+                if(map_temp.map_to_send.border.bottom.fileName.size()>0)
                 {
                     map_semi.border.bottom.fileName		= Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.bottom.fileName,GlobalServerData::serverPrivateVariables.datapack_mapPath);
-                    map_semi.border.bottom.fileName.remove(BaseServer::text_dottmx);
+                    stringreplace(map_semi.border.bottom.fileName,BaseServer::text_dottmx,"");
                     map_semi.border.bottom.x_offset		= map_temp.map_to_send.border.bottom.x_offset;
                 }
-                if(!map_temp.map_to_send.border.left.fileName.isEmpty())
+                if(map_temp.map_to_send.border.left.fileName.size()>0)
                 {
                     map_semi.border.left.fileName		= Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.left.fileName,GlobalServerData::serverPrivateVariables.datapack_mapPath);
-                    map_semi.border.left.fileName.remove(BaseServer::text_dottmx);
+                    stringreplace(map_semi.border.left.fileName,BaseServer::text_dottmx,"");
                     map_semi.border.left.y_offset		= map_temp.map_to_send.border.left.y_offset;
                 }
-                if(!map_temp.map_to_send.border.right.fileName.isEmpty())
+                if(map_temp.map_to_send.border.right.fileName.size()>0)
                 {
                     map_semi.border.right.fileName		= Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.right.fileName,GlobalServerData::serverPrivateVariables.datapack_mapPath);
-                    map_semi.border.right.fileName.remove(BaseServer::text_dottmx);
+                    stringreplace(map_semi.border.right.fileName,BaseServer::text_dottmx,"");
                     map_semi.border.right.y_offset		= map_temp.map_to_send.border.right.y_offset;
                 }
 
@@ -720,13 +722,13 @@ bool BaseServer::preload_the_map()
                 while(sub_index<listsize)
                 {
                     map_temp.map_to_send.teleport[sub_index].map=Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.teleport.at(sub_index).map,GlobalServerData::serverPrivateVariables.datapack_mapPath);
-                    map_temp.map_to_send.teleport[sub_index].map.remove(BaseServer::text_dottmx);
+                    stringreplace(map_temp.map_to_send.teleport[sub_index].map,BaseServer::text_dottmx,"");
                     sub_index++;
                 }
 
                 map_semi.old_map=map_temp.map_to_send;
 
-                semi_loaded_map << map_semi;
+                semi_loaded_map.push_back(map_semi);
             }
             else
                 DebugClass::debugConsole(std::stringLiteral("error at loading: %1, error: %2").arg(fileName).arg(map_temp.errorString()));
@@ -1030,7 +1032,7 @@ void BaseServer::preload_the_datapack()
             DebugClass::debugConsole(std::stringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode.isEmpty"));
             abort();
         }
-        if(!CommonSettingsServer::commonSettingsServer.mainDatapackCode.contains(QRegularExpression(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE)))
+        if(!CommonSettingsServer::commonSettingsServer.mainDatapackCode.contains(std::regex(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE)))
         {
             DebugClass::debugConsole(
                         std::stringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode not match CATCHCHALLENGER_CHECK_MAINDATAPACKCODE %1 not contain %2")
@@ -1065,7 +1067,7 @@ void BaseServer::preload_the_datapack()
         const QHash<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,false);
         std::vector<std::string> datapack_file_temp=pair.keys();
         datapack_file_temp.sort();
-        const QRegularExpression mainDatapackBaseFilter("^map[/\\\\]main[/\\\\]");
+        const std::regex mainDatapackBaseFilter("^map[/\\\\]main[/\\\\]");
         int index=0;
         while(index<datapack_file_temp.size()) {
             QFile file(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index));
@@ -1128,7 +1130,7 @@ void BaseServer::preload_the_datapack()
         const QHash<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,false);
         std::vector<std::string> datapack_file_temp=pair.keys();
         datapack_file_temp.sort();
-        const QRegularExpression mainDatapackFolderFilter("^sub[/\\\\]");
+        const std::regex mainDatapackFolderFilter("^sub[/\\\\]");
         int index=0;
         while(index<datapack_file_temp.size()) {
             QFile file(GlobalServerData::serverPrivateVariables.mainDatapackFolder+datapack_file_temp.at(index));
@@ -1318,7 +1320,7 @@ void BaseServer::preload_the_visibility_algorithm()
     }
 }
 
-void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
+void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
 {
     int shops_number=0;
     int bots_number=0;
