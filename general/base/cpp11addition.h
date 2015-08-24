@@ -265,4 +265,6 @@ int64_t stringtoint64(const std::string &string,bool *ok=NULL)
     }
 }
 
+//s.find('q') == std::string::npos
+
 #endif
