@@ -18,6 +18,7 @@
 #include "PreparedDBQuery.h"
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
+#include "../../general/base/cpp11addition.h"
 
 #include <QFile>
 #include <QByteArray>
@@ -37,7 +38,7 @@ void BaseServer::preload_zone_sql()
     const int &listsize=entryListZone.size();
     while(entryListIndex<listsize)
     {
-        std::string zoneCodeName=entryListZone.at(entryListIndex).fileName();
+        std::string zoneCodeName=entryListZone.at(entryListIndex).fileName().toStdString();
         zoneCodeName.remove(BaseServer::text_dotxml);
         std::string queryText;
         switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
@@ -55,7 +56,7 @@ void BaseServer::preload_zone_sql()
         }
         if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_zone_static)==NULL)
         {
-            qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
+            std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
             criticalDatabaseQueryFailed();return;//stop because can't do the first db access
             entryListIndex++;
             preload_market_monsters_sql();
@@ -95,7 +96,7 @@ void BaseServer::preload_pointOnMap_sql()
     }
     if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_pointOnMap_static)==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         criticalDatabaseQueryFailed();return;//stop because can't do the first db access
 
         preload_the_visibility_algorithm();
@@ -125,17 +126,17 @@ void BaseServer::preload_pointOnMap_return()
     dictionary_pointOnMap_maxId=0;
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
-        const quint16 &id=std::string(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
+        const uint16_t &id=std::string(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
         if(!ok)
             qDebug() << std::stringLiteral("preload_itemOnMap_return(): Id not found: %1").arg(std::string(GlobalServerData::serverPrivateVariables.db_server->value(0)));
         else
         {
-            const quint32 &map_id=std::string(GlobalServerData::serverPrivateVariables.db_server->value(1)).toUInt(&ok);
+            const uint32_t &map_id=std::string(GlobalServerData::serverPrivateVariables.db_server->value(1)).toUInt(&ok);
             if(!ok)
                 qDebug() << std::stringLiteral("preload_itemOnMap_return(): map id not number: %1").arg(std::string(GlobalServerData::serverPrivateVariables.db_server->value(1)));
             else
             {
-                if(map_id>=(quint32)DictionaryServer::dictionary_map_database_to_internal.size())
+                if(map_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
                     qDebug() << std::stringLiteral("preload_itemOnMap_return(): map out of range: %1 %2 %3").arg(map_id);
                 else
                 {
@@ -143,7 +144,7 @@ void BaseServer::preload_pointOnMap_return()
                         qDebug() << std::stringLiteral("preload_itemOnMap_return(): map == NULL for this id, map not found: %1 %2 %3").arg(map_id);
                     else
                     {
-                        const quint32 &x=std::string(GlobalServerData::serverPrivateVariables.db_server->value(2)).toUInt(&ok);
+                        const uint32_t &x=std::string(GlobalServerData::serverPrivateVariables.db_server->value(2)).toUInt(&ok);
                         if(!ok)
                             qDebug() << std::stringLiteral("preload_itemOnMap_return(): x not number: %1").arg(std::string(GlobalServerData::serverPrivateVariables.db_server->value(2)));
                         else
@@ -152,7 +153,7 @@ void BaseServer::preload_pointOnMap_return()
                                 qDebug() << std::stringLiteral("preload_itemOnMap_return(): x out of range").arg(x);
                             else
                             {
-                                const quint32 &y=std::string(GlobalServerData::serverPrivateVariables.db_server->value(3)).toUInt(&ok);
+                                const uint32_t &y=std::string(GlobalServerData::serverPrivateVariables.db_server->value(3)).toUInt(&ok);
                                 if(!ok)
                                     qDebug() << std::stringLiteral("preload_itemOnMap_return(): y not number: %1").arg(std::string(GlobalServerData::serverPrivateVariables.db_server->value(3)));
                                 else
@@ -164,9 +165,9 @@ void BaseServer::preload_pointOnMap_return()
                                         const std::string &map_file=DictionaryServer::dictionary_map_database_to_internal.value(map_id)->map_file;
 
                                         ///used only at map loading, \see BaseServer::preload_the_map()
-                                        DictionaryServer::dictionary_pointOnMap_internal_to_database[map_file][QPair<quint8/*x*/,quint8/*y*/>(x,y)]=id;
+                                        DictionaryServer::dictionary_pointOnMap_internal_to_database[map_file][QPair<uint8_t/*x*/,uint8_t/*y*/>(x,y)]=id;
 
-                                        while((quint32)DictionaryServer::dictionary_pointOnMap_database_to_internal.size()<=id)
+                                        while((uint32_t)DictionaryServer::dictionary_pointOnMap_database_to_internal.size()<=id)
                                         {
                                             DictionaryServer::MapAndPoint mapAndPoint;
                                             mapAndPoint.map=NULL;
@@ -250,7 +251,7 @@ void BaseServer::preload_dictionary_map()
     }
     if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_dictionary_map_static)==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         criticalDatabaseQueryFailed();return;//stop because can't resolv the name
     }
 }
@@ -324,7 +325,7 @@ void BaseServer::preload_dictionary_map_return()
             }
             if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText.toLatin1()))
             {
-                qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
+                std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
                 criticalDatabaseQueryFailed();return;//stop because can't resolv the name
             }
             while(DictionaryServer::dictionary_map_database_to_internal.size()<=databaseMapId)
@@ -373,7 +374,7 @@ void BaseServer::preload_industries()
     }
     if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_industries_static)==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         preload_finish();
     }
 }
@@ -389,7 +390,7 @@ void BaseServer::preload_industries_return()
     {
         IndustryStatus industryStatus;
         bool ok;
-        quint32 id=std::string(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
+        uint32_t id=std::string(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
         if(!ok)
             DebugClass::debugConsole(std::stringLiteral("preload_industries: id is not a number"));
         if(ok)
@@ -414,13 +415,13 @@ void BaseServer::preload_industries_return()
                     ok=false;
                     break;
                 }
-                const quint32 &item=itemStringList.first().toUInt(&ok);
+                const uint32_t &item=itemStringList.first().toUInt(&ok);
                 if(!ok)
                 {
                     DebugClass::debugConsole(std::stringLiteral("preload_industries: item is not a number"));
                     break;
                 }
-                quint32 quantity=itemStringList.last().toUInt(&ok);
+                uint32_t quantity=itemStringList.last().toUInt(&ok);
                 if(!ok)
                 {
                     DebugClass::debugConsole(std::stringLiteral("preload_industries: quantity is not a number"));
@@ -467,13 +468,13 @@ void BaseServer::preload_industries_return()
                     ok=false;
                     break;
                 }
-                const quint32 &item=itemStringList.first().toUInt(&ok);
+                const uint32_t &item=itemStringList.first().toUInt(&ok);
                 if(!ok)
                 {
                     DebugClass::debugConsole(std::stringLiteral("preload_industries: item is not a number"));
                     break;
                 }
-                quint32 quantity=itemStringList.last().toUInt(&ok);
+                uint32_t quantity=itemStringList.last().toUInt(&ok);
                 if(!ok)
                 {
                     DebugClass::debugConsole(std::stringLiteral("preload_industries: quantity is not a number"));
@@ -541,7 +542,7 @@ void BaseServer::preload_market_monsters_prices_sql()
     }
     if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_market_monsters_prices_static)==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         preload_market_monsters_sql();
     }
 }
@@ -618,7 +619,7 @@ void BaseServer::preload_market_monsters_sql()
     if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_market_monsters_static)==NULL)
     {
         monsterSemiMarketList.clear();
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         preload_market_items();
     }
 }
@@ -630,7 +631,7 @@ void BaseServer::preload_market_monsters_static(void *object)
 
 void BaseServer::preload_market_monsters_return()
 {
-    quint8 spOffset;
+    uint8_t spOffset;
     if(CommonSettingsServer::commonSettingsServer.useSP)
         spOffset=0;
     else
@@ -709,7 +710,7 @@ void BaseServer::preload_market_monsters_return()
         }
         if(ok)
         {
-            const quint32 &value=std::string(GlobalServerData::serverPrivateVariables.db_common->value(7-spOffset)).toUInt(&ok);
+            const uint32_t &value=std::string(GlobalServerData::serverPrivateVariables.db_common->value(7-spOffset)).toUInt(&ok);
             if(ok)
             {
                 if(value>=1 && value<=3)
@@ -807,7 +808,7 @@ void BaseServer::preload_market_items()
     }
     if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_market_items_static)==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         if(GlobalServerData::serverSettings.automatic_account_creation)
             load_account_max_id();
@@ -874,10 +875,10 @@ void BaseServer::preload_market_items_return()
         BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_base);
 }
 
-void BaseServer::loadMonsterBuffs(const quint32 &index)
+void BaseServer::loadMonsterBuffs(const uint32_t &index)
 {
     entryListIndex=index;
-    if(index>=(quint32)GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size())
+    if(index>=(uint32_t)GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size())
     {
         loadMonsterSkills(0);
         return;
@@ -899,7 +900,7 @@ void BaseServer::loadMonsterBuffs(const quint32 &index)
 
     if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::loadMonsterBuffs_static)==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         loadMonsterSkills(0);
     }
 }
@@ -911,7 +912,7 @@ void BaseServer::loadMonsterBuffs_static(void *object)
 
 void BaseServer::loadMonsterBuffs_return()
 {
-    const quint32 &monsterId=GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.at(entryListIndex).monster.id;
+    const uint32_t &monsterId=GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.at(entryListIndex).monster.id;
     QList<PlayerBuff> buffs;
     bool ok;
     while(GlobalServerData::serverPrivateVariables.db_common->next())
@@ -956,10 +957,10 @@ void BaseServer::loadMonsterBuffs_return()
     loadMonsterBuffs(entryListIndex+1);
 }
 
-void BaseServer::loadMonsterSkills(const quint32 &index)
+void BaseServer::loadMonsterSkills(const uint32_t &index)
 {
     entryListIndex=index;
-    if(index>=(quint32)GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size())
+    if(index>=(uint32_t)GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size())
     {
         preload_market_items();
         return;
@@ -980,7 +981,7 @@ void BaseServer::loadMonsterSkills(const quint32 &index)
     }
     if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::loadMonsterSkills_static)==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         preload_market_items();
     }
 }
@@ -992,7 +993,7 @@ void BaseServer::loadMonsterSkills_static(void *object)
 
 void BaseServer::loadMonsterSkills_return()
 {
-    const quint32 &monsterId=GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.at(entryListIndex).monster.id;
+    const uint32_t &monsterId=GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.at(entryListIndex).monster.id;
     QList<PlayerMonster::PlayerSkill> skills;
     bool ok;
     while(GlobalServerData::serverPrivateVariables.db_common->next())
@@ -1065,7 +1066,7 @@ void BaseServer::load_clan_max_id()
     }
     if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::load_clan_max_id_static)==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         preload_industries();
     }
 }
@@ -1167,7 +1168,7 @@ void BaseServer::load_character_max_id()
     }
     if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::load_character_max_id_static)==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_base);
     }
     //start to 0 due to pre incrementation before use
