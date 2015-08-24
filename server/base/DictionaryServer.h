@@ -5,6 +5,7 @@
 #include <vector>
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/GeneralVariable.h"
+#include "../../general/base/cpp11addition.h"
 #include "MapServer.h"
 
 namespace CatchChallenger {
@@ -13,7 +14,7 @@ class DictionaryServer
 public:
     static std::vector<MapServer *> dictionary_map_database_to_internal;
     ///used only at map loading, \see BaseServer::preload_the_map()
-    static std::unordered_map<std::string,std::unordered_map<std::pair<quint8/*x*/,quint8/*y*/>,quint16/*db code*/> > dictionary_pointOnMap_internal_to_database;
+    static std::unordered_map<std::string,std::unordered_map<std::pair<quint8/*x*/,quint8/*y*/>,quint16/*db code*/,pairhash> > dictionary_pointOnMap_internal_to_database;
 
     struct MapAndPoint
     {
