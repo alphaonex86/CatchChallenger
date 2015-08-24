@@ -18,6 +18,7 @@
 #include "PreparedDBQuery.h"
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
+#include "../../general/base/cpp11addition.h"
 
 #include <QFile>
 #include <QByteArray>

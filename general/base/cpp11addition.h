@@ -5,17 +5,27 @@
 #include <string>
 #include <regex>
 
+#if ! defined(Q_LIKELY)
+    #if defined(__GNUC__)
+    #  define Q_LIKELY(expr)    __builtin_expect(!!(expr), true)
+    #  define Q_UNLIKELY(expr)  __builtin_expect(!!(expr), false)
+    #else
+    #  define Q_LIKELY(x) (x)
+    #endif
+#endif
+
+std::regex isaunsignednumber("^[0-9]+$");
+std::regex isasignednumber("^-?[0-9]+$");
+
 struct pairhash {
 public:
-  template <typename T, typename U>
-  std::size_t operator()(const std::pair<T, U> &x) const
+  std::size_t operator()(const std::pair<uint8_t, uint8_t> &x) const
   {
       return (x.first << 8) + x.second;
-    //return std::hash<T>()(x.first) ^ std::hash<U>()(x.second);
   }
 };
 
-bool replace(std::string& str, const std::string& from, const std::string& to) {
+bool stringreplace(std::string& str, const std::string& from, const std::string& to) {
     size_t start_pos = str.find(from);
     if(start_pos == std::string::npos)
         return false;
@@ -23,7 +33,7 @@ bool replace(std::string& str, const std::string& from, const std::string& to) {
     return true;
 }
 
-uint8_t replaceAll(std::string& str, const std::string& from, const std::string& to) {
+uint8_t stringreplaceAll(std::string& str, const std::string& from, const std::string& to) {
     if(from.empty())
         return 0;
     size_t start_pos = 0;
@@ -85,6 +95,174 @@ std::string stringimplode(const std::vector<std::string>& elems, char delim)
 {
     std::string s;
     return stringimplode(elems, delim, s);
+}
+
+uint8_t stringtouint8(const std::string &string,bool *ok=NULL)
+{
+    if(Q_LIKELY(std::regex_match(string,isaunsignednumber)))
+    {
+        if(Q_LIKELY(ok!=NULL))
+            *ok=true;
+        const unsigned int &tempValue=std::stoull(string);
+        if(Q_LIKELY(tempValue<=0xFF))
+            return tempValue;
+        else
+        {
+            if(ok!=NULL)
+                *ok=false;
+            return 0;
+        }
+    }
+    else
+    {
+        if(ok!=NULL)
+            *ok=false;
+        return 0;
+    }
+}
+
+uint16_t stringtouint16(const std::string &string,bool *ok=NULL)
+{
+    if(Q_LIKELY(std::regex_match(string,isaunsignednumber)))
+    {
+        if(Q_LIKELY(ok!=NULL))
+            *ok=true;
+        const unsigned int &tempValue=std::stoull(string);
+        if(Q_LIKELY(tempValue<=0xFFFF))
+            return tempValue;
+        else
+        {
+            if(ok!=NULL)
+                *ok=false;
+            return 0;
+        }
+    }
+    else
+    {
+        if(ok!=NULL)
+            *ok=false;
+        return 0;
+    }
+}
+
+uint32_t stringtouint32(const std::string &string,bool *ok=NULL)
+{
+    if(Q_LIKELY(std::regex_match(string,isaunsignednumber)))
+    {
+        if(Q_LIKELY(ok!=NULL))
+            *ok=true;
+        const unsigned int &tempValue=std::stoull(string);
+        if(Q_LIKELY(tempValue<=0xFFFFFFFF))
+            return tempValue;
+        else
+        {
+            if(ok!=NULL)
+                *ok=false;
+            return 0;
+        }
+    }
+    else
+    {
+        if(ok!=NULL)
+            *ok=false;
+        return 0;
+    }
+}
+
+uint64_t stringtouint64(const std::string &string,bool *ok=NULL)
+{
+    if(Q_LIKELY(std::regex_match(string,isaunsignednumber)))
+    {
+        if(Q_LIKELY(ok!=NULL))
+            *ok=true;
+        return std::stoull(string);
+    }
+    else
+    {
+        if(ok!=NULL)
+            *ok=false;
+        return 0;
+    }
+}
+
+int8_t stringtoint8(const std::string &string,bool *ok=NULL)
+{
+    if(Q_LIKELY(std::regex_match(string,isasignednumber)))
+    {
+        if(Q_LIKELY(ok!=NULL))
+            *ok=true;
+        const unsigned int &tempValue=std::stoi(string);
+        if(Q_LIKELY(tempValue<=0x7F))
+            return tempValue;
+        else
+        {
+            if(ok!=NULL)
+                *ok=false;
+            return 0;
+        }
+    }
+    else
+    {
+        if(ok!=NULL)
+            *ok=false;
+        return 0;
+    }
+}
+
+int16_t stringtoint16(const std::string &string,bool *ok=NULL)
+{
+    if(Q_LIKELY(std::regex_match(string,isasignednumber)))
+    {
+        if(Q_LIKELY(ok!=NULL))
+            *ok=true;
+        const unsigned int &tempValue=std::stoi(string);
+        if(Q_LIKELY(tempValue<=0x7FFF))
+            return tempValue;
+        else
+        {
+            if(ok!=NULL)
+                *ok=false;
+            return 0;
+        }
+    }
+    else
+    {
+        if(ok!=NULL)
+            *ok=false;
+        return 0;
+    }
+}
+
+int32_t stringtoint32(const std::string &string,bool *ok=NULL)
+{
+    if(Q_LIKELY(std::regex_match(string,isasignednumber)))
+    {
+        if(Q_LIKELY(ok!=NULL))
+            *ok=true;
+        return std::stoi(string);
+    }
+    else
+    {
+        if(ok!=NULL)
+            *ok=false;
+        return 0;
+    }
+}
+
+int64_t stringtoint64(const std::string &string,bool *ok=NULL)
+{
+    if(Q_LIKELY(std::regex_match(string,isasignednumber)))
+    {
+        if(Q_LIKELY(ok!=NULL))
+            *ok=true;
+        return std::stoll(string);
+    }
+    else
+    {
+        if(ok!=NULL)
+            *ok=false;
+        return 0;
+    }
 }
 
 #endif
