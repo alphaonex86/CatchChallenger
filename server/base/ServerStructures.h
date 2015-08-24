@@ -88,10 +88,10 @@ enum QuestAction
 
 struct MonsterDrops
 {
-    quint32 item;
-    quint32 quantity_min;
-    quint32 quantity_max;
-    quint32 luck;//seam be 0 to 100
+    uint32_t item;
+    uint32_t quantity_min;
+    uint32_t quantity_max;
+    uint32_t luck;//seam be 0 to 100
 };
 
 struct PlayerOnMap
@@ -104,10 +104,10 @@ struct PlayerOnMap
 
 struct NormalServerSettings
 {
-    quint16 server_port;
+    uint16_t server_port;
     std::string server_ip;
     std::string proxy;
-    quint16 proxy_port;
+    uint16_t proxy_port;
     bool useSsl;
     #ifdef Q_OS_LINUX
     bool tcpNodelay;
@@ -122,19 +122,19 @@ struct LoginServerSettings
 struct GameServerSettings
 {
     CompressionType compressionType;
-    quint8 compressionLevel;
+    uint8_t compressionLevel;
     bool sendPlayerNumber;
     bool anonymous;
     bool benchmark;
     //fight
     bool pvp;
-    quint16 max_players;//not common because if null info not send
+    uint16_t max_players;//not common because if null info not send
 
     //the listen, implicit on the client
     std::string datapack_basePath;
     std::string server_message;
     bool dontSendPlayerType;
-    qint32 datapackCache;//-1 = disable, 0 = no timeout, else it's the timeout in s
+    int32_t datapackCache;//-1 = disable, 0 = no timeout, else it's the timeout in s
 
     enum FightSync
     {
@@ -144,7 +144,7 @@ struct GameServerSettings
     };
     FightSync fightSync;
     bool positionTeleportSync;
-    quint32 secondToPositionSync;//0 is disabled
+    uint32_t secondToPositionSync;//0 is disabled
 
     struct Database
     {
@@ -176,17 +176,17 @@ struct GameServerSettings
 
         struct MapVisibility_Simple
         {
-            quint16 max;
-            quint16 reshow;
+            uint16_t max;
+            uint16_t reshow;
             bool reemit;
         };
         MapVisibility_Simple simple;
         struct MapVisibility_WithBorder
         {
-            quint16 maxWithBorder;
-            quint16 reshowWithBorder;
-            quint16 max;
-            quint16 reshow;
+            uint16_t maxWithBorder;
+            uint16_t reshowWithBorder;
+            uint16_t max;
+            uint16_t reshow;
         };
         MapVisibility_WithBorder withBorder;
     };
@@ -196,12 +196,12 @@ struct GameServerSettings
     struct DDOS
     {
         #ifdef CATCHCHALLENGER_DDOS_FILTER
-        quint8 kickLimitMove;
-        quint8 kickLimitChat;
-        quint8 kickLimitOther;
+        uint8_t kickLimitMove;
+        uint8_t kickLimitChat;
+        uint8_t kickLimitOther;
         #endif
         int computeAverageValueNumberOfValue;
-        quint8 computeAverageValueTimeInterval;
+        uint8_t computeAverageValueTimeInterval;
         int dropGlobalChatMessageGeneral;
         int dropGlobalChatMessageLocalClan;
         int dropGlobalChatMessagePrivate;
@@ -214,38 +214,38 @@ struct GameServerSettings
     struct ProgrammedEvent
     {
         std::string value;
-        quint16 cycle;//mins
-        quint16 offset;//mins
+        uint16_t cycle;//mins
+        uint16_t offset;//mins
     };
     std::unordered_map<std::string/*type, example: day*/,std::unordered_map<std::string/*groupName, example: day/night*/,ProgrammedEvent> > programmedEventList;
 };
 
 struct CityStatus
 {
-    quint32 clan;
+    uint32_t clan;
 };
 
 struct MarketPlayerMonster
 {
     PlayerMonster monster;
-    quint32 player;
-    quint32 cash;
+    uint32_t player;
+    uint32_t cash;
 };
 
 struct MarketItem
 {
-    quint32 marketObjectId;
-    quint32 item;
-    quint32 quantity;
-    quint32 player;
-    quint32 cash;
+    uint32_t marketObjectId;
+    uint32_t item;
+    uint32_t quantity;
+    uint32_t player;
+    uint32_t cash;
 };
 
 struct Clan
 {
     std::string captureCityInProgress;
     std::string capturedCity;
-    quint32 clanId;
+    uint32_t clanId;
     std::vector<Client *> players;
 
     //the db info
@@ -257,16 +257,16 @@ struct CaptureCityValidated
 {
     std::vector<Client *> players;
     std::vector<Client *> playersInFight;
-    std::vector<quint16> bots;
-    std::vector<quint16> botsInFight;
-    std::unordered_map<quint32,quint16> clanSize;
+    std::vector<uint16_t> bots;
+    std::vector<uint16_t> botsInFight;
+    std::unordered_map<uint32_t,uint16_t> clanSize;
 };
 
 struct ServerProfileInternal
 {
     MapServer *map;
-    /*COORD_TYPE*/ quint8 x;
-    /*COORD_TYPE*/ quint8 y;
+    /*COORD_TYPE*/ uint8_t x;
+    /*COORD_TYPE*/ uint8_t y;
     Orientation orientation;
 
     //only to add
@@ -304,18 +304,18 @@ struct ServerPrivateVariables
     QRegularExpression datapack_rightFolderName;
 
     //fight
-    std::unordered_multimap<quint16,MonsterDrops> monsterDrops;
+    std::unordered_multimap<uint16_t,MonsterDrops> monsterDrops;
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    std::vector<quint32> maxMonsterId;
-    std::vector<quint32> maxClanId;
+    std::vector<uint32_t> maxMonsterId;
+    std::vector<uint32_t> maxClanId;
     #else
     std::atomic<unsigned int> maxClanId;
     std::atomic<unsigned int> maxMonsterId;
     #endif
-    std::unordered_map<std::string,std::vector<quint16> > captureFightIdListByZoneToCaptureCity;
+    std::unordered_map<std::string,std::vector<uint16_t> > captureFightIdListByZoneToCaptureCity;
     std::unordered_map<std::string,CityStatus> cityStatusList;
-    std::unordered_map<quint32,std::string > cityStatusListReverse;
-    std::unordered_set<quint32> tradedMonster;
+    std::unordered_map<uint32_t,std::string > cityStatusListReverse;
+    std::unordered_set<uint32_t> tradedMonster;
     QByteArray randomData;
 
     //market
@@ -338,50 +338,50 @@ struct ServerPrivateVariables
     //general data
     bool stopIt;
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    quint32 maxAccountId;
-    quint32 maxCharacterId;
+    uint32_t maxAccountId;
+    uint32_t maxCharacterId;
     #endif
     QDateTime time_city_capture;
-    std::unordered_map<quint32,Clan *> clanList;
+    std::unordered_map<uint32_t,Clan *> clanList;
 
     //map
     std::unordered_map<std::string,CommonMap *> map_list;
     CommonMap ** flat_map_list;
-    std::unordered_map<quint32,std::string > id_map_to_map;
-    qint8 sizeofInsertRequest;
+    std::unordered_map<uint32_t,std::string > id_map_to_map;
+    int8_t sizeofInsertRequest;
 
     //connection
-    quint16 connected_players;
+    uint16_t connected_players;
     PlayerUpdater player_updater;
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     PlayerUpdaterToMaster player_updater_to_master;
     #endif
-    std::unordered_set<quint32> connected_players_id_list;
+    std::unordered_set<uint32_t> connected_players_id_list;
     std::vector<std::string > server_message;
 
-    quint32 number_of_bots_logged;
+    uint32_t number_of_bots_logged;
     int botSpawnIndex;
-    std::unordered_map<quint32,IndustryStatus> industriesStatus;
-    std::vector<quint8> events;
+    std::unordered_map<uint32_t,IndustryStatus> industriesStatus;
+    std::vector<uint8_t> events;
 
     //plant
-    std::vector<quint32> plantUsedId;
-    std::vector<quint32> plantUnusedId;
-    quint32 maxPlantId;
+    std::vector<uint32_t> plantUsedId;
+    std::vector<uint32_t> plantUnusedId;
+    uint32_t maxPlantId;
 
     //xp rate at form for level to xp: a*exp(x*b+c)+d
     struct Xp
     {
-        quint32 a,b,c,d;
+        uint32_t a,b,c,d;
     };
     //xp rate at form for level to xp: a*exp(x*b+c)+d
     struct Sp
     {
-        quint32 a,b,c,d;
+        uint32_t a,b,c,d;
     };
 
     //datapack
-    std::unordered_map<std::string,quint8> skinList;
+    std::unordered_map<std::string,uint8_t> skinList;
 };
 
 bool operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchChallenger::MonsterDrops &monsterDrops2);

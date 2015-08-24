@@ -18,6 +18,7 @@
 #include "PreparedDBQuery.h"
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
+#include "../../general/base/cpp11addition.h"
 
 #include <QFile>
 #include <QByteArray>
@@ -40,7 +41,7 @@ void BaseServer::preload_randomBlock()
     int index=0;
     while(index<CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
     {
-        randomDataStream << quint8(rand()%256);
+        randomDataStream << uint8_t(rand()%256);
         index++;
     }
 }
@@ -127,35 +128,35 @@ bool BaseServer::preload_zone_init()
         }
         if(!entryListZone.at(index).fileName().contains(regexXmlFile))
         {
-            qDebug() << std::stringLiteral("%1 the zone file name not match").arg(entryListZone.at(index).fileName());
+            std::cerr << entryListZone.at(index).fileName().toStdString() << " the zone file name not match" << std::endl;
             index++;
             continue;
         }
-        std::string zoneCodeName=entryListZone.at(index).fileName();
-        zoneCodeName.remove(BaseServer::text_dotxml);
+        std::string zoneCodeName=entryListZone.at(index).fileName().toStdString();
+        zoneCodeName.erase(std::find(zoneCodeName.begin(), zoneCodeName.end(), BaseServer::text_dotxml));
         QDomDocument domDocument;
-        const std::string &file=entryListZone.at(index).absoluteFilePath();
+        const std::string &file=entryListZone.at(index).absoluteFilePath().toStdString();
         #ifndef EPOLLCATCHCHALLENGERSERVER
         if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
             domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
         else
         {
         #endif
-            QFile itemsFile(file);
+            QFile itemsFile(file.c_str());
             QByteArray xmlContent;
             if(!itemsFile.open(QIODevice::ReadOnly))
             {
-                qDebug() << std::stringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString());
+                std::cerr << "Unable to open the file: " << file.c_str() << ", error: " << itemsFile.errorString().toStdString() << std::endl;
                 index++;
                 continue;
             }
             xmlContent=itemsFile.readAll();
             itemsFile.close();
-            std::string errorStr;
+            QString errorStr;
             int errorLine,errorColumn;
             if(!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
             {
-                qDebug() << std::stringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
+                std::cerr << "Unable to open the file: " << file.c_str() << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
                 index++;
                 continue;
             }
@@ -163,60 +164,61 @@ bool BaseServer::preload_zone_init()
             CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
         #endif
-        if(GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.contains(zoneCodeName))
+        auto search = GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.find(zoneCodeName);
+        if(search != GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.end())
         {
-            qDebug() << std::stringLiteral("Unable to open the file: %1, zone code name already found");
+            std::cerr << "Unable to open the file: " << file.c_str() << ", zone code name already found" << std::endl;
             index++;
             continue;
         }
         QDomElement root(domDocument.documentElement());
-        if(root.tagName()!=BaseServer::text_zone)
+        if(root.tagName().toStdString()!=BaseServer::text_zone)
         {
-            qDebug() << std::stringLiteral("Unable to open the file: %1, \"zone\" root balise not found for the xml file").arg(file);
+            std::cerr << "Unable to open the file: " << file.c_str() << ", \"zone\" root balise not found for the xml file" << std::endl;
             index++;
             continue;
         }
 
         //load capture
-        QList<quint16> fightIdList;
-        QDomElement capture(root.firstChildElement(BaseServer::text_capture));
+        std::vector<uint16_t> fightIdList;
+        QDomElement capture(root.firstChildElement(QString::fromStdString(BaseServer::text_capture)));
         if(!capture.isNull())
         {
-            if(capture.isElement() && capture.hasAttribute(BaseServer::text_fightId))
+            if(capture.isElement() && capture.hasAttribute(QString::fromStdString(BaseServer::text_fightId)))
             {
                 bool ok;
-                const std::stringList &fightIdStringList=capture.attribute(BaseServer::text_fightId).split(BaseServer::text_dotcomma);
+                const std::vector<std::string> &fightIdStringList=stringsplit(capture.attribute(QString::fromStdString(BaseServer::text_fightId)).toStdString(),';');
                 int sub_index=0;
                 const int &listsize=fightIdStringList.size();
                 while(sub_index<listsize)
                 {
-                    const quint16 &fightId=fightIdStringList.at(sub_index).toUShort(&ok);
+                    const uint16_t &fightId=stringtouint16(fightIdStringList.at(sub_index),&ok);
                     if(ok)
                     {
-                        if(!CommonDatapackServerSpec::commonDatapackServerSpec.botFights.contains(fightId))
-                            qDebug() << std::stringLiteral("bot fightId %1 not found for capture zone %2").arg(fightId).arg(zoneCodeName);
+                        if(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightId)==CommonDatapackServerSpec::commonDatapackServerSpec.botFights.end())
+                            std::cerr << "bot fightId " << fightId << " not found for capture zone " << zoneCodeName << std::endl;
                         else
-                            fightIdList << fightId;
+                            fightIdList.push_back(fightId);
                     }
                     sub_index++;
                 }
-                if(sub_index==listsize && !fightIdList.isEmpty())
+                if(sub_index==listsize && !fightIdList.size()==0)
                     GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity[zoneCodeName]=fightIdList;
                 break;
             }
             else
-                qDebug() << std::stringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(capture.tagName()).arg(capture.lineNumber());
+                std::cerr << "Unable to open the file: " << file << ", is not an element: child.tagName(): " << capture.tagName().toStdString() << " (at line: " << capture.lineNumber() << ")" << std::endl;
         }
         index++;
     }
 
-    qDebug() << std::stringLiteral("%1 zone(s) loaded").arg(GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.size());
+    std::cout << GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.size() << " zone(s) loaded" << std::endl;
     return true;
 }
 
 void BaseServer::preload_map_semi_after_db_id()
 {
-    if(DictionaryServer::dictionary_map_database_to_internal.isEmpty())
+    if(DictionaryServer::dictionary_map_database_to_internal.size()==0)
     {
         qDebug() << "Need be called after preload_dictionary_map()";
         abort();
@@ -225,7 +227,7 @@ void BaseServer::preload_map_semi_after_db_id()
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     Client::indexOfDirtOnMap=0;//index of plant on map, ordened by map and x,y ordened into the xml file, less bandwith than send map,x,y
     #endif
-    int indexMapSemi=0;
+    unsigned int indexMapSemi=0;
     while(indexMapSemi<semi_loaded_map.size())
     {
         const Map_semi &map_semi=semi_loaded_map.at(indexMapSemi);
@@ -233,16 +235,23 @@ void BaseServer::preload_map_semi_after_db_id()
         const std::string &sortFileName=mapServer->map_file;
         //item on map
         {
-            int index=0;
+            unsigned int index=0;
             while(index<map_semi.old_map.items.size())
             {
                 const Map_to_send::ItemOnMap_Semi &item=map_semi.old_map.items.at(index);
 
-                quint16 pointOnMapDbCode;
-                if(DictionaryServer::dictionary_pointOnMap_internal_to_database.contains(sortFileName)
-                        && DictionaryServer::dictionary_pointOnMap_internal_to_database.value(sortFileName).contains(QPair<quint8/*x*/,quint8/*y*/>(item.point.x,item.point.y)))
+                const std::pair<uint8_t/*x*/,uint8_t/*y*/> pair(item.point.x,item.point.y);
+                uint16_t pointOnMapDbCode;
+                bool found=false;
+                if(DictionaryServer::dictionary_pointOnMap_internal_to_database.find(sortFileName)!=DictionaryServer::dictionary_pointOnMap_internal_to_database.end())
                 {
-                    pointOnMapDbCode=DictionaryServer::dictionary_pointOnMap_internal_to_database.value(sortFileName).value(QPair<quint8,quint8>(item.point.x,item.point.y));
+                    const std::unordered_map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/,pairhash> &subItem=DictionaryServer::dictionary_pointOnMap_internal_to_database.at(sortFileName);
+                    if(subItem.find(pair)!=subItem.end())
+                        found=true;
+                }
+                if(found)
+                {
+                    pointOnMapDbCode=DictionaryServer::dictionary_pointOnMap_internal_to_database.at(sortFileName).at(pair);
                     DictionaryServer::dictionary_pointOnMap_database_to_internal[pointOnMapDbCode].indexOfItemOnMap=Client::indexOfItemOnMap;
                 }
                 else
@@ -253,37 +262,37 @@ void BaseServer::preload_map_semi_after_db_id()
                     {
                         default:
                         case DatabaseBase::DatabaseType::Mysql:
-                            queryText=std::stringLiteral("INSERT INTO `dictionary_pointonmap`(`id`,`map`,`x`,`y`) VALUES(%1,'%2',%3,%4);")
-                                    .arg(dictionary_pointOnMap_maxId)
-                                    .arg(mapServer->reverse_db_id)
-                                    .arg(item.point.x)
-                                    .arg(item.point.y)
+                            queryText="INSERT INTO `dictionary_pointonmap`(`id`,`map`,`x`,`y`) VALUES("+
+                                    std::to_string(dictionary_pointOnMap_maxId)+","+
+                                    std::to_string(mapServer->reverse_db_id)+","+
+                                    std::to_string(item.point.x)+","+
+                                    std::to_string(item.point.y)+");"
                                     ;
                         break;
                         case DatabaseBase::DatabaseType::SQLite:
-                            queryText=std::stringLiteral("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
-                                    .arg(dictionary_pointOnMap_maxId)
-                                    .arg(mapServer->reverse_db_id)
-                                    .arg(item.point.x)
-                                    .arg(item.point.y)
+                            queryText="INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES("+
+                                    std::to_string(dictionary_pointOnMap_maxId)+","+
+                                    std::to_string(mapServer->reverse_db_id)+","+
+                                    std::to_string(item.point.x)+","+
+                                    std::to_string(item.point.y)+");"
                                     ;
                         break;
                         case DatabaseBase::DatabaseType::PostgreSQL:
-                            queryText=std::stringLiteral("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
-                                    .arg(dictionary_pointOnMap_maxId)
-                                    .arg(mapServer->reverse_db_id)
-                                    .arg(item.point.x)
-                                    .arg(item.point.y)
+                            queryText="INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES("+
+                                    std::to_string(dictionary_pointOnMap_maxId)+","+
+                                    std::to_string(mapServer->reverse_db_id)+","+
+                                    std::to_string(item.point.x)+","+
+                                    std::to_string(item.point.y)+");"
                                     ;
                         break;
                     }
-                    if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText.toLatin1()))
+                    if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText.c_str()))
                     {
-                        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
+                        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
                         criticalDatabaseQueryFailed();abort();//stop because can't resolv the name
                     }
-                    DictionaryServer::dictionary_pointOnMap_internal_to_database[sortFileName][QPair<quint8,quint8>(item.point.x,item.point.y)]=dictionary_pointOnMap_maxId;
-                    while((quint32)DictionaryServer::dictionary_pointOnMap_database_to_internal.size()<=dictionary_pointOnMap_maxId)
+                    DictionaryServer::dictionary_pointOnMap_internal_to_database[sortFileName][std::pair<uint8_t,uint8_t>(item.point.x,item.point.y)]=dictionary_pointOnMap_maxId;
+                    while((uint32_t)DictionaryServer::dictionary_pointOnMap_database_to_internal.size()<=dictionary_pointOnMap_maxId)
                     {
                         DictionaryServer::MapAndPoint mapAndPoint;
                         mapAndPoint.map=NULL;
@@ -314,7 +323,7 @@ void BaseServer::preload_map_semi_after_db_id()
                 itemOnMap.item=item.item;
                 itemOnMap.pointOnMapDbCode=pointOnMapDbCode;
                 itemOnMap.indexOfOnMap=Client::indexOfItemOnMap;
-                mapServer->itemsOnMap[QPair<quint8,quint8>(item.point.x,item.point.y)]=itemOnMap;
+                mapServer->itemsOnMap[std::pair<uint8_t,uint8_t>(item.point.x,item.point.y)]=itemOnMap;
 
                 if(Client::indexOfItemOnMap>=254)//255 reserved
                 {
@@ -327,16 +336,23 @@ void BaseServer::preload_map_semi_after_db_id()
         }
         //dirt/plant
         {
-            int index=0;
+            unsigned int index=0;
             while(index<map_semi.old_map.dirts.size())
             {
                 const Map_to_send::DirtOnMap_Semi &dirt=map_semi.old_map.dirts.at(index);
 
-                quint16 pointOnMapDbCode;
-                if(DictionaryServer::dictionary_pointOnMap_internal_to_database.contains(sortFileName)
-                        && DictionaryServer::dictionary_pointOnMap_internal_to_database.value(sortFileName).contains(QPair<quint8/*x*/,quint8/*y*/>(dirt.point.x,dirt.point.y)))
+                uint16_t pointOnMapDbCode;
+                std::pair<uint8_t/*x*/,uint8_t/*y*/> pair(dirt.point.x,dirt.point.y);
+                bool found=false;
+                if(DictionaryServer::dictionary_pointOnMap_internal_to_database.find(sortFileName)!=DictionaryServer::dictionary_pointOnMap_internal_to_database.end())
                 {
-                    pointOnMapDbCode=DictionaryServer::dictionary_pointOnMap_internal_to_database.value(sortFileName).value(QPair<quint8,quint8>(dirt.point.x,dirt.point.y));
+                    const std::unordered_map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/,pairhash> &subItem=DictionaryServer::dictionary_pointOnMap_internal_to_database.at(sortFileName);
+                    if(subItem.find(pair)!=subItem.end())
+                        found=true;
+                }
+                if(found)
+                {
+                    pointOnMapDbCode=DictionaryServer::dictionary_pointOnMap_internal_to_database.at(sortFileName).at(pair);
                     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
                     DictionaryServer::dictionary_pointOnMap_database_to_internal[pointOnMapDbCode].indexOfDirtOnMap=Client::indexOfDirtOnMap;
                     #endif
@@ -349,37 +365,37 @@ void BaseServer::preload_map_semi_after_db_id()
                     {
                         default:
                         case DatabaseBase::DatabaseType::Mysql:
-                            queryText=std::stringLiteral("INSERT INTO `dictionary_pointonmap`(`id`,`map`,`x`,`y`) VALUES(%1,'%2',%3,%4);")
-                                    .arg(dictionary_pointOnMap_maxId)
-                                    .arg(mapServer->reverse_db_id)
-                                    .arg(dirt.point.x)
-                                    .arg(dirt.point.y)
+                            queryText="INSERT INTO `dictionary_pointonmap`(`id`,`map`,`x`,`y`) VALUES("+
+                                    std::to_string(dictionary_pointOnMap_maxId)+","+
+                                    std::to_string(mapServer->reverse_db_id)+","+
+                                    std::to_string(dirt.point.x)+","+
+                                    std::to_string(dirt.point.y)+");"
                                     ;
                         break;
                         case DatabaseBase::DatabaseType::SQLite:
-                            queryText=std::stringLiteral("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
-                                    .arg(dictionary_pointOnMap_maxId)
-                                    .arg(mapServer->reverse_db_id)
-                                    .arg(dirt.point.x)
-                                    .arg(dirt.point.y)
+                            queryText="INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES("+
+                                    std::to_string(dictionary_pointOnMap_maxId)+","+
+                                    std::to_string(mapServer->reverse_db_id)+","+
+                                    std::to_string(dirt.point.x)+","+
+                                    std::to_string(dirt.point.y)+");"
                                     ;
                         break;
                         case DatabaseBase::DatabaseType::PostgreSQL:
-                            queryText=std::stringLiteral("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
-                                    .arg(dictionary_pointOnMap_maxId)
-                                    .arg(mapServer->reverse_db_id)
-                                    .arg(dirt.point.x)
-                                    .arg(dirt.point.y)
+                            queryText="INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES("+
+                                    std::to_string(dictionary_pointOnMap_maxId)+","+
+                                    std::to_string(mapServer->reverse_db_id)+","+
+                                    std::to_string(dirt.point.x)+","+
+                                    std::to_string(dirt.point.y)+");"
                                     ;
                         break;
                     }
-                    if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText.toLatin1()))
+                    if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText.c_str()))
                     {
-                        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
+                        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
                         criticalDatabaseQueryFailed();abort();//stop because can't resolv the name
                     }
-                    DictionaryServer::dictionary_pointOnMap_internal_to_database[sortFileName][QPair<quint8,quint8>(dirt.point.x,dirt.point.y)]=dictionary_pointOnMap_maxId;
-                    while((quint32)DictionaryServer::dictionary_pointOnMap_database_to_internal.size()<=dictionary_pointOnMap_maxId)
+                    DictionaryServer::dictionary_pointOnMap_internal_to_database[sortFileName][std::pair<uint8_t,uint8_t>(dirt.point.x,dirt.point.y)]=dictionary_pointOnMap_maxId;
+                    while((uint32_t)DictionaryServer::dictionary_pointOnMap_database_to_internal.size()<=dictionary_pointOnMap_maxId)
                     {
                         DictionaryServer::MapAndPoint mapAndPoint;
                         mapAndPoint.map=NULL;
@@ -417,7 +433,7 @@ void BaseServer::preload_map_semi_after_db_id()
                 plantOnMap.indexOfOnMap=Client::indexOfDirtOnMap;
                 #endif
                 plantOnMap.pointOnMapDbCode=pointOnMapDbCode;
-                mapServer->plants[QPair<quint8,quint8>(dirt.point.x,dirt.point.y)]=plantOnMap;
+                mapServer->plants[std::pair<uint8_t,uint8_t>(dirt.point.x,dirt.point.y)]=plantOnMap;
 
                 #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
                 if(Client::indexOfDirtOnMap>=254)//255 reserved
@@ -443,118 +459,120 @@ void BaseServer::preload_map_semi_after_db_id()
  * */
 void BaseServer::preload_profile()
 {
-    DebugClass::debugConsole(std::stringLiteral("%1 SQL skin dictionary").arg(DictionaryLogin::dictionary_skin_internal_to_database.size()));
+    std::cout << DictionaryLogin::dictionary_skin_internal_to_database.size() << " SQL skin dictionary" << std::endl;
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     /*if(CommonDatapack::commonDatapack.profileList.size()!=GlobalServerData::serverPrivateVariables.serverProfileList.size())
     {
-        DebugClass::debugConsole(std::stringLiteral("profile common and server don't match"));
+        std::cout << "profile common and server don't match" << std::endl;
         return;
     }*/
     if(CommonDatapack::commonDatapack.profileList.size()!=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.size())
     {
-        DebugClass::debugConsole(std::stringLiteral("profile common and server don't match"));
+        std::cout << "profile common and server don't match" << std::endl;
         return;
     }
     #endif
     {
-        int index=0;
+        unsigned int index=0;
         while(index<CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.size())
         {
-            CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList[index].mapString.remove(BaseServer::text_dottmx);
+            stringreplace(CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList[index].mapString,BaseServer::text_dottmx,"");
             index++;
         }
     }
 
     GlobalServerData::serverPrivateVariables.serverProfileInternalList.clear();
-    int index=0;
+    unsigned int index=0;
     while(index<CommonDatapack::commonDatapack.profileList.size())
     {
         const Profile &profile=CommonDatapack::commonDatapack.profileList.at(index);
         const ServerProfile &serverProfile=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.at(index);
         ServerProfileInternal serverProfileInternal;
         serverProfileInternal.valid=false;
-        if(!serverProfile.mapString.isEmpty() && GlobalServerData::serverPrivateVariables.map_list.contains(serverProfile.mapString))
+        if(serverProfile.mapString.size()>0 && GlobalServerData::serverPrivateVariables.map_list.find(serverProfile.mapString)!=GlobalServerData::serverPrivateVariables.map_list.end())
         {
             serverProfileInternal.map=
-                    static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.value(serverProfile.mapString));
+                    static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.at(serverProfile.mapString));
             serverProfileInternal.x=serverProfile.x;
             serverProfileInternal.y=serverProfile.y;
             serverProfileInternal.orientation=serverProfile.orientation;
-            const quint32 &mapId=serverProfileInternal.map->reverse_db_id;
-            const std::string &mapQuery=std::string::number(mapId)+
-                    QLatin1String(",")+
-                    std::string::number(serverProfile.x)+
-                    QLatin1String(",")+
-                    std::string::number(serverProfile.y)+
-                    QLatin1String(",")+
-                    std::string::number(Orientation_bottom);
+            const uint32_t &mapId=serverProfileInternal.map->reverse_db_id;
+            const std::string &mapQuery=std::to_string(mapId)+
+                    ","+
+                    std::to_string(serverProfile.x)+
+                    ","+
+                    std::to_string(serverProfile.y)+
+                    ","+
+                    std::to_string(Orientation_bottom);
             switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
             {
                 default:
                 case DatabaseBase::DatabaseType::Mysql:
-                    serverProfileInternal.preparedQueryAdd << std::stringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(");
-                    serverProfileInternal.preparedQueryAdd << /*id*/ QLatin1String(",");
-                    serverProfileInternal.preparedQueryAdd << /*account*/ QLatin1String(",'");
-                    serverProfileInternal.preparedQueryAdd << /*pseudo*/ QLatin1String("',");
-                    serverProfileInternal.preparedQueryAdd << /*skin*/QLatin1String(",0,0,")+
-                            std::string::number(profile.cash)+QLatin1String(",");
-                    serverProfileInternal.preparedQueryAdd << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0,0,0,0,0,")+
-                            std::string::number(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+QLatin1String(");");
+                    serverProfileInternal.preparedQueryAdd.push_back("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(");
+                    serverProfileInternal.preparedQueryAdd.push_back(/*id*/ ",");
+                    serverProfileInternal.preparedQueryAdd.push_back(/*account*/ ",'");
+                    serverProfileInternal.preparedQueryAdd.push_back(/*pseudo*/ "',");
+                    serverProfileInternal.preparedQueryAdd.push_back(/*skin*/ ",0,0,"+
+                            std::to_string(profile.cash)+",");
+                    serverProfileInternal.preparedQueryAdd.push_back(/*QDateTime::currentDateTime().toTime_t()*/ ",0,0,0,0,0,"+
+                            std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+");");
                 break;
                 case DatabaseBase::DatabaseType::SQLite:
-                    serverProfileInternal.preparedQueryAdd << std::stringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
-                    serverProfileInternal.preparedQueryAdd << /*id*/ QLatin1String(",");
-                    serverProfileInternal.preparedQueryAdd << /*account*/ QLatin1String(",'");
-                    serverProfileInternal.preparedQueryAdd << /*pseudo*/ QLatin1String("',");
-                    serverProfileInternal.preparedQueryAdd << /*skin*/QLatin1String(",0,0,")+
-                            std::string::number(profile.cash)+QLatin1String(",");
-                    serverProfileInternal.preparedQueryAdd << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0,0,0,0,0,")+
-                            std::string::number(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+QLatin1String(");");
+                    serverProfileInternal.preparedQueryAdd.push_back("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
+                    serverProfileInternal.preparedQueryAdd.push_back(/*id*/ ",");
+                    serverProfileInternal.preparedQueryAdd.push_back(/*account*/ ",'");
+                    serverProfileInternal.preparedQueryAdd.push_back(/*pseudo*/ "',");
+                    serverProfileInternal.preparedQueryAdd.push_back(/*skin*/ ",0,0,"+
+                            std::to_string(profile.cash)+",");
+                    serverProfileInternal.preparedQueryAdd.push_back(/*QDateTime::currentDateTime().toTime_t()*/ ",0,0,0,0,0,"+
+                            std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+");");
                 break;
                 case DatabaseBase::DatabaseType::PostgreSQL:
-                    serverProfileInternal.preparedQueryAdd << std::stringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
-                    serverProfileInternal.preparedQueryAdd << /*id*/ QLatin1String(",");
-                    serverProfileInternal.preparedQueryAdd << /*account*/ QLatin1String(",'");
-                    serverProfileInternal.preparedQueryAdd << /*pseudo*/ QLatin1String("',");
-                    serverProfileInternal.preparedQueryAdd << /*skin*/QLatin1String(",0,0,")+
-                            std::string::number(profile.cash)+QLatin1String(",");
-                    serverProfileInternal.preparedQueryAdd << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0,FALSE,0,0,0,")+
-                            std::string::number(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+QLatin1String(");");
+                    serverProfileInternal.preparedQueryAdd.push_back("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
+                    serverProfileInternal.preparedQueryAdd.push_back(/*id*/ ",");
+                    serverProfileInternal.preparedQueryAdd.push_back(/*account*/ ",'");
+                    serverProfileInternal.preparedQueryAdd.push_back(/*pseudo*/ "',");
+                    serverProfileInternal.preparedQueryAdd.push_back(/*skin*/ ",0,0,"+
+                            std::to_string(profile.cash)+",");
+                    serverProfileInternal.preparedQueryAdd.push_back(/*QDateTime::currentDateTime().toTime_t()*/ ",0,FALSE,0,0,0,"+
+                            std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+");");
                 break;
             }
             switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
             {
                 default:
                 case DatabaseBase::DatabaseType::Mysql:
-                    serverProfileInternal.preparedQuerySelect << std::stringLiteral("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`) VALUES(");
-                    serverProfileInternal.preparedQuerySelect << /*id*/ QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",");
-                    serverProfileInternal.preparedQuerySelect << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0);");
+                    serverProfileInternal.preparedQuerySelect.push_back("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`) VALUES(");
+                    serverProfileInternal.preparedQuerySelect.push_back(/*id*/ ","+mapQuery+","+mapQuery+","+mapQuery+",");
+                    serverProfileInternal.preparedQuerySelect.push_back(/*QDateTime::currentDateTime().toTime_t()*/ ",0);");
                 break;
                 case DatabaseBase::DatabaseType::SQLite:
-                    serverProfileInternal.preparedQuerySelect << std::stringLiteral("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
-                    serverProfileInternal.preparedQuerySelect << /*id*/ QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",");
-                    serverProfileInternal.preparedQuerySelect << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0);");
+                    serverProfileInternal.preparedQuerySelect.push_back("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
+                    serverProfileInternal.preparedQuerySelect.push_back(/*id*/ ","+mapQuery+","+mapQuery+","+mapQuery+",");
+                    serverProfileInternal.preparedQuerySelect.push_back(/*QDateTime::currentDateTime().toTime_t()*/ ",0);");
                 break;
                 case DatabaseBase::DatabaseType::PostgreSQL:
-                    serverProfileInternal.preparedQuerySelect << std::stringLiteral("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
-                    serverProfileInternal.preparedQuerySelect << /*id*/ QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",");
-                    serverProfileInternal.preparedQuerySelect << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0);");
+                    serverProfileInternal.preparedQuerySelect.push_back("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
+                    serverProfileInternal.preparedQuerySelect.push_back(/*id*/ ","+mapQuery+","+mapQuery+","+mapQuery+",");
+                    serverProfileInternal.preparedQuerySelect.push_back(/*QDateTime::currentDateTime().toTime_t()*/ ",0);");
                 break;
             }
             serverProfileInternal.valid=true;
         }
-        GlobalServerData::serverPrivateVariables.serverProfileInternalList << serverProfileInternal;
+        GlobalServerData::serverPrivateVariables.serverProfileInternalList.push_back(serverProfileInternal);
         index++;
     }
 
-    DebugClass::debugConsole(std::stringLiteral("%1 profile loaded").arg(GlobalServerData::serverPrivateVariables.serverProfileInternalList.size()));
+    std::cout << GlobalServerData::serverPrivateVariables.serverProfileInternalList.size() << " profile loaded" << std::endl;
 }
 
 bool BaseServer::preload_zone()
 {
     //open and quick check the file
-    entryListZone=QFileInfoList(QDir(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_ZONE).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot));
+    entryListZone=QFileInfoList(QDir(
+                                    std::string(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_ZONE1+CommonSettingsServer::commonSettingsServer.mainDatapackCode+DATAPACK_BASE_PATH_ZONE2).c_str()
+                                    ).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot));
     entryListIndex=0;
     return preload_zone_init();
 }
@@ -569,17 +587,17 @@ void BaseServer::preload_zone_return()
     if(GlobalServerData::serverPrivateVariables.db_server->next())
     {
         bool ok;
-        std::string zoneCodeName=entryListZone.at(entryListIndex).fileName();
-        zoneCodeName.remove(BaseServer::text_dotxml);
+        std::string zoneCodeName=entryListZone.at(entryListIndex).fileName().toStdString();
+        stringreplace(zoneCodeName,BaseServer::text_dotxml,"");
         const std::string &tempString=std::string(GlobalServerData::serverPrivateVariables.db_server->value(0));
-        const quint32 &clanId=tempString.toUInt(&ok);
+        const uint32_t &clanId=stringtouint32(tempString,&ok);
         if(ok)
         {
             GlobalServerData::serverPrivateVariables.cityStatusList[zoneCodeName].clan=clanId;
             GlobalServerData::serverPrivateVariables.cityStatusListReverse[clanId]=zoneCodeName;
         }
         else
-            DebugClass::debugConsole(std::stringLiteral("clan id is failed to convert to number for city status"));
+            std::cerr << "clan id is failed to convert to number for city status" << std::endl;;
     }
     GlobalServerData::serverPrivateVariables.db_server->clear();
     entryListIndex++;
@@ -599,14 +617,17 @@ bool BaseServer::preload_the_city_capture()
 
 bool BaseServer::preload_the_map()
 {
-    GlobalServerData::serverPrivateVariables.datapack_mapPath=GlobalServerData::serverSettings.datapack_basePath+std::stringLiteral(DATAPACK_BASE_PATH_MAPMAIN).arg(CommonSettingsServer::commonSettingsServer.mainDatapackCode);
+    GlobalServerData::serverPrivateVariables.datapack_mapPath=GlobalServerData::serverSettings.datapack_basePath+
+            DATAPACK_BASE_PATH_MAPMAIN+
+            CommonSettingsServer::commonSettingsServer.mainDatapackCode+
+            "/";
     #ifdef DEBUG_MESSAGE_MAP_LOAD
-    DebugClass::debugConsole(std::stringLiteral("start preload the map, into: %1").arg(GlobalServerData::serverPrivateVariables.datapack_mapPath));
+    std::cout << "start preload the map, into: " << GlobalServerData::serverPrivateVariables.datapack_mapPath << std::endl;;
     #endif
     Map_loader map_temp;
-    std::stringList map_name;
-    std::stringList map_name_to_do_id;
-    std::stringList returnList=FacilityLibGeneral::listFolder(GlobalServerData::serverPrivateVariables.datapack_mapPath);
+    std::vector<std::string> map_name;
+    std::vector<std::string> map_name_to_do_id;
+    std::vector<std::string> returnList=FacilityLibGeneral::listFolder(GlobalServerData::serverPrivateVariables.datapack_mapPath);
     returnList.sort();
 
     if(returnList.isEmpty())
@@ -941,7 +962,7 @@ bool BaseServer::preload_the_map()
         while(sub_index<semi_loaded_map.value(index).old_map.rescue_points.size())
         {
             const Map_to_send::Map_Point &point=semi_loaded_map.value(index).old_map.rescue_points.at(sub_index);
-            QPair<quint8,quint8> coord;
+            std::pair<uint8_t,uint8_t> coord;
             coord.first=point.x;
             coord.second=point.y;
             static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)])->rescue[coord]=Orientation_bottom;
@@ -979,7 +1000,7 @@ void BaseServer::criticalDatabaseQueryFailed()
 
 void BaseServer::preload_the_skin()
 {
-    std::stringList skinFolderList=FacilityLibGeneral::skinIdList(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_SKIN);
+    std::vector<std::string> skinFolderList=FacilityLibGeneral::skinIdList(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_SKIN);
     int index=0;
     const int &listsize=skinFolderList.size();
     while(index<listsize)
@@ -993,9 +1014,9 @@ void BaseServer::preload_the_skin()
 
 void BaseServer::preload_the_datapack()
 {
-    std::stringList extensionAllowedTemp=std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+BaseServer::text_dotcomma+CATCHCHALLENGER_EXTENSION_COMPRESSED).split(BaseServer::text_dotcomma);
+    std::vector<std::string> extensionAllowedTemp=std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+BaseServer::text_dotcomma+CATCHCHALLENGER_EXTENSION_COMPRESSED).split(BaseServer::text_dotcomma);
     BaseServerMasterSendDatapack::extensionAllowed=extensionAllowedTemp.toSet();
-    std::stringList compressedExtensionAllowedTemp=std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(BaseServer::text_dotcomma);
+    std::vector<std::string> compressedExtensionAllowedTemp=std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(BaseServer::text_dotcomma);
     BaseServerMasterSendDatapack::compressedExtension=compressedExtensionAllowedTemp.toSet();
     Client::datapack_list_cache_timestamp_base=0;
     Client::datapack_list_cache_timestamp_main=0;
@@ -1042,7 +1063,7 @@ void BaseServer::preload_the_datapack()
     {
         QCryptographicHash hashBase(QCryptographicHash::Sha224);
         const QHash<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,false);
-        std::stringList datapack_file_temp=pair.keys();
+        std::vector<std::string> datapack_file_temp=pair.keys();
         datapack_file_temp.sort();
         const QRegularExpression mainDatapackBaseFilter("^map[/\\\\]main[/\\\\]");
         int index=0;
@@ -1105,7 +1126,7 @@ void BaseServer::preload_the_datapack()
     {
         QCryptographicHash hashMain(QCryptographicHash::Sha224);
         const QHash<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,false);
-        std::stringList datapack_file_temp=pair.keys();
+        std::vector<std::string> datapack_file_temp=pair.keys();
         datapack_file_temp.sort();
         const QRegularExpression mainDatapackFolderFilter("^sub[/\\\\]");
         int index=0;
@@ -1169,7 +1190,7 @@ void BaseServer::preload_the_datapack()
     {
         QCryptographicHash hashSub(QCryptographicHash::Sha224);
         const QHash<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,false);
-        std::stringList datapack_file_temp=pair.keys();
+        std::vector<std::string> datapack_file_temp=pair.keys();
         datapack_file_temp.sort();
         int index=0;
         while(index<datapack_file_temp.size()) {
@@ -1328,7 +1349,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                     #ifdef DEBUG_MESSAGE_MAP_LOAD
                     CatchChallenger::DebugClass::debugConsole(std::stringLiteral("Bot %1 (%2) at %3 (%4,%5)").arg(bot_Semi.file).arg(bot_Semi.id).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                     #endif
-                    QHashIterator<quint8,QDomElement> i(botFiles.value(bot_Semi.file).value(bot_Semi.id).step);
+                    QHashIterator<uint8_t,QDomElement> i(botFiles.value(bot_Semi.file).value(bot_Semi.id).step);
                     while (i.hasNext()) {
                         i.next();
                         QDomElement step = i.value();
@@ -1339,7 +1360,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
-                                quint32 shop=step.attribute(BaseServer::text_shop).toUInt(&ok);
+                                uint32_t shop=step.attribute(BaseServer::text_shop).toUInt(&ok);
                                 if(!ok)
                                     CatchChallenger::DebugClass::debugConsole(std::stringLiteral("shop is not a number: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                         .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
@@ -1352,14 +1373,14 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                     CatchChallenger::DebugClass::debugConsole(std::stringLiteral("shop put at: %1 (%2,%3)")
                                         .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                     #endif
-                                    static_cast<MapServer *>(semi_loaded_map.value(index).map)->shops.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y),shop);
+                                    static_cast<MapServer *>(semi_loaded_map.value(index).map)->shops.insert(std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y),shop);
                                     shops_number++;
                                 }
                             }
                         }
                         else if(step.attribute(BaseServer::text_type)==BaseServer::text_learn)
                         {
-                            if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->learn.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
+                            if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->learn.contains(std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y)))
                                 CatchChallenger::DebugClass::debugConsole(std::stringLiteral("learn point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
@@ -1368,13 +1389,13 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                 CatchChallenger::DebugClass::debugConsole(std::stringLiteral("learn point put at: %1 (%2,%3)")
                                     .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                 #endif
-                                static_cast<MapServer *>(semi_loaded_map.value(index).map)->learn.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
+                                static_cast<MapServer *>(semi_loaded_map.value(index).map)->learn.insert(std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y));
                                 learnpoint_number++;
                             }
                         }
                         else if(step.attribute(BaseServer::text_type)==BaseServer::text_heal)
                         {
-                            if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->heal.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
+                            if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->heal.contains(std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y)))
                                 CatchChallenger::DebugClass::debugConsole(std::stringLiteral("heal point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
@@ -1383,13 +1404,13 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                 CatchChallenger::DebugClass::debugConsole(std::stringLiteral("heal point put at: %1 (%2,%3)")
                                     .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                 #endif
-                                static_cast<MapServer *>(semi_loaded_map.value(index).map)->heal.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
+                                static_cast<MapServer *>(semi_loaded_map.value(index).map)->heal.insert(std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y));
                                 healpoint_number++;
                             }
                         }
                         else if(step.attribute(BaseServer::text_type)==BaseServer::text_market)
                         {
-                            if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->market.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
+                            if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->market.contains(std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y)))
                                 CatchChallenger::DebugClass::debugConsole(std::stringLiteral("market point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
@@ -1398,7 +1419,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                 CatchChallenger::DebugClass::debugConsole(std::stringLiteral("market point put at: %1 (%2,%3)")
                                     .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                 #endif
-                                static_cast<MapServer *>(semi_loaded_map.value(index).map)->market.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
+                                static_cast<MapServer *>(semi_loaded_map.value(index).map)->market.insert(std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y));
                                 marketpoint_number++;
                             }
                         }
@@ -1407,7 +1428,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                             if(!step.hasAttribute(BaseServer::text_zone))
                                 CatchChallenger::DebugClass::debugConsole(std::stringLiteral("zonecapture point have not the zone attribute: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
-                            else if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->zonecapture.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
+                            else if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->zonecapture.contains(std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y)))
                                 CatchChallenger::DebugClass::debugConsole(std::stringLiteral("zonecapture point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
@@ -1416,18 +1437,18 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                 CatchChallenger::DebugClass::debugConsole(std::stringLiteral("zonecapture point put at: %1 (%2,%3)")
                                     .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                 #endif
-                                static_cast<MapServer *>(semi_loaded_map[index].map)->zonecapture[QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)]=step.attribute(BaseServer::text_zone);
+                                static_cast<MapServer *>(semi_loaded_map[index].map)->zonecapture[std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y)]=step.attribute(BaseServer::text_zone);
                                 zonecapturepoint_number++;
                             }
                         }
                         else if(step.attribute(BaseServer::text_type)==BaseServer::text_fight)
                         {
-                            if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->botsFight.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
+                            if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->botsFight.contains(std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y)))
                                 CatchChallenger::DebugClass::debugConsole(std::stringLiteral("botsFight point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
-                                const quint32 &fightid=step.attribute(BaseServer::text_fightid).toUInt(&ok);
+                                const uint32_t &fightid=step.attribute(BaseServer::text_fightid).toUInt(&ok);
                                 if(ok)
                                 {
                                     if(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.contains(fightid))
@@ -1452,10 +1473,10 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                             CatchChallenger::DebugClass::debugConsole(std::stringLiteral("botsFight point put at: %1 (%2,%3)")
                                                 .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                             #endif
-                                            static_cast<MapServer *>(semi_loaded_map[index].map)->botsFight.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y),fightid);
+                                            static_cast<MapServer *>(semi_loaded_map[index].map)->botsFight.insert(std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y),fightid);
                                             botfights_number++;
 
-                                            quint32 fightRange=5;
+                                            uint32_t fightRange=5;
                                             if(bot_Semi.property_text.contains(BaseServer::text_fightRange))
                                             {
                                                 fightRange=bot_Semi.property_text.value(BaseServer::text_fightRange).toUInt(&ok);
@@ -1482,8 +1503,8 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT_BOT
                                             CatchChallenger::DebugClass::debugConsole(std::stringLiteral("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(direction));
                                             #endif
-                                            quint8 temp_x=bot_Semi.point.x,temp_y=bot_Semi.point.y;
-                                            quint32 index_botfight_range=0;
+                                            uint8_t temp_x=bot_Semi.point.x,temp_y=bot_Semi.point.y;
+                                            uint32_t index_botfight_range=0;
                                             CatchChallenger::CommonMap *map=semi_loaded_map.value(index).map;
                                             CatchChallenger::CommonMap *old_map=map;
                                             while(index_botfight_range<fightRange)
@@ -1494,7 +1515,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                                     break;
                                                 if(map!=old_map)
                                                     break;
-                                                static_cast<MapServer *>(semi_loaded_map[index].map)->botsFightTrigger.insert(QPair<quint8,quint8>(temp_x,temp_y),fightid);
+                                                static_cast<MapServer *>(semi_loaded_map[index].map)->botsFightTrigger.insert(std::pair<uint8_t,uint8_t>(temp_x,temp_y),fightid);
                                                 index_botfight_range++;
                                                 botfightstigger_number++;
                                             }
