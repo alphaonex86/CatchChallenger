@@ -22,12 +22,12 @@ public:
         struct Map_BorderContent_TopBottom
         {
             CommonMap *map;
-            qint32 x_offset;
+            int32_t x_offset;
         };
         struct Map_BorderContent_LeftRight
         {
             CommonMap *map;
-            qint32 y_offset;
+            int32_t y_offset;
         };
         Map_BorderContent_TopBottom top;
         Map_BorderContent_TopBottom bottom;
@@ -39,30 +39,30 @@ public:
     std::vector<CommonMap *> near_map,border_map;//not only the border
     struct Teleporter
     {
-        quint32 x,y;
+        uint32_t x,y;
         CommonMap *map;
         MapCondition condition;
     };
-    std::unordered_map<quint32,Teleporter> teleporter;//the int (x+y*width) is position
+    std::unordered_map<uint32_t,Teleporter> teleporter;//the int (x+y*width) is position
 
     std::string map_file;
-    quint16 width;
-    quint16 height;
-    quint32 group;
-    quint32 id;
+    uint16_t width;
+    uint16_t height;
+    uint32_t group;
+    uint32_t id;
 
-    std::unordered_multimap<std::pair<uint8_t,uint8_t>,uint32_t, pairhash> shops;
-    std::unordered_set<std::pair<quint8,quint8>,pairhash> learn;
-    std::unordered_set<std::pair<quint8,quint8>,pairhash> heal;
-    std::unordered_set<std::pair<quint8,quint8>,pairhash> market;
-    std::unordered_map<std::pair<quint8,quint8>,std::string,pairhash> zonecapture;
-    std::unordered_multimap<std::pair<quint8,quint8>,quint32,pairhash> botsFight;
+    std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint32_t>, pairhash> shops;
+    std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> learn;
+    std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> heal;
+    std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> market;
+    std::unordered_map<std::pair<uint8_t,uint8_t>,std::string,pairhash> zonecapture;
+    std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint32_t>,pairhash> botsFight;
 
     /*std::vector<MapMonster> grassMonster;
     std::vector<MapMonster> waterMonster;
     std::vector<MapMonster> caveMonster;*/
 
-    std::unordered_multimap<std::pair<quint8,quint8>,quint32,pairhash> botsFightTrigger;//trigger line in front of bot fight
+    std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint32_t>,pairhash> botsFightTrigger;//trigger line in front of bot fight
 
     static void removeParsedLayer(const ParsedLayer &parsed_layer);
 };

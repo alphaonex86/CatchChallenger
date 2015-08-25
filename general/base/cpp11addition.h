@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <regex>
+#include <unordered_map>
 
 #if ! defined(Q_LIKELY)
     #if defined(__GNUC__)
@@ -263,6 +264,26 @@ int64_t stringtoint64(const std::string &string,bool *ok=NULL)
             *ok=false;
         return 0;
     }
+}
+
+template <class T>
+int vectorindexOf(const std::vector<T> &list,const T &item)
+{
+    const auto &r=std::find(list.begin(),list.end(),item);
+    if(r==list.end())
+        return -1;
+    else
+        return std::distance(list.begin(),r);
+}
+
+template <class T, class U>
+std::vector<T> unordered_map_keys_vector(const std::unordered_map<T,U> &unordered_map_var)
+{
+    std::vector<T> keyList;
+    keyList.reserve(unordered_map_var.size());
+    for ( auto it = unordered_map_var.cbegin(); it != unordered_map_var.cend(); ++it )
+        keyList.push_back(it->first);
+    return keyList;
 }
 
 //s.find('q') == std::string::npos
