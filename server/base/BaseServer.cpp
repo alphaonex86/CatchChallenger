@@ -98,7 +98,7 @@ BaseServer::BaseServer() :
     #endif
 
     GlobalServerData::serverPrivateVariables.botSpawnIndex          = 0;
-    GlobalServerData::serverPrivateVariables.datapack_rightFileName	= QRegularExpression(DATAPACK_FILE_REGEX);
+    GlobalServerData::serverPrivateVariables.datapack_rightFileName	= std::regex(DATAPACK_FILE_REGEX);
     GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove=NULL;
 
     GlobalServerData::serverSettings.automatic_account_creation             = false;

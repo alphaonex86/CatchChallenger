@@ -80,7 +80,7 @@ void BaseServer::preload_the_events()
                             GlobalServerData::serverPrivateVariables.timerEvents.push_back(timer);
                             timer->start(j->second.cycle*1000*60,j->second.offset*1000*60);
                             #else
-                            GlobalServerData::serverPrivateVariables.timerEvents.push_back(new QtTimerEvents(j.value().offset*1000*60,j.value().cycle*1000*60,index,sub_index));
+                            GlobalServerData::serverPrivateVariables.timerEvents.push_back(new QtTimerEvents(j.at().offset*1000*60,j.at().cycle*1000*60,index,sub_index));
                             #endif
                         }
                         else
@@ -135,12 +135,12 @@ bool BaseServer::preload_zone_init()
             continue;
         }
         std::string zoneCodeName=entryListZone.at(index).fileName().toStdString();
-        zoneCodeName.erase(std::find(zoneCodeName.begin(), zoneCodeName.end(), BaseServer::text_dotxml));
+        stringreplace(zoneCodeName,BaseServer::text_dotxml,"");
         QDomDocument domDocument;
         const std::string &file=entryListZone.at(index).absoluteFilePath().toStdString();
         #ifndef EPOLLCATCHCHALLENGERSERVER
         if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
-            domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+            domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
         else
         {
         #endif
@@ -643,9 +643,9 @@ bool BaseServer::preload_the_map()
         abort();
     }
     //load the map
-    int size=returnList.size();
-    int index=0;
-    int sub_index;
+    unsigned int size=returnList.size();
+    unsigned int index=0;
+    unsigned int sub_index;
     std::string tmxRemove(".tmx");
     std::regex mapFilter("\\.tmx$");
     std::regex mapExclude("[\"']");
@@ -718,7 +718,7 @@ bool BaseServer::preload_the_map()
                 }
 
                 sub_index=0;
-                const int &listsize=map_temp.map_to_send.teleport.size();
+                const unsigned int &listsize=map_temp.map_to_send.teleport.size();
                 while(sub_index<listsize)
                 {
                     map_temp.map_to_send.teleport[sub_index].map=Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.teleport.at(sub_index).map,GlobalServerData::serverPrivateVariables.datapack_mapPath);
@@ -731,13 +731,13 @@ bool BaseServer::preload_the_map()
                 semi_loaded_map.push_back(map_semi);
             }
             else
-                DebugClass::debugConsole(std::stringLiteral("error at loading: %1, error: %2").arg(fileName).arg(map_temp.errorString()));
+                std::cout << "error at loading: " << fileName << ", error: " << map_temp.errorString() << std::endl;;
         }
         index++;
     }
     {
         GlobalServerData::serverPrivateVariables.flat_map_list=static_cast<CommonMap **>(malloc(sizeof(CommonMap *)*flat_map_list_temp.size()));
-        int index=0;
+        unsigned int index=0;
         while(index<flat_map_list_temp.size())
         {
             GlobalServerData::serverPrivateVariables.flat_map_list[index]=flat_map_list_temp.at(index);
@@ -745,30 +745,30 @@ bool BaseServer::preload_the_map()
         }
     }
 
-    map_name_to_do_id.sort();
+    std::sort(map_name_to_do_id.begin(),map_name_to_do_id.end());
 
     //resolv the border map name into their pointer
     size=semi_loaded_map.size();
     index=0;
     while(index<size)
     {
-        if(!semi_loaded_map.at(index).border.bottom.fileName.isEmpty() && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.bottom.fileName))
-            semi_loaded_map[index].map->border.bottom.map=GlobalServerData::serverPrivateVariables.map_list.value(semi_loaded_map.at(index).border.bottom.fileName);
+        if(semi_loaded_map.at(index).border.bottom.fileName.size()>0 && GlobalServerData::serverPrivateVariables.map_list.find(semi_loaded_map.at(index).border.bottom.fileName)!=GlobalServerData::serverPrivateVariables.map_list.end())
+            semi_loaded_map[index].map->border.bottom.map=GlobalServerData::serverPrivateVariables.map_list.at(semi_loaded_map.at(index).border.bottom.fileName);
         else
             semi_loaded_map[index].map->border.bottom.map=NULL;
 
-        if(!semi_loaded_map.at(index).border.top.fileName.isEmpty() && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.top.fileName))
-            semi_loaded_map[index].map->border.top.map=GlobalServerData::serverPrivateVariables.map_list.value(semi_loaded_map.at(index).border.top.fileName);
+        if(semi_loaded_map.at(index).border.top.fileName.size()>0 && GlobalServerData::serverPrivateVariables.map_list.find(semi_loaded_map.at(index).border.top.fileName)!=GlobalServerData::serverPrivateVariables.map_list.end())
+            semi_loaded_map[index].map->border.top.map=GlobalServerData::serverPrivateVariables.map_list.at(semi_loaded_map.at(index).border.top.fileName);
         else
             semi_loaded_map[index].map->border.top.map=NULL;
 
-        if(!semi_loaded_map.at(index).border.left.fileName.isEmpty() && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.left.fileName))
-            semi_loaded_map[index].map->border.left.map=GlobalServerData::serverPrivateVariables.map_list.value(semi_loaded_map.at(index).border.left.fileName);
+        if(semi_loaded_map.at(index).border.left.fileName.size()>0 && GlobalServerData::serverPrivateVariables.map_list.find(semi_loaded_map.at(index).border.left.fileName)!=GlobalServerData::serverPrivateVariables.map_list.end())
+            semi_loaded_map[index].map->border.left.map=GlobalServerData::serverPrivateVariables.map_list.at(semi_loaded_map.at(index).border.left.fileName);
         else
             semi_loaded_map[index].map->border.left.map=NULL;
 
-        if(!semi_loaded_map.at(index).border.right.fileName.isEmpty() && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.right.fileName))
-            semi_loaded_map[index].map->border.right.map=GlobalServerData::serverPrivateVariables.map_list.value(semi_loaded_map.at(index).border.right.fileName);
+        if(semi_loaded_map.at(index).border.right.fileName.size()>0 && GlobalServerData::serverPrivateVariables.map_list.find(semi_loaded_map.at(index).border.right.fileName)!=GlobalServerData::serverPrivateVariables.map_list.end())
+            semi_loaded_map[index].map->border.right.map=GlobalServerData::serverPrivateVariables.map_list.at(semi_loaded_map.at(index).border.right.fileName);
         else
             semi_loaded_map[index].map->border.right.map=NULL;
 
@@ -780,62 +780,90 @@ bool BaseServer::preload_the_map()
     index=0;
     while(index<size)
     {
-        int sub_index=0;
-        while(sub_index<semi_loaded_map.value(index).old_map.teleport.size())
+        unsigned int sub_index=0;
+        while(sub_index<semi_loaded_map.at(index).old_map.teleport.size())
         {
-            std::string teleportString=semi_loaded_map.value(index).old_map.teleport.at(sub_index).map;
-            teleportString.remove(BaseServer::text_dottmx);
-            if(GlobalServerData::serverPrivateVariables.map_list.contains(teleportString))
+            std::string teleportString=semi_loaded_map.at(index).old_map.teleport.at(sub_index).map;
+            stringreplace(teleportString,BaseServer::text_dottmx,"");
+            if(GlobalServerData::serverPrivateVariables.map_list.find(teleportString)!=GlobalServerData::serverPrivateVariables.map_list.end())
             {
-                if(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x<GlobalServerData::serverPrivateVariables.map_list.value(teleportString)->width
-                        && semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y<GlobalServerData::serverPrivateVariables.map_list.value(teleportString)->height)
+                if(semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_x<GlobalServerData::serverPrivateVariables.map_list.at(teleportString)->width
+                        && semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_y<GlobalServerData::serverPrivateVariables.map_list.at(teleportString)->height)
                 {
-                    int virtual_position=semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_x+semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_y*semi_loaded_map.value(index).map->width;
-                    if(semi_loaded_map.value(index).map->teleporter.contains(virtual_position))
+                    int virtual_position=semi_loaded_map.at(index).old_map.teleport.at(sub_index).source_x+semi_loaded_map.at(index).old_map.teleport.at(sub_index).source_y*semi_loaded_map.at(index).map->width;
+                    if(semi_loaded_map.at(index).map->teleporter.find(virtual_position)!=semi_loaded_map.at(index).map->teleporter.end())
                     {
-                        DebugClass::debugConsole(std::stringLiteral("already found teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
-                             .arg(semi_loaded_map.value(index).map->map_file)
-                             .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_x)
-                             .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_y)
-                             .arg(teleportString)
-                             .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x)
-                             .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y));
+                        std::cerr << "already found teleporter on the map: "
+                             << semi_loaded_map.at(index).map->map_file
+                             << "("
+                             << semi_loaded_map.at(index).old_map.teleport.at(sub_index).source_x
+                             << ","
+                             << semi_loaded_map.at(index).old_map.teleport.at(sub_index).source_y
+                             << "), to "
+                             << teleportString
+                             << "("
+                             << semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_x
+                             << ","
+                             << semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_y
+                             << ")"
+                             << std::endl;
                     }
                     else
                     {
                         #ifdef DEBUG_MESSAGE_MAP_LOAD
-                        DebugClass::debugConsole(std::stringLiteral("teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
-                                     .arg(semi_loaded_map.value(index).map->map_file)
-                                     .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_x)
-                                     .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_y)
-                                     .arg(teleportString)
-                                     .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x)
-                                     .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y));
+                        std::cout << "teleporter on the map: "
+                             << semi_loaded_map.at(index).map->map_file
+                             << "("
+                             << semi_loaded_map.at(index).old_map.teleport.at(sub_index).source_x
+                             << ","
+                             << semi_loaded_map.at(index).old_map.teleport.at(sub_index).source_y
+                             << "), to "
+                             << teleportString
+                             << "("
+                             << semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_x
+                             << ","
+                             << semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_y
+                             << ")"
+                             << std::endl;
                         #endif
                         CommonMap::Teleporter *teleporter=&semi_loaded_map[index].map->teleporter[virtual_position];
-                        teleporter->map=GlobalServerData::serverPrivateVariables.map_list.value(teleportString);
-                        teleporter->x=semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x;
-                        teleporter->y=semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y;
-                        teleporter->condition=semi_loaded_map.value(index).old_map.teleport.at(sub_index).condition;
+                        teleporter->map=GlobalServerData::serverPrivateVariables.map_list.at(teleportString);
+                        teleporter->x=semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_x;
+                        teleporter->y=semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_y;
+                        teleporter->condition=semi_loaded_map.at(index).old_map.teleport.at(sub_index).condition;
                     }
                 }
                 else
-                    DebugClass::debugConsole(std::stringLiteral("wrong teleporter on the map: %1(%2,%3), to %4 (%5,%6) because the tp is out of range")
-                         .arg(semi_loaded_map.value(index).map->map_file)
-                         .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_x)
-                         .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_y)
-                         .arg(teleportString)
-                         .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x)
-                         .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y));
+                    std::cerr << "wrong teleporter on the map: "
+                         << semi_loaded_map.at(index).map->map_file
+                         << "("
+                         << semi_loaded_map.at(index).old_map.teleport.at(sub_index).source_x
+                         << ","
+                         << semi_loaded_map.at(index).old_map.teleport.at(sub_index).source_y
+                         << "), to "
+                         << teleportString
+                         << "("
+                         << semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_x
+                         << ","
+                         << semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_y
+                         << ") because the tp is out of range"
+                         << std::endl;
             }
             else
-                DebugClass::debugConsole(std::stringLiteral("wrong teleporter on the map: %1(%2,%3), to %4 (%5,%6) because the map is not found")
-                     .arg(semi_loaded_map.value(index).map->map_file)
-                     .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_x)
-                     .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_y)
-                     .arg(teleportString)
-                     .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x)
-                     .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y));
+                std::cerr << "wrong teleporter on the map: "
+                     << semi_loaded_map.at(index).map->map_file
+                     << "("
+                     << semi_loaded_map.at(index).old_map.teleport.at(sub_index).source_x
+                     << ","
+                     << semi_loaded_map.at(index).old_map.teleport.at(sub_index).source_y
+                     << "), to "
+                     << teleportString
+                     << "("
+                     << semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_x
+                     << ","
+                     << semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_y
+                     << ") because the map is not found"
+                     << std::endl;
 
             sub_index++;
         }
@@ -847,36 +875,81 @@ bool BaseServer::preload_the_map()
     index=0;
     while(index<size)
     {
-        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map!=NULL && GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map->border.top.map!=GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index)))
+        const auto &currentTempMap=GlobalServerData::serverPrivateVariables.map_list.at(map_name.at(index));
+        if(currentTempMap->border.bottom.map!=NULL && currentTempMap->border.bottom.map->border.top.map!=currentTempMap)
         {
-            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map->border.top.map==NULL)
-                DebugClass::debugConsole(std::stringLiteral("the map %1 have bottom map: %2, the map %2 have not a top map").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map->map_file));
+            if(currentTempMap->border.bottom.map->border.top.map==NULL)
+                std::cerr << "the map "
+                          << currentTempMap->map_file
+                          << "have bottom map: "
+                          << currentTempMap->border.bottom.map->map_file
+                          << ", but the bottom map have not a top map"
+                          << std::endl;
             else
-                DebugClass::debugConsole(std::stringLiteral("the map %1 have bottom map: %2, the map %2 have this top map: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map->border.top.map->map_file));
+                std::cerr << "the map "
+                          << currentTempMap->map_file
+                          << "have bottom map: "
+                          << currentTempMap->border.bottom.map->map_file
+                          << ", but the bottom map have different top map: "
+                          << currentTempMap->border.bottom.map->border.top.map->map_file
+                          << std::endl;
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map=NULL;
         }
-        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map!=NULL && GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map->border.bottom.map!=GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index)))
+        if(currentTempMap->border.top.map!=NULL && currentTempMap->border.top.map->border.bottom.map!=currentTempMap)
         {
-            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map->border.bottom.map==NULL)
-                DebugClass::debugConsole(std::stringLiteral("the map %1 have top map: %2, the map %2 have not a bottom map").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map->map_file));
+            if(currentTempMap->border.top.map->border.bottom.map==NULL)
+                std::cerr << "the map "
+                          << currentTempMap->map_file
+                          << "have top map: "
+                          << currentTempMap->border.top.map->map_file
+                          << ", but the bottom map have not a bottom map"
+                          << std::endl;
             else
-                DebugClass::debugConsole(std::stringLiteral("the map %1 have top map: %2, the map %2 have this bottom map: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map->border.bottom.map->map_file));
+                std::cerr << "the map "
+                          << currentTempMap->map_file
+                          << "have top map: "
+                          << currentTempMap->border.top.map->map_file
+                          << ", but the bottom map have different bottom map: "
+                          << currentTempMap->border.top.map->border.bottom.map->map_file
+                          << std::endl;
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map=NULL;
         }
-        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map!=NULL && GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map->border.right.map!=GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index)))
+        if(currentTempMap->border.left.map!=NULL && currentTempMap->border.left.map->border.right.map!=currentTempMap)
         {
-            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map->border.right.map==NULL)
-                DebugClass::debugConsole(std::stringLiteral("the map %1 have left map: %2, the map %2 have not a right map").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map->map_file));
+            if(currentTempMap->border.left.map->border.right.map==NULL)
+                std::cerr << "the map "
+                          << currentTempMap->map_file
+                          << "have left map: "
+                          << currentTempMap->border.left.map->map_file
+                          << ", but the right map have not a right map"
+                          << std::endl;
             else
-                DebugClass::debugConsole(std::stringLiteral("the map %1 have left map: %2, the map %2 have this right map: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map->border.right.map->map_file));
+                std::cerr << "the map "
+                          << currentTempMap->map_file
+                          << "have left map: "
+                          << currentTempMap->border.left.map->map_file
+                          << ", but the right map have different right map: "
+                          << currentTempMap->border.left.map->border.right.map->map_file
+                          << std::endl;
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map=NULL;
         }
-        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map!=NULL && GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map->border.left.map!=GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index)))
+        if(currentTempMap->border.right.map!=NULL && currentTempMap->border.right.map->border.left.map!=currentTempMap)
         {
-            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map->border.left.map==NULL)
-                DebugClass::debugConsole(std::stringLiteral("the map %1 have right map: %2, the map %2 have not a left map").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map->map_file));
+            if(currentTempMap->border.right.map->border.left.map==NULL)
+                std::cerr << "the map "
+                          << currentTempMap->map_file
+                          << "have right map: "
+                          << currentTempMap->border.right.map->map_file
+                          << ", but the left map have not a left map"
+                          << std::endl;
             else
-                DebugClass::debugConsole(std::stringLiteral("the map %1 have right map: %2, the map %2 have this left map: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->border.left.map->map_file));
+                std::cerr << "the map "
+                          << currentTempMap->map_file
+                          << "have right map: "
+                          << currentTempMap->border.right.map->map_file
+                          << ", but the left map have different left map: "
+                          << currentTempMap->border.right.map->border.left.map->map_file
+                          << std::endl;
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map=NULL;
         }
         index++;
@@ -887,44 +960,76 @@ bool BaseServer::preload_the_map()
     index=0;
     while(index<size)
     {
-        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map))
+        const auto &currentTempMap=GlobalServerData::serverPrivateVariables.map_list.at(map_name.at(index));
+        if(currentTempMap->border.bottom.map!=NULL &&
+                std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.bottom.map)
+                ==
+                currentTempMap->near_map.end())
         {
-            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map;
-            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map))
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map;
-            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map))
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map;
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.bottom.map);
+            if(currentTempMap->border.left.map!=NULL && std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.left.map)
+                    ==
+                    currentTempMap->near_map.end())
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.left.map);
+            if(currentTempMap->border.right.map!=NULL && std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.right.map)
+                    ==
+                    currentTempMap->near_map.end())
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.right.map);
         }
 
-        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map))
+        if(currentTempMap->border.top.map!=NULL &&
+                std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.top.map)
+                ==
+                currentTempMap->near_map.end()
+                )
         {
-            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map;
-            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map))
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map;
-            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map))
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map;
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.top.map);
+            if(currentTempMap->border.left.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.left.map)
+                    ==
+                    currentTempMap->near_map.end())
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.left.map);
+            if(currentTempMap->border.right.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.right.map)
+                    ==
+                    currentTempMap->near_map.end())
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.right.map);
         }
 
-        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map))
+        if(currentTempMap->border.right.map!=NULL &&
+                std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.right.map)
+                ==
+                currentTempMap->near_map.end()
+                )
         {
-            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map;
-            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map))
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map;
-            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map))
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map;
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.right.map);
+            if(currentTempMap->border.top.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.top.map)
+                    ==
+                    currentTempMap->near_map.end())
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.top.map);
+            if(currentTempMap->border.bottom.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.bottom.map)
+                    ==
+                    currentTempMap->near_map.end())
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.bottom.map);
         }
 
-        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map))
+        if(currentTempMap->border.left.map!=NULL &&
+                std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.left.map)
+                ==
+                currentTempMap->near_map.end()
+                )
         {
-            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map;
-            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map))
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map;
-            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map))
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map;
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.left.map);
+            if(currentTempMap->border.top.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.top.map)
+                    ==
+                    currentTempMap->near_map.end())
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.top.map);
+            if(currentTempMap->border.bottom.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.bottom.map)
+                    ==
+                    currentTempMap->near_map.end())
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.bottom.map);
         }
 
         GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border_map=GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map;
-        GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index));
+        GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap);
         index++;
     }
 
@@ -933,20 +1038,37 @@ bool BaseServer::preload_the_map()
     index=0;
     while(index<size)
     {
-        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map!=NULL)
-            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.x_offset=semi_loaded_map.at(map_name.indexOf(semi_loaded_map.at(index).border.bottom.fileName)).border.top.x_offset-semi_loaded_map.at(index).border.bottom.x_offset;
+        const auto &currentTempMap=GlobalServerData::serverPrivateVariables.map_list.at(map_name.at(index));
+        if(currentTempMap->border.bottom.map!=NULL)
+        {
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.x_offset=
+                    semi_loaded_map.at(vectorindexOf(map_name,semi_loaded_map.at(index).border.bottom.fileName)).border.top.x_offset-
+                    semi_loaded_map.at(index).border.bottom.x_offset;
+        }
         else
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.x_offset=0;
-        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map!=NULL)
-            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.x_offset=semi_loaded_map.at(map_name.indexOf(semi_loaded_map.at(index).border.top.fileName)).border.bottom.x_offset-semi_loaded_map.at(index).border.top.x_offset;
+        if(currentTempMap->border.top.map!=NULL)
+        {
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.x_offset=
+                    semi_loaded_map.at(vectorindexOf(map_name,semi_loaded_map.at(index).border.top.fileName)).border.bottom.x_offset-
+                    semi_loaded_map.at(index).border.top.x_offset;
+        }
         else
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.x_offset=0;
-        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map!=NULL)
-            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.y_offset=semi_loaded_map.at(map_name.indexOf(semi_loaded_map.at(index).border.left.fileName)).border.right.y_offset-semi_loaded_map.at(index).border.left.y_offset;
+        if(currentTempMap->border.left.map!=NULL)
+        {
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.y_offset=
+                    semi_loaded_map.at(vectorindexOf(map_name,semi_loaded_map.at(index).border.left.fileName)).border.right.y_offset-
+                    semi_loaded_map.at(index).border.left.y_offset;
+        }
         else
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.y_offset=0;
-        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map!=NULL)
-            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.y_offset=semi_loaded_map.at(map_name.indexOf(semi_loaded_map.at(index).border.right.fileName)).border.left.y_offset-semi_loaded_map.at(index).border.right.y_offset;
+        if(currentTempMap->border.right.map!=NULL)
+        {
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.y_offset=
+                    semi_loaded_map.at(vectorindexOf(map_name,semi_loaded_map.at(index).border.right.fileName)).border.left.y_offset-
+                    semi_loaded_map.at(index).border.right.y_offset;
+        }
         else
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.y_offset=0;
         index++;
@@ -961,9 +1083,9 @@ bool BaseServer::preload_the_map()
     while(index<size)
     {
         sub_index=0;
-        while(sub_index<semi_loaded_map.value(index).old_map.rescue_points.size())
+        while(sub_index<semi_loaded_map.at(index).old_map.rescue_points.size())
         {
-            const Map_to_send::Map_Point &point=semi_loaded_map.value(index).old_map.rescue_points.at(sub_index);
+            const Map_to_send::Map_Point &point=semi_loaded_map.at(index).old_map.rescue_points.at(sub_index);
             std::pair<uint8_t,uint8_t> coord;
             coord.first=point.x;
             coord.second=point.y;
@@ -977,7 +1099,7 @@ bool BaseServer::preload_the_map()
     index=0;
     while(index<size)
     {
-        if(GlobalServerData::serverPrivateVariables.map_list.contains(map_name_to_do_id.at(index)))
+        if(GlobalServerData::serverPrivateVariables.map_list.find(map_name_to_do_id.at(index))!=GlobalServerData::serverPrivateVariables.map_list.end())
         {
             GlobalServerData::serverPrivateVariables.map_list[map_name_to_do_id.at(index)]->id=index;
             GlobalServerData::serverPrivateVariables.id_map_to_map[GlobalServerData::serverPrivateVariables.map_list[map_name_to_do_id.at(index)]->id]=map_name_to_do_id.at(index);
@@ -987,7 +1109,7 @@ bool BaseServer::preload_the_map()
         index++;
     }
 
-    DebugClass::debugConsole(std::stringLiteral("%1 map(s) loaded").arg(GlobalServerData::serverPrivateVariables.map_list.size()));
+    std::cout << GlobalServerData::serverPrivateVariables.map_list.size() << " map(s) loaded" << std::endl;
 
     DictionaryServer::dictionary_pointOnMap_internal_to_database.clear();
     botFiles.clear();
@@ -1011,50 +1133,58 @@ void BaseServer::preload_the_skin()
         index++;
     }
 
-    DebugClass::debugConsole(std::stringLiteral("%1 skin(s) loaded").arg(listsize));
+    std::cout << listsize << " skin(s) loaded" << std::endl;
 }
 
 void BaseServer::preload_the_datapack()
 {
-    std::vector<std::string> extensionAllowedTemp=std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+BaseServer::text_dotcomma+CATCHCHALLENGER_EXTENSION_COMPRESSED).split(BaseServer::text_dotcomma);
-    BaseServerMasterSendDatapack::extensionAllowed=extensionAllowedTemp.toSet();
-    std::vector<std::string> compressedExtensionAllowedTemp=std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(BaseServer::text_dotcomma);
-    BaseServerMasterSendDatapack::compressedExtension=compressedExtensionAllowedTemp.toSet();
+    std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+BaseServer::text_dotcomma+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
+    BaseServerMasterSendDatapack::extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+    std::vector<std::string> compressedExtensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
+    BaseServerMasterSendDatapack::compressedExtension=std::unordered_set<std::string>(compressedExtensionAllowedTemp.begin(),compressedExtensionAllowedTemp.end());
     Client::datapack_list_cache_timestamp_base=0;
     Client::datapack_list_cache_timestamp_main=0;
     Client::datapack_list_cache_timestamp_sub=0;
 
-    GlobalServerData::serverPrivateVariables.mainDatapackFolder=GlobalServerData::serverSettings.datapack_basePath+std::stringLiteral("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+std::stringLiteral("/");
+    GlobalServerData::serverPrivateVariables.mainDatapackFolder=
+            GlobalServerData::serverSettings.datapack_basePath+
+            "map/main/"+
+            CommonSettingsServer::commonSettingsServer.mainDatapackCode+
+            "/";
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
-        if(CommonSettingsServer::commonSettingsServer.mainDatapackCode.isEmpty())
+        if(CommonSettingsServer::commonSettingsServer.mainDatapackCode.size()==0)
         {
-            DebugClass::debugConsole(std::stringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode.isEmpty"));
+            std::cerr << "CommonSettingsServer::commonSettingsServer.mainDatapackCode.isEmpty" << std::endl;
             abort();
         }
-        if(!CommonSettingsServer::commonSettingsServer.mainDatapackCode.contains(std::regex(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE)))
+        if(!std::regex_match(CommonSettingsServer::commonSettingsServer.mainDatapackCode,std::regex(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE)))
         {
-            DebugClass::debugConsole(
-                        std::stringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode not match CATCHCHALLENGER_CHECK_MAINDATAPACKCODE %1 not contain %2")
-                         .arg(CommonSettingsServer::commonSettingsServer.mainDatapackCode)
-                         .arg(std::stringLiteral(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE))
-                         );
+            std::cerr << "CommonSettingsServer::commonSettingsServer.mainDatapackCode not match CATCHCHALLENGER_CHECK_MAINDATAPACKCODE "
+                      << CommonSettingsServer::commonSettingsServer.mainDatapackCode
+                      << " not contain "
+                      << CATCHCHALLENGER_CHECK_MAINDATAPACKCODE;
             abort();
         }
-        if(!QDir(GlobalServerData::serverPrivateVariables.mainDatapackFolder).exists())
+        if(!QDir(QString::fromStdString(GlobalServerData::serverPrivateVariables.mainDatapackFolder)).exists())
         {
-            DebugClass::debugConsole(GlobalServerData::serverPrivateVariables.mainDatapackFolder+std::stringLiteral(" don't exists"));
+            std::cerr << GlobalServerData::serverPrivateVariables.mainDatapackFolder << " don't exists" << std::endl;
             abort();
         }
     }
     #endif
-    if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+    if(CommonSettingsServer::commonSettingsServer.subDatapackCode.size()>0)
     {
-        GlobalServerData::serverPrivateVariables.subDatapackFolder=GlobalServerData::serverSettings.datapack_basePath+std::stringLiteral("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+std::stringLiteral("/")+
-                std::stringLiteral("sub/")+CommonSettingsServer::commonSettingsServer.subDatapackCode+std::stringLiteral("/");
-        if(!QDir(GlobalServerData::serverPrivateVariables.subDatapackFolder).exists())
+        GlobalServerData::serverPrivateVariables.subDatapackFolder=
+                GlobalServerData::serverSettings.datapack_basePath+
+                "map/main/"+
+                CommonSettingsServer::commonSettingsServer.mainDatapackCode+
+                "/sub/"+
+                CommonSettingsServer::commonSettingsServer.subDatapackCode+
+                "/";
+        if(!QDir(QString::fromStdString(GlobalServerData::serverPrivateVariables.subDatapackFolder)).exists())
         {
-            DebugClass::debugConsole(GlobalServerData::serverPrivateVariables.subDatapackFolder+std::stringLiteral(" don't exists, drop spec"));
+            std::cerr << GlobalServerData::serverPrivateVariables.subDatapackFolder << " don't exists, drop spec" << std::endl;
             GlobalServerData::serverPrivateVariables.subDatapackFolder.clear();
             CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
         }
@@ -1064,14 +1194,14 @@ void BaseServer::preload_the_datapack()
     //do the base
     {
         QCryptographicHash hashBase(QCryptographicHash::Sha224);
-        const QHash<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,false);
-        std::vector<std::string> datapack_file_temp=pair.keys();
-        datapack_file_temp.sort();
+        const std::unordered_map<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,false);
+        std::vector<std::string> datapack_file_temp=unordered_map_keys_vector(pair);
+        std::sort(datapack_file_temp.begin(), datapack_file_temp.end());
         const std::regex mainDatapackBaseFilter("^map[/\\\\]main[/\\\\]");
-        int index=0;
+        unsigned int index=0;
         while(index<datapack_file_temp.size()) {
-            QFile file(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index));
-            if(datapack_file_temp.at(index).contains(GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+            QFile file(QString::fromStdString(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index)));
+            if(std::regex_match(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName))
             {
                 if(file.open(QIODevice::ReadOnly))
                 {
@@ -1080,23 +1210,23 @@ void BaseServer::preload_the_datapack()
 
                     if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
-                        if(BaseServerMasterSendDatapack::compressedExtension.contains(QFileInfo(file).suffix()))
+                        if(BaseServerMasterSendDatapack::compressedExtension.find(QFileInfo(file).suffix().toStdString())!=BaseServerMasterSendDatapack::compressedExtension.end())
                         {
                             if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
                             {
-                                DebugClass::debugConsole(std::stringLiteral("The file %1 is over the maximum packet size, but can be compressed, try enable the compression").arg(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index)));
+                                std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size, but can be compressed, try enable the compression" << std::endl;
                                 abort();
                             }
                         }
                         else
                         {
-                            DebugClass::debugConsole(std::stringLiteral("The file %1 is over the maximum packet size").arg(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index)));
+                            std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size" << std::endl;
                             abort();
                         }
                     }
 
                     //switch the data to correct hash or drop it
-                    if(datapack_file_temp.at(index).contains(mainDatapackBaseFilter))
+                    if(std::regex_match(datapack_file_temp.at(index),mainDatapackBaseFilter))
                     {}
                     else
                     {
@@ -1113,28 +1243,30 @@ void BaseServer::preload_the_datapack()
                 }
                 else
                 {
-                    DebugClass::debugConsole(std::stringLiteral("Stop now! Unable to open the file %1 to do the datapack checksum for the mirror").arg(file.fileName()));
+                    std::cerr << "Stop now! Unable to open the file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " to do the datapack checksum for the mirror" << std::endl;
                     abort();
                 }
             }
             else
-                DebugClass::debugConsole(std::stringLiteral("File excluded because don't match the regex: %1").arg(file.fileName()));
+                std::cerr << "File excluded because don't match the regex: " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << std::endl;
             index++;
         }
         CommonSettingsCommon::commonSettingsCommon.datapackHashBase=hashBase.result();
     }
     #endif
+    /// \todo check if big file is compressible under 1MB
+
     //do the main
     {
         QCryptographicHash hashMain(QCryptographicHash::Sha224);
-        const QHash<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,false);
-        std::vector<std::string> datapack_file_temp=pair.keys();
-        datapack_file_temp.sort();
+        const std::unordered_map<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,false);
+        std::vector<std::string> datapack_file_temp=unordered_map_keys_vector(pair);
+        std::sort(datapack_file_temp.begin(), datapack_file_temp.end());
         const std::regex mainDatapackFolderFilter("^sub[/\\\\]");
-        int index=0;
+        unsigned int index=0;
         while(index<datapack_file_temp.size()) {
-            QFile file(GlobalServerData::serverPrivateVariables.mainDatapackFolder+datapack_file_temp.at(index));
-            if(datapack_file_temp.at(index).contains(GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+            QFile file(QString::fromStdString(GlobalServerData::serverPrivateVariables.mainDatapackFolder+datapack_file_temp.at(index)));
+            if(std::regex_match(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName))
             {
                 if(file.open(QIODevice::ReadOnly))
                 {
@@ -1143,23 +1275,23 @@ void BaseServer::preload_the_datapack()
 
                     if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
-                        if(BaseServerMasterSendDatapack::compressedExtension.contains(QFileInfo(file).suffix()))
+                        if(BaseServerMasterSendDatapack::compressedExtension.find(QFileInfo(file).suffix().toStdString())!=BaseServerMasterSendDatapack::compressedExtension.end())
                         {
                             if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
                             {
-                                DebugClass::debugConsole(std::stringLiteral("The file %1 is over the maximum packet size, but can be compressed, try enable the compression").arg(GlobalServerData::serverPrivateVariables.mainDatapackFolder+datapack_file_temp.at(index)));
+                                std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size, but can be compressed, try enable the compression" << std::endl;
                                 abort();
                             }
                         }
                         else
                         {
-                            DebugClass::debugConsole(std::stringLiteral("The file %1 is over the maximum packet size").arg(GlobalServerData::serverPrivateVariables.mainDatapackFolder+datapack_file_temp.at(index)));
+                            std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size" << std::endl;
                             abort();
                         }
                     }
 
                     //switch the data to correct hash or drop it
-                    if(datapack_file_temp.at(index).contains(mainDatapackFolderFilter))
+                    if(std::regex_match(datapack_file_temp.at(index),mainDatapackFolderFilter))
                     {
                     }
                     else
@@ -1177,27 +1309,27 @@ void BaseServer::preload_the_datapack()
                 }
                 else
                 {
-                    DebugClass::debugConsole(std::stringLiteral("Stop now! Unable to open the file %1 to do the datapack checksum for the mirror").arg(file.fileName()));
+                    std::cerr << "Stop now! Unable to open the file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " to do the datapack checksum for the mirror" << std::endl;
                     abort();
                 }
             }
             else
-                DebugClass::debugConsole(std::stringLiteral("File excluded because don't match the regex: %1").arg(file.fileName()));
+                std::cerr << "File excluded because don't match the regex: " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << std::endl;
             index++;
         }
         CommonSettingsServer::commonSettingsServer.datapackHashServerMain=hashMain.result();
     }
     //do the sub
-    if(!GlobalServerData::serverPrivateVariables.subDatapackFolder.isEmpty())
+    if(GlobalServerData::serverPrivateVariables.subDatapackFolder.size()>0)
     {
         QCryptographicHash hashSub(QCryptographicHash::Sha224);
-        const QHash<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,false);
-        std::vector<std::string> datapack_file_temp=pair.keys();
-        datapack_file_temp.sort();
-        int index=0;
+        const std::unordered_map<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,false);
+        std::vector<std::string> datapack_file_temp=unordered_map_keys_vector(pair);
+        std::sort(datapack_file_temp.begin(), datapack_file_temp.end());
+        unsigned int index=0;
         while(index<datapack_file_temp.size()) {
-            QFile file(GlobalServerData::serverPrivateVariables.subDatapackFolder+datapack_file_temp.at(index));
-            if(datapack_file_temp.at(index).contains(GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+            QFile file(QString::fromStdString(GlobalServerData::serverPrivateVariables.subDatapackFolder+datapack_file_temp.at(index)));
+            if(std::regex_match(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName))
             {
                 if(file.open(QIODevice::ReadOnly))
                 {
@@ -1206,17 +1338,17 @@ void BaseServer::preload_the_datapack()
 
                     if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
-                        if(BaseServerMasterSendDatapack::compressedExtension.contains(QFileInfo(file).suffix()))
+                        if(BaseServerMasterSendDatapack::compressedExtension.find(QFileInfo(file).suffix().toStdString())!=BaseServerMasterSendDatapack::compressedExtension.end())
                         {
                             if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
                             {
-                                DebugClass::debugConsole(std::stringLiteral("The file %1 is over the maximum packet size, but can be compressed, try enable the compression").arg(GlobalServerData::serverPrivateVariables.subDatapackFolder+datapack_file_temp.at(index)));
+                                std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size, but can be compressed, try enable the compression" << std::endl;
                                 abort();
                             }
                         }
                         else
                         {
-                            DebugClass::debugConsole(std::stringLiteral("The file %1 is over the maximum packet size").arg(GlobalServerData::serverPrivateVariables.subDatapackFolder+datapack_file_temp.at(index)));
+                            std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size" << std::endl;
                             abort();
                         }
                     }
@@ -1234,26 +1366,29 @@ void BaseServer::preload_the_datapack()
                 }
                 else
                 {
-                    DebugClass::debugConsole(std::stringLiteral("Stop now! Unable to open the file %1 to do the datapack checksum for the mirror").arg(file.fileName()));
+                    std::cerr << "Stop now! Unable to open the file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " to do the datapack checksum for the mirror" << std::endl;
                     abort();
                 }
             }
             else
-                DebugClass::debugConsole(std::stringLiteral("File excluded because don't match the regex: %1").arg(file.fileName()));
+                std::cerr << "File excluded because don't match the regex: " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << std::endl;
             index++;
         }
         CommonSettingsServer::commonSettingsServer.datapackHashServerSub=hashSub.result();
     }
 
-    DebugClass::debugConsole(std::stringLiteral("%1 file for datapack loaded, base hash: %2, main hash: %3, sub hash: %4").arg(
-                                 Client::datapack_file_hash_cache_base.size()+
-                                 Client::datapack_file_hash_cache_main.size()+
-                                 Client::datapack_file_hash_cache_sub.size()
-                                 )
-                             .arg(std::string(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.toHex()))
-                             .arg(std::string(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.toHex()))
-                             .arg(std::string(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.toHex()))
-                             );
+    std::cout << Client::datapack_file_hash_cache_base.size()
+              << " file for datapack loaded base, "
+              << Client::datapack_file_hash_cache_main.size()
+              << " file for datapack loaded main, "
+              << Client::datapack_file_hash_cache_sub.size()
+              << " file for datapack loaded sub" << std::endl;
+    std::cout << QString(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.toHex()).toStdString()
+              << " hash for datapack loaded base, "
+              << QString(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.toHex()).toStdString()
+              << " hash for datapack loaded main, "
+              << QString(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.toHex()).toStdString()
+              << " hash for datapack loaded sub" << std::endl;
 }
 
 void BaseServer::preload_the_players()
@@ -1266,10 +1401,10 @@ void BaseServer::preload_the_players()
         case MapVisibilityAlgorithmSelection_Simple:
         case MapVisibilityAlgorithmSelection_WithBorder:
         {
-            int index=0;
+            uint16_t index=0;
             while(index<GlobalServerData::serverSettings.max_players)
             {
-                Client::simplifiedIdList << index;
+                Client::simplifiedIdList.push_back(index);
                 index++;
             }
         }
@@ -1309,13 +1444,13 @@ void BaseServer::preload_the_visibility_algorithm()
     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
     {
         case MapVisibilityAlgorithmSelection_Simple:
-            DebugClass::debugConsole(std::stringLiteral("Visibility: MapVisibilityAlgorithmSelection_Simple"));
+            std::cout << "Visibility: MapVisibilityAlgorithmSelection_Simple" << std::endl;
         break;
         case MapVisibilityAlgorithmSelection_WithBorder:
-            DebugClass::debugConsole(std::stringLiteral("Visibility: MapVisibilityAlgorithmSelection_WithBorder"));
+            std::cout << "Visibility: MapVisibilityAlgorithmSelection_WithBorder" << std::endl;
         break;
         case MapVisibilityAlgorithmSelection_None:
-            DebugClass::debugConsole(std::stringLiteral("Visibility: MapVisibilityAlgorithmSelection_None"));
+            std::cout << "Visibility: MapVisibilityAlgorithmSelection_None" << std::endl;
         break;
     }
 }
@@ -1337,177 +1472,382 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
     while(index<size)
     {
         int sub_index=0;
-        const int &botssize=semi_loaded_map.value(index).old_map.bots.size();
+        const int &botssize=semi_loaded_map.at(index).old_map.bots.size();
         while(sub_index<botssize)
         {
             bots_number++;
-            Map_to_send::Bot_Semi bot_Semi=semi_loaded_map.value(index).old_map.bots.at(sub_index);
-            if(!bot_Semi.file.endsWith(BaseServer::text_dotxml))
+            Map_to_send::Bot_Semi bot_Semi=semi_loaded_map.at(index).old_map.bots.at(sub_index);
+            if(!stringEndsWith(bot_Semi.file,BaseServer::text_dotxml))
                 bot_Semi.file+=BaseServer::text_dotxml;
-            loadBotFile(semi_loaded_map.value(index).map->map_file,bot_Semi.file);
-            if(botFiles.contains(bot_Semi.file))
-                if(botFiles.value(bot_Semi.file).contains(bot_Semi.id))
+            loadBotFile(semi_loaded_map.at(index).map->map_file,bot_Semi.file);
+            if(botFiles.find(bot_Semi.file)!=botFiles.end())
+                if(botFiles.at(bot_Semi.file).find(bot_Semi.id)!=botFiles.at(bot_Semi.file).end())
                 {
                     #ifdef DEBUG_MESSAGE_MAP_LOAD
-                    CatchChallenger::DebugClass::debugConsole(std::stringLiteral("Bot %1 (%2) at %3 (%4,%5)").arg(bot_Semi.file).arg(bot_Semi.id).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                    std::cout << "Bot "
+                              << bot_Semi.id
+                              << " ("
+                              << bot_Semi.file
+                              << "), spawn at: "
+                              << semi_loaded_map.at(index).map->map_file
+                              << " ("
+                              << bot_Semi.point.x
+                              << ","
+                              << bot_Semi.point.y
+                              << "), for step: "
+                              << i->first;
                     #endif
-                    QHashIterator<uint8_t,QDomElement> i(botFiles.value(bot_Semi.file).value(bot_Semi.id).step);
-                    while (i.hasNext()) {
-                        i.next();
-                        QDomElement step = i.value();
-                        if(step.attribute(BaseServer::text_type)==BaseServer::text_shop)
+                    const auto &step=botFiles.at(bot_Semi.file).at(bot_Semi.id).step;
+                    auto i=step.begin();
+                    while (i!=step.end())
+                    {
+                        QDomElement step = i->second;
+                        std::pair<uint8_t,uint8_t> pairpoint(bot_Semi.point.x,bot_Semi.point.y);
+                        MapServer * const mapServer=static_cast<MapServer *>(semi_loaded_map.at(index).map);
+                        if(step.attribute(QString::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_shop)
                         {
-                            if(!step.hasAttribute(BaseServer::text_shop))
-                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("Has not attribute \"shop\": for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                            if(!step.hasAttribute(QString::fromStdString(BaseServer::text_shop)))
+                                std::cerr << "Has not attribute \"shop\": for bot id: "
+                                          << bot_Semi.id
+                                          << " ("
+                                          << bot_Semi.file
+                                          << "), spawn at: "
+                                          << semi_loaded_map.at(index).map->map_file
+                                          << " ("
+                                          << bot_Semi.point.x
+                                          << ","
+                                          << bot_Semi.point.y
+                                          << "), for step: "
+                                          << i->first;
                             else
                             {
-                                uint32_t shop=step.attribute(BaseServer::text_shop).toUInt(&ok);
+                                uint32_t shop=step.attribute(QString::fromStdString(BaseServer::text_shop)).toUInt(&ok);
                                 if(!ok)
-                                    CatchChallenger::DebugClass::debugConsole(std::stringLiteral("shop is not a number: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                        .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
-                                else if(!CommonDatapackServerSpec::commonDatapackServerSpec.shops.contains(shop))
-                                    CatchChallenger::DebugClass::debugConsole(std::stringLiteral("shop number is not valid shop: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                        .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                                    std::cerr << "shop is not a number: for bot id: "
+                                              << bot_Semi.id
+                                              << " ("
+                                              << bot_Semi.file
+                                              << "), spawn at: "
+                                              << semi_loaded_map.at(index).map->map_file
+                                              << " ("
+                                              << bot_Semi.point.x
+                                              << ","
+                                              << bot_Semi.point.y
+                                              << "), for step: "
+                                              << i->first;
+                                else if(CommonDatapackServerSpec::commonDatapackServerSpec.shops.find(shop)==CommonDatapackServerSpec::commonDatapackServerSpec.shops.end())
+                                        std::cerr << "shop number is not valid shop: for bot id: "
+                                                  << bot_Semi.id
+                                                  << " ("
+                                                  << bot_Semi.file
+                                                  << "), spawn at: "
+                                                  << semi_loaded_map.at(index).map->map_file
+                                                  << " ("
+                                                  << bot_Semi.point.x
+                                                  << ","
+                                                  << bot_Semi.point.y
+                                                  << "), for step: "
+                                                  << i->first;
                                 else
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP_LOAD
-                                    CatchChallenger::DebugClass::debugConsole(std::stringLiteral("shop put at: %1 (%2,%3)")
-                                        .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                    std::cout << "shop put at: for bot id: "
+                                              << bot_Semi.id
+                                              << " ("
+                                              << bot_Semi.file
+                                              << "), spawn at: "
+                                              << semi_loaded_map.at(index).map->map_file
+                                              << " ("
+                                              << bot_Semi.point.x
+                                              << ","
+                                              << bot_Semi.point.y
+                                              << "), for step: "
+                                              << i->first;
                                     #endif
-                                    static_cast<MapServer *>(semi_loaded_map.value(index).map)->shops.insert(std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y),shop);
+                                    mapServer->shops[pairpoint].push_back(shop);
                                     shops_number++;
                                 }
                             }
                         }
-                        else if(step.attribute(BaseServer::text_type)==BaseServer::text_learn)
+                        else if(step.attribute(QString::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_learn)
                         {
-                            if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->learn.contains(std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y)))
-                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("learn point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                            if(mapServer->learn.find(pairpoint)!=mapServer->learn.end())
+                                std::cerr << "learn point already on the map: for bot id: "
+                                          << bot_Semi.id
+                                          << " ("
+                                          << bot_Semi.file
+                                          << "), spawn at: "
+                                          << semi_loaded_map.at(index).map->map_file
+                                          << " ("
+                                          << bot_Semi.point.x
+                                          << ","
+                                          << bot_Semi.point.y
+                                          << "), for step: "
+                                          << i->first;
                             else
                             {
                                 #ifdef DEBUG_MESSAGE_MAP_LOAD
-                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("learn point put at: %1 (%2,%3)")
-                                    .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                    std::cout << "learn point for bot id: "
+                                              << bot_Semi.id
+                                              << " ("
+                                              << bot_Semi.file
+                                              << "), spawn at: "
+                                              << semi_loaded_map.at(index).map->map_file
+                                              << " ("
+                                              << bot_Semi.point.x
+                                              << ","
+                                              << bot_Semi.point.y
+                                              << "), for step: "
+                                              << i->first;
                                 #endif
-                                static_cast<MapServer *>(semi_loaded_map.value(index).map)->learn.insert(std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y));
+                                mapServer->learn.insert(pairpoint);
                                 learnpoint_number++;
                             }
                         }
-                        else if(step.attribute(BaseServer::text_type)==BaseServer::text_heal)
+                        else if(step.attribute(QString::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_heal)
                         {
-                            if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->heal.contains(std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y)))
-                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("heal point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                            if(mapServer->heal.find(pairpoint)!=mapServer->heal.end())
+                                std::cerr << "heal point already on the map: for bot id: "
+                                          << bot_Semi.id
+                                          << " ("
+                                          << bot_Semi.file
+                                          << "), spawn at: "
+                                          << semi_loaded_map.at(index).map->map_file
+                                          << " ("
+                                          << bot_Semi.point.x
+                                          << ","
+                                          << bot_Semi.point.y
+                                          << "), for step: "
+                                          << i->first;
                             else
                             {
                                 #ifdef DEBUG_MESSAGE_MAP_LOAD
-                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("heal point put at: %1 (%2,%3)")
-                                    .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                    std::cout << "heal point put at: for bot id: "
+                                              << bot_Semi.id
+                                              << " ("
+                                              << bot_Semi.file
+                                              << "), spawn at: "
+                                              << semi_loaded_map.at(index).map->map_file
+                                              << " ("
+                                              << bot_Semi.point.x
+                                              << ","
+                                              << bot_Semi.point.y
+                                              << "), for step: "
+                                              << i->first;
                                 #endif
-                                static_cast<MapServer *>(semi_loaded_map.value(index).map)->heal.insert(std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y));
+                                mapServer->heal.insert(pairpoint);
                                 healpoint_number++;
                             }
                         }
-                        else if(step.attribute(BaseServer::text_type)==BaseServer::text_market)
+                        else if(step.attribute(QString::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_market)
                         {
-                            if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->market.contains(std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y)))
-                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("market point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                            if(mapServer->market.find(pairpoint)!=mapServer->market.end())
+                                std::cerr << "market point already on the map: for bot id: "
+                                          << bot_Semi.id
+                                          << " ("
+                                          << bot_Semi.file
+                                          << "), spawn at: "
+                                          << semi_loaded_map.at(index).map->map_file
+                                          << " ("
+                                          << bot_Semi.point.x
+                                          << ","
+                                          << bot_Semi.point.y
+                                          << "), for step: "
+                                          << i->first;
                             else
                             {
                                 #ifdef DEBUG_MESSAGE_MAP_LOAD
-                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("market point put at: %1 (%2,%3)")
-                                    .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                    std::cout << "market point put at: for bot id: "
+                                              << bot_Semi.id
+                                              << " ("
+                                              << bot_Semi.file
+                                              << "), spawn at: "
+                                              << semi_loaded_map.at(index).map->map_file
+                                              << " ("
+                                              << bot_Semi.point.x
+                                              << ","
+                                              << bot_Semi.point.y
+                                              << "), for step: "
+                                              << i->first;
                                 #endif
-                                static_cast<MapServer *>(semi_loaded_map.value(index).map)->market.insert(std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y));
+                                mapServer->market.insert(pairpoint);
                                 marketpoint_number++;
                             }
                         }
-                        else if(step.attribute(BaseServer::text_type)==BaseServer::text_zonecapture)
+                        else if(step.attribute(QString::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_zonecapture)
                         {
-                            if(!step.hasAttribute(BaseServer::text_zone))
-                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("zonecapture point have not the zone attribute: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
-                            else if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->zonecapture.contains(std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y)))
-                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("zonecapture point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                            if(!step.hasAttribute(QString::fromStdString(BaseServer::text_zone)))
+                                std::cerr << "zonecapture point have not the zone attribute: for bot id: "
+                                          << bot_Semi.id
+                                          << " ("
+                                          << bot_Semi.file
+                                          << "), spawn at: "
+                                          << semi_loaded_map.at(index).map->map_file
+                                          << " ("
+                                          << bot_Semi.point.x
+                                          << ","
+                                          << bot_Semi.point.y
+                                          << "), for step: "
+                                          << i->first;
+                            else if(mapServer->zonecapture.find(pairpoint)!=mapServer->zonecapture.end())
+                                    std::cerr << "zonecapture point already on the map: for bot id: "
+                                              << bot_Semi.id
+                                              << " ("
+                                              << bot_Semi.file
+                                              << "), spawn at: "
+                                              << semi_loaded_map.at(index).map->map_file
+                                              << " ("
+                                              << bot_Semi.point.x
+                                              << ","
+                                              << bot_Semi.point.y
+                                              << "), for step: "
+                                              << i->first;
                             else
                             {
                                 #ifdef DEBUG_MESSAGE_MAP_LOAD
-                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("zonecapture point put at: %1 (%2,%3)")
-                                    .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                    std::cerr << "zonecapture point put at: for bot id: "
+                                              << bot_Semi.id
+                                              << " ("
+                                              << bot_Semi.file
+                                              << "), spawn at: "
+                                              << semi_loaded_map.at(index).map->map_file
+                                              << " ("
+                                              << bot_Semi.point.x
+                                              << ","
+                                              << bot_Semi.point.y
+                                              << "), for step: "
+                                              << i->first;
                                 #endif
-                                static_cast<MapServer *>(semi_loaded_map[index].map)->zonecapture[std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y)]=step.attribute(BaseServer::text_zone);
+                                mapServer->zonecapture[pairpoint]=step.attribute(QString::fromStdString(BaseServer::text_zone)).toStdString();
                                 zonecapturepoint_number++;
                             }
                         }
-                        else if(step.attribute(BaseServer::text_type)==BaseServer::text_fight)
+                        else if(step.attribute(QString::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_fight)
                         {
-                            if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->botsFight.contains(std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y)))
-                                CatchChallenger::DebugClass::debugConsole(std::stringLiteral("botsFight point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                            if(mapServer->botsFight.find(pairpoint)!=mapServer->botsFight.end())
+                                std::cerr << "botsFight point already on the map: for bot id: "
+                                          << bot_Semi.id
+                                          << " ("
+                                          << bot_Semi.file
+                                          << "), spawn at: "
+                                          << semi_loaded_map.at(index).map->map_file
+                                          << " ("
+                                          << bot_Semi.point.x
+                                          << ","
+                                          << bot_Semi.point.y
+                                          << "), for step: "
+                                          << i->first;
                             else
                             {
-                                const uint32_t &fightid=step.attribute(BaseServer::text_fightid).toUInt(&ok);
+                                const uint32_t &fightid=step.attribute(QString::fromStdString(BaseServer::text_fightid)).toUInt(&ok);
                                 if(ok)
                                 {
-                                    if(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.contains(fightid))
+                                    if(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightid)!=CommonDatapackServerSpec::commonDatapackServerSpec.botFights.end())
                                     {
-                                        if(bot_Semi.property_text.contains(BaseServer::text_lookAt))
+                                        if(bot_Semi.property_text.find(BaseServer::text_lookAt)!=bot_Semi.property_text.end())
                                         {
                                             Direction direction;
-                                            if(bot_Semi.property_text.value(BaseServer::text_lookAt)==BaseServer::text_left)
+                                            const std::string &lookAt=bot_Semi.property_text.at(BaseServer::text_lookAt).toString().toStdString();
+                                            if(lookAt==BaseServer::text_left)
                                                 direction=CatchChallenger::Direction_move_at_left;
-                                            else if(bot_Semi.property_text.value(BaseServer::text_lookAt)==BaseServer::text_right)
+                                            else if(lookAt==BaseServer::text_right)
                                                 direction=CatchChallenger::Direction_move_at_right;
-                                            else if(bot_Semi.property_text.value(BaseServer::text_lookAt)==BaseServer::text_top)
+                                            else if(lookAt==BaseServer::text_top)
                                                 direction=CatchChallenger::Direction_move_at_top;
                                             else
                                             {
-                                                if(bot_Semi.property_text.value(BaseServer::text_lookAt)!=BaseServer::text_bottom)
-                                                    CatchChallenger::DebugClass::debugConsole(std::stringLiteral("Wrong direction for the bot at %1 (%2,%3)")
-                                                        .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                                if(lookAt!=BaseServer::text_bottom)
+                                                    std::cerr << "Wrong direction for the botp: for bot id: "
+                                                              << bot_Semi.id
+                                                              << " ("
+                                                              << bot_Semi.file
+                                                              << "), spawn at: "
+                                                              << semi_loaded_map.at(index).map->map_file
+                                                              << " ("
+                                                              << bot_Semi.point.x
+                                                              << ","
+                                                              << bot_Semi.point.y
+                                                              << "), for step: "
+                                                              << i->first;
                                                 direction=CatchChallenger::Direction_move_at_bottom;
                                             }
                                             #ifdef DEBUG_MESSAGE_MAP_LOAD
-                                            CatchChallenger::DebugClass::debugConsole(std::stringLiteral("botsFight point put at: %1 (%2,%3)")
-                                                .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                            std::cout << "botsFight point put at: for bot id: "
+                                                      << bot_Semi.id
+                                                      << " ("
+                                                      << bot_Semi.file
+                                                      << "), spawn at: "
+                                                      << semi_loaded_map.at(index).map->map_file
+                                                      << " ("
+                                                      << bot_Semi.point.x
+                                                      << ","
+                                                      << bot_Semi.point.y
+                                                      << "), for step: "
+                                                      << i->first;
                                             #endif
-                                            static_cast<MapServer *>(semi_loaded_map[index].map)->botsFight.insert(std::pair<uint8_t,uint8_t>(bot_Semi.point.x,bot_Semi.point.y),fightid);
+                                            mapServer->botsFight[pairpoint].push_back(fightid);
                                             botfights_number++;
 
                                             uint32_t fightRange=5;
-                                            if(bot_Semi.property_text.contains(BaseServer::text_fightRange))
+                                            if(bot_Semi.property_text.find(BaseServer::text_fightRange)!=bot_Semi.property_text.end())
                                             {
-                                                fightRange=bot_Semi.property_text.value(BaseServer::text_fightRange).toUInt(&ok);
+                                                fightRange=bot_Semi.property_text.at(BaseServer::text_fightRange).toUInt(&ok);
                                                 if(!ok)
                                                 {
-                                                    CatchChallenger::DebugClass::debugConsole(std::stringLiteral("fightRange is not a number at %1 (%2,%3): %4")
-                                                        .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y)
-                                                        .arg(bot_Semi.property_text.value(BaseServer::text_fightRange).toString()));
+                                                    std::cerr << "fightRange is not a number: for bot id: "
+                                                              << bot_Semi.id
+                                                              << " ("
+                                                              << bot_Semi.file
+                                                              << "), spawn at: "
+                                                              << semi_loaded_map.at(index).map->map_file
+                                                              << " ("
+                                                              << bot_Semi.point.x
+                                                              << ","
+                                                              << bot_Semi.point.y
+                                                              << "), for step: "
+                                                              << i->first;
                                                     fightRange=5;
                                                 }
                                                 else
                                                 {
                                                     if(fightRange>10)
                                                     {
-                                                        CatchChallenger::DebugClass::debugConsole(std::stringLiteral("fightRange is greater than 10 at %1 (%2,%3): %4")
-                                                            .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y)
-                                                            .arg(fightRange)
-                                                            );
+                                                        std::cerr << "fightRange is greater than 10: for bot id: "
+                                                                  << bot_Semi.id
+                                                                  << " ("
+                                                                  << bot_Semi.file
+                                                                  << "), spawn at: "
+                                                                  << semi_loaded_map.at(index).map->map_file
+                                                                  << " ("
+                                                                  << bot_Semi.point.x
+                                                                  << ","
+                                                                  << bot_Semi.point.y
+                                                                  << "), for step: "
+                                                                  << i->first;
                                                         fightRange=5;
                                                     }
                                                 }
                                             }
                                             //load the botsFightTrigger
                                             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT_BOT
-                                            CatchChallenger::DebugClass::debugConsole(std::stringLiteral("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(direction));
+                                            std::cerr << "Put bot fight point: for bot id: "
+                                                      << bot_Semi.id
+                                                      << " ("
+                                                      << bot_Semi.file
+                                                      << "), spawn at: "
+                                                      << semi_loaded_map.at(index).map->map_file
+                                                      << " ("
+                                                      << bot_Semi.point.x
+                                                      << ","
+                                                      << bot_Semi.point.y
+                                                      << "), for step: "
+                                                      << i->first
+                                                      << " in direction: "
+                                                      << direction;
                                             #endif
                                             uint8_t temp_x=bot_Semi.point.x,temp_y=bot_Semi.point.y;
                                             uint32_t index_botfight_range=0;
-                                            CatchChallenger::CommonMap *map=semi_loaded_map.value(index).map;
+                                            CatchChallenger::CommonMap *map=semi_loaded_map.at(index).map;
                                             CatchChallenger::CommonMap *old_map=map;
                                             while(index_botfight_range<fightRange)
                                             {
@@ -1517,21 +1857,56 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                                     break;
                                                 if(map!=old_map)
                                                     break;
-                                                static_cast<MapServer *>(semi_loaded_map[index].map)->botsFightTrigger.insert(std::pair<uint8_t,uint8_t>(temp_x,temp_y),fightid);
+                                                const std::pair<uint8_t,uint8_t> botFightRangePoint(temp_x,temp_y);
+                                                mapServer->botsFightTrigger[botFightRangePoint].push_back(fightid);
                                                 index_botfight_range++;
                                                 botfightstigger_number++;
                                             }
                                         }
                                         else
-                                            DebugClass::debugConsole(std::stringLiteral("lookAt not found: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                            std::cerr << "lookAt not found: for bot id: "
+                                                      << bot_Semi.id
+                                                      << " ("
+                                                      << bot_Semi.file
+                                                      << "), spawn at: "
+                                                      << semi_loaded_map.at(index).map->map_file
+                                                      << " ("
+                                                      << bot_Semi.point.x
+                                                      << ","
+                                                      << bot_Semi.point.y
+                                                      << "), for step: "
+                                                      << i->first;
                                     }
                                     else
-                                        DebugClass::debugConsole(std::stringLiteral("fightid not found into the list: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                        std::cerr << "fightid not found into the list: for bot id: "
+                                                  << bot_Semi.id
+                                                  << " ("
+                                                  << bot_Semi.file
+                                                  << "), spawn at: "
+                                                  << semi_loaded_map.at(index).map->map_file
+                                                  << " ("
+                                                  << bot_Semi.point.x
+                                                  << ","
+                                                  << bot_Semi.point.y
+                                                  << "), for step: "
+                                                  << i->first;
                                 }
                                 else
-                                    DebugClass::debugConsole(std::stringLiteral("botsFight point have wrong fightid: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                    std::cerr << "botsFight point have wrong fightid: for bot id: "
+                                              << bot_Semi.id
+                                              << " ("
+                                              << bot_Semi.file
+                                              << "), spawn at: "
+                                              << semi_loaded_map.at(index).map->map_file
+                                              << " ("
+                                              << bot_Semi.point.x
+                                              << ","
+                                              << bot_Semi.point.y
+                                              << "), for step: "
+                                              << i->first;
                             }
                         }
+                        ++i;
                     }
                 }
             sub_index++;
@@ -1540,12 +1915,12 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
     }
     botIdLoaded.clear();
 
-    DebugClass::debugConsole(std::stringLiteral("%1 learn point(s) on map loaded").arg(learnpoint_number));
-    DebugClass::debugConsole(std::stringLiteral("%1 zonecapture point(s) on map loaded").arg(zonecapturepoint_number));
-    DebugClass::debugConsole(std::stringLiteral("%1 heal point(s) on map loaded").arg(healpoint_number));
-    DebugClass::debugConsole(std::stringLiteral("%1 market point(s) on map loaded").arg(marketpoint_number));
-    DebugClass::debugConsole(std::stringLiteral("%1 bot fight(s) on map loaded").arg(botfights_number));
-    DebugClass::debugConsole(std::stringLiteral("%1 bot fights tigger(s) on map loaded").arg(botfightstigger_number));
-    DebugClass::debugConsole(std::stringLiteral("%1 shop(s) on map loaded").arg(shops_number));
-    DebugClass::debugConsole(std::stringLiteral("%1 bots(s) on map loaded").arg(bots_number));
+    std::cout << learnpoint_number << " learn point(s) on map loaded" << std::endl;
+    std::cout << zonecapturepoint_number << " zonecapture point(s) on map loaded" << std::endl;
+    std::cout << healpoint_number << " heal point(s) on map loaded" << std::endl;
+    std::cout << marketpoint_number << " market point(s) on map loaded" << std::endl;
+    std::cout << botfights_number << " bot fight(s) on map loaded" << std::endl;
+    std::cout << botfightstigger_number << " bot fights tigger(s) on map loaded" << std::endl;
+    std::cout << shops_number << " shop(s) on map loaded" << std::endl;
+    std::cout << bots_number << " bots(s) on map loaded" << std::endl;
 }
