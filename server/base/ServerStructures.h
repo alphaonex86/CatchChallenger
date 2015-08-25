@@ -8,11 +8,10 @@
 #include <QObject>
 #include <vector>
 #include <string>
-#include <QMutex>
 #include <QVariant>
 #include <unordered_set>
 #include <unordered_map>
-#include <QRegularExpression>
+#include <regex>
 #include <QDateTime>
 #include <QProcess>
 
@@ -71,14 +70,14 @@ struct FileToSend
     std::string file;
 };
 
-enum MapVisibilityAlgorithmSelection
+enum MapVisibilityAlgorithmSelection : uint8_t
 {
     MapVisibilityAlgorithmSelection_WithBorder,
     MapVisibilityAlgorithmSelection_Simple,
     MapVisibilityAlgorithmSelection_None
 };
 
-enum QuestAction
+enum QuestAction : uint8_t
 {
     QuestAction_Start,
     QuestAction_Finish,
@@ -136,7 +135,7 @@ struct GameServerSettings
     bool dontSendPlayerType;
     int32_t datapackCache;//-1 = disable, 0 = no timeout, else it's the timeout in s
 
-    enum FightSync
+    enum FightSync : uint8_t
     {
         FightSync_AtEachTurn=0x00,
         FightSync_AtTheEndOfBattle=0x01,//or at the object usage
@@ -300,8 +299,8 @@ struct ServerPrivateVariables
     std::string datapack_mapPath;
     std::string mainDatapackFolder;
     std::string subDatapackFolder;
-    QRegularExpression datapack_rightFileName;
-    QRegularExpression datapack_rightFolderName;
+    std::regex datapack_rightFileName;
+    std::regex datapack_rightFolderName;
 
     //fight
     std::unordered_multimap<uint16_t,MonsterDrops> monsterDrops;
