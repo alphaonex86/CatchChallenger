@@ -4,6 +4,7 @@
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../VariableServer.h"
+#include "../../general/base/cpp11addition.h"
 
 #include <QCryptographicHash>
 #include <regex>
@@ -54,10 +55,10 @@ void BaseServerMasterSendDatapack::preload_the_skin()
 
 void BaseServerMasterSendDatapack::loadTheDatapackFileList()
 {
-    std::vector<std::string> extensionAllowedTemp=(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED)+std::string(";")+std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED)).split(";");
-    extensionAllowed=extensionAllowedTemp.toSet();
-    std::vector<std::string> compressedExtensionAllowedTemp=std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(";");
-    compressedExtension=compressedExtensionAllowedTemp.toSet();
+    std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
+    extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+    std::vector<std::string> compressedExtensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
+    compressedExtension=std::unordered_set<std::string>(compressedExtensionAllowedTemp.begin(),compressedExtensionAllowedTemp.end());
     std::regex datapack_rightFileName = std::regex(DATAPACK_FILE_REGEX);
 
     std::string text_datapack(datapack_basePathLogin);
@@ -65,16 +66,16 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
 
     QCryptographicHash baseHash(QCryptographicHash::Sha224);
     std::vector<std::string> datapack_file_temp=FacilityLibGeneral::listFolder(text_datapack);
-    datapack_file_temp.sort();
+    std::sort(datapack_file_temp.begin(),datapack_file_temp.end());
 
-    int index=0;
+    unsigned int index=0;
     while(index<datapack_file_temp.size()) {
-        QFile file(text_datapack+datapack_file_temp.at(index));
-        if(datapack_file_temp.at(index).contains(datapack_rightFileName))
+        QFile file(QString::fromStdString(text_datapack+datapack_file_temp.at(index)));
+        if(std::regex_match(datapack_file_temp.at(index),datapack_rightFileName))
         {
             if(file.size()<=8*1024*1024)
             {
-                if(!datapack_file_temp.at(index).startsWith(text_exclude))
+                if(!stringStartWith(datapack_file_temp.at(index),text_exclude))
                 {
                     if(file.open(QIODevice::ReadOnly))
                     {
@@ -98,7 +99,7 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
                 }
             }
             else
-                std::cerr << "File to big: " << datapack_file_temp.at(index).toStdString() << " size: " << file.size() << std::endl;
+                std::cerr << "File to big: " << datapack_file_temp.at(index) << " size: " << file.size() << std::endl;
         }
         else
             std::cerr << "File excluded because don't match the regex: " << file.fileName().toStdString() << std::endl;
