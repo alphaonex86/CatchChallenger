@@ -39,22 +39,22 @@ void BaseServer::preload_zone_sql()
     while(entryListIndex<listsize)
     {
         std::string zoneCodeName=entryListZone.at(entryListIndex).fileName().toStdString();
-        zoneCodeName.remove(BaseServer::text_dotxml);
+        stringreplace(zoneCodeName,BaseServer::text_dotxml,"");
         std::string queryText;
         switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
         {
             default:
             case DatabaseBase::DatabaseType::Mysql:
-                queryText=std::stringLiteral("SELECT `clan` FROM `city` WHERE `city`='%1' ORDER BY `city`").arg(zoneCodeName);
+                queryText="SELECT `clan` FROM `city` WHERE `city`='"+zoneCodeName+"' ORDER BY `city`";
             break;
             case DatabaseBase::DatabaseType::SQLite:
-                queryText=std::stringLiteral("SELECT clan FROM city WHERE city='%1' ORDER BY city").arg(zoneCodeName);
+                queryText="SELECT clan FROM city WHERE city='"+zoneCodeName+"' ORDER BY city";
             break;
             case DatabaseBase::DatabaseType::PostgreSQL:
-                queryText=std::stringLiteral("SELECT clan FROM city WHERE city='%1' ORDER BY city").arg(zoneCodeName);
+                queryText="SELECT clan FROM city WHERE city='"+zoneCodeName+"' ORDER BY city";
             break;
         }
-        if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_zone_static)==NULL)
+        if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.c_str(),this,&BaseServer::preload_zone_static)==NULL)
         {
             std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
             criticalDatabaseQueryFailed();return;//stop because can't do the first db access
@@ -70,12 +70,12 @@ void BaseServer::preload_zone_sql()
 
 void BaseServer::preload_pointOnMap_sql()
 {
-    if(DictionaryServer::dictionary_map_database_to_internal.isEmpty())
+    if(DictionaryServer::dictionary_map_database_to_internal.size()==0)
     {
         qDebug() << "Need be called after preload_dictionary_map()";
         abort();
     }
-    if(!DictionaryServer::dictionary_pointOnMap_internal_to_database.isEmpty())
+    if(DictionaryServer::dictionary_pointOnMap_internal_to_database.size()>0)
     {
         qDebug() << "!DictionaryServer::dictionary_pointOnMap_internal_to_database.isEmpty(), already called?";
         abort();
@@ -85,16 +85,16 @@ void BaseServer::preload_pointOnMap_sql()
     {
         default:
         case DatabaseBase::DatabaseType::Mysql:
-            queryText=std::stringLiteral("SELECT `id`,`map`,`x`,`y` FROM `dictionary_pointonmap` ORDER BY `map`,`x`,`y`");
+            queryText="SELECT `id`,`map`,`x`,`y` FROM `dictionary_pointonmap` ORDER BY `map`,`x`,`y`";
         break;
         case DatabaseBase::DatabaseType::SQLite:
-            queryText=std::stringLiteral("SELECT id,map,x,y FROM dictionary_pointonmap ORDER BY map,x,y");
+            queryText="SELECT id,map,x,y FROM dictionary_pointonmap ORDER BY map,x,y";
         break;
         case DatabaseBase::DatabaseType::PostgreSQL:
-            queryText=std::stringLiteral("SELECT id,map,x,y FROM dictionary_pointonmap ORDER BY map,x,y");
+            queryText="SELECT id,map,x,y FROM dictionary_pointonmap ORDER BY map,x,y";
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_pointOnMap_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.c_str(),this,&BaseServer::preload_pointOnMap_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         criticalDatabaseQueryFailed();return;//stop because can't do the first db access
@@ -102,7 +102,7 @@ void BaseServer::preload_pointOnMap_sql()
         preload_the_visibility_algorithm();
         preload_the_city_capture();
         preload_zone();
-        qDebug() << std::stringLiteral("Loaded the server static datapack into %1ms").arg(timeDatapack.elapsed());
+        std::cout << "Loaded the server static datapack into " << timeDatapack.elapsed() << "ms" << std::endl;
         timeDatapack.restart();
 
         //start SQL load
@@ -117,7 +117,7 @@ void BaseServer::preload_pointOnMap_static(void *object)
 
 void BaseServer::preload_pointOnMap_return()
 {
-    if(DictionaryServer::dictionary_map_database_to_internal.isEmpty())
+    if(DictionaryServer::dictionary_map_database_to_internal.size()==0)
     {
         qDebug() << "Call preload_dictionary_map() before";
         abort();
@@ -126,46 +126,46 @@ void BaseServer::preload_pointOnMap_return()
     dictionary_pointOnMap_maxId=0;
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
-        const uint16_t &id=std::string(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
+        const uint16_t &id=stringtouint16(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
         if(!ok)
-            qDebug() << std::stringLiteral("preload_itemOnMap_return(): Id not found: %1").arg(std::string(GlobalServerData::serverPrivateVariables.db_server->value(0)));
+            std::cerr << "preload_itemOnMap_return(): Id not found: " << GlobalServerData::serverPrivateVariables.db_server->value(0) << std::endl;
         else
         {
-            const uint32_t &map_id=std::string(GlobalServerData::serverPrivateVariables.db_server->value(1)).toUInt(&ok);
+            const uint32_t &map_id=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
             if(!ok)
-                qDebug() << std::stringLiteral("preload_itemOnMap_return(): map id not number: %1").arg(std::string(GlobalServerData::serverPrivateVariables.db_server->value(1)));
+                std::cerr << "preload_itemOnMap_return(): map id not number: " << GlobalServerData::serverPrivateVariables.db_server->value(1) << std::endl;
             else
             {
                 if(map_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
-                    qDebug() << std::stringLiteral("preload_itemOnMap_return(): map out of range: %1 %2 %3").arg(map_id);
+                    std::cerr << "preload_itemOnMap_return(): map out of range: " << map_id << std::endl;
                 else
                 {
-                    if(DictionaryServer::dictionary_map_database_to_internal.value(map_id)==NULL)
-                        qDebug() << std::stringLiteral("preload_itemOnMap_return(): map == NULL for this id, map not found: %1 %2 %3").arg(map_id);
+                    if(DictionaryServer::dictionary_map_database_to_internal.at(map_id)==NULL)
+                        std::cerr << "preload_itemOnMap_return(): map == NULL for this id, map not found: " << map_id << std::endl;
                     else
                     {
-                        const uint32_t &x=std::string(GlobalServerData::serverPrivateVariables.db_server->value(2)).toUInt(&ok);
+                        const uint32_t &x=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok);
                         if(!ok)
-                            qDebug() << std::stringLiteral("preload_itemOnMap_return(): x not number: %1").arg(std::string(GlobalServerData::serverPrivateVariables.db_server->value(2)));
+                            std::cerr << "preload_itemOnMap_return(): x not number: " << GlobalServerData::serverPrivateVariables.db_server->value(2) << std::endl;
                         else
                         {
-                            if(x>255 || x>=DictionaryServer::dictionary_map_database_to_internal.value(map_id)->width)
-                                qDebug() << std::stringLiteral("preload_itemOnMap_return(): x out of range").arg(x);
+                            if(x>255 || x>=DictionaryServer::dictionary_map_database_to_internal.at(map_id)->width)
+                                std::cerr << "preload_itemOnMap_return(): x out of range: " << x << ", for " << map_id << std::endl;
                             else
                             {
-                                const uint32_t &y=std::string(GlobalServerData::serverPrivateVariables.db_server->value(3)).toUInt(&ok);
+                                const uint32_t &y=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(3),&ok);
                                 if(!ok)
-                                    qDebug() << std::stringLiteral("preload_itemOnMap_return(): y not number: %1").arg(std::string(GlobalServerData::serverPrivateVariables.db_server->value(3)));
+                                    std::cerr << "preload_itemOnMap_return(): y not number: " << GlobalServerData::serverPrivateVariables.db_server->value(3) << ", for " << map_id << std::endl;
                                 else
                                 {
-                                    if(y>255 || y>=DictionaryServer::dictionary_map_database_to_internal.value(map_id)->height)
-                                        qDebug() << std::stringLiteral("preload_itemOnMap_return(): y out of range").arg(y);
+                                    if(y>255 || y>=DictionaryServer::dictionary_map_database_to_internal.at(map_id)->height)
+                                        std::cerr << "preload_itemOnMap_return(): y out of range: " << y << ", for " << map_id << std::endl;
                                     else
                                     {
-                                        const std::string &map_file=DictionaryServer::dictionary_map_database_to_internal.value(map_id)->map_file;
+                                        const std::string &map_file=DictionaryServer::dictionary_map_database_to_internal.at(map_id)->map_file;
 
                                         ///used only at map loading, \see BaseServer::preload_the_map()
-                                        DictionaryServer::dictionary_pointOnMap_internal_to_database[map_file][QPair<uint8_t/*x*/,uint8_t/*y*/>(x,y)]=id;
+                                        DictionaryServer::dictionary_pointOnMap_internal_to_database[map_file][std::pair<uint8_t/*x*/,uint8_t/*y*/>(x,y)]=id;
 
                                         while((uint32_t)DictionaryServer::dictionary_pointOnMap_database_to_internal.size()<=id)
                                         {
@@ -186,7 +186,7 @@ void BaseServer::preload_pointOnMap_return()
                                         #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
                                         mapAndPoint.indexOfDirtOnMap=255;
                                         #endif
-                                        mapAndPoint.map=DictionaryServer::dictionary_map_database_to_internal.value(map_id);
+                                        mapAndPoint.map=DictionaryServer::dictionary_map_database_to_internal.at(map_id);
                                         mapAndPoint.x=x;
                                         mapAndPoint.y=y;
                                         DictionaryServer::dictionary_pointOnMap_database_to_internal[id]=mapAndPoint;
@@ -203,14 +203,14 @@ void BaseServer::preload_pointOnMap_return()
     }
     GlobalServerData::serverPrivateVariables.db_server->clear();
     {
-        DebugClass::debugConsole(std::stringLiteral("%1 SQL item on map dictionary").arg(DictionaryServer::dictionary_pointOnMap_internal_to_database.size()));
+        std::cout << DictionaryServer::dictionary_pointOnMap_internal_to_database.size() << " SQL item on map dictionary" << std::endl;
 
         preload_the_visibility_algorithm();
         if(!preload_the_city_capture())
             return;
         if(!preload_zone())
             return;
-        qDebug() << std::stringLiteral("Loaded the server static datapack into %1ms").arg(timeDatapack.elapsed());
+        std::cout << "Loaded the server static datapack into " << timeDatapack.elapsed() << "ms" << std::endl;
         timeDatapack.restart();
 
         //start SQL load
@@ -225,12 +225,12 @@ void BaseServer::preload_dictionary_map()
         qDebug() << "GlobalServerData::serverPrivateVariables.db_server==NULL";
         abort();
     }
-    if(GlobalServerData::serverPrivateVariables.map_list.isEmpty())
+    if(GlobalServerData::serverPrivateVariables.map_list.size()==0)
     {
         qDebug() << "No map to list";
         abort();
     }
-    if(!DictionaryServer::dictionary_map_database_to_internal.isEmpty())
+    if(DictionaryServer::dictionary_map_database_to_internal.size()>0)
     {
         qDebug() << "preload_dictionary_map() already call";
         abort();
@@ -240,16 +240,16 @@ void BaseServer::preload_dictionary_map()
     {
         default:
         case DatabaseBase::DatabaseType::Mysql:
-            queryText=std::stringLiteral("SELECT `id`,`map` FROM `dictionary_map` ORDER BY `map`");
+            queryText="SELECT `id`,`map` FROM `dictionary_map` ORDER BY `map`";
         break;
         case DatabaseBase::DatabaseType::SQLite:
-            queryText=std::stringLiteral("SELECT id,map FROM dictionary_map ORDER BY map");
+            queryText="SELECT id,map FROM dictionary_map ORDER BY map";
         break;
         case DatabaseBase::DatabaseType::PostgreSQL:
-            queryText=std::stringLiteral("SELECT id,map FROM dictionary_map ORDER BY map");
+            queryText="SELECT id,map FROM dictionary_map ORDER BY map";
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_dictionary_map_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.c_str(),this,&BaseServer::preload_dictionary_map_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         criticalDatabaseQueryFailed();return;//stop because can't resolv the name
@@ -263,50 +263,50 @@ void BaseServer::preload_dictionary_map_static(void *object)
 
 void BaseServer::preload_dictionary_map_return()
 {
-    if(!DictionaryServer::dictionary_map_database_to_internal.isEmpty())
+    if(DictionaryServer::dictionary_map_database_to_internal.size()>0)
     {
         qDebug() << "preload_dictionary_map_return() already call";
         abort();
     }
-    QSet<std::string> foundMap;
-    int databaseMapId=0;
-    int obsoleteMap=0;
+    std::unordered_set<std::string> foundMap;
+    unsigned int databaseMapId=0;
+    unsigned int obsoleteMap=0;
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
         bool ok;
-        databaseMapId=std::string(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
+        databaseMapId=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
         const std::string &map=std::string(GlobalServerData::serverPrivateVariables.db_server->value(1));
         if(DictionaryServer::dictionary_map_database_to_internal.size()<=databaseMapId)
         {
-            int index=DictionaryServer::dictionary_map_database_to_internal.size();
+            unsigned int index=DictionaryServer::dictionary_map_database_to_internal.size();
             while(index<=databaseMapId)
             {
-                DictionaryServer::dictionary_map_database_to_internal << NULL;
+                DictionaryServer::dictionary_map_database_to_internal.push_back(NULL);
                 index++;
             }
         }
-        if(GlobalServerData::serverPrivateVariables.map_list.contains(map))
+        if(GlobalServerData::serverPrivateVariables.map_list.find(map)!=GlobalServerData::serverPrivateVariables.map_list.end())
         {
-            DictionaryServer::dictionary_map_database_to_internal[databaseMapId]=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.value(map));
-            foundMap << map;
-            static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.value(map))->reverse_db_id=databaseMapId;
+            DictionaryServer::dictionary_map_database_to_internal[databaseMapId]=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.at(map));
+            foundMap.insert(map);
+            static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.at(map))->reverse_db_id=databaseMapId;
         }
         else
             obsoleteMap++;
     }
     GlobalServerData::serverPrivateVariables.db_server->clear();
-    if(obsoleteMap>0 && GlobalServerData::serverPrivateVariables.map_list.isEmpty())
+    if(obsoleteMap>0 && GlobalServerData::serverPrivateVariables.map_list.size()==0)
     {
         qDebug() << "Only obsolete map!";
         abort();
     }
-    std::stringList map_list_flat=GlobalServerData::serverPrivateVariables.map_list.keys();
-    map_list_flat.sort();
-    int index=0;
+    std::vector<std::string> map_list_flat=unordered_map_keys_vector(GlobalServerData::serverPrivateVariables.map_list);
+    std::sort(map_list_flat.begin(),map_list_flat.end());
+    unsigned int index=0;
     while(index<map_list_flat.size())
     {
         const std::string &map=map_list_flat.at(index);
-        if(!foundMap.contains(map))
+        if(foundMap.find(map)==foundMap.end())
         {
             databaseMapId++;
             std::string queryText;
@@ -314,22 +314,22 @@ void BaseServer::preload_dictionary_map_return()
             {
                 default:
                 case DatabaseBase::DatabaseType::Mysql:
-                    queryText=std::stringLiteral("INSERT INTO `dictionary_map`(`id`,`map`) VALUES(%1,'%2');").arg(databaseMapId).arg(map);
+                    queryText="INSERT INTO `dictionary_map`(`id`,`map`) VALUES("+std::to_string(databaseMapId)+",'"+map+"');";
                 break;
                 case DatabaseBase::DatabaseType::SQLite:
-                    queryText=std::stringLiteral("INSERT INTO dictionary_map(id,map) VALUES(%1,'%2');").arg(databaseMapId).arg(map);
+                    queryText="INSERT INTO dictionary_map(id,map) VALUES("+std::to_string(databaseMapId)+",'"+map+"');";
                 break;
                 case DatabaseBase::DatabaseType::PostgreSQL:
-                    queryText=std::stringLiteral("INSERT INTO dictionary_map(id,map) VALUES(%1,'%2');").arg(databaseMapId).arg(map);
+                    queryText="INSERT INTO dictionary_map(id,map) VALUES("+std::to_string(databaseMapId)+",'"+map+"');";
                 break;
             }
-            if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText.toLatin1()))
+            if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText.c_str()))
             {
                 std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
                 criticalDatabaseQueryFailed();return;//stop because can't resolv the name
             }
             while(DictionaryServer::dictionary_map_database_to_internal.size()<=databaseMapId)
-                DictionaryServer::dictionary_map_database_to_internal << NULL;
+                DictionaryServer::dictionary_map_database_to_internal.push_back(NULL);
             DictionaryServer::dictionary_map_database_to_internal[databaseMapId]=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map]);
             static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map])->reverse_db_id=databaseMapId;
         }
@@ -337,8 +337,8 @@ void BaseServer::preload_dictionary_map_return()
     }
 
     if(obsoleteMap)
-        DebugClass::debugConsole(std::stringLiteral("%1 SQL obsolete map dictionary").arg(obsoleteMap));
-    DebugClass::debugConsole(std::stringLiteral("%1 SQL map dictionary").arg(DictionaryServer::dictionary_map_database_to_internal.size()));
+        std::cerr << obsoleteMap << " SQL obsolete map dictionary" << std::endl;
+    std::cout << DictionaryServer::dictionary_map_database_to_internal.size() << " SQL map dictionary" << std::endl;
 
     preload_pointOnMap_sql();
 }
@@ -347,7 +347,7 @@ void BaseServer::preload_dictionary_map_return()
 bool BaseServer::preload_zone()
 {
     //open and quick check the file
-    entryListZone=QFileInfoList(QDir(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_ZONE).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot));
+    entryListZone=QFileInfoList(QDir(QString::fromStdString(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_ZONE1+CommonSettingsServer::commonSettingsServer.mainDatapackCode+DATAPACK_BASE_PATH_ZONE2)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot));
     entryListIndex=0;
     return preload_zone_init();
 }
@@ -355,7 +355,7 @@ bool BaseServer::preload_zone()
 void BaseServer::preload_industries()
 {
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    DebugClass::debugConsole(std::stringLiteral("%1 SQL clan max id").arg(GlobalServerData::serverPrivateVariables.maxClanId));
+    std::cout << GlobalServerData::serverPrivateVariables.maxClanId << " SQL clan max id" << std::endl;
     #endif
 
     std::string queryText;
@@ -363,16 +363,16 @@ void BaseServer::preload_industries()
     {
         default:
         case DatabaseBase::DatabaseType::Mysql:
-            queryText=QLatin1String("SELECT `id`,`resources`,`products`,`last_update` FROM `factory`");
+            queryText="SELECT `id`,`resources`,`products`,`last_update` FROM `factory`";
         break;
         case DatabaseBase::DatabaseType::SQLite:
-            queryText=QLatin1String("SELECT id,resources,products,last_update FROM factory");
+            queryText="SELECT id,resources,products,last_update FROM factory";
         break;
         case DatabaseBase::DatabaseType::PostgreSQL:
-            queryText=QLatin1String("SELECT id,resources,products,last_update FROM factory");
+            queryText="SELECT id,resources,products,last_update FROM factory";
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_industries_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.c_str(),this,&BaseServer::preload_industries_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         preload_finish();
@@ -390,50 +390,50 @@ void BaseServer::preload_industries_return()
     {
         IndustryStatus industryStatus;
         bool ok;
-        uint32_t id=std::string(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
+        uint32_t id=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
         if(!ok)
-            DebugClass::debugConsole(std::stringLiteral("preload_industries: id is not a number"));
+            std::cerr << "preload_industries: id is not a number" << std::endl;
         if(ok)
         {
-            if(!CommonDatapack::commonDatapack.industriesLink.contains(id))
+            if(CommonDatapack::commonDatapack.industriesLink.find(id)==CommonDatapack::commonDatapack.industriesLink.end())
             {
                 ok=false;
-                DebugClass::debugConsole(std::stringLiteral("preload_industries: industries link not found"));
+                std::cerr << "preload_industries: industries link not found" << std::endl;
             }
         }
         if(ok)
         {
-            const std::stringList &resourcesStringList=std::string(GlobalServerData::serverPrivateVariables.db_server->value(1)).split(BaseServer::text_dotcomma);
-            int index=0;
-            const int &listsize=resourcesStringList.size();
+            const std::vector<std::string> &resourcesStringList=stringsplit(GlobalServerData::serverPrivateVariables.db_server->value(1),';');
+            unsigned int index=0;
+            const unsigned int &listsize=resourcesStringList.size();
             while(index<listsize)
             {
-                const std::stringList &itemStringList=resourcesStringList.at(index).split(BaseServer::text_arrow);
+                const std::vector<std::string> &itemStringList=stringsplit(resourcesStringList.at(index),':');
                 if(itemStringList.size()!=2)
                 {
-                    DebugClass::debugConsole(std::stringLiteral("preload_industries: wrong entry count"));
+                    std::cerr << "preload_industries: wrong entry count" << std::endl;
                     ok=false;
                     break;
                 }
-                const uint32_t &item=itemStringList.first().toUInt(&ok);
+                const uint32_t &item=stringtouint32(itemStringList.at(0),&ok);
                 if(!ok)
                 {
-                    DebugClass::debugConsole(std::stringLiteral("preload_industries: item is not a number"));
+                    std::cerr << "preload_industries: item is not a number" << std::endl;
                     break;
                 }
-                uint32_t quantity=itemStringList.last().toUInt(&ok);
+                uint32_t quantity=stringtouint32(itemStringList.at(1),&ok);
                 if(!ok)
                 {
-                    DebugClass::debugConsole(std::stringLiteral("preload_industries: quantity is not a number"));
+                    std::cerr << "preload_industries: quantity is not a number" << std::endl;
                     break;
                 }
-                if(industryStatus.resources.contains(item))
+                if(industryStatus.resources.find(item)!=industryStatus.resources.end())
                 {
-                    DebugClass::debugConsole(std::stringLiteral("preload_industries: item already set"));
+                    std::cerr << "preload_industries: item already set" << std::endl;
                     ok=false;
                     break;
                 }
-                const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(id).industry);
+                const Industry &industry=CommonDatapack::commonDatapack.industries.at(CommonDatapack::commonDatapack.industriesLink.at(id).industry);
                 int indexItem=0;
                 const int &resourceslistsize=industry.resources.size();
                 while(indexItem<resourceslistsize)
@@ -444,7 +444,7 @@ void BaseServer::preload_industries_return()
                 }
                 if(indexItem==resourceslistsize)
                 {
-                    DebugClass::debugConsole(std::stringLiteral("preload_industries: item in db not found"));
+                    std::cerr << "preload_industries: item in db not found" << std::endl;
                     ok=false;
                     break;
                 }
@@ -456,37 +456,37 @@ void BaseServer::preload_industries_return()
         }
         if(ok)
         {
-            const std::stringList &productsStringList=std::string(GlobalServerData::serverPrivateVariables.db_server->value(2)).split(BaseServer::text_dotcomma);
+            const std::vector<std::string> &productsStringList=stringsplit(GlobalServerData::serverPrivateVariables.db_server->value(2),';');
             int index=0;
             const int &listsize=productsStringList.size();
             while(index<listsize)
             {
-                const std::stringList &itemStringList=productsStringList.at(index).split(BaseServer::text_arrow);
+                const std::vector<std::string> &itemStringList=stringsplit(productsStringList.at(index),':');
                 if(itemStringList.size()!=2)
                 {
-                    DebugClass::debugConsole(std::stringLiteral("preload_industries: wrong entry count"));
+                    std::cerr << "preload_industries: wrong entry count" << std::endl;
                     ok=false;
                     break;
                 }
-                const uint32_t &item=itemStringList.first().toUInt(&ok);
+                const uint32_t &item=stringtouint32(itemStringList.at(0),&ok);
                 if(!ok)
                 {
-                    DebugClass::debugConsole(std::stringLiteral("preload_industries: item is not a number"));
+                    std::cerr << "preload_industries: item is not a number" << std::endl;
                     break;
                 }
-                uint32_t quantity=itemStringList.last().toUInt(&ok);
+                uint32_t quantity=stringtouint32(itemStringList.at(1),&ok);
                 if(!ok)
                 {
-                    DebugClass::debugConsole(std::stringLiteral("preload_industries: quantity is not a number"));
+                    std::cerr << "preload_industries: quantity is not a number" << std::endl;
                     break;
                 }
-                if(industryStatus.products.contains(item))
+                if(industryStatus.products.find(item)!=industryStatus.products.end())
                 {
-                    DebugClass::debugConsole(std::stringLiteral("preload_industries: item already set"));
+                    std::cerr << "preload_industries: item already set" << std::endl;
                     ok=false;
                     break;
                 }
-                const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(id).industry);
+                const Industry &industry=CommonDatapack::commonDatapack.industries.at(CommonDatapack::commonDatapack.industriesLink.at(id).industry);
                 int indexItem=0;
                 const int &productlistsize=industry.products.size();
                 while(indexItem<productlistsize)
@@ -497,7 +497,7 @@ void BaseServer::preload_industries_return()
                 }
                 if(indexItem==productlistsize)
                 {
-                    DebugClass::debugConsole(std::stringLiteral("preload_industries: item in db not found"));
+                    std::cerr << "preload_industries: item in db not found" << std::endl;
                     ok=false;
                     break;
                 }
@@ -509,14 +509,14 @@ void BaseServer::preload_industries_return()
         }
         if(ok)
         {
-            industryStatus.last_update=std::string(GlobalServerData::serverPrivateVariables.db_server->value(3)).toUInt(&ok);
+            industryStatus.last_update=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(3),&ok);
             if(!ok)
-                DebugClass::debugConsole(std::stringLiteral("preload_industries: last_update is not a number"));
+                std::cerr << "preload_industries: last_update is not a number" << std::endl;
         }
         if(ok)
             GlobalServerData::serverPrivateVariables.industriesStatus[id]=industryStatus;
     }
-    DebugClass::debugConsole(std::stringLiteral("%1 SQL industries loaded").arg(GlobalServerData::serverPrivateVariables.industriesStatus.size()));
+    std::cout << GlobalServerData::serverPrivateVariables.industriesStatus.size() << " SQL industries loaded" << std::endl;
 
     preload_finish();
 }
@@ -524,23 +524,23 @@ void BaseServer::preload_industries_return()
 //unique table due to linked datas like skills/buffers product need of id, to be accruate on max id
 void BaseServer::preload_market_monsters_prices_sql()
 {
-    DebugClass::debugConsole(std::stringLiteral("%1 SQL industrie loaded").arg(GlobalServerData::serverPrivateVariables.industriesStatus.size()));
+    std::cout << GlobalServerData::serverPrivateVariables.industriesStatus.size() << " SQL industrie loaded" << std::endl;
 
     std::string queryText;
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
         case DatabaseBase::DatabaseType::Mysql:
-            queryText=QLatin1String("SELECT `id`,`market_price` FROM `monster_market_price` ORDER BY `id`");
+            queryText="SELECT `id`,`market_price` FROM `monster_market_price` ORDER BY `id`";
         break;
         case DatabaseBase::DatabaseType::SQLite:
-            queryText=QLatin1String("SELECT id,market_price FROM monster_market_price ORDER BY id");
+            queryText="SELECT id,market_price FROM monster_market_price ORDER BY id";
         break;
         case DatabaseBase::DatabaseType::PostgreSQL:
-            queryText=QLatin1String("SELECT id,market_price FROM monster_market_price ORDER BY id");
+            queryText="SELECT id,market_price FROM monster_market_price ORDER BY id";
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_market_monsters_prices_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.c_str(),this,&BaseServer::preload_market_monsters_prices_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         preload_market_monsters_sql();
@@ -558,21 +558,21 @@ void BaseServer::preload_market_monsters_prices_return()
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
         Monster_Semi_Market monsterSemi;
-        monsterSemi.id=std::string(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
+        monsterSemi.id=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
         if(!ok)
         {
-            DebugClass::debugConsole(std::stringLiteral("monsterId: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_server->value(0)));
+            std::cerr << "monsterId: " << GlobalServerData::serverPrivateVariables.db_server->value(0) << " is not a number" << std::endl;
             continue;
         }
-        monsterSemi.price=std::string(GlobalServerData::serverPrivateVariables.db_server->value(1)).toUInt(&ok);
+        monsterSemi.price=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
         if(!ok)
         {
-            DebugClass::debugConsole(std::stringLiteral("price: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_server->value(1)));
+            std::cerr << "price: " << GlobalServerData::serverPrivateVariables.db_server->value(1) << " is not a number" << std::endl;
             continue;
         }
         //finish it
         if(ok)
-            monsterSemiMarketList << monsterSemi;
+            monsterSemiMarketList.push_back(monsterSemi);
     }
 
     preload_market_monsters_sql();
@@ -581,7 +581,7 @@ void BaseServer::preload_market_monsters_prices_return()
 //unique table due to linked datas like skills/buffers product need of id, to be accruate on max id
 void BaseServer::preload_market_monsters_sql()
 {
-    if(monsterSemiMarketList.isEmpty())
+    if(monsterSemiMarketList.size()==0)
     {
         preload_market_items();
         return;
@@ -593,13 +593,13 @@ void BaseServer::preload_market_monsters_sql()
         {
             default:
             case DatabaseBase::DatabaseType::Mysql:
-                queryText=std::stringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character` FROM `monster` WHERE `id`=%1").arg(monsterSemiMarketList.first().id);
+                queryText="SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character` FROM `monster` WHERE `id`="+std::to_string(monsterSemiMarketList.at(0).id);
             break;
             case DatabaseBase::DatabaseType::SQLite:
-                queryText=std::stringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character FROM monster WHERE id=%1").arg(monsterSemiMarketList.first().id);
+                queryText="SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character FROM monster WHERE id="+std::to_string(monsterSemiMarketList.at(0).id);
             break;
             case DatabaseBase::DatabaseType::PostgreSQL:
-                queryText=std::stringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character FROM monster WHERE id=%1").arg(monsterSemiMarketList.first().id);
+                queryText="SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character FROM monster WHERE id="+std::to_string(monsterSemiMarketList.at(0).id);
             break;
         }
     else
@@ -607,16 +607,16 @@ void BaseServer::preload_market_monsters_sql()
         {
             default:
             case DatabaseBase::DatabaseType::Mysql:
-                queryText=std::stringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character` FROM `monster` WHERE `id`=%1").arg(monsterSemiMarketList.first().id);
+                queryText="SELECT `id`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character` FROM `monster` WHERE `id`="+std::to_string(monsterSemiMarketList.at(0).id);
             break;
             case DatabaseBase::DatabaseType::SQLite:
-                queryText=std::stringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character FROM monster WHERE id=%1").arg(monsterSemiMarketList.first().id);
+                queryText="SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character FROM monster WHERE id="+std::to_string(monsterSemiMarketList.at(0).id);
             break;
             case DatabaseBase::DatabaseType::PostgreSQL:
-                queryText=std::stringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character FROM monster WHERE id=%1").arg(monsterSemiMarketList.first().id);
+                queryText="SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character FROM monster WHERE id="+std::to_string(monsterSemiMarketList.at(0).id);
             break;
         }
-    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_market_monsters_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.c_str(),this,&BaseServer::preload_market_monsters_static)==NULL)
     {
         monsterSemiMarketList.clear();
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
@@ -641,76 +641,76 @@ void BaseServer::preload_market_monsters_return()
     {
         MarketPlayerMonster marketPlayerMonster;
         PlayerMonster playerMonster;
-        playerMonster.id=std::string(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
+        playerMonster.id=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(!ok)
-            DebugClass::debugConsole(std::stringLiteral("monsterId: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(0)));
+            std::cerr << "monsterId: " << GlobalServerData::serverPrivateVariables.db_common->value(0) << " is not a number" << std::endl;
         if(ok)
         {
-            playerMonster.monster=std::string(GlobalServerData::serverPrivateVariables.db_common->value(2)).toUInt(&ok);
+            playerMonster.monster=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
             if(ok)
             {
-                if(!CommonDatapack::commonDatapack.monsters.contains(playerMonster.monster))
+                if(CommonDatapack::commonDatapack.monsters.find(playerMonster.monster)==CommonDatapack::commonDatapack.monsters.end())
                 {
                     ok=false;
-                    DebugClass::debugConsole(std::stringLiteral("monster: %1 is not into monster list").arg(playerMonster.monster));
+                    std::cerr << "monster: " << playerMonster.monster << " is not into monster list" << std::endl;
                 }
             }
             else
-            DebugClass::debugConsole(std::stringLiteral("monster: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(2)));
+                std::cerr << "monster: " << GlobalServerData::serverPrivateVariables.db_common->value(2) << " is not a number" << std::endl;
         }
         if(ok)
         {
-            playerMonster.level=std::string(GlobalServerData::serverPrivateVariables.db_common->value(3)).toUInt(&ok);
+            playerMonster.level=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(3),&ok);
             if(ok)
             {
                 if(playerMonster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
                 {
-                    DebugClass::debugConsole(std::stringLiteral("level: %1 greater than %2, truncated").arg(playerMonster.level).arg(CATCHCHALLENGER_MONSTER_LEVEL_MAX));
+                    std::cerr << "level: " << playerMonster.level << " greater than " << CATCHCHALLENGER_MONSTER_LEVEL_MAX << ", truncated" << std::endl;
                     playerMonster.level=CATCHCHALLENGER_MONSTER_LEVEL_MAX;
                 }
             }
             else
-                DebugClass::debugConsole(std::stringLiteral("level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(3)));
+                std::cerr << "level: " << GlobalServerData::serverPrivateVariables.db_common->value(3) << " is not a number" << std::endl;
         }
         if(ok)
         {
-            playerMonster.remaining_xp=std::string(GlobalServerData::serverPrivateVariables.db_common->value(4)).toUInt(&ok);
+            playerMonster.remaining_xp=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(4),&ok);
             if(ok)
             {
-                if(playerMonster.remaining_xp>CommonDatapack::commonDatapack.monsters.value(playerMonster.monster).level_to_xp.at(playerMonster.level-1))
+                if(playerMonster.remaining_xp>CommonDatapack::commonDatapack.monsters.at(playerMonster.monster).level_to_xp.at(playerMonster.level-1))
                 {
-                    DebugClass::debugConsole(std::stringLiteral("monster xp: %1 greater than %2, truncated").arg(playerMonster.remaining_xp).arg(CommonDatapack::commonDatapack.monsters.value(playerMonster.monster).level_to_xp.at(playerMonster.level-1)));
+                    std::cerr << "monster xp: " << playerMonster.remaining_xp << " greater than " << CommonDatapack::commonDatapack.monsters.at(playerMonster.monster).level_to_xp.at(playerMonster.level-1) << ", truncated" << std::endl;
                     playerMonster.remaining_xp=0;
                 }
             }
             else
-                DebugClass::debugConsole(std::stringLiteral("monster xp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(4)));
+                std::cerr << "monster xp: " << GlobalServerData::serverPrivateVariables.db_common->value(4) << " is not a number" << std::endl;
         }
         if(CommonSettingsServer::commonSettingsServer.useSP)
         {
             if(ok)
             {
-                playerMonster.sp=std::string(GlobalServerData::serverPrivateVariables.db_common->value(5)).toUInt(&ok);
+                playerMonster.sp=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(5),&ok);
                 if(!ok)
-                    DebugClass::debugConsole(std::stringLiteral("monster sp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(5)));
+                    std::cerr << "monster sp: " << GlobalServerData::serverPrivateVariables.db_common->value(5) << " is not a number" << std::endl;
             }
         }
         else
             playerMonster.sp=0;
         if(ok)
         {
-            playerMonster.catched_with=std::string(GlobalServerData::serverPrivateVariables.db_common->value(6-spOffset)).toUInt(&ok);
+            playerMonster.catched_with=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(6-spOffset),&ok);
             if(ok)
             {
-                if(!CommonDatapack::commonDatapack.items.item.contains(playerMonster.catched_with))
-                    DebugClass::debugConsole(std::stringLiteral("captured_with: %1 is not is not into items list").arg(playerMonster.catched_with));
+                if(CommonDatapack::commonDatapack.items.item.find(playerMonster.catched_with)==CommonDatapack::commonDatapack.items.item.end())
+                    std::cerr << "captured_with: " << playerMonster.catched_with << " is not is not into items list" << std::endl;
             }
             else
-                DebugClass::debugConsole(std::stringLiteral("captured_with: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(6-spOffset)));
+                std::cerr << "captured_with: " << GlobalServerData::serverPrivateVariables.db_common->value(6-spOffset) << " is not a number" << std::endl;
         }
         if(ok)
         {
-            const uint32_t &value=std::string(GlobalServerData::serverPrivateVariables.db_common->value(7-spOffset)).toUInt(&ok);
+            const uint32_t &value=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(7-spOffset),&ok);
             if(ok)
             {
                 if(value>=1 && value<=3)
@@ -718,62 +718,65 @@ void BaseServer::preload_market_monsters_return()
                 else
                 {
                     playerMonster.gender=Gender_Unknown;
-                    DebugClass::debugConsole(std::stringLiteral("unknown monster gender: %1").arg(value));
+                    std::cerr << "unknown monster gender: " << value << std::endl;
                     ok=false;
                 }
             }
             else
             {
                 playerMonster.gender=Gender_Unknown;
-                DebugClass::debugConsole(std::stringLiteral("unknown monster gender: %1").arg(GlobalServerData::serverPrivateVariables.db_common->value(7-spOffset)));
+                std::cerr << "unknown monster gender: " << GlobalServerData::serverPrivateVariables.db_common->value(7-spOffset) << std::endl;
                 ok=false;
             }
         }
         if(ok)
         {
-            playerMonster.egg_step=std::string(GlobalServerData::serverPrivateVariables.db_common->value(8-spOffset)).toUInt(&ok);
+            playerMonster.egg_step=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(8-spOffset),&ok);
             if(!ok)
-                DebugClass::debugConsole(std::stringLiteral("monster egg_step: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(8-spOffset)));
+                std::cerr << "monster egg_step: " << GlobalServerData::serverPrivateVariables.db_common->value(8-spOffset) << " is not a number" << std::endl;
         }
         if(ok)
-            marketPlayerMonster.player=std::string(GlobalServerData::serverPrivateVariables.db_common->value(9-spOffset)).toUInt(&ok);
+            marketPlayerMonster.player=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(9-spOffset),&ok);
         if(ok)
-            marketPlayerMonster.cash=monsterSemiMarketList.first().price;
+            marketPlayerMonster.cash=monsterSemiMarketList.at(0).price;
         //stats
         if(ok)
         {
-            playerMonster.hp=std::string(GlobalServerData::serverPrivateVariables.db_common->value(1)).toUInt(&ok);
+            playerMonster.hp=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
             if(ok)
             {
-                const Monster::Stat &stat=CommonFightEngine::getStat(CommonDatapack::commonDatapack.monsters.value(playerMonster.monster),playerMonster.level);
+                const Monster::Stat &stat=CommonFightEngine::getStat(CommonDatapack::commonDatapack.monsters.at(playerMonster.monster),playerMonster.level);
                 if(playerMonster.hp>stat.hp)
                 {
-                    DebugClass::debugConsole(std::stringLiteral("monster hp: %1 greater than max hp %2 for the level %3 of the monster %4, truncated")
-                    .arg(playerMonster.hp)
-                    .arg(stat.hp)
-                    .arg(playerMonster.level)
-                    .arg(playerMonster.monster)
-                    );
+                    std::cerr << "monster hp: "
+                    << playerMonster.hp
+                    << " greater than max hp "
+                    << stat.hp
+                    << " for the level "
+                    << playerMonster.level
+                    << " of the monster "
+                    << playerMonster.monster
+                    << " , truncated";
                     playerMonster.hp=stat.hp;
                 }
             }
             else
-            DebugClass::debugConsole(std::stringLiteral("monster hp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(1)));
+                std::cerr << "monster hp: " << GlobalServerData::serverPrivateVariables.db_common->value(1) << " is not a number" << std::endl;
         }
         //finish it
         if(ok)
         {
             marketPlayerMonster.monster=playerMonster;
-            GlobalServerData::serverPrivateVariables.marketPlayerMonsterList << marketPlayerMonster;
+            GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.push_back(marketPlayerMonster);
         }
     }
-    monsterSemiMarketList.removeFirst();
-    if(!monsterSemiMarketList.isEmpty())
+    monsterSemiMarketList.erase(monsterSemiMarketList.begin());
+    if(monsterSemiMarketList.size()>0)
     {
         preload_market_monsters_sql();
         return;
     }
-    if(!GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.isEmpty())
+    if(GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size()>0)
         loadMonsterBuffs(0);
     else
         preload_market_items();
@@ -781,14 +784,14 @@ void BaseServer::preload_market_monsters_return()
 
 void BaseServer::preload_market_items()
 {
-    DebugClass::debugConsole(std::stringLiteral("%1 SQL monster list loaded").arg(GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size()));
+    std::cout << GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size() << " SQL monster list loaded" << std::endl;
 
     Client::marketObjectIdList.clear();
     Client::marketObjectIdList.reserve(65535);
     int index=0;
     while(index<=65535)
     {
-        Client::marketObjectIdList << index;
+        Client::marketObjectIdList.push_back(index);
         index++;
     }
     //do the query
@@ -797,16 +800,16 @@ void BaseServer::preload_market_items()
     {
         default:
         case DatabaseBase::DatabaseType::Mysql:
-            queryText=QLatin1String("SELECT `item`,`quantity`,`character`,`market_price` FROM `item_market` ORDER BY `item`");
+            queryText="SELECT `item`,`quantity`,`character`,`market_price` FROM `item_market` ORDER BY `item`";
         break;
         case DatabaseBase::DatabaseType::SQLite:
-            queryText=QLatin1String("SELECT item,quantity,character,market_price FROM item_market ORDER BY item");
+            queryText="SELECT item,quantity,character,market_price FROM item_market ORDER BY item";
         break;
         case DatabaseBase::DatabaseType::PostgreSQL:
-            queryText=QLatin1String("SELECT item,quantity,character,market_price FROM item_market ORDER BY item");
+            queryText="SELECT item,quantity,character,market_price FROM item_market ORDER BY item";
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_market_items_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.c_str(),this,&BaseServer::preload_market_items_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
@@ -832,38 +835,38 @@ void BaseServer::preload_market_items_return()
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
         MarketItem marketItem;
-        marketItem.item=std::string(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
+        marketItem.item=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
         if(!ok)
         {
-            DebugClass::debugConsole(std::stringLiteral("item id is not a number, skip"));
+            std::cerr << "item id is not a number, skip" << std::endl;
             continue;
         }
-        marketItem.quantity=std::string(GlobalServerData::serverPrivateVariables.db_server->value(1)).toUInt(&ok);
+        marketItem.quantity=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
         if(!ok)
         {
-            DebugClass::debugConsole(std::stringLiteral("quantity is not a number, skip"));
+            std::cerr << "quantity is not a number, skip" << std::endl;
             continue;
         }
-        marketItem.player=std::string(GlobalServerData::serverPrivateVariables.db_server->value(2)).toUInt(&ok);
+        marketItem.player=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok);
         if(!ok)
         {
-            DebugClass::debugConsole(std::stringLiteral("player id is not a number, skip"));
+            std::cerr << "player id is not a number, skip" << std::endl;
             continue;
         }
-        marketItem.cash=std::string(GlobalServerData::serverPrivateVariables.db_server->value(3)).toULongLong(&ok);
+        marketItem.cash=stringtouint64(GlobalServerData::serverPrivateVariables.db_server->value(3),&ok);
         if(!ok)
         {
-            DebugClass::debugConsole(std::stringLiteral("cash is not a number, skip"));
+            std::cerr << "cash is not a number, skip" << std::endl;
             continue;
         }
-        if(Client::marketObjectIdList.isEmpty())
+        if(Client::marketObjectIdList.size()==0)
         {
-            DebugClass::debugConsole(std::stringLiteral("not more marketObjectId into the list, skip"));
+            std::cerr << "not more marketObjectId into the list, skip" << std::endl;
             return;
         }
-        marketItem.marketObjectId=Client::marketObjectIdList.first();
-        Client::marketObjectIdList.removeFirst();
-        GlobalServerData::serverPrivateVariables.marketItemList << marketItem;
+        marketItem.marketObjectId=Client::marketObjectIdList.at(0);
+        Client::marketObjectIdList.erase(Client::marketObjectIdList.begin());
+        GlobalServerData::serverPrivateVariables.marketItemList.push_back(marketItem);
     }
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     if(GlobalServerData::serverSettings.automatic_account_creation)
@@ -888,17 +891,17 @@ void BaseServer::loadMonsterBuffs(const uint32_t &index)
     {
         default:
         case DatabaseBase::DatabaseType::Mysql:
-            queryText=std::stringLiteral("SELECT `buff`,`level` FROM `monster_buff` WHERE `monster`=%1 ORDER BY `buff`").arg(index);
+            queryText="SELECT `buff`,`level` FROM `monster_buff` WHERE `monster`="+std::to_string(index)+" ORDER BY `buff`";
         break;
         case DatabaseBase::DatabaseType::SQLite:
-            queryText=std::stringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1 ORDER BY buff").arg(index);
+            queryText="SELECT buff,level FROM monster_buff WHERE monster="+std::to_string(index)+" ORDER BY buff";
         break;
         case DatabaseBase::DatabaseType::PostgreSQL:
-            queryText=std::stringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1 ORDER BY buff").arg(index);
+            queryText="SELECT buff,level FROM monster_buff WHERE monster="+std::to_string(index)+" ORDER BY buff";
         break;
     }
 
-    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::loadMonsterBuffs_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.c_str(),this,&BaseServer::loadMonsterBuffs_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         loadMonsterSkills(0);
@@ -918,37 +921,37 @@ void BaseServer::loadMonsterBuffs_return()
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         PlayerBuff buff;
-        buff.buff=std::string(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
+        buff.buff=stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(ok)
         {
-            if(!CommonDatapack::commonDatapack.monsterBuffs.contains(buff.buff))
+            if(CommonDatapack::commonDatapack.monsterBuffs.find(buff.buff)==CommonDatapack::commonDatapack.monsterBuffs.end())
             {
                 ok=false;
-                DebugClass::debugConsole(std::stringLiteral("buff %1 for monsterId: %2 is not found into buff list").arg(buff.buff).arg(monsterId));
+                std::cerr << "buff " << buff.buff << " for monsterId: " << monsterId << " is not found into buff list" << std::endl;
             }
         }
         else
-            DebugClass::debugConsole(std::stringLiteral("buff id: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(0)));
+            std::cerr << "buff id: " << GlobalServerData::serverPrivateVariables.db_common->value(0) << " is not a number" << std::endl;
         if(ok)
         {
-            buff.level=std::string(GlobalServerData::serverPrivateVariables.db_common->value(1)).toUInt(&ok);
+            buff.level=stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
             if(ok)
             {
-                if(buff.level<=0 || buff.level>CommonDatapack::commonDatapack.monsterBuffs.value(buff.buff).level.size())
+                if(buff.level<=0 || buff.level>CommonDatapack::commonDatapack.monsterBuffs.at(buff.buff).level.size())
                 {
                     ok=false;
-                    DebugClass::debugConsole(std::stringLiteral("buff %1 for monsterId: %2 have not the level: %3").arg(buff.buff).arg(monsterId).arg(buff.level));
+                    std::cerr << "buff " << buff.buff << " for monsterId: " << monsterId << " have not the level: " << buff.level << std::endl;
                 }
             }
             else
-                DebugClass::debugConsole(std::stringLiteral("buff level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(2)));
+                std::cerr << "buff level: " << GlobalServerData::serverPrivateVariables.db_common->value(2) << " is not a number" << std::endl;
         }
         if(ok)
         {
-            if(CommonDatapack::commonDatapack.monsterBuffs.value(buff.buff).level.at(buff.level-1).duration!=Buff::Duration_Always)
+            if(CommonDatapack::commonDatapack.monsterBuffs.at(buff.buff).level.at(buff.level-1).duration!=Buff::Duration_Always)
             {
                 ok=false;
-                DebugClass::debugConsole(std::stringLiteral("buff %1 for monsterId: %2 can't be loaded from the db if is not permanent").arg(buff.buff).arg(monsterId));
+                std::cerr << "buff " << buff.buff << " for monsterId: " << monsterId << " can't be loaded from the db if is not permanent" << std::endl;
             }
         }
         if(ok)
@@ -970,16 +973,16 @@ void BaseServer::loadMonsterSkills(const uint32_t &index)
     {
         default:
         case DatabaseBase::DatabaseType::Mysql:
-            queryText=std::stringLiteral("SELECT `skill`,`level`,`endurance` FROM `monster_skill` WHERE `monster`=%1 ORDER BY `skill`").arg(index);
+            queryText="SELECT `skill`,`level`,`endurance` FROM `monster_skill` WHERE `monster`="+std::to_string(index)+" ORDER BY `skill`";
         break;
         case DatabaseBase::DatabaseType::SQLite:
-            queryText=std::stringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1 ORDER BY skill").arg(index);
+            queryText="SELECT skill,level,endurance FROM monster_skill WHERE monster="+std::to_string(index)+" ORDER BY skill";
         break;
         case DatabaseBase::DatabaseType::PostgreSQL:
-            queryText=std::stringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1 ORDER BY skill").arg(index);
+            queryText="SELECT skill,level,endurance FROM monster_skill WHERE monster="+std::to_string(index)+" ORDER BY skill";
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::loadMonsterSkills_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.c_str(),this,&BaseServer::loadMonsterSkills_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         preload_market_items();
@@ -999,48 +1002,48 @@ void BaseServer::loadMonsterSkills_return()
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         PlayerMonster::PlayerSkill skill;
-        skill.skill=std::string(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
+        skill.skill=stringtouint16(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(ok)
         {
-            if(!CommonDatapack::commonDatapack.monsterSkills.contains(skill.skill))
+            if(CommonDatapack::commonDatapack.monsterSkills.find(skill.skill)==CommonDatapack::commonDatapack.monsterSkills.end())
             {
                 ok=false;
-                DebugClass::debugConsole(std::stringLiteral("skill %1 for monsterId: %2 is not found into skill list").arg(skill.skill).arg(monsterId));
+                std::cerr << "skill " << skill.skill << " for monsterId: " << monsterId << " is not found into skill list" << std::endl;
             }
         }
         else
-            DebugClass::debugConsole(std::stringLiteral("skill id: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(0)));
+            std::cerr << "skill id: " << GlobalServerData::serverPrivateVariables.db_common->value(0) << " is not a number" << std::endl;
         if(ok)
         {
-            skill.level=std::string(GlobalServerData::serverPrivateVariables.db_common->value(1)).toUInt(&ok);
+            skill.level=stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
             if(ok)
             {
-                if(skill.level>CommonDatapack::commonDatapack.monsterSkills.value(skill.skill).level.size())
+                if(skill.level>CommonDatapack::commonDatapack.monsterSkills.at(skill.skill).level.size())
                 {
                     ok=false;
-                    DebugClass::debugConsole(std::stringLiteral("skill %1 for monsterId: %2 have not the level: %3").arg(skill.skill).arg(monsterId).arg(skill.level));
+                    std::cerr << "skill " << skill.skill << " for monsterId: " << monsterId << " have not the level: " << skill.level << std::endl;
                 }
             }
             else
-                DebugClass::debugConsole(std::stringLiteral("skill level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(1)));
+                std::cerr << "skill level: " << GlobalServerData::serverPrivateVariables.db_common->value(1) << " is not a number" << std::endl;
         }
         if(ok)
         {
-            skill.endurance=std::string(GlobalServerData::serverPrivateVariables.db_common->value(2)).toUInt(&ok);
+            skill.endurance=stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
             if(ok)
             {
-                if(skill.endurance>CommonDatapack::commonDatapack.monsterSkills.value(skill.skill).level.at(skill.level-1).endurance)
+                if(skill.endurance>CommonDatapack::commonDatapack.monsterSkills.at(skill.skill).level.at(skill.level-1).endurance)
                 {
-                    skill.endurance=CommonDatapack::commonDatapack.monsterSkills.value(skill.skill).level.at(skill.level-1).endurance;
+                    skill.endurance=CommonDatapack::commonDatapack.monsterSkills.at(skill.skill).level.at(skill.level-1).endurance;
                     ok=false;
-                    DebugClass::debugConsole(std::stringLiteral("endurance of skill %1 for monsterId: %2 have been fixed by lower at ").arg(skill.endurance));
+                    std::cerr << "endurance of skill " << skill.skill << " for monsterId: " <<  monsterId<< " have been fixed by lower at " << skill.endurance << std::endl;
                 }
             }
             else
-                DebugClass::debugConsole(std::stringLiteral("skill level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(2)));
+                std::cerr << "skill level: " << GlobalServerData::serverPrivateVariables.db_common->value(2) << " is not a number" << std::endl;
         }
         if(ok)
-            skills << skill;
+            skills.push_back(skill);
     }
     loadMonsterSkills(entryListIndex+1);
 }
@@ -1055,16 +1058,16 @@ void BaseServer::load_clan_max_id()
     {
         default:
         case DatabaseBase::DatabaseType::Mysql:
-            queryText=QLatin1String("SELECT `id` FROM `clan` ORDER BY `id` DESC LIMIT 0,1;");
+            queryText="SELECT `id` FROM `clan` ORDER BY `id` DESC LIMIT 0,1;";
         break;
         case DatabaseBase::DatabaseType::SQLite:
-            queryText=QLatin1String("SELECT id FROM clan ORDER BY id DESC LIMIT 0,1;");
+            queryText="SELECT id FROM clan ORDER BY id DESC LIMIT 0,1;";
         break;
         case DatabaseBase::DatabaseType::PostgreSQL:
-            queryText=QLatin1String("SELECT id FROM clan ORDER BY id DESC LIMIT 1;");
+            queryText="SELECT id FROM clan ORDER BY id DESC LIMIT 1;";
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::load_clan_max_id_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.c_str(),this,&BaseServer::load_clan_max_id_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         preload_industries();
@@ -1084,10 +1087,10 @@ void BaseServer::load_clan_max_id_return()
     {
         bool ok;
         //not +1 because incremented before use
-        GlobalServerData::serverPrivateVariables.maxClanId=std::string(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok)+1;
+        GlobalServerData::serverPrivateVariables.maxClanId=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok)+1;
         if(!ok)
         {
-            DebugClass::debugConsole(std::stringLiteral("Max clan id is failed to convert to number"));
+            std::cerr << "Max clan id is failed to convert to number" << std::endl;
             //start to 0 due to pre incrementation before use
             GlobalServerData::serverPrivateVariables.maxClanId=1;
             continue;
@@ -1103,18 +1106,18 @@ void BaseServer::load_account_max_id()
     {
         default:
         case DatabaseBase::DatabaseType::Mysql:
-            queryText=QLatin1String("SELECT `id` FROM `account` ORDER BY `id` DESC LIMIT 0,1;");
+            queryText="SELECT `id` FROM `account` ORDER BY `id` DESC LIMIT 0,1;";
         break;
         case DatabaseBase::DatabaseType::SQLite:
-            queryText=QLatin1String("SELECT id FROM account ORDER BY id DESC LIMIT 0,1;");
+            queryText="SELECT id FROM account ORDER BY id DESC LIMIT 0,1;";
         break;
         case DatabaseBase::DatabaseType::PostgreSQL:
-            queryText=QLatin1String("SELECT id FROM account ORDER BY id DESC LIMIT 1;");
+            queryText="SELECT id FROM account ORDER BY id DESC LIMIT 1;";
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db_login->asyncRead(queryText.toLatin1(),this,&BaseServer::load_account_max_id_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_login->asyncRead(queryText.c_str(),this,&BaseServer::load_account_max_id_static)==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_login->errorMessage());
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_login->errorMessage() << std::endl;
         if(CommonSettingsCommon::commonSettingsCommon.max_character)
             load_character_max_id();
         else
@@ -1135,10 +1138,10 @@ void BaseServer::load_account_max_id_return()
     {
         bool ok;
         //not +1 because incremented before use
-        GlobalServerData::serverPrivateVariables.maxAccountId=std::string(GlobalServerData::serverPrivateVariables.db_login->value(0)).toUInt(&ok);
+        GlobalServerData::serverPrivateVariables.maxAccountId=stringtouint32(GlobalServerData::serverPrivateVariables.db_login->value(0),&ok);
         if(!ok)
         {
-            DebugClass::debugConsole(std::stringLiteral("Max account id is failed to convert to number"));
+            std::cerr << "Max account id is failed to convert to number" << std::endl;
             //start to 0 due to pre incrementation before use
             GlobalServerData::serverPrivateVariables.maxAccountId=0;
             continue;
@@ -1157,16 +1160,16 @@ void BaseServer::load_character_max_id()
     {
         default:
         case DatabaseBase::DatabaseType::Mysql:
-            queryText=QLatin1String("SELECT `id` FROM `character` ORDER BY `id` DESC LIMIT 0,1;");
+            queryText="SELECT `id` FROM `character` ORDER BY `id` DESC LIMIT 0,1;";
         break;
         case DatabaseBase::DatabaseType::SQLite:
-            queryText=QLatin1String("SELECT id FROM character ORDER BY id DESC LIMIT 0,1;");
+            queryText="SELECT id FROM character ORDER BY id DESC LIMIT 0,1;";
         break;
         case DatabaseBase::DatabaseType::PostgreSQL:
-            queryText=QLatin1String("SELECT id FROM character ORDER BY id DESC LIMIT 1;");
+            queryText="SELECT id FROM character ORDER BY id DESC LIMIT 1;";
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::load_character_max_id_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.c_str(),this,&BaseServer::load_character_max_id_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_base);
@@ -1186,10 +1189,10 @@ void BaseServer::load_character_max_id_return()
     {
         bool ok;
         //not +1 because incremented before use
-        GlobalServerData::serverPrivateVariables.maxCharacterId=std::string(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
+        GlobalServerData::serverPrivateVariables.maxCharacterId=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(!ok)
         {
-            DebugClass::debugConsole(std::stringLiteral("Max character id is failed to convert to number"));
+            std::cerr << "Max character id is failed to convert to number" << std::endl;
             //start to 0 due to pre incrementation before use
             GlobalServerData::serverPrivateVariables.maxCharacterId=0;
             continue;
