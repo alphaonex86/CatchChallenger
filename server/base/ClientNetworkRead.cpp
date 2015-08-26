@@ -37,7 +37,7 @@ void Client::doDDOSCompute()
             }
             if(movePacketKick[index]>GlobalServerData::serverSettings.ddos.kickLimitMove*2)
             {
-                errorOutput(QString("index out of range in array for index %1, movePacketKick").arg(movePacketKick[index]));
+                errorOutput(std::string("index out of range in array for index %1, movePacketKick").arg(movePacketKick[index]));
                 return;
             }
             #endif
@@ -113,18 +113,18 @@ void Client::sendNewEvent(const QByteArray &data)
 {
     if(queryNumberList.empty())
     {
-        errorOutput(QStringLiteral("Sorry, no free query number to send this query of sendNewEvent"));
+        errorOutput(std::stringLiteral("Sorry, no free query number to send this query of sendNewEvent"));
         return;
     }
     sendQuery(0x79,0x02,queryNumberList.first(),data.constData(),data.size());
     queryNumberList.removeFirst();
 }
 
-void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
+void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation)
 {
     if(queryNumberList.empty())
     {
-        errorOutput(QStringLiteral("Sorry, no free query number to send this query of teleportation"));
+        errorOutput(std::stringLiteral("Sorry, no free query number to send this query of teleportation"));
         return;
     }
     PlayerOnMap teleportationPoint;
@@ -137,14 +137,14 @@ void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COO
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
-        out << (quint8)map->id;
+        out << (uint8_t)map->id;
     else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
-        out << (quint16)map->id;
+        out << (uint16_t)map->id;
     else
-        out << (quint32)map->id;
+        out << (uint32_t)map->id;
     out << (COORD_TYPE)x;
     out << (COORD_TYPE)y;
-    out << (quint8)orientation;
+    out << (uint8_t)orientation;
     sendQuery(0x79,0x01,queryNumberList.first(),outputData.constData(),outputData.size());
     queryNumberList.removeFirst();
 }
@@ -153,7 +153,7 @@ void Client::sendTradeRequest(const QByteArray &data)
 {
     if(queryNumberList.empty())
     {
-        errorOutput(QStringLiteral("Sorry, no free query number to send this query of trade"));
+        errorOutput(std::stringLiteral("Sorry, no free query number to send this query of trade"));
         return;
     }
     sendQuery(0x80,0x01,queryNumberList.first(),data.constData(),data.size());
@@ -164,20 +164,20 @@ void Client::sendBattleRequest(const QByteArray &data)
 {
     if(queryNumberList.empty())
     {
-        errorOutput(QStringLiteral("Sorry, no free query number to send this query of trade"));
+        errorOutput(std::stringLiteral("Sorry, no free query number to send this query of trade"));
         return;
     }
     sendQuery(0x90,0x01,queryNumberList.first(),data.constData(),data.size());
     queryNumberList.removeFirst();
 }
 
-void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size)
+void Client::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
 {
     Q_UNUSED(size);
     if(stopIt)
         return;
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    normalOutput(QStringLiteral("parseInputBeforeLogin(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data.toHex())));
+    normalOutput(std::stringLiteral("parseInputBeforeLogin(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(std::string(data.toHex())));
     #endif
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
@@ -214,7 +214,7 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
                     BaseServerLogin::tokenForAuthSize--;
                     if(BaseServerLogin::tokenForAuthSize>0)
                     {
-                        quint32 index=0;
+                        uint32_t index=0;
                         while(index<BaseServerLogin::tokenForAuthSize)
                         {
                             BaseServerLogin::tokenForAuth[index]=BaseServerLogin::tokenForAuth[index+1];
@@ -253,12 +253,12 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
                     }
                     else
                     {
-                        const qint32 readedByte=fread(token->value,1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,BaseServerLogin::fpRandomFile);
+                        const int32_t readedByte=fread(token->value,1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,BaseServerLogin::fpRandomFile);
                         if(readedByte!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
                         {
                             /// \todo check why client not disconnected if pass here
                             errorOutput(
-                                        QStringLiteral("Not correct number of byte to generate the token readedByte!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT: %1!=%2, errno: %3")
+                                        std::stringLiteral("Not correct number of byte to generate the token readedByte!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT: %1!=%2, errno: %3")
                                         .arg(readedByte)
                                         .arg(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
                                         .arg(errno)
@@ -316,7 +316,7 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
                 #endif
                 have_send_protocol=true;
                 #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-                normalOutput(QStringLiteral("Protocol sended and replied"));
+                normalOutput(std::stringLiteral("Protocol sended and replied"));
                 #endif
             }
             else
@@ -386,12 +386,12 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
         break;
         #endif
         default:
-            parseNetworkReadError("wrong data before login with mainIdent: "+QString::number(mainCodeType));
+            parseNetworkReadError("wrong data before login with mainIdent: "+std::string::number(mainCodeType));
         break;
     }
 }
 
-void Client::parseMessage(const quint8 &mainCodeType,const char * const data,const int unsigned &size)
+void Client::parseMessage(const uint8_t &mainCodeType,const char * const data,const int unsigned &size)
 {
     if(stopIt)
         return;
@@ -404,7 +404,7 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
     {
         //wrong protocol
         disconnectClient();
-        //parseError(QStringLiteral("is not logged, parsenormalOutput(%1)").arg(mainCodeType));
+        //parseError(std::stringLiteral("is not logged, parsenormalOutput(%1)").arg(mainCodeType));
         return;
     }
     #ifdef CATCHCHALLENGER_DDOS_FILTER
@@ -438,26 +438,26 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
     #endif
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    normalOutput(QStringLiteral("parsenormalOutput(%1,%2)").arg(mainCodeType).arg(QString(data.toHex())));
+    normalOutput(std::stringLiteral("parsenormalOutput(%1,%2)").arg(mainCodeType).arg(std::string(data.toHex())));
     #endif
     switch(mainCodeType)
     {
         case 0x40:
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size!=(int)sizeof(quint8)*2)
+            if(size!=(int)sizeof(uint8_t)*2)
             {
                 parseNetworkReadError("Wrong size in move packet");
                 return;
             }
             #endif
-            const quint8 &direction=*(data+sizeof(quint8));
+            const uint8_t &direction=*(data+sizeof(uint8_t));
             if(direction<1 || direction>8)
             {
-                parseNetworkReadError(QStringLiteral("Bad direction number: %1").arg(direction));
+                parseNetworkReadError(std::stringLiteral("Bad direction number: %1").arg(direction));
                 return;
             }
-            moveThePlayer(static_cast<quint8>(*data),static_cast<Direction>(direction));
+            moveThePlayer(static_cast<uint8_t>(*data),static_cast<Direction>(direction));
             return;
         }
         break;
@@ -467,61 +467,61 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
             QByteArray newData(data,size);
             QDataStream in(newData);
             in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
-            if(size<((int)sizeof(quint8)))
+            if(size<((int)sizeof(uint8_t)))
             {
                 parseNetworkReadError("wrong remaining size for chat");
                 return;
             }
-            quint8 chatType;
+            uint8_t chatType;
             in >> chatType;
             if(chatType!=Chat_type_local && chatType!=Chat_type_all && chatType!=Chat_type_clan && chatType!=Chat_type_pm)
             {
-                parseNetworkReadError("chat type error: "+QString::number(chatType));
+                parseNetworkReadError("chat type error: "+std::string::number(chatType));
                 return;
             }
             if(chatType==Chat_type_pm)
             {
                 if(CommonSettingsServer::commonSettingsServer.chat_allow_private)
                 {
-                    QString text;
+                    std::string text;
                     {
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                         {
-                            parseNetworkReadError("wrong utf8 to QString size in PM for text size");
+                            parseNetworkReadError("wrong utf8 to std::string size in PM for text size");
                             return;
                         }
-                        quint8 textSize;
+                        uint8_t textSize;
                         in >> textSize;
                         if(textSize>0)
                         {
                             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
                             {
-                                parseNetworkReadError("wrong utf8 to QString size in PM for text");
+                                parseNetworkReadError("wrong utf8 to std::string size in PM for text");
                                 return;
                             }
                             const QByteArray &rawText=newData.mid(in.device()->pos(),textSize);
-                            text=QString::fromUtf8(rawText.data(),rawText.size());
+                            text=std::string::fromUtf8(rawText.data(),rawText.size());
                             in.device()->seek(in.device()->pos()+rawText.size());
                         }
                     }
-                    QString pseudo;
+                    std::string pseudo;
                     {
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                         {
-                            parseNetworkReadError("wrong utf8 to QString size in PM for pseudo");
+                            parseNetworkReadError("wrong utf8 to std::string size in PM for pseudo");
                             return;
                         }
-                        quint8 pseudoSize;
+                        uint8_t pseudoSize;
                         in >> pseudoSize;
                         if(pseudoSize>0)
                         {
                             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pseudoSize)
                             {
-                                parseNetworkReadError("wrong utf8 to QString size in PM for pseudo");
+                                parseNetworkReadError("wrong utf8 to std::string size in PM for pseudo");
                                 return;
                             }
                             const QByteArray &rawText=newData.mid(in.device()->pos(),pseudoSize);
-                            pseudo=QString::fromUtf8(rawText.data(),rawText.size());
+                            pseudo=std::string::fromUtf8(rawText.data(),rawText.size());
                             in.device()->seek(in.device()->pos()+rawText.size());
                         }
                     }
@@ -531,29 +531,29 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
                 }
                 else
                 {
-                    parseNetworkReadError("can't send pm because is disabled: "+QString::number(chatType));
+                    parseNetworkReadError("can't send pm because is disabled: "+std::string::number(chatType));
                     return;
                 }
             }
             else
             {
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                 {
-                    parseNetworkReadError("wrong utf8 to QString header size");
+                    parseNetworkReadError("wrong utf8 to std::string header size");
                     return;
                 }
-                QString text;
-                quint8 textSize;
+                std::string text;
+                uint8_t textSize;
                 in >> textSize;
                 if(textSize>0)
                 {
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
                     {
-                        parseNetworkReadError("wrong utf8 to QString size");
+                        parseNetworkReadError("wrong utf8 to std::string size");
                         return;
                     }
                     const QByteArray &rawText=newData.mid(in.device()->pos(),textSize);
-                    text=QString::fromUtf8(rawText.data(),rawText.size());
+                    text=std::string::fromUtf8(rawText.data(),rawText.size());
                     in.device()->seek(in.device()->pos()+rawText.size());
                 }
 
@@ -565,7 +565,7 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
                             sendLocalChatText(text);
                         else
                         {
-                            parseNetworkReadError("can't send chat local because is disabled: "+QString::number(chatType));
+                            parseNetworkReadError("can't send chat local because is disabled: "+std::string::number(chatType));
                             return;
                         }
                     }
@@ -575,7 +575,7 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
                             sendChatText((Chat_type)chatType,text);
                         else
                         {
-                            parseNetworkReadError("can't send chat other because is disabled: "+QString::number(chatType));
+                            parseNetworkReadError("can't send chat other because is disabled: "+std::string::number(chatType));
                             return;
                         }
                     }
@@ -585,7 +585,7 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
                     if(text.contains(commandRegExp))
                     {
                         //isolate the main command (the first word)
-                        QString command=text;
+                        std::string command=text;
                         command.replace(commandRegExp,Client::text_regexresult1);
 
                         //isolate the arguements
@@ -595,7 +595,7 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
                             text.replace(isolateTheMainCommand,Client::text_regexresult1);
                         }
                         else
-                            text=QString();
+                            text=std::string();
 
                         //the normal player command
                         {
@@ -691,29 +691,29 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
         case 0x61:
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size!=(int)sizeof(quint16))
+            if(size!=(int)sizeof(uint16_t))
             {
                 parseNetworkReadError("Wrong size in move packet");
                 return;
             }
             #endif
-            if(size!=(int)sizeof(quint16))
+            if(size!=(int)sizeof(uint16_t))
             {
                 parseNetworkReadError("Wrong size in move packet");
                 return;
             }
-            useSkill(le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data))));
+            useSkill(le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data))));
             return;
         }
         break;
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType));
             return;
         break;
     }
 }
 
-void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const rawData,const unsigned int &size)
+void Client::parseFullMessage(const uint8_t &mainCodeType,const uint8_t &subCodeType,const char * const rawData,const unsigned int &size)
 {
     if(stopIt)
         return;
@@ -726,7 +726,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
     {
         //wrong protocol
         disconnectClient();
-        //parseError(QStringLiteral("is not logged, parsenormalOutput(%1,%2)").arg(mainCodeType).arg(subCodeType));
+        //parseError(std::stringLiteral("is not logged, parsenormalOutput(%1,%2)").arg(mainCodeType).arg(subCodeType));
         return;
     }
     #ifdef CATCHCHALLENGER_DDOS_FILTER
@@ -739,7 +739,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
     #endif
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    normalOutput(QStringLiteral("parsenormalOutput(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(QString(data.toHex())));
+    normalOutput(std::stringLiteral("parsenormalOutput(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(std::string(data.toHex())));
     #endif
     switch(mainCodeType)
     {
@@ -750,13 +750,13 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
             case 0x04:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if(size!=((int)sizeof(quint8)))
+                if(size!=((int)sizeof(uint8_t)))
                 {
                     parseNetworkReadError("wrong remaining size for clan invite");
                     return;
                 }
                 #endif
-                const quint8 &returnCode=*(rawData+sizeof(quint8));
+                const uint8_t &returnCode=*(rawData+sizeof(uint8_t));
                 switch(returnCode)
                 {
                     case 0x01:
@@ -766,14 +766,14 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                         clanInvite(false);
                     break;
                     default:
-                        parseNetworkReadError(QStringLiteral("wrong return code for clan invite ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                        parseNetworkReadError(std::stringLiteral("wrong return code for clan invite ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                     return;
                 }
                 return;
             }
             break;
             default:
-                parseNetworkReadError(QStringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                parseNetworkReadError(std::stringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                 return;
             break;
         }
@@ -785,13 +785,13 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 //Destroy an object
                 case 0x02:
                 {
-                    if(size!=((int)sizeof(quint16)+sizeof(quint32)))
+                    if(size!=((int)sizeof(uint16_t)+sizeof(uint32_t)))
                     {
                         parseNetworkReadError("wrong remaining size for destroy item id");
                         return;
                     }
-                    const quint16 &itemId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
-                    const quint32 &quantity=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16))));
+                    const uint16_t &itemId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData)));
+                    const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+sizeof(uint16_t))));
                     destroyObject(itemId,quantity);
                     return;
                 }
@@ -802,12 +802,12 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                     QByteArray data(rawData,size);
                     QDataStream in(data);
                     in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
-                    if((data.size()-in.device()->pos())<((int)sizeof(quint8)))
+                    if((data.size()-in.device()->pos())<((int)sizeof(uint8_t)))
                     {
                         parseNetworkReadError("wrong remaining size for trade add type");
                         return;
                     }
-                    quint8 type;
+                    uint8_t type;
                     in >> type;
                     switch(type)
                     {
@@ -827,19 +827,19 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                         //item
                         case 0x02:
                         {
-                            if((data.size()-in.device()->pos())<((int)sizeof(quint16)))
+                            if((data.size()-in.device()->pos())<((int)sizeof(uint16_t)))
                             {
                                 parseNetworkReadError("wrong remaining size for trade add item id");
                                 return;
                             }
-                            quint16 item;
+                            uint16_t item;
                             in >> item;
-                            if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                            if((data.size()-in.device()->pos())<((int)sizeof(uint32_t)))
                             {
                                 parseNetworkReadError("wrong remaining size for trade add item quantity");
                                 return;
                             }
-                            quint32 quantity;
+                            uint32_t quantity;
                             in >> quantity;
                             tradeAddTradeObject(item,quantity);
                         }
@@ -847,12 +847,12 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                         //monster
                         case 0x03:
                         {
-                            if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                            if((data.size()-in.device()->pos())<((int)sizeof(uint32_t)))
                             {
                                 parseNetworkReadError("wrong remaining size for trade add monster");
                                 return;
                             }
-                            quint32 monsterId;
+                            uint32_t monsterId;
                             in >> monsterId;
                             tradeAddTradeMonster(monsterId);
                         }
@@ -864,11 +864,11 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                     }
                     if((in.device()->size()-in.device()->pos())!=0)
                     {
-                        parseNetworkReadError(QStringLiteral("remaining data: parsenormalOutput(%1,%2): %3 %4")
+                        parseNetworkReadError(std::stringLiteral("remaining data: parsenormalOutput(%1,%2): %3 %4")
                                    .arg(mainCodeType)
                                    .arg(subCodeType)
-                                   .arg(QString(data.mid(0,in.device()->pos()).toHex()))
-                                   .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                                   .arg(std::string(data.mid(0,in.device()->pos()).toHex()))
+                                   .arg(std::string(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
                                    );
                         return;
                     }
@@ -890,54 +890,54 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                     QDataStream in(data);
                     in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
                     qint64 cash;
-                    QList<QPair<quint16, qint32> > items;
-                    QList<quint32> withdrawMonsters;
-                    QList<quint32> depositeMonsters;
+                    std::vector<std::pair<uint16_t, int32_t> > items;
+                    std::vector<uint32_t> withdrawMonsters;
+                    std::vector<uint32_t> depositeMonsters;
                     if((data.size()-in.device()->pos())<((int)sizeof(qint64)))
                     {
                         parseNetworkReadError("wrong remaining size for trade add monster");
                         return;
                     }
                     in >> cash;
-                    quint16 size16;
-                    if((data.size()-in.device()->pos())<((int)sizeof(quint16)))
+                    uint16_t size16;
+                    if((data.size()-in.device()->pos())<((int)sizeof(uint16_t)))
                     {
                         parseNetworkReadError("wrong remaining size for trade add monster");
                         return;
                     }
                     in >> size16;
-                    quint32 index=0;
+                    uint32_t index=0;
                     while(index<size16)
                     {
-                        quint16 id;
-                        if((data.size()-in.device()->pos())<((int)sizeof(quint16)))
+                        uint16_t id;
+                        if((data.size()-in.device()->pos())<((int)sizeof(uint16_t)))
                         {
                             parseNetworkReadError("wrong remaining size for trade add monster");
                             return;
                         }
                         in >> id;
-                        qint32 quantity;
-                        if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                        int32_t quantity;
+                        if((data.size()-in.device()->pos())<((int)sizeof(uint32_t)))
                         {
                             parseNetworkReadError("wrong remaining size for trade add monster");
                             return;
                         }
                         in >> quantity;
-                        items << QPair<quint16, qint32>(id,quantity);
+                        items << std::pair<uint16_t, int32_t>(id,quantity);
                         index++;
                     }
-                    if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                    if((data.size()-in.device()->pos())<((int)sizeof(uint32_t)))
                     {
                         parseNetworkReadError("wrong remaining size for trade add monster");
                         return;
                     }
-                    quint32 size;
+                    uint32_t size;
                     in >> size;
                     index=0;
                     while(index<size)
                     {
-                        quint32 id;
-                        if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                        uint32_t id;
+                        if((data.size()-in.device()->pos())<((int)sizeof(uint32_t)))
                         {
                             parseNetworkReadError("wrong remaining size for trade add monster");
                             return;
@@ -946,7 +946,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                         withdrawMonsters << id;
                         index++;
                     }
-                    if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                    if((data.size()-in.device()->pos())<((int)sizeof(uint32_t)))
                     {
                         parseNetworkReadError("wrong remaining size for trade add monster");
                         return;
@@ -955,8 +955,8 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                     index=0;
                     while(index<size)
                     {
-                        quint32 id;
-                        if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                        uint32_t id;
+                        if((data.size()-in.device()->pos())<((int)sizeof(uint32_t)))
                         {
                             parseNetworkReadError("wrong remaining size for trade add monster");
                             return;
@@ -968,11 +968,11 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                     wareHouseStore(cash,items,withdrawMonsters,depositeMonsters);
                     if((in.device()->size()-in.device()->pos())!=0)
                     {
-                        parseNetworkReadError(QStringLiteral("remaining data: parsenormalOutput(%1,%2): %3 %4")
+                        parseNetworkReadError(std::stringLiteral("remaining data: parsenormalOutput(%1,%2): %3 %4")
                                    .arg(mainCodeType)
                                    .arg(subCodeType)
-                                   .arg(QString(data.mid(0,in.device()->pos()).toHex()))
-                                   .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                                   .arg(std::string(data.mid(0,in.device()->pos()).toHex()))
+                                   .arg(std::string(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
                                    );
                         return;
                     }
@@ -987,13 +987,13 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 case 0x08:
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(size!=(int)sizeof(quint8))
+                    if(size!=(int)sizeof(uint8_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                        parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(QByteArray(rawData,size).toHex())));
                         return;
                     }
                     #endif
-                    const quint8 &plant_id=*rawData;
+                    const uint8_t &plant_id=*rawData;
                     plantSeed(plant_id);
                     return;
                 }
@@ -1004,7 +1004,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 break;
                 #endif
                 default:
-                    parseNetworkReadError(QStringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                    parseNetworkReadError(std::stringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                     return;
                 break;
             }
@@ -1020,13 +1020,13 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 //Learn skill
                 case 0x04:
                 {
-                    if(size!=((int)sizeof(quint32)+sizeof(quint16)))
+                    if(size!=((int)sizeof(uint32_t)+sizeof(uint16_t)))
                     {
                         parseNetworkReadError("wrong remaining size for learn skill");
                         return;
                     }
-                    const quint32 &monsterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
-                    const quint16 &skill=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+sizeof(quint32))));
+                    const uint32_t &monsterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData)));
+                    const uint16_t &skill=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData+sizeof(uint32_t))));
                     learnSkill(monsterId,skill);
                     return;
                 }
@@ -1038,12 +1038,12 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 //Request bot fight
                 case 0x07:
                 {
-                    if(size!=((int)sizeof(quint16)))
+                    if(size!=((int)sizeof(uint16_t)))
                     {
                         parseNetworkReadError("wrong remaining size for request bot fight");
                         return;
                     }
-                    const quint16 &fightId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                    const uint16_t &fightId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData)));
                     requestFight(fightId);
                     return;
                 }
@@ -1051,12 +1051,12 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 //move the monster
                 case 0x08:
                 {
-                    if(size!=((int)sizeof(quint8)*2))
+                    if(size!=((int)sizeof(uint8_t)*2))
                     {
                         parseNetworkReadError("wrong remaining size for move monster");
                         return;
                     }
-                    const quint8 &moveWay=*rawData;
+                    const uint8_t &moveWay=*rawData;
                     bool moveUp;
                     switch(moveWay)
                     {
@@ -1070,7 +1070,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                             parseNetworkReadError("wrong move up value");
                         return;
                     }
-                    const quint8 &position=*(rawData+sizeof(quint8));
+                    const uint8_t &position=*(rawData+sizeof(uint8_t));
                     moveMonster(moveUp,position);
                     return;
                 }
@@ -1078,12 +1078,12 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 //change monster in fight, monster id in db
                 case 0x09:
                 {
-                    if(size!=((int)sizeof(quint32)))
+                    if(size!=((int)sizeof(uint32_t)))
                     {
                         parseNetworkReadError("wrong remaining size for monster in fight");
                         return;
                     }
-                    const quint32 &monsterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
+                    const uint32_t &monsterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData)));
                     changeOfMonsterInFight(monsterId);
                     return;
                 }
@@ -1092,12 +1092,12 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 //Monster evolution validated
                 case 0x0A:
                 {
-                    if(size!=((int)sizeof(quint32)))
+                    if(size!=((int)sizeof(uint32_t)))
                     {
                         parseNetworkReadError("wrong remaining size for monster evolution validated");
                         return;
                     }
-                    const quint32 &monsterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
+                    const uint32_t &monsterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData)));
                     confirmEvolution(monsterId);
                     return;
                 }
@@ -1105,19 +1105,19 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 //Use object on monster
                 case 0x0B:
                 {
-                    if(size<((int)sizeof(quint16)+(int)sizeof(quint32)))
+                    if(size<((int)sizeof(uint16_t)+(int)sizeof(uint32_t)))
                     {
                         parseNetworkReadError("wrong remaining size for use object on monster");
                         return;
                     }
-                    const quint16 &item=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
-                    const quint32 &monsterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16))));
+                    const uint16_t &item=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData)));
+                    const uint32_t &monsterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+sizeof(uint16_t))));
                     useObjectOnMonster(item,monsterId);
                     return;
                 }
                 break;
                 default:
-                    parseNetworkReadError(QStringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                    parseNetworkReadError(std::stringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                     return;
                 break;
             }
@@ -1130,13 +1130,13 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 case 0x01:
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(size!=((int)sizeof(quint16)))
+                    if(size!=((int)sizeof(uint16_t)))
                     {
                         parseNetworkReadError("wrong remaining size for quest start");
                         return;
                     }
                     #endif
-                    const quint16 &questId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                    const uint16_t &questId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData)));
                     newQuestAction(QuestAction_Start,questId);
                     return;
                 }
@@ -1145,13 +1145,13 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 case 0x02:
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(size!=((int)sizeof(quint16)))
+                    if(size!=((int)sizeof(uint16_t)))
                     {
                         parseNetworkReadError("wrong remaining size for quest finish");
                         return;
                     }
                     #endif
-                    const quint16 &questId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                    const uint16_t &questId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData)));
                     newQuestAction(QuestAction_Finish,questId);
                     return;
                 }
@@ -1160,13 +1160,13 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 case 0x03:
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(size!=((int)sizeof(quint16)))
+                    if(size!=((int)sizeof(uint16_t)))
                     {
                         parseNetworkReadError("wrong remaining size for quest cancel");
                         return;
                     }
                     #endif
-                    const quint16 &questId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                    const uint16_t &questId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData)));
                     newQuestAction(QuestAction_Cancel,questId);
                     return;
                 }
@@ -1175,13 +1175,13 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 case 0x04:
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(size!=((int)sizeof(quint16)))
+                    if(size!=((int)sizeof(uint16_t)))
                     {
                         parseNetworkReadError("wrong remaining size for quest next step");
                         return;
                     }
                     #endif
-                    const quint32 &questId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                    const uint32_t &questId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData)));
                     newQuestAction(QuestAction_NextStep,questId);
                     return;
                 }
@@ -1190,13 +1190,13 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 case 0x05:
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(size!=((int)sizeof(quint8)))
+                    if(size!=((int)sizeof(uint8_t)))
                     {
                         parseNetworkReadError("wrong remaining size for city capture");
                         return;
                     }
                     #endif
-                    const quint8 &cancel=*rawData;
+                    const uint8_t &cancel=*rawData;
                     if(cancel==0x00)
                         waitingForCityCaputre(false);
                     else
@@ -1205,20 +1205,20 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 }
                 break;
                 default:
-                    parseNetworkReadError(QStringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                    parseNetworkReadError(std::stringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                     return;
                 break;
             }
         break;
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType));
             return;
         break;
     }
 }
 
 //have query with reply
-void Client::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+void Client::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     if(stopIt)
         return;
@@ -1234,20 +1234,20 @@ void Client::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,con
     }
     if(account_id==0)
     {
-        parseNetworkReadError(QStringLiteral("is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+        parseNetworkReadError(std::stringLiteral("is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
         return;
     }
     if(!character_loaded)
     {
-        parseNetworkReadError(QStringLiteral("charaters is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+        parseNetworkReadError(std::stringLiteral("charaters is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
         return;
     }
     //do the work here
-    parseNetworkReadError(QStringLiteral("no query with only the main code for now, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+    parseNetworkReadError(std::stringLiteral("no query with only the main code for now, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
     return;
 }
 
-void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *rawData,const unsigned int &size)
+void Client::parseFullQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char *rawData,const unsigned int &size)
 {
     if(stopIt)
         return;
@@ -1258,7 +1258,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             #endif
             )
     {
-        parseNetworkReadError(QStringLiteral("is not logged, parseQuery(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+        parseNetworkReadError(std::stringLiteral("is not logged, parseQuery(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
         return;
     }
     const bool goodQueryBeforeCharacterLoaded=mainCodeType==0x02 &&
@@ -1274,7 +1274,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                 );
     if(!character_loaded && !goodQueryBeforeCharacterLoaded)
     {
-        parseNetworkReadError(QStringLiteral("charaters is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+        parseNetworkReadError(std::stringLiteral("charaters is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
         return;
     }
     #ifdef CATCHCHALLENGER_DDOS_FILTER
@@ -1287,7 +1287,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
     #endif
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    normalOutput(QStringLiteral("parseQuery(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data.toHex())));
+    normalOutput(std::stringLiteral("parseQuery(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(std::string(data.toHex())));
     #endif
     switch(mainCodeType)
     {
@@ -1300,69 +1300,69 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             {
                 if(character_loaded)
                 {
-                    parseNetworkReadError(QStringLiteral("charaters is logged, deny charaters add/select/delete, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+                    parseNetworkReadError(std::stringLiteral("charaters is logged, deny charaters add/select/delete, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
                     return;
                 }
                 QByteArray data(rawData,size);
                 QDataStream in(data);
                 in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
-                quint8 profileIndex;
-                QString pseudo;
-                quint8 skinId;
-                quint8 charactersGroupIndex;
-                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                uint8_t profileIndex;
+                std::string pseudo;
+                uint8_t skinId;
+                uint8_t charactersGroupIndex;
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                     return;
                 }
                 in >> charactersGroupIndex;
-                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                     return;
                 }
                 in >> profileIndex;
                 //pseudo
                 {
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                     {
-                        parseNetworkReadError("wrong utf8 to QString size in PM for text size");
+                        parseNetworkReadError("wrong utf8 to std::string size in PM for text size");
                         return;
                     }
-                    quint8 textSize;
+                    uint8_t textSize;
                     in >> textSize;
                     if(textSize>0)
                     {
                         if(textSize>CommonSettingsCommon::commonSettingsCommon.max_pseudo_size)
                         {
-                            parseNetworkReadError(QStringLiteral("pseudo size is too big: %1 because is greater than %2").arg(pseudo.size()).arg(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size));
+                            parseNetworkReadError(std::stringLiteral("pseudo size is too big: %1 because is greater than %2").arg(pseudo.size()).arg(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size));
                             return;
                         }
                         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
                         {
-                            parseNetworkReadError("wrong utf8 to QString size in PM for text");
+                            parseNetworkReadError("wrong utf8 to std::string size in PM for text");
                             return;
                         }
                         const QByteArray &rawText=data.mid(in.device()->pos(),textSize);
-                        pseudo=QString::fromUtf8(rawText.data(),rawText.size());
+                        pseudo=std::string::fromUtf8(rawText.data(),rawText.size());
                         in.device()->seek(in.device()->pos()+rawText.size());
                     }
                 }
-                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                 {
-                    parseNetworkReadError(QStringLiteral("error to get skin with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    parseNetworkReadError(std::stringLiteral("error to get skin with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                     return;
                 }
                 in >> skinId;
                 addCharacter(queryNumber,profileIndex,pseudo,skinId);
                 if((in.device()->size()-in.device()->pos())!=0)
                 {
-                    parseNetworkReadError(QStringLiteral("remaining data: parseQuery(%1,%2,%3): %4 %5")
+                    parseNetworkReadError(std::stringLiteral("remaining data: parseQuery(%1,%2,%3): %4 %5")
                                .arg(mainCodeType)
                                .arg(subCodeType)
                                .arg(queryNumber)
-                               .arg(QString(data.mid(0,in.device()->pos()).toHex()))
-                               .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                               .arg(std::string(data.mid(0,in.device()->pos()).toHex()))
+                               .arg(std::string(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
                                );
                     return;
                 }
@@ -1374,18 +1374,18 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             {
                 if(character_loaded)
                 {
-                    parseNetworkReadError(QStringLiteral("charaters is logged, deny charaters add/select/delete, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+                    parseNetworkReadError(std::stringLiteral("charaters is logged, deny charaters add/select/delete, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
                     return;
                 }
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if(size!=(int)sizeof(quint8)+sizeof(quint32))
+                if(size!=(int)sizeof(uint8_t)+sizeof(uint32_t))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                    parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(QByteArray(rawData,size).toHex())));
                     return;
                 }
                 #endif
                 //skip charactersGroupIndex with rawData+1
-                const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+1)));
+                const uint32_t &characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+1)));
                 removeCharacterLater(queryNumber,characterId);
             }
             break;
@@ -1394,18 +1394,18 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             {
                 if(character_loaded)
                 {
-                    parseNetworkReadError(QStringLiteral("charaters is logged, deny charaters add/select/delete, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+                    parseNetworkReadError(std::stringLiteral("charaters is logged, deny charaters add/select/delete, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
                     return;
                 }
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if(size!=(int)sizeof(quint8)+sizeof(quint32)+sizeof(quint32))
+                if(size!=(int)sizeof(uint8_t)+sizeof(uint32_t)+sizeof(uint32_t))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                    parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(QByteArray(rawData,size).toHex())));
                     return;
                 }
                 #endif
                 //skip charactersGroupIndex with rawData+4+1
-                const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+1+4)));
+                const uint32_t &characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+1+4)));
                 selectCharacter(queryNumber,characterId);
             }
             break;
@@ -1415,13 +1415,13 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             {
                 if(character_loaded)
                 {
-                    parseNetworkReadError(QStringLiteral("charaters is logged, deny charaters add/select/delete, parseQuery(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    parseNetworkReadError(std::stringLiteral("charaters is logged, deny charaters add/select/delete, parseQuery(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     return;
                 }
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(size!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, subCodeType: %2, data: %3").arg(mainCodeType).arg(subCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                    parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, subCodeType: %2, data: %3").arg(mainCodeType).arg(subCodeType).arg(std::string(QByteArray(rawData,size).toHex())));
                     return;
                 }
                 #endif
@@ -1468,12 +1468,12 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                 QDataStream in(data);
                 in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
 
-                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                     return;
                 }
-                quint8 stepToSkip;
+                uint8_t stepToSkip;
                 in >> stepToSkip;
                 switch(stepToSkip)
                 {
@@ -1482,7 +1482,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                         {}
                         else
                         {
-                            parseNetworkReadError(QStringLiteral("step out of range to get datapack base but already in highter level"));
+                            parseNetworkReadError(std::stringLiteral("step out of range to get datapack base but already in highter level"));
                             return;
                         }
                     break;
@@ -1493,7 +1493,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                         {}
                         else
                         {
-                            parseNetworkReadError(QStringLiteral("step out of range to get datapack base but already in highter level"));
+                            parseNetworkReadError(std::stringLiteral("step out of range to get datapack base but already in highter level"));
                             return;
                         }
                     break;
@@ -1506,34 +1506,34 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                         {}
                         else
                         {
-                            parseNetworkReadError(QStringLiteral("step out of range to get datapack base but already in highter level"));
+                            parseNetworkReadError(std::stringLiteral("step out of range to get datapack base but already in highter level"));
                             return;
                         }
                     break;
                     default:
-                        parseNetworkReadError(QStringLiteral("step out of range to get datapack: %1").arg(stepToSkip));
+                        parseNetworkReadError(std::stringLiteral("step out of range to get datapack: %1").arg(stepToSkip));
                     return;
                 }
 
-                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                     return;
                 }
-                quint8 textSize;
-                quint32 number_of_file;
+                uint8_t textSize;
+                uint32_t number_of_file;
                 in >> number_of_file;
-                QStringList files;
-                QList<quint32> partialHashList;
-                QString tempFileName;
-                quint32 partialHash;
-                quint32 index=0;
+                std::stringList files;
+                std::vector<uint32_t> partialHashList;
+                std::string tempFileName;
+                uint32_t partialHash;
+                uint32_t index=0;
                 while(index<number_of_file)
                 {
                     {
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                         {
-                            parseNetworkReadError("wrong utf8 to QString size in PM for text size");
+                            parseNetworkReadError("wrong utf8 to std::string size in PM for text size");
                             return;
                         }
                         in >> textSize;
@@ -1542,33 +1542,33 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                         {
                             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
                             {
-                                parseNetworkReadError(QStringLiteral("wrong utf8 to QString size for file name: parseQuery(%1,%2,%3): %4 %5")
+                                parseNetworkReadError(std::stringLiteral("wrong utf8 to std::string size for file name: parseQuery(%1,%2,%3): %4 %5")
                                            .arg(mainCodeType)
                                            .arg(subCodeType)
                                            .arg(queryNumber)
-                                           .arg(QString(data.mid(0,in.device()->pos()).toHex()))
-                                           .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                                           .arg(std::string(data.mid(0,in.device()->pos()).toHex()))
+                                           .arg(std::string(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
                                            );
                                 return;
                             }
                             const QByteArray &rawText=data.mid(in.device()->pos(),textSize);
-                            tempFileName=QString::fromUtf8(rawText.data(),rawText.size());
+                            tempFileName=std::string::fromUtf8(rawText.data(),rawText.size());
                             in.device()->seek(in.device()->pos()+rawText.size());
                         }
                     }
                     if((in.device()->size()-in.device()->pos())<1)
                     {
-                        parseNetworkReadError(QStringLiteral("missing header utf8 datapack file list query"));
+                        parseNetworkReadError(std::stringLiteral("missing header utf8 datapack file list query"));
                         return;
                     }
                     files << tempFileName;
-                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size for id with main ident: %1, subIdent: %2, remaining: %3, lower than: %4")
+                        parseNetworkReadError(std::stringLiteral("wrong size for id with main ident: %1, subIdent: %2, remaining: %3, lower than: %4")
                             .arg(mainCodeType)
                             .arg(subCodeType)
                             .arg(in.device()->size()-in.device()->pos())
-                            .arg((int)sizeof(quint32))
+                            .arg((int)sizeof(uint32_t))
                             );
                         return;
                     }
@@ -1579,12 +1579,12 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                 datapackList(queryNumber,files,partialHashList);
                 if((in.device()->size()-in.device()->pos())!=0)
                 {
-                    parseNetworkReadError(QStringLiteral("remaining data: parseQuery(%1,%2,%3): %4 %5")
+                    parseNetworkReadError(std::stringLiteral("remaining data: parseQuery(%1,%2,%3): %4 %5")
                                .arg(mainCodeType)
                                .arg(subCodeType)
                                .arg(queryNumber)
-                               .arg(QString(data.mid(0,in.device()->pos()).toHex()))
-                               .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                               .arg(std::string(data.mid(0,in.device()->pos()).toHex()))
+                               .arg(std::string(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
                                );
                     return;
                 }
@@ -1597,12 +1597,12 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                 QByteArray data(rawData,size);
                 QDataStream in(data);
                 in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
-                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                     return;
                 }
-                quint8 clanActionId;
+                uint8_t clanActionId;
                 in >> clanActionId;
                 switch(clanActionId)
                 {
@@ -1612,30 +1612,30 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                     {
                         if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
                         {
-                            parseNetworkReadError(QStringLiteral("error at datapack file list query"));
+                            parseNetworkReadError(std::stringLiteral("error at datapack file list query"));
                             return;
                         }
-                        QString tempString;
+                        std::string tempString;
                         in >> tempString;
                         clanAction(queryNumber,clanActionId,tempString);
                     }
                     break;
                     case 0x02:
                     case 0x03:
-                        clanAction(queryNumber,clanActionId,QString());
+                        clanAction(queryNumber,clanActionId,std::string());
                     break;
                     default:
-                    parseNetworkReadError(QStringLiteral("unknown clan action code"));
+                    parseNetworkReadError(std::stringLiteral("unknown clan action code"));
                     return;
                 }
                 if((in.device()->size()-in.device()->pos())!=0)
                 {
-                    parseNetworkReadError(QStringLiteral("remaining data: parseQuery(%1,%2,%3): %4 %5")
+                    parseNetworkReadError(std::stringLiteral("remaining data: parseQuery(%1,%2,%3): %4 %5")
                                .arg(mainCodeType)
                                .arg(subCodeType)
                                .arg(queryNumber)
-                               .arg(QString(data.mid(0,in.device()->pos()).toHex()))
-                               .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                               .arg(std::string(data.mid(0,in.device()->pos()).toHex()))
+                               .arg(std::string(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
                                );
                     return;
                 }
@@ -1643,7 +1643,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             }
             break;
             default:
-                parseNetworkReadError(QStringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                parseNetworkReadError(std::stringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                 return;
             break;
         }
@@ -1656,13 +1656,13 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             case 0x06:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if(size!=(int)sizeof(quint8))
+                if(size!=(int)sizeof(uint8_t))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                    parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(QByteArray(rawData,size).toHex())));
                     return;
                 }
                 #endif
-                const quint8 &plant_id=*rawData;
+                const uint8_t &plant_id=*rawData;
                 plantSeed(queryNumber,plant_id);
                 return;
             }
@@ -1676,13 +1676,13 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             case 0x08:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if(size!=(int)sizeof(quint16))
+                if(size!=(int)sizeof(uint16_t))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                    parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(QByteArray(rawData,size).toHex())));
                     return;
                 }
                 #endif
-                const quint16 &recipe_id=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                const uint16_t &recipe_id=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData)));
                 useRecipe(queryNumber,recipe_id);
                 return;
             }
@@ -1691,13 +1691,13 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             case 0x09:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if(size!=(int)sizeof(quint16))
+                if(size!=(int)sizeof(uint16_t))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                    parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(QByteArray(rawData,size).toHex())));
                     return;
                 }
                 #endif
-                const quint16 &objectId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                const uint16_t &objectId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData)));
                 useObject(queryNumber,objectId);
                 return;
             }
@@ -1706,13 +1706,13 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             case 0x0A:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if(size!=(int)sizeof(quint16))
+                if(size!=(int)sizeof(uint16_t))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                    parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(QByteArray(rawData,size).toHex())));
                     return;
                 }
                 #endif
-                const quint16 &shopId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                const uint16_t &shopId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData)));
                 getShopList(queryNumber,shopId);
                 return;
             }
@@ -1721,16 +1721,16 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             case 0x0B:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if(size!=(int)sizeof(quint16)*2+sizeof(quint32)*2)
+                if(size!=(int)sizeof(uint16_t)*2+sizeof(uint32_t)*2)
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                    parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(QByteArray(rawData,size).toHex())));
                     return;
                 }
                 #endif
-                const quint16 &shopId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
-                const quint16 &objectId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+sizeof(quint16))));
-                const quint32 &quantity=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2)));
-                const quint32 &price=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2+sizeof(quint32))));
+                const uint16_t &shopId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData)));
+                const uint16_t &objectId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData+sizeof(uint16_t))));
+                const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+sizeof(uint16_t)*2)));
+                const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+sizeof(uint16_t)*2+sizeof(uint32_t))));
                 buyObject(queryNumber,shopId,objectId,quantity,price);
                 return;
             }
@@ -1739,16 +1739,16 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             case 0x0C:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if(size!=(int)sizeof(quint16)*2+sizeof(quint32)*2)
+                if(size!=(int)sizeof(uint16_t)*2+sizeof(uint32_t)*2)
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                    parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(QByteArray(rawData,size).toHex())));
                     return;
                 }
                 #endif
-                const quint16 &shopId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
-                const quint16 &objectId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+sizeof(quint16))));
-                const quint32 &quantity=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2)));
-                const quint32 &price=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2+sizeof(quint32))));
+                const uint16_t &shopId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData)));
+                const uint16_t &objectId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData+sizeof(uint16_t))));
+                const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+sizeof(uint16_t)*2)));
+                const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+sizeof(uint16_t)*2+sizeof(uint32_t))));
                 sellObject(queryNumber,shopId,objectId,quantity,price);
                 return;
             }
@@ -1756,13 +1756,13 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             case 0x0D:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if(size!=(int)sizeof(quint16))
+                if(size!=(int)sizeof(uint16_t))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                    parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(QByteArray(rawData,size).toHex())));
                     return;
                 }
                 #endif
-                const quint16 &factoryId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                const uint16_t &factoryId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData)));
                 getFactoryList(queryNumber,factoryId);
                 return;
             }
@@ -1770,16 +1770,16 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             case 0x0E:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if(size!=(int)sizeof(quint16)*2+sizeof(quint32)*2)
+                if(size!=(int)sizeof(uint16_t)*2+sizeof(uint32_t)*2)
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                    parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(QByteArray(rawData,size).toHex())));
                     return;
                 }
                 #endif
-                const quint16 &factoryId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
-                const quint16 &objectId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+sizeof(quint16))));
-                const quint32 &quantity=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2)));
-                const quint32 &price=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2+sizeof(quint32))));
+                const uint16_t &factoryId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData)));
+                const uint16_t &objectId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData+sizeof(uint16_t))));
+                const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+sizeof(uint16_t)*2)));
+                const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+sizeof(uint16_t)*2+sizeof(uint32_t))));
                 buyFactoryProduct(queryNumber,factoryId,objectId,quantity,price);
                 return;
             }
@@ -1787,16 +1787,16 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             case 0x0F:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if(size!=(int)sizeof(quint16)*2+sizeof(quint32)*2)
+                if(size!=(int)sizeof(uint16_t)*2+sizeof(uint32_t)*2)
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                    parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(QByteArray(rawData,size).toHex())));
                     return;
                 }
                 #endif
-                const quint16 &factoryId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
-                const quint16 &objectId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+sizeof(quint16))));
-                const quint32 &quantity=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2)));
-                const quint32 &price=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2+sizeof(quint32))));
+                const uint16_t &factoryId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData)));
+                const uint16_t &objectId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData+sizeof(uint16_t))));
+                const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+sizeof(uint16_t)*2)));
+                const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+sizeof(uint16_t)*2+sizeof(uint32_t))));
                 sellFactoryResource(queryNumber,factoryId,objectId,quantity,price);
                 return;
             }
@@ -1810,12 +1810,12 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                 QByteArray data(rawData,size);
                 QDataStream in(data);
                 in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
-                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                     return;
                 }
-                quint8 queryType;
+                uint8_t queryType;
                 in >> queryType;
                 switch(queryType)
                 {
@@ -1823,46 +1823,46 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                     case 0x02:
                     break;
                     default:
-                        parseNetworkReadError(QStringLiteral("market return type with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        parseNetworkReadError(std::stringLiteral("market return type with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                     return;
                 }
                 if(queryType==0x01)
                 {
-                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                         return;
                     }
-                    quint32 marketObjectId;
+                    uint32_t marketObjectId;
                     in >> marketObjectId;
-                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                         return;
                     }
-                    quint32 quantity;
+                    uint32_t quantity;
                     in >> quantity;
                     buyMarketObject(queryNumber,marketObjectId,quantity);
                 }
                 else
                 {
-                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                         return;
                     }
-                    quint32 monsterId;
+                    uint32_t monsterId;
                     in >> monsterId;
                     buyMarketMonster(queryNumber,monsterId);
                 }
                 if((in.device()->size()-in.device()->pos())!=0)
                 {
-                    parseNetworkReadError(QStringLiteral("remaining data: parseQuery(%1,%2,%3): %4 %5")
+                    parseNetworkReadError(std::stringLiteral("remaining data: parseQuery(%1,%2,%3): %4 %5")
                                .arg(mainCodeType)
                                .arg(subCodeType)
                                .arg(queryNumber)
-                               .arg(QString(data.mid(0,in.device()->pos()).toHex()))
-                               .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                               .arg(std::string(data.mid(0,in.device()->pos()).toHex()))
+                               .arg(std::string(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
                                );
                     return;
                 }
@@ -1874,12 +1874,12 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                 QByteArray data(rawData,size);
                 QDataStream in(data);
                 in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
-                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                     return;
                 }
-                quint8 queryType;
+                uint8_t queryType;
                 in >> queryType;
                 switch(queryType)
                 {
@@ -1887,70 +1887,70 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                     case 0x02:
                     break;
                     default:
-                        parseNetworkReadError(QStringLiteral("market return type with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        parseNetworkReadError(std::stringLiteral("market return type with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                     return;
                 }
                 if(queryType==0x01)
                 {
-                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                         return;
                     }
-                    quint16 objectId;
+                    uint16_t objectId;
                     in >> objectId;
-                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                         return;
                     }
-                    quint32 quantity;
+                    uint32_t quantity;
                     in >> quantity;
-                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                         return;
                     }
-                    quint32 price;
+                    uint32_t price;
                     in >> price;
                     if((in.device()->size()-in.device()->pos())<(int)sizeof(double))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                         return;
                     }
                     putMarketObject(queryNumber,objectId,quantity,price);
                 }
                 else
                 {
-                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                         return;
                     }
-                    quint32 monsterId;
+                    uint32_t monsterId;
                     in >> monsterId;
-                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                         return;
                     }
-                    quint32 price;
+                    uint32_t price;
                     in >> price;
                     if((in.device()->size()-in.device()->pos())<(int)sizeof(double))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                         return;
                     }
                     putMarketMonster(queryNumber,monsterId,price);
                 }
                 if((in.device()->size()-in.device()->pos())!=0)
                 {
-                    parseNetworkReadError(QStringLiteral("remaining data: parseQuery(%1,%2,%3): %4 %5")
+                    parseNetworkReadError(std::stringLiteral("remaining data: parseQuery(%1,%2,%3): %4 %5")
                                .arg(mainCodeType)
                                .arg(subCodeType)
                                .arg(queryNumber)
-                               .arg(QString(data.mid(0,in.device()->pos()).toHex()))
-                               .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                               .arg(std::string(data.mid(0,in.device()->pos()).toHex()))
+                               .arg(std::string(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
                                );
                     return;
                 }
@@ -1966,12 +1966,12 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                 QByteArray data(rawData,size);
                 QDataStream in(data);
                 in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
-                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                     return;
                 }
-                quint8 queryType;
+                uint8_t queryType;
                 in >> queryType;
                 switch(queryType)
                 {
@@ -1979,46 +1979,46 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                     case 0x02:
                     break;
                     default:
-                        parseNetworkReadError(QStringLiteral("market return type with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        parseNetworkReadError(std::stringLiteral("market return type with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                     return;
                 }
                 if(queryType==0x01)
                 {
-                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                         return;
                     }
-                    quint32 objectId;
+                    uint32_t objectId;
                     in >> objectId;
-                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                         return;
                     }
-                    quint32 quantity;
+                    uint32_t quantity;
                     in >> quantity;
                     withdrawMarketObject(queryNumber,objectId,quantity);
                 }
                 else
                 {
-                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(data.toHex())));
                         return;
                     }
-                    quint32 monsterId;
+                    uint32_t monsterId;
                     in >> monsterId;
                     withdrawMarketMonster(queryNumber,monsterId);
                 }
                 if((in.device()->size()-in.device()->pos())!=0)
                 {
-                    parseNetworkReadError(QStringLiteral("remaining data: parseQuery(%1,%2,%3): %4 %5")
+                    parseNetworkReadError(std::stringLiteral("remaining data: parseQuery(%1,%2,%3): %4 %5")
                                .arg(mainCodeType)
                                .arg(subCodeType)
                                .arg(queryNumber)
-                               .arg(QString(data.mid(0,in.device()->pos()).toHex()))
-                               .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                               .arg(std::string(data.mid(0,in.device()->pos()).toHex()))
+                               .arg(std::string(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
                                );
                     return;
                 }
@@ -2026,20 +2026,20 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             }
             break;
             default:
-                parseNetworkReadError(QStringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                parseNetworkReadError(std::stringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                 return;
             break;
         }
         break;
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType));
             return;
         break;
     }
 }
 
 //send reply
-void Client::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+void Client::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     queryNumberList << queryNumber;
     if(stopIt)
@@ -2053,14 +2053,14 @@ void Client::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber
     }
     if(!character_loaded)
     {
-        parseNetworkReadError(QStringLiteral("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
+        parseNetworkReadError(std::stringLiteral("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
         return;
     }
-    parseNetworkReadError(QStringLiteral("The server for now not ask anything: %1, %2").arg(mainCodeType).arg(queryNumber));
+    parseNetworkReadError(std::stringLiteral("The server for now not ask anything: %1, %2").arg(mainCodeType).arg(queryNumber));
     return;
 }
 
-void Client::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+void Client::parseFullReplyData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     queryNumberList << queryNumber;
     if(stopIt)
@@ -2073,7 +2073,7 @@ void Client::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCode
     }
     if(!character_loaded)
     {
-        parseNetworkReadError(QStringLiteral("is not logged, parseReplyData(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+        parseNetworkReadError(std::stringLiteral("is not logged, parseReplyData(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
         return;
     }
     if(stopIt)
@@ -2093,7 +2093,7 @@ void Client::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCode
     }*/
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    normalOutput(QStringLiteral("parseQuery(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data.toHex())));
+    normalOutput(std::stringLiteral("parseQuery(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(std::string(data.toHex())));
     #endif
     switch(mainCodeType)
     {
@@ -2111,7 +2111,7 @@ void Client::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCode
                 removeFirstEventInQueue();
             break;
             default:
-                parseNetworkReadError(QStringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                parseNetworkReadError(std::stringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                 return;
             break;
         }
@@ -2123,13 +2123,13 @@ void Client::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCode
             case 0x01:
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(size!=(int)sizeof(quint8))
+                    if(size!=(int)sizeof(uint8_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the full reply data main ident: %1, sub ident: %2, data: %3").arg(mainCodeType).arg(subCodeType).arg(QString(QByteArray(data,size).toHex())));
+                        parseNetworkReadError(std::stringLiteral("wrong size with the full reply data main ident: %1, sub ident: %2, data: %3").arg(mainCodeType).arg(subCodeType).arg(std::string(QByteArray(data,size).toHex())));
                         return;
                     }
                     #endif
-                    const quint8 &returnCode=*data;
+                    const uint8_t &returnCode=*data;
                     switch(returnCode)
                     {
                         case 0x01:
@@ -2139,14 +2139,14 @@ void Client::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCode
                             tradeCanceled();
                         break;
                         default:
-                            parseNetworkReadError(QStringLiteral("ident: %1, sub ident: %2, unknown return code: %3").arg(mainCodeType).arg(subCodeType).arg(returnCode));
+                            parseNetworkReadError(std::stringLiteral("ident: %1, sub ident: %2, unknown return code: %3").arg(mainCodeType).arg(subCodeType).arg(returnCode));
                         break;
                     }
                     return;
                 }
             break;
             default:
-                parseNetworkReadError(QStringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                parseNetworkReadError(std::stringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                 return;
             break;
         }
@@ -2158,13 +2158,13 @@ void Client::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCode
             case 0x01:
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(size!=(int)sizeof(quint8))
+                    if(size!=(int)sizeof(uint8_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the full reply data main ident: %1, sub ident: %2, data: %3").arg(mainCodeType).arg(subCodeType).arg(QString(QByteArray(data,size).toHex())));
+                        parseNetworkReadError(std::stringLiteral("wrong size with the full reply data main ident: %1, sub ident: %2, data: %3").arg(mainCodeType).arg(subCodeType).arg(std::string(QByteArray(data,size).toHex())));
                         return;
                     }
                     #endif
-                    const quint8 &returnCode=*data;
+                    const uint8_t &returnCode=*data;
                     switch(returnCode)
                     {
                         case 0x01:
@@ -2174,29 +2174,29 @@ void Client::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCode
                             battleCanceled();
                         break;
                         default:
-                            parseNetworkReadError(QStringLiteral("ident: %1, sub ident: %2, unknown return code: %3").arg(mainCodeType).arg(subCodeType).arg(returnCode));
+                            parseNetworkReadError(std::stringLiteral("ident: %1, sub ident: %2, unknown return code: %3").arg(mainCodeType).arg(subCodeType).arg(returnCode));
                         break;
                     }
                     return;
                 }
             break;
             default:
-                parseNetworkReadError(QStringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                parseNetworkReadError(std::stringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                 return;
             break;
         }
         break;
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType));
             return;
         break;
     }
 }
 
-void Client::parseNetworkReadError(const QString &errorString)
+void Client::parseNetworkReadError(const std::string &errorString)
 {
     if(GlobalServerData::serverSettings.tolerantMode)
-        normalOutput(QStringLiteral("Packed dropped, due to: %1").arg(errorString));
+        normalOutput(std::stringLiteral("Packed dropped, due to: %1").arg(errorString));
     else
     {
         errorOutput(errorString);

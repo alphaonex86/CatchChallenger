@@ -12,21 +12,21 @@ using namespace CatchChallenger;
 
 void Client::plantSeed(
         #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-        const quint8 &query_id,
+        const uint8_t &query_id,
         #endif
-        const quint8 &plant_id)
+        const uint8_t &plant_id)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QStringLiteral("plantSeed(%1,%2)").arg(query_id).arg(plant_id));
+    normalOutput(std::stringLiteral("plantSeed(%1,%2)").arg(query_id).arg(plant_id));
     #endif
     if(!CommonDatapack::commonDatapack.plants.contains(plant_id))
     {
-        errorOutput(QStringLiteral("plant_id not found: %1").arg(plant_id));
+        errorOutput(std::stringLiteral("plant_id not found: %1").arg(plant_id));
         return;
     }
     CommonMap *map=this->map;
-    quint8 x=this->x;
-    quint8 y=this->y;
+    uint8_t x=this->x;
+    uint8_t y=this->y;
     //resolv the dirt
     switch(getLastDirection())
     {
@@ -35,7 +35,7 @@ void Client::plantSeed(
             {
                 if(!MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y,false))
                 {
-                    errorOutput(QStringLiteral("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -50,7 +50,7 @@ void Client::plantSeed(
             {
                 if(!MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y,false))
                 {
-                    errorOutput(QStringLiteral("plantSeed() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("plantSeed() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -65,7 +65,7 @@ void Client::plantSeed(
             {
                 if(!MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y,false))
                 {
-                    errorOutput(QStringLiteral("plantSeed() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("plantSeed() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -80,7 +80,7 @@ void Client::plantSeed(
             {
                 if(!MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y,false))
                 {
-                    errorOutput(QStringLiteral("plantSeed() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("plantSeed() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -95,14 +95,14 @@ void Client::plantSeed(
         return;
     }
     //check if is dirt
-    if(!static_cast<MapServer *>(map)->plants.contains(QPair<quint8,quint8>(x,y)))
+    if(!static_cast<MapServer *>(map)->plants.contains(std::pair<uint8_t,uint8_t>(x,y)))
     {
         errorOutput("Try put seed out of the dirt");
         return;
     }
     //check if is free
     {
-        const MapServer::PlantOnMap &plantOnMap=static_cast<MapServer *>(map)->plants.value(QPair<quint8,quint8>(x,y));
+        const MapServer::PlantOnMap &plantOnMap=static_cast<MapServer *>(map)->plants.value(std::pair<uint8_t,uint8_t>(x,y));
         #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
         if(public_and_private_informations.plantOnMap.contains(plantOnMap.indexOfOnMap))
         {
@@ -136,7 +136,7 @@ void Client::plantSeed(
 void Client::seedValidated()
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QStringLiteral("seedValidated()"));
+    normalOutput(std::stringLiteral("seedValidated()"));
     #endif
     /* useless, clean the protocol
     if(!ok)
@@ -149,8 +149,8 @@ void Client::seedValidated()
     }*/
     /* check if is free already done into Client::plantSeed()
     {
-        const quint16 &size=static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.size();
-        quint16 index=0;
+        const uint16_t &size=static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.size();
+        uint16_t index=0;
         while(index<size)
         {
             if(x==static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.at(index).x && y==static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.at(index).y)
@@ -173,7 +173,7 @@ void Client::seedValidated()
     #endif
 
     const quint64 &current_time=QDateTime::currentMSecsSinceEpoch()/1000;
-    const QPair<quint8,quint8> pos(plant_list_in_waiting.first().x,plant_list_in_waiting.first().y);
+    const std::pair<uint8_t,uint8_t> pos(plant_list_in_waiting.first().x,plant_list_in_waiting.first().y);
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     const MapServer::PlantOnMap &plantOnMap=static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.value(pos);
     {
@@ -208,25 +208,25 @@ void Client::seedValidated()
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
             out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-            out << (quint16)1;
+            out << (uint16_t)1;
             if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
-                out << (quint8)map->id;
+                out << (uint8_t)map->id;
             else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
-                out << (quint16)map->id;
+                out << (uint16_t)map->id;
             else
-                out << (quint32)map->id;
+                out << (uint32_t)map->id;
             out << pos.first;
             out << pos.second;
             out << plantOnMap.plant;
             if(current_time>=plantOnMap.mature_at)
-                out << (quint16)0;
+                out << (uint16_t)0;
             else if((plantOnMap.mature_at-current_time)>65535)
             {
-                normalOutput(QStringLiteral("sendNearPlant(): remaining seconds to mature is greater than the possibility: map: %1 (%2,%3), plant: %4").arg(map->map_file).arg(x).arg(y).arg(plantOnMap.plant));
-                out << (quint16)(65535);
+                normalOutput(std::stringLiteral("sendNearPlant(): remaining seconds to mature is greater than the possibility: map: %1 (%2,%3), plant: %4").arg(map->map_file).arg(x).arg(y).arg(plantOnMap.plant));
+                out << (uint16_t)(65535);
             }
             else
-                out << (quint16)(plantOnMap.mature_at-current_time);
+                out << (uint16_t)(plantOnMap.mature_at-current_time);
             finalData.resize(16+outputData.size());
             finalData.resize(ProtocolParsingBase::computeOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -235,8 +235,8 @@ void Client::seedValidated()
                     finalData.data(),0xD1,outputData.constData(),outputData.size()));
         }
 
-        quint16 index=0;
-        const quint16 &size=static_cast<MapServer *>(plant_list_in_waiting.first().map)->clientsForBroadcast.size();
+        uint16_t index=0;
+        const uint16_t &size=static_cast<MapServer *>(plant_list_in_waiting.first().map)->clientsForBroadcast.size();
         while(index<size)
         {
             static_cast<MapServer *>(plant_list_in_waiting.first().map)->clientsForBroadcast.at(index)->sendRawSmallPacket(finalData.constData(),finalData.size());
@@ -259,37 +259,37 @@ void Client::sendNearPlant()
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << static_cast<MapServer *>(map)->plants.size();
 
-    QHashIterator<QPair<quint8,quint8>,MapServerCrafting::PlantOnMap> i(static_cast<MapServer *>(map)->plants);
+    std::unordered_mapIterator<std::pair<uint8_t,uint8_t>,MapServerCrafting::PlantOnMap> i(static_cast<MapServer *>(map)->plants);
     while (i.hasNext()) {
         i.next();
 
         const MapServerCrafting::PlantOnMap &plant=i.value();
         if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
-            out << (quint8)map->id;
+            out << (uint8_t)map->id;
         else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
-            out << (quint16)map->id;
+            out << (uint16_t)map->id;
         else
-            out << (quint32)map->id;
+            out << (uint32_t)map->id;
         out << i.key().first;
         out << i.key().second;
         out << plant.plant;
         quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
         if(current_time>=plant.mature_at)
-            out << (quint16)0;
+            out << (uint16_t)0;
         else if((plant.mature_at-current_time)>65535)
         {
-            normalOutput(QStringLiteral("sendNearPlant(): remaining seconds to mature is greater than the possibility: map: %1 (%2,%3), plant: %4").arg(map->map_file).arg(x).arg(y).arg(plant.plant));
-            out << (quint16)(65535);
+            normalOutput(std::stringLiteral("sendNearPlant(): remaining seconds to mature is greater than the possibility: map: %1 (%2,%3), plant: %4").arg(map->map_file).arg(x).arg(y).arg(plant.plant));
+            out << (uint16_t)(65535);
         }
         else
-            out << (quint16)(plant.mature_at-current_time);
+            out << (uint16_t)(plant.mature_at-current_time);
         #if defined(DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE) && defined(DEBUG_MESSAGE_MAP_PLANTS)
         int remaining_seconds_to_mature;
         if(current_time>=plant.mature_at)
             remaining_seconds_to_mature=0;
         else
             remaining_seconds_to_mature=(plant.mature_at-current_time);
-        normalOutput(QStringLiteral("insert near plant: map: %1 (%2,%3), plant: %4, seconds to mature: %5 (current_time: %6, plant.mature_at: %7)").arg(map->map_file).arg(x).arg(y).arg(plant.plant).arg(remaining_seconds_to_mature).arg(current_time).arg(plant.mature_at));
+        normalOutput(std::stringLiteral("insert near plant: map: %1 (%2,%3), plant: %4, seconds to mature: %5 (current_time: %6, plant.mature_at: %7)").arg(map->map_file).arg(x).arg(y).arg(plant.plant).arg(remaining_seconds_to_mature).arg(current_time).arg(plant.mature_at));
         #endif
     }
     sendPacket(0xD1,outputData.constData(),outputData.size());
@@ -302,27 +302,27 @@ void Client::removeNearPlant()
     normalOutput("removeNearPlant()");
     #endif
     //send the remove plant
-    const quint16 &plant_list_size=static_cast<MapServer *>(map)->plants.size();
+    const uint16_t &plant_list_size=static_cast<MapServer *>(map)->plants.size();
     if(plant_list_size==0)
         return;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << plant_list_size;
-    QHashIterator<QPair<quint8,quint8>,MapServerCrafting::PlantOnMap> i(static_cast<MapServer *>(map)->plants);
+    std::unordered_mapIterator<std::pair<uint8_t,uint8_t>,MapServerCrafting::PlantOnMap> i(static_cast<MapServer *>(map)->plants);
     while (i.hasNext()) {
         i.next();
 
         if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
-            out << (quint8)map->id;
+            out << (uint8_t)map->id;
         else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
-            out << (quint16)map->id;
+            out << (uint16_t)map->id;
         else
-            out << (quint32)map->id;
+            out << (uint32_t)map->id;
         out << i.key().first;
         out << i.key().second;
         #if defined(DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE) && defined(DEBUG_MESSAGE_MAP_PLANTS)
-        normalOutput(QStringLiteral("remove near plant: map: %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+        normalOutput(std::stringLiteral("remove near plant: map: %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
         #endif
     }
     sendPacket(0xD2,outputData.constData(),outputData.size());
@@ -331,16 +331,16 @@ void Client::removeNearPlant()
 
 void Client::collectPlant(
         #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-        const quint8 &query_id
+        const uint8_t &query_id
         #endif
         )
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QStringLiteral("collectPlant(%1)").arg(query_id));
+    normalOutput(std::stringLiteral("collectPlant(%1)").arg(query_id));
     #endif
     CommonMap *map=this->map;
-    quint8 x=this->x;
-    quint8 y=this->y;
+    uint8_t x=this->x;
+    uint8_t y=this->y;
     //resolv the dirt
     switch(getLastDirection())
     {
@@ -349,7 +349,7 @@ void Client::collectPlant(
             {
                 if(!MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y,false))
                 {
-                    errorOutput(QStringLiteral("collectPlant() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("collectPlant() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -364,7 +364,7 @@ void Client::collectPlant(
             {
                 if(!MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y,false))
                 {
-                    errorOutput(QStringLiteral("collectPlant() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("collectPlant() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -379,7 +379,7 @@ void Client::collectPlant(
             {
                 if(!MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y,false))
                 {
-                    errorOutput(QStringLiteral("collectPlant() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("collectPlant() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -394,7 +394,7 @@ void Client::collectPlant(
             {
                 if(!MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y,false))
                 {
-                    errorOutput(QStringLiteral("collectPlant() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("collectPlant() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -416,7 +416,7 @@ void Client::collectPlant(
     }
     //check if is free
     const quint64 &current_time=QDateTime::currentMSecsSinceEpoch()/1000;
-    const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.value(QPair<quint8,quint8>(x,y));
+    const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.value(std::pair<uint8_t,uint8_t>(x,y));
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     if(public_and_private_informations.plantOnMap.contains(plant.indexOfOnMap))
     {
@@ -477,13 +477,13 @@ void Client::collectPlant(
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
             out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-            out << (quint16)1;
+            out << (uint16_t)1;
             if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
-                out << (quint8)map->id;
+                out << (uint8_t)map->id;
             else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
-                out << (quint16)map->id;
+                out << (uint16_t)map->id;
             else
-                out << (quint32)map->id;
+                out << (uint32_t)map->id;
             out << x;
             out << y;
             finalData.resize(16+outputData.size());
@@ -497,7 +497,7 @@ void Client::collectPlant(
         {
             //remove plan from all player display
             int sub_index=0;
-            const quint16 &size=static_cast<MapServer *>(map)->clientsForBroadcast.size();
+            const uint16_t &size=static_cast<MapServer *>(map)->clientsForBroadcast.size();
             while(sub_index<size)
             {
                 static_cast<MapServer *>(map)->clientsForBroadcast.at(sub_index)->sendRawSmallPacket(finalData.constData(),finalData.size());
@@ -519,7 +519,7 @@ void Client::collectPlant(
         //clear the server dirt
         GlobalServerData::serverPrivateVariables.plantUnusedId << plant.pointOnMapDbCode;
 
-        static_cast<MapServer *>(map)->plants[QPair<quint8,quint8>(x,y)].character=0;
+        static_cast<MapServer *>(map)->plants[std::pair<uint8_t,uint8_t>(x,y)].character=0;
         return;
     }
     else

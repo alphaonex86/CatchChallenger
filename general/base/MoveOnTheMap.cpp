@@ -18,12 +18,12 @@ void MoveOnTheMap::setLastDirection(const Direction &the_direction)
 void MoveOnTheMap::newDirection(const Direction &the_new_direction)
 {
     #ifdef DEBUG_MESSAGE_MOVEONTHEMAP
-    qDebug() << QStringLiteral("newDirection(%1)").arg(directionToString(the_new_direction));
+    qDebug() << std::stringLiteral("newDirection(%1)").arg(directionToString(the_new_direction));
     #endif
     if(last_direction!=the_new_direction)
     {
         #ifdef DEBUG_MESSAGE_MOVEONTHEMAP
-        qDebug() << QStringLiteral("send_player_move(%1,%2)").arg(last_step).arg(directionToString(the_new_direction));
+        qDebug() << std::stringLiteral("send_player_move(%1,%2)").arg(last_step).arg(directionToString(the_new_direction));
         #endif
         send_player_move(last_step,the_new_direction);
         last_step=0;
@@ -57,7 +57,7 @@ void MoveOnTheMap::newDirection(const Direction &the_new_direction)
     }
 }
 
-QString MoveOnTheMap::directionToString(const Direction &direction)
+std::string MoveOnTheMap::directionToString(const Direction &direction)
 {
     switch(direction)
     {
@@ -267,12 +267,12 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const CommonMap &map,const
     return false;
 }
 
-CatchChallenger::ParsedLayerLedges MoveOnTheMap::getLedge(const CommonMap &map, const quint8 &x, const quint8 &y)
+CatchChallenger::ParsedLayerLedges MoveOnTheMap::getLedge(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
     if(map.parsed_layer.ledges==NULL)
         return CatchChallenger::ParsedLayerLedges_NoLedges;
-    quint8 i=map.parsed_layer.ledges[x+y*(map.width)];
-    return static_cast<ParsedLayerLedges>((quint32)i);
+    uint8_t i=map.parsed_layer.ledges[x+y*(map.width)];
+    return static_cast<ParsedLayerLedges>((uint32_t)i);
 }
 
 bool MoveOnTheMap::teleport(CommonMap ** map,COORD_TYPE *x,COORD_TYPE *y)
@@ -293,21 +293,21 @@ bool MoveOnTheMap::needBeTeleported(const CommonMap &map, const COORD_TYPE &x, c
     return map.teleporter.contains(x+y*map.width);
 }
 
-bool MoveOnTheMap::isWalkable(const CommonMap &map, const quint8 &x, const quint8 &y)
+bool MoveOnTheMap::isWalkable(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
     if(map.parsed_layer.walkable==NULL)
         return false;
     return map.parsed_layer.walkable[x+y*(map.width)];
 }
 
-bool MoveOnTheMap::isDirt(const CommonMap &map, const quint8 &x, const quint8 &y)
+bool MoveOnTheMap::isDirt(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
     if(map.parsed_layer.dirt==NULL)
         return false;
     return map.parsed_layer.dirt[x+y*(map.width)];
 }
 
-MonstersCollisionValue MoveOnTheMap::getZoneCollision(const CommonMap &map, const quint8 &x, const quint8 &y)
+MonstersCollisionValue MoveOnTheMap::getZoneCollision(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
     if(map.parsed_layer.monstersCollisionMap==NULL)
         return MonstersCollisionValue();

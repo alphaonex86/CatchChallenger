@@ -150,9 +150,9 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_static(void *
 
 void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
 {
-    std::unordered_map<std::string,quint8> reputationResolution;
+    std::unordered_map<std::string,uint8_t> reputationResolution;
     {
-        quint8 index=0;
+        uint8_t index=0;
         while(index<CommonDatapack::commonDatapack.reputation.size())
         {
             reputationResolution[CommonDatapack::commonDatapack.reputation.at(index).name]=index;
@@ -280,7 +280,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
         }
         if(BaseServerMasterSendDatapack::skinList.find(skin)!=BaseServerMasterSendDatapack::skinList.end())
         {
-            const quint8 &internalValue=BaseServerMasterSendDatapack::skinList.at(skin);
+            const uint8_t &internalValue=BaseServerMasterSendDatapack::skinList.at(skin);
             dictionary_skin_database_to_internal[lastId]=internalValue;
             dictionary_skin_internal_to_database[internalValue]=lastId;
             foundSkin.insert(skin);
@@ -358,7 +358,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_static(void *obj
 
 void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
 {
-    std::unordered_map<std::string,quint8> profileNameToId;
+    std::unordered_map<std::string,uint8_t> profileNameToId;
     {
         unsigned int index=0;
         while(index<CommonDatapack::commonDatapack.profileList.size())
@@ -394,7 +394,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
         }
         if(profileNameToId.find(starter)!=profileNameToId.end())
         {
-            const quint8 &internalValue=profileNameToId.at(starter);
+            const uint8_t &internalValue=profileNameToId.at(starter);
             dictionary_starter_database_to_internal[lastId]=internalValue;
             dictionary_starter_internal_to_database[internalValue]=lastId;
             foundstarter.insert(CommonDatapack::commonDatapack.profileList.at(internalValue).id);

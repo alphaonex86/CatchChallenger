@@ -2,6 +2,6 @@
 
 using namespace CatchChallenger;
 
-QList<MapServer *> DictionaryServer::dictionary_map_database_to_internal;
-QHash<QString,QHash<QPair<quint8/*x*/,quint8/*y*/>,quint16/*db code*/> > DictionaryServer::dictionary_pointOnMap_internal_to_database;
-QList<DictionaryServer::MapAndPoint> DictionaryServer::dictionary_pointOnMap_database_to_internal;
+std::vector<MapServer *> DictionaryServer::dictionary_map_database_to_internal;
+std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/> > DictionaryServer::dictionary_pointOnMap_internal_to_database;
+std::vector<DictionaryServer::MapAndPoint> DictionaryServer::dictionary_pointOnMap_database_to_internal;

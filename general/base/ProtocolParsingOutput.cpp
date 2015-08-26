@@ -10,7 +10,7 @@
 
 using namespace CatchChallenger;
 
-void ProtocolParsingBase::newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
+void ProtocolParsingBase::newOutputQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber)
 {
     if(waitedReply_mainCodeType.contains(queryNumber))
     {
@@ -25,9 +25,9 @@ void ProtocolParsingBase::newOutputQuery(const quint8 &mainCodeType,const quint8
         {
             messageParsingLayer(
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return;
         }
         #endif
@@ -38,9 +38,9 @@ void ProtocolParsingBase::newOutputQuery(const quint8 &mainCodeType,const quint8
             if(replyComressionOnlyMainCodePacketServerToClient.contains(mainCodeType))
                 messageParsingLayer(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType));
+                std::stringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType));
             #endif
             #endif
         }
@@ -53,9 +53,9 @@ void ProtocolParsingBase::newOutputQuery(const quint8 &mainCodeType,const quint8
         {
             messageParsingLayer(
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return;
         }
         #endif
@@ -66,9 +66,9 @@ void ProtocolParsingBase::newOutputQuery(const quint8 &mainCodeType,const quint8
             if(replyComressionOnlyMainCodePacketClientToServer.contains(mainCodeType))
                 messageParsingLayer(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType));
+                std::stringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType));
             #endif
             #endif
         }
@@ -76,14 +76,14 @@ void ProtocolParsingBase::newOutputQuery(const quint8 &mainCodeType,const quint8
     #ifdef ProtocolParsingInputOutputDEBUG
     messageParsingLayer(
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                QString::number(isClient)+
+                std::string::number(isClient)+
                 #endif
-    QStringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2").arg(queryNumber).arg(mainCodeType));
+    std::stringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2").arg(queryNumber).arg(mainCodeType));
     #endif
     waitedReply_mainCodeType[queryNumber]=mainCodeType;
 }
 
-void ProtocolParsingBase::newFullOutputQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber)
+void ProtocolParsingBase::newFullOutputQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber)
 {
     if(waitedReply_mainCodeType.contains(queryNumber))
     {
@@ -98,9 +98,9 @@ void ProtocolParsingBase::newFullOutputQuery(const quint8 &mainCodeType,const qu
         {
             messageParsingLayer(
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return;
         }
         #endif
@@ -112,9 +112,9 @@ void ProtocolParsingBase::newFullOutputQuery(const quint8 &mainCodeType,const qu
                 if(replyComressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
                     messageParsingLayer(
                                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                QString::number(isClient)+
+                                std::string::number(isClient)+
                                 #endif
-                    QStringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3 compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+                    std::stringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3 compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             #endif
             #endif
         }
@@ -127,9 +127,9 @@ void ProtocolParsingBase::newFullOutputQuery(const quint8 &mainCodeType,const qu
         {
             messageParsingLayer(
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return;
         }
         #endif
@@ -141,9 +141,9 @@ void ProtocolParsingBase::newFullOutputQuery(const quint8 &mainCodeType,const qu
                 if(replyComressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
                     messageParsingLayer(
                                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                QString::number(isClient)+
+                                std::string::number(isClient)+
                                 #endif
-                    QStringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3 compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+                    std::stringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3 compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             #endif
             #endif
         }
@@ -151,15 +151,15 @@ void ProtocolParsingBase::newFullOutputQuery(const quint8 &mainCodeType,const qu
     #ifdef ProtocolParsingInputOutputDEBUG
     messageParsingLayer(
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                QString::number(isClient)+
+                std::string::number(isClient)+
                 #endif
-    QStringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+    std::stringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
     #endif
     waitedReply_mainCodeType[queryNumber]=mainCodeType;
     waitedReply_subCodeType[queryNumber]=subCodeType;
 }
 
-bool ProtocolParsingBase::postReplyData(const quint8 &queryNumber, const char * const data,const int &size)
+bool ProtocolParsingBase::postReplyData(const uint8_t &queryNumber, const char * const data,const int &size)
 {
     int replyOutputSizeInt=-1;
     if(replyOutputSize.contains(queryNumber))
@@ -184,9 +184,9 @@ bool ProtocolParsingBase::postReplyData(const quint8 &queryNumber, const char * 
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" postReplyData(%1,{}) compression disabled because have fixed size").arg(queryNumber));
+            std::stringLiteral(" postReplyData(%1,{}) compression disabled because have fixed size").arg(queryNumber));
             abort();
         }
         #endif
@@ -198,9 +198,9 @@ bool ProtocolParsingBase::postReplyData(const quint8 &queryNumber, const char * 
     {
         qDebug() << (
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    QString::number(isClient)+
+                    std::string::number(isClient)+
                     #endif
-        QStringLiteral(" ProtocolParsingInputOutput::postReplyData(): try reply to queryNumber: %1, but this query is not into the list").arg(queryNumber));
+        std::stringLiteral(" ProtocolParsingInputOutput::postReplyData(): try reply to queryNumber: %1, but this query is not into the list").arg(queryNumber));
         return 0;
     }
     else
@@ -211,7 +211,7 @@ bool ProtocolParsingBase::postReplyData(const quint8 &queryNumber, const char * 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
     {
-        errorParsingLayer(QString("Buffer in input is too big and will do buffer overflow, size: %1, line %2").arg(size).arg(__LINE__));
+        errorParsingLayer(std::string("Buffer in input is too big and will do buffer overflow, size: %1, line %2").arg(size).arg(__LINE__));
         abort();
     }
     #endif
@@ -267,13 +267,13 @@ QByteArray ProtocolParsingBase::computeCompression(const QByteArray &data,const 
 }
 #endif
 
-bool ProtocolParsingBase::packFullOutcommingData(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const data,const int &size)
+bool ProtocolParsingBase::packFullOutcommingData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const char * const data,const int &size)
 {
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
     {
-        errorParsingLayer(QString("Buffer in input is too big and will do buffer overflow, size: %1, line %2").arg(size).arg(__LINE__));
+        errorParsingLayer(std::string("Buffer in input is too big and will do buffer overflow, size: %1, line %2").arg(size).arg(__LINE__));
         abort();
     }
     #endif
@@ -302,13 +302,13 @@ bool ProtocolParsingBase::packFullOutcommingData(const quint8 &mainCodeType,cons
     #endif
 }
 
-bool ProtocolParsingBase::packOutcommingData(const quint8 &mainCodeType,const char * const data,const int &size)
+bool ProtocolParsingBase::packOutcommingData(const uint8_t &mainCodeType,const char * const data,const int &size)
 {
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
     {
-        errorParsingLayer(QString("Buffer in input is too big and will do buffer overflow, size: %1, line %2").arg(size).arg(__LINE__));
+        errorParsingLayer(std::string("Buffer in input is too big and will do buffer overflow, size: %1, line %2").arg(size).arg(__LINE__));
         abort();
     }
     #endif
@@ -337,13 +337,13 @@ bool ProtocolParsingBase::packOutcommingData(const quint8 &mainCodeType,const ch
     #endif
 }
 
-bool ProtocolParsingBase::packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const int &size)
+bool ProtocolParsingBase::packOutcommingQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const int &size)
 {
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
     {
-        errorParsingLayer(QString("Buffer in input is too big and will do buffer overflow, size: %1, line %2").arg(size).arg(__LINE__));
+        errorParsingLayer(std::string("Buffer in input is too big and will do buffer overflow, size: %1, line %2").arg(size).arg(__LINE__));
         abort();
     }
     #endif
@@ -374,13 +374,13 @@ bool ProtocolParsingBase::packOutcommingQuery(const quint8 &mainCodeType,const q
     #endif
 }
 
-bool ProtocolParsingBase::packFullOutcommingQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size)
+bool ProtocolParsingBase::packFullOutcommingQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const int &size)
 {
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
     {
-        errorParsingLayer(QString("Buffer in input is too big and will do buffer overflow, size: %1, line %2").arg(size).arg(__LINE__));
+        errorParsingLayer(std::string("Buffer in input is too big and will do buffer overflow, size: %1, line %2").arg(size).arg(__LINE__));
         abort();
     }
     #endif
@@ -417,7 +417,7 @@ bool ProtocolParsingBase::internalPackOutcommingData(const char * const data,con
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size<=0)
     {
-        qDebug() << QString("ProtocolParsingInputOutput::internalPackOutcommingData size is null").arg(__LINE__);
+        qDebug() << std::string("ProtocolParsingInputOutput::internalPackOutcommingData size is null").arg(__LINE__);
         return false;
     }
     #endif
@@ -425,7 +425,7 @@ bool ProtocolParsingBase::internalPackOutcommingData(const char * const data,con
     messageParsingLayer("internalPackOutcommingData(): start");
     #endif
     #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    qDebug() << QString(QStringLiteral("Sended packet size: %1: %2").arg(size).arg(QString(QByteArray(data,size).toHex())));
+    qDebug() << std::string(std::stringLiteral("Sended packet size: %1: %2").arg(size).arg(std::string(QByteArray(data,size).toHex())));
     #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
 
     if(size<=CATCHCHALLENGER_MAX_PACKET_SIZE)
@@ -469,7 +469,7 @@ bool ProtocolParsingBase::internalSendRawSmallPacket(const char * const data,con
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size<=0)
     {
-        qDebug() << QString("ProtocolParsingInputOutput::internalSendRawSmallPacket size is null").arg(__LINE__);
+        qDebug() << std::string("ProtocolParsingInputOutput::internalSendRawSmallPacket size is null").arg(__LINE__);
         return false;
     }
     #endif
@@ -477,13 +477,13 @@ bool ProtocolParsingBase::internalSendRawSmallPacket(const char * const data,con
     messageParsingLayer("internalPackOutcommingData(): start");
     #endif
     #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    messageParsingLayer(QStringLiteral("Sended packet size: %1: %2").arg(size).arg(QString(QByteArray(data,size).toHex())));
+    messageParsingLayer(std::stringLiteral("Sended packet size: %1: %2").arg(size).arg(std::string(QByteArray(data,size).toHex())));
     #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size>CATCHCHALLENGER_MAX_PACKET_SIZE)
     {
-        messageParsingLayer(QStringLiteral("ProtocolParsingInputOutput::sendRawSmallPacket(): Packet to big: %1").arg(size));
-        errorParsingLayer(QStringLiteral("ProtocolParsingInputOutput::sendRawSmallPacket(): Packet to big: %1").arg(size));
+        messageParsingLayer(std::stringLiteral("ProtocolParsingInputOutput::sendRawSmallPacket(): Packet to big: %1").arg(size));
+        errorParsingLayer(std::stringLiteral("ProtocolParsingInputOutput::sendRawSmallPacket(): Packet to big: %1").arg(size));
         return false;
     }
     #endif
@@ -497,26 +497,26 @@ bool ProtocolParsingBase::internalSendRawSmallPacket(const char * const data,con
     return true;
 }
 
-qint8 ProtocolParsingBase::encodeSize(char *data,const quint32 &size)
+qint8 ProtocolParsingBase::encodeSize(char *data,const uint32_t &size)
 {
     if(size<=0xFF)
     {
-        memcpy(data,&size,sizeof(quint8));
-        return sizeof(quint8);
+        memcpy(data,&size,sizeof(uint8_t));
+        return sizeof(uint8_t);
     }
     else if(size<=0xFFFF)
     {
-        const quint16 &newSize=htole16(size);
-        memcpy(data,&ProtocolParsingBase::sizeHeaderNullquint16,sizeof(quint8));
-        memcpy(data+sizeof(quint8),&newSize,sizeof(newSize));
-        return sizeof(quint8)+sizeof(quint16);
+        const uint16_t &newSize=htole16(size);
+        memcpy(data,&ProtocolParsingBase::sizeHeaderNulluint16_t,sizeof(uint8_t));
+        memcpy(data+sizeof(uint8_t),&newSize,sizeof(newSize));
+        return sizeof(uint8_t)+sizeof(uint16_t);
     }
     else
     {
-        const quint32 &newSize=htole32(size);
-        memcpy(data,&ProtocolParsingBase::sizeHeaderNullquint16,sizeof(quint16));
-        memcpy(data+sizeof(quint16),&newSize,sizeof(newSize));
-        return sizeof(quint16)+sizeof(quint32);
+        const uint32_t &newSize=htole32(size);
+        memcpy(data,&ProtocolParsingBase::sizeHeaderNulluint16_t,sizeof(uint16_t));
+        memcpy(data+sizeof(uint16_t),&newSize,sizeof(newSize));
+        return sizeof(uint16_t)+sizeof(uint32_t);
     }
 }
 
@@ -525,7 +525,7 @@ int ProtocolParsingBase::computeOutcommingData(
         const bool &isClient,
         #endif
         char *buffer,
-        const quint8 &mainCodeType,const char * const data,const int &size)
+        const uint8_t &mainCodeType,const char * const data,const int &size)
 {
     buffer[0]=mainCodeType;
 
@@ -537,18 +537,18 @@ int ProtocolParsingBase::computeOutcommingData(
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
             return 0;
         }
         if(mainCode_IsQueryClientToServer.contains(mainCodeType))
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): mainCodeType: %1, try send as normal data, but not registred as is").arg(mainCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): mainCodeType: %1, try send as normal data, but not registred as is").arg(mainCodeType));
             return 0;
         }
         #endif
@@ -559,9 +559,9 @@ int ProtocolParsingBase::computeOutcommingData(
             {
                 qDebug() << (
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" packOutcommingData(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
+                std::stringLiteral(" packOutcommingData(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
                 return 0;
             }
             #endif
@@ -581,9 +581,9 @@ int ProtocolParsingBase::computeOutcommingData(
             {
                 qDebug() << (
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" packOutcommingData(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
+                std::stringLiteral(" packOutcommingData(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
                 return 0;
             }
             #endif
@@ -604,18 +604,18 @@ int ProtocolParsingBase::computeOutcommingData(
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
             return 0;
         }
         if(mainCode_IsQueryServerToClient.contains(mainCodeType))
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): mainCodeType: %1, try send as normal data, but not registred as is").arg(mainCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): mainCodeType: %1, try send as normal data, but not registred as is").arg(mainCodeType));
             return 0;
         }
         #endif
@@ -626,9 +626,9 @@ int ProtocolParsingBase::computeOutcommingData(
             {
                 qDebug() << (
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" packOutcommingData(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
+                std::stringLiteral(" packOutcommingData(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
                 return 0;
             }
             #endif
@@ -648,9 +648,9 @@ int ProtocolParsingBase::computeOutcommingData(
             {
                 qDebug() << (
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" packOutcommingData(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
+                std::stringLiteral(" packOutcommingData(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
                 return 0;
             }
             #endif
@@ -670,7 +670,7 @@ int ProtocolParsingBase::computeOutcommingQuery(
         const bool &isClient,
         #endif
         char *buffer,
-        const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const int &size)
+        const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const int &size)
 {
     buffer[0]=mainCodeType;
     buffer[1]=queryNumber;
@@ -683,18 +683,18 @@ int ProtocolParsingBase::computeOutcommingQuery(
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return 0;
         }
         if(!mainCode_IsQueryClientToServer.contains(mainCodeType))
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return 0;
         }
         #endif
@@ -705,9 +705,9 @@ int ProtocolParsingBase::computeOutcommingQuery(
             {
                 qDebug() << (
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
+                std::stringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
                 return 0;
             }
             #endif
@@ -727,9 +727,9 @@ int ProtocolParsingBase::computeOutcommingQuery(
             {
                 qDebug() << (
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
+                std::stringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
                 return 0;
             }
             #endif
@@ -750,18 +750,18 @@ int ProtocolParsingBase::computeOutcommingQuery(
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return 0;
         }
         if(!mainCode_IsQueryServerToClient.contains(mainCodeType))
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return 0;
         }
         #endif
@@ -772,9 +772,9 @@ int ProtocolParsingBase::computeOutcommingQuery(
             {
                 qDebug() << (
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
+                std::stringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
                 return 0;
             }
             #endif
@@ -794,9 +794,9 @@ int ProtocolParsingBase::computeOutcommingQuery(
             {
                 qDebug() << (
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
+                std::stringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
                 return 0;
             }
             #endif
@@ -816,7 +816,7 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
         const bool &isClient,
         #endif
         char *buffer,
-        const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size)
+        const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const int &size)
 {
     buffer[0]=mainCodeType;
     buffer[1]=subCodeType;
@@ -830,18 +830,18 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return 0;
         }
         if(!mainCode_IsQueryClientToServer.contains(mainCodeType))
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return 0;
         }
         #endif
@@ -854,9 +854,9 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                     #ifdef PROTOCOLPARSINGDEBUG
                     qDebug() << (
                                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                QString::number(isClient)+
+                                std::string::number(isClient)+
                                 #endif
-                    QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    std::stringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     #endif
                     switch(compressionTypeClient)
                     {
@@ -870,9 +870,9 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                             {
                                 qDebug() << (
                                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                            QString::number(isClient)+
+                                            std::string::number(isClient)+
                                             #endif
-                                QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                                 return 0;
                             }
                             #endif
@@ -896,9 +896,9 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
             {
                 qDebug() << (
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                 return 0;
             }
             #endif
@@ -920,9 +920,9 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                     #ifdef PROTOCOLPARSINGDEBUG
                     qDebug() << (
                                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                QString::number(isClient)+
+                                std::string::number(isClient)+
                                 #endif
-                    QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    std::stringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     #endif
                     switch(compressionTypeClient)
                     {
@@ -936,9 +936,9 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                             {
                                 qDebug() << (
                                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                            QString::number(isClient)+
+                                            std::string::number(isClient)+
                                             #endif
-                                QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                                 return 0;
                             }
                             #endif
@@ -962,9 +962,9 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
             {
                 qDebug() << (
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                 return 0;
             }
             #endif
@@ -985,17 +985,17 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                 if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
                     qDebug() << (
                                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                QString::number(isClient)+
+                                std::string::number(isClient)+
                                 #endif
-                    QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    std::stringLiteral(" packOutcommingQuery(%1,%2,%3) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
             #endif
             if(size!=sizeMultipleCodePacketClientToServer.value(mainCodeType).value(subCodeType))
             {
                 qDebug() << (
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
+                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
                 return 0;
             }
             #endif
@@ -1016,18 +1016,18 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return 0;
         }
         if(!mainCode_IsQueryServerToClient.contains(mainCodeType))
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return 0;
         }
         #endif
@@ -1040,9 +1040,9 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                     #ifdef PROTOCOLPARSINGDEBUG
                     qDebug() << (
                                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                QString::number(isClient)+
+                                std::string::number(isClient)+
                                 #endif
-                    QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    std::stringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     #endif
                     switch(compressionTypeServer)
                     {
@@ -1056,9 +1056,9 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                             {
                                 qDebug() << (
                                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                            QString::number(isClient)+
+                                            std::string::number(isClient)+
                                             #endif
-                                QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                                 return 0;
                             }
                             #endif
@@ -1082,9 +1082,9 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
             {
                 qDebug() << (
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                 return 0;
             }
             #endif
@@ -1106,9 +1106,9 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                     #ifdef PROTOCOLPARSINGDEBUG
                     qDebug() << (
                                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                QString::number(isClient)+
+                                std::string::number(isClient)+
                                 #endif
-                    QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    std::stringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     #endif
                     switch(compressionTypeServer)
                     {
@@ -1122,9 +1122,9 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                             {
                                 qDebug() << (
                                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                            QString::number(isClient)+
+                                            std::string::number(isClient)+
                                             #endif
-                                QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                                 return 0;
                             }
                             #endif
@@ -1148,9 +1148,9 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
             {
                 qDebug() << (
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                 return 0;
             }
             #endif
@@ -1171,17 +1171,17 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                 if(compressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
                     qDebug() << (
                                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                QString::number(isClient)+
+                                std::string::number(isClient)+
                                 #endif
-                    QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    std::stringLiteral(" packOutcommingQuery(%1,%2,%3) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
             #endif
             if(size!=sizeMultipleCodePacketServerToClient.value(mainCodeType).value(subCodeType))
             {
                 qDebug() << (
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
+                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
                 return 0;
             }
             #endif
@@ -1201,7 +1201,7 @@ int ProtocolParsingBase::computeFullOutcommingData(
         const bool &isClient,
         #endif
         char *buffer,
-        const quint8 &mainCodeType,const quint8 &subCodeType,const char * const data,const int &size)
+        const uint8_t &mainCodeType,const uint8_t &subCodeType,const char * const data,const int &size)
 {
     buffer[0]=mainCodeType;
     buffer[1]=subCodeType;
@@ -1214,18 +1214,18 @@ int ProtocolParsingBase::computeFullOutcommingData(
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
             return 0;
         }
         if(mainCode_IsQueryClientToServer.contains(mainCodeType))
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): mainCodeType: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(mainCodeType).arg(subCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): mainCodeType: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(mainCodeType).arg(subCodeType));
             return 0;
         }
         #endif
@@ -1238,9 +1238,9 @@ int ProtocolParsingBase::computeFullOutcommingData(
                     #ifdef PROTOCOLPARSINGDEBUG
                     qDebug() << (
                                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                QString::number(isClient)+
+                                std::string::number(isClient)+
                                 #endif
-                    QStringLiteral(" packOutcommingData(%1,%2) compression enabled").arg(mainCodeType).arg(subCodeType));
+                    std::stringLiteral(" packOutcommingData(%1,%2) compression enabled").arg(mainCodeType).arg(subCodeType));
                     #endif
                     switch(compressionTypeClient)
                     {
@@ -1254,9 +1254,9 @@ int ProtocolParsingBase::computeFullOutcommingData(
                             {
                                 qDebug() << (
                                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                            QString::number(isClient)+
+                                            std::string::number(isClient)+
                                             #endif
-                                QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                                 return 0;
                             }
                             #endif
@@ -1280,9 +1280,9 @@ int ProtocolParsingBase::computeFullOutcommingData(
             {
                 qDebug() << (
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                 return 0;
             }
             #endif
@@ -1304,9 +1304,9 @@ int ProtocolParsingBase::computeFullOutcommingData(
                     #ifdef PROTOCOLPARSINGDEBUG
                     qDebug() << (
                                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                QString::number(isClient)+
+                                std::string::number(isClient)+
                                 #endif
-                    QStringLiteral(" packOutcommingData(%1,%2) compression enabled").arg(mainCodeType).arg(subCodeType));
+                    std::stringLiteral(" packOutcommingData(%1,%2) compression enabled").arg(mainCodeType).arg(subCodeType));
                     #endif
                     switch(compressionTypeClient)
                     {
@@ -1320,9 +1320,9 @@ int ProtocolParsingBase::computeFullOutcommingData(
                             {
                                 qDebug() << (
                                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                            QString::number(isClient)+
+                                            std::string::number(isClient)+
                                             #endif
-                                QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                                 return 0;
                             }
                             #endif
@@ -1346,9 +1346,9 @@ int ProtocolParsingBase::computeFullOutcommingData(
             {
                 qDebug() << (
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                 return 0;
             }
             #endif
@@ -1369,17 +1369,17 @@ int ProtocolParsingBase::computeFullOutcommingData(
                 if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
                     qDebug() << (
                                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                QString::number(isClient)+
+                                std::string::number(isClient)+
                                 #endif
-                    QStringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
+                    std::stringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
             #endif
             if(size!=sizeMultipleCodePacketClientToServer.value(mainCodeType).value(subCodeType))
             {
                 qDebug() << (
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
+                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
                 return 0;
             }
             #endif
@@ -1400,18 +1400,18 @@ int ProtocolParsingBase::computeFullOutcommingData(
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
             return 0;
         }
         if(mainCode_IsQueryServerToClient.contains(mainCodeType))
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): mainCodeType: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(mainCodeType).arg(subCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): mainCodeType: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(mainCodeType).arg(subCodeType));
             return 0;
         }
         #endif
@@ -1424,9 +1424,9 @@ int ProtocolParsingBase::computeFullOutcommingData(
                     #ifdef PROTOCOLPARSINGDEBUG
                     qDebug() << (
                                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                QString::number(isClient)+
+                                std::string::number(isClient)+
                                 #endif
-                    QStringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
+                    std::stringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
                     #endif
                     switch(compressionTypeServer)
                     {
@@ -1440,9 +1440,9 @@ int ProtocolParsingBase::computeFullOutcommingData(
                             {
                                 qDebug() << (
                                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                            QString::number(isClient)+
+                                            std::string::number(isClient)+
                                             #endif
-                                QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                                 return 0;
                             }
                             #endif
@@ -1466,9 +1466,9 @@ int ProtocolParsingBase::computeFullOutcommingData(
             {
                 qDebug() << (
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                 return 0;
             }
             #endif
@@ -1490,9 +1490,9 @@ int ProtocolParsingBase::computeFullOutcommingData(
                     #ifdef PROTOCOLPARSINGDEBUG
                     qDebug() << (
                                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                QString::number(isClient)+
+                                std::string::number(isClient)+
                                 #endif
-                    QStringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
+                    std::stringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
                     #endif
                     switch(compressionTypeServer)
                     {
@@ -1506,9 +1506,9 @@ int ProtocolParsingBase::computeFullOutcommingData(
                             {
                                 qDebug() << (
                                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                            QString::number(isClient)+
+                                            std::string::number(isClient)+
                                             #endif
-                                QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                                 return 0;
                             }
                             #endif
@@ -1532,9 +1532,9 @@ int ProtocolParsingBase::computeFullOutcommingData(
             {
                 qDebug() << (
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                 return 0;
             }
             #endif
@@ -1555,17 +1555,17 @@ int ProtocolParsingBase::computeFullOutcommingData(
                 if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
                     qDebug() << (
                                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                QString::number(isClient)+
+                                std::string::number(isClient)+
                                 #endif
-                    QStringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
+                    std::stringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
             #endif
             if(size!=sizeMultipleCodePacketServerToClient.value(mainCodeType).value(subCodeType))
             {
                 qDebug() << (
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
+                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
                 return 0;
             }
             #endif
@@ -1581,7 +1581,7 @@ int ProtocolParsingBase::computeFullOutcommingData(
 }
 
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-bool ProtocolParsingBase::removeFromQueryReceived(const quint8 &queryNumber)
+bool ProtocolParsingBase::removeFromQueryReceived(const uint8_t &queryNumber)
 {
     return queryReceived.remove(queryNumber);
 }
@@ -1591,8 +1591,8 @@ int ProtocolParsingBase::computeReplyData(
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     const bool &isClient,
     #endif
-    char *dataBuffer, const quint8 &queryNumber, const char * const data, const int &size,
-    const qint32 &replyOutputSizeInt
+    char *dataBuffer, const uint8_t &queryNumber, const char * const data, const int &size,
+    const int32_t &replyOutputSizeInt
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     , const CompressionType &compressionType
     #endif
@@ -1601,11 +1601,11 @@ int ProtocolParsingBase::computeReplyData(
 
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     if(isClient)
-        memcpy(dataBuffer,&replyCodeClientToServer,sizeof(quint8));
+        memcpy(dataBuffer,&replyCodeClientToServer,sizeof(uint8_t));
     else
     #endif
-        memcpy(dataBuffer,&replyCodeServerToClient,sizeof(quint8));
-    memcpy(dataBuffer+sizeof(quint8),&queryNumber,sizeof(quint8));
+        memcpy(dataBuffer,&replyCodeServerToClient,sizeof(uint8_t));
+    memcpy(dataBuffer+sizeof(uint8_t),&queryNumber,sizeof(uint8_t));
 
     if(replyOutputSizeInt==-1)
     {
@@ -1615,9 +1615,9 @@ int ProtocolParsingBase::computeReplyData(
             #ifdef PROTOCOLPARSINGDEBUG
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" postReplyData(%1) is now compressed").arg(queryNumber));
+            std::stringLiteral(" postReplyData(%1) is now compressed").arg(queryNumber));
             #endif
             switch(compressionType)
             {
@@ -1631,13 +1631,13 @@ int ProtocolParsingBase::computeReplyData(
                     {
                         qDebug() << (
                                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                    QString::number(isClient)+
+                                    std::string::number(isClient)+
                                     #endif
-                        QStringLiteral(" postReplyData(%1,{}) dropped because can be size==0 if not fixed size").arg(queryNumber));
+                        std::stringLiteral(" postReplyData(%1,{}) dropped because can be size==0 if not fixed size").arg(queryNumber));
                         return 0;
                     }
                     #endif
-                    const quint8 &fullSize=sizeof(quint8)*2+encodeSize(dataBuffer+sizeof(quint8)*2,compressedData.size());
+                    const uint8_t &fullSize=sizeof(uint8_t)*2+encodeSize(dataBuffer+sizeof(uint8_t)*2,compressedData.size());
                     if(compressedData.size()>0)
                     {
                         memcpy(dataBuffer+fullSize,compressedData.constData(),compressedData.size());
@@ -1655,13 +1655,13 @@ int ProtocolParsingBase::computeReplyData(
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" postReplyData(%1,{}) dropped because can be size==0 if not fixed size").arg(queryNumber));
+            std::stringLiteral(" postReplyData(%1,{}) dropped because can be size==0 if not fixed size").arg(queryNumber));
             return 0;
         }
         #endif
-        const quint8 &fullSize=sizeof(quint8)*2+encodeSize(dataBuffer+sizeof(quint8)*2,size);
+        const uint8_t &fullSize=sizeof(uint8_t)*2+encodeSize(dataBuffer+sizeof(uint8_t)*2,size);
         if(size>0)
         {
             memcpy(dataBuffer+fullSize,data,size);
@@ -1678,9 +1678,9 @@ int ProtocolParsingBase::computeReplyData(
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" postReplyData(%1,{}) compression disabled because have fixed size").arg(queryNumber));
+            std::stringLiteral(" postReplyData(%1,{}) compression disabled because have fixed size").arg(queryNumber));
             abort();
         }
         #endif
@@ -1688,18 +1688,18 @@ int ProtocolParsingBase::computeReplyData(
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" postReplyData(%1,{}) dropped because can be size!=fixed size").arg(queryNumber));
+            std::stringLiteral(" postReplyData(%1,{}) dropped because can be size!=fixed size").arg(queryNumber));
             return 0;
         }
         #endif
         if(size>0)
         {
-            memcpy(dataBuffer+sizeof(quint8)*2,data,size);
-            return sizeof(quint8)*2+size;
+            memcpy(dataBuffer+sizeof(uint8_t)*2,data,size);
+            return sizeof(uint8_t)*2+size;
         }
         else
-            return sizeof(quint8)*2;
+            return sizeof(uint8_t)*2;
     }
 }

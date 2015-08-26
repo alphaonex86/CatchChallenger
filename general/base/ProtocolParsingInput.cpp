@@ -17,7 +17,7 @@ ssize_t ProtocolParsingInputOutput::read(char * data, const size_t &size)
     {}
     else
     {
-        messageParsingLayer(QStringLiteral("Socket open in read only!"));
+        messageParsingLayer(std::stringLiteral("Socket open in read only!"));
         disconnectClient();
         return false;
     }
@@ -46,7 +46,7 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
     {}
     else
     {
-        messageParsingLayer(QStringLiteral("Socket open in write only!"));
+        messageParsingLayer(std::stringLiteral("Socket open in write only!"));
         disconnectClient();
         return false;
     }
@@ -62,21 +62,21 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
     if(Q_UNLIKELY((ssize_t)size!=byteWriten))
     {
         #ifdef EPOLLCATCHCHALLENGERSERVER
-        messageParsingLayer(QStringLiteral("All the bytes have not be written byteWriten: %1, size: %2").arg(byteWriten).arg(size));
+        messageParsingLayer(std::stringLiteral("All the bytes have not be written byteWriten: %1, size: %2").arg(byteWriten).arg(size));
         #else
-        messageParsingLayer(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+        messageParsingLayer(std::stringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
         #endif
     }
     else
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         {
-            quint32 cursor=0;
+            uint32_t cursor=0;
             do
             {
                 if(!protocolParsingCheck->parseIncommingDataRaw(data,size,cursor))
                 {
-                    qDebug() << "Bug at data-sending: " << QString(QByteArray(data,size).toHex());
+                    qDebug() << "Bug at data-sending: " << std::string(QByteArray(data,size).toHex());
                     abort();
                 }
                 if(!protocolParsingCheck->valid)
@@ -85,12 +85,12 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
                     abort();
                 }
                 protocolParsingCheck->valid=false;
-            } while(cursor!=(quint32)size);
-            /*if(cursor!=(quint32)size)
+            } while(cursor!=(uint32_t)size);
+            /*if(cursor!=(uint32_t)size)
             {
                 // Muliple concatened packet
                 qDebug() << "Bug at data-sending cursor != size:" << cursor << "!=" << size;
-                qDebug() << "raw write control bug:" << QString(QByteArray(data,size).toHex());
+                qDebug() << "raw write control bug:" << std::string(QByteArray(data,size).toHex());
                 //abort();
             }*/
         }
@@ -123,16 +123,16 @@ void ProtocolParsingInputOutput::parseIncommingData()
     #ifdef PROTOCOLPARSINGDEBUG
     messageParsingLayer(
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                QString::number(isClient)+
+                std::string::number(isClient)+
                 #endif
-                QStringLiteral(" parseIncommingData(): socket->bytesAvailable(): %1, header_cut: %2").arg(socket->bytesAvailable()).arg(header_cut.size()));
+                std::stringLiteral(" parseIncommingData(): socket->bytesAvailable(): %1, header_cut: %2").arg(socket->bytesAvailable()).arg(header_cut.size()));
     #endif
     #endif
 
     while(1)
     {
-        qint32 size;
-        quint32 cursor=0;
+        int32_t size;
+        uint32_t cursor=0;
         if(!header_cut.isEmpty())
         {
             const unsigned int &size_to_get=CATCHCHALLENGER_COMMONBUFFERSIZE-header_cut.size();
@@ -158,9 +158,9 @@ void ProtocolParsingInputOutput::parseIncommingData()
         {
             /*messageParsingLayer(
 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-QString::number(isClient)+
+std::string::number(isClient)+
 #endif
-QStringLiteral(" parseIncommingData(): size returned is 0!"));*/
+std::stringLiteral(" parseIncommingData(): size returned is 0!"));*/
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             parseIncommingDataCount--;
             #endif
@@ -171,7 +171,7 @@ QStringLiteral(" parseIncommingData(): size returned is 0!"));*/
         {
             if(!parseIncommingDataRaw(ProtocolParsingInputOutput::commonBuffer,size,cursor))
                 break;
-        } while(cursor<(quint32)size);
+        } while(cursor<(uint32_t)size);
 
         if(size<CATCHCHALLENGER_COMMONBUFFERSIZE)
         {
@@ -184,16 +184,16 @@ QStringLiteral(" parseIncommingData(): size returned is 0!"));*/
     #ifdef PROTOCOLPARSINGDEBUG
     messageParsingLayer(
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                QString::number(isClient)+
+                std::string::number(isClient)+
                 #endif
-    QStringLiteral(" parseIncommingData(): finish parse the input"));
+    std::stringLiteral(" parseIncommingData(): finish parse the input"));
     #endif
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     parseIncommingDataCount--;
     #endif
 }
 
-bool ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer, const quint32 &size, quint32 &cursor)
+bool ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer, const uint32_t &size, uint32_t &cursor)
 {
     if(!parseHeader(commonBuffer,size,cursor))
     {
@@ -249,14 +249,14 @@ bool ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer,
     return true;
 }
 
-bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const quint32 &size,quint32 &cursor)
+bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const uint32_t &size,uint32_t &cursor)
 {
     if(!haveData)
     {
-        if((size-cursor)<sizeof(quint8))//ignore because first int is cuted!
+        if((size-cursor)<sizeof(uint8_t))//ignore because first int is cuted!
             return false;
         mainCodeType=*(commonBuffer+cursor);
-        cursor+=sizeof(quint8);
+        cursor+=sizeof(uint8_t);
         //def query without the sub code
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -286,9 +286,9 @@ bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const quin
         #ifdef PROTOCOLPARSINGDEBUG
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    QString::number(isClient)+
+                    std::string::number(isClient)+
                     #endif
-        QStringLiteral(" parseIncommingData(): !haveData, mainCodeType: %1").arg(mainCodeType));
+        std::stringLiteral(" parseIncommingData(): !haveData, mainCodeType: %1").arg(mainCodeType));
         #endif
         haveData=true;
         haveData_dataSize=false;
@@ -318,18 +318,18 @@ bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const quin
         #ifdef PROTOCOLPARSINGDEBUG
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    QString::number(isClient)+
+                    std::string::number(isClient)+
                     #endif
-        QStringLiteral(" parseIncommingData(): !have_subCodeType"));
+        std::stringLiteral(" parseIncommingData(): !have_subCodeType"));
         #endif
         if(!need_subCodeType)
         {
             #ifdef PROTOCOLPARSINGDEBUG
             messageParsingLayer(
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" parseIncommingData(): !need_subCodeType"));
+            std::stringLiteral(" parseIncommingData(): !need_subCodeType"));
             #endif
             //if is a reply
             if(
@@ -343,9 +343,9 @@ bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const quin
                 #ifdef PROTOCOLPARSINGDEBUG
                 messageParsingLayer(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" parseIncommingData(): need_query_number=true"));
+                std::stringLiteral(" parseIncommingData(): need_query_number=true"));
                 #endif
                 is_reply=true;
                 need_query_number=true;
@@ -369,9 +369,9 @@ bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const quin
                         #ifdef PROTOCOLPARSINGDEBUG
                         messageParsingLayer(
                                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                    QString::number(isClient)+
+                                    std::string::number(isClient)+
                                     #endif
-                        QStringLiteral(" parseIncommingData(): need_query_number=true, query with reply"));
+                        std::stringLiteral(" parseIncommingData(): need_query_number=true, query with reply"));
                         #endif
                         need_query_number=true;
                     }
@@ -420,12 +420,12 @@ bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const quin
             #ifdef PROTOCOLPARSINGDEBUG
             messageParsingLayer(
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" parseIncommingData(): need_subCodeType"));
+            std::stringLiteral(" parseIncommingData(): need_subCodeType"));
             #endif
             subCodeType=commonBuffer[cursor];
-            cursor+=sizeof(quint8);
+            cursor+=sizeof(uint8_t);
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(cursor==0 && !haveData)
             {
@@ -440,9 +440,9 @@ bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const quin
                 #ifdef PROTOCOLPARSINGDEBUG
                 messageParsingLayer(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" parseIncommingData(): isClient"));
+                std::stringLiteral(" parseIncommingData(): isClient"));
                 #endif
                 //if is query with reply
                 if(mainCode_IsQueryServerToClient.contains(mainCodeType))
@@ -450,9 +450,9 @@ bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const quin
                     #ifdef PROTOCOLPARSINGDEBUG
                     messageParsingLayer(
                                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                QString::number(isClient)+
+                                std::string::number(isClient)+
                                 #endif
-                    QStringLiteral(" parseIncommingData(): need_query_number=true, query with reply (mainCode_IsQueryClientToServer)"));
+                    std::stringLiteral(" parseIncommingData(): need_query_number=true, query with reply (mainCode_IsQueryClientToServer)"));
                     #endif
                     need_query_number=true;
                 }
@@ -481,9 +481,9 @@ bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const quin
                 #ifdef PROTOCOLPARSINGDEBUG
                 messageParsingLayer(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" parseIncommingData(): !isClient"));
+                std::stringLiteral(" parseIncommingData(): !isClient"));
                 #endif
                 //if is query with reply
                 if(mainCode_IsQueryClientToServer.contains(mainCodeType))
@@ -491,9 +491,9 @@ bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const quin
                     #ifdef PROTOCOLPARSINGDEBUG
                     messageParsingLayer(
                                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                QString::number(isClient)+
+                                std::string::number(isClient)+
                                 #endif
-                    QStringLiteral(" parseIncommingData(): need_query_number=true, query with reply (mainCode_IsQueryServerToClient)"));
+                    std::stringLiteral(" parseIncommingData(): need_query_number=true, query with reply (mainCode_IsQueryServerToClient)"));
                     #endif
                     need_query_number=true;
                 }
@@ -525,9 +525,9 @@ bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const quin
     else
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    QString::number(isClient)+
+                    std::string::number(isClient)+
                     #endif
-        QStringLiteral(" parseIncommingData(): have_subCodeType"));
+        std::stringLiteral(" parseIncommingData(): have_subCodeType"));
     #endif
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(cursor==0 && !haveData)
@@ -539,24 +539,24 @@ bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const quin
     return true;
 }
 
-bool ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,const quint32 &size,quint32 &cursor)
+bool ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,const uint32_t &size,uint32_t &cursor)
 {
     if(!have_query_number && need_query_number)
     {
         #ifdef PROTOCOLPARSINGDEBUG
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    QString::number(isClient)+
+                    std::string::number(isClient)+
                     #endif
-        QStringLiteral(" parseIncommingData(): need_query_number"));
+        std::stringLiteral(" parseIncommingData(): need_query_number"));
         #endif
-        if((size-cursor)<sizeof(quint8))
+        if((size-cursor)<sizeof(uint8_t))
         {
             //todo, write message: need more bytes
             return false;
         }
         queryNumber=*(commonBuffer+cursor);
-        cursor+=sizeof(quint8);
+        cursor+=sizeof(uint8_t);
 
         // it's reply
         if(is_reply)
@@ -668,39 +668,39 @@ bool ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,const
     else
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    QString::number(isClient)+
+                    std::string::number(isClient)+
                     #endif
-        QStringLiteral(" parseIncommingData(): not need_query_number"));
+        std::stringLiteral(" parseIncommingData(): not need_query_number"));
     #endif
     return true;
 }
 
-bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const quint32 &size,quint32 &cursor)
+bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor)
 {
     if(!haveData_dataSize)
     {
         #ifdef PROTOCOLPARSINGDEBUG
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    QString::number(isClient)+
+                    std::string::number(isClient)+
                     #endif
-        QStringLiteral(" parseIncommingData(): !haveData_dataSize"));
+        std::stringLiteral(" parseIncommingData(): !haveData_dataSize"));
         #endif
         //temp data
-        quint8 temp_size_8Bits;
-        quint16 temp_size_16Bits;
-        quint32 temp_size_32Bits;
+        uint8_t temp_size_8Bits;
+        uint16_t temp_size_16Bits;
+        uint32_t temp_size_32Bits;
         while(!haveData_dataSize)
         {
             switch(data_size_size)
             {
                 case 0:
                 {
-                    if((size-cursor)<sizeof(quint8))
+                    if((size-cursor)<sizeof(uint8_t))
                         return false;
                     temp_size_8Bits=*(commonBuffer+cursor);
-                    data_size_size+=sizeof(quint8);
-                    cursor+=sizeof(quint8);
+                    data_size_size+=sizeof(uint8_t);
+                    cursor+=sizeof(uint8_t);
                     if(temp_size_8Bits!=0x00)
                     {
                         dataSize=temp_size_8Bits;
@@ -708,9 +708,9 @@ bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const q
                         #ifdef PROTOCOLPARSINGDEBUG
                         messageParsingLayer(
                                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                    QString::number(isClient)+
+                                    std::string::number(isClient)+
                                     #endif
-                        QStringLiteral(" parseIncommingData(): have 8Bits data size"));
+                        std::stringLiteral(" parseIncommingData(): have 8Bits data size"));
                         #endif
                     }
                     else
@@ -718,27 +718,27 @@ bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const q
                         #ifdef PROTOCOLPARSINGDEBUG
                         messageParsingLayer(
                                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                    QString::number(isClient)+
+                                    std::string::number(isClient)+
                                     #endif
-                        QStringLiteral(" parseIncommingData(): have not 8Bits data size: %1 (%2), temp_size_8Bits: %3").arg(dataSize).arg(data_size_size).arg(temp_size_8Bits));
+                        std::stringLiteral(" parseIncommingData(): have not 8Bits data size: %1 (%2), temp_size_8Bits: %3").arg(dataSize).arg(data_size_size).arg(temp_size_8Bits));
                         #endif
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
                         if(data_size_size==0)
                         {
                             messageParsingLayer(
                                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                        QString::number(isClient)+
+                                        std::string::number(isClient)+
                                         #endif
-                            QStringLiteral(" parseIncommingData(): internal infinity packet read prevent"));
+                            std::stringLiteral(" parseIncommingData(): internal infinity packet read prevent"));
                             return false;
                         }
                         #endif
                     }
                 }
                 break;
-                case sizeof(quint8):
+                case sizeof(uint8_t):
                 {
-                    if((size-cursor)<sizeof(quint16))
+                    if((size-cursor)<sizeof(uint16_t))
                     {
                         if((size-cursor)>0)
                             header_cut.append(commonBuffer+cursor,(size-cursor));
@@ -747,39 +747,39 @@ bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const q
                     temp_size_8Bits=*(commonBuffer+cursor);
                     if(temp_size_8Bits!=0x00)
                     {
-                        temp_size_16Bits=le16toh(*(reinterpret_cast<const quint16 *>(commonBuffer+cursor)));
-                        cursor+=sizeof(quint16);
+                        temp_size_16Bits=le16toh(*(reinterpret_cast<const uint16_t *>(commonBuffer+cursor)));
+                        cursor+=sizeof(uint16_t);
 
                         dataSize=temp_size_16Bits;
                         haveData_dataSize=true;
                         #ifdef PROTOCOLPARSINGDEBUG
                         messageParsingLayer(
                                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                    QString::number(isClient)+
+                                    std::string::number(isClient)+
                                     #endif
-                        QStringLiteral(" parseIncommingData(): have 16Bits data size: %1, temp_size_16Bits: %2").arg(dataSize).arg(data_size_size));
+                        std::stringLiteral(" parseIncommingData(): have 16Bits data size: %1, temp_size_16Bits: %2").arg(dataSize).arg(data_size_size));
                         #endif
                     }
                     else
                     {
-                        data_size_size+=sizeof(quint8);
-                        cursor+=sizeof(quint8);//2x 0x00 when 32Bits size
+                        data_size_size+=sizeof(uint8_t);
+                        cursor+=sizeof(uint8_t);//2x 0x00 when 32Bits size
 
                         #ifdef PROTOCOLPARSINGDEBUG
                         messageParsingLayer(
                                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                    QString::number(isClient)+
+                                    std::string::number(isClient)+
                                     #endif
-                        QStringLiteral(" parseIncommingData(): have not 16Bits data size"));
+                        std::stringLiteral(" parseIncommingData(): have not 16Bits data size"));
                         #endif
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                        if(data_size_size==sizeof(quint8))
+                        if(data_size_size==sizeof(uint8_t))
                         {
                             messageParsingLayer(
                                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                        QString::number(isClient)+
+                                        std::string::number(isClient)+
                                         #endif
-                            QStringLiteral(" parseIncommingData(): internal infinity packet read prevent"));
+                            std::stringLiteral(" parseIncommingData(): internal infinity packet read prevent"));
                             header_cut.append(commonBuffer+cursor,(size-cursor));
                             return false;
                         }
@@ -787,16 +787,16 @@ bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const q
                     }
                 }
                 break;
-                case sizeof(quint16):
+                case sizeof(uint16_t):
                 {
-                    if((size-cursor)<sizeof(quint32))
+                    if((size-cursor)<sizeof(uint32_t))
                     {
                         if((size-cursor)>0)
                             header_cut.append(commonBuffer+cursor,(size-cursor));
                         return false;
                     }
-                    temp_size_32Bits=le32toh(*reinterpret_cast<const quint32 *>(commonBuffer+cursor));
-                    cursor+=sizeof(quint32);
+                    temp_size_32Bits=le32toh(*reinterpret_cast<const uint32_t *>(commonBuffer+cursor));
+                    cursor+=sizeof(uint32_t);
 
                     if(temp_size_32Bits!=0x00000000)
                     {
@@ -813,7 +813,7 @@ bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const q
                 }
                 break;
                 default:
-                errorParsingLayer(QStringLiteral("size not understand, internal bug: %1").arg(data_size_size));
+                errorParsingLayer(std::stringLiteral("size not understand, internal bug: %1").arg(data_size_size));
                 return false;
             }
         }
@@ -822,9 +822,9 @@ bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const q
     else
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    QString::number(isClient)+
+                    std::string::number(isClient)+
                     #endif
-        QStringLiteral(" parseIncommingData(): haveData_dataSize"));
+        std::stringLiteral(" parseIncommingData(): haveData_dataSize"));
     #endif
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(!haveData_dataSize)
@@ -836,9 +836,9 @@ bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const q
     #ifdef PROTOCOLPARSINGDEBUG
     messageParsingLayer(
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                QString::number(isClient)+
+                std::string::number(isClient)+
                 #endif
-    QStringLiteral(" parseIncommingData(): header informations is ready, dataSize: %1").arg(dataSize));
+    std::stringLiteral(" parseIncommingData(): header informations is ready, dataSize: %1").arg(dataSize));
     #endif
     if(dataSize>16*1024*1024)
     {
@@ -848,7 +848,7 @@ bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const q
     return true;
 }
 
-bool ProtocolParsingBase::parseData(const char * const commonBuffer, const quint32 &size,quint32 &cursor)
+bool ProtocolParsingBase::parseData(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor)
 {
     if(dataSize==0)
         return parseDispatch(NULL,0);
@@ -869,9 +869,9 @@ bool ProtocolParsingBase::parseData(const char * const commonBuffer, const quint
             #ifdef PROTOCOLPARSINGDEBUG
             messageParsingLayer(
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" parseIncommingData(): remaining data: %1").arg((size-cursor)));
+            std::stringLiteral(" parseIncommingData(): remaining data: %1").arg((size-cursor)));
             #endif
             return returnVal;
         }
@@ -879,18 +879,18 @@ bool ProtocolParsingBase::parseData(const char * const commonBuffer, const quint
     //if have too many data, or just the size
     if((dataSize-dataToWithoutHeader.size())<=(size-cursor))
     {
-        const quint32 &size_to_append=dataSize-dataToWithoutHeader.size();
+        const uint32_t &size_to_append=dataSize-dataToWithoutHeader.size();
         dataToWithoutHeader.append(commonBuffer+cursor,size_to_append);
         cursor+=size_to_append;
         #ifdef PROTOCOLPARSINGDEBUG
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    QString::number(isClient)+
+                    std::string::number(isClient)+
                     #endif
-        QStringLiteral(" parseIncommingData(): remaining data: %1, buffer data: %2").arg((size-cursor)).arg(QString(QByteArray(commonBuffer,sizeof(commonBuffer)).toHex())));
+        std::stringLiteral(" parseIncommingData(): remaining data: %1, buffer data: %2").arg((size-cursor)).arg(std::string(QByteArray(commonBuffer,sizeof(commonBuffer)).toHex())));
         #endif
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(dataSize!=(quint32)dataToWithoutHeader.size())
+        if(dataSize!=(uint32_t)dataToWithoutHeader.size())
         {
             errorParsingLayer("wrong data size here");
             return false;
@@ -904,9 +904,9 @@ bool ProtocolParsingBase::parseData(const char * const commonBuffer, const quint
         #ifdef PROTOCOLPARSINGDEBUG
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    QString::number(isClient)+
+                    std::string::number(isClient)+
                     #endif
-        QStringLiteral(" parseIncommingData(): need more to recompose: %1").arg(dataSize-dataToWithoutHeader.size()));
+        std::stringLiteral(" parseIncommingData(): need more to recompose: %1").arg(dataSize-dataToWithoutHeader.size()));
         #endif
         cursor=size;
         return false;
@@ -920,24 +920,24 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
     if(isClient)
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    QString::number(isClient)+
+                    std::string::number(isClient)+
                     #endif
-        QStringLiteral(" parseIncommingData(): parse message as client"));
+        std::stringLiteral(" parseIncommingData(): parse message as client"));
     else
     #else
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    QString::number(isClient)+
+                    std::string::number(isClient)+
                     #endif
-        QStringLiteral(" parseIncommingData(): parse message as server"));
+        std::stringLiteral(" parseIncommingData(): parse message as server"));
     #endif
     #endif
     #ifdef ProtocolParsingInputOutputDEBUG
     messageParsingLayer(
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                QString::number(isClient)+
+                std::string::number(isClient)+
                 #endif
-    QStringLiteral(" parseIncommingData(): data: %1").arg(QString(data.toHex())));
+    std::stringLiteral(" parseIncommingData(): data: %1").arg(std::string(data.toHex())));
     #endif
     //message
     if(!need_query_number)
@@ -947,9 +947,9 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
             #ifdef ProtocolParsingInputOutputDEBUG
             messageParsingLayer(
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" parseIncommingData(): !need_query_number && !need_subCodeType, mainCodeType: %1").arg(mainCodeType));
+            std::stringLiteral(" parseIncommingData(): !need_query_number && !need_subCodeType, mainCodeType: %1").arg(mainCodeType));
             #endif
             parseMessage(mainCodeType,data,size);
         }
@@ -958,9 +958,9 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
             #ifdef ProtocolParsingInputOutputDEBUG
             messageParsingLayer(
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" parseIncommingData(): !need_query_number && need_subCodeType, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+            std::stringLiteral(" parseIncommingData(): !need_query_number && need_subCodeType, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
             #endif
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             if(isClient)
@@ -1090,9 +1090,9 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                 #ifdef ProtocolParsingInputOutputDEBUG
                 messageParsingLayer(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" parseIncommingData(): need_query_number && !is_reply, mainCodeType: %1").arg(mainCodeType));
+                std::stringLiteral(" parseIncommingData(): need_query_number && !is_reply, mainCodeType: %1").arg(mainCodeType));
                 #endif
                 storeInputQuery(mainCodeType,queryNumber);
                 parseQuery(mainCodeType,queryNumber,data,size);
@@ -1102,9 +1102,9 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                 #ifdef ProtocolParsingInputOutputDEBUG
                 messageParsingLayer(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" parseIncommingData(): need_query_number && !is_reply, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+                std::stringLiteral(" parseIncommingData(): need_query_number && !is_reply, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
                 #endif
                 storeFullInputQuery(mainCodeType,subCodeType,queryNumber);
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -1234,9 +1234,9 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                 #ifdef ProtocolParsingInputOutputDEBUG
                 messageParsingLayer(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, mainCodeType: %2").arg(queryNumber).arg(mainCodeType));
+                std::stringLiteral(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, mainCodeType: %2").arg(queryNumber).arg(mainCodeType));
                 #endif
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                 if(isClient)
@@ -1360,9 +1360,9 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                 #ifdef ProtocolParsingInputOutputDEBUG
                 messageParsingLayer(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, mainCodeType: %2, subCodeType: %3").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+                std::stringLiteral(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, mainCodeType: %2, subCodeType: %3").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
                 #endif
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                 if(isClient)
@@ -1494,35 +1494,35 @@ void ProtocolParsingBase::dataClear()
 }
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
-QStringList ProtocolParsingBase::getQueryRunningList()
+std::stringList ProtocolParsingBase::getQueryRunningList()
 {
-    QStringList returnedList;
-    QHashIterator<quint8,quint8> i(waitedReply_mainCodeType);
+    std::stringList returnedList;
+    std::unordered_mapIterator<uint8_t,uint8_t> i(waitedReply_mainCodeType);
     while (i.hasNext()) {
         i.next();
         if(waitedReply_subCodeType.contains(i.key()))
-            returnedList << QStringLiteral("%1 %2").arg(i.value()).arg(waitedReply_subCodeType.value(i.key()));
+            returnedList << std::stringLiteral("%1 %2").arg(i.value()).arg(waitedReply_subCodeType.value(i.key()));
         else
-            returnedList << QString::number(i.value());
+            returnedList << std::string::number(i.value());
     }
     return returnedList;
 }
 #endif
 
-void ProtocolParsingBase::storeInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
+void ProtocolParsingBase::storeInputQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber)
 {
     Q_UNUSED(mainCodeType);
     Q_UNUSED(queryNumber);
 }
 
-void ProtocolParsingBase::storeFullInputQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber)
+void ProtocolParsingBase::storeFullInputQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber)
 {
     Q_UNUSED(mainCodeType);
     Q_UNUSED(subCodeType);
     Q_UNUSED(queryNumber);
 }
 
-void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
+void ProtocolParsingInputOutput::storeInputQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     protocolParsingCheck->waitedReply_mainCodeType[queryNumber]=mainCodeType;
@@ -1530,9 +1530,9 @@ void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,cons
     {
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    QString::number(isClient)+
+                    std::string::number(isClient)+
                     #endif
-        QStringLiteral(" storeInputQuery(%1,%2) query with same id previously say").arg(mainCodeType).arg(queryNumber));
+        std::stringLiteral(" storeInputQuery(%1,%2) query with same id previously say").arg(mainCodeType).arg(queryNumber));
         return;
     }
     queryReceived << queryNumber;
@@ -1545,9 +1545,9 @@ void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,cons
         {
             messageParsingLayer(
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::storeInputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::storeInputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return;
         }
         #endif
@@ -1558,9 +1558,9 @@ void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,cons
             if(replyComressionOnlyMainCodePacketServerToClient.contains(mainCodeType))
                 messageParsingLayer(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" storeInputQuery(%1,%2) compression can't be enabled with fixed size").arg(mainCodeType).arg(queryNumber));
+                std::stringLiteral(" storeInputQuery(%1,%2) compression can't be enabled with fixed size").arg(mainCodeType).arg(queryNumber));
             #endif
             #endif
             //register the size of the reply to send
@@ -1574,9 +1574,9 @@ void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,cons
                 #ifdef PROTOCOLPARSINGDEBUG
                 messageParsingLayer(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" storeInputQuery(%1,%2) compression enabled").arg(mainCodeType).arg(queryNumber));
+                std::stringLiteral(" storeInputQuery(%1,%2) compression enabled").arg(mainCodeType).arg(queryNumber));
                 #endif
                 //register the compression of the reply to send
                 replyOutputCompression << queryNumber;
@@ -1592,9 +1592,9 @@ void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,cons
         {
             messageParsingLayer(
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::storeInputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::storeInputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return;
         }
         #endif
@@ -1605,9 +1605,9 @@ void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,cons
             if(replyComressionOnlyMainCodePacketClientToServer.contains(mainCodeType))
                 messageParsingLayer(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" storeInputQuery(%1,%2) compression can't be enabled with fixed size").arg(mainCodeType).arg(queryNumber));
+                std::stringLiteral(" storeInputQuery(%1,%2) compression can't be enabled with fixed size").arg(mainCodeType).arg(queryNumber));
             #endif
             #endif
             //register the size of the reply to send
@@ -1621,9 +1621,9 @@ void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,cons
                 #ifdef PROTOCOLPARSINGDEBUG
                 messageParsingLayer(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" storeInputQuery(%1,%2) compression enabled").arg(mainCodeType).arg(queryNumber));
+                std::stringLiteral(" storeInputQuery(%1,%2) compression enabled").arg(mainCodeType).arg(queryNumber));
                 #endif
                 //register the compression of the reply to send
                 replyOutputCompression << queryNumber;
@@ -1633,7 +1633,7 @@ void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,cons
     }
 }
 
-void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber)
+void ProtocolParsingInputOutput::storeFullInputQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     protocolParsingCheck->waitedReply_mainCodeType[queryNumber]=mainCodeType;
@@ -1642,9 +1642,9 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
     {
         errorParsingLayer(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            QString::number(isClient)+
+            std::string::number(isClient)+
             #endif
-    QStringLiteral(" storeInputQuery(%1,%2,%3) query with same id previously say").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+    std::stringLiteral(" storeInputQuery(%1,%2,%3) query with same id previously say").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
         return;
     }
     queryReceived << queryNumber;
@@ -1657,9 +1657,9 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
         {
             messageParsingLayer(
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::storeInputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::storeInputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return;
         }
         #endif
@@ -1670,9 +1670,9 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                 #ifdef PROTOCOLPARSINGDEBUG
                 messageParsingLayer(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" storeInputQuery(%1,%2,%3) fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                std::stringLiteral(" storeInputQuery(%1,%2,%3) fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                 #endif
                 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -1680,9 +1680,9 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                     if(replyComressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
                         messageParsingLayer(
                                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                    QString::number(isClient)+
+                                    std::string::number(isClient)+
                                     #endif
-                        QStringLiteral(" storeInputQuery(%1,%2,%3) compression can't be enabled with fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                        std::stringLiteral(" storeInputQuery(%1,%2,%3) compression can't be enabled with fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                 #endif
                 #endif
                 replyOutputSize[queryNumber]=replySizeMultipleCodePacketClientToServer.value(mainCodeType).value(subCodeType);
@@ -1692,9 +1692,9 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                 #ifdef PROTOCOLPARSINGDEBUG
                 messageParsingLayer(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" storeInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                std::stringLiteral(" storeInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                 #endif
                 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                 if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
@@ -1703,9 +1703,9 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                         #ifdef PROTOCOLPARSINGDEBUG
                         messageParsingLayer(
                                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                    QString::number(isClient)+
+                                    std::string::number(isClient)+
                                     #endif
-                        QStringLiteral(" storeInputQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                        std::stringLiteral(" storeInputQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                         #endif
                         //register the compression of the reply to send
                         replyOutputCompression << queryNumber;
@@ -1718,9 +1718,9 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
             #ifdef PROTOCOLPARSINGDEBUG
             messageParsingLayer(
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" storeInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+            std::stringLiteral(" storeInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
             #endif
             #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
             if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
@@ -1729,9 +1729,9 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                     #ifdef PROTOCOLPARSINGDEBUG
                     messageParsingLayer(
                                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                QString::number(isClient)+
+                                std::string::number(isClient)+
                                 #endif
-                    QStringLiteral(" storeInputQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    std::stringLiteral(" storeInputQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     #endif
                     //register the compression of the reply to send
                     replyOutputCompression << queryNumber;
@@ -1747,9 +1747,9 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
         {
             messageParsingLayer(
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" ProtocolParsingInputOutput::storeInputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            std::stringLiteral(" ProtocolParsingInputOutput::storeInputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return;
         }
         #endif
@@ -1760,9 +1760,9 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                 #ifdef PROTOCOLPARSINGDEBUG
                 messageParsingLayer(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" storeInputQuery(%1,%2,%3) fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                std::stringLiteral(" storeInputQuery(%1,%2,%3) fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                 #endif
                 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -1770,9 +1770,9 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                     if(replyComressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
                         messageParsingLayer(
                                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                    QString::number(isClient)+
+                                    std::string::number(isClient)+
                                     #endif
-                        QStringLiteral(" storeInputQuery(%1,%2,%3) compression can't be enabled with fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                        std::stringLiteral(" storeInputQuery(%1,%2,%3) compression can't be enabled with fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                 #endif
                 #endif
                 replyOutputSize[queryNumber]=replySizeMultipleCodePacketServerToClient.value(mainCodeType).value(subCodeType);
@@ -1782,9 +1782,9 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                 #ifdef PROTOCOLPARSINGDEBUG
                 messageParsingLayer(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            QString::number(isClient)+
+                            std::string::number(isClient)+
                             #endif
-                QStringLiteral(" storeInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                std::stringLiteral(" storeInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                 #endif
                 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                 if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
@@ -1793,9 +1793,9 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                         #ifdef PROTOCOLPARSINGDEBUG
                         messageParsingLayer(
                                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                    QString::number(isClient)+
+                                    std::string::number(isClient)+
                                     #endif
-                        QStringLiteral(" storeInputQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                        std::stringLiteral(" storeInputQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                         #endif
                         //register the compression of the reply to send
                         replyOutputCompression << queryNumber;
@@ -1808,9 +1808,9 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
             #ifdef PROTOCOLPARSINGDEBUG
             messageParsingLayer(
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        QString::number(isClient)+
+                        std::string::number(isClient)+
                         #endif
-            QStringLiteral(" storeInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+            std::stringLiteral(" storeInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
             #endif
             #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
             if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
@@ -1819,9 +1819,9 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                     #ifdef PROTOCOLPARSINGDEBUG
                     messageParsingLayer(
                                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                QString::number(isClient)+
+                                std::string::number(isClient)+
                                 #endif
-                    QStringLiteral(" storeInputQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    std::stringLiteral(" storeInputQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     #endif
                     //register the compression of the reply to send
                     replyOutputCompression << queryNumber;

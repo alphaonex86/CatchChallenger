@@ -2,8 +2,8 @@
 #define CommonFightEngine_H
 
 #include <QByteArray>
-#include <QHash>
-#include <QString>
+#include <std::unordered_map>
+#include <std::string>
 #include <vector>
 
 #include "../base/GeneralStructures.h"
@@ -25,10 +25,10 @@ public:
     PlayerMonster *getCurrentMonster();
     virtual PublicPlayerMonster *getOtherMonster();
     virtual Skill::AttackReturn generateOtherAttack();
-    quint8 getCurrentSelectedMonsterNumber() const;
-    quint8 getOtherSelectedMonsterNumber() const;
-    virtual bool remainMonstersToFight(const quint32 &monsterId) const;
-    virtual bool canDoRandomFight(const CommonMap &map,const quint8 &x,const quint8 &y) const;
+    uint8_t getCurrentSelectedMonsterNumber() const;
+    uint8_t getOtherSelectedMonsterNumber() const;
+    virtual bool remainMonstersToFight(const uint32_t &monsterId) const;
+    virtual bool canDoRandomFight(const CommonMap &map,const uint8_t &x,const uint8_t &y) const;
     void updateCanDoFight();
     virtual bool haveAnotherMonsterOnThePlayerToFight() const;
     virtual bool haveAnotherEnnemyMonsterToFight();
@@ -40,71 +40,71 @@ public:
     bool dropKOCurrentMonster();
     virtual bool dropKOOtherMonster();
     virtual void healAllMonsters();
-    virtual bool learnSkill(const quint32 &monsterId,const quint32 &skill);
-    virtual bool learnSkillByItem(PlayerMonster *playerMonster, const quint32 &itemId);
+    virtual bool learnSkill(const uint32_t &monsterId,const uint32_t &skill);
+    virtual bool learnSkillByItem(PlayerMonster *playerMonster, const uint32_t &itemId);
     virtual void addPlayerMonster(const std::vector<PlayerMonster> &playerMonster);
     virtual void addPlayerMonster(const PlayerMonster &playerMonster);
-    virtual void insertPlayerMonster(const quint8 &place,const PlayerMonster &playerMonster);
+    virtual void insertPlayerMonster(const uint8_t &place,const PlayerMonster &playerMonster);
     std::vector<PlayerMonster> getPlayerMonster() const;
-    virtual bool moveUpMonster(const quint8 &number);
-    virtual bool moveDownMonster(const quint8 &number);
-    virtual bool removeMonster(const quint32 &monsterId);
-    bool haveThisMonster(const quint32 &monsterId) const;
-    PlayerMonster * monsterById(const quint32 &monsterId);
+    virtual bool moveUpMonster(const uint8_t &number);
+    virtual bool moveDownMonster(const uint8_t &number);
+    virtual bool removeMonster(const uint32_t &monsterId);
+    bool haveThisMonster(const uint32_t &monsterId) const;
+    PlayerMonster * monsterById(const uint32_t &monsterId);
     virtual bool canEscape();
     virtual bool tryEscape();
     bool canDoFightAction();
-    virtual bool useSkill(const quint32 &skill);
-    quint8 getSkillLevel(const quint32 &skill);
-    virtual quint8 decreaseSkillEndurance(const quint32 &skill);
+    virtual bool useSkill(const uint32_t &skill);
+    uint8_t getSkillLevel(const uint32_t &skill);
+    virtual uint8_t decreaseSkillEndurance(const uint32_t &skill);
     bool haveMoreEndurance();
     std::vector<Skill::LifeEffectReturn> applyBuffLifeEffect(PublicPlayerMonster * playerMonster);
     std::vector<Skill::BuffEffect> removeOldBuff(PublicPlayerMonster *playerMonster);
     virtual bool isInBattle() const = 0;
     //return true if now have wild monter to fight
-    virtual bool generateWildFightIfCollision(CommonMap *map, const COORD_TYPE &x, const COORD_TYPE &y, const QHash<quint16, quint32> &items, const std::vector<quint8> &events);
+    virtual bool generateWildFightIfCollision(CommonMap *map, const COORD_TYPE &x, const COORD_TYPE &y, const std::unordered_map<uint16_t, uint32_t> &items, const std::vector<uint8_t> &events);
     virtual bool doTheOtherMonsterTurn();
-    virtual void doTheTurn(const quint32 &skill,const quint8 &skillLevel,const bool currentMonsterStatIsFirstToAttack);
+    virtual void doTheTurn(const uint32_t &skill,const uint8_t &skillLevel,const bool currentMonsterStatIsFirstToAttack);
     virtual bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const;
-    virtual quint32 tryCapture(const quint32 &item);
-    virtual bool changeOfMonsterInFight(const quint32 &monsterId);
+    virtual uint32_t tryCapture(const uint32_t &item);
+    virtual bool changeOfMonsterInFight(const uint32_t &monsterId);
     virtual int addBuffEffectFull(const Skill::BuffEffect &effect,PublicPlayerMonster * currentMonster,PublicPlayerMonster * otherMonster);
     virtual void removeBuffEffectFull(const Skill::BuffEffect &effect);
-    virtual bool useObjectOnMonster(const quint32 &object,const quint32 &monster);
-    virtual void confirmEvolutionTo(PlayerMonster * playerMonster,const quint32 &monster);
-    virtual void hpChange(PlayerMonster * currentMonster, const quint32 &newHpValue);
-    virtual bool removeBuffOnMonster(PlayerMonster * currentMonster, const quint32 &buffId);
+    virtual bool useObjectOnMonster(const uint32_t &object,const uint32_t &monster);
+    virtual void confirmEvolutionTo(PlayerMonster * playerMonster,const uint32_t &monster);
+    virtual void hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue);
+    virtual bool removeBuffOnMonster(PlayerMonster * currentMonster, const uint32_t &buffId);
     virtual bool removeAllBuffOnMonster(PlayerMonster * currentMonster);
 protected:
     static ApplyOn invertApplyOn(const ApplyOn &applyOn);
     virtual PlayerMonster getRandomMonster(const std::vector<MapMonster> &monsterList,bool *ok);
     static bool monsterIsKO(const PlayerMonster &playerMonter);
-    Skill::LifeEffectReturn applyLifeEffect(const quint8 &type, const Skill::LifeEffect &effect, PublicPlayerMonster *currentMonster, PublicPlayerMonster *otherMonster);
-    virtual quint8 getOneSeed(const quint8 &max) = 0;
+    Skill::LifeEffectReturn applyLifeEffect(const uint8_t &type, const Skill::LifeEffect &effect, PublicPlayerMonster *currentMonster, PublicPlayerMonster *otherMonster);
+    virtual uint8_t getOneSeed(const uint8_t &max) = 0;
     virtual bool internalTryEscape();
     virtual bool internalTryCapture(const Trap &trap);
     virtual void fightFinished();
-    virtual void wildDrop(const quint32 &monster);
+    virtual void wildDrop(const uint32_t &monster);
     virtual bool checkKOOtherMonstersForGain();
     virtual bool giveXPSP(int xp,int sp);
-    virtual bool addLevel(PlayerMonster * monster,const quint8 &numberOfLevel=1);
-    virtual void levelUp(const quint8 &level,const quint8 &monsterIndex);
-    virtual std::vector<Monster::AttackToLearn> autoLearnSkill(const quint8 &level,const quint8 &monsterIndex);
-    virtual Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel);
-    Skill::AttackReturn genericMonsterAttack(PublicPlayerMonster *currentMonster,PublicPlayerMonster *otherMonster,const quint32 &skill, const quint8 &skillLevel);
-    virtual quint32 catchAWild(const bool &toStorage, const PlayerMonster &newMonster) = 0;
+    virtual bool addLevel(PlayerMonster * monster,const uint8_t &numberOfLevel=1);
+    virtual void levelUp(const uint8_t &level,const uint8_t &monsterIndex);
+    virtual std::vector<Monster::AttackToLearn> autoLearnSkill(const uint8_t &level,const uint8_t &monsterIndex);
+    virtual Skill::AttackReturn doTheCurrentMonsterAttack(const uint32_t &skill, const uint8_t &skillLevel);
+    Skill::AttackReturn genericMonsterAttack(PublicPlayerMonster *currentMonster,PublicPlayerMonster *otherMonster,const uint32_t &skill, const uint8_t &skillLevel);
+    virtual uint32_t catchAWild(const bool &toStorage, const PlayerMonster &newMonster) = 0;
     void startTheFight();
     virtual bool addSkill(PlayerMonster * currentMonster,const PlayerMonster::PlayerSkill &skill);
-    virtual bool setSkillLevel(PlayerMonster * currentMonster,const int &index,const quint8 &level);
+    virtual bool setSkillLevel(PlayerMonster * currentMonster,const int &index,const uint8_t &level);
     virtual bool removeSkill(PlayerMonster * currentMonster,const int &index);
 protected:
-    virtual void errorFightEngine(const QString &error) = 0;
-    virtual void messageFightEngine(const QString &message) const = 0;
-    virtual quint32 randomSeedsSize() const = 0;
+    virtual void errorFightEngine(const std::string &error) = 0;
+    virtual void messageFightEngine(const std::string &message) const = 0;
+    virtual uint32_t randomSeedsSize() const = 0;
 protected:
     bool ableToFight;
     std::vector<PlayerMonster> wildMonsters,botFightMonsters;
-    quint8 stepFight;
+    uint8_t stepFight;
     int selectedMonster;
     bool doTurnIfChangeOfMonster;
 };

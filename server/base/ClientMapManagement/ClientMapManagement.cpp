@@ -12,10 +12,10 @@ using namespace CatchChallenger;
 
 /// \todo drop this class
 
-bool ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
+bool ClientMapManagement::moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_MOVE
-    message(QStringLiteral("ClientMapManagement::moveThePlayer (%1,%2): %3, direction: %4, previousMovedUnit: %5").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(MoveOnTheMap::directionToString(direction)).arg(previousMovedUnit));
+    message(std::stringLiteral("ClientMapManagement::moveThePlayer (%1,%2): %3, direction: %4, previousMovedUnit: %5").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(MoveOnTheMap::directionToString(direction)).arg(previousMovedUnit));
     #endif
     if(Q_UNLIKELY(!MapBasicMove::moveThePlayer(previousMovedUnit,direction)))
         return false;

@@ -43,30 +43,30 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
 
             //////////////////////////// insert //////////////////////////
             /* can be only this map with this algo, then 1 map */
-            out << (quint8)0x01;
+            out << (uint8_t)0x01;
             if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
-                out << (quint8)id;
+                out << (uint8_t)id;
             else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
-                out << (quint16)id;
+                out << (uint16_t)id;
             else
-                out << (quint32)id;
+                out << (uint32_t)id;
             if(GlobalServerData::serverSettings.max_players<=255)
-                out << (quint8)clients.size();
+                out << (uint8_t)clients.size();
             else
-                out << (quint16)clients.size();
+                out << (uint16_t)clients.size();
             int index=0;
             while(index<clients.size())
             {
                 if(GlobalServerData::serverSettings.max_players<=255)
-                    out << (quint8)clients.at(index)->public_and_private_informations.public_informations.simplifiedId;
+                    out << (uint8_t)clients.at(index)->public_and_private_informations.public_informations.simplifiedId;
                 else
-                    out << (quint16)clients.at(index)->public_and_private_informations.public_informations.simplifiedId;
+                    out << (uint16_t)clients.at(index)->public_and_private_informations.public_informations.simplifiedId;
                 out << (COORD_TYPE)clients.at(index)->getX();
                 out << (COORD_TYPE)clients.at(index)->getY();
                 if(GlobalServerData::serverSettings.dontSendPlayerType)
-                    out << (quint8)((quint8)clients.at(index)->getLastDirection() | (quint8)Player_type_normal);
+                    out << (uint8_t)((uint8_t)clients.at(index)->getLastDirection() | (uint8_t)Player_type_normal);
                 else
-                    out << (quint8)((quint8)clients.at(index)->getLastDirection() | (quint8)clients.at(index)->public_and_private_informations.public_informations.type);
+                    out << (uint8_t)((uint8_t)clients.at(index)->getLastDirection() | (uint8_t)clients.at(index)->public_and_private_informations.public_informations.type);
                 if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
                     out << clients.at(index)->public_and_private_informations.public_informations.speed;
                 //pseudo
@@ -121,17 +121,17 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
 
                     //////////////////////////// insert //////////////////////////
                     /* can be only this map with this algo, then 1 map */
-                    out << (quint8)0x01;
+                    out << (uint8_t)0x01;
                     if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
-                        out << (quint8)id;
+                        out << (uint8_t)id;
                     else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
-                        out << (quint16)id;
+                        out << (uint16_t)id;
                     else
-                        out << (quint32)id;
+                        out << (uint32_t)id;
                     if(GlobalServerData::serverSettings.max_players<=255)
-                        out << (quint8)(insert_player);
+                        out << (uint8_t)(insert_player);
                     else
-                        out << (quint16)(insert_player);
+                        out << (uint16_t)(insert_player);
                     int index=0;
                     while(index<clients.size())
                     {
@@ -139,15 +139,15 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         if(client->to_send_insert)
                         {
                             if(GlobalServerData::serverSettings.max_players<=255)
-                                out << (quint8)client->public_and_private_informations.public_informations.simplifiedId;
+                                out << (uint8_t)client->public_and_private_informations.public_informations.simplifiedId;
                             else
-                                out << (quint16)client->public_and_private_informations.public_informations.simplifiedId;
+                                out << (uint16_t)client->public_and_private_informations.public_informations.simplifiedId;
                             out << (COORD_TYPE)client->getX();
                             out << (COORD_TYPE)client->getY();
                             if(GlobalServerData::serverSettings.dontSendPlayerType)
-                                out << (quint8)((quint8)client->getLastDirection() | (quint8)Player_type_normal);
+                                out << (uint8_t)((uint8_t)client->getLastDirection() | (uint8_t)Player_type_normal);
                             else
-                                out << (quint8)((quint8)client->getLastDirection() | (quint8)client->public_and_private_informations.public_informations.type);
+                                out << (uint8_t)((uint8_t)client->getLastDirection() | (uint8_t)client->public_and_private_informations.public_informations.type);
                             if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
                                 out << client->public_and_private_informations.public_informations.speed;
                             //pseudo
@@ -201,17 +201,17 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
 
                     //////////////////////////// insert //////////////////////////
                     /* can be only this map with this algo, then 1 map */
-                    out << (quint8)0x01;
+                    out << (uint8_t)0x01;
                     if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
-                        out << (quint8)id;
+                        out << (uint8_t)id;
                     else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
-                        out << (quint16)id;
+                        out << (uint16_t)id;
                     else
-                        out << (quint32)id;
+                        out << (uint32_t)id;
                     if(GlobalServerData::serverSettings.max_players<=255)
-                        out << (quint8)(clients.size()-1);
+                        out << (uint8_t)(clients.size()-1);
                     else
-                        out << (quint16)(clients.size()-1);
+                        out << (uint16_t)(clients.size()-1);
                     int index_subindex=0;
                     while(index_subindex<clients.size())
                     {
@@ -219,15 +219,15 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         if(index!=index_subindex)
                         {
                             if(GlobalServerData::serverSettings.max_players<=255)
-                                out << (quint8)client->public_and_private_informations.public_informations.simplifiedId;
+                                out << (uint8_t)client->public_and_private_informations.public_informations.simplifiedId;
                             else
-                                out << (quint16)client->public_and_private_informations.public_informations.simplifiedId;
+                                out << (uint16_t)client->public_and_private_informations.public_informations.simplifiedId;
                             out << (COORD_TYPE)client->getX();
                             out << (COORD_TYPE)client->getY();
                             if(GlobalServerData::serverSettings.dontSendPlayerType)
-                                out << (quint8)((quint8)client->getLastDirection() | (quint8)Player_type_normal);
+                                out << (uint8_t)((uint8_t)client->getLastDirection() | (uint8_t)Player_type_normal);
                             else
-                                out << (quint8)((quint8)client->getLastDirection() | (quint8)client->public_and_private_informations.public_informations.type);
+                                out << (uint8_t)((uint8_t)client->getLastDirection() | (uint8_t)client->public_and_private_informations.public_informations.type);
                             if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
                                 out << client->public_and_private_informations.public_informations.speed;
                             //pseudo
@@ -264,20 +264,20 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
     {
         if(GlobalServerData::serverSettings.max_players<=255)
         {
-            if((sizeof(quint8)+to_send_remove.size()*sizeof(quint8))<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
+            if((sizeof(uint8_t)+to_send_remove.size()*sizeof(uint8_t))<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
             {
-                char buffer[sizeof(quint8)+to_send_remove.size()*sizeof(quint8)];
-                buffer[0]=(quint8)to_send_remove.size();
+                char buffer[sizeof(uint8_t)+to_send_remove.size()*sizeof(uint8_t)];
+                buffer[0]=(uint8_t)to_send_remove.size();
                 int index_subindex=0;
                 while(index_subindex<to_send_remove.size())
                 {
-                    buffer[sizeof(quint8)+index_subindex*sizeof(quint8)]=(quint8)to_send_remove.at(index_subindex);
+                    buffer[sizeof(uint8_t)+index_subindex*sizeof(uint8_t)]=(uint8_t)to_send_remove.at(index_subindex);
                     index_subindex++;
                 }
                 index_subindex=0;
                 while(index_subindex<clientsToSendDataSizeOldClients)
                 {
-                    clientsToSendDataOldClients[index_subindex]->packOutcommingData(0xC8,buffer,sizeof(quint8)+sizeof(quint8)*to_send_remove.size());
+                    clientsToSendDataOldClients[index_subindex]->packOutcommingData(0xC8,buffer,sizeof(uint8_t)+sizeof(uint8_t)*to_send_remove.size());
                     index_subindex++;
                 }
             }
@@ -288,19 +288,19 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         }
         else
         {
-            if((sizeof(quint16)+to_send_remove.size()*sizeof(quint16))<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
+            if((sizeof(uint16_t)+to_send_remove.size()*sizeof(uint16_t))<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
             {
-                *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htole16((quint16)to_send_remove.size());
+                *reinterpret_cast<uint16_t *>(buffer+0)=(uint16_t)htole16((uint16_t)to_send_remove.size());
                 int index_subindex=0;
                 while(index_subindex<to_send_remove.size())
                 {
-                    *reinterpret_cast<quint16 *>(buffer+sizeof(quint16)+index_subindex*sizeof(quint16))=(quint16)htole16((quint16)to_send_remove.at(index_subindex));
+                    *reinterpret_cast<uint16_t *>(buffer+sizeof(uint16_t)+index_subindex*sizeof(uint16_t))=(uint16_t)htole16((uint16_t)to_send_remove.at(index_subindex));
                     index_subindex++;
                 }
                 index_subindex=0;
                 while(index_subindex<clientsToSendDataSizeOldClients)
                 {
-                    clientsToSendDataOldClients[index_subindex]->packOutcommingData(0xC8,buffer,sizeof(quint16)+sizeof(quint16)*to_send_remove.size());
+                    clientsToSendDataOldClients[index_subindex]->packOutcommingData(0xC8,buffer,sizeof(uint16_t)+sizeof(uint16_t)*to_send_remove.size());
                     index_subindex++;
                 }
             }
@@ -330,9 +330,9 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                 index_subindex++;
             }
             if(GlobalServerData::serverSettings.max_players<=255)
-                bufferSizeToHave=sizeof(quint8)+real_reinsert_count*(sizeof(quint8)+sizeof(quint8)*3);
+                bufferSizeToHave=sizeof(uint8_t)+real_reinsert_count*(sizeof(uint8_t)+sizeof(uint8_t)*3);
             else
-                bufferSizeToHave=sizeof(quint16)+real_reinsert_count*(sizeof(quint16)+sizeof(quint8)*3);
+                bufferSizeToHave=sizeof(uint16_t)+real_reinsert_count*(sizeof(uint16_t)+sizeof(uint8_t)*3);
             if(bufferSizeToHave<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
             {
                 if(real_reinsert_count>0)
@@ -341,13 +341,13 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     //////////////////////////// insert //////////////////////////
                     if(GlobalServerData::serverSettings.max_players<=255)
                     {
-                        buffer[0]=(quint8)real_reinsert_count;
-                        bufferCursor=sizeof(quint8);
+                        buffer[0]=(uint8_t)real_reinsert_count;
+                        bufferCursor=sizeof(uint8_t);
                     }
                     else
                     {
-                        *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htole16((quint16)real_reinsert_count);
-                        bufferCursor=sizeof(quint16);
+                        *reinterpret_cast<uint16_t *>(buffer+0)=(uint16_t)htole16((uint16_t)real_reinsert_count);
+                        bufferCursor=sizeof(uint16_t);
                     }
                     index_subindex=0;
                     if(GlobalServerData::serverSettings.max_players<=255)
@@ -355,11 +355,11 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         {
                             if(clientsToSendDataOldClients[index_subindex]->haveNewMove)
                             {
-                                buffer[bufferCursor+0]=(quint8)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
-                                buffer[bufferCursor+1]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
-                                buffer[bufferCursor+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
-                                buffer[bufferCursor+3]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
-                                bufferCursor+=sizeof(quint8)+sizeof(quint8)*3;
+                                buffer[bufferCursor+0]=(uint8_t)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
+                                buffer[bufferCursor+1]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getX();
+                                buffer[bufferCursor+2]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getY();
+                                buffer[bufferCursor+3]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                bufferCursor+=sizeof(uint8_t)+sizeof(uint8_t)*3;
                             }
                             index_subindex++;
                         }
@@ -368,11 +368,11 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         {
                             if(clientsToSendDataOldClients[index_subindex]->haveNewMove)
                             {
-                                *reinterpret_cast<quint16 *>(buffer+bufferCursor)=(quint16)htole16((quint16)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
-                                buffer[bufferCursor+sizeof(quint16)+0]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
-                                buffer[bufferCursor+sizeof(quint16)+1]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
-                                buffer[bufferCursor+sizeof(quint16)+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
-                                bufferCursor+=sizeof(quint16)+sizeof(quint8)*3;
+                                *reinterpret_cast<uint16_t *>(buffer+bufferCursor)=(uint16_t)htole16((uint16_t)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
+                                buffer[bufferCursor+sizeof(uint16_t)+0]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getX();
+                                buffer[bufferCursor+sizeof(uint16_t)+1]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getY();
+                                buffer[bufferCursor+sizeof(uint16_t)+2]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                bufferCursor+=sizeof(uint16_t)+sizeof(uint8_t)*3;
                             }
                             index_subindex++;
                         }
@@ -397,9 +397,9 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             int bufferBaseCursor;
             int bufferSizeToHave;
             if(GlobalServerData::serverSettings.max_players<=255)
-                bufferBaseCursor=sizeof(quint8);
+                bufferBaseCursor=sizeof(uint8_t);
             else
-                bufferBaseCursor=sizeof(quint16);
+                bufferBaseCursor=sizeof(uint16_t);
 
             while(index_subindex<clientsToSendDataSizeOldClients)
             {
@@ -410,9 +410,9 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             if(real_reinsert_count>0)
             {
                 if(GlobalServerData::serverSettings.max_players<=255)
-                    bufferSizeToHave=sizeof(quint8)+real_reinsert_count*(sizeof(quint8)+sizeof(quint8)*3);
+                    bufferSizeToHave=sizeof(uint8_t)+real_reinsert_count*(sizeof(uint8_t)+sizeof(uint8_t)*3);
                 else
-                    bufferSizeToHave=sizeof(quint16)+real_reinsert_count*(sizeof(quint16)+sizeof(quint8)*3);
+                    bufferSizeToHave=sizeof(uint16_t)+real_reinsert_count*(sizeof(uint16_t)+sizeof(uint8_t)*3);
                 if(bufferSizeToHave<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
                 {
                     int index=0;
@@ -427,16 +427,16 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                             if(temp_reinsert>0)
                             {
                                 index_subindex=0;
-                                buffer[0]=(quint8)temp_reinsert;
+                                buffer[0]=(uint8_t)temp_reinsert;
                                 while(index_subindex<clientsToSendDataSizeOldClients)
                                 {
                                     if(index!=index_subindex && clientsToSendDataOldClients[index_subindex]->haveNewMove)
                                     {
-                                        buffer[bufferCursor+0]=(quint8)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
-                                        buffer[bufferCursor+1]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
-                                        buffer[bufferCursor+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
-                                        buffer[bufferCursor+3]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
-                                        bufferCursor+=sizeof(quint8)+sizeof(quint8)*3;
+                                        buffer[bufferCursor+0]=(uint8_t)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
+                                        buffer[bufferCursor+1]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getX();
+                                        buffer[bufferCursor+2]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getY();
+                                        buffer[bufferCursor+3]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                        bufferCursor+=sizeof(uint8_t)+sizeof(uint8_t)*3;
                                     }
                                     index_subindex++;
                                 }
@@ -456,16 +456,16 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                             if(temp_reinsert>0)
                             {
                                 index_subindex=0;
-                                *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htole16((quint16)temp_reinsert);
+                                *reinterpret_cast<uint16_t *>(buffer+0)=(uint16_t)htole16((uint16_t)temp_reinsert);
                                 while(index_subindex<clientsToSendDataSizeOldClients)
                                 {
                                     if(index!=index_subindex && clientsToSendDataOldClients[index_subindex]->haveNewMove)
                                     {
-                                        *reinterpret_cast<quint16 *>(buffer+bufferCursor)=(quint16)htole16((quint16)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
-                                        buffer[bufferCursor+sizeof(quint16)+0]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
-                                        buffer[bufferCursor+sizeof(quint16)+1]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
-                                        buffer[bufferCursor+sizeof(quint16)+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
-                                        bufferCursor+=sizeof(quint16)+sizeof(quint8)*3;
+                                        *reinterpret_cast<uint16_t *>(buffer+bufferCursor)=(uint16_t)htole16((uint16_t)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
+                                        buffer[bufferCursor+sizeof(uint16_t)+0]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getX();
+                                        buffer[bufferCursor+sizeof(uint16_t)+1]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getY();
+                                        buffer[bufferCursor+sizeof(uint16_t)+2]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                        bufferCursor+=sizeof(uint16_t)+sizeof(uint8_t)*3;
                                     }
                                     index_subindex++;
                                 }

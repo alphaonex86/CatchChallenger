@@ -21,11 +21,11 @@ public:
     static QDateTime nextCaptureTime(const City &city);
     static QByteArray privateMonsterToBinary(const PlayerMonster &monster);
     static IndustryStatus industryStatusWithCurrentTime(const IndustryStatus &industryStatus, const Industry &industry);
-    static quint32 getFactoryResourcePrice(const quint32 &quantityInStock,const Industry::Resource &resource,const Industry &industry);
-    static quint32 getFactoryProductPrice(const quint32 &quantityInStock,const Industry::Product &product,const Industry &industry);
+    static uint32_t getFactoryResourcePrice(const uint32_t &quantityInStock,const Industry::Resource &resource,const Industry &industry);
+    static uint32_t getFactoryProductPrice(const uint32_t &quantityInStock,const Industry::Product &product,const Industry &industry);
     static IndustryStatus factoryCheckProductionStart(const IndustryStatus &industryStatus,const Industry &industry);
     static bool factoryProductionStarted(const IndustryStatus &industryStatus,const Industry &industry);
-    static void appendReputationPoint(PlayerReputation *playerReputation, const qint32 &point, const Reputation &reputation);
+    static void appendReputationPoint(PlayerReputation *playerReputation, const int32_t &point, const Reputation &reputation);
 private:
     static QByteArray UTF8EmptyData;
     static std::string text_slash;

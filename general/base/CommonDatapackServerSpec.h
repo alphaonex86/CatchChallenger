@@ -18,9 +18,9 @@ public:
     void unload();
     void parseDatapack(const std::string &datapackPath, const std::string &mainDatapackCode);
 public:
-    std::unordered_map<quint16,BotFight> botFights;
-    std::unordered_map<quint16,Quest> quests;
-    std::unordered_map<quint32,Shop> shops;
+    std::unordered_map<uint16_t,BotFight> botFights;
+    std::unordered_map<uint16_t,Quest> quests;
+    std::unordered_map<uint32_t,Shop> shops;
     std::vector<ServerProfile> serverProfileList;
     static CommonDatapackServerSpec commonDatapackServerSpec;
 private:

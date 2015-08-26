@@ -22,14 +22,14 @@ bool Client::tryEscape()
     }
     else
     {
-        errorOutput(QStringLiteral("Try escape when not allowed"));
+        errorOutput(std::stringLiteral("Try escape when not allowed"));
         return false;
     }
 }
 
-quint32 Client::tryCapture(const quint16 &item)
+uint32_t Client::tryCapture(const uint16_t &item)
 {
-    quint32 captureSuccessId=CommonFightEngine::tryCapture(item);
+    uint32_t captureSuccessId=CommonFightEngine::tryCapture(item);
     if(captureSuccessId!=0)//if success
         saveCurrentMonsterStat();
     else
@@ -58,13 +58,13 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
     {
         if(!CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(monster.monster))
         {
-            errorOutput(QStringLiteral("saveMonsterStat() The monster %1 is not into the monster list (%2)").arg(monster.monster).arg(CatchChallenger::CommonDatapack::commonDatapack.monsters.size()));
+            errorOutput(std::stringLiteral("saveMonsterStat() The monster %1 is not into the monster list (%2)").arg(monster.monster).arg(CatchChallenger::CommonDatapack::commonDatapack.monsters.size()));
             return;
         }
         Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(monster.monster),monster.level);
         if(monster.hp>currentMonsterStat.hp)
         {
-            errorOutput(QStringLiteral("saveMonsterStat() The hp %1 of current monster %2 is greater than the max %3").arg(monster.hp).arg(monster.monster).arg(currentMonsterStat.hp));
+            errorOutput(std::stringLiteral("saveMonsterStat() The hp %1 of current monster %2 is greater than the max %3").arg(monster.hp).arg(monster.monster).arg(currentMonsterStat.hp));
             return;
         }
     }
@@ -87,9 +87,9 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
                                  .arg(monster.remaining_xp)
                                  .arg(monster.level)
                                  );
-        QHash<quint32, QHash<quint32,quint32> >::const_iterator i = deferedEndurance.constBegin();
+        std::unordered_map<uint32_t, std::unordered_map<uint32_t,uint32_t> >::const_iterator i = deferedEndurance.constBegin();
         while (i != deferedEndurance.constEnd()) {
-            QHash<quint32,quint32>::const_iterator j = i.value().constBegin();
+            std::unordered_map<uint32_t,uint32_t>::const_iterator j = i.value().constBegin();
             while (j != i.value().constEnd()) {
                 dbQueryWriteCommon(PreparedDBQueryCommon::db_query_monster_skill
                              .arg(j.value())
@@ -106,7 +106,7 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
 
 void Client::saveAllMonsterPosition()
 {
-    const QList<PlayerMonster> &playerMonsterList=getPlayerMonster();
+    const std::vector<PlayerMonster> &playerMonsterList=getPlayerMonster();
     int index=0;
     while(index<playerMonsterList.size())
     {
@@ -121,7 +121,7 @@ bool Client::checkKOCurrentMonsters()
     if(getCurrentMonster()->hp==0)
     {
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        normalOutput(QStringLiteral("You current monster (%1) is KO").arg(getCurrentMonster()->monster));
+        normalOutput(std::stringLiteral("You current monster (%1) is KO").arg(getCurrentMonster()->monster));
         #endif
         saveStat();
         return true;
@@ -138,7 +138,7 @@ bool Client::checkLoose()
     if(!haveAnotherMonsterOnThePlayerToFight())
     {
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        normalOutput(QStringLiteral("You have lost, tp to %1 (%2,%3) and heal").arg(rescue.map->map_file).arg(rescue.x).arg(rescue.y));
+        normalOutput(std::stringLiteral("You have lost, tp to %1 (%2,%3) and heal").arg(rescue.map->map_file).arg(rescue.x).arg(rescue.y));
         #endif
         doTurnIfChangeOfMonster=true;
         //teleport
@@ -153,7 +153,7 @@ bool Client::checkLoose()
         normalOutput("You lost the battle");
         if(!ableToFight)
         {
-            errorOutput(QStringLiteral("after lost in fight, remain unable to do a fight"));
+            errorOutput(std::stringLiteral("after lost in fight, remain unable to do a fight"));
             return true;
         }
         #endif
@@ -234,13 +234,13 @@ void Client::saveStat()
         if(currentMonster!=NULL)
             if(currentMonster->hp>currentMonsterStat.hp)
             {
-                errorOutput(QStringLiteral("saveStat() The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonsterStat.hp));
+                errorOutput(std::stringLiteral("saveStat() The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonsterStat.hp));
                 return;
             }
         if(otherMonster!=NULL)
             if(otherMonster->hp>otherMonsterStat.hp)
             {
-                errorOutput(QStringLiteral("saveStat() The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonsterStat.hp));
+                errorOutput(std::stringLiteral("saveStat() The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonsterStat.hp));
                 return;
             }
     }
@@ -255,17 +255,17 @@ bool Client::botFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TY
 {
     if(isInFight())
     {
-        errorOutput(QStringLiteral("error: map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
+        errorOutput(std::stringLiteral("error: map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
         return false;
     }
-    const QList<quint32> &botList=static_cast<MapServer *>(map)->botsFightTrigger.values(QPair<quint8,quint8>(x,y));
+    const std::vector<uint32_t> &botList=static_cast<MapServer *>(map)->botsFightTrigger.values(std::pair<uint8_t,uint8_t>(x,y));
     int index=0;
     while(index<botList.size())
     {
-        const quint32 &botFightId=botList.at(index);
+        const uint32_t &botFightId=botList.at(index);
         if(!public_and_private_informations.bot_already_beaten.contains(botFightId))
         {
-            normalOutput(QStringLiteral("is now in fight on map %1 (%2,%3) with the bot %4").arg(map->map_file).arg(x).arg(y).arg(botFightId));
+            normalOutput(std::stringLiteral("is now in fight on map %1 (%2,%3) with the bot %4").arg(map->map_file).arg(x).arg(y).arg(botFightId));
             botFightStart(botFightId);
             return true;
         }
@@ -276,22 +276,22 @@ bool Client::botFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TY
     return false;
 }
 
-bool Client::botFightStart(const quint32 &botFightId)
+bool Client::botFightStart(const uint32_t &botFightId)
 {
     if(isInFight())
     {
-        errorOutput(QStringLiteral("error: is already in fight"));
+        errorOutput(std::stringLiteral("error: is already in fight"));
         return false;
     }
     if(!CommonDatapackServerSpec::commonDatapackServerSpec.botFights.contains(botFightId))
     {
-        errorOutput(QStringLiteral("error: bot id %1 not found").arg(botFightId));
+        errorOutput(std::stringLiteral("error: bot id %1 not found").arg(botFightId));
         return false;
     }
     const BotFight &botFight=CommonDatapackServerSpec::commonDatapackServerSpec.botFights.value(botFightId);
     if(botFight.monsters.isEmpty())
     {
-        errorOutput(QStringLiteral("error: bot id %1 have no monster to fight").arg(botFightId));
+        errorOutput(std::stringLiteral("error: bot id %1 have no monster to fight").arg(botFightId));
         return false;
     }
     startTheFight();
@@ -307,7 +307,7 @@ bool Client::botFightStart(const quint32 &botFightId)
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
     if(botFightMonsters.isEmpty())
     {
-        errorOutput(QStringLiteral("error: after the bot add, remaing empty").arg(botFightId));
+        errorOutput(std::stringLiteral("error: after the bot add, remaing empty").arg(botFightId));
         return false;
     }
     #endif
@@ -333,29 +333,29 @@ PublicPlayerMonster *Client::getOtherMonster()
         if(otherPlayerBattleCurrentMonster!=NULL)
             return otherPlayerBattleCurrentMonster;
         else
-            errorOutput(QStringLiteral("Is in battle but the other monster is null"));
+            errorOutput(std::stringLiteral("Is in battle but the other monster is null"));
     }
     return CommonFightEngine::getOtherMonster();
 }
 
-void Client::wildDrop(const quint32 &monster)
+void Client::wildDrop(const uint32_t &monster)
 {
-    QList<MonsterDrops> drops=GlobalServerData::serverPrivateVariables.monsterDrops.values(monster);
+    std::vector<MonsterDrops> drops=GlobalServerData::serverPrivateVariables.monsterDrops.values(monster);
     if(questsDrop.contains(monster))
         drops+=questsDrop.values(monster);
     int index=0;
     bool success;
-    quint32 quantity;
+    uint32_t quantity;
     while(index<drops.size())
     {
-        const quint32 &tempLuck=drops.at(index).luck;
-        const quint32 &quantity_min=drops.at(index).quantity_min;
-        const quint32 &quantity_max=drops.at(index).quantity_max;
+        const uint32_t &tempLuck=drops.at(index).luck;
+        const uint32_t &quantity_min=drops.at(index).quantity_min;
+        const uint32_t &quantity_max=drops.at(index).quantity_max;
         if(tempLuck==100)
             success=true;
         else
         {
-            if(rand()%100<(qint32)tempLuck)
+            if(rand()%100<(int32_t)tempLuck)
                 success=true;
             else
                 success=false;
@@ -369,7 +369,7 @@ void Client::wildDrop(const quint32 &monster)
             else
                 quantity=rand()%(quantity_max-quantity_min+1)+quantity_min;
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            normalOutput(QStringLiteral("Win %1 item: %2").arg(quantity).arg(drops.at(index).item));
+            normalOutput(std::stringLiteral("Win %1 item: %2").arg(quantity).arg(drops.at(index).item));
             #endif
             addObjectAndSend(drops.at(index).item,quantity);
         }
@@ -384,7 +384,7 @@ bool Client::isInFight() const
     return otherPlayerBattle!=NULL || battleIsValidated;
 }
 
-bool Client::learnSkillInternal(const quint32 &monsterId,const quint32 &skill)
+bool Client::learnSkillInternal(const uint32_t &monsterId,const uint32_t &skill)
 {
     int index=0;
     while(index<public_and_private_informations.playerMonster.size())
@@ -411,10 +411,10 @@ bool Client::learnSkillInternal(const quint32 &monsterId,const quint32 &skill)
                         if(CommonSettingsServer::commonSettingsServer.useSP)
                         {
                             const Skill &skillStructure=CommonDatapack::commonDatapack.monsterSkills.value(learn.learnSkill);
-                            const quint32 &sp=skillStructure.level.at(learn.learnSkillLevel-1).sp_to_learn;
+                            const uint32_t &sp=skillStructure.level.at(learn.learnSkillLevel-1).sp_to_learn;
                             if(sp>monster.sp)
                             {
-                                errorOutput(QStringLiteral("The attack require %1 sp to be learned, you have only %2").arg(sp).arg(monster.sp));
+                                errorOutput(std::stringLiteral("The attack require %1 sp to be learned, you have only %2").arg(sp).arg(monster.sp));
                                 return false;
                             }
                             public_and_private_informations.playerMonster[index].sp-=sp;
@@ -451,12 +451,12 @@ bool Client::learnSkillInternal(const quint32 &monsterId,const quint32 &skill)
                 }
                 sub_index++;
             }
-            errorOutput(QStringLiteral("The skill %1 is not into learn skill list for the monster").arg(skill));
+            errorOutput(std::stringLiteral("The skill %1 is not into learn skill list for the monster").arg(skill));
             return false;
         }
         index++;
     }
-    errorOutput(QStringLiteral("The monster is not found: %1").arg(monsterId));
+    errorOutput(std::stringLiteral("The monster is not found: %1").arg(monsterId));
     return false;
 }
 
@@ -473,7 +473,7 @@ void Client::registerBattleRequest(Client *otherPlayerBattle)
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QStringLiteral("%1 have requested battle with you").arg(otherPlayerBattle->public_and_private_informations.public_informations.pseudo));
+    normalOutput(std::stringLiteral("%1 have requested battle with you").arg(otherPlayerBattle->public_and_private_informations.public_informations.pseudo));
     #endif
     this->otherPlayerBattle=otherPlayerBattle;
     otherPlayerBattle->otherPlayerBattle=this;
@@ -587,12 +587,12 @@ void Client::internalBattleAccepted(const bool &send)
     }
     if(!otherPlayerBattle->getAbleToFight())
     {
-        errorOutput(QStringLiteral("The other player can't fight"));
+        errorOutput(std::stringLiteral("The other player can't fight"));
         return;
     }
     if(!getAbleToFight())
     {
-        errorOutput(QStringLiteral("You can't fight"));
+        errorOutput(std::stringLiteral("You can't fight"));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
@@ -604,22 +604,22 @@ void Client::internalBattleAccepted(const bool &send)
     mMonsterChange=false;
     if(send)
     {
-        QList<PlayerMonster> playerMonstersPreview=otherPlayerBattle->public_and_private_informations.playerMonster;
+        std::vector<PlayerMonster> playerMonstersPreview=otherPlayerBattle->public_and_private_informations.playerMonster;
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << otherPlayerBattle->public_and_private_informations.public_informations.skinId;
-        out << (quint8)playerMonstersPreview.size();
+        out << (uint8_t)playerMonstersPreview.size();
         int index=0;
         while(index<playerMonstersPreview.size() && index<255)
         {
             if(!monsterIsKO(playerMonstersPreview.at(index)))
-                out << (quint8)0x01;
+                out << (uint8_t)0x01;
             else
-                out << (quint8)0x02;
+                out << (uint8_t)0x02;
             index++;
         }
-        out << (quint8)selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());
+        out << (uint8_t)selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());
         QByteArray firstValidOtherPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(FacilityLib::playerMonsterToPublicPlayerMonster(*otherPlayerBattle->getCurrentMonster()));
         const QByteArray newData(otherPlayerBattle->rawPseudo+outputData+firstValidOtherPlayerMonster);
         sendFullPacket(0xE0,0x08,newData.constData(),newData.size());
@@ -637,7 +637,7 @@ void Client::resetBattleAction()
     mMonsterChange=false;
 }
 
-quint8 Client::getOtherSelectedMonsterNumber() const
+uint8_t Client::getOtherSelectedMonsterNumber() const
 {
     if(!isInBattle())
         return 0;
@@ -668,7 +668,7 @@ bool Client::currentMonsterAttackFirst(const PlayerMonster * currentMonster,cons
         return CommonFightEngine::currentMonsterAttackFirst(currentMonster,otherMonster);
 }
 
-quint8 Client::selectedMonsterNumberToMonsterPlace(const quint8 &selectedMonsterNumber)
+uint8_t Client::selectedMonsterNumberToMonsterPlace(const uint8_t &selectedMonsterNumber)
 {
     return selectedMonsterNumber+1;
 }
@@ -681,58 +681,58 @@ void Client::sendBattleReturn()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
-    out << (quint8)attackReturn.size();
+    out << (uint8_t)attackReturn.size();
     master_index=0;
     while(master_index<attackReturn.size())
     {
         const Skill::AttackReturn &attackReturnTemp=attackReturn.at(master_index);
-        out << (quint8)attackReturnTemp.doByTheCurrentMonster;
-        out << (quint8)attackReturnTemp.attackReturnCase;
-        out << (quint8)attackReturnTemp.success;
+        out << (uint8_t)attackReturnTemp.doByTheCurrentMonster;
+        out << (uint8_t)attackReturnTemp.attackReturnCase;
+        out << (uint8_t)attackReturnTemp.success;
         out << attackReturnTemp.attack;
         //ad buff
         index=0;
-        out << (quint8)attackReturnTemp.addBuffEffectMonster.size();
+        out << (uint8_t)attackReturnTemp.addBuffEffectMonster.size();
         while(index<attackReturnTemp.addBuffEffectMonster.size())
         {
             out << attackReturnTemp.addBuffEffectMonster.at(index).buff;
-            out << (quint8)attackReturnTemp.addBuffEffectMonster.at(index).on;
+            out << (uint8_t)attackReturnTemp.addBuffEffectMonster.at(index).on;
             out << attackReturnTemp.addBuffEffectMonster.at(index).level;
             index++;
         }
         //remove buff
         index=0;
-        out << (quint8)attackReturnTemp.removeBuffEffectMonster.size();
+        out << (uint8_t)attackReturnTemp.removeBuffEffectMonster.size();
         while(index<attackReturnTemp.removeBuffEffectMonster.size())
         {
             out << attackReturnTemp.removeBuffEffectMonster.at(index).buff;
-            out << (quint8)attackReturnTemp.removeBuffEffectMonster.at(index).on;
+            out << (uint8_t)attackReturnTemp.removeBuffEffectMonster.at(index).on;
             out << attackReturnTemp.removeBuffEffectMonster.at(index).level;
             index++;
         }
         //life effect
         index=0;
-        out << (quint8)attackReturnTemp.lifeEffectMonster.size();
+        out << (uint8_t)attackReturnTemp.lifeEffectMonster.size();
         while(index<attackReturnTemp.lifeEffectMonster.size())
         {
             out << attackReturnTemp.lifeEffectMonster.at(index).quantity;
-            out << (quint8)attackReturnTemp.lifeEffectMonster.at(index).on;
+            out << (uint8_t)attackReturnTemp.lifeEffectMonster.at(index).on;
             index++;
         }
         //buff effect
         index=0;
-        out << (quint8)attackReturnTemp.buffLifeEffectMonster.size();
+        out << (uint8_t)attackReturnTemp.buffLifeEffectMonster.size();
         while(index<attackReturnTemp.buffLifeEffectMonster.size())
         {
             out << attackReturnTemp.buffLifeEffectMonster.at(index).quantity;
-            out << (quint8)attackReturnTemp.buffLifeEffectMonster.at(index).on;
+            out << (uint8_t)attackReturnTemp.buffLifeEffectMonster.at(index).on;
             index++;
         }
         master_index++;
     }
     if(otherPlayerBattle!=NULL && otherPlayerBattle->haveMonsterChange())
     {
-        out << (quint8)selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());;
+        out << (uint8_t)selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());;
         binarypublicPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(*getOtherMonster());
     }
     attackReturn.clear();
@@ -747,8 +747,8 @@ void Client::sendBattleMonsterChange()
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0;
-    out << (quint8)selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());;
+    out << (uint8_t)0;
+    out << (uint8_t)selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());;
     binarypublicPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(*getOtherMonster());
     const QByteArray newData(outputData+binarypublicPlayerMonster);
     sendFullPacket(0xE0,0x06,newData.constData(),newData.size());
@@ -822,19 +822,19 @@ bool Client::finishTheTurn(const bool &isBot)
                                  );
                 }
                 fightOrBattleFinish(win,botFightId);
-                normalOutput(QStringLiteral("Register the win against the bot fight: %1").arg(botFightId));
+                normalOutput(std::stringLiteral("Register the win against the bot fight: %1").arg(botFightId));
             }
             else
-                normalOutput(QStringLiteral("Have win agains a wild monster"));
+                normalOutput(std::stringLiteral("Have win agains a wild monster"));
         }
         fightOrBattleFinish(win,0);
     }
     return win;
 }
 
-bool Client::useSkill(const quint32 &skill)
+bool Client::useSkill(const uint32_t &skill)
 {
-    normalOutput(QStringLiteral("use the skill: %1").arg(skill));
+    normalOutput(std::stringLiteral("use the skill: %1").arg(skill));
     if(!isInBattle())//wild or bot
     {
         const bool &isBot=!botFightMonsters.isEmpty();
@@ -845,7 +845,7 @@ bool Client::useSkill(const quint32 &skill)
     {
         if(haveBattleAction())
         {
-            errorOutput(QStringLiteral("Have already a battle action"));
+            errorOutput(std::stringLiteral("Have already a battle action"));
             return false;
         }
         mHaveCurrentSkill=true;
@@ -928,11 +928,11 @@ bool Client::dropKOOtherMonster()
     return commonReturn || battleReturn;
 }
 
-quint32 Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonster)
+uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonster)
 {
     int position=999999;
     bool ok;
-    const quint32 monster_id=getMonsterId(&ok);
+    const uint32_t monster_id=getMonsterId(&ok);
     if(!ok)
     {
         errorFightEngine("No more monster id: getMonsterId(&ok) failed");
@@ -952,7 +952,7 @@ quint32 Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonste
     }
     if(toStorage)
         dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_warehouse_monster_full
-                     .arg(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
+                     .arg(std::stringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
                           .arg(monster_id)
                           .arg(newMonster.hp)
                           .arg(character_id)
@@ -961,9 +961,9 @@ quint32 Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonste
                           .arg(newMonster.remaining_xp)
                           .arg(newMonster.sp)
                           .arg(newMonster.catched_with)
-                          .arg((quint8)newMonster.gender)
+                          .arg((uint8_t)newMonster.gender)
                           )
-                     .arg(QStringLiteral("%1,%2,%3")
+                     .arg(std::stringLiteral("%1,%2,%3")
                           .arg(newMonster.egg_step)
                           .arg(character_id)
                           .arg(position)
@@ -971,7 +971,7 @@ quint32 Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonste
                      );
     else
         dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_monster_full
-                     .arg(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
+                     .arg(std::stringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
                           .arg(monster_id)
                           .arg(newMonster.hp)
                           .arg(character_id)
@@ -980,9 +980,9 @@ quint32 Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonste
                           .arg(newMonster.remaining_xp)
                           .arg(newMonster.sp)
                           .arg(newMonster.catched_with)
-                          .arg((quint8)newMonster.gender)
+                          .arg((uint8_t)newMonster.gender)
                           )
-                     .arg(QStringLiteral("%1,%2,%3")
+                     .arg(std::stringLiteral("%1,%2,%3")
                           .arg(newMonster.egg_step)
                           .arg(character_id)
                           .arg(position)
@@ -1020,7 +1020,7 @@ bool Client::haveCurrentSkill() const
     return mHaveCurrentSkill;
 }
 
-quint32 Client::getCurrentSkill() const
+uint32_t Client::getCurrentSkill() const
 {
     return mCurrentSkillId;
 }
@@ -1089,7 +1089,7 @@ int Client::addCurrentBuffEffect(const Skill::BuffEffect &effect)
     return returnCode;
 }
 
-bool Client::moveUpMonster(const quint8 &number)
+bool Client::moveUpMonster(const uint8_t &number)
 {
     if(!CommonFightEngine::moveUpMonster(number))
         return false;
@@ -1101,7 +1101,7 @@ bool Client::moveUpMonster(const quint8 &number)
     return true;
 }
 
-bool Client::moveDownMonster(const quint8 &number)
+bool Client::moveDownMonster(const uint8_t &number)
 {
     if(!CommonFightEngine::moveDownMonster(number))
     {
@@ -1117,7 +1117,7 @@ bool Client::moveDownMonster(const quint8 &number)
 
 }
 
-void Client::saveMonsterPosition(const quint32 &monsterId,const quint8 &monsterPosition)
+void Client::saveMonsterPosition(const uint32_t &monsterId,const uint8_t &monsterPosition)
 {
     dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_position
                  .arg(monsterPosition)
@@ -1125,7 +1125,7 @@ void Client::saveMonsterPosition(const quint32 &monsterId,const quint8 &monsterP
                  );
 }
 
-bool Client::changeOfMonsterInFight(const quint32 &monsterId)
+bool Client::changeOfMonsterInFight(const uint32_t &monsterId)
 {
     const bool &doTurnIfChangeOfMonster=this->doTurnIfChangeOfMonster;
 
@@ -1176,15 +1176,15 @@ Skill::AttackReturn Client::generateOtherAttack()
         errorOutput("The other player have not skill at generateOtherAttack()");
         return attackReturnTemp;
     }
-    const quint32 &skill=otherPlayerBattle->getCurrentSkill();
-    quint8 skillLevel=getSkillLevel(skill);
+    const uint32_t &skill=otherPlayerBattle->getCurrentSkill();
+    uint8_t skillLevel=getSkillLevel(skill);
     if(skillLevel==0)
     {
         if(!haveMoreEndurance() && skill==0 && CommonDatapack::commonDatapack.monsterSkills.contains(skill))
             skillLevel=1;
         else
         {
-            errorOutput(QStringLiteral("Unable to fight because the current monster have not the skill %3").arg(skill));
+            errorOutput(std::stringLiteral("Unable to fight because the current monster have not the skill %3").arg(skill));
             return attackReturnTemp;
         }
     }
@@ -1194,7 +1194,7 @@ Skill::AttackReturn Client::generateOtherAttack()
     return attackReturn.last();
 }
 
-Skill::AttackReturn Client::doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel)
+Skill::AttackReturn Client::doTheCurrentMonsterAttack(const uint32_t &skill, const uint8_t &skillLevel)
 {
     if(!isInBattle())
         return CommonFightEngine::doTheCurrentMonsterAttack(skill,skillLevel);
@@ -1207,7 +1207,7 @@ Skill::AttackReturn Client::doTheCurrentMonsterAttack(const quint32 &skill, cons
     return attackReturn.last();
 }
 
-quint8 Client::decreaseSkillEndurance(const quint32 &skill)
+uint8_t Client::decreaseSkillEndurance(const uint32_t &skill)
 {
     PlayerMonster * currentMonster=getCurrentMonster();
     if(currentMonster==NULL)
@@ -1215,7 +1215,7 @@ quint8 Client::decreaseSkillEndurance(const quint32 &skill)
         errorOutput("Unable to locate the current monster");
         return 0;
     }
-    const quint8 &newEndurance=CommonFightEngine::decreaseSkillEndurance(skill);
+    const uint8_t &newEndurance=CommonFightEngine::decreaseSkillEndurance(skill);
     if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtEachTurn)
     {
         dbQueryWriteCommon(PreparedDBQueryCommon::db_query_monster_skill
@@ -1232,7 +1232,7 @@ quint8 Client::decreaseSkillEndurance(const quint32 &skill)
     return newEndurance;
 }
 
-void Client::confirmEvolutionTo(PlayerMonster * playerMonster,const quint32 &monster)
+void Client::confirmEvolutionTo(PlayerMonster * playerMonster,const uint32_t &monster)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     PlayerMonster * currentMonster=getCurrentMonster();
@@ -1241,7 +1241,7 @@ void Client::confirmEvolutionTo(PlayerMonster * playerMonster,const quint32 &mon
     if(currentMonster!=NULL)
         if(currentMonster->hp>currentMonsterStat.hp)
         {
-            errorOutput(QStringLiteral("confirmEvolutionTo() The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonsterStat.hp));
+            errorOutput(std::stringLiteral("confirmEvolutionTo() The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonsterStat.hp));
             return;
         }
     #endif
@@ -1253,7 +1253,7 @@ void Client::confirmEvolutionTo(PlayerMonster * playerMonster,const quint32 &mon
                  );
 }
 
-void Client::confirmEvolution(const quint32 &monsterId)
+void Client::confirmEvolution(const uint32_t &monsterId)
 {
     int index=0;
     while(index<public_and_private_informations.playerMonster.size())
@@ -1275,15 +1275,15 @@ void Client::confirmEvolution(const quint32 &monsterId)
                 }
                 sub_index++;
             }
-            errorOutput(QStringLiteral("Evolution not found"));
+            errorOutput(std::stringLiteral("Evolution not found"));
             return;
         }
         index++;
     }
-    errorOutput(QStringLiteral("Monster for evolution not found"));
+    errorOutput(std::stringLiteral("Monster for evolution not found"));
 }
 
-void Client::hpChange(PlayerMonster * currentMonster, const quint32 &newHpValue)
+void Client::hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
@@ -1294,7 +1294,7 @@ void Client::hpChange(PlayerMonster * currentMonster, const quint32 &newHpValue)
             const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
             if(currentMonster->hp>currentMonsterStat.hp)
             {
-                errorOutput(QStringLiteral("hpChange() The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+                errorOutput(std::stringLiteral("hpChange() The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
                 return;
             }
         }
@@ -1303,7 +1303,7 @@ void Client::hpChange(PlayerMonster * currentMonster, const quint32 &newHpValue)
             const Monster::Stat &otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
             if(otherMonster->hp>otherMonsterStat.hp)
             {
-                errorOutput(QStringLiteral("hpChange() The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->monster).arg(otherMonster->hp).arg(otherMonsterStat.hp));
+                errorOutput(std::stringLiteral("hpChange() The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->monster).arg(otherMonster->hp).arg(otherMonsterStat.hp));
                 return;
             }
         }
@@ -1319,7 +1319,7 @@ void Client::hpChange(PlayerMonster * currentMonster, const quint32 &newHpValue)
             const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
             if(currentMonster->hp>currentMonsterStat.hp)
             {
-                errorOutput(QStringLiteral("hpChange() after The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+                errorOutput(std::stringLiteral("hpChange() after The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
                 return;
             }
         }
@@ -1328,7 +1328,7 @@ void Client::hpChange(PlayerMonster * currentMonster, const quint32 &newHpValue)
             const Monster::Stat &otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
             if(otherMonster->hp>otherMonsterStat.hp)
             {
-                errorOutput(QStringLiteral("hpChange() after The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->monster).arg(otherMonster->hp).arg(otherMonsterStat.hp));
+                errorOutput(std::stringLiteral("hpChange() after The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->monster).arg(otherMonster->hp).arg(otherMonsterStat.hp));
                 return;
             }
         }
@@ -1340,7 +1340,7 @@ void Client::hpChange(PlayerMonster * currentMonster, const quint32 &newHpValue)
                  );
 }
 
-bool Client::removeBuffOnMonster(PlayerMonster * currentMonster, const quint32 &buffId)
+bool Client::removeBuffOnMonster(PlayerMonster * currentMonster, const uint32_t &buffId)
 {
     const bool returnVal=CommonFightEngine::removeBuffOnMonster(currentMonster,buffId);
     if(returnVal)
@@ -1356,7 +1356,7 @@ bool Client::removeAllBuffOnMonster(PlayerMonster * currentMonster)
     return returnVal;
 }
 
-bool Client::addLevel(PlayerMonster * monster, const quint8 &numberOfLevel)
+bool Client::addLevel(PlayerMonster * monster, const uint8_t &numberOfLevel)
 {
     if(!CommonFightEngine::addLevel(monster,numberOfLevel))
         return false;
@@ -1372,7 +1372,7 @@ bool Client::addSkill(PlayerMonster * currentMonster,const PlayerMonster::Player
     return true;
 }
 
-bool Client::setSkillLevel(PlayerMonster * currentMonster,const int &index,const quint8 &level)
+bool Client::setSkillLevel(PlayerMonster * currentMonster,const int &index,const uint8_t &level)
 {
     if(!CommonFightEngine::setSkillLevel(currentMonster,index,level))
         return false;

@@ -104,7 +104,7 @@ enum Plant_collect : uint8_t
 
 struct Reputation
 {
-    std::vector<qint32> reputation_positive/*start with 0*/,reputation_negative;
+    std::vector<int32_t> reputation_positive/*start with 0*/,reputation_negative;
     /*server only*/
     int reverse_database_id;
     std::string name;
@@ -113,7 +113,7 @@ struct Reputation
 struct ReputationRewards
 {
     uint8_t reputationId;
-    qint32 point;
+    int32_t point;
 };
 
 struct ReputationRequirements
@@ -166,13 +166,13 @@ struct Trap
 struct MonsterItemEffect
 {
     MonsterItemEffectType type;
-    qint32 value;
+    int32_t value;
 };
 
 struct MonsterItemEffectOutOfFight
 {
     MonsterItemEffectTypeOutOfFight type;
-    qint32 value;
+    int32_t value;
 };
 
 struct ItemFull
@@ -335,7 +335,7 @@ struct PlayerQuest
 struct PlayerReputation
 {
     qint8 level;
-    qint32 point;
+    int32_t point;
 };
 
 struct PlayerPlant
@@ -386,13 +386,13 @@ struct CharacterEntry
 struct Map_semi_border_content_top_bottom
 {
     std::string fileName;
-    qint16 x_offset;//can be negative, it's an offset!
+    int16_t x_offset;//can be negative, it's an offset!
 };
 
 struct Map_semi_border_content_left_right
 {
     std::string fileName;
-    qint16 y_offset;//can be negative, it's an offset!
+    int16_t y_offset;//can be negative, it's an offset!
 };
 
 struct Map_semi_border
@@ -522,7 +522,7 @@ struct Buff
             EffectOn_Attack
         };
         EffectOn on;
-        qint32 quantity;
+        int32_t quantity;
         QuantityType type;
     };
     struct EffectInWalk
@@ -566,13 +566,13 @@ struct Skill
     };
     struct LifeEffect
     {
-        qint32 quantity;
+        int32_t quantity;
         QuantityType type;
         ApplyOn on;
     };
     struct LifeEffectReturn
     {
-        qint32 quantity;
+        int32_t quantity;
         ApplyOn on;
         bool critical;
         float effective;
@@ -633,7 +633,7 @@ struct Monster
     struct Evolution
     {
         EvolutionType type;
-        qint32 level;
+        int32_t level;
         uint32_t evolveTo;
     };
 
@@ -794,7 +794,7 @@ struct Profile
     {
         uint8_t reputationId;//datapack order, can can need the dicionary to db resolv
         qint8 level;
-        qint32 point;
+        int32_t point;
     };
     struct Monster
     {

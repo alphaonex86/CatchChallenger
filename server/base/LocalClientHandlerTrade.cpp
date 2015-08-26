@@ -18,7 +18,7 @@ void Client::registerTradeRequest(Client * otherPlayerTrade)
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QStringLiteral("%1 have requested trade with you").arg(otherPlayerTrade->public_and_private_informations.public_informations.pseudo));
+    normalOutput(std::stringLiteral("%1 have requested trade with you").arg(otherPlayerTrade->public_and_private_informations.public_informations.pseudo));
     #endif
     this->otherPlayerTrade=otherPlayerTrade;
     QByteArray outputData;
@@ -38,12 +38,12 @@ quint64 Client::getTradeCash()
     return tradeCash;
 }
 
-QHash<quint32,quint32> Client::getTradeObjects()
+std::unordered_map<uint32_t,uint32_t> Client::getTradeObjects()
 {
     return tradeObjects;
 }
 
-QList<PlayerMonster> Client::getTradeMonster()
+std::vector<PlayerMonster> Client::getTradeMonster()
 {
     return tradeMonster;
 }
@@ -85,13 +85,13 @@ void Client::tradeFinished()
         addCash(otherPlayerTrade->getTradeCash(),(tradeCash!=0));
 
         //object
-        QHashIterator<quint32,quint32> i(tradeObjects);
+        std::unordered_mapIterator<uint32_t,uint32_t> i(tradeObjects);
         while (i.hasNext()) {
             i.next();
             otherPlayerTrade->addObject(i.key(),i.value());
             saveObjectRetention(i.key());
         }
-        QHashIterator<quint32,quint32> j(otherPlayerTrade->getTradeObjects());
+        std::unordered_mapIterator<uint32_t,uint32_t> j(otherPlayerTrade->getTradeObjects());
         while (j.hasNext()) {
             j.next();
             addObject(j.key(),j.value());
@@ -142,7 +142,7 @@ void Client::resetTheTrade()
     updateCanDoFight();
 }
 
-void Client::addExistingMonster(QList<PlayerMonster> tradeMonster)
+void Client::addExistingMonster(std::vector<PlayerMonster> tradeMonster)
 {
     int index=0;
     while(index<tradeMonster.size())
@@ -176,19 +176,19 @@ void Client::tradeAddTradeCash(const quint64 &cash)
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QStringLiteral("Add cash to trade: %1").arg(cash));
+    normalOutput(std::stringLiteral("Add cash to trade: %1").arg(cash));
     #endif
     tradeCash+=cash;
     public_and_private_informations.cash-=cash;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x01;
+    out << (uint8_t)0x01;
     out << cash;
     otherPlayerTrade->sendFullPacket(0xD0,0x04,outputData.constData(),outputData.size());
 }
 
-void Client::tradeAddTradeObject(const quint16 &item,const quint32 &quantity)
+void Client::tradeAddTradeObject(const uint16_t &item,const uint32_t &quantity)
 {
     if(!tradeIsValidated)
     {
@@ -207,11 +207,11 @@ void Client::tradeAddTradeObject(const quint16 &item,const quint32 &quantity)
     }
     if(quantity>objectQuantity(item))
     {
-        errorOutput(QStringLiteral("Trade object %1 in quantity %2 superior to the actual quantity").arg(item).arg(quantity));
+        errorOutput(std::stringLiteral("Trade object %1 in quantity %2 superior to the actual quantity").arg(item).arg(quantity));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QStringLiteral("Add object to trade: %1 (quantity: %2)").arg(item).arg(quantity));
+    normalOutput(std::stringLiteral("Add object to trade: %1 (quantity: %2)").arg(item).arg(quantity));
     #endif
     if(tradeObjects.contains(item))
         tradeObjects[item]+=quantity;
@@ -223,13 +223,13 @@ void Client::tradeAddTradeObject(const quint16 &item,const quint32 &quantity)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x02;
+    out << (uint8_t)0x02;
     out << item;
     out << quantity;
     otherPlayerTrade->sendFullPacket(0xD0,0x04,outputData.constData(),outputData.size());
 }
 
-void Client::tradeAddTradeMonster(const quint32 &monsterId)
+void Client::tradeAddTradeMonster(const uint32_t &monsterId)
 {
     if(!tradeIsValidated)
     {
@@ -252,7 +252,7 @@ void Client::tradeAddTradeMonster(const quint32 &monsterId)
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QStringLiteral("Add monster to trade: %1").arg(monsterId));
+    normalOutput(std::stringLiteral("Add monster to trade: %1").arg(monsterId));
     #endif
     int index=0;
     while(index<public_and_private_informations.playerMonster.size())
@@ -270,7 +270,7 @@ void Client::tradeAddTradeMonster(const quint32 &monsterId)
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
             out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-            out << (quint8)0x03;
+            out << (uint8_t)0x03;
             const PlayerMonster &monster=tradeMonster.last();
             out << monster.id;
             out << monster.monster;
@@ -280,12 +280,12 @@ void Client::tradeAddTradeMonster(const quint32 &monsterId)
             if(CommonSettingsServer::commonSettingsServer.useSP)
                 out << monster.sp;
             out << monster.catched_with;
-            out << (quint8)monster.gender;
+            out << (uint8_t)monster.gender;
             out << monster.egg_step;
             out << monster.character_origin;
             int sub_index=0;
             int sub_size=monster.buffs.size();
-            out << (quint32)sub_size;
+            out << (uint32_t)sub_size;
             while(sub_index<sub_size)
             {
                 out << monster.buffs.at(sub_index).buff;
@@ -294,7 +294,7 @@ void Client::tradeAddTradeMonster(const quint32 &monsterId)
             }
             sub_index=0;
             sub_size=monster.skills.size();
-            out << (quint32)sub_size;
+            out << (uint32_t)sub_size;
             while(sub_index<sub_size)
             {
                 out << monster.skills.at(sub_index).skill;
@@ -329,7 +329,7 @@ void Client::internalTradeCanceled(const bool &send)
     {
         public_and_private_informations.cash+=tradeCash;
         tradeCash=0;
-        QHashIterator<quint32,quint32> i(tradeObjects);
+        std::unordered_mapIterator<uint32_t,uint32_t> i(tradeObjects);
         while (i.hasNext()) {
             i.next();
             if(public_and_private_informations.items.contains(i.key()))
