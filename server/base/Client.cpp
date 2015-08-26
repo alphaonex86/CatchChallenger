@@ -96,13 +96,13 @@ Client::Client(
     {
         memset(movePacketKick+(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue),
                0x00,
-               GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue*sizeof(quint8));
+               GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue*sizeof(uint8_t));
         memset(chatPacketKick+(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue),
                0x00,
-               GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue*sizeof(quint8));
+               GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue*sizeof(uint8_t));
         memset(otherPacketKick+(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue),
                0x00,
-               GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue*sizeof(quint8));
+               GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue*sizeof(uint8_t));
     }
     #endif
     queryNumberList.reserve(256);
@@ -159,7 +159,7 @@ void Client::connectionError(QAbstractSocket::SocketError error)
     isConnected=false;
     if(error!=QAbstractSocket::RemoteHostClosedError)
     {
-        normalOutput(QStringLiteral("error detected for the client: %1 %2").arg(error));
+        normalOutput(std::stringLiteral("error detected for the client: %1 %2").arg(error));
         socket->disconnectFromHost();
     }
 }
@@ -196,7 +196,7 @@ void Client::disconnectClient()
     #endif
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     {
-        quint32 index=0;
+        uint32_t index=0;
         while(index<BaseServerLogin::tokenForAuthSize)
         {
             const BaseServerLogin::TokenLink &tokenLink=BaseServerLogin::tokenForAuth[index];
@@ -255,7 +255,7 @@ void Client::disconnectClient()
         playerByPseudo.remove(public_and_private_informations.public_informations.pseudo);
         playerById.remove(character_id);
         leaveTheCityCapture();
-        const quint32 &addTime=QDateTime::currentDateTime().toMSecsSinceEpoch()/1000-connectedSince.toMSecsSinceEpoch()/1000;
+        const uint32_t &addTime=QDateTime::currentDateTime().toMSecsSinceEpoch()/1000-connectedSince.toMSecsSinceEpoch()/1000;
         if(addTime>5)
         {
             dbQueryWriteCommon(PreparedDBQueryCommon::db_query_played_time.arg(character_id).arg(addTime));
@@ -323,82 +323,82 @@ void Client::disconnectClient()
 }
 
 //input/ouput layer
-void Client::errorParsingLayer(const QString &error)
+void Client::errorParsingLayer(const std::string &error)
 {
     errorOutput(error);
 }
 
-void Client::messageParsingLayer(const QString &message) const
+void Client::messageParsingLayer(const std::string &message) const
 {
     normalOutput(message);
 }
 
 //* do the message by the general broadcast */
-void Client::errorOutput(const QString &errorString)
+void Client::errorOutput(const std::string &errorString)
 {
     if(account_id==0)
     {
-        normalOutput(QStringLiteral("Kicked by: ")+errorString);
+        normalOutput(std::stringLiteral("Kicked by: ")+errorString);
         disconnectClient();
         return;
     }
     if(character_loaded)
         sendSystemMessage(public_and_private_informations.public_informations.pseudo+" have been kicked from server, have try hack",false);
 
-    normalOutput(QStringLiteral("Kicked by: ")+errorString);
+    normalOutput(std::stringLiteral("Kicked by: ")+errorString);
     disconnectClient();
 }
 
 void Client::kick()
 {
-    normalOutput(QStringLiteral("kicked()"));
+    normalOutput(std::stringLiteral("kicked()"));
     disconnectClient();
 }
 
-void Client::normalOutput(const QString &message) const
+void Client::normalOutput(const std::string &message) const
 {
     if(!public_and_private_informations.public_informations.pseudo.isEmpty())
     {
         if(GlobalServerData::serverSettings.anonymous)
-            DebugClass::debugConsole(QStringLiteral("%1: %2").arg(character_id).arg(message));
+            DebugClass::debugConsole(std::stringLiteral("%1: %2").arg(character_id).arg(message));
         else
-            DebugClass::debugConsole(QStringLiteral("%1: %2").arg(public_and_private_informations.public_informations.pseudo).arg(message));
+            DebugClass::debugConsole(std::stringLiteral("%1: %2").arg(public_and_private_informations.public_informations.pseudo).arg(message));
     }
     else
     {
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        QString ip;
+        std::string ip;
         if(socket==NULL)
             ip="unknown";
         else
         {
             QHostAddress hostAddress=socket->peerAddress();
             if(hostAddress==QHostAddress::LocalHost || hostAddress==QHostAddress::LocalHostIPv6)
-                ip=QStringLiteral("localhost:%1").arg(socket->peerPort());
+                ip=std::stringLiteral("localhost:%1").arg(socket->peerPort());
             else if(hostAddress==QHostAddress::Null || hostAddress==QHostAddress::Any || hostAddress==QHostAddress::AnyIPv4 || hostAddress==QHostAddress::AnyIPv6 || hostAddress==QHostAddress::Broadcast)
                 ip="internal";
             else
-                ip=QStringLiteral("%1:%2").arg(hostAddress.toString()).arg(socket->peerPort());
+                ip=std::stringLiteral("%1:%2").arg(hostAddress.toString()).arg(socket->peerPort());
         }
         #else
-        QString ip;
+        std::string ip;
         if(socketString==NULL)
-            ip=QStringLiteral("[IP]:[PORT]");
+            ip=std::stringLiteral("[IP]:[PORT]");
         else
-            ip=QString::fromLatin1(QByteArray(socketString,socketStringSize));
+            ip=std::string::fromLatin1(QByteArray(socketString,socketStringSize));
         #endif
         if(GlobalServerData::serverSettings.anonymous)
         {
             QCryptographicHash hash(QCryptographicHash::Sha1);
             hash.addData(ip.toUtf8());
-            DebugClass::debugConsole(QStringLiteral("%1: %2").arg(QString(hash.result().toHex())).arg(message));
+            DebugClass::debugConsole(std::stringLiteral("%1: %2").arg(std::string(hash.result().toHex())).arg(message));
         }
         else
-            DebugClass::debugConsole(QStringLiteral("%1: %2").arg(ip).arg(message));
+            DebugClass::debugConsole(std::stringLiteral("%1: %2").arg(ip).arg(message));
     }
 }
 
-QString Client::getPseudo()
+std::string Client::getPseudo()
 {
     return public_and_private_informations.public_informations.pseudo;
 }
@@ -430,18 +430,18 @@ void Client::parseIncommingData()
     ProtocolParsingInputOutput::parseIncommingData();
 }
 
-void Client::errorFightEngine(const QString &error)
+void Client::errorFightEngine(const std::string &error)
 {
     errorOutput(error);
 }
 
-void Client::messageFightEngine(const QString &message) const
+void Client::messageFightEngine(const std::string &message) const
 {
     normalOutput(message);
 }
 
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-char *Client::addAuthGetToken(const quint32 &characterId, const quint32 &accountIdRequester)
+char *Client::addAuthGetToken(const uint32_t &characterId, const uint32_t &accountIdRequester)
 {
     TokenAuth newEntry;
     newEntry.characterId=characterId;
@@ -451,7 +451,7 @@ char *Client::addAuthGetToken(const quint32 &characterId, const quint32 &account
     const int &returnedSize=fread(newEntry.token,1,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER,BaseServerLogin::fpRandomFile);
     if(returnedSize!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
     {
-        qDebug() << QStringLiteral("sizeof(newEntry.token) don't match with urandom size: %1").arg(returnedSize);
+        qDebug() << std::stringLiteral("sizeof(newEntry.token) don't match with urandom size: %1").arg(returnedSize);
         delete newEntry.token;
         return NULL;
     }
@@ -465,7 +465,7 @@ char *Client::addAuthGetToken(const quint32 &characterId, const quint32 &account
     return newEntry.token;
 }
 
-quint32 Client::getMonsterId(bool * const ok)
+uint32_t Client::getMonsterId(bool * const ok)
 {
     if(GlobalServerData::serverPrivateVariables.maxMonsterId.size()==0)
     {
@@ -475,14 +475,14 @@ quint32 Client::getMonsterId(bool * const ok)
     }
     if(ok!=NULL)
         *ok=true;
-    const quint32 monsterId=GlobalServerData::serverPrivateVariables.maxMonsterId.front();
+    const uint32_t monsterId=GlobalServerData::serverPrivateVariables.maxMonsterId.front();
     GlobalServerData::serverPrivateVariables.maxMonsterId.erase(GlobalServerData::serverPrivateVariables.maxMonsterId.begin());
     if(GlobalServerData::serverPrivateVariables.maxMonsterId.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK)
         LinkToMaster::linkToMaster->askMoreMaxMonsterId();
     return monsterId;
 }
 
-quint32 Client::getClanId(bool * const ok)
+uint32_t Client::getClanId(bool * const ok)
 {
     if(GlobalServerData::serverPrivateVariables.maxClanId.size()==0)
     {
@@ -492,36 +492,36 @@ quint32 Client::getClanId(bool * const ok)
     }
     if(ok!=NULL)
         *ok=true;
-    const quint32 clanId=GlobalServerData::serverPrivateVariables.maxClanId.front();
+    const uint32_t clanId=GlobalServerData::serverPrivateVariables.maxClanId.front();
     GlobalServerData::serverPrivateVariables.maxClanId.erase(GlobalServerData::serverPrivateVariables.maxClanId.begin());
     if(GlobalServerData::serverPrivateVariables.maxClanId.size()<CATCHCHALLENGER_SERVER_MINCLANIDBLOCK)
         LinkToMaster::linkToMaster->askMoreMaxClanId();
     return clanId;
 }
 #else
-quint32 Client::getMonsterId(bool * const ok)
+uint32_t Client::getMonsterId(bool * const ok)
 {
     *ok=true;
-    const quint32 monsterId=GlobalServerData::serverPrivateVariables.maxMonsterId;
+    const uint32_t monsterId=GlobalServerData::serverPrivateVariables.maxMonsterId;
     GlobalServerData::serverPrivateVariables.maxMonsterId++;
     return monsterId;
 }
 
-quint32 Client::getClanId(bool * const ok)
+uint32_t Client::getClanId(bool * const ok)
 {
     *ok=true;
-    const quint32 clanId=GlobalServerData::serverPrivateVariables.maxClanId;
+    const uint32_t clanId=GlobalServerData::serverPrivateVariables.maxClanId;
     GlobalServerData::serverPrivateVariables.maxClanId++;
     return clanId;
 }
 #endif
 
-bool Client::characterConnected(const quint32 &characterId)
+bool Client::characterConnected(const uint32_t &characterId)
 {
     return playerById.contains(characterId);
 }
 
-void Client::disconnectClientById(const quint32 &characterId)
+void Client::disconnectClientById(const uint32_t &characterId)
 {
     if(playerById.contains(characterId))
         playerById.value(characterId)->disconnectClient();

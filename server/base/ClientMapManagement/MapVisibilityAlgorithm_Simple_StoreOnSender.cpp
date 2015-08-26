@@ -52,7 +52,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::insertClient()
         if(Q_UNLIKELY(loop_size>=GlobalServerData::serverSettings.mapVisibility.simple.max))
         {
             #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-            normalOutput(QStringLiteral("insertClient() too many client, hide now, into: %1").arg(map->map_file));
+            normalOutput(std::stringLiteral("insertClient() too many client, hide now, into: %1").arg(map->map_file));
             #endif
             temp_map->show=false;
             //drop all show client because it have excess the limit
@@ -67,19 +67,19 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::insertClient()
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(this->x>=this->map->width)
             {
-                qDebug() << QStringLiteral("x to out of map: %1 > %2 (%3)").arg(this->x).arg(this->map->width).arg(this->map->map_file);
+                qDebug() << std::stringLiteral("x to out of map: %1 > %2 (%3)").arg(this->x).arg(this->map->width).arg(this->map->map_file);
                 abort();
                 return;
             }
             if(this->y>=this->map->height)
             {
-                qDebug() << QStringLiteral("y to out of map: %1 > %2 (%3)").arg(this->y).arg(this->map->height).arg(this->map->map_file);
+                qDebug() << std::stringLiteral("y to out of map: %1 > %2 (%3)").arg(this->y).arg(this->map->height).arg(this->map->map_file);
                 abort();
                 return;
             }
             #endif
             #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-            //normalOutput(QStringLiteral("insertClient() insert the client, into: %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+            //normalOutput(std::stringLiteral("insertClient() insert the client, into: %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
             #endif
             //insert the new client
             to_send_insert=true;
@@ -91,14 +91,14 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::insertClient()
     else
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        normalOutput(QStringLiteral("insertClient() already too many client, into: %1").arg(map->map_file));
+        normalOutput(std::stringLiteral("insertClient() already too many client, into: %1").arg(map->map_file));
         #endif
     }
     //auto insert to know where it have spawn, now in charge of ClientLocalCalcule
     //insertAnotherClient(player_id,current_map,x,y,last_direction,speed);
 }
 
-void MapVisibilityAlgorithm_Simple_StoreOnSender::moveClient(const quint8 &movedUnit,const Direction &direction)
+void MapVisibilityAlgorithm_Simple_StoreOnSender::moveClient(const uint8_t &movedUnit,const Direction &direction)
 {
     Q_UNUSED(movedUnit);
     Q_UNUSED(direction);
@@ -106,7 +106,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::moveClient(const quint8 &moved
     if(Q_UNLIKELY(mapHaveChanged))
     {
         #ifdef DEBUG_MESSAGE_CLIENT_MOVE
-        normalOutput(QStringLiteral("map have change, direction: %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(public_and_private_informations.public_informations.simplifiedId).arg(MoveOnTheMap::directionToString(direction)).arg(loop_size-1));
+        normalOutput(std::stringLiteral("map have change, direction: %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(public_and_private_informations.public_informations.simplifiedId).arg(MoveOnTheMap::directionToString(direction)).arg(loop_size-1));
         #endif
         if(Q_LIKELY(temp_map->show))
         {
@@ -126,7 +126,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::moveClient(const quint8 &moved
         if(haveNewMove)
         {
             #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-            normalOutput(QStringLiteral("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, already into over move").arg(player_id).arg(movedUnit).arg(MoveOnTheMap::directionToString(direction)).arg(public_and_private_informations.public_informations.simplifiedId));
+            normalOutput(std::stringLiteral("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, already into over move").arg(player_id).arg(movedUnit).arg(MoveOnTheMap::directionToString(direction)).arg(public_and_private_informations.public_informations.simplifiedId));
             #endif
             //to_send_map_management_remove.remove(player_id); -> what?
             return;//quit now
@@ -134,7 +134,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::moveClient(const quint8 &moved
         #endif
         //here to know how player is affected
         #ifdef DEBUG_MESSAGE_CLIENT_MOVE
-        normalOutput(QStringLiteral("after %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(public_and_private_informations.public_informations.simplifiedId).arg(MoveOnTheMap::directionToString(direction)).arg(loop_size-1));
+        normalOutput(std::stringLiteral("after %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(public_and_private_informations.public_informations.simplifiedId).arg(MoveOnTheMap::directionToString(direction)).arg(loop_size-1));
         #endif
 
         //normal operation
@@ -142,7 +142,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::moveClient(const quint8 &moved
         {
             haveNewMove=true;
             #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-            normalOutput(QStringLiteral("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, normal move").arg(player_id).arg(movedUnit).arg(MoveOnTheMap::directionToString(direction)).arg(public_and_private_informations.public_informations.simplifiedId));
+            normalOutput(std::stringLiteral("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, normal move").arg(player_id).arg(movedUnit).arg(MoveOnTheMap::directionToString(direction)).arg(public_and_private_informations.public_informations.simplifiedId));
             #endif
         }
         else //all client is dropped due to over load on the map
@@ -173,7 +173,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::removeClient()
         if(Q_UNLIKELY(loop_size<=(GlobalServerData::serverSettings.mapVisibility.simple.reshow)))
         {
             #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-            normalOutput(QStringLiteral("removeClient() client of the map is now under the limit, reinsert all into: %1").arg(map->map_file));
+            normalOutput(std::stringLiteral("removeClient() client of the map is now under the limit, reinsert all into: %1").arg(map->map_file));
             #endif
             temp_map->show=true;
             //insert all the client because it start to be visible
@@ -186,14 +186,14 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::removeClient()
         else
         {
             #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-            normalOutput(QStringLiteral("removeClient() do nothing because client hiden, into: %1").arg(map->map_file));
+            normalOutput(std::stringLiteral("removeClient() do nothing because client hiden, into: %1").arg(map->map_file));
             #endif
         }
     }
     else //normal working
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        //normalOutput(QStringLiteral("removeClient() normal work, just remove from client on: %1").arg(map->map_file));
+        //normalOutput(std::stringLiteral("removeClient() normal work, just remove from client on: %1").arg(map->map_file));
         #endif
         //on client side to remove the other visible client for later reinsert
         Client::dropAllClients();
@@ -231,12 +231,12 @@ bool MapVisibilityAlgorithm_Simple_StoreOnSender::singleMove(const Direction &di
     if(old_map!=map)
     {
         if(old_map==NULL)
-            normalOutput(QStringLiteral("singleMove() old map is null"));
+            normalOutput(std::stringLiteral("singleMove() old map is null"));
         else
         {
             #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-            normalOutput(QStringLiteral("singleMove() have change from old map: %1").arg(old_map->map_file));
-            normalOutput(QStringLiteral("singleMove() to the new map: %1").arg(map->map_file));
+            normalOutput(std::stringLiteral("singleMove() have change from old map: %1").arg(old_map->map_file));
+            normalOutput(std::stringLiteral("singleMove() to the new map: %1").arg(map->map_file));
             #endif
             mapHaveChanged=true;
             CommonMap *new_map=map;
@@ -244,11 +244,11 @@ bool MapVisibilityAlgorithm_Simple_StoreOnSender::singleMove(const Direction &di
             unloadFromTheMap();
             map=static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(new_map);
             if(map==NULL)
-                normalOutput(QStringLiteral("singleMove() new map is null"));
+                normalOutput(std::stringLiteral("singleMove() new map is null"));
             else
             {
                 #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-                normalOutput(QStringLiteral("singleMove() to the new map: %1").arg(map->map_file));
+                normalOutput(std::stringLiteral("singleMove() to the new map: %1").arg(map->map_file));
                 #endif
                 loadOnTheMap();
             }
@@ -284,13 +284,13 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::unloadFromTheMap()
 }
 
 //map slots, transmited by the current ClientNetworkRead
-void MapVisibilityAlgorithm_Simple_StoreOnSender::put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
+void MapVisibilityAlgorithm_Simple_StoreOnSender::put_on_the_map(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation)
 {
     Client::put_on_the_map(map,x,y,orientation);
     loadOnTheMap();
 }
 
-bool MapVisibilityAlgorithm_Simple_StoreOnSender::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
+bool MapVisibilityAlgorithm_Simple_StoreOnSender::moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction)
 {
     mapHaveChanged=false;
     //move the player on the server map
@@ -304,7 +304,7 @@ bool MapVisibilityAlgorithm_Simple_StoreOnSender::moveThePlayer(const quint8 &pr
 void MapVisibilityAlgorithm_Simple_StoreOnSender::teleportValidatedTo(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
 {
     bool mapChange=(this->map!=map);
-    normalOutput(QStringLiteral("MapVisibilityAlgorithm_Simple_StoreOnSender::teleportValidatedTo() with mapChange: %1").arg(mapChange));
+    normalOutput(std::stringLiteral("MapVisibilityAlgorithm_Simple_StoreOnSender::teleportValidatedTo() with mapChange: %1").arg(mapChange));
     if(mapChange)
         unloadFromTheMap();
     Client::teleportValidatedTo(map,x,y,orientation);//apply the change into it
@@ -312,9 +312,9 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::teleportValidatedTo(CommonMap 
     {
         if(this->map->map_file!=map->map_file)
         {
-            errorOutput(QStringLiteral("Warning: Map pointer != but map_file is same: %1 && %2, need be done into Client::teleportValidatedTo()").arg(this->map->map_file).arg(map->map_file));
+            errorOutput(std::stringLiteral("Warning: Map pointer != but map_file is same: %1 && %2, need be done into Client::teleportValidatedTo()").arg(this->map->map_file).arg(map->map_file));
             /*#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-            normalOutput(QStringLiteral("have changed of map for teleportation, old map: %1, new map: %2").arg(this->map->map_file).arg(map->map_file));
+            normalOutput(std::stringLiteral("have changed of map for teleportation, old map: %1, new map: %2").arg(this->map->map_file).arg(map->map_file));
             #endif
             this->map=static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(map);
             loadOnTheMap();*/
