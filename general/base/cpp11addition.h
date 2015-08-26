@@ -79,6 +79,14 @@ bool stringEndsWith(std::string const &fullString, std::string const &ending) {
     }
 }
 
+bool stringStartWith(std::string const &fullString, std::string const &starting) {
+    if (fullString.length() >= starting.length()) {
+        return (fullString.substr(0,starting.length())==starting);
+    } else {
+        return false;
+    }
+}
+
 std::string& stringimplode(const std::vector<std::string>& elems, char delim, std::string& s)
 {
     for (std::vector<std::string>::const_iterator ii = elems.begin(); ii != elems.end(); ++ii)
