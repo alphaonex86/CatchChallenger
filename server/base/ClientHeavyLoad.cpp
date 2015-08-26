@@ -1414,7 +1414,7 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
 {
     std::unordered_map<std::string,DatapackCacheFile> filesList;
 
-    const std::stringList &returnList=FacilityLibGeneral::listFolder(path);
+    const std::vector<std::string> &returnList=FacilityLibGeneral::listFolder(path);
     int index=0;
     const int &size=returnList.size();
     while(index<size)
@@ -1458,7 +1458,7 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
 }
 
 //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
-void Client::datapackList(const uint8_t &query_id,const std::stringList &files,const std::vector<uint32_t> &partialHashList)
+void Client::datapackList(const uint8_t &query_id,const std::vector<std::string> &files,const std::vector<uint32_t> &partialHashList)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     /// \see Client::parseFullQuery() already checked here

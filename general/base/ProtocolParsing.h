@@ -128,7 +128,7 @@ public:
 public:
     bool parseIncommingDataRaw(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    std::stringList getQueryRunningList();
+    std::vector<std::string> getQueryRunningList();
     #endif
 protected:
     bool parseHeader(const char * const commonBuffer, const uint32_t &size, uint32_t &cursor);

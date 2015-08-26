@@ -1523,7 +1523,7 @@ void Client::parseFullQuery(const uint8_t &mainCodeType,const uint8_t &subCodeTy
                 uint8_t textSize;
                 uint32_t number_of_file;
                 in >> number_of_file;
-                std::stringList files;
+                std::vector<std::string> files;
                 std::vector<uint32_t> partialHashList;
                 std::string tempFileName;
                 uint32_t partialHash;

@@ -51,9 +51,9 @@ int FacilityLibGeneral::toUTF8With16BitsHeader(const std::string &text,char * co
     return 2+utf8data.size();
 }
 
-std::stringList FacilityLibGeneral::listFolder(const std::string& folder,const std::string& suffix)
+std::vector<std::string> FacilityLibGeneral::listFolder(const std::string& folder,const std::string& suffix)
 {
-    std::stringList returnList;
+    std::vector<std::string> returnList;
     QFileInfoList entryList=QDir(folder+suffix).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot);//possible wait time here
     int sizeEntryList=entryList.size();
     for (int index=0;index<sizeEntryList;++index)
@@ -81,12 +81,12 @@ std::string FacilityLibGeneral::randomPassword(const std::string& string,const u
     return randomPassword;
 }
 
-std::stringList FacilityLibGeneral::skinIdList(const std::string& skinPath)
+std::vector<std::string> FacilityLibGeneral::skinIdList(const std::string& skinPath)
 {
     const std::string &slashbackpng=std::stringLiteral("/back.png");
     const std::string &slashfrontpng=std::stringLiteral("/front.png");
     const std::string &slashtrainerpng=std::stringLiteral("/trainer.png");
-    std::stringList skinFolderList;
+    std::vector<std::string> skinFolderList;
     QFileInfoList entryList=QDir(skinPath).entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::DirsFirst);//possible wait time here
     int sizeEntryList=entryList.size();
     for (int index=0;index<sizeEntryList;++index)
