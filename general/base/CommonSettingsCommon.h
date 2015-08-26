@@ -12,16 +12,16 @@ public:
     QByteArray datapackHashBase;
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    quint8 max_character;//if 0, not allowed, else the character max allowed
-    quint8 min_character;
-    quint8 max_pseudo_size;
-    quint32 character_delete_time;//in seconds
+    uint8_t max_character;//if 0, not allowed, else the character max allowed
+    uint8_t min_character;
+    uint8_t max_pseudo_size;
+    uint32_t character_delete_time;//in seconds
     #endif
 
-    quint8 maxPlayerMonsters;
-    quint16 maxWarehousePlayerMonsters;
-    quint8 maxPlayerItems;
-    quint16 maxWarehousePlayerItems;
+    uint8_t maxPlayerMonsters;
+    uint16_t maxWarehousePlayerMonsters;
+    uint8_t maxPlayerItems;
+    uint16_t maxWarehousePlayerItems;
 
     static CommonSettingsCommon commonSettingsCommon;
 };

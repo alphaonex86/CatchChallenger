@@ -9,7 +9,7 @@ class CommonSettingsServer
 public:
     std::string httpDatapackMirrorServer;
     bool plantOnlyVisibleByPlayer;
-    quint8 forcedSpeed;
+    uint8_t forcedSpeed;
     bool tcpCork;
     bool useSP;
     bool autoLearn;
@@ -37,7 +37,7 @@ public:
     bool chat_allow_clan;
 
     //trade
-    quint8 factoryPriceChange;
+    uint8_t factoryPriceChange;
 
     static CommonSettingsServer commonSettingsServer;
 };

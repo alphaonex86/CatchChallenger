@@ -7,14 +7,14 @@
 using namespace CatchChallenger;
 
 QByteArray FacilityLibGeneral::UTF8EmptyData=QByteArray().fill(0x00,1);
-QString FacilityLibGeneral::text_slash=QLatin1Literal("/");
-QString FacilityLibGeneral::text_male=QLatin1Literal("male");
-QString FacilityLibGeneral::text_female=QLatin1Literal("female");
-QString FacilityLibGeneral::text_unknown=QLatin1Literal("unknown");
-QString FacilityLibGeneral::text_clan=QLatin1Literal("clan");
-QString FacilityLibGeneral::text_dotcomma=QLatin1Literal(";");
+std::string FacilityLibGeneral::text_slash=QLatin1Literal("/");
+std::string FacilityLibGeneral::text_male=QLatin1Literal("male");
+std::string FacilityLibGeneral::text_female=QLatin1Literal("female");
+std::string FacilityLibGeneral::text_unknown=QLatin1Literal("unknown");
+std::string FacilityLibGeneral::text_clan=QLatin1Literal("clan");
+std::string FacilityLibGeneral::text_dotcomma=QLatin1Literal(";");
 
-QByteArray FacilityLibGeneral::toUTF8WithHeader(const QString &text)
+QByteArray FacilityLibGeneral::toUTF8WithHeader(const std::string &text)
 {
     if(text.isEmpty() || text.size()>255)
         return UTF8EmptyData;
@@ -27,7 +27,7 @@ QByteArray FacilityLibGeneral::toUTF8WithHeader(const QString &text)
     return returnedData;
 }
 
-int FacilityLibGeneral::toUTF8WithHeader(const QString &text,char * const data)
+int FacilityLibGeneral::toUTF8WithHeader(const std::string &text,char * const data)
 {
     if(text.isEmpty() || text.size()>255)
         return 0;
@@ -39,21 +39,21 @@ int FacilityLibGeneral::toUTF8WithHeader(const QString &text,char * const data)
     return 1+utf8data.size();
 }
 
-int FacilityLibGeneral::toUTF8With16BitsHeader(const QString &text,char * const data)
+int FacilityLibGeneral::toUTF8With16BitsHeader(const std::string &text,char * const data)
 {
     if(text.isEmpty() || text.size()>65535)
         return 0;
     const QByteArray &utf8data=text.toUtf8();
     if(utf8data.size()==0 || utf8data.size()>65535)
         return 0;
-    *reinterpret_cast<quint16 *>(data+0)=(quint16)htole16((quint16)utf8data.size());
+    *reinterpret_cast<uint16_t *>(data+0)=(uint16_t)htole16((uint16_t)utf8data.size());
     memcpy(data+2,utf8data.constData(),utf8data.size());
     return 2+utf8data.size();
 }
 
-QStringList FacilityLibGeneral::listFolder(const QString& folder,const QString& suffix)
+std::stringList FacilityLibGeneral::listFolder(const std::string& folder,const std::string& suffix)
 {
-    QStringList returnList;
+    std::stringList returnList;
     QFileInfoList entryList=QDir(folder+suffix).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot);//possible wait time here
     int sizeEntryList=entryList.size();
     for (int index=0;index<sizeEntryList;++index)
@@ -67,11 +67,11 @@ QStringList FacilityLibGeneral::listFolder(const QString& folder,const QString& 
     return returnList;
 }
 
-QString FacilityLibGeneral::randomPassword(const QString& string,const quint8& length)
+std::string FacilityLibGeneral::randomPassword(const std::string& string,const uint8_t& length)
 {
     if(string.size()<2)
-        return QString();
-    QString randomPassword;
+        return std::string();
+    std::string randomPassword;
     int index=0;
     while(index<length)
     {
@@ -81,12 +81,12 @@ QString FacilityLibGeneral::randomPassword(const QString& string,const quint8& l
     return randomPassword;
 }
 
-QStringList FacilityLibGeneral::skinIdList(const QString& skinPath)
+std::stringList FacilityLibGeneral::skinIdList(const std::string& skinPath)
 {
-    const QString &slashbackpng=QStringLiteral("/back.png");
-    const QString &slashfrontpng=QStringLiteral("/front.png");
-    const QString &slashtrainerpng=QStringLiteral("/trainer.png");
-    QStringList skinFolderList;
+    const std::string &slashbackpng=std::stringLiteral("/back.png");
+    const std::string &slashfrontpng=std::stringLiteral("/front.png");
+    const std::string &slashtrainerpng=std::stringLiteral("/trainer.png");
+    std::stringList skinFolderList;
     QFileInfoList entryList=QDir(skinPath).entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::DirsFirst);//possible wait time here
     int sizeEntryList=entryList.size();
     for (int index=0;index<sizeEntryList;++index)
@@ -102,7 +102,7 @@ QStringList FacilityLibGeneral::skinIdList(const QString& skinPath)
     return skinFolderList;
 }
 
-QString FacilityLibGeneral::secondsToString(const quint64 &seconds)
+std::string FacilityLibGeneral::secondsToString(const quint64 &seconds)
 {
     if(seconds<60)
         return QObject::tr("%n second(s)","",seconds);
@@ -159,7 +159,7 @@ bool FacilityLibGeneral::rmpath(const QDir &dir)
     return allHaveWork;
 }
 
-QString FacilityLibGeneral::timeToString(const quint32 &time)
+std::string FacilityLibGeneral::timeToString(const uint32_t &time)
 {
     if(time>=3600*24*10)
         return QObject::tr("%n day(s)","",time/(3600*24));

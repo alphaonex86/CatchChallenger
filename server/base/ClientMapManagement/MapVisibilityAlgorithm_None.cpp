@@ -33,7 +33,7 @@ void MapVisibilityAlgorithm_None::insertClient()
     //ClientMapManagement::insertAnotherClient(player_id,map,x,y,direction,speed);
 }
 
-void MapVisibilityAlgorithm_None::moveClient(const quint8 &movedUnit,const Direction &direction)
+void MapVisibilityAlgorithm_None::moveClient(const uint8_t &movedUnit,const Direction &direction)
 {
     Q_UNUSED(movedUnit);
     Q_UNUSED(direction);
@@ -53,7 +53,7 @@ void MapVisibilityAlgorithm_None::extraStop()
 }
 
 //map slots, transmited by the current ClientNetworkRead
-/*void MapVisibilityAlgorithm_None::put_on_the_map(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,Map_server_MapVisibility_simple *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)
+/*void MapVisibilityAlgorithm_None::put_on_the_map(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,Map_server_MapVisibility_simple *map,const uint16_t &x,const uint16_t &y,const Orientation &orientation,const uint16_t &speed)
 {
     Q_UNUSED(player_id);
     Q_UNUSED(map);
@@ -63,7 +63,7 @@ void MapVisibilityAlgorithm_None::extraStop()
     Q_UNUSED(speed);
 }*/
 
-bool MapVisibilityAlgorithm_None::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
+bool MapVisibilityAlgorithm_None::moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction)
 {
     //real move to save the possition
     if(!Client::moveThePlayer(previousMovedUnit,direction))

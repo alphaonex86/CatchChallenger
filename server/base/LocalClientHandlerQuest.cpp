@@ -8,11 +8,11 @@
 using namespace CatchChallenger;
 
 //quest
-void Client::newQuestAction(const QuestAction &action,const quint32 &questId)
+void Client::newQuestAction(const QuestAction &action,const uint32_t &questId)
 {
     if(!CommonDatapackServerSpec::commonDatapackServerSpec.quests.contains(questId))
     {
-        errorOutput(QStringLiteral("unknown questId: %1").arg(questId));
+        errorOutput(std::stringLiteral("unknown questId: %1").arg(questId));
         return;
     }
     const Quest &quest=CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId);
@@ -21,7 +21,7 @@ void Client::newQuestAction(const QuestAction &action,const quint32 &questId)
         case QuestAction_Start:
             if(!haveStartQuestRequirement(quest))
             {
-                errorOutput(QStringLiteral("have not quest requirement: %1").arg(questId));
+                errorOutput(std::stringLiteral("have not quest requirement: %1").arg(questId));
                 return;
             }
             startQuest(quest);
@@ -32,21 +32,21 @@ void Client::newQuestAction(const QuestAction &action,const quint32 &questId)
         case QuestAction_NextStep:
             if(!haveNextStepQuestRequirements(quest))
             {
-                errorOutput(QStringLiteral("have not next step quest requirement: %1").arg(questId));
+                errorOutput(std::stringLiteral("have not next step quest requirement: %1").arg(questId));
                 return;
             }
             nextStepQuest(quest);
         break;
         default:
-            errorOutput(QStringLiteral("newQuestAction unknow: %1").arg(action));
+            errorOutput(std::stringLiteral("newQuestAction unknow: %1").arg(action));
         return;
     }
 }
 
-void Client::addQuestStepDrop(const quint32 &questId,const quint8 &questStep)
+void Client::addQuestStepDrop(const uint32_t &questId,const uint8_t &questStep)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-    normalOutput(QStringLiteral("addQuestStepDrop for quest: %1, step: %2").arg(questId).arg(questStep));
+    normalOutput(std::stringLiteral("addQuestStepDrop for quest: %1, step: %2").arg(questId).arg(questStep));
     #endif
     if(!CommonDatapackServerSpec::commonDatapackServerSpec.quests.contains(questId))
     {
@@ -76,10 +76,10 @@ void Client::addQuestStepDrop(const quint32 &questId,const quint8 &questStep)
     }
 }
 
-void Client::removeQuestStepDrop(const quint32 &questId,const quint8 &questStep)
+void Client::removeQuestStepDrop(const uint32_t &questId,const uint8_t &questStep)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-    normalOutput(QStringLiteral("removeQuestStepDrop for quest: %1, step: %2").arg(questId).arg(questStep));
+    normalOutput(std::stringLiteral("removeQuestStepDrop for quest: %1, step: %2").arg(questId).arg(questStep));
     #endif
     if(!CommonDatapackServerSpec::commonDatapackServerSpec.quests.contains(questId))
     {
@@ -122,17 +122,17 @@ MonsterDrops Client::questItemMonsterToMonsterDrops(const Quest::ItemMonster &qu
 bool Client::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-    normalOutput(QStringLiteral("check quest step requirement for: %1").arg(quest.id));
+    normalOutput(std::stringLiteral("check quest step requirement for: %1").arg(quest.id));
     #endif
     if(!public_and_private_informations.quests.contains(quest.id))
     {
-        normalOutput(QStringLiteral("player quest not found: %1").arg(quest.id));
+        normalOutput(std::stringLiteral("player quest not found: %1").arg(quest.id));
         return false;
     }
-    const quint8 &step=public_and_private_informations.quests.value(quest.id).step;
+    const uint8_t &step=public_and_private_informations.quests.value(quest.id).step;
     if(step<=0 || step>quest.steps.size())
     {
-        normalOutput(QStringLiteral("step out of range for: %1").arg(quest.id));
+        normalOutput(std::stringLiteral("step out of range for: %1").arg(quest.id));
         return false;
     }
     const CatchChallenger::Quest::StepRequirements &requirements=quest.steps.at(step-1).requirements;
@@ -142,7 +142,7 @@ bool Client::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest)
         const CatchChallenger::Quest::Item &item=requirements.items.at(index);
         if(objectQuantity(item.item)<item.quantity)
         {
-            normalOutput(QStringLiteral("quest requirement, have not the quantity for the item: %1").arg(item.item));
+            normalOutput(std::stringLiteral("quest requirement, have not the quantity for the item: %1").arg(item.item));
             return false;
         }
         index++;
@@ -150,10 +150,10 @@ bool Client::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest)
     index=0;
     while(index<requirements.fightId.size())
     {
-        const quint32 &fightId=requirements.fightId.at(index);
+        const uint32_t &fightId=requirements.fightId.at(index);
         if(!public_and_private_informations.bot_already_beaten.contains(fightId))
         {
-            normalOutput(QStringLiteral("quest requirement, have not beat the bot: %1").arg(fightId));
+            normalOutput(std::stringLiteral("quest requirement, have not beat the bot: %1").arg(fightId));
             return false;
         }
         index++;
@@ -164,37 +164,37 @@ bool Client::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest)
 bool Client::haveStartQuestRequirement(const CatchChallenger::Quest &quest)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-    normalOutput(QStringLiteral("check quest requirement for: %1").arg(quest.id));
+    normalOutput(std::stringLiteral("check quest requirement for: %1").arg(quest.id));
     #endif
     if(public_and_private_informations.quests.contains(quest.id))
     {
         if(public_and_private_informations.quests.value(quest.id).step!=0)
         {
-            normalOutput(QStringLiteral("can start the quest because is already running: %1").arg(quest.id));
+            normalOutput(std::stringLiteral("can start the quest because is already running: %1").arg(quest.id));
             return false;
         }
         if(public_and_private_informations.quests.value(quest.id).finish_one_time && !quest.repeatable)
         {
-            normalOutput(QStringLiteral("done one time and no repeatable: %1").arg(quest.id));
+            normalOutput(std::stringLiteral("done one time and no repeatable: %1").arg(quest.id));
             return false;
         }
     }
     int index=0;
     while(index<quest.requirements.quests.size())
     {
-        const quint16 &questId=quest.requirements.quests.at(index).quest;
+        const uint16_t &questId=quest.requirements.quests.at(index).quest;
         if(
                 (!public_and_private_informations.quests.contains(questId) && !quest.requirements.quests.at(index).inverse)
                 ||
                 (public_and_private_informations.quests.contains(questId) && quest.requirements.quests.at(index).inverse)
             )
         {
-            normalOutput(QStringLiteral("have never started the quest: %1").arg(questId));
+            normalOutput(std::stringLiteral("have never started the quest: %1").arg(questId));
             return false;
         }
         if(!public_and_private_informations.quests.value(questId).finish_one_time)
         {
-            normalOutput(QStringLiteral("quest never finished: %1").arg(questId));
+            normalOutput(std::stringLiteral("quest never finished: %1").arg(questId));
             return false;
         }
         index++;
@@ -205,17 +205,17 @@ bool Client::haveStartQuestRequirement(const CatchChallenger::Quest &quest)
 bool Client::nextStepQuest(const Quest &quest)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-    normalOutput(QStringLiteral("drop quest step requirement for: %1").arg(quest.id));
+    normalOutput(std::stringLiteral("drop quest step requirement for: %1").arg(quest.id));
     #endif
     if(!public_and_private_informations.quests.contains(quest.id))
     {
-        normalOutput(QStringLiteral("step out of range for: %1").arg(quest.id));
+        normalOutput(std::stringLiteral("step out of range for: %1").arg(quest.id));
         return false;
     }
-    quint8 step=public_and_private_informations.quests.value(quest.id).step;
+    uint8_t step=public_and_private_informations.quests.value(quest.id).step;
     if(step<=0 || step>quest.steps.size())
     {
-        normalOutput(QStringLiteral("step out of range for: %1").arg(quest.id));
+        normalOutput(std::stringLiteral("step out of range for: %1").arg(quest.id));
         return false;
     }
     const CatchChallenger::Quest::StepRequirements &requirements=quest.steps.at(step-1).requirements;
@@ -231,7 +231,7 @@ bool Client::nextStepQuest(const Quest &quest)
     if(public_and_private_informations.quests.value(quest.id).step>quest.steps.size())
     {
         #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-        normalOutput(QStringLiteral("finish the quest: %1").arg(quest.id));
+        normalOutput(std::stringLiteral("finish the quest: %1").arg(quest.id));
         #endif
         dbQueryWriteServer(PreparedDBQueryServer::db_query_update_quest_finish.arg(character_id).arg(quest.id));
         public_and_private_informations.quests[quest.id].step=0;
@@ -258,7 +258,7 @@ bool Client::nextStepQuest(const Quest &quest)
     else
     {
         #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-        normalOutput(QStringLiteral("next step in the quest: %1").arg(quest.id));
+        normalOutput(std::stringLiteral("next step in the quest: %1").arg(quest.id));
         #endif
         dbQueryWriteServer(PreparedDBQueryServer::db_query_update_quest_step
                      .arg(character_id)

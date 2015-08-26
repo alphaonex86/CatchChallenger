@@ -7,16 +7,16 @@
 
 using namespace CatchChallenger;
 
-void Client::useSeed(const quint8 &plant_id)
+void Client::useSeed(const uint8_t &plant_id)
 {
     if(!haveReputationRequirements(CommonDatapack::commonDatapack.plants.value(plant_id).requirements.reputation))
     {
-        errorOutput(QStringLiteral("The player have not the requirement: %1 to plant as seed").arg(CommonDatapack::commonDatapack.plants.value(plant_id).itemUsed));
+        errorOutput(std::stringLiteral("The player have not the requirement: %1 to plant as seed").arg(CommonDatapack::commonDatapack.plants.value(plant_id).itemUsed));
         return;
     }
     else if(objectQuantity(CommonDatapack::commonDatapack.plants.value(plant_id).itemUsed)==0)
     {
-        errorOutput(QStringLiteral("The player have not the item id: %1 to plant as seed").arg(CommonDatapack::commonDatapack.plants.value(plant_id).itemUsed));
+        errorOutput(std::stringLiteral("The player have not the item id: %1 to plant as seed").arg(CommonDatapack::commonDatapack.plants.value(plant_id).itemUsed));
         return;
     }
     else
@@ -27,12 +27,12 @@ void Client::useSeed(const quint8 &plant_id)
     }
 }
 
-void Client::useRecipe(const quint8 &query_id,const quint32 &recipe_id)
+void Client::useRecipe(const uint8_t &query_id,const uint32_t &recipe_id)
 {
     //don't check if the recipe exists, because the loading of the know recide do that's
     if(!public_and_private_informations.recipes.contains(recipe_id))
     {
-        errorOutput(QStringLiteral("The player have not this recipe as know: %1").arg(recipe_id));
+        errorOutput(std::stringLiteral("The player have not this recipe as know: %1").arg(recipe_id));
         return;
     }
     const CrafingRecipe &recipe=CommonDatapack::commonDatapack.crafingRecipes.value(recipe_id);
@@ -43,7 +43,7 @@ void Client::useRecipe(const quint8 &query_id,const quint32 &recipe_id)
     {
         if(objectQuantity(recipe.materials.at(index).item)<recipe.materials.at(index).quantity)
         {
-            errorOutput(QStringLiteral("The player have only: %1 of item: %2, can't craft").arg(objectQuantity(recipe.materials.at(index).item)).arg(recipe.materials.at(index).item));
+            errorOutput(std::stringLiteral("The player have only: %1 of item: %2, can't craft").arg(objectQuantity(recipe.materials.at(index).item)).arg(recipe.materials.at(index).item));
             return;
         }
         index++;
@@ -71,20 +71,20 @@ void Client::useRecipe(const quint8 &query_id,const quint32 &recipe_id)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     if(success)
-        out << (quint8)RecipeUsage_ok;
+        out << (uint8_t)RecipeUsage_ok;
     else
-        out << (quint8)RecipeUsage_failed;
+        out << (uint8_t)RecipeUsage_failed;
     postReply(query_id,outputData.constData(),outputData.size());
 }
 
 void Client::takeAnObjectOnMap()
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QStringLiteral("takeAnObjectOnMap()"));
+    normalOutput(std::stringLiteral("takeAnObjectOnMap()"));
     #endif
     CommonMap *map=this->map;
-    quint8 x=this->x;
-    quint8 y=this->y;
+    uint8_t x=this->x;
+    uint8_t y=this->y;
     //resolv the dirt
     switch(getLastDirection())
     {
@@ -93,7 +93,7 @@ void Client::takeAnObjectOnMap()
             {
                 if(!MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y,false))
                 {
-                    errorOutput(QStringLiteral("takeAnObjectOnMap() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("takeAnObjectOnMap() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -108,7 +108,7 @@ void Client::takeAnObjectOnMap()
             {
                 if(!MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y,false))
                 {
-                    errorOutput(QStringLiteral("takeAnObjectOnMap() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("takeAnObjectOnMap() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -123,7 +123,7 @@ void Client::takeAnObjectOnMap()
             {
                 if(!MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y,false))
                 {
-                    errorOutput(QStringLiteral("takeAnObjectOnMap() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("takeAnObjectOnMap() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -138,7 +138,7 @@ void Client::takeAnObjectOnMap()
             {
                 if(!MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y,false))
                 {
-                    errorOutput(QStringLiteral("takeAnObjectOnMap() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("takeAnObjectOnMap() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -153,12 +153,12 @@ void Client::takeAnObjectOnMap()
         return;
     }
     //check if is dirt
-    if(!static_cast<MapServer *>(map)->itemsOnMap.contains(QPair<quint8,quint8>(x,y)))
+    if(!static_cast<MapServer *>(map)->itemsOnMap.contains(std::pair<uint8_t,uint8_t>(x,y)))
     {
         errorOutput("Not on map item on this place");
         return;
     }
-    const MapServer::ItemOnMap &item=static_cast<MapServer *>(map)->itemsOnMap.value(QPair<quint8,quint8>(x,y));
+    const MapServer::ItemOnMap &item=static_cast<MapServer *>(map)->itemsOnMap.value(std::pair<uint8_t,uint8_t>(x,y));
     //add get item from db
     if(!item.infinite)
     {

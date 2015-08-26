@@ -11,7 +11,7 @@
 
 #include "GlobalServerData.h"
 
-#include <QStringList>
+#include <std::stringList>
 
 using namespace CatchChallenger;
 
@@ -21,7 +21,7 @@ bool Client::checkCollision()
         return false;
     if(!map->parsed_layer.walkable[x+y*map->width])
     {
-        errorOutput(QStringLiteral("move at %1, can't wall at: %2,%3 on map: %4").arg(temp_direction).arg(x).arg(y).arg(map->map_file));
+        errorOutput("move at "+std::to_string(temp_direction)+", can't wall at: "+std::to_string(x)+","+std::to_string(y)+" on map: "+map->map_file);
         return false;
     }
     else
@@ -33,7 +33,7 @@ void Client::removeFromClan()
     clanChangeWithoutDb(0);
 }
 
-QString Client::directionToStringToSave(const Direction &direction)
+std::string Client::directionToStringToSave(const Direction &direction)
 {
     switch(direction)
     {
@@ -59,7 +59,7 @@ QString Client::directionToStringToSave(const Direction &direction)
     return Client::text_bottom;
 }
 
-QString Client::orientationToStringToSave(const Orientation &orientation)
+std::string Client::orientationToStringToSave(const Orientation &orientation)
 {
     switch(orientation)
     {
@@ -96,30 +96,30 @@ void Client::savePosition()
     #endif
     /* disable because use memory, but useful only into less than < 0.1% of case
      * if(map!=at_start_map_name || x!=at_start_x || y!=at_start_y || orientation!=at_start_orientation) */
-    QString updateMapPositionQuery;
-    const quint32 &map_file_database_id=static_cast<MapServer *>(map)->reverse_db_id;
-    const quint32 &rescue_map_file_database_id=static_cast<MapServer *>(rescue.map)->reverse_db_id;
-    const quint32 &unvalidated_rescue_map_file_database_id=static_cast<MapServer *>(unvalidated_rescue.map)->reverse_db_id;
+    std::string updateMapPositionQuery;
+    const uint32_t &map_file_database_id=static_cast<MapServer *>(map)->reverse_db_id;
+    const uint32_t &rescue_map_file_database_id=static_cast<MapServer *>(rescue.map)->reverse_db_id;
+    const uint32_t &unvalidated_rescue_map_file_database_id=static_cast<MapServer *>(unvalidated_rescue.map)->reverse_db_id;
     updateMapPositionQuery=PreparedDBQueryServer::db_query_update_character_forserver_map_part1
         .arg(map_file_database_id)
         .arg(x)
         .arg(y)
-        .arg((quint8)getLastDirection())
+        .arg((uint8_t)getLastDirection())
         .arg(
                 PreparedDBQueryServer::db_query_update_character_forserver_map_part2
                 .arg(rescue_map_file_database_id)
                 .arg(rescue.x)
                 .arg(rescue.y)
-                .arg((quint8)rescue.orientation)
+                .arg((uint8_t)rescue.orientation)
                 .arg(unvalidated_rescue_map_file_database_id)
                 .arg(unvalidated_rescue.x)
                 .arg(unvalidated_rescue.y)
-                .arg((quint8)unvalidated_rescue.orientation)
+                .arg((uint8_t)unvalidated_rescue.orientation)
         )
         .arg(character_id);
     dbQueryWriteServer(updateMapPositionQuery);
 /* do at moveDownMonster and moveUpMonster
- *     const QList<PlayerMonster> &playerMonsterList=getPlayerMonster();
+ *     const std::vector<PlayerMonster> &playerMonsterList=getPlayerMonster();
     int index=0;
     while(index<playerMonsterList.size())
     {
@@ -143,29 +143,29 @@ void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE 
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
-    out << (quint8)0x01;
+    out << (uint8_t)0x01;
     if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
-        out << (quint8)map->id;
+        out << (uint8_t)map->id;
     else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
-        out << (quint16)map->id;
+        out << (uint16_t)map->id;
     else
-        out << (quint32)map->id;
+        out << (uint32_t)map->id;
     if(GlobalServerData::serverSettings.max_players<=255)
     {
-        out << (quint8)0x01;
-        out << (quint8)public_and_private_informations.public_informations.simplifiedId;
+        out << (uint8_t)0x01;
+        out << (uint8_t)public_and_private_informations.public_informations.simplifiedId;
     }
     else
     {
-        out << (quint16)0x0001;
-        out << (quint16)public_and_private_informations.public_informations.simplifiedId;
+        out << (uint16_t)0x0001;
+        out << (uint16_t)public_and_private_informations.public_informations.simplifiedId;
     }
     out << x;
     out << y;
     if(GlobalServerData::serverSettings.dontSendPlayerType)
-        out << quint8((quint8)orientation | (quint8)Player_type_normal);
+        out << uint8_t((uint8_t)orientation | (uint8_t)Player_type_normal);
     else
-        out << quint8((quint8)orientation | (quint8)public_and_private_informations.public_informations.type);
+        out << uint8_t((uint8_t)orientation | (uint8_t)public_and_private_informations.public_informations.type);
     if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
         out << public_and_private_informations.public_informations.speed;
 
@@ -216,25 +216,25 @@ void Client::createMemoryClan()
     clan->players << this;
 }
 
-bool Client::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
+bool Client::moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(this->x>=this->map->width)
     {
-        qDebug() << QStringLiteral("x to out of map: %1 > %2 (%3)").arg(this->x).arg(this->map->width).arg(this->map->map_file);
+        qDebug() << std::stringLiteral("x to out of map: %1 > %2 (%3)").arg(this->x).arg(this->map->width).arg(this->map->map_file);
         abort();
         return false;
     }
     if(this->y>=this->map->height)
     {
-        qDebug() << QStringLiteral("y to out of map: %1 > %2 (%3)").arg(this->y).arg(this->map->height).arg(this->map->map_file);
+        qDebug() << std::stringLiteral("y to out of map: %1 > %2 (%3)").arg(this->y).arg(this->map->height).arg(this->map->map_file);
         abort();
         return false;
     }
     #endif
 
     #ifdef DEBUG_MESSAGE_CLIENT_MOVE
-    normalOutput(QStringLiteral("moveThePlayer(): for player (%1,%2): %3, previousMovedUnit: %4 (%5), next direction: %6")
+    normalOutput(std::stringLiteral("moveThePlayer(): for player (%1,%2): %3, previousMovedUnit: %4 (%5), next direction: %6")
                  .arg(x)
                  .arg(y)
                  .arg(public_and_private_informations.public_informations.simplifiedId)
@@ -249,13 +249,13 @@ bool Client::moveThePlayer(const quint8 &previousMovedUnit,const Direction &dire
     {
         if(this->x>=this->map->width)
         {
-            qDebug() << QStringLiteral("x to out of map: %1 > %2 (%3)").arg(this->x).arg(this->map->width).arg(this->map->map_file);
+            qDebug() << std::stringLiteral("x to out of map: %1 > %2 (%3)").arg(this->x).arg(this->map->width).arg(this->map->map_file);
             abort();
             return false;
         }
         if(this->y>=this->map->height)
         {
-            qDebug() << QStringLiteral("y to out of map: %1 > %2 (%3)").arg(this->y).arg(this->map->height).arg(this->map->map_file);
+            qDebug() << std::stringLiteral("y to out of map: %1 > %2 (%3)").arg(this->y).arg(this->map->height).arg(this->map->map_file);
             abort();
             return false;
         }
@@ -290,13 +290,13 @@ bool Client::singleMove(const Direction &direction)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(this->x>=this->map->width)
     {
-        qDebug() << QStringLiteral("x to out of map: %1 > %2 (%3)").arg(this->x).arg(this->map->width).arg(this->map->map_file);
+        qDebug() << std::stringLiteral("x to out of map: %1 > %2 (%3)").arg(this->x).arg(this->map->width).arg(this->map->map_file);
         abort();
         return false;
     }
     if(this->y>=this->map->height)
     {
-        qDebug() << QStringLiteral("y to out of map: %1 > %2 (%3)").arg(this->y).arg(this->map->height).arg(this->map->map_file);
+        qDebug() << std::stringLiteral("y to out of map: %1 > %2 (%3)").arg(this->y).arg(this->map->height).arg(this->map->map_file);
         abort();
         return false;
     }
@@ -304,33 +304,33 @@ bool Client::singleMove(const Direction &direction)
 
     if(isInFight())//check if is in fight
     {
-        errorOutput(QStringLiteral("error: try move when is in fight"));
+        errorOutput(std::stringLiteral("error: try move when is in fight"));
         return false;
     }
     if(captureCityInProgress())
     {
-        errorOutput(QStringLiteral("Try move when is in capture city"));
+        errorOutput(std::stringLiteral("Try move when is in capture city"));
         return false;
     }
     if(!oldEvents.oldEventList.isEmpty() && (QDateTime::currentDateTime().toTime_t()-oldEvents.time.toTime_t())>30/*30s*/)
     {
-        errorOutput(QStringLiteral("Try move but lost of event sync"));
+        errorOutput(std::stringLiteral("Try move but lost of event sync"));
         return false;
     }
     COORD_TYPE x=this->x,y=this->y;
     temp_direction=direction;
     CommonMap* map=this->map;
     #ifdef DEBUG_MESSAGE_CLIENT_MOVE
-    normalOutput(QStringLiteral("Client::singleMove(), go in this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
+    normalOutput(std::stringLiteral("Client::singleMove(), go in this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
     #endif
     if(!MoveOnTheMap::canGoTo(direction,*map,x,y,true))
     {
-        errorOutput(QStringLiteral("Client::singleMove(), can't go into this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
+        errorOutput(std::stringLiteral("Client::singleMove(), can't go into this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
         return false;
     }
     if(!MoveOnTheMap::moveWithoutTeleport(direction,&map,&x,&y,false,true))
     {
-        errorOutput(QStringLiteral("Client::singleMove(), can go but move failed into this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
+        errorOutput(std::stringLiteral("Client::singleMove(), can go but move failed into this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
         return false;
     }
 
@@ -345,26 +345,26 @@ bool Client::singleMove(const Direction &direction)
             case CatchChallenger::MapConditionType_FightBot:
                 if(!public_and_private_informations.bot_already_beaten.contains(teleporter.condition.value))
                 {
-                    errorOutput(QStringLiteral("Need have FightBot win to use this teleporter: %1 with map: %2(%3,%4)").arg(teleporter.condition.value).arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("Need have FightBot win to use this teleporter: %1 with map: %2(%3,%4)").arg(teleporter.condition.value).arg(map->map_file).arg(x).arg(y));
                     return false;
                 }
             break;
             case CatchChallenger::MapConditionType_Item:
                 if(!public_and_private_informations.items.contains(teleporter.condition.value))
                 {
-                    errorOutput(QStringLiteral("Need have item to use this teleporter: %1 with map: %2(%3,%4)").arg(teleporter.condition.value).arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("Need have item to use this teleporter: %1 with map: %2(%3,%4)").arg(teleporter.condition.value).arg(map->map_file).arg(x).arg(y));
                     return false;
                 }
             break;
             case CatchChallenger::MapConditionType_Quest:
                 if(!public_and_private_informations.quests.contains(teleporter.condition.value))
                 {
-                    errorOutput(QStringLiteral("Need have quest to use this teleporter: %1 with map: %2(%3,%4)").arg(teleporter.condition.value).arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("Need have quest to use this teleporter: %1 with map: %2(%3,%4)").arg(teleporter.condition.value).arg(map->map_file).arg(x).arg(y));
                     return false;
                 }
                 if(!public_and_private_informations.quests.value(teleporter.condition.value).finish_one_time)
                 {
-                    errorOutput(QStringLiteral("Need have finish the quest to use this teleporter: %1 with map: %2(%3,%4)").arg(teleporter.condition.value).arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("Need have finish the quest to use this teleporter: %1 with map: %2(%3,%4)").arg(teleporter.condition.value).arg(map->map_file).arg(x).arg(y));
                     return false;
                 }
             break;
@@ -394,19 +394,19 @@ bool Client::singleMove(const Direction &direction)
     #endif
     this->x=x;
     this->y=y;
-    if(static_cast<MapServer*>(map)->rescue.contains(QPair<quint8,quint8>(x,y)))
+    if(static_cast<MapServer*>(map)->rescue.contains(std::pair<uint8_t,uint8_t>(x,y)))
     {
         unvalidated_rescue.map=map;
         unvalidated_rescue.x=x;
         unvalidated_rescue.y=y;
-        unvalidated_rescue.orientation=static_cast<MapServer*>(map)->rescue.value(QPair<quint8,quint8>(x,y));
+        unvalidated_rescue.orientation=static_cast<MapServer*>(map)->rescue.value(std::pair<uint8_t,uint8_t>(x,y));
     }
     if(botFightCollision(map,x,y))
         return true;
     if(public_and_private_informations.repel_step<=0)
     {
         //merge the result event:
-        QList<quint8> mergedEvents(GlobalServerData::serverPrivateVariables.events);
+        std::vector<uint8_t> mergedEvents(GlobalServerData::serverPrivateVariables.events);
         if(!oldEvents.oldEventList.isEmpty())
         {
             int index=0;
@@ -418,7 +418,7 @@ bool Client::singleMove(const Direction &direction)
         }
         if(generateWildFightIfCollision(map,x,y,public_and_private_informations.items,mergedEvents))
         {
-            normalOutput(QStringLiteral("Client::singleMove(), now is in front of wild monster with map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
+            normalOutput(std::stringLiteral("Client::singleMove(), now is in front of wild monster with map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
             return true;
         }
     }
@@ -430,13 +430,13 @@ bool Client::singleMove(const Direction &direction)
     {
         if(this->x>=this->map->width)
         {
-            qDebug() << QStringLiteral("x to out of map: %1 > %2 (%3)").arg(this->x).arg(this->map->width).arg(this->map->map_file);
+            qDebug() << std::stringLiteral("x to out of map: %1 > %2 (%3)").arg(this->x).arg(this->map->width).arg(this->map->map_file);
             abort();
             return false;
         }
         if(this->y>=this->map->height)
         {
-            qDebug() << QStringLiteral("y to out of map: %1 > %2 (%3)").arg(this->y).arg(this->map->height).arg(this->map->map_file);
+            qDebug() << std::stringLiteral("y to out of map: %1 > %2 (%3)").arg(this->y).arg(this->map->height).arg(this->map->map_file);
             abort();
             return false;
         }
@@ -446,20 +446,20 @@ bool Client::singleMove(const Direction &direction)
     return true;
 }
 
-void Client::addObjectAndSend(const quint16 &item,const quint32 &quantity)
+void Client::addObjectAndSend(const uint16_t &item,const uint32_t &quantity)
 {
     addObject(item,quantity);
     //add into the inventory
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint16)1;
-    out << (quint16)item;
-    out << (quint32)quantity;
+    out << (uint16_t)1;
+    out << (uint16_t)item;
+    out << (uint32_t)quantity;
     sendFullPacket(0xD0,0x02,outputData.constData(),outputData.size());
 }
 
-void Client::addObject(const quint16 &item,const quint32 &quantity)
+void Client::addObject(const uint16_t &item,const uint32_t &quantity)
 {
     if(!CommonDatapack::commonDatapack.items.item.contains(item))
     {
@@ -486,7 +486,7 @@ void Client::addObject(const quint16 &item,const quint32 &quantity)
     }
 }
 
-void Client::addWarehouseObject(const quint16 &item,const quint32 &quantity)
+void Client::addWarehouseObject(const uint16_t &item,const uint32_t &quantity)
 {
     if(public_and_private_informations.warehouse_items.contains(item))
     {
@@ -508,7 +508,7 @@ void Client::addWarehouseObject(const quint16 &item,const quint32 &quantity)
     }
 }
 
-quint32 Client::removeWarehouseObject(const quint16 &item,const quint32 &quantity)
+uint32_t Client::removeWarehouseObject(const uint16_t &item,const uint32_t &quantity)
 {
     if(public_and_private_informations.warehouse_items.contains(item))
     {
@@ -524,7 +524,7 @@ quint32 Client::removeWarehouseObject(const quint16 &item,const quint32 &quantit
         }
         else
         {
-            quint32 removed_quantity=public_and_private_informations.warehouse_items.value(item);
+            uint32_t removed_quantity=public_and_private_informations.warehouse_items.value(item);
             public_and_private_informations.warehouse_items.remove(item);
             dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_item_warehouse
                          .arg(item)
@@ -537,7 +537,7 @@ quint32 Client::removeWarehouseObject(const quint16 &item,const quint32 &quantit
         return 0;
 }
 
-void Client::saveObjectRetention(const quint16 &item)
+void Client::saveObjectRetention(const uint16_t &item)
 {
     if(public_and_private_informations.items.contains(item))
     {
@@ -556,7 +556,7 @@ void Client::saveObjectRetention(const quint16 &item)
     }
 }
 
-quint32 Client::removeObject(const quint16 &item, const quint32 &quantity)
+uint32_t Client::removeObject(const uint16_t &item, const uint32_t &quantity)
 {
     if(public_and_private_informations.items.contains(item))
     {
@@ -572,7 +572,7 @@ quint32 Client::removeObject(const quint16 &item, const quint32 &quantity)
         }
         else
         {
-            quint32 removed_quantity=public_and_private_informations.items.value(item);
+            uint32_t removed_quantity=public_and_private_informations.items.value(item);
             public_and_private_informations.items.remove(item);
             dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_item
                          .arg(item)
@@ -585,19 +585,19 @@ quint32 Client::removeObject(const quint16 &item, const quint32 &quantity)
         return 0;
 }
 
-void Client::sendRemoveObject(const quint16 &item,const quint32 &quantity)
+void Client::sendRemoveObject(const uint16_t &item,const uint32_t &quantity)
 {
     //add into the inventory
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint32)1;
-    out << (quint16)item;
-    out << (quint32)quantity;
+    out << (uint32_t)1;
+    out << (uint16_t)item;
+    out << (uint32_t)quantity;
     sendFullPacket(0xD0,0x03,outputData.constData(),outputData.size());
 }
 
-quint32 Client::objectQuantity(const quint16 &item)
+uint32_t Client::objectQuantity(const uint16_t &item)
 {
     if(public_and_private_informations.items.contains(item))
         return public_and_private_informations.items.value(item);
@@ -655,7 +655,7 @@ void Client::removeWarehouseCash(const quint64 &cash)
                  );
 }
 
-void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint16, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters)
+void Client::wareHouseStore(const qint64 &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint32_t> &withdrawMonsters, const std::vector<uint32_t> &depositeMonsters)
 {
     if(!wareHouseStoreCheck(cash,items,withdrawMonsters,depositeMonsters))
         return;
@@ -663,7 +663,7 @@ void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint16, qint3
         int index=0;
         while(index<items.size())
         {
-            const QPair<quint16, qint32> &item=items.at(index);
+            const std::pair<uint16_t, int32_t> &item=items.at(index);
             if(item.second>0)
             {
                 removeWarehouseObject(item.first,item.second);
@@ -734,7 +734,7 @@ void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint16, qint3
             saveMonsterStat(public_and_private_informations.playerMonster.last());
 }
 
-bool Client::wareHouseStoreCheck(const qint64 &cash, const QList<QPair<quint16, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters)
+bool Client::wareHouseStoreCheck(const qint64 &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint32_t> &withdrawMonsters, const std::vector<uint32_t> &depositeMonsters)
 {
     //check all
     if((cash>0 && (qint64)public_and_private_informations.warehouse_cash<cash) || (cash<0 && (qint64)public_and_private_informations.cash<-cash))
@@ -746,7 +746,7 @@ bool Client::wareHouseStoreCheck(const qint64 &cash, const QList<QPair<quint16, 
         int index=0;
         while(index<items.size())
         {
-            const QPair<quint16, qint32> &item=items.at(index);
+            const std::pair<uint16_t, int32_t> &item=items.at(index);
             if(item.second>0)
             {
                 if(!public_and_private_informations.warehouse_items.contains(item.first))
@@ -829,37 +829,37 @@ bool Client::wareHouseStoreCheck(const qint64 &cash, const QList<QPair<quint16, 
     return true;
 }
 
-void Client::sendHandlerCommand(const QString &command,const QString &extraText)
+void Client::sendHandlerCommand(const std::string &command,const std::string &extraText)
 {
     if(command==Client::text_give)
     {
         bool ok;
-        QStringList arguments=extraText.split(Client::text_space,QString::SkipEmptyParts);
+        std::stringList arguments=extraText.split(Client::text_space,std::string::SkipEmptyParts);
         if(arguments.size()==2)
             arguments << Client::text_1;
         while(arguments.size()>3)
         {
-            const QString &arg1=arguments.takeAt(arguments.size()-3);
-            const QString &arg2=arguments.takeAt(arguments.size()-2);
+            const std::string &arg1=arguments.takeAt(arguments.size()-3);
+            const std::string &arg2=arguments.takeAt(arguments.size()-2);
             arguments.insert(arguments.size()-1,arg1+Client::text_space+arg2);
         }
         if(arguments.size()!=3)
         {
-            receiveSystemText(QStringLiteral("Wrong arguments number for the command, usage: /give objectId player [quantity=1]"));
+            receiveSystemText(std::stringLiteral("Wrong arguments number for the command, usage: /give objectId player [quantity=1]"));
             return;
         }
-        const quint32 &objectId=arguments.first().toUInt(&ok);
+        const uint32_t &objectId=arguments.first().toUInt(&ok);
         if(!ok)
         {
-            receiveSystemText(QStringLiteral("objectId is not a number, usage: /give objectId player [quantity=1]"));
+            receiveSystemText(std::stringLiteral("objectId is not a number, usage: /give objectId player [quantity=1]"));
             return;
         }
         if(!CommonDatapack::commonDatapack.items.item.contains(objectId))
         {
-            receiveSystemText(QStringLiteral("objectId is not a valid item, usage: /give objectId player [quantity=1]"));
+            receiveSystemText(std::stringLiteral("objectId is not a valid item, usage: /give objectId player [quantity=1]"));
             return;
         }
-        quint32 quantity=1;
+        uint32_t quantity=1;
         if(arguments.size()==3)
         {
             quantity=arguments.last().toUInt(&ok);
@@ -867,29 +867,29 @@ void Client::sendHandlerCommand(const QString &command,const QString &extraText)
             {
                 while(arguments.size()>2)
                 {
-                    const QString &arg1=arguments.takeAt(arguments.size()-2);
-                    const QString &arg2=arguments.takeAt(arguments.size()-1);
+                    const std::string &arg1=arguments.takeAt(arguments.size()-2);
+                    const std::string &arg2=arguments.takeAt(arguments.size()-1);
                     arguments << arg1+Client::text_space+arg2;
                 }
                 quantity=1;
-                //receiveSystemText(QStringLiteral("quantity is not a number, usage: /give objectId player [quantity=1]"));
+                //receiveSystemText(std::stringLiteral("quantity is not a number, usage: /give objectId player [quantity=1]"));
                 //return;
             }
         }
         if(!playerByPseudo.contains(arguments.at(1)))
         {
-            receiveSystemText(QStringLiteral("player is not connected, usage: /give objectId player [quantity=1]"));
+            receiveSystemText(std::stringLiteral("player is not connected, usage: /give objectId player [quantity=1]"));
             return;
         }
-        normalOutput(QStringLiteral("%1 have give to %2 the item with id: %3 in quantity: %4").arg(public_and_private_informations.public_informations.pseudo).arg(arguments.at(1)).arg(objectId).arg(quantity));
+        normalOutput(std::stringLiteral("%1 have give to %2 the item with id: %3 in quantity: %4").arg(public_and_private_informations.public_informations.pseudo).arg(arguments.at(1)).arg(objectId).arg(quantity));
         playerByPseudo.value(arguments.at(1))->addObjectAndSend(objectId,quantity);
     }
     else if(command==Client::text_setevent)
     {
-        const QStringList &arguments=extraText.split(Client::text_space,QString::SkipEmptyParts);
+        const std::stringList &arguments=extraText.split(Client::text_space,std::string::SkipEmptyParts);
         if(arguments.size()!=2)
         {
-            receiveSystemText(QStringLiteral("Wrong arguments number for the command, usage: /give setevent [event] [value]"));
+            receiveSystemText(std::stringLiteral("Wrong arguments number for the command, usage: /give setevent [event] [value]"));
             return;
         }
         int index=0,sub_index;
@@ -905,7 +905,7 @@ void Client::sendHandlerCommand(const QString &command,const QString &extraText)
                     {
                         if(GlobalServerData::serverPrivateVariables.events.at(index)==sub_index)
                         {
-                            receiveSystemText(QStringLiteral("The event have aready this value"));
+                            receiveSystemText(std::stringLiteral("The event have aready this value"));
                             return;
                         }
                         else
@@ -919,7 +919,7 @@ void Client::sendHandlerCommand(const QString &command,const QString &extraText)
                 }
                 if(sub_index==event.values.size())
                 {
-                    receiveSystemText(QStringLiteral("The event value is not found"));
+                    receiveSystemText(std::stringLiteral("The event value is not found"));
                     return;
                 }
                 break;
@@ -928,71 +928,71 @@ void Client::sendHandlerCommand(const QString &command,const QString &extraText)
         }
         if(index==CommonDatapack::commonDatapack.events.size())
         {
-            receiveSystemText(QStringLiteral("The event is not found"));
+            receiveSystemText(std::stringLiteral("The event is not found"));
             return;
         }
     }
     else if(command==Client::text_take)
     {
         bool ok;
-        QStringList arguments=extraText.split(Client::text_space,QString::SkipEmptyParts);
+        std::stringList arguments=extraText.split(Client::text_space,std::string::SkipEmptyParts);
         if(arguments.size()==2)
             arguments << Client::text_1;
         if(arguments.size()!=3)
         {
-            receiveSystemText(QStringLiteral("Wrong arguments number for the command, usage: /take objectId player [quantity=1]"));
+            receiveSystemText(std::stringLiteral("Wrong arguments number for the command, usage: /take objectId player [quantity=1]"));
             return;
         }
-        quint32 objectId=arguments.first().toUInt(&ok);
+        uint32_t objectId=arguments.first().toUInt(&ok);
         if(!ok)
         {
-            receiveSystemText(QStringLiteral("objectId is not a number, usage: /take objectId player [quantity=1]"));
+            receiveSystemText(std::stringLiteral("objectId is not a number, usage: /take objectId player [quantity=1]"));
             return;
         }
         if(!CommonDatapack::commonDatapack.items.item.contains(objectId))
         {
-            receiveSystemText(QStringLiteral("objectId is not a valid item, usage: /take objectId player [quantity=1]"));
+            receiveSystemText(std::stringLiteral("objectId is not a valid item, usage: /take objectId player [quantity=1]"));
             return;
         }
-        quint32 quantity=arguments.last().toUInt(&ok);
+        uint32_t quantity=arguments.last().toUInt(&ok);
         if(!ok)
         {
-            receiveSystemText(QStringLiteral("quantity is not a number, usage: /take objectId player [quantity=1]"));
+            receiveSystemText(std::stringLiteral("quantity is not a number, usage: /take objectId player [quantity=1]"));
             return;
         }
         if(!playerByPseudo.contains(arguments.at(1)))
         {
-            receiveSystemText(QStringLiteral("player is not connected, usage: /take objectId player [quantity=1]"));
+            receiveSystemText(std::stringLiteral("player is not connected, usage: /take objectId player [quantity=1]"));
             return;
         }
-        normalOutput(QStringLiteral("%1 have take to %2 the item with id: %3 in quantity: %4").arg(public_and_private_informations.public_informations.pseudo).arg(arguments.at(1)).arg(objectId).arg(quantity));
+        normalOutput(std::stringLiteral("%1 have take to %2 the item with id: %3 in quantity: %4").arg(public_and_private_informations.public_informations.pseudo).arg(arguments.at(1)).arg(objectId).arg(quantity));
         playerByPseudo.value(arguments.at(1))->sendRemoveObject(objectId,playerByPseudo.value(arguments.at(1))->removeObject(objectId,quantity));
     }
     else if(command==Client::text_tp)
     {
-        QStringList arguments=extraText.split(Client::text_space,QString::SkipEmptyParts);
+        std::stringList arguments=extraText.split(Client::text_space,std::string::SkipEmptyParts);
         if(arguments.size()==3)
         {
             if(arguments.at(1)!=Client::text_to)
             {
-                receiveSystemText(QStringLiteral("wrong second arguement: %1, usage: /tp player1 to player2").arg(arguments.at(1)));
+                receiveSystemText(std::stringLiteral("wrong second arguement: %1, usage: /tp player1 to player2").arg(arguments.at(1)));
                 return;
             }
             if(!playerByPseudo.contains(arguments.first()))
             {
-                receiveSystemText(QStringLiteral("%1 is not connected, usage: /tp player1 to player2").arg(arguments.first()));
+                receiveSystemText(std::stringLiteral("%1 is not connected, usage: /tp player1 to player2").arg(arguments.first()));
                 return;
             }
             if(!playerByPseudo.contains(arguments.last()))
             {
-                receiveSystemText(QStringLiteral("%1 is not connected, usage: /tp player1 to player2").arg(arguments.last()));
+                receiveSystemText(std::stringLiteral("%1 is not connected, usage: /tp player1 to player2").arg(arguments.last()));
                 return;
             }
             playerByPseudo.value(arguments.first())->receiveTeleportTo(playerByPseudo.value(arguments.last())->map,playerByPseudo.value(arguments.last())->x,playerByPseudo.value(arguments.last())->y,MoveOnTheMap::directionToOrientation(playerByPseudo.value(arguments.last())->getLastDirection()));
         }
         else
         {
-            receiveSystemText(QStringLiteral("Wrong arguments number for the command, usage: /tp player1 to player2"));
+            receiveSystemText(std::stringLiteral("Wrong arguments number for the command, usage: /tp player1 to player2"));
             return;
         }
     }
@@ -1000,46 +1000,46 @@ void Client::sendHandlerCommand(const QString &command,const QString &extraText)
     {
         if(extraText.isEmpty())
         {
-            receiveSystemText(QStringLiteral("no player given, syntaxe: /trade player").arg(extraText));
+            receiveSystemText(std::stringLiteral("no player given, syntaxe: /trade player").arg(extraText));
             return;
         }
         if(!playerByPseudo.contains(extraText))
         {
-            receiveSystemText(QStringLiteral("%1 is not connected").arg(extraText));
+            receiveSystemText(std::stringLiteral("%1 is not connected").arg(extraText));
             return;
         }
         if(public_and_private_informations.public_informations.pseudo==extraText)
         {
-            receiveSystemText(QStringLiteral("You can't trade with yourself").arg(extraText));
+            receiveSystemText(std::stringLiteral("You can't trade with yourself").arg(extraText));
             return;
         }
         if(getInTrade())
         {
-            receiveSystemText(QStringLiteral("You are already in trade"));
+            receiveSystemText(std::stringLiteral("You are already in trade"));
             return;
         }
         if(isInBattle())
         {
-            receiveSystemText(QStringLiteral("You are already in battle"));
+            receiveSystemText(std::stringLiteral("You are already in battle"));
             return;
         }
         if(playerByPseudo.value(extraText)->getInTrade())
         {
-            receiveSystemText(QStringLiteral("%1 is already in trade").arg(extraText));
+            receiveSystemText(std::stringLiteral("%1 is already in trade").arg(extraText));
             return;
         }
         if(playerByPseudo.value(extraText)->isInBattle())
         {
-            receiveSystemText(QStringLiteral("%1 is already in battle").arg(extraText));
+            receiveSystemText(std::stringLiteral("%1 is already in battle").arg(extraText));
             return;
         }
         if(!otherPlayerIsInRange(playerByPseudo.value(extraText)))
         {
-            receiveSystemText(QStringLiteral("%1 is not in range").arg(extraText));
+            receiveSystemText(std::stringLiteral("%1 is not in range").arg(extraText));
             return;
         }
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        normalOutput(QStringLiteral("Trade requested"));
+        normalOutput(std::stringLiteral("Trade requested"));
         #endif
         otherPlayerTrade=playerByPseudo.value(extraText);
         otherPlayerTrade->registerTradeRequest(this);
@@ -1048,82 +1048,82 @@ void Client::sendHandlerCommand(const QString &command,const QString &extraText)
     {
         if(extraText.isEmpty())
         {
-            receiveSystemText(QStringLiteral("no player given, syntaxe: /battle player").arg(extraText));
+            receiveSystemText(std::stringLiteral("no player given, syntaxe: /battle player").arg(extraText));
             return;
         }
         if(!playerByPseudo.contains(extraText))
         {
-            receiveSystemText(QStringLiteral("%1 is not connected").arg(extraText));
+            receiveSystemText(std::stringLiteral("%1 is not connected").arg(extraText));
             return;
         }
         if(public_and_private_informations.public_informations.pseudo==extraText)
         {
-            receiveSystemText(QStringLiteral("You can't battle with yourself").arg(extraText));
+            receiveSystemText(std::stringLiteral("You can't battle with yourself").arg(extraText));
             return;
         }
         if(isInBattle())
         {
-            receiveSystemText(QStringLiteral("you are already in battle"));
+            receiveSystemText(std::stringLiteral("you are already in battle"));
             return;
         }
         if(getInTrade())
         {
-            receiveSystemText(QStringLiteral("you are already in trade"));
+            receiveSystemText(std::stringLiteral("you are already in trade"));
             return;
         }
         if(playerByPseudo.value(extraText)->isInBattle())
         {
-            receiveSystemText(QStringLiteral("%1 is already in battle").arg(extraText));
+            receiveSystemText(std::stringLiteral("%1 is already in battle").arg(extraText));
             return;
         }
         if(playerByPseudo.value(extraText)->getInTrade())
         {
-            receiveSystemText(QStringLiteral("%1 is already in battle").arg(extraText));
+            receiveSystemText(std::stringLiteral("%1 is already in battle").arg(extraText));
             return;
         }
         if(!otherPlayerIsInRange(playerByPseudo.value(extraText)))
         {
-            receiveSystemText(QStringLiteral("%1 is not in range").arg(extraText));
+            receiveSystemText(std::stringLiteral("%1 is not in range").arg(extraText));
             return;
         }
         if(!playerByPseudo.value(extraText)->getAbleToFight())
         {
-            receiveSystemText(QStringLiteral("The other player can't fight"));
+            receiveSystemText(std::stringLiteral("The other player can't fight"));
             return;
         }
         if(!getAbleToFight())
         {
-            receiveSystemText(QStringLiteral("You can't fight"));
+            receiveSystemText(std::stringLiteral("You can't fight"));
             return;
         }
         if(playerByPseudo.value(extraText)->isInFight())
         {
-            receiveSystemText(QStringLiteral("The other player is in fight"));
+            receiveSystemText(std::stringLiteral("The other player is in fight"));
             return;
         }
         if(isInFight())
         {
-            receiveSystemText(QStringLiteral("You are in fight"));
+            receiveSystemText(std::stringLiteral("You are in fight"));
             return;
         }
         if(captureCityInProgress())
         {
-            errorOutput(QStringLiteral("Try battle when is in capture city"));
+            errorOutput(std::stringLiteral("Try battle when is in capture city"));
             return;
         }
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        normalOutput(QStringLiteral("Battle requested"));
+        normalOutput(std::stringLiteral("Battle requested"));
         #endif
         playerByPseudo.value(extraText)->registerBattleRequest(this);
     }
 }
 
-void Client::setEvent(const quint8 &event, const quint8 &new_value)
+void Client::setEvent(const uint8_t &event, const uint8_t &new_value)
 {
-    const quint8 &event_value=GlobalServerData::serverPrivateVariables.events.at(event);
+    const uint8_t &event_value=GlobalServerData::serverPrivateVariables.events.at(event);
     QDateTime currentDateTime=QDateTime::currentDateTime();
-    QList<Client *> playerList;
-    QHashIterator<QString,Client *> i(playerByPseudo);
+    std::vector<Client *> playerList;
+    std::unordered_mapIterator<std::string,Client *> i(playerByPseudo);
     while (i.hasNext()) {
         i.next();
         i.value()->addEventInQueue(event,event_value,currentDateTime);
@@ -1143,7 +1143,7 @@ void Client::setEvent(const quint8 &event, const quint8 &new_value)
     GlobalServerData::serverPrivateVariables.events[event]=new_value;
 }
 
-void Client::addEventInQueue(const quint8 &event,const quint8 &event_value,const QDateTime &currentDateTime)
+void Client::addEventInQueue(const uint8_t &event,const uint8_t &event_value,const QDateTime &currentDateTime)
 {
     if(oldEvents.oldEventList.isEmpty())
         oldEvents.time=currentDateTime;
@@ -1165,14 +1165,14 @@ void Client::removeFirstEventInQueue()
         oldEvents.time=QDateTime::currentDateTime();
 }
 
-bool Client::learnSkill(const quint32 &monsterId, const quint16 &skill)
+bool Client::learnSkill(const uint32_t &monsterId, const uint16_t &skill)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QStringLiteral("learnSkill(%1,%2)").arg(monsterId).arg(skill));
+    normalOutput(std::stringLiteral("learnSkill(%1,%2)").arg(monsterId).arg(skill));
     #endif
     CommonMap *map=this->map;
-    quint8 x=this->x;
-    quint8 y=this->y;
+    uint8_t x=this->x;
+    uint8_t y=this->y;
     Direction direction=getLastDirection();
     switch(getLastDirection())
     {
@@ -1185,21 +1185,21 @@ bool Client::learnSkill(const quint32 &monsterId, const quint16 &skill)
             {
                 if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                 {
-                    errorOutput(QStringLiteral("learnSkill() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("learnSkill() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return false;
                 }
             }
             else
             {
-                errorOutput(QStringLiteral("No valid map in this direction"));
+                errorOutput(std::stringLiteral("No valid map in this direction"));
                 return false;
             }
         break;
         default:
-        errorOutput(QStringLiteral("Wrong direction to use a learn skill"));
+        errorOutput(std::stringLiteral("Wrong direction to use a learn skill"));
         return false;
     }
-    if(!static_cast<MapServer*>(this->map)->learn.contains(QPair<quint8,quint8>(x,y)))
+    if(!static_cast<MapServer*>(this->map)->learn.contains(std::pair<uint8_t,uint8_t>(x,y)))
     {
         switch(direction)
         {
@@ -1211,22 +1211,22 @@ bool Client::learnSkill(const quint32 &monsterId, const quint16 &skill)
                 {
                     if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                     {
-                        errorOutput(QStringLiteral("learnSkill() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                        errorOutput(std::stringLiteral("learnSkill() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                         return false;
                     }
                 }
                 else
                 {
-                    errorOutput(QStringLiteral("No valid map in this direction"));
+                    errorOutput(std::stringLiteral("No valid map in this direction"));
                     return false;
                 }
             break;
             default:
             break;
         }
-        if(!static_cast<MapServer*>(this->map)->learn.contains(QPair<quint8,quint8>(x,y)))
+        if(!static_cast<MapServer*>(this->map)->learn.contains(std::pair<uint8_t,uint8_t>(x,y)))
         {
-            errorOutput(QStringLiteral("not learn skill into this direction"));
+            errorOutput(std::stringLiteral("not learn skill into this direction"));
             return false;
         }
     }
@@ -1240,25 +1240,25 @@ bool Client::otherPlayerIsInRange(Client * otherPlayer)
     return getMap()==otherPlayer->getMap();
 }
 
-void Client::destroyObject(const quint16 &itemId,const quint32 &quantity)
+void Client::destroyObject(const uint16_t &itemId,const uint32_t &quantity)
 {
-    normalOutput(QStringLiteral("The player have destroy them self %1 item(s) with id: %2").arg(quantity).arg(itemId));
+    normalOutput(std::stringLiteral("The player have destroy them self %1 item(s) with id: %2").arg(quantity).arg(itemId));
     removeObject(itemId,quantity);
 }
 
-bool Client::useObjectOnMonster(const quint16 &object,const quint32 &monster)
+bool Client::useObjectOnMonster(const uint16_t &object,const uint32_t &monster)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QStringLiteral("use the object: %1 on monster %2").arg(object).arg(monster));
+    normalOutput(std::stringLiteral("use the object: %1 on monster %2").arg(object).arg(monster));
     #endif
     if(!public_and_private_informations.items.contains(object))
     {
-        errorOutput(QStringLiteral("can't use the object: %1 because don't have into the inventory").arg(object));
+        errorOutput(std::stringLiteral("can't use the object: %1 because don't have into the inventory").arg(object));
         return false;
     }
     if(objectQuantity(object)<1)
     {
-        errorOutput(QStringLiteral("have not quantity to use this object: %1").arg(object));
+        errorOutput(std::stringLiteral("have not quantity to use this object: %1").arg(object));
         return false;
     }
     if(CommonFightEngine::useObjectOnMonster(object,monster))
@@ -1269,19 +1269,19 @@ bool Client::useObjectOnMonster(const quint16 &object,const quint32 &monster)
     return true;
 }
 
-void Client::useObject(const quint8 &query_id,const quint16 &itemId)
+void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QStringLiteral("use the object: %1").arg(itemId));
+    normalOutput(std::stringLiteral("use the object: %1").arg(itemId));
     #endif
     if(!public_and_private_informations.items.contains(itemId))
     {
-        errorOutput(QStringLiteral("can't use the object: %1 because don't have into the inventory").arg(itemId));
+        errorOutput(std::stringLiteral("can't use the object: %1 because don't have into the inventory").arg(itemId));
         return;
     }
     if(objectQuantity(itemId)<1)
     {
-        errorOutput(QStringLiteral("have not quantity to use this object: %1 because recipe already registred").arg(itemId));
+        errorOutput(std::stringLiteral("have not quantity to use this object: %1 because recipe already registred").arg(itemId));
         return;
     }
     if(CommonDatapack::commonDatapack.items.item.value(itemId).consumeAtUse)
@@ -1289,15 +1289,15 @@ void Client::useObject(const quint8 &query_id,const quint16 &itemId)
     //if is crafting recipe
     if(CommonDatapack::commonDatapack.itemToCrafingRecipes.contains(itemId))
     {
-        const quint32 &recipeId=CommonDatapack::commonDatapack.itemToCrafingRecipes.value(itemId);
+        const uint32_t &recipeId=CommonDatapack::commonDatapack.itemToCrafingRecipes.value(itemId);
         if(public_and_private_informations.recipes.contains(recipeId))
         {
-            errorOutput(QStringLiteral("can't use the object: %1").arg(itemId));
+            errorOutput(std::stringLiteral("can't use the object: %1").arg(itemId));
             return;
         }
         if(!haveReputationRequirements(CommonDatapack::commonDatapack.crafingRecipes.value(recipeId).requirements.reputation))
         {
-            errorOutput(QStringLiteral("The player have not the requirement: %1 to to learn crafting recipe").arg(recipeId));
+            errorOutput(std::stringLiteral("The player have not the requirement: %1 to to learn crafting recipe").arg(recipeId));
             return;
         }
         public_and_private_informations.recipes << recipeId;
@@ -1305,7 +1305,7 @@ void Client::useObject(const quint8 &query_id,const quint16 &itemId)
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (quint8)ObjectUsage_correctlyUsed;
+        out << (uint8_t)ObjectUsage_correctlyUsed;
         postReply(query_id,outputData.constData(),outputData.size());
         //add into db
         dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_recipe
@@ -1318,24 +1318,24 @@ void Client::useObject(const quint8 &query_id,const quint16 &itemId)
     {
         if(!isInFight())
         {
-            errorOutput(QStringLiteral("is not in fight to use trap: %1").arg(itemId));
+            errorOutput(std::stringLiteral("is not in fight to use trap: %1").arg(itemId));
             return;
         }
         if(!isInFightWithWild())
         {
-            errorOutput(QStringLiteral("is not in fight with wild to use trap: %1").arg(itemId));
+            errorOutput(std::stringLiteral("is not in fight with wild to use trap: %1").arg(itemId));
             return;
         }
-        const quint32 &maxMonsterId=tryCapture(itemId);
+        const uint32_t &maxMonsterId=tryCapture(itemId);
         //send the network reply
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (quint8)ObjectUsage_correctlyUsed;
+        out << (uint8_t)ObjectUsage_correctlyUsed;
         if(maxMonsterId>0)
-            out << (quint32)maxMonsterId;
+            out << (uint32_t)maxMonsterId;
         else
-            out << (quint32)0x00000000;
+            out << (uint32_t)0x00000000;
         postReply(query_id,outputData.constData(),outputData.size());
     }
     //use repel into fight
@@ -1346,24 +1346,24 @@ void Client::useObject(const quint8 &query_id,const quint16 &itemId)
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (quint8)ObjectUsage_correctlyUsed;
+        out << (uint8_t)ObjectUsage_correctlyUsed;
         postReply(query_id,outputData.constData(),outputData.size());
     }
     else
     {
-        errorOutput(QStringLiteral("can't use the object: %1 because don't have an usage").arg(itemId));
+        errorOutput(std::stringLiteral("can't use the object: %1 because don't have an usage").arg(itemId));
         return;
     }
 }
 
-void Client::receiveTeleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
+void Client::receiveTeleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation)
 {
     teleportTo(map,x,y,orientation);
 }
 
-void Client::teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
+void Client::teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation)
 {
-    normalOutput(QStringLiteral("teleportValidatedTo(%1,%2,%3,%4)").arg(map->map_file).arg(x).arg(y).arg((quint8)orientation));
+    normalOutput(std::stringLiteral("teleportValidatedTo(%1,%2,%3,%4)").arg(map->map_file).arg(x).arg(y).arg((uint8_t)orientation));
     #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     bool mapChange=this->map!=map;
     if(mapChange)
@@ -1399,19 +1399,19 @@ Direction Client::lookToMove(const Direction &direction)
     }
 }
 
-void Client::getShopList(const quint8 &query_id,const quint16 &shopId)
+void Client::getShopList(const uint8_t &query_id,const uint16_t &shopId)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QStringLiteral("getShopList(%1,%2)").arg(query_id).arg(shopId));
+    normalOutput(std::stringLiteral("getShopList(%1,%2)").arg(query_id).arg(shopId));
     #endif
     if(!CommonDatapackServerSpec::commonDatapackServerSpec.shops.contains(shopId))
     {
-        errorOutput(QStringLiteral("shopId not found: %1").arg(shopId));
+        errorOutput(std::stringLiteral("shopId not found: %1").arg(shopId));
         return;
     }
     CommonMap *map=this->map;
-    quint8 x=this->x;
-    quint8 y=this->y;
+    uint8_t x=this->x;
+    uint8_t y=this->y;
     //resolv the object
     Direction direction=getLastDirection();
     switch(direction)
@@ -1425,24 +1425,24 @@ void Client::getShopList(const quint8 &query_id,const quint16 &shopId)
             {
                 if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                 {
-                    errorOutput(QStringLiteral("getShopList() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("getShopList() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
             else
             {
-                errorOutput(QStringLiteral("No valid map in this direction"));
+                errorOutput(std::stringLiteral("No valid map in this direction"));
                 return;
             }
         break;
         default:
-        errorOutput(QStringLiteral("Wrong direction to use a shop"));
+        errorOutput(std::stringLiteral("Wrong direction to use a shop"));
         return;
     }
     //check if is shop
-    if(static_cast<MapServer*>(this->map)->shops.contains(QPair<quint8,quint8>(x,y)))
+    if(static_cast<MapServer*>(this->map)->shops.contains(std::pair<uint8_t,uint8_t>(x,y)))
     {
-        QList<quint32> shops=static_cast<MapServer*>(this->map)->shops.values(QPair<quint8,quint8>(x,y));
+        std::vector<uint32_t> shops=static_cast<MapServer*>(this->map)->shops.values(std::pair<uint8_t,uint8_t>(x,y));
         if(!shops.contains(shopId))
         {
             switch(direction)
@@ -1455,25 +1455,25 @@ void Client::getShopList(const quint8 &query_id,const quint16 &shopId)
                     {
                         if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                         {
-                            errorOutput(QStringLiteral("getShopList() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            errorOutput(std::stringLiteral("getShopList() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                             return;
                         }
                     }
                     else
                     {
-                        errorOutput(QStringLiteral("No valid map in this direction"));
+                        errorOutput(std::stringLiteral("No valid map in this direction"));
                         return;
                     }
                 break;
                 default:
                 break;
             }
-            if(static_cast<MapServer*>(this->map)->shops.contains(QPair<quint8,quint8>(x,y)))
+            if(static_cast<MapServer*>(this->map)->shops.contains(std::pair<uint8_t,uint8_t>(x,y)))
             {
-                QList<quint32> shops=static_cast<MapServer*>(this->map)->shops.values(QPair<quint8,quint8>(x,y));
+                std::vector<uint32_t> shops=static_cast<MapServer*>(this->map)->shops.values(std::pair<uint8_t,uint8_t>(x,y));
                 if(!shops.contains(shopId))
                 {
-                    errorOutput(QStringLiteral("not shop into this direction"));
+                    errorOutput(std::stringLiteral("not shop into this direction"));
                     return;
                 }
             }
@@ -1495,37 +1495,37 @@ void Client::getShopList(const quint8 &query_id,const quint16 &shopId)
         {
             if(shop.prices.at(index)>0)
             {
-                out2 << (quint16)shop.items.at(index);
-                out2 << (quint32)shop.prices.at(index);
-                out2 << (quint32)0;
+                out2 << (uint16_t)shop.items.at(index);
+                out2 << (uint32_t)shop.prices.at(index);
+                out2 << (uint32_t)0;
                 objectCount++;
             }
         }
         index++;
     }
-    out << (quint16)objectCount;
+    out << (uint16_t)objectCount;
     const QByteArray outputNew(outputData+outputData2);
     postReply(query_id,outputNew.constData(),outputNew.size());
 }
 
-void Client::buyObject(const quint8 &query_id,const quint16 &shopId,const quint16 &objectId,const quint32 &quantity,const quint32 &price)
+void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QStringLiteral("getShopList(%1,%2)").arg(query_id).arg(shopId));
+    normalOutput(std::stringLiteral("getShopList(%1,%2)").arg(query_id).arg(shopId));
     #endif
     if(!CommonDatapackServerSpec::commonDatapackServerSpec.shops.contains(shopId))
     {
-        errorOutput(QStringLiteral("shopId not found: %1").arg(shopId));
+        errorOutput(std::stringLiteral("shopId not found: %1").arg(shopId));
         return;
     }
     if(quantity<=0)
     {
-        errorOutput(QStringLiteral("quantity wrong: %1").arg(quantity));
+        errorOutput(std::stringLiteral("quantity wrong: %1").arg(quantity));
         return;
     }
     CommonMap *map=this->map;
-    quint8 x=this->x;
-    quint8 y=this->y;
+    uint8_t x=this->x;
+    uint8_t y=this->y;
     //resolv the object
     Direction direction=getLastDirection();
     switch(direction)
@@ -1539,24 +1539,24 @@ void Client::buyObject(const quint8 &query_id,const quint16 &shopId,const quint1
             {
                 if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                 {
-                    errorOutput(QStringLiteral("buyObject() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("buyObject() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
             else
             {
-                errorOutput(QStringLiteral("No valid map in this direction"));
+                errorOutput(std::stringLiteral("No valid map in this direction"));
                 return;
             }
         break;
         default:
-        errorOutput(QStringLiteral("Wrong direction to use a shop"));
+        errorOutput(std::stringLiteral("Wrong direction to use a shop"));
         return;
     }
     //check if is shop
-    if(static_cast<MapServer*>(this->map)->shops.contains(QPair<quint8,quint8>(x,y)))
+    if(static_cast<MapServer*>(this->map)->shops.contains(std::pair<uint8_t,uint8_t>(x,y)))
     {
-        QList<quint32> shops=static_cast<MapServer*>(this->map)->shops.values(QPair<quint8,quint8>(x,y));
+        std::vector<uint32_t> shops=static_cast<MapServer*>(this->map)->shops.values(std::pair<uint8_t,uint8_t>(x,y));
         if(!shops.contains(shopId))
         {
             Direction direction=getLastDirection();
@@ -1571,26 +1571,26 @@ void Client::buyObject(const quint8 &query_id,const quint16 &shopId,const quint1
                     {
                         if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                         {
-                            errorOutput(QStringLiteral("buyObject() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            errorOutput(std::stringLiteral("buyObject() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                             return;
                         }
                     }
                     else
                     {
-                        errorOutput(QStringLiteral("No valid map in this direction"));
+                        errorOutput(std::stringLiteral("No valid map in this direction"));
                         return;
                     }
                 break;
                 default:
-                errorOutput(QStringLiteral("Wrong direction to use a shop"));
+                errorOutput(std::stringLiteral("Wrong direction to use a shop"));
                 return;
             }
-            if(static_cast<MapServer*>(this->map)->shops.contains(QPair<quint8,quint8>(x,y)))
+            if(static_cast<MapServer*>(this->map)->shops.contains(std::pair<uint8_t,uint8_t>(x,y)))
             {
-                QList<quint32> shops=static_cast<MapServer*>(this->map)->shops.values(QPair<quint8,quint8>(x,y));
+                std::vector<uint32_t> shops=static_cast<MapServer*>(this->map)->shops.values(std::pair<uint8_t,uint8_t>(x,y));
                 if(!shops.contains(shopId))
                 {
-                    errorOutput(QStringLiteral("not shop into this direction"));
+                    errorOutput(std::stringLiteral("not shop into this direction"));
                     return;
                 }
             }
@@ -1603,59 +1603,59 @@ void Client::buyObject(const quint8 &query_id,const quint16 &shopId,const quint1
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     if(priceIndex==-1)
     {
-        out << (quint8)BuyStat_HaveNotQuantity;
+        out << (uint8_t)BuyStat_HaveNotQuantity;
         postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
-    const quint32 &realprice=CommonDatapackServerSpec::commonDatapackServerSpec.shops.value(shopId).prices.at(priceIndex);
+    const uint32_t &realprice=CommonDatapackServerSpec::commonDatapackServerSpec.shops.value(shopId).prices.at(priceIndex);
     if(realprice==0)
     {
-        out << (quint8)BuyStat_HaveNotQuantity;
+        out << (uint8_t)BuyStat_HaveNotQuantity;
         postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
     if(realprice>price)
     {
-        out << (quint8)BuyStat_PriceHaveChanged;
+        out << (uint8_t)BuyStat_PriceHaveChanged;
         postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
     if(realprice<price)
     {
-        out << (quint8)BuyStat_BetterPrice;
-        out << (quint32)price;
+        out << (uint8_t)BuyStat_BetterPrice;
+        out << (uint32_t)price;
     }
     else
-        out << (quint8)BuyStat_Done;
+        out << (uint8_t)BuyStat_Done;
     if(public_and_private_informations.cash>=(realprice*quantity))
         removeCash(realprice*quantity);
     else
     {
-        errorOutput(QStringLiteral("The player have not the cash to buy %1 item of id: %2").arg(quantity).arg(objectId));
+        errorOutput(std::stringLiteral("The player have not the cash to buy %1 item of id: %2").arg(quantity).arg(objectId));
         return;
     }
     addObject(objectId,quantity);
     postReply(query_id,outputData.constData(),outputData.size());
 }
 
-void Client::sellObject(const quint8 &query_id,const quint16 &shopId,const quint16 &objectId,const quint32 &quantity,const quint32 &price)
+void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QStringLiteral("getShopList(%1,%2)").arg(query_id).arg(shopId));
+    normalOutput(std::stringLiteral("getShopList(%1,%2)").arg(query_id).arg(shopId));
     #endif
     if(!CommonDatapackServerSpec::commonDatapackServerSpec.shops.contains(shopId))
     {
-        errorOutput(QStringLiteral("shopId not found: %1").arg(shopId));
+        errorOutput(std::stringLiteral("shopId not found: %1").arg(shopId));
         return;
     }
     if(quantity<=0)
     {
-        errorOutput(QStringLiteral("quantity wrong: %1").arg(quantity));
+        errorOutput(std::stringLiteral("quantity wrong: %1").arg(quantity));
         return;
     }
     CommonMap *map=this->map;
-    quint8 x=this->x;
-    quint8 y=this->y;
+    uint8_t x=this->x;
+    uint8_t y=this->y;
     //resolv the object
     Direction direction=getLastDirection();
     switch(direction)
@@ -1669,24 +1669,24 @@ void Client::sellObject(const quint8 &query_id,const quint16 &shopId,const quint
             {
                 if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                 {
-                    errorOutput(QStringLiteral("sellObject() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("sellObject() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
             else
             {
-                errorOutput(QStringLiteral("No valid map in this direction"));
+                errorOutput(std::stringLiteral("No valid map in this direction"));
                 return;
             }
         break;
         default:
-        errorOutput(QStringLiteral("Wrong direction to use a shop"));
+        errorOutput(std::stringLiteral("Wrong direction to use a shop"));
         return;
     }
     //check if is shop
-    if(static_cast<MapServer*>(this->map)->shops.contains(QPair<quint8,quint8>(x,y)))
+    if(static_cast<MapServer*>(this->map)->shops.contains(std::pair<uint8_t,uint8_t>(x,y)))
     {
-        QList<quint32> shops=static_cast<MapServer*>(this->map)->shops.values(QPair<quint8,quint8>(x,y));
+        std::vector<uint32_t> shops=static_cast<MapServer*>(this->map)->shops.values(std::pair<uint8_t,uint8_t>(x,y));
         if(!shops.contains(shopId))
         {
             Direction direction=getLastDirection();
@@ -1701,26 +1701,26 @@ void Client::sellObject(const quint8 &query_id,const quint16 &shopId,const quint
                     {
                         if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                         {
-                            errorOutput(QStringLiteral("sellObject() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            errorOutput(std::stringLiteral("sellObject() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                             return;
                         }
                     }
                     else
                     {
-                        errorOutput(QStringLiteral("No valid map in this direction"));
+                        errorOutput(std::stringLiteral("No valid map in this direction"));
                         return;
                     }
                 break;
                 default:
-                errorOutput(QStringLiteral("Wrong direction to use a shop"));
+                errorOutput(std::stringLiteral("Wrong direction to use a shop"));
                 return;
             }
-            if(static_cast<MapServer*>(this->map)->shops.contains(QPair<quint8,quint8>(x,y)))
+            if(static_cast<MapServer*>(this->map)->shops.contains(std::pair<uint8_t,uint8_t>(x,y)))
             {
-                QList<quint32> shops=static_cast<MapServer*>(this->map)->shops.values(QPair<quint8,quint8>(x,y));
+                std::vector<uint32_t> shops=static_cast<MapServer*>(this->map)->shops.values(std::pair<uint8_t,uint8_t>(x,y));
                 if(!shops.contains(shopId))
                 {
-                    errorOutput(QStringLiteral("not shop into this direction"));
+                    errorOutput(std::stringLiteral("not shop into this direction"));
                     return;
                 }
             }
@@ -1732,49 +1732,49 @@ void Client::sellObject(const quint8 &query_id,const quint16 &shopId,const quint
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     if(!CommonDatapack::commonDatapack.items.item.contains(objectId))
     {
-        errorOutput(QStringLiteral("this item don't exists"));
+        errorOutput(std::stringLiteral("this item don't exists"));
         return;
     }
     if(objectQuantity(objectId)<quantity)
     {
-        errorOutput(QStringLiteral("you have not this quantity to sell"));
+        errorOutput(std::stringLiteral("you have not this quantity to sell"));
         return;
     }
     if(CommonDatapack::commonDatapack.items.item.value(objectId).price==0)
     {
-        errorOutput(QStringLiteral("Can't sold %1").arg(objectId));
+        errorOutput(std::stringLiteral("Can't sold %1").arg(objectId));
         return;
     }
-    const quint32 &realPrice=CommonDatapack::commonDatapack.items.item.value(objectId).price/2;
+    const uint32_t &realPrice=CommonDatapack::commonDatapack.items.item.value(objectId).price/2;
     if(realPrice<price)
     {
-        out << (quint8)SoldStat_PriceHaveChanged;
+        out << (uint8_t)SoldStat_PriceHaveChanged;
         postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
     if(realPrice>price)
     {
-        out << (quint8)SoldStat_BetterPrice;
-        out << (quint32)realPrice;
+        out << (uint8_t)SoldStat_BetterPrice;
+        out << (uint32_t)realPrice;
     }
     else
-        out << (quint8)SoldStat_Done;
+        out << (uint8_t)SoldStat_Done;
     removeObject(objectId,quantity);
     addCash(realPrice*quantity);
     postReply(query_id,outputData.constData(),outputData.size());
 }
 
-void Client::saveIndustryStatus(const quint32 &factoryId,const IndustryStatus &industryStatus,const Industry &industry)
+void Client::saveIndustryStatus(const uint32_t &factoryId,const IndustryStatus &industryStatus,const Industry &industry)
 {
-    QStringList resourcesStringList,productsStringList;
+    std::stringList resourcesStringList,productsStringList;
     int index;
     //send the resource
     index=0;
     while(index<industry.resources.size())
     {
         const Industry::Resource &resource=industry.resources.at(index);
-        const quint32 &quantityInStock=industryStatus.resources.value(resource.item);
-        resourcesStringList << QStringLiteral("%1:%2").arg(resource.item).arg(quantityInStock);
+        const uint32_t &quantityInStock=industryStatus.resources.value(resource.item);
+        resourcesStringList << std::stringLiteral("%1:%2").arg(resource.item).arg(quantityInStock);
         index++;
     }
     //send the product
@@ -1782,8 +1782,8 @@ void Client::saveIndustryStatus(const quint32 &factoryId,const IndustryStatus &i
     while(index<industry.products.size())
     {
         const Industry::Product &product=industry.products.at(index);
-        const quint32 &quantityInStock=industryStatus.products.value(product.item);
-        productsStringList << QStringLiteral("%1:%2").arg(product.item).arg(quantityInStock);
+        const uint32_t &quantityInStock=industryStatus.products.value(product.item);
+        productsStringList << std::stringLiteral("%1:%2").arg(product.item).arg(quantityInStock);
         index++;
     }
 
@@ -1809,21 +1809,21 @@ void Client::saveIndustryStatus(const quint32 &factoryId,const IndustryStatus &i
     GlobalServerData::serverPrivateVariables.industriesStatus[factoryId]=industryStatus;
 }
 
-void Client::getFactoryList(const quint8 &query_id, const quint16 &factoryId)
+void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
 {
     if(isInFight())
     {
-        errorOutput(QStringLiteral("Try do inventory action when is in fight"));
+        errorOutput(std::stringLiteral("Try do inventory action when is in fight"));
         return;
     }
     if(captureCityInProgress())
     {
-        errorOutput(QStringLiteral("Try do inventory action when is in capture city"));
+        errorOutput(std::stringLiteral("Try do inventory action when is in capture city"));
         return;
     }
     if(!CommonDatapack::commonDatapack.industriesLink.contains(factoryId))
     {
-        errorOutput(QStringLiteral("factory id not found"));
+        errorOutput(std::stringLiteral("factory id not found"));
         return;
     }
     const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId).industry);
@@ -1833,18 +1833,18 @@ void Client::getFactoryList(const quint8 &query_id, const quint16 &factoryId)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     if(!GlobalServerData::serverPrivateVariables.industriesStatus.contains(factoryId))
     {
-        out << (quint32)0;
-        out << (quint16)industry.resources.size();
+        out << (uint32_t)0;
+        out << (uint16_t)industry.resources.size();
         int index=0;
         while(index<industry.resources.size())
         {
             const Industry::Resource &resource=industry.resources.at(index);
-            out << (quint16)resource.item;
-            out << (quint32)CommonDatapack::commonDatapack.items.item.value(resource.item).price*(100+CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE)/100;
-            out << (quint32)resource.quantity*industry.cycletobefull;
+            out << (uint16_t)resource.item;
+            out << (uint32_t)CommonDatapack::commonDatapack.items.item.value(resource.item).price*(100+CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE)/100;
+            out << (uint32_t)resource.quantity*industry.cycletobefull;
             index++;
         }
-        out << (quint16)0x0000;//no product do
+        out << (uint16_t)0x0000;//no product do
     }
     else
     {
@@ -1852,33 +1852,33 @@ void Client::getFactoryList(const quint8 &query_id, const quint16 &factoryId)
         const IndustryStatus &industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus.value(factoryId),industry);
         quint64 currentTime=QDateTime::currentMSecsSinceEpoch()/1000;
         if(industryStatus.last_update>currentTime)
-            out << (quint32)0;
+            out << (uint32_t)0;
         else if((currentTime-industryStatus.last_update)>industry.time)
-            out << (quint32)0;
+            out << (uint32_t)0;
         else
-            out << (quint32)(industry.time-(currentTime-industryStatus.last_update));
+            out << (uint32_t)(industry.time-(currentTime-industryStatus.last_update));
         //send the resource
         count_item=0;
         index=0;
         while(index<industry.resources.size())
         {
             const Industry::Resource &resource=industry.resources.at(index);
-            const quint32 &quantityInStock=industryStatus.resources.value(resource.item);
+            const uint32_t &quantityInStock=industryStatus.resources.value(resource.item);
             if(quantityInStock<resource.quantity*industry.cycletobefull)
                 count_item++;
             index++;
         }
-        out << (quint16)count_item;
+        out << (uint16_t)count_item;
         index=0;
         while(index<industry.resources.size())
         {
             const Industry::Resource &resource=industry.resources.at(index);
-            const quint32 &quantityInStock=industryStatus.resources.value(resource.item);
+            const uint32_t &quantityInStock=industryStatus.resources.value(resource.item);
             if(quantityInStock<resource.quantity*industry.cycletobefull)
             {
-                out << (quint16)resource.item;
-                out << (quint32)FacilityLib::getFactoryResourcePrice(quantityInStock,resource,industry);
-                out << (quint32)resource.quantity*industry.cycletobefull-quantityInStock;
+                out << (uint16_t)resource.item;
+                out << (uint32_t)FacilityLib::getFactoryResourcePrice(quantityInStock,resource,industry);
+                out << (uint32_t)resource.quantity*industry.cycletobefull-quantityInStock;
             }
             index++;
         }
@@ -1888,22 +1888,22 @@ void Client::getFactoryList(const quint8 &query_id, const quint16 &factoryId)
         while(index<industry.products.size())
         {
             const Industry::Product &product=industry.products.at(index);
-            const quint32 &quantityInStock=industryStatus.products.value(product.item);
+            const uint32_t &quantityInStock=industryStatus.products.value(product.item);
             if(quantityInStock>0)
                 count_item++;
             index++;
         }
-        out << (quint16)count_item;
+        out << (uint16_t)count_item;
         index=0;
         while(index<industry.products.size())
         {
             const Industry::Product &product=industry.products.at(index);
-            const quint32 &quantityInStock=industryStatus.products.value(product.item);
+            const uint32_t &quantityInStock=industryStatus.products.value(product.item);
             if(quantityInStock>0)
             {
-                out << (quint16)product.item;
-                out << (quint32)FacilityLib::getFactoryProductPrice(quantityInStock,product,industry);
-                out << (quint32)quantityInStock;
+                out << (uint16_t)product.item;
+                out << (uint32_t)FacilityLib::getFactoryProductPrice(quantityInStock,product,industry);
+                out << (uint32_t)quantityInStock;
             }
             index++;
         }
@@ -1911,42 +1911,42 @@ void Client::getFactoryList(const quint8 &query_id, const quint16 &factoryId)
     postReply(query_id,outputData.constData(),outputData.size());
 }
 
-void Client::buyFactoryProduct(const quint8 &query_id,const quint16 &factoryId,const quint16 &objectId,const quint32 &quantity,const quint32 &price)
+void Client::buyFactoryProduct(const uint8_t &query_id,const uint16_t &factoryId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     if(isInFight())
     {
-        errorOutput(QStringLiteral("Try do inventory action when is in fight"));
+        errorOutput(std::stringLiteral("Try do inventory action when is in fight"));
         return;
     }
     if(captureCityInProgress())
     {
-        errorOutput(QStringLiteral("Try do inventory action when is in capture city"));
+        errorOutput(std::stringLiteral("Try do inventory action when is in capture city"));
         return;
     }
     if(!CommonDatapack::commonDatapack.industriesLink.contains(factoryId))
     {
-        errorOutput(QStringLiteral("factory id not found"));
+        errorOutput(std::stringLiteral("factory id not found"));
         return;
     }
     if(!CommonDatapack::commonDatapack.items.item.contains(objectId))
     {
-        errorOutput(QStringLiteral("object id not found into the factory product list"));
+        errorOutput(std::stringLiteral("object id not found into the factory product list"));
         return;
     }
     if(!GlobalServerData::serverPrivateVariables.industriesStatus.contains(factoryId))
     {
-        errorOutput(QStringLiteral("factory id not found in active list"));
+        errorOutput(std::stringLiteral("factory id not found in active list"));
         return;
     }
     if(!haveReputationRequirements(CommonDatapack::commonDatapack.industriesLink.value(factoryId).requirements.reputation))
     {
-        errorOutput(QStringLiteral("The player have not the requirement: %1 to use the factory").arg(factoryId));
+        errorOutput(std::stringLiteral("The player have not the requirement: %1 to use the factory").arg(factoryId));
         return;
     }
     const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId).industry);
     IndustryStatus industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus.value(factoryId),industry);
-    quint32 quantityInStock=0;
-    quint32 actualPrice=0;
+    uint32_t quantityInStock=0;
+    uint32_t actualPrice=0;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
@@ -1967,33 +1967,33 @@ void Client::buyFactoryProduct(const quint8 &query_id,const quint16 &factoryId,c
         }
         if(index==industry.products.size())
         {
-            errorOutput(QStringLiteral("internal bug, product for the factory not found"));
+            errorOutput(std::stringLiteral("internal bug, product for the factory not found"));
             return;
         }
     }
     if(public_and_private_informations.cash<(actualPrice*quantity))
     {
-        errorOutput(QStringLiteral("have not the cash to buy into this factory"));
+        errorOutput(std::stringLiteral("have not the cash to buy into this factory"));
         return;
     }
     if(quantity>quantityInStock)
     {
-        out << (quint8)0x03;
+        out << (uint8_t)0x03;
         postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
     if(actualPrice>price)
     {
-        out << (quint8)0x04;
+        out << (uint8_t)0x04;
         postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
     if(actualPrice==price)
-        out << (quint8)0x01;
+        out << (uint8_t)0x01;
     else
     {
-        out << (quint8)0x02;
-        out << (quint32)actualPrice;
+        out << (uint8_t)0x02;
+        out << (uint32_t)actualPrice;
     }
     quantityInStock-=quantity;
     if(quantityInStock==(product.item*industry.cycletobefull))
@@ -2010,36 +2010,36 @@ void Client::buyFactoryProduct(const quint8 &query_id,const quint16 &factoryId,c
     postReply(query_id,outputData.constData(),outputData.size());
 }
 
-void Client::sellFactoryResource(const quint8 &query_id,const quint16 &factoryId,const quint16 &objectId,const quint32 &quantity,const quint32 &price)
+void Client::sellFactoryResource(const uint8_t &query_id,const uint16_t &factoryId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     if(isInFight())
     {
-        errorOutput(QStringLiteral("Try do inventory action when is in fight"));
+        errorOutput(std::stringLiteral("Try do inventory action when is in fight"));
         return;
     }
     if(captureCityInProgress())
     {
-        errorOutput(QStringLiteral("Try do inventory action when is in capture city"));
+        errorOutput(std::stringLiteral("Try do inventory action when is in capture city"));
         return;
     }
     if(!CommonDatapack::commonDatapack.industriesLink.contains(factoryId))
     {
-        errorOutput(QStringLiteral("factory id not found"));
+        errorOutput(std::stringLiteral("factory id not found"));
         return;
     }
     if(!CommonDatapack::commonDatapack.items.item.contains(objectId))
     {
-        errorOutput(QStringLiteral("object id not found"));
+        errorOutput(std::stringLiteral("object id not found"));
         return;
     }
     if(objectQuantity(objectId)<quantity)
     {
-        errorOutput(QStringLiteral("you have not the object quantity to sell at this factory"));
+        errorOutput(std::stringLiteral("you have not the object quantity to sell at this factory"));
         return;
     }
     if(!haveReputationRequirements(CommonDatapack::commonDatapack.industriesLink.value(factoryId).requirements.reputation))
     {
-        errorOutput(QStringLiteral("The player have not the requirement: %1 to use the factory").arg(factoryId));
+        errorOutput(std::stringLiteral("The player have not the requirement: %1 to use the factory").arg(factoryId));
         return;
     }
     const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId).industry);
@@ -2070,7 +2070,7 @@ void Client::sellFactoryResource(const quint8 &query_id,const quint16 &factoryId
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    quint32 resourcePrice;
+    uint32_t resourcePrice;
     //check if not overfull
     {
         int index=0;
@@ -2081,14 +2081,14 @@ void Client::sellFactoryResource(const quint8 &query_id,const quint16 &factoryId
             {
                 if((resource.quantity*industry.cycletobefull-industryStatus.resources.value(resource.item))<quantity)
                 {
-                    out << (quint8)0x03;
+                    out << (uint8_t)0x03;
                     postReply(query_id,outputData.constData(),outputData.size());
                     return;
                 }
                 resourcePrice=FacilityLib::getFactoryResourcePrice(industryStatus.resources.value(resource.item),resource,industry);
                 if(price>resourcePrice)
                 {
-                    out << (quint8)0x04;
+                    out << (uint8_t)0x04;
                     postReply(query_id,outputData.constData(),outputData.size());
                     return;
                 }
@@ -2105,16 +2105,16 @@ void Client::sellFactoryResource(const quint8 &query_id,const quint16 &factoryId
         }
         if(index==industry.resources.size())
         {
-            errorOutput(QStringLiteral("internal bug, resource for the factory not found"));
+            errorOutput(std::stringLiteral("internal bug, resource for the factory not found"));
             return;
         }
     }
     if(price==resourcePrice)
-        out << (quint8)0x01;
+        out << (uint8_t)0x01;
     else
     {
-        out << (quint8)0x02;
-        out << (quint32)resourcePrice;
+        out << (uint8_t)0x02;
+        out << (uint32_t)resourcePrice;
     }
     removeObject(objectId,quantity);
     addCash(resourcePrice*quantity);
@@ -2158,7 +2158,7 @@ void Client::removeAllow(const ActionAllow &allow)
                  );
 }
 
-void Client::appendReputationRewards(const QList<ReputationRewards> &reputationList)
+void Client::appendReputationRewards(const std::vector<ReputationRewards> &reputationList)
 {
     int index=0;
     while(index<reputationList.size())
@@ -2170,7 +2170,7 @@ void Client::appendReputationRewards(const QList<ReputationRewards> &reputationL
 }
 
 //reputation
-void Client::appendReputationPoint(const quint8 &reputationId, const qint32 &point)
+void Client::appendReputationPoint(const uint8_t &reputationId, const int32_t &point)
 {
     if(point==0)
         return;
@@ -2179,7 +2179,7 @@ void Client::appendReputationPoint(const quint8 &reputationId, const qint32 &poi
     PlayerReputation *playerReputation=NULL;
     //search
     {
-        QMapIterator<quint8,PlayerReputation> i(public_and_private_informations.reputation);
+        QMapIterator<uint8_t,PlayerReputation> i(public_and_private_informations.reputation);
         while (i.hasNext()) {
             i.next();
             if(i.key()==reputationId)
@@ -2200,7 +2200,7 @@ void Client::appendReputationPoint(const quint8 &reputationId, const qint32 &poi
     }
 
     #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
-    normalOutput(QStringLiteral("Reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
+    normalOutput(std::stringLiteral("Reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
     #endif
     FacilityLib::appendReputationPoint(playerReputation,point,reputation);
     if(isNewReputation)
@@ -2222,7 +2222,7 @@ void Client::appendReputationPoint(const quint8 &reputationId, const qint32 &poi
                      );
     }
     #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
-    normalOutput(QStringLiteral("New reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
+    normalOutput(std::stringLiteral("New reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
     #endif
 }
 
@@ -2230,15 +2230,15 @@ void Client::heal()
 {
     if(isInFight())
     {
-        errorOutput(QStringLiteral("Try do heal action when is in fight"));
+        errorOutput(std::stringLiteral("Try do heal action when is in fight"));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QStringLiteral("ask heal at %1 (%2,%3)").arg(this->map->map_file).arg(this->x).arg(this->y));
+    normalOutput(std::stringLiteral("ask heal at %1 (%2,%3)").arg(this->map->map_file).arg(this->x).arg(this->y));
     #endif
     CommonMap *map=this->map;
-    quint8 x=this->x;
-    quint8 y=this->y;
+    uint8_t x=this->x;
+    uint8_t y=this->y;
     //resolv the object
     Direction direction=getLastDirection();
     switch(direction)
@@ -2252,22 +2252,22 @@ void Client::heal()
             {
                 if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                 {
-                    errorOutput(QStringLiteral("heal() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("heal() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
             else
             {
-                errorOutput(QStringLiteral("No valid map in this direction"));
+                errorOutput(std::stringLiteral("No valid map in this direction"));
                 return;
             }
         break;
         default:
-        errorOutput(QStringLiteral("Wrong direction to use a heal"));
+        errorOutput(std::stringLiteral("Wrong direction to use a heal"));
         return;
     }
     //check if is shop
-    if(!static_cast<MapServer*>(this->map)->heal.contains(QPair<quint8,quint8>(x,y)))
+    if(!static_cast<MapServer*>(this->map)->heal.contains(std::pair<uint8_t,uint8_t>(x,y)))
     {
         Direction direction=getLastDirection();
         switch(direction)
@@ -2281,23 +2281,23 @@ void Client::heal()
                 {
                     if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                     {
-                        errorOutput(QStringLiteral("heal() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                        errorOutput(std::stringLiteral("heal() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                         return;
                     }
                 }
                 else
                 {
-                    errorOutput(QStringLiteral("No valid map in this direction"));
+                    errorOutput(std::stringLiteral("No valid map in this direction"));
                     return;
                 }
             break;
             default:
-            errorOutput(QStringLiteral("Wrong direction to use a heal"));
+            errorOutput(std::stringLiteral("Wrong direction to use a heal"));
             return;
         }
-        if(!static_cast<MapServer*>(this->map)->heal.contains(QPair<quint8,quint8>(x,y)))
+        if(!static_cast<MapServer*>(this->map)->heal.contains(std::pair<uint8_t,uint8_t>(x,y)))
         {
-            errorOutput(QStringLiteral("no heal point in this direction"));
+            errorOutput(std::stringLiteral("no heal point in this direction"));
             return;
         }
     }
@@ -2306,11 +2306,11 @@ void Client::heal()
     rescue=unvalidated_rescue;
 }
 
-void Client::requestFight(const quint16 &fightId)
+void Client::requestFight(const uint16_t &fightId)
 {
     if(isInFight())
     {
-        errorOutput(QStringLiteral("error: map: %1 (%2,%3), is in fight").arg(static_cast<MapServer *>(map)->map_file).arg(x).arg(y));
+        errorOutput(std::stringLiteral("error: map: %1 (%2,%3), is in fight").arg(static_cast<MapServer *>(map)->map_file).arg(x).arg(y));
         return;
     }
     if(captureCityInProgress())
@@ -2324,11 +2324,11 @@ void Client::requestFight(const quint16 &fightId)
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QStringLiteral("request fight at %1 (%2,%3)").arg(this->map->map_file).arg(this->x).arg(this->y));
+    normalOutput(std::stringLiteral("request fight at %1 (%2,%3)").arg(this->map->map_file).arg(this->x).arg(this->y));
     #endif
     CommonMap *map=this->map;
-    quint8 x=this->x;
-    quint8 y=this->y;
+    uint8_t x=this->x;
+    uint8_t y=this->y;
     //resolv the object
     Direction direction=getLastDirection();
     switch(direction)
@@ -2342,25 +2342,25 @@ void Client::requestFight(const quint16 &fightId)
             {
                 if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                 {
-                    errorOutput(QStringLiteral("requestFight() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(std::stringLiteral("requestFight() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
             else
             {
-                errorOutput(QStringLiteral("No valid map in this direction"));
+                errorOutput(std::stringLiteral("No valid map in this direction"));
                 return;
             }
         break;
         default:
-        errorOutput(QStringLiteral("Wrong direction to use a shop"));
+        errorOutput(std::stringLiteral("Wrong direction to use a shop"));
         return;
     }
     //check if is shop
     bool found=false;
-    if(static_cast<MapServer*>(this->map)->botsFight.contains(QPair<quint8,quint8>(x,y)))
+    if(static_cast<MapServer*>(this->map)->botsFight.contains(std::pair<uint8_t,uint8_t>(x,y)))
     {
-        const QList<quint32> &botsFightList=static_cast<MapServer*>(this->map)->botsFight.values(QPair<quint8,quint8>(x,y));
+        const std::vector<uint32_t> &botsFightList=static_cast<MapServer*>(this->map)->botsFight.values(std::pair<uint8_t,uint8_t>(x,y));
         if(botsFightList.contains(fightId))
             found=true;
     }
@@ -2378,37 +2378,37 @@ void Client::requestFight(const quint16 &fightId)
                 {
                     if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                     {
-                        errorOutput(QStringLiteral("requestFight() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                        errorOutput(std::stringLiteral("requestFight() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                         return;
                     }
                 }
                 else
                 {
-                    errorOutput(QStringLiteral("No valid map in this direction"));
+                    errorOutput(std::stringLiteral("No valid map in this direction"));
                     return;
                 }
             break;
             default:
-            errorOutput(QStringLiteral("Wrong direction to use a shop"));
+            errorOutput(std::stringLiteral("Wrong direction to use a shop"));
             return;
         }
-        if(static_cast<MapServer*>(this->map)->botsFight.contains(QPair<quint8,quint8>(x,y)))
+        if(static_cast<MapServer*>(this->map)->botsFight.contains(std::pair<uint8_t,uint8_t>(x,y)))
         {
-            const QList<quint32> &botsFightList=static_cast<MapServer*>(this->map)->botsFight.values(QPair<quint8,quint8>(x,y));
+            const std::vector<uint32_t> &botsFightList=static_cast<MapServer*>(this->map)->botsFight.values(std::pair<uint8_t,uint8_t>(x,y));
             if(botsFightList.contains(fightId))
                 found=true;
         }
         if(!found)
         {
-            errorOutput(QStringLiteral("no fight with id %1 in this direction").arg(fightId));
+            errorOutput(std::stringLiteral("no fight with id %1 in this direction").arg(fightId));
             return;
         }
     }
-    normalOutput(QStringLiteral("is now in fight (after a request) on map %1 (%2,%3) with the bot %4").arg(map->map_file).arg(x).arg(y).arg(fightId));
+    normalOutput(std::stringLiteral("is now in fight (after a request) on map %1 (%2,%3) with the bot %4").arg(map->map_file).arg(x).arg(y).arg(fightId));
     botFightStart(fightId);
 }
 
-void Client::clanAction(const quint8 &query_id,const quint8 &action,const QString &text)
+void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std::string &text)
 {
     switch(action)
     {
@@ -2417,17 +2417,17 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
         {
             if(public_and_private_informations.clan>0)
             {
-                errorOutput(QStringLiteral("You are already in clan"));
+                errorOutput(std::stringLiteral("You are already in clan"));
                 return;
             }
             if(text.isEmpty())
             {
-                errorOutput(QStringLiteral("You can't create clan with empty name"));
+                errorOutput(std::stringLiteral("You can't create clan with empty name"));
                 return;
             }
             if(!public_and_private_informations.allow.contains(ActionAllow_Clan))
             {
-                errorOutput(QStringLiteral("You have not the right to create clan"));
+                errorOutput(std::stringLiteral("You have not the right to create clan"));
                 return;
             }
             ClanActionParam *clanActionParam=new ClanActionParam();
@@ -2435,16 +2435,16 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             clanActionParam->action=action;
             clanActionParam->text=text;
 
-            const QString &queryText=PreparedDBQueryCommon::db_query_select_clan_by_name.arg(SqlFunction::quoteSqlVariable(text));
+            const std::string &queryText=PreparedDBQueryCommon::db_query_select_clan_by_name.arg(SqlFunction::quoteSqlVariable(text));
             CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&Client::addClan_static);
             if(callback==NULL)
             {
-                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
+                qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
 
                 QByteArray outputData;
                 QDataStream out(&outputData, QIODevice::WriteOnly);
                 out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-                out << (quint8)0x02;
+                out << (uint8_t)0x02;
                 postReply(query_id,outputData.constData(),outputData.size());
                 delete clanActionParam;
                 return;
@@ -2453,7 +2453,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             {
                 paramToPassToCallBack << clanActionParam;
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                paramToPassToCallBackType << QStringLiteral("ClanActionParam");
+                paramToPassToCallBackType << std::stringLiteral("ClanActionParam");
                 #endif
                 callbackRegistred << callback;
             }
@@ -2465,12 +2465,12 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
         {
             if(public_and_private_informations.clan==0)
             {
-                errorOutput(QStringLiteral("You have not a clan"));
+                errorOutput(std::stringLiteral("You have not a clan"));
                 return;
             }
             if(public_and_private_informations.clan_leader)
             {
-                errorOutput(QStringLiteral("You can't leave if you are the leader"));
+                errorOutput(std::stringLiteral("You can't leave if you are the leader"));
                 return;
             }
             removeFromClan();
@@ -2479,7 +2479,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
             out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-            out << (quint8)0x01;
+            out << (uint8_t)0x01;
             postReply(query_id,outputData.constData(),outputData.size());
             //update the db
             dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_clan.arg(character_id));
@@ -2490,25 +2490,25 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
         {
             if(public_and_private_informations.clan==0)
             {
-                errorOutput(QStringLiteral("You have not a clan"));
+                errorOutput(std::stringLiteral("You have not a clan"));
                 return;
             }
             if(!public_and_private_informations.clan_leader)
             {
-                errorOutput(QStringLiteral("You are not a leader to dissolve the clan"));
+                errorOutput(std::stringLiteral("You are not a leader to dissolve the clan"));
                 return;
             }
             if(!clan->captureCityInProgress.isEmpty())
             {
-                errorOutput(QStringLiteral("You can't disolv the clan if is in city capture"));
+                errorOutput(std::stringLiteral("You can't disolv the clan if is in city capture"));
                 return;
             }
-            const QList<Client *> &players=clanList.value(public_and_private_informations.clan)->players;
+            const std::vector<Client *> &players=clanList.value(public_and_private_informations.clan)->players;
             //send the network reply
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
             out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-            out << (quint8)0x01;
+            out << (uint8_t)0x01;
             postReply(query_id,outputData.constData(),outputData.size());
             //update the db
             int index=0;
@@ -2544,12 +2544,12 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
         {
             if(public_and_private_informations.clan==0)
             {
-                errorOutput(QStringLiteral("You have not a clan"));
+                errorOutput(std::stringLiteral("You have not a clan"));
                 return;
             }
             if(!public_and_private_informations.clan_leader)
             {
-                errorOutput(QStringLiteral("You are not a leader to invite into the clan"));
+                errorOutput(std::stringLiteral("You are not a leader to invite into the clan"));
                 return;
             }
             bool haveAClan=true;
@@ -2564,17 +2564,17 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             if(isFound && !haveAClan)
             {
                 if(playerByPseudo.value(text)->inviteToClan(public_and_private_informations.clan))
-                    out << (quint8)0x01;
+                    out << (uint8_t)0x01;
                 else
-                    out << (quint8)0x02;
+                    out << (uint8_t)0x02;
             }
             else
             {
                 if(!isFound)
-                    normalOutput(QStringLiteral("Clan invite: Player %1 not found, is connected?").arg(text));
+                    normalOutput(std::stringLiteral("Clan invite: Player %1 not found, is connected?").arg(text));
                 if(haveAClan)
-                    normalOutput(QStringLiteral("Clan invite: Player %1 is already into a clan").arg(text));
-                out << (quint8)0x02;
+                    normalOutput(std::stringLiteral("Clan invite: Player %1 is already into a clan").arg(text));
+                out << (uint8_t)0x02;
             }
             postReply(query_id,outputData.constData(),outputData.size());
         }
@@ -2584,17 +2584,17 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
         {
             if(public_and_private_informations.clan==0)
             {
-                errorOutput(QStringLiteral("You have not a clan"));
+                errorOutput(std::stringLiteral("You have not a clan"));
                 return;
             }
             if(!public_and_private_informations.clan_leader)
             {
-                errorOutput(QStringLiteral("You are not a leader to invite into the clan"));
+                errorOutput(std::stringLiteral("You are not a leader to invite into the clan"));
                 return;
             }
             if(public_and_private_informations.public_informations.pseudo==text)
             {
-                errorOutput(QStringLiteral("You can't eject your self"));
+                errorOutput(std::stringLiteral("You can't eject your self"));
                 return;
             }
             bool isIntoTheClan=false;
@@ -2607,14 +2607,14 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             QDataStream out(&outputData, QIODevice::WriteOnly);
             out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
             if(isFound && isIntoTheClan)
-                out << (quint8)0x01;
+                out << (uint8_t)0x01;
             else
             {
                 if(!isFound)
-                    normalOutput(QStringLiteral("Clan invite: Player %1 not found, is connected?").arg(text));
+                    normalOutput(std::stringLiteral("Clan invite: Player %1 not found, is connected?").arg(text));
                 if(!isIntoTheClan)
-                    normalOutput(QStringLiteral("Clan invite: Player %1 is not into your clan").arg(text));
-                out << (quint8)0x02;
+                    normalOutput(std::stringLiteral("Clan invite: Player %1 is not into your clan").arg(text));
+                out << (uint8_t)0x02;
             }
             postReply(query_id,outputData.constData(),outputData.size());
             if(!isFound)
@@ -2627,7 +2627,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
         }
         break;
         default:
-            errorOutput(QStringLiteral("Action on the clan not found"));
+            errorOutput(std::stringLiteral("Action on the clan not found"));
         return;
     }
 }
@@ -2653,10 +2653,10 @@ void Client::addClan_object()
     delete clanActionParam;
 }
 
-void Client::addClan_return(const quint8 &query_id,const quint8 &action,const QString &text)
+void Client::addClan_return(const uint8_t &query_id,const uint8_t &action,const std::string &text)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("ClanActionParam"))
+    if(paramToPassToCallBackType.takeFirst()!=std::stringLiteral("ClanActionParam"))
     {
         qDebug() << "is not ClanActionParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         abort();
@@ -2669,18 +2669,18 @@ void Client::addClan_return(const quint8 &query_id,const quint8 &action,const QS
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (quint8)0x02;
+        out << (uint8_t)0x02;
         postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
     bool ok;
-    const quint32 clanId=getClanId(&ok);
+    const uint32_t clanId=getClanId(&ok);
     if(!ok)
     {
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (quint8)0x02;
+        out << (uint8_t)0x02;
         postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
@@ -2692,8 +2692,8 @@ void Client::addClan_return(const quint8 &query_id,const quint8 &action,const QS
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x01;
-    out << (quint32)clanId;
+    out << (uint8_t)0x01;
+    out << (uint32_t)clanId;
     postReply(query_id,outputData.constData(),outputData.size());
     //add into db
     dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_clan
@@ -2704,16 +2704,16 @@ void Client::addClan_return(const quint8 &query_id,const quint8 &action,const QS
     insertIntoAClan(clanId);
 }
 
-quint32 Client::getPlayerId() const
+uint32_t Client::getPlayerId() const
 {
     if(character_loaded)
         return character_id;
     return 0;
 }
 
-void Client::haveClanInfo(const quint32 &clanId,const QString &clanName,const quint64 &cash)
+void Client::haveClanInfo(const uint32_t &clanId,const std::string &clanName,const quint64 &cash)
 {
-    normalOutput(QStringLiteral("First client of the clan: %1, clanId: %2 to connect").arg(clanName).arg(clanId));
+    normalOutput(std::stringLiteral("First client of the clan: %1, clanId: %2 to connect").arg(clanName).arg(clanId));
     createMemoryClan();
     clanList[clanId]->name=clanName;
     clanList[clanId]->cash=cash;
@@ -2725,7 +2725,7 @@ void Client::sendClanInfo()
         return;
     if(clan==NULL)
         return;
-    normalOutput(QStringLiteral("Send the clan info: %1, clanId: %2, get the info").arg(clan->name).arg(public_and_private_informations.clan));
+    normalOutput(std::stringLiteral("Send the clan info: %1, clanId: %2, get the info").arg(clan->name).arg(public_and_private_informations.clan));
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
@@ -2744,7 +2744,7 @@ void Client::dissolvedClan()
     clanChangeWithoutDb(public_and_private_informations.clan);
 }
 
-bool Client::inviteToClan(const quint32 &clanId)
+bool Client::inviteToClan(const uint32_t &clanId)
 {
     if(!inviteToClanList.isEmpty())
         return false;
@@ -2754,7 +2754,7 @@ bool Client::inviteToClan(const quint32 &clanId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint32)clanId;
+    out << (uint32_t)clanId;
     out << clan->name;
     sendFullPacket(0xC2,0x000B,outputData.constData(),outputData.size());
     return false;
@@ -2764,14 +2764,14 @@ void Client::clanInvite(const bool &accept)
 {
     if(!accept)
     {
-        normalOutput(QStringLiteral("You have refused the clan invitation"));
+        normalOutput(std::stringLiteral("You have refused the clan invitation"));
         inviteToClanList.removeFirst();
         return;
     }
-    normalOutput(QStringLiteral("You have accepted the clan invitation"));
+    normalOutput(std::stringLiteral("You have accepted the clan invitation"));
     if(inviteToClanList.isEmpty())
     {
-        errorOutput(QStringLiteral("Can't responde to clan invite, because no in suspend"));
+        errorOutput(std::stringLiteral("Can't responde to clan invite, because no in suspend"));
         return;
     }
     public_and_private_informations.clan_leader=false;
@@ -2781,15 +2781,15 @@ void Client::clanInvite(const bool &accept)
     inviteToClanList.removeFirst();
 }
 
-quint32 Client::clanId() const
+uint32_t Client::clanId() const
 {
     return public_and_private_informations.clan;
 }
 
-void Client::insertIntoAClan(const quint32 &clanId)
+void Client::insertIntoAClan(const uint32_t &clanId)
 {
     //add into db
-    QString clan_leader;
+    std::string clan_leader;
     if(GlobalServerData::serverPrivateVariables.db_common->databaseType()!=DatabaseBase::DatabaseType::PostgreSQL)
     {
         if(public_and_private_informations.clan_leader)
@@ -2819,7 +2819,7 @@ void Client::ejectToClan()
     dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_clan.arg(character_id));
 }
 
-quint32 Client::getClanId() const
+uint32_t Client::getClanId() const
 {
     return public_and_private_informations.clan;
 }
@@ -2833,27 +2833,27 @@ void Client::waitingForCityCaputre(const bool &cancel)
 {
     if(clan==NULL)
     {
-        errorOutput(QStringLiteral("Try capture city when is not in clan"));
+        errorOutput(std::stringLiteral("Try capture city when is not in clan"));
         return;
     }
     if(!cancel)
     {
         if(captureCityInProgress())
         {
-            errorOutput(QStringLiteral("Try capture city when is already into that's"));
+            errorOutput(std::stringLiteral("Try capture city when is already into that's"));
             return;
         }
         if(isInFight())
         {
-            errorOutput(QStringLiteral("Try capture city when is in fight"));
+            errorOutput(std::stringLiteral("Try capture city when is in fight"));
             return;
         }
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        normalOutput(QStringLiteral("ask zonecapture at %1 (%2,%3)").arg(this->map->map_file).arg(this->x).arg(this->y));
+        normalOutput(std::stringLiteral("ask zonecapture at %1 (%2,%3)").arg(this->map->map_file).arg(this->x).arg(this->y));
         #endif
         CommonMap *map=this->map;
-        quint8 x=this->x;
-        quint8 y=this->y;
+        uint8_t x=this->x;
+        uint8_t y=this->y;
         //resolv the object
         Direction direction=getLastDirection();
         switch(direction)
@@ -2867,13 +2867,13 @@ void Client::waitingForCityCaputre(const bool &cancel)
                 {
                     if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                     {
-                        errorOutput(QStringLiteral("waitingForCityCaputre() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                        errorOutput(std::stringLiteral("waitingForCityCaputre() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                         return;
                     }
                 }
                 else
                 {
-                    errorOutput(QStringLiteral("No valid map in this direction"));
+                    errorOutput(std::stringLiteral("No valid map in this direction"));
                     return;
                 }
             break;
@@ -2882,7 +2882,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
             return;
         }
         //check if is shop
-        if(!static_cast<MapServer*>(this->map)->zonecapture.contains(QPair<quint8,quint8>(x,y)))
+        if(!static_cast<MapServer*>(this->map)->zonecapture.contains(std::pair<uint8_t,uint8_t>(x,y)))
         {
             Direction direction=getLastDirection();
             switch(direction)
@@ -2896,28 +2896,28 @@ void Client::waitingForCityCaputre(const bool &cancel)
                     {
                         if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                         {
-                            errorOutput(QStringLiteral("waitingForCityCaputre() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            errorOutput(std::stringLiteral("waitingForCityCaputre() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                             return;
                         }
                     }
                     else
                     {
-                        errorOutput(QStringLiteral("No valid map in this direction"));
+                        errorOutput(std::stringLiteral("No valid map in this direction"));
                         return;
                     }
                 break;
                 default:
-                errorOutput(QStringLiteral("Wrong direction to use a zonecapture"));
+                errorOutput(std::stringLiteral("Wrong direction to use a zonecapture"));
                 return;
             }
-            if(!static_cast<MapServer*>(this->map)->zonecapture.contains(QPair<quint8,quint8>(x,y)))
+            if(!static_cast<MapServer*>(this->map)->zonecapture.contains(std::pair<uint8_t,uint8_t>(x,y)))
             {
-                errorOutput(QStringLiteral("no zonecapture point in this direction"));
+                errorOutput(std::stringLiteral("no zonecapture point in this direction"));
                 return;
             }
         }
         //send the zone capture
-        const QString &zoneName=static_cast<MapServer*>(this->map)->zonecapture.value(QPair<quint8,quint8>(x,y));
+        const std::string &zoneName=static_cast<MapServer*>(this->map)->zonecapture.value(std::pair<uint8_t,uint8_t>(x,y));
         if(!public_and_private_informations.clan_leader)
         {
             if(clan->captureCityInProgress.isEmpty())
@@ -2925,7 +2925,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
                 QByteArray outputData;
                 QDataStream out(&outputData, QIODevice::WriteOnly);
                 out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-                out << (quint8)0x01;
+                out << (uint8_t)0x01;
                 sendFullPacket(0xF0,0x01,outputData.constData(),outputData.size());
                 return;
             }
@@ -2940,14 +2940,14 @@ void Client::waitingForCityCaputre(const bool &cancel)
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
             out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-            out << (quint8)0x02;
+            out << (uint8_t)0x02;
             out << clan->captureCityInProgress;
             sendFullPacket(0xF0,0x01,outputData.constData(),outputData.size());
             return;
         }
         if(captureCity.count(zoneName)>0)
         {
-            errorOutput(QStringLiteral("already in capture city"));
+            errorOutput(std::stringLiteral("already in capture city"));
             return;
         }
         captureCity[zoneName] << this;
@@ -2957,12 +2957,12 @@ void Client::waitingForCityCaputre(const bool &cancel)
     {
         if(clan->captureCityInProgress.isEmpty())
         {
-            errorOutput(QStringLiteral("your clan is not in capture city"));
+            errorOutput(std::stringLiteral("your clan is not in capture city"));
             return;
         }
         if(!captureCity[clan->captureCityInProgress].removeOne(this))
         {
-            errorOutput(QStringLiteral("not in capture city"));
+            errorOutput(std::stringLiteral("not in capture city"));
             return;
         }
         leaveTheCityCapture();
@@ -3004,7 +3004,7 @@ void Client::leaveTheCityCapture()
 
 void Client::startTheCityCapture()
 {
-    QHashIterator<QString,QList<Client *> > i(captureCity);
+    std::unordered_mapIterator<std::string,std::vector<Client *> > i(captureCity);
     while (i.hasNext()) {
         i.next();
         //the city is not free to capture
@@ -3039,7 +3039,7 @@ void Client::startTheCityCapture()
                 index=0;
                 while(index<tempCaptureCityValidated.players.size())
                 {
-                    const quint32 &clanId=tempCaptureCityValidated.players.at(index)->clanId();
+                    const uint32_t &clanId=tempCaptureCityValidated.players.at(index)->clanId();
                     if(tempCaptureCityValidated.clanSize.contains(clanId))
                         tempCaptureCityValidated.clanSize[clanId]++;
                     else
@@ -3093,7 +3093,7 @@ void Client::startTheCityCapture()
 }
 
 //fightId == 0 if is in battle
-void Client::fightOrBattleFinish(const bool &win, const quint32 &fightId)
+void Client::fightOrBattleFinish(const bool &win, const uint32_t &fightId)
 {
     if(clan!=NULL)
     {
@@ -3115,8 +3115,8 @@ void Client::fightOrBattleFinish(const bool &win, const quint32 &fightId)
                             otherCityPlayerBattle=NULL;
                         }
                     }
-                    quint16 player_count=cityCapturePlayerCount(captureCityValidated);
-                    quint16 clan_count=cityCaptureClanCount(captureCityValidated);
+                    uint16_t player_count=cityCapturePlayerCount(captureCityValidated);
+                    uint16_t clan_count=cityCaptureClanCount(captureCityValidated);
                     bool newFightFound=false;
                     int index=0;
                     while(index<captureCityValidated.players.size())
@@ -3164,8 +3164,8 @@ void Client::fightOrBattleFinish(const bool &win, const quint32 &fightId)
                     if(captureCityValidated.clanSize.value(clanId())==0)
                         captureCityValidated.clanSize.remove(clanId());
                 }
-                quint16 player_count=cityCapturePlayerCount(captureCityValidated);
-                quint16 clan_count=cityCaptureClanCount(captureCityValidated);
+                uint16_t player_count=cityCapturePlayerCount(captureCityValidated);
+                uint16_t clan_count=cityCaptureClanCount(captureCityValidated);
                 //city capture
                 if(captureCityValidated.bots.isEmpty() && captureCityValidated.botsInFight.isEmpty() && captureCityValidated.playersInFight.isEmpty())
                 {
@@ -3205,7 +3205,7 @@ void Client::fightOrBattleFinish(const bool &win, const quint32 &fightId)
     }
 }
 
-void Client::cityCaptureSendInWait(const CaptureCityValidated &captureCityValidated, const quint16 &number_of_player, const quint16 &number_of_clan)
+void Client::cityCaptureSendInWait(const CaptureCityValidated &captureCityValidated, const uint16_t &number_of_player, const uint16_t &number_of_clan)
 {
     int index=0;
     while(index<captureCityValidated.players.size())
@@ -3215,12 +3215,12 @@ void Client::cityCaptureSendInWait(const CaptureCityValidated &captureCityValida
     }
 }
 
-quint16 Client::cityCapturePlayerCount(const CaptureCityValidated &captureCityValidated)
+uint16_t Client::cityCapturePlayerCount(const CaptureCityValidated &captureCityValidated)
 {
     return captureCityValidated.bots.size()+captureCityValidated.botsInFight.size()+captureCityValidated.players.size()+captureCityValidated.playersInFight.size();
 }
 
-quint16 Client::cityCaptureClanCount(const CaptureCityValidated &captureCityValidated)
+uint16_t Client::cityCaptureClanCount(const CaptureCityValidated &captureCityValidated)
 {
     if(captureCityValidated.bots.isEmpty() && captureCityValidated.botsInFight.isEmpty())
         return captureCityValidated.clanSize.size();
@@ -3228,37 +3228,37 @@ quint16 Client::cityCaptureClanCount(const CaptureCityValidated &captureCityVali
         return captureCityValidated.clanSize.size()+1;
 }
 
-void Client::cityCaptureBattle(const quint16 &number_of_player,const quint16 &number_of_clan)
+void Client::cityCaptureBattle(const uint16_t &number_of_player,const uint16_t &number_of_clan)
 {
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x04;
-    out << (quint16)number_of_player;
-    out << (quint16)number_of_clan;
+    out << (uint8_t)0x04;
+    out << (uint16_t)number_of_player;
+    out << (uint16_t)number_of_clan;
     sendFullPacket(0xF0,0x01,outputData.constData(),outputData.size());
 }
 
-void Client::cityCaptureBotFight(const quint16 &number_of_player,const quint16 &number_of_clan,const quint32 &fightId)
+void Client::cityCaptureBotFight(const uint16_t &number_of_player,const uint16_t &number_of_clan,const uint32_t &fightId)
 {
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x04;
-    out << (quint16)number_of_player;
-    out << (quint16)number_of_clan;
-    out << (quint32)fightId;
+    out << (uint8_t)0x04;
+    out << (uint16_t)number_of_player;
+    out << (uint16_t)number_of_clan;
+    out << (uint32_t)fightId;
     sendFullPacket(0xF0,0x01,outputData.constData(),outputData.size());
 }
 
-void Client::cityCaptureInWait(const quint16 &number_of_player,const quint16 &number_of_clan)
+void Client::cityCaptureInWait(const uint16_t &number_of_player,const uint16_t &number_of_clan)
 {
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x05;
-    out << (quint16)number_of_player;
-    out << (quint16)number_of_clan;
+    out << (uint8_t)0x05;
+    out << (uint16_t)number_of_player;
+    out << (uint16_t)number_of_clan;
     sendFullPacket(0xF0,0x01,outputData.constData(),outputData.size());
 }
 
@@ -3267,7 +3267,7 @@ void Client::cityCaptureWin()
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x06;
+    out << (uint8_t)0x06;
     sendFullPacket(0xF0,0x01,outputData.constData(),outputData.size());
 }
 
@@ -3276,11 +3276,11 @@ void Client::previousCityCaptureNotFinished()
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x02;
+    out << (uint8_t)0x02;
     sendFullPacket(0xF0,0x03,outputData.constData(),outputData.size());
 }
 
-void Client::moveMonster(const bool &up,const quint8 &number)
+void Client::moveMonster(const bool &up,const uint8_t &number)
 {
     if(up)
         moveUpMonster(number-1);
@@ -3288,11 +3288,11 @@ void Client::moveMonster(const bool &up,const quint8 &number)
         moveDownMonster(number-1);
 }
 
-void Client::getMarketList(const quint32 &query_id)
+void Client::getMarketList(const uint32_t &query_id)
 {
     if(getInTrade() || isInFight())
     {
-        errorOutput(QStringLiteral("You can't use the market in trade/fight"));
+        errorOutput(std::stringLiteral("You can't use the market in trade/fight"));
         return;
     }
     QByteArray outputData;
@@ -3300,8 +3300,8 @@ void Client::getMarketList(const quint32 &query_id)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint64)market_cash;
     int index;
-    QList<MarketItem> marketItemList,marketOwnItemList;
-    QList<MarketPlayerMonster> marketPlayerMonsterList,marketOwnPlayerMonsterList;
+    std::vector<MarketItem> marketItemList,marketOwnItemList;
+    std::vector<MarketPlayerMonster> marketPlayerMonsterList,marketOwnPlayerMonsterList;
     //object filter
     index=0;
     while(index<GlobalServerData::serverPrivateVariables.marketItemList.size())
@@ -3325,7 +3325,7 @@ void Client::getMarketList(const quint32 &query_id)
         index++;
     }
     //object
-    out << (quint32)marketItemList.size();
+    out << (uint32_t)marketItemList.size();
     index=0;
     while(index<marketItemList.size())
     {
@@ -3337,7 +3337,7 @@ void Client::getMarketList(const quint32 &query_id)
         index++;
     }
     //monster
-    out << (quint32)marketPlayerMonsterList.size();
+    out << (uint32_t)marketPlayerMonsterList.size();
     index=0;
     while(index<marketPlayerMonsterList.size())
     {
@@ -3349,7 +3349,7 @@ void Client::getMarketList(const quint32 &query_id)
         index++;
     }
     //own object
-    out << (quint32)marketOwnItemList.size();
+    out << (uint32_t)marketOwnItemList.size();
     index=0;
     while(index<marketOwnItemList.size())
     {
@@ -3361,7 +3361,7 @@ void Client::getMarketList(const quint32 &query_id)
         index++;
     }
     //own monster
-    out << (quint32)marketPlayerMonsterList.size();
+    out << (uint32_t)marketPlayerMonsterList.size();
     index=0;
     while(index<marketPlayerMonsterList.size())
     {
@@ -3376,16 +3376,16 @@ void Client::getMarketList(const quint32 &query_id)
     postReply(query_id,outputData.constData(),outputData.size());
 }
 
-void Client::buyMarketObject(const quint32 &query_id,const quint32 &marketObjectId,const quint32 &quantity)
+void Client::buyMarketObject(const uint32_t &query_id,const uint32_t &marketObjectId,const uint32_t &quantity)
 {
     if(getInTrade() || isInFight())
     {
-        errorOutput(QStringLiteral("You can't use the market in trade/fight"));
+        errorOutput(std::stringLiteral("You can't use the market in trade/fight"));
         return;
     }
     if(quantity<=0)
     {
-        errorOutput(QStringLiteral("You can't use the market with null quantity"));
+        errorOutput(std::stringLiteral("You can't use the market with null quantity"));
         return;
     }
     QByteArray outputData;
@@ -3400,14 +3400,14 @@ void Client::buyMarketObject(const quint32 &query_id,const quint32 &marketObject
         {
             if(marketItem.quantity<quantity)
             {
-                out << (quint8)0x02;
+                out << (uint8_t)0x02;
                 postReply(query_id,outputData.constData(),outputData.size());
                 return;
             }
             //check if have the price
             if((quantity*marketItem.cash)>public_and_private_informations.cash)
             {
-                out << (quint8)0x03;
+                out << (uint8_t)0x03;
                 postReply(query_id,outputData.constData(),outputData.size());
                 return;
             }
@@ -3430,28 +3430,28 @@ void Client::buyMarketObject(const quint32 &query_id,const quint32 &marketObject
             if(playerById.contains(marketItem.player))
             {
                 if(!playerById.value(marketItem.player)->addMarketCashWithoutSave(quantity*marketItem.cash))
-                    normalOutput(QStringLiteral("Problem at market cash adding"));
+                    normalOutput(std::stringLiteral("Problem at market cash adding"));
             }
             dbQueryWriteServer(PreparedDBQueryServer::db_query_update_charaters_market_cash
                          .arg(quantity*marketItem.cash)
                          .arg(marketItem.player)
                          );
             addObject(marketItem.item,quantity);
-            out << (quint8)0x01;
+            out << (uint8_t)0x01;
             postReply(query_id,outputData.constData(),outputData.size());
             return;
         }
         index++;
     }
-    out << (quint8)0x03;
+    out << (uint8_t)0x03;
     postReply(query_id,outputData.constData(),outputData.size());
 }
 
-void Client::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
+void Client::buyMarketMonster(const uint32_t &query_id,const uint32_t &monsterId)
 {
     if(getInTrade() || isInFight())
     {
-        errorOutput(QStringLiteral("You can't use the market in trade/fight"));
+        errorOutput(std::stringLiteral("You can't use the market in trade/fight"));
         return;
     }
     QByteArray outputData;
@@ -3459,7 +3459,7 @@ void Client::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     if(public_and_private_informations.playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
     {
-        out << (quint8)0x02;
+        out << (uint8_t)0x02;
         postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
@@ -3473,7 +3473,7 @@ void Client::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
             //check if have the price
             if(marketPlayerMonster.cash>public_and_private_informations.cash)
             {
-                out << (quint8)0x03;
+                out << (uint8_t)0x03;
                 postReply(query_id,outputData.constData(),outputData.size());
                 return;
             }
@@ -3493,26 +3493,26 @@ void Client::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
                                .arg(getPlayerMonster().size())
                                .arg(marketPlayerMonster.monster.id)
                                );
-            out << (quint8)0x01;
+            out << (uint8_t)0x01;
             postReply(query_id,outputData.constData(),outputData.size());
             return;
         }
         index++;
     }
-    out << (quint8)0x03;
+    out << (uint8_t)0x03;
     postReply(query_id,outputData.constData(),outputData.size());
 }
 
-void Client::putMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
+void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     if(getInTrade() || isInFight())
     {
-        errorOutput(QStringLiteral("You can't use the market in trade/fight"));
+        errorOutput(std::stringLiteral("You can't use the market in trade/fight"));
         return;
     }
     if(quantity<=0)
     {
-        errorOutput(QStringLiteral("You can't use the market with null quantity"));
+        errorOutput(std::stringLiteral("You can't use the market with null quantity"));
         return;
     }
     QByteArray outputData;
@@ -3520,7 +3520,7 @@ void Client::putMarketObject(const quint32 &query_id,const quint32 &objectId,con
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     if(objectQuantity(objectId)<quantity)
     {
-        out << (quint8)0x02;
+        out << (uint8_t)0x02;
         postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
@@ -3534,7 +3534,7 @@ void Client::putMarketObject(const quint32 &query_id,const quint32 &objectId,con
             removeObject(objectId,quantity);
             GlobalServerData::serverPrivateVariables.marketItemList[index].cash=price;
             GlobalServerData::serverPrivateVariables.marketItemList[index].quantity+=quantity;
-            out << (quint8)0x01;
+            out << (uint8_t)0x01;
             postReply(query_id,outputData.constData(),outputData.size());
             dbQueryWriteServer(PreparedDBQueryServer::db_query_update_item_market_and_price
                 .arg(GlobalServerData::serverPrivateVariables.marketItemList[index].quantity)
@@ -3548,9 +3548,9 @@ void Client::putMarketObject(const quint32 &query_id,const quint32 &objectId,con
     }
     if(marketObjectIdList.isEmpty())
     {
-        out << (quint8)0x02;
+        out << (uint8_t)0x02;
         postReply(query_id,outputData.constData(),outputData.size());
-        normalOutput(QStringLiteral("No more id into marketObjectIdList"));
+        normalOutput(std::stringLiteral("No more id into marketObjectIdList"));
         return;
     }
     //append to the market
@@ -3569,15 +3569,15 @@ void Client::putMarketObject(const quint32 &query_id,const quint32 &objectId,con
     marketItem.quantity=quantity;
     marketObjectIdList.removeFirst();
     GlobalServerData::serverPrivateVariables.marketItemList << marketItem;
-    out << (quint8)0x01;
+    out << (uint8_t)0x01;
     postReply(query_id,outputData.constData(),outputData.size());
 }
 
-void Client::putMarketMonster(const quint32 &query_id,const quint32 &monsterId,const quint32 &price)
+void Client::putMarketMonster(const uint32_t &query_id,const uint32_t &monsterId,const uint32_t &price)
 {
     if(getInTrade() || isInFight())
     {
-        errorOutput(QStringLiteral("You can't use the market in trade/fight"));
+        errorOutput(std::stringLiteral("You can't use the market in trade/fight"));
         return;
     }
     QByteArray outputData;
@@ -3591,8 +3591,8 @@ void Client::putMarketMonster(const quint32 &query_id,const quint32 &monsterId,c
         {
             if(!remainMonstersToFight(monsterId))
             {
-                normalOutput(QStringLiteral("You can't put in market this msonter because you will be without monster to fight"));
-                out << (quint8)0x02;
+                normalOutput(std::stringLiteral("You can't put in market this msonter because you will be without monster to fight"));
+                out << (uint8_t)0x02;
                 postReply(query_id,outputData.constData(),outputData.size());
                 return;
             }
@@ -3614,21 +3614,21 @@ void Client::putMarketMonster(const quint32 &query_id,const quint32 &monsterId,c
                              );
                 index++;
             }
-            out << (quint8)0x01;
+            out << (uint8_t)0x01;
             postReply(query_id,outputData.constData(),outputData.size());
             return;
         }
         index++;
     }
-    out << (quint8)0x02;
+    out << (uint8_t)0x02;
     postReply(query_id,outputData.constData(),outputData.size());
 }
 
-void Client::recoverMarketCash(const quint32 &query_id)
+void Client::recoverMarketCash(const uint32_t &query_id)
 {
     if(getInTrade() || isInFight())
     {
-        errorOutput(QStringLiteral("You can't use the market in trade/fight"));
+        errorOutput(std::stringLiteral("You can't use the market in trade/fight"));
         return;
     }
     QByteArray outputData;
@@ -3644,16 +3644,16 @@ void Client::recoverMarketCash(const quint32 &query_id)
     postReply(query_id,outputData.constData(),outputData.size());
 }
 
-void Client::withdrawMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity)
+void Client::withdrawMarketObject(const uint32_t &query_id,const uint32_t &objectId,const uint32_t &quantity)
 {
     if(getInTrade() || isInFight())
     {
-        errorOutput(QStringLiteral("You can't use the market in trade/fight"));
+        errorOutput(std::stringLiteral("You can't use the market in trade/fight"));
         return;
     }
     if(quantity<=0)
     {
-        errorOutput(QStringLiteral("You can't use the market with null quantity"));
+        errorOutput(std::stringLiteral("You can't use the market with null quantity"));
         return;
     }
     QByteArray outputData;
@@ -3667,18 +3667,18 @@ void Client::withdrawMarketObject(const quint32 &query_id,const quint32 &objectI
         {
             if(marketItem.player!=character_id)
             {
-                out << (quint8)0x02;
+                out << (uint8_t)0x02;
                 postReply(query_id,outputData.constData(),outputData.size());
                 return;
             }
             if(marketItem.quantity<quantity)
             {
-                out << (quint8)0x02;
+                out << (uint8_t)0x02;
                 postReply(query_id,outputData.constData(),outputData.size());
                 return;
             }
-            out << (quint8)0x01;
-            out << (quint8)0x01;
+            out << (uint8_t)0x01;
+            out << (uint8_t)0x01;
             out << marketItem.item;
             out << marketItem.quantity;
             GlobalServerData::serverPrivateVariables.marketItemList[index].quantity=marketItem.quantity-quantity;
@@ -3703,15 +3703,15 @@ void Client::withdrawMarketObject(const quint32 &query_id,const quint32 &objectI
         }
         index++;
     }
-    out << (quint8)0x02;
+    out << (uint8_t)0x02;
     postReply(query_id,outputData.constData(),outputData.size());
 }
 
-void Client::withdrawMarketMonster(const quint32 &query_id,const quint32 &monsterId)
+void Client::withdrawMarketMonster(const uint32_t &query_id,const uint32_t &monsterId)
 {
     if(getInTrade() || isInFight())
     {
-        errorOutput(QStringLiteral("You can't use the market in trade/fight"));
+        errorOutput(std::stringLiteral("You can't use the market in trade/fight"));
         return;
     }
     QByteArray outputData;
@@ -3725,13 +3725,13 @@ void Client::withdrawMarketMonster(const quint32 &query_id,const quint32 &monste
         {
             if(marketPlayerMonster.player!=character_id)
             {
-                out << (quint8)0x02;
+                out << (uint8_t)0x02;
                 postReply(query_id,outputData.constData(),outputData.size());
                 return;
             }
             if(public_and_private_informations.playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
             {
-                out << (quint8)0x02;
+                out << (uint8_t)0x02;
                 postReply(query_id,outputData.constData(),outputData.size());
                 return;
             }
@@ -3739,19 +3739,19 @@ void Client::withdrawMarketMonster(const quint32 &query_id,const quint32 &monste
             public_and_private_informations.playerMonster << marketPlayerMonster.monster;
             dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_move_to_player.arg(marketPlayerMonster.monster.id));
             dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_monster_market_price.arg(marketPlayerMonster.monster.id));
-            out << (quint8)0x01;
-            out << (quint8)0x02;
+            out << (uint8_t)0x01;
+            out << (uint8_t)0x02;
             const QByteArray newData(outputData+FacilityLib::privateMonsterToBinary(public_and_private_informations.playerMonster.last()));
             postReply(query_id,newData.constData(),newData.size());
             return;
         }
         index++;
     }
-    out << (quint8)0x02;
+    out << (uint8_t)0x02;
     postReply(query_id,outputData.constData(),outputData.size());
 }
 
-bool Client::haveReputationRequirements(const QList<ReputationRequirements> &reputationList) const
+bool Client::haveReputationRequirements(const std::vector<ReputationRequirements> &reputationList) const
 {
     int index=0;
     while(index<reputationList.size())
@@ -3764,7 +3764,7 @@ bool Client::haveReputationRequirements(const QList<ReputationRequirements> &rep
             {
                 if(-reputationRequierement.level<playerReputation.level)
                 {
-                    normalOutput(QStringLiteral("reputation.level(%1)<playerReputation.level(%2)").arg(reputationRequierement.level).arg(playerReputation.level));
+                    normalOutput(std::stringLiteral("reputation.level(%1)<playerReputation.level(%2)").arg(reputationRequierement.level).arg(playerReputation.level));
                     return false;
                 }
             }
@@ -3772,7 +3772,7 @@ bool Client::haveReputationRequirements(const QList<ReputationRequirements> &rep
             {
                 if(reputationRequierement.level>playerReputation.level || playerReputation.point<0)
                 {
-                    normalOutput(QStringLiteral("reputation.level(%1)>playerReputation.level(%2) || playerReputation.point(%3)<0").arg(reputationRequierement.level).arg(playerReputation.level).arg(playerReputation.point));
+                    normalOutput(std::stringLiteral("reputation.level(%1)>playerReputation.level(%2) || playerReputation.point(%3)<0").arg(reputationRequierement.level).arg(playerReputation.level).arg(playerReputation.point));
                     return false;
                 }
             }
@@ -3780,7 +3780,7 @@ bool Client::haveReputationRequirements(const QList<ReputationRequirements> &rep
         else
             if(!reputationRequierement.positif)//default level is 0, but required level is negative
             {
-                normalOutput(QStringLiteral("reputation.level(%1)<0 and no reputation.type=%2").arg(reputationRequierement.level).arg(CommonDatapack::commonDatapack.reputation.at(reputationRequierement.reputationId).name));
+                normalOutput(std::stringLiteral("reputation.level(%1)<0 and no reputation.type=%2").arg(reputationRequierement.level).arg(CommonDatapack::commonDatapack.reputation.at(reputationRequierement.reputationId).name));
                 return false;
             }
         index++;

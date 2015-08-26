@@ -16,26 +16,26 @@ public:
     static std::vector<std::string> loadSkins(const std::string &folder);
     static std::vector<Reputation> loadReputation(const std::string &file);
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    static std::unordered_map<quint16, Quest> loadQuests(const std::string &folder);
+    static std::unordered_map<uint16_t, Quest> loadQuests(const std::string &folder);
     static std::pair<bool,Quest> loadSingleQuest(const std::string &file);
-    static std::unordered_map<quint8,Plant> loadPlants(const std::string &file);
-    static std::pair<std::unordered_map<quint16,CrafingRecipe>,std::unordered_map<quint16,quint16> > loadCraftingRecipes(const std::string &file, const std::unordered_map<quint16, Item> &items);
-    static ItemFull loadItems(const std::string &folder, const std::unordered_map<quint8, Buff> &monsterBuffs);
-    static std::unordered_map<quint16,Industry> loadIndustries(const std::string &folder,const std::unordered_map<quint16, Item> &items);
-    static std::unordered_map<quint16,IndustryLink> loadIndustriesLink(const std::string &file,const std::unordered_map<quint16,Industry> &industries);
+    static std::unordered_map<uint8_t,Plant> loadPlants(const std::string &file);
+    static std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> > loadCraftingRecipes(const std::string &file, const std::unordered_map<uint16_t, Item> &items);
+    static ItemFull loadItems(const std::string &folder, const std::unordered_map<uint8_t, Buff> &monsterBuffs);
+    static std::unordered_map<uint16_t,Industry> loadIndustries(const std::string &folder,const std::unordered_map<uint16_t, Item> &items);
+    static std::unordered_map<uint16_t,IndustryLink> loadIndustriesLink(const std::string &file,const std::unordered_map<uint16_t,Industry> &industries);
     #endif
     static std::pair<std::vector<QDomElement>, std::vector<Profile> > loadProfileList(const std::string &datapackPath, const std::string &file,
                                                                       #ifndef CATCHCHALLENGER_CLASS_MASTER
-                                                                      const std::unordered_map<quint16, Item> &items,
+                                                                      const std::unordered_map<uint16_t, Item> &items,
                                                                       #endif // CATCHCHALLENGER_CLASS_MASTER
-                                                                      const std::unordered_map<quint16,Monster> &monsters,const std::vector<Reputation> &reputations);
+                                                                      const std::unordered_map<uint16_t,Monster> &monsters,const std::vector<Reputation> &reputations);
     static std::vector<ServerProfile> loadServerProfileList(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &file, const std::vector<Profile> &profileCommon);
     static std::vector<ServerProfile> loadServerProfileListInternal(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &file);
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    static std::vector<MonstersCollision> loadMonstersCollision(const std::string &file, const std::unordered_map<quint16, Item> &items, const std::vector<Event> &events);
+    static std::vector<MonstersCollision> loadMonstersCollision(const std::string &file, const std::unordered_map<uint16_t, Item> &items, const std::vector<Event> &events);
     static LayersOptions loadLayersOptions(const std::string &file);
     static std::vector<Event> loadEvents(const std::string &file);
-    static std::unordered_map<quint32,Shop> preload_shop(const std::string &file, const std::unordered_map<quint16, Item> &items);
+    static std::unordered_map<uint32_t,Shop> preload_shop(const std::string &file, const std::unordered_map<uint16_t, Item> &items);
     #endif
 protected:
     static const std::string text_list;

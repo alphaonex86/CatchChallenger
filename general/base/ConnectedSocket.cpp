@@ -41,7 +41,7 @@ ConnectedSocket::ConnectedSocket(QSslSocket *socket) :
     connect(socket,&QSslSocket::disconnected,   this,&ConnectedSocket::disconnected,Qt::QueuedConnection);
     connect(socket,static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),this,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error));
     connect(socket,&QSslSocket::stateChanged,   this,&ConnectedSocket::stateChanged,Qt::QueuedConnection);
-    connect(socket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),this,static_cast<void(ConnectedSocket::*)(const QList<QSslError> &errors)>(&ConnectedSocket::sslErrors),Qt::QueuedConnection);
+    connect(socket,static_cast<void(QSslSocket::*)(const std::vector<QSslError> &errors)>(&QSslSocket::sslErrors),this,static_cast<void(ConnectedSocket::*)(const std::vector<QSslError> &errors)>(&ConnectedSocket::sslErrors),Qt::QueuedConnection);
     purgeBuffer();
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
 }
@@ -72,11 +72,11 @@ ConnectedSocket::~ConnectedSocket()
         fakeSocket->deleteLater();
 }
 
-QList<QSslError> ConnectedSocket::sslErrors() const
+std::vector<QSslError> ConnectedSocket::sslErrors() const
 {
     if(sslSocket!=NULL)
         return sslSocket->sslErrors();
-    return QList<QSslError>();
+    return std::vector<QSslError>();
 }
 
 void ConnectedSocket::purgeBuffer()
@@ -107,7 +107,7 @@ void ConnectedSocket::abort()
         tcpSocket->abort();
 }
 
-void ConnectedSocket::connectToHost(const QString & hostName, quint16 port)
+void ConnectedSocket::connectToHost(const std::string & hostName, uint16_t port)
 {
     if(state()!=QAbstractSocket::UnconnectedState)
         return;
@@ -119,7 +119,7 @@ void ConnectedSocket::connectToHost(const QString & hostName, quint16 port)
         tcpSocket->connectToHost(hostName,port);
 }
 
-void ConnectedSocket::connectToHost(const QHostAddress & address, quint16 port)
+void ConnectedSocket::connectToHost(const QHostAddress & address, uint16_t port)
 {
     if(state()!=QAbstractSocket::UnconnectedState)
         return;
@@ -213,7 +213,7 @@ QHostAddress ConnectedSocket::localAddress() const
     return QHostAddress::Null;
 }
 
-quint16	ConnectedSocket::localPort() const
+uint16_t	ConnectedSocket::localPort() const
 {
     if(fakeSocket!=NULL)
         return 9999;
@@ -235,12 +235,12 @@ QHostAddress	ConnectedSocket::peerAddress() const
     return QHostAddress::Null;
 }
 
-QString	ConnectedSocket::peerName() const
+std::string	ConnectedSocket::peerName() const
 {
     return peerAddress().toString();
 }
 
-quint16	ConnectedSocket::peerPort() const
+uint16_t	ConnectedSocket::peerPort() const
 {
     if(fakeSocket!=NULL)
         return 15000;
@@ -307,7 +307,7 @@ QIODevice::OpenMode ConnectedSocket::openMode() const
     return QIODevice::NotOpen;
 }
 
-QString ConnectedSocket::errorString() const
+std::string ConnectedSocket::errorString() const
 {
     if(fakeSocket!=NULL)
         return fakeSocket->errorString();
@@ -315,7 +315,7 @@ QString ConnectedSocket::errorString() const
         return sslSocket->errorString();
     if(tcpSocket!=NULL)
         return tcpSocket->errorString();
-    return QString();
+    return std::string();
 }
 
 void ConnectedSocket::close()

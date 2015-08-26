@@ -54,30 +54,30 @@ public:
     //to get some info
     std::string getPseudo();
     void savePosition();
-    static bool characterConnected(const quint32 &characterId);
+    static bool characterConnected(const uint32_t &characterId);
     void disconnectClient();
-    static void disconnectClientById(const quint32 &characterId);
+    static void disconnectClientById(const uint32_t &characterId);
     Client *getClientFight();
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     void doDDOSCompute();
     #endif
-    void receive_instant_player_number(const quint16 &connected_players, const char * const data, const quint8 &size);
+    void receive_instant_player_number(const uint16_t &connected_players, const char * const data, const uint8_t &size);
     QByteArray getRawPseudo() const;
     void parseIncommingData();
     static void startTheCityCapture();
-    static void setEvent(const quint8 &event, const quint8 &new_value);
+    static void setEvent(const uint8_t &event, const uint8_t &new_value);
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    static char * addAuthGetToken(const quint32 &characterId,const quint32 &accountIdRequester);
+    static char * addAuthGetToken(const uint32_t &characterId,const uint32_t &accountIdRequester);
     static void purgeTokenAuthList();
     #endif
-    quint32 getPlayerId() const;
-    quint32 getClanId() const;
+    uint32_t getPlayerId() const;
+    uint32_t getClanId() const;
     bool haveAClan() const;
 
-    void sendFullPacket(const quint8 &mainIdent,const quint8 &subIdent,const char * const data,const unsigned int &size);
-    void sendPacket(const quint8 &mainIdent,const char * const data,const unsigned int &size);
-    void sendFullPacket(const quint8 &mainIdent,const quint8 &subIdent);
-    void sendPacket(const quint8 &mainIdent);
+    void sendFullPacket(const uint8_t &mainIdent,const uint8_t &subIdent,const char * const data,const unsigned int &size);
+    void sendPacket(const uint8_t &mainIdent,const char * const data,const unsigned int &size);
+    void sendFullPacket(const uint8_t &mainIdent,const uint8_t &subIdent);
+    void sendPacket(const uint8_t &mainIdent);
     void sendRawSmallPacket(const char * const data,const unsigned int &size);
 
     static std::vector<int> generalChatDrop;
@@ -89,15 +89,15 @@ public:
     static std::vector<int> privateChatDrop;
     static int privateChatDropTotalCache;
     static int privateChatDropNewValue;
-    static std::vector<quint16> marketObjectIdList;
+    static std::vector<uint16_t> marketObjectIdList;
     static quint64 datapack_list_cache_timestamp_base,datapack_list_cache_timestamp_main,datapack_list_cache_timestamp_sub;
-    static std::vector<quint16> simplifiedIdList;
+    static std::vector<uint16_t> simplifiedIdList;
     static std::unordered_map<std::string,Client *> playerByPseudo;
-    static std::unordered_map<quint32,Clan *> clanList;
+    static std::unordered_map<uint32_t,Clan *> clanList;
     static std::vector<Client *> clientBroadCastList;
-    static quint8 indexOfItemOnMap;
+    static uint8_t indexOfItemOnMap;
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-    static quint8 indexOfDirtOnMap;//index of plant on map, ordened by map and x,y ordened into the xml file, less bandwith than send map,x,y
+    static uint8_t indexOfDirtOnMap;//index of plant on map, ordened by map and x,y ordened into the xml file, less bandwith than send map,x,y
     #endif
 
     static unsigned char protocolReplyProtocolNotSupported[4];
@@ -124,64 +124,64 @@ protected:
 
     struct ClanActionParam
     {
-        quint8 query_id;
-        quint8 action;
+        uint8_t query_id;
+        uint8_t action;
         std::string text;
     };
     struct AddCharacterParam
     {
-        quint8 query_id;
-        quint8 profileIndex;
+        uint8_t query_id;
+        uint8_t profileIndex;
         std::string pseudo;
-        quint8 skinId;
+        uint8_t skinId;
     };
     struct RemoveCharacterParam
     {
-        quint8 query_id;
-        quint32 characterId;
+        uint8_t query_id;
+        uint32_t characterId;
     };
     struct DeleteCharacterNow
     {
-        quint32 characterId;
+        uint32_t characterId;
     };
     struct AskLoginParam
     {
-        quint8 query_id;
+        uint8_t query_id;
         QByteArray login;
         QByteArray pass;
         QByteArray tempOutputData;
     };
     struct SelectCharacterParam
     {
-        quint8 query_id;
-        quint32 characterId;
+        uint8_t query_id;
+        uint32_t characterId;
     };
     struct SelectIndexParam
     {
-        quint32 index;
+        uint32_t index;
     };
 private:
     //-------------------
-    quint32 account_id;//0 if not logged
-    quint32 character_id;
+    uint32_t account_id;//0 if not logged
+    uint32_t character_id;
     quint64 market_cash;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     bool isConnected;
     #endif
-    quint16 randomIndex,randomSize;
-    quint8 number_of_character;
+    uint16_t randomIndex,randomSize;
+    uint8_t number_of_character;
 
     PlayerOnMap map_entry;
     PlayerOnMap rescue;
     PlayerOnMap unvalidated_rescue;
-    QMultiHash<quint32,MonsterDrops> questsDrop;
+    QMultiHash<uint32_t,MonsterDrops> questsDrop;
     QDateTime connectedSince;
     struct OldEvents
     {
         struct OldEventEntry
         {
-            quint8 event;
-            quint8 eventValue;
+            uint8_t event;
+            uint8_t eventValue;
         };
         QDateTime time;
         std::vector<OldEventEntry> oldEventList;
@@ -197,51 +197,51 @@ private:
     };
     DatapackStatus datapackStatus;
 
-    qint32 connected_players;//it's th last number of connected player send
+    int32_t connected_players;//it's th last number of connected player send
     std::vector<void *> paramToPassToCallBack;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     std::vector<std::string > paramToPassToCallBackType;
     #endif
-    static std::vector<quint8> selectCharacterQueryId;
+    static std::vector<uint8_t> selectCharacterQueryId;
 
     // for status
     bool have_send_protocol;
     bool is_logging_in_progess;
     bool stopIt;
     #ifdef CATCHCHALLENGER_DDOS_FILTER
-    quint8 movePacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
-    quint8 movePacketKickSize;
-    quint8 movePacketKickTotalCache;
-    quint8 movePacketKickNewValue;
-    quint8 chatPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
-    quint8 chatPacketKickSize;
-    quint8 chatPacketKickTotalCache;
-    quint8 chatPacketKickNewValue;
-    quint8 otherPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
-    quint8 otherPacketKickSize;
-    quint8 otherPacketKickTotalCache;
-    quint8 otherPacketKickNewValue;
+    uint8_t movePacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
+    uint8_t movePacketKickSize;
+    uint8_t movePacketKickTotalCache;
+    uint8_t movePacketKickNewValue;
+    uint8_t chatPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
+    uint8_t chatPacketKickSize;
+    uint8_t chatPacketKickTotalCache;
+    uint8_t chatPacketKickNewValue;
+    uint8_t otherPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
+    uint8_t otherPacketKickSize;
+    uint8_t otherPacketKickTotalCache;
+    uint8_t otherPacketKickNewValue;
     #endif
-    quint8 profileIndex;
+    uint8_t profileIndex;
     std::vector<PlayerOnMap> lastTeleportation;
-    std::vector<quint8> queryNumberList;
+    std::vector<uint8_t> queryNumberList;
 
     Client *otherPlayerBattle;
     bool battleIsValidated;
-    quint32 mCurrentSkillId;
+    uint32_t mCurrentSkillId;
     bool mHaveCurrentSkill,mMonsterChange;
-    quint32 botFightCash;
-    quint32 botFightId;
+    uint32_t botFightCash;
+    uint32_t botFightId;
     bool isInCityCapture;
     std::vector<Skill::AttackReturn> attackReturn;
-    std::unordered_map<quint32, std::unordered_map<quint32,quint32> > deferedEndurance;
+    std::unordered_map<uint32_t, std::unordered_map<uint32_t,uint32_t> > deferedEndurance;
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     struct TokenAuth
     {
         char *token;
-        quint32 characterId;
-        quint32 accountIdRequester;
-        quint32 createTime;
+        uint32_t characterId;
+        uint32_t accountIdRequester;
+        uint32_t createTime;
     };
     static std::vector<TokenAuth> tokenAuthList;
     #endif
@@ -291,16 +291,16 @@ private:
     static const std::string text_restart;
     static const std::string text_unknown_send_command_slash;
     static const std::string text_commands_seem_not_right;
-    static quint8 tempDatapackListReplySize;
+    static uint8_t tempDatapackListReplySize;
     static QByteArray tempDatapackListReplyArray;
-    static quint8 tempDatapackListReply;
+    static uint8_t tempDatapackListReply;
     static int tempDatapackListReplyTestCount;
     struct DatapackCacheFile
     {
-        //quint32 mtime;
-        quint32 partialHash;
+        //uint32_t mtime;
+        uint32_t partialHash;
     };
-    //static std::unordered_map<std::string,quint32> datapack_file_list_cache_base,datapack_file_list_cache_main,datapack_file_list_cache_sub;//same than above
+    //static std::unordered_map<std::string,uint32_t> datapack_file_list_cache_base,datapack_file_list_cache_main,datapack_file_list_cache_sub;//same than above
     static std::unordered_map<std::string,DatapackCacheFile> datapack_file_hash_cache_base,datapack_file_hash_cache_main,datapack_file_hash_cache_sub;
     static QRegularExpression fileNameStartStringRegex;
     static std::string single_quote;
@@ -323,7 +323,7 @@ private:
 
     //info linked
     static Direction	temp_direction;
-    static std::unordered_map<quint32,Client *> playerById;
+    static std::unordered_map<uint32_t,Client *> playerById;
     static std::unordered_map<std::string,std::vector<Client *> > captureCity;
     static std::unordered_map<std::string,CaptureCityValidated> captureCityValidatedList;
 
@@ -352,11 +352,11 @@ private:
     //normal slots
     void sendSystemMessage(const std::string &text,const bool &important=false);
     //clan
-    void clanChangeWithoutDb(const quint32 &clanId);
+    void clanChangeWithoutDb(const uint32_t &clanId);
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    void askLogin(const quint8 &query_id, const char *rawdata);
-    void createAccount(const quint8 &query_id, const char *rawdata);
+    void askLogin(const uint8_t &query_id, const char *rawdata);
+    void createAccount(const uint8_t &query_id, const char *rawdata);
     static void createAccount_static(void *object);
     void createAccount_object();
     void createAccount_return(AskLoginParam *askLoginParam);
@@ -365,24 +365,24 @@ private:
     void askLogin_return(AskLoginParam *askLoginParam);
     static void character_list_static(void *object);
     void character_list_object();
-    QByteArray character_list_return(const quint8 &query_id);
+    QByteArray character_list_return(const uint8_t &query_id);
     bool server_list();
     static void server_list_static(void *object);
     void server_list_object();
-    void server_list_return(const quint8 &query_id,const QByteArray &previousData);
-    void deleteCharacterNow(const quint32 &characterId);
+    void server_list_return(const uint8_t &query_id,const QByteArray &previousData);
+    void deleteCharacterNow(const uint32_t &characterId);
     static void deleteCharacterNow_static(void *object);
     void deleteCharacterNow_object();
-    void deleteCharacterNow_return(const quint32 &characterId);
+    void deleteCharacterNow_return(const uint32_t &characterId);
     #endif
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
-    void datapackList(const quint8 &query_id, const std::vector<std::string > &files, const std::vector<quint32> &partialHashList);
+    void datapackList(const uint8_t &query_id, const std::vector<std::string > &files, const std::vector<uint32_t> &partialHashList);
     static std::unordered_map<std::string,DatapackCacheFile> datapack_file_list(const std::string &path,const bool withHash=true);
     std::unordered_map<std::string,Client::DatapackCacheFile> datapack_file_list_cached_base();
     std::unordered_map<std::string,Client::DatapackCacheFile> datapack_file_list_cached_main();
     std::unordered_map<std::string,Client::DatapackCacheFile> datapack_file_list_cached_sub();
     void addDatapackListReply(const bool &fileRemove);
-    void purgeDatapackListReply(const quint8 &query_id);
+    void purgeDatapackListReply(const uint8_t &query_id);
     void sendFileContent();
     void sendCompressedFileContent();
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
@@ -392,26 +392,26 @@ private:
     void dbQueryWriteServer(const std::string &queryText);
     //character
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    void addCharacter(const quint8 &query_id, const quint8 &profileIndex, const std::string &pseudo, const quint8 &skinId);
+    void addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &skinId);
     static void addCharacter_static(void *object);
     void addCharacter_object();
-    void addCharacter_return(const quint8 &query_id, const quint8 &profileIndex, const std::string &pseudo, const quint8 &skinId);
-    void removeCharacterLater(const quint8 &query_id, const quint32 &characterId);
+    void addCharacter_return(const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &skinId);
+    void removeCharacterLater(const uint8_t &query_id, const uint32_t &characterId);
     static void removeCharacterLater_static(void *object);
     void removeCharacterLater_object();
-    void removeCharacterLater_return(const quint8 &query_id, const quint32 &characterId);
+    void removeCharacterLater_return(const uint8_t &query_id, const uint32_t &characterId);
     #endif
-    void selectCharacter(const quint8 &query_id, const quint32 &characterId);
+    void selectCharacter(const uint8_t &query_id, const uint32_t &characterId);
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    void selectCharacter(const quint8 &query_id, const char * const token);
+    void selectCharacter(const uint8_t &query_id, const char * const token);
     #endif
     static void selectCharacter_static(void *object);
     void selectCharacter_object();
-    void selectCharacter_return(const quint8 &query_id, const quint32 &characterId);
-    void selectCharacterServer(const quint8 &query_id, const quint32 &characterId);
+    void selectCharacter_return(const uint8_t &query_id, const uint32_t &characterId);
+    void selectCharacterServer(const uint8_t &query_id, const uint32_t &characterId);
     static void selectCharacterServer_static(void *object);
     void selectCharacterServer_object();
-    void selectCharacterServer_return(const quint8 &query_id, const quint32 &characterId);
+    void selectCharacterServer_return(const uint8_t &query_id, const uint32_t &characterId);
 
     static void selectClan_static(void *object);
     void selectClan_object();
@@ -421,7 +421,7 @@ private:
     void purgeReadBuffer();
 
     void sendNewEvent(const QByteArray &data);
-    void teleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+    void teleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
     void sendTradeRequest(const QByteArray &data);
     void sendBattleRequest(const QByteArray &data);
 
@@ -431,112 +431,112 @@ private:
     void seedValidated();
     void plantSeed(
         #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-        const quint8 &query_id,
+        const uint8_t &query_id,
         #endif
-        const quint8 &plant_id);
+        const uint8_t &plant_id);
     void collectPlant(
             #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-            const quint8 &query_id
+            const uint8_t &query_id
             #endif
             );
 
     void createMemoryClan();
     Direction lookToMove(const Direction &direction);
     //seed
-    void useSeed(const quint8 &plant_id);
+    void useSeed(const uint8_t &plant_id);
     //crafting
-    void useRecipe(const quint8 &query_id,const quint32 &recipe_id);
+    void useRecipe(const uint8_t &query_id,const uint32_t &recipe_id);
     void takeAnObjectOnMap();
     //inventory
-    void addObjectAndSend(const quint16 &item,const quint32 &quantity=1);
-    void addObject(const quint16 &item,const quint32 &quantity=1);
-    void saveObjectRetention(const quint16 &item);
-    quint32 removeObject(const quint16 &item,const quint32 &quantity=1);
-    void sendRemoveObject(const quint16 &item,const quint32 &quantity=1);
-    quint32 objectQuantity(const quint16 &item);
+    void addObjectAndSend(const uint16_t &item,const uint32_t &quantity=1);
+    void addObject(const uint16_t &item,const uint32_t &quantity=1);
+    void saveObjectRetention(const uint16_t &item);
+    uint32_t removeObject(const uint16_t &item,const uint32_t &quantity=1);
+    void sendRemoveObject(const uint16_t &item,const uint32_t &quantity=1);
+    uint32_t objectQuantity(const uint16_t &item);
     bool addMarketCashWithoutSave(const quint64 &cash);
     void addCash(const quint64 &cash,const bool &forceSave=false);
     void removeCash(const quint64 &cash);
     void addWarehouseCash(const quint64 &cash,const bool &forceSave=false);
     void removeWarehouseCash(const quint64 &cash);
-    void wareHouseStore(const qint64 &cash, const std::vector<QPair<quint16, qint32> > &items, const std::vector<quint32> &withdrawMonsters, const std::vector<quint32> &depositeMonsters);
-    bool wareHouseStoreCheck(const qint64 &cash, const std::vector<QPair<quint16, qint32> > &items, const std::vector<quint32> &withdrawMonsters, const std::vector<quint32> &depositeMonsters);
-    void addWarehouseObject(const quint16 &item,const quint32 &quantity=1);
-    quint32 removeWarehouseObject(const quint16 &item,const quint32 &quantity=1);
+    void wareHouseStore(const qint64 &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint32_t> &withdrawMonsters, const std::vector<uint32_t> &depositeMonsters);
+    bool wareHouseStoreCheck(const qint64 &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint32_t> &withdrawMonsters, const std::vector<uint32_t> &depositeMonsters);
+    void addWarehouseObject(const uint16_t &item,const uint32_t &quantity=1);
+    uint32_t removeWarehouseObject(const uint16_t &item,const uint32_t &quantity=1);
 
     bool haveReputationRequirements(const std::vector<ReputationRequirements> &reputationList) const;
-    void confirmEvolution(const quint32 &monsterId);
+    void confirmEvolution(const uint32_t &monsterId);
     void sendHandlerCommand(const std::string &command,const std::string &extraText);
-    void addEventInQueue(const quint8 &event, const quint8 &event_value, const QDateTime &currentDateTime);
+    void addEventInQueue(const uint8_t &event, const uint8_t &event_value, const QDateTime &currentDateTime);
     void removeFirstEventInQueue();
     //inventory
-    void destroyObject(const quint16 &itemId,const quint32 &quantity);
-    void useObject(const quint8 &query_id,const quint16 &itemId);
-    bool useObjectOnMonster(const quint16 &object, const quint32 &monster);
+    void destroyObject(const uint16_t &itemId,const uint32_t &quantity);
+    void useObject(const uint8_t &query_id,const uint16_t &itemId);
+    bool useObjectOnMonster(const uint16_t &object, const uint32_t &monster);
     //teleportation
-    void receiveTeleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+    void receiveTeleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
     //shop
-    void getShopList(const quint8 &query_id, const quint16 &shopId);
-    void buyObject(const quint8 &query_id, const quint16 &shopId, const quint16 &objectId, const quint32 &quantity, const quint32 &price);
-    void sellObject(const quint8 &query_id,const quint16 &shopId,const quint16 &objectId,const quint32 &quantity,const quint32 &price);
+    void getShopList(const uint8_t &query_id, const uint16_t &shopId);
+    void buyObject(const uint8_t &query_id, const uint16_t &shopId, const uint16_t &objectId, const uint32_t &quantity, const uint32_t &price);
+    void sellObject(const uint8_t &query_id,const uint16_t &shopId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price);
     //factory
-    void saveIndustryStatus(const quint32 &factoryId,const IndustryStatus &industryStatus,const Industry &industry);
-    void getFactoryList(const quint8 &query_id, const quint16 &factoryId);
-    void buyFactoryProduct(const quint8 &query_id,const quint16 &factoryId,const quint16 &objectId,const quint32 &quantity,const quint32 &price);
-    void sellFactoryResource(const quint8 &query_id,const quint16 &factoryId,const quint16 &objectId,const quint32 &quantity,const quint32 &price);
+    void saveIndustryStatus(const uint32_t &factoryId,const IndustryStatus &industryStatus,const Industry &industry);
+    void getFactoryList(const uint8_t &query_id, const uint16_t &factoryId);
+    void buyFactoryProduct(const uint8_t &query_id,const uint16_t &factoryId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price);
+    void sellFactoryResource(const uint8_t &query_id,const uint16_t &factoryId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price);
     //trade
     void tradeCanceled();
     void tradeAccepted();
     void tradeFinished();
     void tradeAddTradeCash(const quint64 &cash);
-    void tradeAddTradeObject(const quint16 &item,const quint32 &quantity);
-    void tradeAddTradeMonster(const quint32 &monsterId);
+    void tradeAddTradeObject(const uint16_t &item,const uint32_t &quantity);
+    void tradeAddTradeMonster(const uint32_t &monsterId);
     //quest
-    void newQuestAction(const QuestAction &action,const quint32 &questId);
+    void newQuestAction(const QuestAction &action,const uint32_t &questId);
     void appendAllow(const ActionAllow &allow);
     void removeAllow(const ActionAllow &allow);
     //reputation
-    void appendReputationPoint(const quint8 &reputationId, const qint32 &point);
+    void appendReputationPoint(const uint8_t &reputationId, const int32_t &point);
     void appendReputationRewards(const std::vector<ReputationRewards> &reputationList);
     //battle
     void battleCanceled();
     void battleAccepted();
     virtual bool tryEscape();
     void heal();
-    void requestFight(const quint16 &fightId);
-    bool learnSkill(const quint32 &monsterId,const quint16 &skill);
+    void requestFight(const uint16_t &fightId);
+    bool learnSkill(const uint32_t &monsterId,const uint16_t &skill);
     Client * getLocalClientHandlerFight();
     //clan
-    void clanAction(const quint8 &query_id,const quint8 &action,const std::string &text);
-    void addClan_return(const quint8 &query_id, const quint8 &action, const std::string &text);
+    void clanAction(const uint8_t &query_id,const uint8_t &action,const std::string &text);
+    void addClan_return(const uint8_t &query_id, const uint8_t &action, const std::string &text);
     void addClan_object();
     static void addClan_static(void *object);
-    void haveClanInfo(const quint32 &clanId, const std::string &clanName, const quint64 &cash);
+    void haveClanInfo(const uint32_t &clanId, const std::string &clanName, const quint64 &cash);
     void sendClanInfo();
     void clanInvite(const bool &accept);
     void waitingForCityCaputre(const bool &cancel);
-    quint32 clanId() const;
+    uint32_t clanId() const;
     void previousCityCaptureNotFinished();
     void leaveTheCityCapture();
     void removeFromClan();
-    void cityCaptureBattle(const quint16 &number_of_player,const quint16 &number_of_clan);
-    void cityCaptureBotFight(const quint16 &number_of_player,const quint16 &number_of_clan,const quint32 &fightId);
-    void cityCaptureInWait(const quint16 &number_of_player,const quint16 &number_of_clan);
+    void cityCaptureBattle(const uint16_t &number_of_player,const uint16_t &number_of_clan);
+    void cityCaptureBotFight(const uint16_t &number_of_player,const uint16_t &number_of_clan,const uint32_t &fightId);
+    void cityCaptureInWait(const uint16_t &number_of_player,const uint16_t &number_of_clan);
     void cityCaptureWin();
-    void fightOrBattleFinish(const bool &win,const quint32 &fightId);//fightId == 0 if is in battle
-    static void cityCaptureSendInWait(const CaptureCityValidated &captureCityValidated,const quint16 &number_of_player,const quint16 &number_of_clan);
-    static quint16 cityCapturePlayerCount(const CaptureCityValidated &captureCityValidated);
-    static quint16 cityCaptureClanCount(const CaptureCityValidated &captureCityValidated);
-    void moveMonster(const bool &up,const quint8 &number);
+    void fightOrBattleFinish(const bool &win,const uint32_t &fightId);//fightId == 0 if is in battle
+    static void cityCaptureSendInWait(const CaptureCityValidated &captureCityValidated,const uint16_t &number_of_player,const uint16_t &number_of_clan);
+    static uint16_t cityCapturePlayerCount(const CaptureCityValidated &captureCityValidated);
+    static uint16_t cityCaptureClanCount(const CaptureCityValidated &captureCityValidated);
+    void moveMonster(const bool &up,const uint8_t &number);
     //market
-    void getMarketList(const quint32 &query_id);
-    void buyMarketObject(const quint32 &query_id,const quint32 &marketObjectId,const quint32 &quantity);
-    void buyMarketMonster(const quint32 &query_id,const quint32 &monsterId);
-    void putMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
-    void putMarketMonster(const quint32 &query_id, const quint32 &monsterId, const quint32 &price);
-    void recoverMarketCash(const quint32 &query_id);
-    void withdrawMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity);
-    void withdrawMarketMonster(const quint32 &query_id, const quint32 &monsterId);
+    void getMarketList(const uint32_t &query_id);
+    void buyMarketObject(const uint32_t &query_id,const uint32_t &marketObjectId,const uint32_t &quantity);
+    void buyMarketMonster(const uint32_t &query_id,const uint32_t &monsterId);
+    void putMarketObject(const uint32_t &query_id,const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price);
+    void putMarketMonster(const uint32_t &query_id, const uint32_t &monsterId, const uint32_t &price);
+    void recoverMarketCash(const uint32_t &query_id);
+    void withdrawMarketObject(const uint32_t &query_id,const uint32_t &objectId,const uint32_t &quantity);
+    void withdrawMarketMonster(const uint32_t &query_id, const uint32_t &monsterId);
 
     static std::string directionToStringToSave(const Direction &direction);
     static std::string orientationToStringToSave(const Orientation &orientation);
@@ -545,8 +545,8 @@ private:
     bool haveStartQuestRequirement(const CatchChallenger::Quest &quest);
     bool nextStepQuest(const Quest &quest);
     bool startQuest(const Quest &quest);
-    void addQuestStepDrop(const quint32 &questId,const quint8 &questStep);
-    void removeQuestStepDrop(const quint32 &questId,const quint8 &questStep);
+    void addQuestStepDrop(const uint32_t &questId,const uint8_t &questStep);
+    void removeQuestStepDrop(const uint32_t &questId,const uint8_t &questStep);
 
     bool checkCollision();
 
@@ -556,7 +556,7 @@ private:
     void saveMonsterStat(const PlayerMonster &monster);
     bool checkLoose();
     bool isInBattle() const;
-    bool learnSkillInternal(const quint32 &monsterId,const quint32 &skill);
+    bool learnSkillInternal(const uint32_t &monsterId,const uint32_t &skill);
     void getRandomNumberIfNeeded() const;
     bool botFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y);
     bool checkFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y);
@@ -567,26 +567,26 @@ private:
     void battleFinishedReset();
     Client * getOtherPlayerBattle() const;
     bool finishTheTurn(const bool &isBot);
-    bool useSkill(const quint32 &skill);
+    bool useSkill(const uint32_t &skill);
     bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const;
     void healAllMonsters();
     void battleFakeAccepted(Client * otherPlayer);
     void battleFakeAcceptedInternal(Client *otherPlayer);
-    bool botFightStart(const quint32 &botFightId);
+    bool botFightStart(const uint32_t &botFightId);
     void setInCityCapture(const bool &isInCityCapture);
     int addCurrentBuffEffect(const Skill::BuffEffect &effect);
-    bool moveUpMonster(const quint8 &number);
-    bool moveDownMonster(const quint8 &number);
-    void saveMonsterPosition(const quint32 &monsterId,const quint8 &monsterPosition);
+    bool moveUpMonster(const uint8_t &number);
+    bool moveDownMonster(const uint8_t &number);
+    void saveMonsterPosition(const uint32_t &monsterId,const uint8_t &monsterPosition);
     bool doTheOtherMonsterTurn();
     Skill::AttackReturn generateOtherAttack();
-    Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel);
-    quint8 decreaseSkillEndurance(const quint32 &skill);
+    Skill::AttackReturn doTheCurrentMonsterAttack(const uint32_t &skill, const uint8_t &skillLevel);
+    uint8_t decreaseSkillEndurance(const uint32_t &skill);
     void emitBattleWin();
-    void hpChange(PlayerMonster * currentMonster, const quint32 &newHpValue);
-    bool removeBuffOnMonster(PlayerMonster * currentMonster, const quint32 &buffId);
+    void hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue);
+    bool removeBuffOnMonster(PlayerMonster * currentMonster, const uint32_t &buffId);
     bool removeAllBuffOnMonster(PlayerMonster * currentMonster);
-    bool addLevel(PlayerMonster * monster, const quint8 &numberOfLevel=1);
+    bool addLevel(PlayerMonster * monster, const uint8_t &numberOfLevel=1);
 
     bool checkKOCurrentMonsters();
     void syncForEndOfTurn();
@@ -594,29 +594,29 @@ private:
     bool buffIsValid(const Skill::BuffEffect &buffEffect);
     bool haveBattleAction() const;
     void resetBattleAction();
-    quint8 getOtherSelectedMonsterNumber() const;
+    uint8_t getOtherSelectedMonsterNumber() const;
     void haveUsedTheBattleAction();
     void sendBattleReturn();
     void sendBattleMonsterChange();
-    inline quint8 selectedMonsterNumberToMonsterPlace(const quint8 &selectedMonsterNumber);
+    inline uint8_t selectedMonsterNumberToMonsterPlace(const uint8_t &selectedMonsterNumber);
     void internalBattleCanceled(const bool &send);
     void internalBattleAccepted(const bool &send);
     void resetTheBattle();
     PublicPlayerMonster *getOtherMonster();
     void fightFinished();
     bool giveXPSP(int xp,int sp);
-    bool useSkillAgainstBotMonster(const quint32 &skill, const quint8 &skillLevel);
-    void wildDrop(const quint32 &monster);
-    quint8 getOneSeed(const quint8 &max);
+    bool useSkillAgainstBotMonster(const uint32_t &skill, const uint8_t &skillLevel);
+    void wildDrop(const uint32_t &monster);
+    uint8_t getOneSeed(const uint8_t &max);
     bool bothRealPlayerIsReady() const;
     bool checkIfCanDoTheTurn();
     bool dropKOOtherMonster();
-    quint32 catchAWild(const bool &toStorage, const PlayerMonster &newMonster);
+    uint32_t catchAWild(const bool &toStorage, const PlayerMonster &newMonster);
     bool haveCurrentSkill() const;
-    quint32 getCurrentSkill() const;
+    uint32_t getCurrentSkill() const;
     bool haveMonsterChange() const;
     bool addSkill(PlayerMonster * currentMonster,const PlayerMonster::PlayerSkill &skill);
-    bool setSkillLevel(PlayerMonster * currentMonster,const int &index,const quint8 &level);
+    bool setSkillLevel(PlayerMonster * currentMonster,const int &index,const uint8_t &level);
     bool removeSkill(PlayerMonster * currentMonster,const int &index);
 
     //trade
@@ -624,9 +624,9 @@ private:
     bool tradeIsValidated;
     bool tradeIsFreezed;
     quint64 tradeCash;
-    std::unordered_map<quint32,quint32> tradeObjects;
+    std::unordered_map<uint32_t,uint32_t> tradeObjects;
     std::vector<PlayerMonster> tradeMonster;
-    std::vector<quint32> inviteToClanList;
+    std::vector<uint32_t> inviteToClanList;
     Clan *clan;
 public:
     #ifdef EPOLLCATCHCHALLENGERSERVER
@@ -647,28 +647,28 @@ private:
     static MonsterDrops questItemMonsterToMonsterDrops(const Quest::ItemMonster &questItemMonster);
     bool otherPlayerIsInRange(Client * otherPlayer);
 
-    static quint32 getMonsterId(bool * const ok);
-    static quint32 getClanId(bool * const ok);
+    static uint32_t getMonsterId(bool * const ok);
+    static uint32_t getClanId(bool * const ok);
     bool getInTrade();
     void registerTradeRequest(Client * otherPlayerTrade);
     bool getIsFreezed();
     quint64 getTradeCash();
-    std::unordered_map<quint32,quint32> getTradeObjects();
+    std::unordered_map<uint32_t,uint32_t> getTradeObjects();
     std::vector<PlayerMonster> getTradeMonster();
     void resetTheTrade();
     void addExistingMonster(std::vector<PlayerMonster> tradeMonster);
     PlayerMonster &getSelectedMonster();
-    quint8 getSelectedMonsterNumber();
+    uint8_t getSelectedMonsterNumber();
     PlayerMonster& getEnemyMonster();
     void dissolvedClan();
-    bool inviteToClan(const quint32 &clanId);
-    void insertIntoAClan(const quint32 &clanId);
+    bool inviteToClan(const uint32_t &clanId);
+    void insertIntoAClan(const uint32_t &clanId);
     void ejectToClan();
 
-    void sendQuery(const quint8 &mainIdent,const quint8 &subIdent,const quint8 &queryNumber,const char * const data,const unsigned int &size);
-    void sendQuery(const quint8 &mainIdent,const quint8 &subIdent,const quint8 &queryNumber);
-    void postReply(const quint8 &queryNumber,const char * const data,const unsigned int &size);
-    void postReply(const quint8 &queryNumber);
+    void sendQuery(const uint8_t &mainIdent,const uint8_t &subIdent,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    void sendQuery(const uint8_t &mainIdent,const uint8_t &subIdent,const uint8_t &queryNumber);
+    void postReply(const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    void postReply(const uint8_t &queryNumber);
 
     void insertClientOnMap(CommonMap *map);
     void removeClientOnMap(CommonMap *map
@@ -687,11 +687,11 @@ private:
     struct PlantInWaiting
     {
         #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-        quint8 query_id;
+        uint8_t query_id;
         #endif
-        quint8 plant_id;
+        uint8_t plant_id;
         CommonMap *map;
-        quint8 x,y;
+        uint8_t x,y;
     };
     #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     static std::vector<PlantInWaiting> plant_list_in_waiting;
@@ -699,36 +699,36 @@ private:
     std::vector<PlantInWaiting> plant_list_in_waiting;
     #endif
 
-    void parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data,const unsigned int &size);
+    void parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data,const unsigned int &size);
     //have message without reply
-    void parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size);
-    void parseFullMessage(const quint8 &mainCodeType, const quint8 &subCodeType, const char * const rawData, const unsigned int &size);
+    void parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size);
+    void parseFullMessage(const uint8_t &mainCodeType, const uint8_t &subCodeType, const char * const rawData, const unsigned int &size);
     //have query with reply
-    void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
-    void parseFullQuery(const quint8 &mainCodeType, const quint8 &subCodeType, const quint8 &queryNumber, const char * const rawData, const unsigned int &size);
+    void parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    void parseFullQuery(const uint8_t &mainCodeType, const uint8_t &subCodeType, const uint8_t &queryNumber, const char * const rawData, const unsigned int &size);
     //send reply
-    void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
-    void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
+    void parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    void parseFullReplyData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
 
     void parseNetworkReadError(const std::string &errorString);
 
     // ------------------------------
     bool sendFile(const std::string &datapackPath,const std::string &fileName);
 
-    void characterIsRight(const quint8 &query_id, quint32 characterId, CommonMap* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation);
-    void characterIsRightWithParsedRescue(const quint8 &query_id, quint32 characterId, CommonMap* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation,
-                      CommonMap* rescue_map, const /*COORD_TYPE*/ quint8 &rescue_x, const /*COORD_TYPE*/ quint8 &rescue_y, const Orientation &rescue_orientation,
-                      CommonMap* unvalidated_rescue_map, const /*COORD_TYPE*/ quint8 &unvalidated_rescue_x, const /*COORD_TYPE*/ quint8 &unvalidated_rescue_y, const Orientation &unvalidated_rescue_orientation
+    void characterIsRight(const uint8_t &query_id, uint32_t characterId, CommonMap* map, const /*COORD_TYPE*/ uint8_t &x, const /*COORD_TYPE*/ uint8_t &y, const Orientation &orientation);
+    void characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t characterId, CommonMap* map, const /*COORD_TYPE*/ uint8_t &x, const /*COORD_TYPE*/ uint8_t &y, const Orientation &orientation,
+                      CommonMap* rescue_map, const /*COORD_TYPE*/ uint8_t &rescue_x, const /*COORD_TYPE*/ uint8_t &rescue_y, const Orientation &rescue_orientation,
+                      CommonMap* unvalidated_rescue_map, const /*COORD_TYPE*/ uint8_t &unvalidated_rescue_x, const /*COORD_TYPE*/ uint8_t &unvalidated_rescue_y, const Orientation &unvalidated_rescue_orientation
                       );
-    void characterIsRightWithRescue(const quint8 &query_id,quint32 characterId,CommonMap* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation,
+    void characterIsRightWithRescue(const uint8_t &query_id,uint32_t characterId,CommonMap* map,const /*COORD_TYPE*/ uint8_t &x,const /*COORD_TYPE*/ uint8_t &y,const Orientation &orientation,
                       const QVariant &rescue_map,const QVariant &rescue_x,const QVariant &rescue_y,const QVariant &rescue_orientation,
                       const QVariant &unvalidated_rescue_map,const QVariant &unvalidated_rescue_x,const QVariant &unvalidated_rescue_y,const QVariant &unvalidated_rescue_orientation
                       );
     void characterIsRightFinalStep();
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    void loginIsWrong(const quint8 &query_id,const quint8 &returnCode,const std::string &debugMessage);
+    void loginIsWrong(const uint8_t &query_id,const uint8_t &returnCode,const std::string &debugMessage);
     #endif
-    void characterSelectionIsWrong(const quint8 &query_id,const quint8 &returnCode,const std::string &debugMessage);
+    void characterSelectionIsWrong(const uint8_t &query_id,const uint8_t &returnCode,const std::string &debugMessage);
     //load linked data (like item, quests, ...)
     void loadLinkedData();
     void loadItems();
@@ -739,8 +739,8 @@ private:
     void loadReputation();
     void loadQuests();
     void loadBotAlreadyBeaten();
-    void loadPlayerMonsterBuffs(const quint32 &index);
-    void loadPlayerMonsterSkills(const quint32 &index);
+    void loadPlayerMonsterBuffs(const uint32_t &index);
+    void loadPlayerMonsterSkills(const uint32_t &index);
     void loadPlayerAllow();
 
     static void loadItems_static(void *object);
@@ -772,19 +772,19 @@ private:
 
     static void loadPlayerMonsterBuffs_static(void *object);
     void loadPlayerMonsterBuffs_object();
-    void loadPlayerMonsterBuffs_return(const quint32 &index);
+    void loadPlayerMonsterBuffs_return(const uint32_t &index);
     static void loadPlayerMonsterSkills_static(void *object);
     void loadPlayerMonsterSkills_object();
-    void loadPlayerMonsterSkills_return(const quint32 &index);
+    void loadPlayerMonsterSkills_return(const uint32_t &index);
 
-    quint32 tryCapture(const quint16 &item);
-    bool changeOfMonsterInFight(const quint32 &monsterId);
-    void confirmEvolutionTo(PlayerMonster * playerMonster,const quint32 &monster);
+    uint32_t tryCapture(const uint16_t &item);
+    bool changeOfMonsterInFight(const uint32_t &monsterId);
+    void confirmEvolutionTo(PlayerMonster * playerMonster,const uint32_t &monster);
 
     void sendInventory();
 
     void generateRandomNumber();
-    quint32 randomSeedsSize() const;
+    uint32_t randomSeedsSize() const;
 protected:
     bool loadTheRawUTF8String();//virtual to load dynamic max to_send_move
     //normal management related
@@ -799,9 +799,9 @@ protected:
     void messageParsingLayer(const std::string &message) const;
     //map move
     virtual bool singleMove(const Direction &direction);
-    virtual void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
-    virtual void teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
-    virtual bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
+    virtual void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
+    virtual void teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
+    virtual bool moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction);
     virtual void extraStop() = 0;
 };
 }

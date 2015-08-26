@@ -28,18 +28,18 @@ public:
     void parseDatapack(const std::string &datapackPath);
 public:
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    std::unordered_map<quint8,Plant> plants;
-    std::unordered_map<quint16,CrafingRecipe> crafingRecipes;
-    std::unordered_map<quint16,quint16> itemToCrafingRecipes;
+    std::unordered_map<uint8_t,Plant> plants;
+    std::unordered_map<uint16_t,CrafingRecipe> crafingRecipes;
+    std::unordered_map<uint16_t,uint16_t> itemToCrafingRecipes;
     #endif
     std::vector<Reputation> reputation;
-    std::unordered_map<quint16,Monster> monsters;
-    std::unordered_map<quint16,Skill> monsterSkills;
+    std::unordered_map<uint16_t,Monster> monsters;
+    std::unordered_map<uint16_t,Skill> monsterSkills;
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    std::unordered_map<quint8,Buff> monsterBuffs;
+    std::unordered_map<uint8_t,Buff> monsterBuffs;
     ItemFull items;
-    std::unordered_map<quint16,Industry> industries;
-    std::unordered_map<quint16,IndustryLink> industriesLink;
+    std::unordered_map<uint16_t,Industry> industries;
+    std::unordered_map<uint16_t,IndustryLink> industriesLink;
     std::vector<MonstersCollision> monstersCollision;
     #endif
     std::vector<Profile> profileList;

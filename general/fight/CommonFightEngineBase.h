@@ -2,8 +2,8 @@
 #define CommonFightEngineBase_BASE_H
 
 #include <QByteArray>
-#include <QHash>
-#include <QString>
+#include <std::unordered_map>
+#include <std::string>
 #include <vector>
 
 #include "../base/GeneralStructures.h"
@@ -15,8 +15,8 @@ namespace CatchChallenger {
 class CommonFightEngineBase
 {
 public:
-    static std::vector<PlayerMonster::PlayerSkill> generateWildSkill(const Monster &monster, const quint8 &level);
-    static Monster::Stat getStat(const Monster &monster, const quint8 &level);
+    static std::vector<PlayerMonster::PlayerSkill> generateWildSkill(const Monster &monster, const uint8_t &level);
+    static Monster::Stat getStat(const Monster &monster, const uint8_t &level);
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     static bool buffIsValid(const Skill::BuffEffect &buffEffect);
     #endif
