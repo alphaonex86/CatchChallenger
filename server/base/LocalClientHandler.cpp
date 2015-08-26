@@ -11,7 +11,8 @@
 
 #include "GlobalServerData.h"
 
-#include <std::stringList>
+#include <vector>
+#include <string>
 
 using namespace CatchChallenger;
 
@@ -834,7 +835,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
     if(command==Client::text_give)
     {
         bool ok;
-        std::stringList arguments=extraText.split(Client::text_space,std::string::SkipEmptyParts);
+        std::vector<std::string> arguments=extraText.split(Client::text_space,std::string::SkipEmptyParts);
         if(arguments.size()==2)
             arguments << Client::text_1;
         while(arguments.size()>3)
@@ -886,7 +887,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
     }
     else if(command==Client::text_setevent)
     {
-        const std::stringList &arguments=extraText.split(Client::text_space,std::string::SkipEmptyParts);
+        const std::vector<std::string> &arguments=extraText.split(Client::text_space,std::string::SkipEmptyParts);
         if(arguments.size()!=2)
         {
             receiveSystemText(std::stringLiteral("Wrong arguments number for the command, usage: /give setevent [event] [value]"));
@@ -935,7 +936,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
     else if(command==Client::text_take)
     {
         bool ok;
-        std::stringList arguments=extraText.split(Client::text_space,std::string::SkipEmptyParts);
+        std::vector<std::string> arguments=extraText.split(Client::text_space,std::string::SkipEmptyParts);
         if(arguments.size()==2)
             arguments << Client::text_1;
         if(arguments.size()!=3)
@@ -970,7 +971,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
     }
     else if(command==Client::text_tp)
     {
-        std::stringList arguments=extraText.split(Client::text_space,std::string::SkipEmptyParts);
+        std::vector<std::string> arguments=extraText.split(Client::text_space,std::string::SkipEmptyParts);
         if(arguments.size()==3)
         {
             if(arguments.at(1)!=Client::text_to)
@@ -1766,7 +1767,7 @@ void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uin
 
 void Client::saveIndustryStatus(const uint32_t &factoryId,const IndustryStatus &industryStatus,const Industry &industry)
 {
-    std::stringList resourcesStringList,productsStringList;
+    std::vector<std::string> resourcesStringList,productsStringList;
     int index;
     //send the resource
     index=0;

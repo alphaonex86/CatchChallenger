@@ -291,7 +291,7 @@ void Client::sendBroadCastCommand(const std::string &command,const std::string &
     normalOutput(Client::text_command+command+Client::text_space+extraText);
     if(command==Client::text_chat)
     {
-        std::stringList list=extraText.split(Client::text_space);
+        std::vector<std::string> list=extraText.split(Client::text_space);
         if(list.size()<2)
         {
             receiveSystemText(Client::text_commandnotunderstand+command+Client::text_space+extraText);
@@ -319,7 +319,7 @@ void Client::sendBroadCastCommand(const std::string &command,const std::string &
     }
     else if(command==Client::text_setrights)
     {
-        std::stringList list=extraText.split(Client::text_space);
+        std::vector<std::string> list=extraText.split(Client::text_space);
         if(list.size()!=2)
         {
             receiveSystemText(Client::text_commandnotunderstand+command+Client::text_space+extraText);
@@ -360,7 +360,7 @@ void Client::sendBroadCastCommand(const std::string &command,const std::string &
             receiveSystemText(Client::text_Youarealoneontheserver);
         else
         {
-            std::stringList playerStringList;
+            std::vector<std::string> playerStringList;
             std::unordered_map<std::string,Client *>::const_iterator i_playerByPseudo=playerByPseudo.constBegin();
             std::unordered_map<std::string,Client *>::const_iterator i_playerByPseudo_end=playerByPseudo.constEnd();
             while(i_playerByPseudo != i_playerByPseudo_end)

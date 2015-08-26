@@ -183,7 +183,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
                                 if(multiplicator.hasAttribute(FightLoader::text_number) && multiplicator.hasAttribute(FightLoader::text_to))
                                 {
                                     float number=multiplicator.attribute(FightLoader::text_number).toFloat(&ok);
-                                    std::stringList to=multiplicator.attribute(FightLoader::text_to).split(FightLoader::text_dotcoma);
+                                    std::vector<std::string> to=multiplicator.attribute(FightLoader::text_to).split(FightLoader::text_dotcoma);
                                     if(ok && (number==2.0 || number==0.5 || number==0.0))
                                     {
                                         int index=0;
@@ -403,7 +403,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                         }
                         if(item.hasAttribute(FightLoader::text_type))
                         {
-                            const std::stringList &typeList=item.attribute(FightLoader::text_type).split(FightLoader::text_dotcoma);
+                            const std::vector<std::string> &typeList=item.attribute(FightLoader::text_type).split(FightLoader::text_dotcoma);
                             int index=0;
                             while(index<typeList.size())
                             {
@@ -416,7 +416,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                         }
                         if(item.hasAttribute(FightLoader::text_type2))
                         {
-                            const std::stringList &typeList=item.attribute(FightLoader::text_type2).split(FightLoader::text_dotcoma);
+                            const std::vector<std::string> &typeList=item.attribute(FightLoader::text_type2).split(FightLoader::text_dotcoma);
                             int index=0;
                             while(index<typeList.size())
                             {
@@ -980,7 +980,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
 {
     std::unordered_map<uint16_t,BotFight> botFightList;
     QDir dir(folder);
-    QFileInfoList list=dir.entryInfoList(std::stringList(),QDir::NoDotAndDotDot|QDir::Files);
+    QFileInfoList list=dir.entryInfoList(std::vector<std::string>(),QDir::NoDotAndDotDot|QDir::Files);
     int index_file=0;
     while(index_file<list.size())
     {

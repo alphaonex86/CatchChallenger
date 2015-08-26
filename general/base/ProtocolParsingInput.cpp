@@ -1494,9 +1494,9 @@ void ProtocolParsingBase::dataClear()
 }
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
-std::stringList ProtocolParsingBase::getQueryRunningList()
+std::vector<std::string> ProtocolParsingBase::getQueryRunningList()
 {
-    std::stringList returnedList;
+    std::vector<std::string> returnedList;
     std::unordered_mapIterator<uint8_t,uint8_t> i(waitedReply_mainCodeType);
     while (i.hasNext()) {
         i.next();

@@ -909,7 +909,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                             {
                                 mapLayerContentForMonsterCollision[name]=data.constData();
                                 {
-                                    const std::stringList &monsterTypeListText=CommonDatapack::commonDatapack.monstersCollision.at(index).monsterTypeList;
+                                    const std::vector<std::string> &monsterTypeListText=CommonDatapack::commonDatapack.monstersCollision.at(index).monsterTypeList;
                                     int monsterTypeListIndex=0;
                                     while(monsterTypeListIndex<monsterTypeListText.size())
                                     {
@@ -1205,7 +1205,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
         null_data[3]=0x00;
         x=0;
         y=0;
-        std::stringList layers_name;
+        std::vector<std::string> layers_name;
         if(Walkable.size()>0)
             layers_name << "Walkable";
         if(this->map_to_send.parsed_layer.monstersCollisionMap!=NULL)
@@ -1326,7 +1326,7 @@ bool Map_loader::loadMonsterMap(const std::string &fileName, std::vector<std::st
     }
 
     //found the cave name
-    std::stringList caveName;
+    std::vector<std::string> caveName;
     {
         int index=0;
         while(index<CommonDatapack::commonDatapack.monstersCollision.size())
@@ -1365,7 +1365,7 @@ bool Map_loader::loadMonsterMap(const std::string &fileName, std::vector<std::st
         while(index<CommonDatapack::commonDatapack.monstersCollision.size())
         {
             const MonstersCollision &monstersCollision=CommonDatapack::commonDatapack.monstersCollision.at(index);
-            const std::stringList &searchList=monstersCollision.defautMonsterTypeList;
+            const std::vector<std::string> &searchList=monstersCollision.defautMonsterTypeList;
             int index_search=0;
             while(index_search<searchList.size())
             {
@@ -1408,7 +1408,7 @@ bool Map_loader::loadMonsterMap(const std::string &fileName, std::vector<std::st
                         while(event_index<monstersCollision.events.size())
                         {
                             const MonstersCollision::MonstersCollisionEvent &monstersCollisionEvent=monstersCollision.events.at(event_index);
-                            const std::stringList &searchList=monstersCollisionEvent.monsterTypeList;
+                            const std::vector<std::string> &searchList=monstersCollisionEvent.monsterTypeList;
                             int index_search=0;
                             while(index_search<searchList.size())
                             {
