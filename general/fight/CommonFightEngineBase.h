@@ -2,8 +2,6 @@
 #define CommonFightEngineBase_BASE_H
 
 #include <QByteArray>
-#include <std::unordered_map>
-#include <std::string>
 #include <vector>
 
 #include "../base/GeneralStructures.h"

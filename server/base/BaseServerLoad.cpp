@@ -154,7 +154,7 @@ bool BaseServer::preload_zone_init()
             }
             xmlContent=itemsFile.readAll();
             itemsFile.close();
-            std::string errorStr;
+            QString errorStr;
             int errorLine,errorColumn;
             if(!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
             {
@@ -183,13 +183,13 @@ bool BaseServer::preload_zone_init()
 
         //load capture
         std::vector<uint16_t> fightIdList;
-        QDomElement capture(root.firstChildElement(std::string::fromStdString(BaseServer::text_capture)));
+        QDomElement capture(root.firstChildElement(QString::fromStdString(BaseServer::text_capture)));
         if(!capture.isNull())
         {
-            if(capture.isElement() && capture.hasAttribute(std::string::fromStdString(BaseServer::text_fightId)))
+            if(capture.isElement() && capture.hasAttribute(QString::fromStdString(BaseServer::text_fightId)))
             {
                 bool ok;
-                const std::vector<std::string> &fightIdStringList=stringsplit(capture.attribute(std::string::fromStdString(BaseServer::text_fightId)).toStdString(),';');
+                const std::vector<std::string> &fightIdStringList=stringsplit(capture.attribute(QString::fromStdString(BaseServer::text_fightId)).toStdString(),';');
                 int sub_index=0;
                 const int &listsize=fightIdStringList.size();
                 while(sub_index<listsize)
@@ -1166,7 +1166,7 @@ void BaseServer::preload_the_datapack()
                       << CATCHCHALLENGER_CHECK_MAINDATAPACKCODE;
             abort();
         }
-        if(!QDir(std::string::fromStdString(GlobalServerData::serverPrivateVariables.mainDatapackFolder)).exists())
+        if(!QDir(QString::fromStdString(GlobalServerData::serverPrivateVariables.mainDatapackFolder)).exists())
         {
             std::cerr << GlobalServerData::serverPrivateVariables.mainDatapackFolder << " don't exists" << std::endl;
             abort();
@@ -1182,7 +1182,7 @@ void BaseServer::preload_the_datapack()
                 "/sub/"+
                 CommonSettingsServer::commonSettingsServer.subDatapackCode+
                 "/";
-        if(!QDir(std::string::fromStdString(GlobalServerData::serverPrivateVariables.subDatapackFolder)).exists())
+        if(!QDir(QString::fromStdString(GlobalServerData::serverPrivateVariables.subDatapackFolder)).exists())
         {
             std::cerr << GlobalServerData::serverPrivateVariables.subDatapackFolder << " don't exists, drop spec" << std::endl;
             GlobalServerData::serverPrivateVariables.subDatapackFolder.clear();
@@ -1200,7 +1200,7 @@ void BaseServer::preload_the_datapack()
         const std::regex mainDatapackBaseFilter("^map[/\\\\]main[/\\\\]");
         unsigned int index=0;
         while(index<datapack_file_temp.size()) {
-            QFile file(std::string::fromStdString(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index)));
+            QFile file(QString::fromStdString(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index)));
             if(std::regex_match(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName))
             {
                 if(file.open(QIODevice::ReadOnly))
@@ -1265,7 +1265,7 @@ void BaseServer::preload_the_datapack()
         const std::regex mainDatapackFolderFilter("^sub[/\\\\]");
         unsigned int index=0;
         while(index<datapack_file_temp.size()) {
-            QFile file(std::string::fromStdString(GlobalServerData::serverPrivateVariables.mainDatapackFolder+datapack_file_temp.at(index)));
+            QFile file(QString::fromStdString(GlobalServerData::serverPrivateVariables.mainDatapackFolder+datapack_file_temp.at(index)));
             if(std::regex_match(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName))
             {
                 if(file.open(QIODevice::ReadOnly))
@@ -1328,7 +1328,7 @@ void BaseServer::preload_the_datapack()
         std::sort(datapack_file_temp.begin(), datapack_file_temp.end());
         unsigned int index=0;
         while(index<datapack_file_temp.size()) {
-            QFile file(std::string::fromStdString(GlobalServerData::serverPrivateVariables.subDatapackFolder+datapack_file_temp.at(index)));
+            QFile file(QString::fromStdString(GlobalServerData::serverPrivateVariables.subDatapackFolder+datapack_file_temp.at(index)));
             if(std::regex_match(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName))
             {
                 if(file.open(QIODevice::ReadOnly))
@@ -1383,11 +1383,11 @@ void BaseServer::preload_the_datapack()
               << " file for datapack loaded main, "
               << Client::datapack_file_hash_cache_sub.size()
               << " file for datapack loaded sub" << std::endl;
-    std::cout << std::string(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.toHex()).toStdString()
+    std::cout << QString(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.toHex()).toStdString()
               << " hash for datapack loaded base, "
-              << std::string(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.toHex()).toStdString()
+              << QString(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.toHex()).toStdString()
               << " hash for datapack loaded main, "
-              << std::string(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.toHex()).toStdString()
+              << QString(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.toHex()).toStdString()
               << " hash for datapack loaded sub" << std::endl;
 }
 
@@ -1504,9 +1504,9 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                         QDomElement step = i->second;
                         std::pair<uint8_t,uint8_t> pairpoint(bot_Semi.point.x,bot_Semi.point.y);
                         MapServer * const mapServer=static_cast<MapServer *>(semi_loaded_map.at(index).map);
-                        if(step.attribute(std::string::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_shop)
+                        if(step.attribute(QString::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_shop)
                         {
-                            if(!step.hasAttribute(std::string::fromStdString(BaseServer::text_shop)))
+                            if(!step.hasAttribute(QString::fromStdString(BaseServer::text_shop)))
                                 std::cerr << "Has not attribute \"shop\": for bot id: "
                                           << bot_Semi.id
                                           << " ("
@@ -1521,7 +1521,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                           << i->first;
                             else
                             {
-                                uint32_t shop=step.attribute(std::string::fromStdString(BaseServer::text_shop)).toUInt(&ok);
+                                uint32_t shop=step.attribute(QString::fromStdString(BaseServer::text_shop)).toUInt(&ok);
                                 if(!ok)
                                     std::cerr << "shop is not a number: for bot id: "
                                               << bot_Semi.id
@@ -1569,7 +1569,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 }
                             }
                         }
-                        else if(step.attribute(std::string::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_learn)
+                        else if(step.attribute(QString::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_learn)
                         {
                             if(mapServer->learn.find(pairpoint)!=mapServer->learn.end())
                                 std::cerr << "learn point already on the map: for bot id: "
@@ -1604,7 +1604,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 learnpoint_number++;
                             }
                         }
-                        else if(step.attribute(std::string::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_heal)
+                        else if(step.attribute(QString::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_heal)
                         {
                             if(mapServer->heal.find(pairpoint)!=mapServer->heal.end())
                                 std::cerr << "heal point already on the map: for bot id: "
@@ -1639,7 +1639,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 healpoint_number++;
                             }
                         }
-                        else if(step.attribute(std::string::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_market)
+                        else if(step.attribute(QString::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_market)
                         {
                             if(mapServer->market.find(pairpoint)!=mapServer->market.end())
                                 std::cerr << "market point already on the map: for bot id: "
@@ -1674,9 +1674,9 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 marketpoint_number++;
                             }
                         }
-                        else if(step.attribute(std::string::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_zonecapture)
+                        else if(step.attribute(QString::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_zonecapture)
                         {
-                            if(!step.hasAttribute(std::string::fromStdString(BaseServer::text_zone)))
+                            if(!step.hasAttribute(QString::fromStdString(BaseServer::text_zone)))
                                 std::cerr << "zonecapture point have not the zone attribute: for bot id: "
                                           << bot_Semi.id
                                           << " ("
@@ -1718,11 +1718,11 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                               << "), for step: "
                                               << i->first;
                                 #endif
-                                mapServer->zonecapture[pairpoint]=step.attribute(std::string::fromStdString(BaseServer::text_zone)).toStdString();
+                                mapServer->zonecapture[pairpoint]=step.attribute(QString::fromStdString(BaseServer::text_zone)).toStdString();
                                 zonecapturepoint_number++;
                             }
                         }
-                        else if(step.attribute(std::string::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_fight)
+                        else if(step.attribute(QString::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_fight)
                         {
                             if(mapServer->botsFight.find(pairpoint)!=mapServer->botsFight.end())
                                 std::cerr << "botsFight point already on the map: for bot id: "
@@ -1739,7 +1739,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                           << i->first;
                             else
                             {
-                                const uint32_t &fightid=step.attribute(std::string::fromStdString(BaseServer::text_fightid)).toUInt(&ok);
+                                const uint32_t &fightid=step.attribute(QString::fromStdString(BaseServer::text_fightid)).toUInt(&ok);
                                 if(ok)
                                 {
                                     if(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightid)!=CommonDatapackServerSpec::commonDatapackServerSpec.botFights.end())

@@ -151,7 +151,7 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
             if(item.hasAttribute(DatapackGeneralLoader::text_type))
             {
                 std::vector<int32_t> point_list_positive,point_list_negative;
-                std::stringList text_positive,text_negative;
+                std::vector<std::string> text_positive,text_negative;
                 QDomElement level = item.firstChildElement(DatapackGeneralLoader::text_level);
                 ok=true;
                 while(!level.isNull() && ok)
@@ -385,7 +385,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
             quest.repeatable=true;
     if(root.hasAttribute(DatapackGeneralLoader::text_bot))
     {
-        const std::stringList &tempStringList=root.attribute(DatapackGeneralLoader::text_bot).split(DatapackGeneralLoader::text_dotcomma);
+        const std::vector<std::string> &tempStringList=root.attribute(DatapackGeneralLoader::text_bot).split(DatapackGeneralLoader::text_dotcomma);
         int index=0;
         while(index<tempStringList.size())
         {
@@ -598,7 +598,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     CatchChallenger::Quest::Step stepObject;
                     if(step.hasAttribute(DatapackGeneralLoader::text_bot))
                     {
-                        const std::stringList &tempStringList=step.attribute(DatapackGeneralLoader::text_bot).split(DatapackGeneralLoader::text_dotcomma);
+                        const std::vector<std::string> &tempStringList=step.attribute(DatapackGeneralLoader::text_bot).split(DatapackGeneralLoader::text_dotcomma);
                         int index=0;
                         while(index<tempStringList.size())
                         {
@@ -641,7 +641,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                                             CatchChallenger::Quest::ItemMonster itemMonster;
                                             itemMonster.item=item.item;
 
-                                            const std::stringList &tempStringList=stepItem.attribute(DatapackGeneralLoader::text_monster).split(DatapackGeneralLoader::text_dotcomma);
+                                            const std::vector<std::string> &tempStringList=stepItem.attribute(DatapackGeneralLoader::text_monster).split(DatapackGeneralLoader::text_dotcomma);
                                             int index=0;
                                             while(index<tempStringList.size())
                                             {
@@ -1742,7 +1742,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
     #endif
     ItemFull items;
     QDir dir(folder);
-    const std::stringList &fileList=FacilityLibGeneral::listFolder(dir.absolutePath()+DatapackGeneralLoader::text_slash);
+    const std::vector<std::string> &fileList=FacilityLibGeneral::listFolder(dir.absolutePath()+DatapackGeneralLoader::text_slash);
     int file_index=0;
     while(file_index<fileList.size())
     {
@@ -2066,7 +2066,7 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
             index++;
         }
     }
-    std::stringList defaultforcedskinList;
+    std::vector<std::string> defaultforcedskinList;
     std::unordered_map<std::string,uint8_t> skinNameToId;
     {
         int index=0;
@@ -2171,7 +2171,7 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
             {
                 const QDomElement &forcedskin = startItem.firstChildElement(DatapackGeneralLoader::text_forcedskin);
 
-                std::stringList forcedskinList;
+                std::vector<std::string> forcedskinList;
                 if(!forcedskin.isNull() && forcedskin.isElement() && forcedskin.hasAttribute(DatapackGeneralLoader::text_value))
                     forcedskinList=forcedskin.attribute(DatapackGeneralLoader::text_value).split(DatapackGeneralLoader::text_dotcomma);
                 else
