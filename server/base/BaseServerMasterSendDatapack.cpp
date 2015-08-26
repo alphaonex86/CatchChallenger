@@ -5,26 +5,25 @@
 #include "../../general/base/GeneralVariable.h"
 #include "../VariableServer.h"
 
-#include <QDebug>
 #include <QCryptographicHash>
-#include <QRegularExpression>
+#include <regex>
 #include <iostream>
 
 using namespace CatchChallenger;
 
-QHash<QString,quint8> BaseServerMasterSendDatapack::skinList;
+std::unordered_map<std::string,quint8> BaseServerMasterSendDatapack::skinList;
 
-QSet<QString> BaseServerMasterSendDatapack::compressedExtension;
-QSet<QString> BaseServerMasterSendDatapack::extensionAllowed;
+std::unordered_set<std::string> BaseServerMasterSendDatapack::compressedExtension;
+std::unordered_set<std::string> BaseServerMasterSendDatapack::extensionAllowed;
 
 QByteArray BaseServerMasterSendDatapack::rawFilesBuffer;
 QByteArray BaseServerMasterSendDatapack::compressedFilesBuffer;
 int BaseServerMasterSendDatapack::rawFilesBufferCount;
 int BaseServerMasterSendDatapack::compressedFilesBufferCount;
 
-QHash<QString,quint32> BaseServerMasterSendDatapack::datapack_file_list_cache;
-QHash<QString,BaseServerMasterSendDatapack::DatapackCacheFile> BaseServerMasterSendDatapack::datapack_file_hash_cache;
-QRegularExpression BaseServerMasterSendDatapack::fileNameStartStringRegex=QRegularExpression(QLatin1String("^[a-zA-Z]:/"));
+std::unordered_map<std::string,uint32_t> BaseServerMasterSendDatapack::datapack_file_list_cache;
+std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> BaseServerMasterSendDatapack::datapack_file_hash_cache;
+std::regex BaseServerMasterSendDatapack::fileNameStartStringRegex=std::regex("^[a-zA-Z]:/");
 
 BaseServerMasterSendDatapack::BaseServerMasterSendDatapack()
 {
@@ -34,7 +33,7 @@ BaseServerMasterSendDatapack::~BaseServerMasterSendDatapack()
 {
 }
 
-void BaseServerMasterSendDatapack::load(const QString &datapack_basePath)
+void BaseServerMasterSendDatapack::load(const std::string &datapack_basePath)
 {
     this->datapack_basePathLogin=datapack_basePath;
     preload_the_skin();
@@ -42,9 +41,9 @@ void BaseServerMasterSendDatapack::load(const QString &datapack_basePath)
 
 void BaseServerMasterSendDatapack::preload_the_skin()
 {
-    const QStringList &skinFolderList=FacilityLibGeneral::skinIdList(datapack_basePathLogin+DATAPACK_BASE_PATH_SKIN);
-    int index=0;
-    const int &listsize=skinFolderList.size();
+    const std::vector<std::string> &skinFolderList=FacilityLibGeneral::skinIdList(datapack_basePathLogin+DATAPACK_BASE_PATH_SKIN);
+    unsigned int index=0;
+    const unsigned int &listsize=skinFolderList.size();
     while(index<listsize)
     {
         skinList[skinFolderList.at(index)]=index;
@@ -55,17 +54,17 @@ void BaseServerMasterSendDatapack::preload_the_skin()
 
 void BaseServerMasterSendDatapack::loadTheDatapackFileList()
 {
-    QStringList extensionAllowedTemp=(QString(CATCHCHALLENGER_EXTENSION_ALLOWED)+QString(";")+QString(CATCHCHALLENGER_EXTENSION_COMPRESSED)).split(";");
+    std::vector<std::string> extensionAllowedTemp=(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED)+std::string(";")+std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED)).split(";");
     extensionAllowed=extensionAllowedTemp.toSet();
-    QStringList compressedExtensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(";");
+    std::vector<std::string> compressedExtensionAllowedTemp=std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(";");
     compressedExtension=compressedExtensionAllowedTemp.toSet();
-    QRegularExpression datapack_rightFileName = QRegularExpression(DATAPACK_FILE_REGEX);
+    std::regex datapack_rightFileName = std::regex(DATAPACK_FILE_REGEX);
 
-    QString text_datapack(datapack_basePathLogin);
-    QString text_exclude("map/main/");
+    std::string text_datapack(datapack_basePathLogin);
+    std::string text_exclude("map/main/");
 
     QCryptographicHash baseHash(QCryptographicHash::Sha224);
-    QStringList datapack_file_temp=FacilityLibGeneral::listFolder(text_datapack);
+    std::vector<std::string> datapack_file_temp=FacilityLibGeneral::listFolder(text_datapack);
     datapack_file_temp.sort();
 
     int index=0;

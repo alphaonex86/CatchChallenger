@@ -1,8 +1,8 @@
 #ifndef CATCHCHALLENGER_BASESERVERLOGINSENDDATAPACK_H
 #define CATCHCHALLENGER_BASESERVERLOGINSENDDATAPACK_H
 
-#include <QList>
-#include <QRegularExpression>
+#include <vector>
+#include <regex>
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../VariableServer.h"
@@ -20,18 +20,18 @@ public:
 
     static std::unordered_map<std::string,quint8> skinList;
 
-    static std::unordered_set<std::string > compressedExtension;
-    static std::unordered_set<std::string > extensionAllowed;
+    static std::unordered_set<std::string> compressedExtension;
+    static std::unordered_set<std::string> extensionAllowed;
     static QByteArray rawFilesBuffer,compressedFilesBuffer;
     static int rawFilesBufferCount,compressedFilesBufferCount;
     struct DatapackCacheFile
     {
-        quint32 mtime;
-        quint32 partialHash;
+        uint32_t mtime;
+        uint32_t partialHash;
     };
-    static std::unordered_map<std::string,quint32> datapack_file_list_cache;
+    static std::unordered_map<std::string,uint32_t> datapack_file_list_cache;
     static std::unordered_map<std::string,DatapackCacheFile> datapack_file_hash_cache;
-    static QRegularExpression fileNameStartStringRegex;
+    static std::regex fileNameStartStringRegex;
 private:
     void preload_the_skin();
     void loadTheDatapackFileList();
