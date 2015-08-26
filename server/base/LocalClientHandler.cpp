@@ -1774,7 +1774,7 @@ void Client::saveIndustryStatus(const quint32 &factoryId,const IndustryStatus &i
     {
         const Industry::Resource &resource=industry.resources.at(index);
         const quint32 &quantityInStock=industryStatus.resources.value(resource.item);
-        resourcesStringList << QStringLiteral("%1->%2").arg(resource.item).arg(quantityInStock);
+        resourcesStringList << QStringLiteral("%1:%2").arg(resource.item).arg(quantityInStock);
         index++;
     }
     //send the product
@@ -1783,7 +1783,7 @@ void Client::saveIndustryStatus(const quint32 &factoryId,const IndustryStatus &i
     {
         const Industry::Product &product=industry.products.at(index);
         const quint32 &quantityInStock=industryStatus.products.value(product.item);
-        productsStringList << QStringLiteral("%1->%2").arg(product.item).arg(quantityInStock);
+        productsStringList << QStringLiteral("%1:%2").arg(product.item).arg(quantityInStock);
         index++;
     }
 
