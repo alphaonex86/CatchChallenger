@@ -117,13 +117,12 @@ void BaseServer::unload_the_bots()
 void BaseServer::unload_the_map()
 {
     semi_loaded_map.clear();
-    QHash<std::string,CommonMap *>::const_iterator i = GlobalServerData::serverPrivateVariables.map_list.constBegin();
-    QHash<std::string,CommonMap *>::const_iterator i_end = GlobalServerData::serverPrivateVariables.map_list.constEnd();
-    while (i != i_end)
+    auto i=GlobalServerData::serverPrivateVariables.map_list.begin();
+    while (i != GlobalServerData::serverPrivateVariables.map_list.end())
     {
-        CommonMap::removeParsedLayer(i.value()->parsed_layer);
-        delete i.value();
-        i++;
+        CommonMap::removeParsedLayer(i->second->parsed_layer);
+        delete i->second;
+        ++i;
     }
     GlobalServerData::serverPrivateVariables.map_list.clear();
     if(GlobalServerData::serverPrivateVariables.flat_map_list!=NULL)
@@ -166,7 +165,7 @@ void BaseServer::unload_the_ddos()
 void BaseServer::unload_the_events()
 {
     GlobalServerData::serverPrivateVariables.events.clear();
-    int index=0;
+    unsigned int index=0;
     while(index<GlobalServerData::serverPrivateVariables.timerEvents.size())
     {
         delete GlobalServerData::serverPrivateVariables.timerEvents.at(index);
