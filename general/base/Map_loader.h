@@ -29,14 +29,14 @@ public:
     static void removeMapLayer(const ParsedLayer &parsed_layer);
     bool loadMonsterMap(const std::string &fileName,std::vector<std::string> detectedMonsterCollisionMonsterType,std::vector<std::string> detectedMonsterCollisionLayer);
     static std::string resolvRelativeMap(const std::string &fileName,const std::string &link,const std::string &datapackPath=std::string());
-    static QDomElement getXmlCondition(const std::string &fileName,const std::string &conditionFile,const quint32 &conditionId);
+    static QDomElement getXmlCondition(const std::string &fileName,const std::string &conditionFile,const uint32_t &conditionId);
     static MapCondition xmlConditionToMapCondition(const std::string &conditionFile, const QDomElement &item);
     std::vector<MapMonster> loadSpecificMonster(const std::string &fileName,const std::string &monsterType);
-    static std::unordered_map<std::string/*file*/, std::unordered_map<quint32/*id*/,QDomElement> > teleportConditionsUnparsed;
+    static std::unordered_map<std::string/*file*/, std::unordered_map<uint32_t/*id*/,QDomElement> > teleportConditionsUnparsed;
 private:
     QByteArray decompress(const QByteArray &data, int expectedSize);
     std::string error;
-    std::unordered_map<std::string,quint8> zoneNumber;
+    std::unordered_map<std::string,uint8_t> zoneNumber;
 
     static const std::string text_map;
     static const std::string text_width;

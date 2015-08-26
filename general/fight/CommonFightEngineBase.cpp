@@ -8,12 +8,12 @@
 
 using namespace CatchChallenger;
 
-QList<PlayerMonster::PlayerSkill> CommonFightEngineBase::generateWildSkill(const Monster &monster, const quint8 &level)
+std::vector<PlayerMonster::PlayerSkill> CommonFightEngineBase::generateWildSkill(const Monster &monster, const uint8_t &level)
 {
-    QList<PlayerMonster::PlayerSkill> skills;
+    std::vector<PlayerMonster::PlayerSkill> skills;
 
     int index=monster.learn.size()-1;
-    QList<quint16> learnedSkill;
+    std::vector<uint16_t> learnedSkill;
     while(index>=0 && skills.size()<CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER)
     {
         const Monster::AttackToLearn &attackToLearn=monster.learn.at(index);
@@ -40,7 +40,7 @@ QList<PlayerMonster::PlayerSkill> CommonFightEngineBase::generateWildSkill(const
 }
 
 /// \warning you need check before the input data
-Monster::Stat CommonFightEngineBase::getStat(const Monster &monster, const quint8 &level)
+Monster::Stat CommonFightEngineBase::getStat(const Monster &monster, const uint8_t &level)
 {
     //get the normal stats
     Monster::Stat stat=monster.stat;

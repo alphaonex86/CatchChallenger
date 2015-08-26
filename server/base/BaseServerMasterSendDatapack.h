@@ -18,7 +18,7 @@ public:
     void load(const std::string &datapack_basePath);
     void unload();
 
-    static std::unordered_map<std::string,quint8> skinList;
+    static std::unordered_map<std::string,uint8_t> skinList;
 
     static std::unordered_set<std::string> compressedExtension;
     static std::unordered_set<std::string> extensionAllowed;

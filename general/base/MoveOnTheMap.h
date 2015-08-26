@@ -26,20 +26,20 @@ public:
     static Orientation directionToOrientation(const Direction &direction);
     static Direction directionToDirectionLook(const Direction &direction);
 
-    static bool canGoTo(const Direction &direction, const CommonMap &map, const quint8 &x, const quint8 &y, const bool &checkCollision, const bool &allowTeleport=true);
-    static ParsedLayerLedges getLedge(const CommonMap &map, const quint8 &x, const quint8 &y);
-    static bool move(Direction direction, CommonMap ** map, quint8 *x, quint8 *y, const bool &checkCollision=false, const bool &allowTeleport=true);
-    static bool moveWithoutTeleport(Direction direction, CommonMap ** map, quint8 *x, quint8 *y, const bool &checkCollision=false, const bool &allowTeleport=true);
-    static bool teleport(CommonMap ** map, quint8 *x, quint8 *y);
+    static bool canGoTo(const Direction &direction, const CommonMap &map, const uint8_t &x, const uint8_t &y, const bool &checkCollision, const bool &allowTeleport=true);
+    static ParsedLayerLedges getLedge(const CommonMap &map, const uint8_t &x, const uint8_t &y);
+    static bool move(Direction direction, CommonMap ** map, uint8_t *x, uint8_t *y, const bool &checkCollision=false, const bool &allowTeleport=true);
+    static bool moveWithoutTeleport(Direction direction, CommonMap ** map, uint8_t *x, uint8_t *y, const bool &checkCollision=false, const bool &allowTeleport=true);
+    static bool teleport(CommonMap ** map, uint8_t *x, uint8_t *y);
     static bool needBeTeleported(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y);
 
-    static bool isWalkable(const CommonMap &map, const quint8 &x, const quint8 &y);
-    static bool isDirt(const CommonMap &map, const quint8 &x, const quint8 &y);
-    static MonstersCollisionValue getZoneCollision(const CommonMap &map, const quint8 &x, const quint8 &y);
+    static bool isWalkable(const CommonMap &map, const uint8_t &x, const uint8_t &y);
+    static bool isDirt(const CommonMap &map, const uint8_t &x, const uint8_t &y);
+    static MonstersCollisionValue getZoneCollision(const CommonMap &map, const uint8_t &x, const uint8_t &y);
 protected:
-    virtual void send_player_move(const quint8 &moved_unit,const Direction &the_new_direction) = 0;
+    virtual void send_player_move(const uint8_t &moved_unit,const Direction &the_new_direction) = 0;
     Direction last_direction;
-    quint8 last_step;
+    uint8_t last_step;
 };
 
 }

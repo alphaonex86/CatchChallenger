@@ -9,12 +9,12 @@
 using namespace CatchChallenger;
 
 QByteArray FacilityLib::UTF8EmptyData=QByteArray().fill(0x00,1);
-QString FacilityLib::text_slash=QLatin1Literal("/");
-QString FacilityLib::text_male=QLatin1Literal("male");
-QString FacilityLib::text_female=QLatin1Literal("female");
-QString FacilityLib::text_unknown=QLatin1Literal("unknown");
-QString FacilityLib::text_clan=QLatin1Literal("clan");
-QString FacilityLib::text_dotcomma=QLatin1Literal(";");
+std::string FacilityLib::text_slash=QLatin1Literal("/");
+std::string FacilityLib::text_male=QLatin1Literal("male");
+std::string FacilityLib::text_female=QLatin1Literal("female");
+std::string FacilityLib::text_unknown=QLatin1Literal("unknown");
+std::string FacilityLib::text_clan=QLatin1Literal("clan");
+std::string FacilityLib::text_dotcomma=QLatin1Literal(";");
 
 PublicPlayerMonster FacilityLib::playerMonsterToPublicPlayerMonster(const PlayerMonster &playerMonster)
 {
@@ -37,8 +37,8 @@ QByteArray FacilityLib::publicPlayerMonsterToBinary(const PublicPlayerMonster &p
     out << publicPlayerMonster.level;
     out << publicPlayerMonster.hp;
     out << publicPlayerMonster.catched_with;
-    out << (quint8)publicPlayerMonster.gender;
-    out << (quint32)publicPlayerMonster.buffs.size();
+    out << (uint8_t)publicPlayerMonster.gender;
+    out << (uint32_t)publicPlayerMonster.buffs.size();
     int index=0;
     while(index<publicPlayerMonster.buffs.size())
     {
@@ -58,8 +58,8 @@ QByteArray playerMonsterToBinary(const PlayerMonster &playerMonster)
     out << playerMonster.level;
     out << playerMonster.hp;
     out << playerMonster.catched_with;
-    out << (quint8)playerMonster.gender;
-    out << (quint32)playerMonster.buffs.size();
+    out << (uint8_t)playerMonster.gender;
+    out << (uint32_t)playerMonster.buffs.size();
     int index=0;
     while(index<playerMonster.buffs.size())
     {
@@ -86,7 +86,7 @@ PlayerMonster FacilityLib::botFightMonsterToPlayerMonster(const BotFight::BotFig
     return tempPlayerMonster;
 }
 
-QString FacilityLib::genderToString(const Gender &gender)
+std::string FacilityLib::genderToString(const Gender &gender)
 {
     switch(gender)
     {
@@ -138,12 +138,12 @@ QByteArray FacilityLib::privateMonsterToBinary(const PlayerMonster &monster)
     out << monster.hp;
     out << monster.sp;
     out << monster.catched_with;
-    out << (quint8)monster.gender;
+    out << (uint8_t)monster.gender;
     out << monster.egg_step;
     out << monster.character_origin;
     int sub_index=0;
     int sub_size=monster.buffs.size();
-    out << (quint8)sub_size;
+    out << (uint8_t)sub_size;
     while(sub_index<sub_size)
     {
         out << monster.buffs.at(sub_index).buff;
@@ -152,7 +152,7 @@ QByteArray FacilityLib::privateMonsterToBinary(const PlayerMonster &monster)
     }
     sub_index=0;
     sub_size=monster.skills.size();
-    out << (quint16)sub_size;
+    out << (uint16_t)sub_size;
     while(sub_index<sub_size)
     {
         out << monster.skills.at(sub_index).skill;
@@ -181,10 +181,10 @@ bool FacilityLib::factoryProductionStarted(const IndustryStatus &industryStatus,
     while(index<industry.resources.size())
     {
         const Industry::Resource &resource=industry.resources.at(index);
-        quint32 quantityInStock=0;
+        uint32_t quantityInStock=0;
         if(industryStatus.resources.contains(resource.item))
             quantityInStock=industryStatus.resources.value(resource.item);
-        const quint32 tempCycleCount=quantityInStock/resource.quantity;
+        const uint32_t tempCycleCount=quantityInStock/resource.quantity;
         if(tempCycleCount<=0)
             return false;
         index++;
@@ -193,10 +193,10 @@ bool FacilityLib::factoryProductionStarted(const IndustryStatus &industryStatus,
     while(index<industry.products.size())
     {
         const Industry::Product &product=industry.products.at(index);
-        quint32 quantityInStock=0;
+        uint32_t quantityInStock=0;
         if(industryStatus.products.contains(product.item))
             quantityInStock=industryStatus.products.value(product.item);
-        const quint32 tempCycleCount=(product.quantity*industry.cycletobefull-quantityInStock)/product.quantity;
+        const uint32_t tempCycleCount=(product.quantity*industry.cycletobefull-quantityInStock)/product.quantity;
         if(tempCycleCount<=0)
             return false;
         index++;
@@ -208,7 +208,7 @@ IndustryStatus FacilityLib::industryStatusWithCurrentTime(const IndustryStatus &
 {
     IndustryStatus industryStatusCopy=industryStatus;
     //do the generated item
-    quint32 ableToProduceCycleCount=0;
+    uint32_t ableToProduceCycleCount=0;
     if(industryStatus.last_update<(QDateTime::currentMSecsSinceEpoch()/1000))
     {
         ableToProduceCycleCount=(QDateTime::currentMSecsSinceEpoch()/1000-industryStatus.last_update)/industry.time;
@@ -222,8 +222,8 @@ IndustryStatus FacilityLib::industryStatusWithCurrentTime(const IndustryStatus &
     while(index<industry.resources.size())
     {
         const Industry::Resource &resource=industry.resources.at(index);
-        const quint32 &quantityInStock=industryStatusCopy.resources.value(resource.item);
-        const quint32 tempCycleCount=quantityInStock/resource.quantity;
+        const uint32_t &quantityInStock=industryStatusCopy.resources.value(resource.item);
+        const uint32_t tempCycleCount=quantityInStock/resource.quantity;
         if(tempCycleCount<=0)
             return industryStatusCopy;
         else if(tempCycleCount<ableToProduceCycleCount)
@@ -234,8 +234,8 @@ IndustryStatus FacilityLib::industryStatusWithCurrentTime(const IndustryStatus &
     while(index<industry.products.size())
     {
         const Industry::Product &product=industry.products.at(index);
-        const quint32 &quantityInStock=industryStatusCopy.products.value(product.item);
-        const quint32 tempCycleCount=(product.quantity*industry.cycletobefull-quantityInStock)/product.quantity;
+        const uint32_t &quantityInStock=industryStatusCopy.products.value(product.item);
+        const uint32_t tempCycleCount=(product.quantity*industry.cycletobefull-quantityInStock)/product.quantity;
         if(tempCycleCount<=0)
             return industryStatusCopy;
         else if(tempCycleCount<ableToProduceCycleCount)
@@ -258,10 +258,10 @@ IndustryStatus FacilityLib::industryStatusWithCurrentTime(const IndustryStatus &
     return industryStatusCopy;
 }
 
-quint32 FacilityLib::getFactoryResourcePrice(const quint32 &quantityInStock,const Industry::Resource &resource,const Industry &industry)
+uint32_t FacilityLib::getFactoryResourcePrice(const uint32_t &quantityInStock,const Industry::Resource &resource,const Industry &industry)
 {
-    quint32 max_items=resource.quantity*industry.cycletobefull;
-    quint8 price_temp_change;
+    uint32_t max_items=resource.quantity*industry.cycletobefull;
+    uint8_t price_temp_change;
     if(quantityInStock>=max_items)
         price_temp_change=0;
     else
@@ -269,10 +269,10 @@ quint32 FacilityLib::getFactoryResourcePrice(const quint32 &quantityInStock,cons
     return CommonDatapack::commonDatapack.items.item.value(resource.item).price*(100-CommonSettingsServer::commonSettingsServer.factoryPriceChange+price_temp_change)/100;
 }
 
-quint32 FacilityLib::getFactoryProductPrice(const quint32 &quantityInStock, const Industry::Product &product, const Industry &industry)
+uint32_t FacilityLib::getFactoryProductPrice(const uint32_t &quantityInStock, const Industry::Product &product, const Industry &industry)
 {
-    quint32 max_items=product.quantity*industry.cycletobefull;
-    quint8 price_temp_change;
+    uint32_t max_items=product.quantity*industry.cycletobefull;
+    uint8_t price_temp_change;
     if(quantityInStock>=max_items)
         price_temp_change=0;
     else
@@ -281,7 +281,7 @@ quint32 FacilityLib::getFactoryProductPrice(const quint32 &quantityInStock, cons
 }
 
 //reputation
-void FacilityLib::appendReputationPoint(PlayerReputation *playerReputation,const qint32 &point,const Reputation &reputation)
+void FacilityLib::appendReputationPoint(PlayerReputation *playerReputation,const int32_t &point,const Reputation &reputation)
 {
     if(point==0)
         return;

@@ -14,51 +14,51 @@ using namespace CatchChallenger;
 #ifdef EPOLLCATCHCHALLENGERSERVER
 char ProtocolParsingInputOutput::commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];
 #endif
-const quint16 ProtocolParsingBase::sizeHeaderNullquint16=0;
+const uint16_t ProtocolParsingBase::sizeHeaderNulluint16_t=0;
 #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
 char ProtocolParsingBase::tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
 #endif
 
-std::unordered_set<quint8>                        ProtocolParsing::mainCodeWithoutSubCodeTypeServerToClient;//if need sub code or not
+std::unordered_set<uint8_t>                        ProtocolParsing::mainCodeWithoutSubCodeTypeServerToClient;//if need sub code or not
 //if is a query
-std::unordered_set<quint8>                        ProtocolParsing::mainCode_IsQueryClientToServer;
+std::unordered_set<uint8_t>                        ProtocolParsing::mainCode_IsQueryClientToServer;
 
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-std::unordered_set<quint8> ProtocolParsing::toDebugValidMainCodeServerToClient;//if need sub code or not
-std::unordered_set<quint8> ProtocolParsing::toDebugValidMainCodeClientToServer;//if need sub code or not
+std::unordered_set<uint8_t> ProtocolParsing::toDebugValidMainCodeServerToClient;//if need sub code or not
+std::unordered_set<uint8_t> ProtocolParsing::toDebugValidMainCodeClientToServer;//if need sub code or not
 #endif
 
-quint8                              ProtocolParsing::replyCodeClientToServer;
+uint8_t                              ProtocolParsing::replyCodeClientToServer;
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
 ProtocolParsing::CompressionType    ProtocolParsing::compressionTypeClient=CompressionType::None;
 #endif
 ProtocolParsing::CompressionType    ProtocolParsing::compressionTypeServer=CompressionType::None;
-quint8 ProtocolParsing::compressionLevel=6;
+uint8_t ProtocolParsing::compressionLevel=6;
 #endif
 //predefined size
-std::unordered_map<quint8,quint16>                   ProtocolParsing::sizeOnlyMainCodePacketClientToServer;
-std::unordered_map<quint8,std::unordered_map<quint16,quint16> >	ProtocolParsing::sizeMultipleCodePacketClientToServer;
-std::unordered_map<quint8,quint16>                   ProtocolParsing::replySizeOnlyMainCodePacketClientToServer;
-std::unordered_map<quint8,std::unordered_map<quint16,quint16> >	ProtocolParsing::replySizeMultipleCodePacketClientToServer;
+std::unordered_map<uint8_t,uint16_t>                   ProtocolParsing::sizeOnlyMainCodePacketClientToServer;
+std::unordered_map<uint8_t,std::unordered_map<uint16_t,uint16_t> >	ProtocolParsing::sizeMultipleCodePacketClientToServer;
+std::unordered_map<uint8_t,uint16_t>                   ProtocolParsing::replySizeOnlyMainCodePacketClientToServer;
+std::unordered_map<uint8_t,std::unordered_map<uint16_t,uint16_t> >	ProtocolParsing::replySizeMultipleCodePacketClientToServer;
 
-std::unordered_set<quint8>                            ProtocolParsing::mainCodeWithoutSubCodeTypeClientToServer;//if need sub code or not
+std::unordered_set<uint8_t>                            ProtocolParsing::mainCodeWithoutSubCodeTypeClientToServer;//if need sub code or not
 //if is a query
-std::unordered_set<quint8>                            ProtocolParsing::mainCode_IsQueryServerToClient;
-quint8                                  ProtocolParsing::replyCodeServerToClient;
+std::unordered_set<uint8_t>                            ProtocolParsing::mainCode_IsQueryServerToClient;
+uint8_t                                  ProtocolParsing::replyCodeServerToClient;
 //predefined size
-std::unordered_map<quint8,quint16>                   ProtocolParsing::sizeOnlyMainCodePacketServerToClient;
-std::unordered_map<quint8,std::unordered_map<quint16,quint16> >	ProtocolParsing::sizeMultipleCodePacketServerToClient;
-std::unordered_map<quint8,quint16>                   ProtocolParsing::replySizeOnlyMainCodePacketServerToClient;
-std::unordered_map<quint8,std::unordered_map<quint16,quint16> >	ProtocolParsing::replySizeMultipleCodePacketServerToClient;
+std::unordered_map<uint8_t,uint16_t>                   ProtocolParsing::sizeOnlyMainCodePacketServerToClient;
+std::unordered_map<uint8_t,std::unordered_map<uint16_t,uint16_t> >	ProtocolParsing::sizeMultipleCodePacketServerToClient;
+std::unordered_map<uint8_t,uint16_t>                   ProtocolParsing::replySizeOnlyMainCodePacketServerToClient;
+std::unordered_map<uint8_t,std::unordered_map<uint16_t,uint16_t> >	ProtocolParsing::replySizeMultipleCodePacketServerToClient;
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-std::unordered_map<quint8,std::unordered_set<quint16> >    ProtocolParsing::compressionMultipleCodePacketClientToServer;
-std::unordered_map<quint8,std::unordered_set<quint16> >    ProtocolParsing::compressionMultipleCodePacketServerToClient;
-std::unordered_map<quint8,std::unordered_set<quint16> >    ProtocolParsing::replyComressionMultipleCodePacketClientToServer;
-std::unordered_map<quint8,std::unordered_set<quint16> >    ProtocolParsing::replyComressionMultipleCodePacketServerToClient;
-std::unordered_set<quint8>                    ProtocolParsing::replyComressionOnlyMainCodePacketClientToServer;
-std::unordered_set<quint8>                    ProtocolParsing::replyComressionOnlyMainCodePacketServerToClient;
+std::unordered_map<uint8_t,std::unordered_set<uint16_t> >    ProtocolParsing::compressionMultipleCodePacketClientToServer;
+std::unordered_map<uint8_t,std::unordered_set<uint16_t> >    ProtocolParsing::compressionMultipleCodePacketServerToClient;
+std::unordered_map<uint8_t,std::unordered_set<uint16_t> >    ProtocolParsing::replyComressionMultipleCodePacketClientToServer;
+std::unordered_map<uint8_t,std::unordered_set<uint16_t> >    ProtocolParsing::replyComressionMultipleCodePacketServerToClient;
+std::unordered_set<uint8_t>                    ProtocolParsing::replyComressionOnlyMainCodePacketClientToServer;
+std::unordered_set<uint8_t>                    ProtocolParsing::replyComressionOnlyMainCodePacketServerToClient;
 #endif
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
@@ -97,8 +97,8 @@ QByteArray ProtocolParsingBase::lzmaCompress(QByteArray data)
     al.alloc = lz_alloc;
     al.free = lz_free;
     strm.allocator = &al;
-    quint8 *in_buf;
-    quint8 out_buf [OUT_BUF_MAX];
+    uint8_t *in_buf;
+    uint8_t out_buf [OUT_BUF_MAX];
     size_t in_len;  /* length of useful data in in_buf */
     size_t out_len; /* length of useful data in out_buf */
     lzma_ret ret_xz;
@@ -110,7 +110,7 @@ QByteArray ProtocolParsingBase::lzmaCompress(QByteArray data)
     }
 
     in_len = data.size();
-    in_buf = (quint8*)data.data();
+    in_buf = (uint8_t*)data.data();
     strm.next_in = in_buf;
     strm.avail_in = in_len;
 
@@ -201,7 +201,7 @@ QByteArray ProtocolParsingBase::lzmaUncompress(QByteArray data)
     lzma_stream strm = LZMA_STREAM_INIT; /* alloc and init lzma_stream struct */
     const uint32_t flags = LZMA_TELL_UNSUPPORTED_CHECK;
     const uint64_t memory_limit = UINT64_MAX; /* no memory limit */
-    quint8 *in_buf;
+    uint8_t *in_buf;
     uint8_t out_buf [OUT_BUF_MAX];
     size_t in_len;  /* length of useful data in in_buf */
     size_t out_len; /* length of useful data in out_buf */
@@ -214,7 +214,7 @@ QByteArray ProtocolParsingBase::lzmaUncompress(QByteArray data)
     }
 
     in_len = data.size();
-    in_buf = (quint8*)data.data();
+    in_buf = (uint8_t*)data.data();
 
     strm.next_in = in_buf;
     strm.avail_in = in_len;
@@ -440,11 +440,11 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             #ifndef EPOLLCATCHCHALLENGERSERVER
             qRegisterMetaType<CatchChallenger::PlayerMonster >("CatchChallenger::PlayerMonster");//for Api_protocol::tradeAddTradeMonster()
             qRegisterMetaType<PublicPlayerMonster >("PublicPlayerMonster");//for battleAcceptedByOther(stat,publicPlayerMonster);
-            qRegisterMetaType<QList<quint8> >("QList<quint8>");//for battleAcceptedByOther(stat,publicPlayerMonster);
-            qRegisterMetaType<QList<Skill::AttackReturn> >("QList<Skill::AttackReturn>");//for battleAcceptedByOther(stat,publicPlayerMonster);
-            qRegisterMetaType<QList<MarketMonster> >("QList<MarketMonster>");
-            qRegisterMetaType<QList<CharacterEntry> >("QList<CharacterEntry>");
-            qRegisterMetaType<std::vector<quint8> >("std::vector<quint8>");//for battleAcceptedByOther(stat,publicPlayerMonster);
+            qRegisterMetaType<std::vector<uint8_t> >("std::vector<uint8_t>");//for battleAcceptedByOther(stat,publicPlayerMonster);
+            qRegisterMetaType<std::vector<Skill::AttackReturn> >("std::vector<Skill::AttackReturn>");//for battleAcceptedByOther(stat,publicPlayerMonster);
+            qRegisterMetaType<std::vector<MarketMonster> >("std::vector<MarketMonster>");
+            qRegisterMetaType<std::vector<CharacterEntry> >("std::vector<CharacterEntry>");
+            qRegisterMetaType<std::vector<uint8_t> >("std::vector<uint8_t>");//for battleAcceptedByOther(stat,publicPlayerMonster);
             qRegisterMetaType<std::vector<Skill::AttackReturn> >("std::vector<Skill::AttackReturn>");//for battleAcceptedByOther(stat,publicPlayerMonster);
             qRegisterMetaType<std::vector<MarketMonster> >("std::vector<MarketMonster>");
             qRegisterMetaType<std::vector<CharacterEntry> >("std::vector<CharacterEntry>");
@@ -456,7 +456,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
     mainCodeWithoutSubCodeTypeClientToServer << ProtocolParsing::replyCodeClientToServer;
 }
 
-void ProtocolParsing::setMaxPlayers(const quint16 &maxPlayers)
+void ProtocolParsing::setMaxPlayers(const uint16_t &maxPlayers)
 {
     if(maxPlayers<=255)
     {
@@ -500,7 +500,7 @@ ProtocolParsingBase::ProtocolParsingBase(
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     //if(!connect(socket,&ConnectedSocket::readyRead,this,&ProtocolParsingInputOutput::parseIncommingData,Qt::QueuedConnection/*to virtual socket*/))
-    //    messageParsingLayer(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::ProtocolParsingInputOutput(): can't connect the object"));
+    //    messageParsingLayer(std::string::number(isClient)+std::stringLiteral(" ProtocolParsingInputOutput::ProtocolParsingInputOutput(): can't connect the object"));
     #endif
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     isClient=(packetModeTransmission==PacketModeTransmission_Client);
@@ -523,21 +523,21 @@ bool ProtocolParsingBase::checkStringIntegrity(const char * const data, const un
         errorParsingLayer("header size not suffisient");
         return false;
     }
-    const quint32 &tempInt=*reinterpret_cast<const quint32 *>(data);
+    const uint32_t &tempInt=*reinterpret_cast<const uint32_t *>(data);
     if(tempInt==4294967295)
     {
         //null string
         return true;
     }
-    const quint32 &stringSize=le32toh(tempInt);
+    const uint32_t &stringSize=le32toh(tempInt);
     if(stringSize>65535)
     {
-        errorParsingLayer(QStringLiteral("String size is wrong: %1").arg(stringSize));
+        errorParsingLayer(std::stringLiteral("String size is wrong: %1").arg(stringSize));
         return false;
     }
     if(size<stringSize)
     {
-        errorParsingLayer(QStringLiteral("String size is greater than the data: %1>%2").arg(size).arg(stringSize));
+        errorParsingLayer(std::stringLiteral("String size is greater than the data: %1>%2").arg(size).arg(stringSize));
         return false;
     }
     return true;
