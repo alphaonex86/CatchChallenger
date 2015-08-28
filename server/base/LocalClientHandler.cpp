@@ -3,6 +3,7 @@
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/CommonDatapackServerSpec.h"
+#include "../../general/base/cpp11addition.h"
 #include "../base/PreparedDBQuery.h"
 #include "../base/BaseServerMasterLoadDictionary.h"
 #include "SqlFunction.h"
@@ -13,6 +14,7 @@
 
 #include <vector>
 #include <string>
+#include <iostream>
 
 using namespace CatchChallenger;
 
@@ -97,27 +99,26 @@ void Client::savePosition()
     #endif
     /* disable because use memory, but useful only into less than < 0.1% of case
      * if(map!=at_start_map_name || x!=at_start_x || y!=at_start_y || orientation!=at_start_orientation) */
-    std::string updateMapPositionQuery;
+    std::string updateMapPositionQuery,updateMapPositionQuerySub;
     const uint32_t &map_file_database_id=static_cast<MapServer *>(map)->reverse_db_id;
     const uint32_t &rescue_map_file_database_id=static_cast<MapServer *>(rescue.map)->reverse_db_id;
     const uint32_t &unvalidated_rescue_map_file_database_id=static_cast<MapServer *>(unvalidated_rescue.map)->reverse_db_id;
-    updateMapPositionQuery=PreparedDBQueryServer::db_query_update_character_forserver_map_part1
-        .arg(map_file_database_id)
-        .arg(x)
-        .arg(y)
-        .arg((uint8_t)getLastDirection())
-        .arg(
-                PreparedDBQueryServer::db_query_update_character_forserver_map_part2
-                .arg(rescue_map_file_database_id)
-                .arg(rescue.x)
-                .arg(rescue.y)
-                .arg((uint8_t)rescue.orientation)
-                .arg(unvalidated_rescue_map_file_database_id)
-                .arg(unvalidated_rescue.x)
-                .arg(unvalidated_rescue.y)
-                .arg((uint8_t)unvalidated_rescue.orientation)
-        )
-        .arg(character_id);
+    updateMapPositionQuery=PreparedDBQueryServer::db_query_update_character_forserver_map_part1;
+    stringreplace(updateMapPositionQuery,"%1",std::to_string(map_file_database_id));
+    stringreplace(updateMapPositionQuery,"%2",std::to_string(x));
+    stringreplace(updateMapPositionQuery,"%3",std::to_string(y));
+    stringreplace(updateMapPositionQuery,"%4",std::to_string((uint8_t)getLastDirection()));
+    updateMapPositionQuerySub=PreparedDBQueryServer::db_query_update_character_forserver_map_part2;
+    stringreplace(updateMapPositionQuerySub,"%1",std::to_string(rescue_map_file_database_id));
+    stringreplace(updateMapPositionQuerySub,"%2",std::to_string(rescue.x));
+    stringreplace(updateMapPositionQuerySub,"%3",std::to_string(rescue.y));
+    stringreplace(updateMapPositionQuerySub,"%4",std::to_string((uint8_t)rescue.orientation));
+    stringreplace(updateMapPositionQuerySub,"%5",std::to_string(unvalidated_rescue_map_file_database_id));
+    stringreplace(updateMapPositionQuerySub,"%6",std::to_string(unvalidated_rescue.x));
+    stringreplace(updateMapPositionQuerySub,"%7",std::to_string(unvalidated_rescue.y));
+    stringreplace(updateMapPositionQuerySub,"%8",std::to_string((uint8_t)unvalidated_rescue.orientation));
+    stringreplace(updateMapPositionQuery,"%5",updateMapPositionQuerySub);
+    stringreplace(updateMapPositionQuery,"%6",std::to_string(character_id));
     dbQueryWriteServer(updateMapPositionQuery);
 /* do at moveDownMonster and moveUpMonster
  *     const std::vector<PlayerMonster> &playerMonsterList=getPlayerMonster();
@@ -193,7 +194,7 @@ void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE 
     else if(haveMonsters())
         checkLoose();
 
-    int index=0;
+    unsigned int index=0;
     while(index<GlobalServerData::serverPrivateVariables.server_message.size())
     {
         receiveSystemText(GlobalServerData::serverPrivateVariables.server_message.at(index));
@@ -203,18 +204,18 @@ void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE 
 
 void Client::createMemoryClan()
 {
-    if(!clanList.contains(public_and_private_informations.clan))
+    if(clanList.find(public_and_private_informations.clan)==clanList.end())
     {
         clan=new Clan;
         clan->cash=0;
         clan->clanId=public_and_private_informations.clan;
         clanList[public_and_private_informations.clan]=clan;
-        if(GlobalServerData::serverPrivateVariables.cityStatusListReverse.contains(clan->clanId))
-            clan->capturedCity=GlobalServerData::serverPrivateVariables.cityStatusListReverse.value(clan->clanId);
+        if(GlobalServerData::serverPrivateVariables.cityStatusListReverse.find(clan->clanId)!=GlobalServerData::serverPrivateVariables.cityStatusListReverse.end())
+            clan->capturedCity=GlobalServerData::serverPrivateVariables.cityStatusListReverse.at(clan->clanId);
     }
     else
-        clan=clanList.value(public_and_private_informations.clan);
-    clan->players << this;
+        clan=clanList.at(public_and_private_informations.clan);
+    clan->players.push_back(this);
 }
 
 bool Client::moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction)
@@ -222,27 +223,22 @@ bool Client::moveThePlayer(const uint8_t &previousMovedUnit,const Direction &dir
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(this->x>=this->map->width)
     {
-        qDebug() << std::stringLiteral("x to out of map: %1 > %2 (%3)").arg(this->x).arg(this->map->width).arg(this->map->map_file);
+        std::cerr << "x to out of map: " << this->x << " > " << this->map->width << " (" << this->map->map_file << ")" << std::endl;
         abort();
         return false;
     }
     if(this->y>=this->map->height)
     {
-        qDebug() << std::stringLiteral("y to out of map: %1 > %2 (%3)").arg(this->y).arg(this->map->height).arg(this->map->map_file);
+        std::cerr << "y to out of map: " << this->y << " > " << this->map->height << " (" << this->map->map_file << ")" << std::endl;
         abort();
         return false;
     }
     #endif
 
     #ifdef DEBUG_MESSAGE_CLIENT_MOVE
-    normalOutput(std::stringLiteral("moveThePlayer(): for player (%1,%2): %3, previousMovedUnit: %4 (%5), next direction: %6")
-                 .arg(x)
-                 .arg(y)
-                 .arg(public_and_private_informations.public_informations.simplifiedId)
-                 .arg(previousMovedUnit)
-                 .arg(MoveOnTheMap::directionToString(getLastDirection()))
-                 .arg(MoveOnTheMap::directionToString(direction))
-                 );
+    std::cout << "moveThePlayer(): for player (" << x << "," << y << "): " << public_and_private_informations.public_informations.simplifiedId
+              << ", previousMovedUnit: " << previousMovedUnit << " (" << MoveOnTheMap::directionToString(getLastDirection())
+              << "), next direction: " << MoveOnTheMap::directionToString(direction) << std::endl;
     #endif
     const bool &returnValue=MapBasicMove::moveThePlayer(previousMovedUnit,direction);
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -250,13 +246,13 @@ bool Client::moveThePlayer(const uint8_t &previousMovedUnit,const Direction &dir
     {
         if(this->x>=this->map->width)
         {
-            qDebug() << std::stringLiteral("x to out of map: %1 > %2 (%3)").arg(this->x).arg(this->map->width).arg(this->map->map_file);
+            std::cerr << "x to out of map: " << this->x << " > " << this->map->width << " (" << this->map->map_file << ")" << std::endl;
             abort();
             return false;
         }
         if(this->y>=this->map->height)
         {
-            qDebug() << std::stringLiteral("y to out of map: %1 > %2 (%3)").arg(this->y).arg(this->map->height).arg(this->map->map_file);
+            std::cerr << "y to out of map: " << this->y << " > " << this->map->height << " (" << this->map->map_file << ")" << std::endl;
             abort();
             return false;
         }
@@ -269,18 +265,18 @@ bool Client::captureCityInProgress()
 {
     if(clan==NULL)
         return false;
-    if(clan->captureCityInProgress.isEmpty())
+    if(clan->captureCityInProgress.size()==0)
         return false;
     //search in capture not validated
-    if(captureCity.contains(clan->captureCityInProgress))
-        if(captureCity.value(clan->captureCityInProgress).contains(this))
+    if(captureCity.find(clan->captureCityInProgress)!=captureCity.end())
+        if(vectorindexOf(captureCity.at(clan->captureCityInProgress),this)>=0)
             return true;
     //search in capture validated
-    if(captureCityValidatedList.contains(clan->captureCityInProgress))
+    if(captureCityValidatedList.find(clan->captureCityInProgress)!=captureCityValidatedList.end())
     {
-        const CaptureCityValidated &captureCityValidated=captureCityValidatedList.value(clan->captureCityInProgress);
+        const CaptureCityValidated &captureCityValidated=captureCityValidatedList.at(clan->captureCityInProgress);
         //check if this player is into the capture city with the other player of the team
-        if(captureCityValidated.players.contains(this))
+        if(vectorindexOf(captureCityValidated.players,this)>=0)
             return true;
     }
     return false;
@@ -291,13 +287,13 @@ bool Client::singleMove(const Direction &direction)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(this->x>=this->map->width)
     {
-        qDebug() << std::stringLiteral("x to out of map: %1 > %2 (%3)").arg(this->x).arg(this->map->width).arg(this->map->map_file);
+        std::cerr << "x to out of map: " << this->x << " > " << this->map->width << " (" << this->map->map_file << ")" << std::endl;
         abort();
         return false;
     }
     if(this->y>=this->map->height)
     {
-        qDebug() << std::stringLiteral("y to out of map: %1 > %2 (%3)").arg(this->y).arg(this->map->height).arg(this->map->map_file);
+        std::cerr << "x to out of map: " << this->y << " > " << this->map->height << " (" << this->map->map_file << ")" << std::endl;
         abort();
         return false;
     }
@@ -305,67 +301,67 @@ bool Client::singleMove(const Direction &direction)
 
     if(isInFight())//check if is in fight
     {
-        errorOutput(std::stringLiteral("error: try move when is in fight"));
+        errorOutput("error: try move when is in fight");
         return false;
     }
     if(captureCityInProgress())
     {
-        errorOutput(std::stringLiteral("Try move when is in capture city"));
+        errorOutput("Try move when is in capture city");
         return false;
     }
-    if(!oldEvents.oldEventList.isEmpty() && (QDateTime::currentDateTime().toTime_t()-oldEvents.time.toTime_t())>30/*30s*/)
+    if(oldEvents.oldEventList.size()>0 && (QDateTime::currentDateTime().toTime_t()-oldEvents.time.toTime_t())>30/*30s*/)
     {
-        errorOutput(std::stringLiteral("Try move but lost of event sync"));
+        errorOutput("Try move but lost of event sync");
         return false;
     }
     COORD_TYPE x=this->x,y=this->y;
     temp_direction=direction;
     CommonMap* map=this->map;
     #ifdef DEBUG_MESSAGE_CLIENT_MOVE
-    normalOutput(std::stringLiteral("Client::singleMove(), go in this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
+    normalOutput("Client::singleMove(), go in this direction: "+MoveOnTheMap::directionToString(direction)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
     #endif
     if(!MoveOnTheMap::canGoTo(direction,*map,x,y,true))
     {
-        errorOutput(std::stringLiteral("Client::singleMove(), can't go into this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
+        errorOutput("Client::singleMove(), can't go into this direction: "+MoveOnTheMap::directionToString(direction)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
         return false;
     }
     if(!MoveOnTheMap::moveWithoutTeleport(direction,&map,&x,&y,false,true))
     {
-        errorOutput(std::stringLiteral("Client::singleMove(), can go but move failed into this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
+        errorOutput("Client::singleMove(), can go but move failed into this direction: "+MoveOnTheMap::directionToString(direction)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
         return false;
     }
 
-    if(map->teleporter.contains(x+y*map->width))
+    if(map->teleporter.find(x+y*map->width)!=map->teleporter.end())
     {
-        const CommonMap::Teleporter &teleporter=map->teleporter.value(x+y*map->width);
+        const CommonMap::Teleporter &teleporter=map->teleporter.at(x+y*map->width);
         switch(teleporter.condition.type)
         {
             case CatchChallenger::MapConditionType_None:
             case CatchChallenger::MapConditionType_Clan://not do for now
             break;
             case CatchChallenger::MapConditionType_FightBot:
-                if(!public_and_private_informations.bot_already_beaten.contains(teleporter.condition.value))
+                if(public_and_private_informations.bot_already_beaten.find(teleporter.condition.value)==public_and_private_informations.bot_already_beaten.end())
                 {
-                    errorOutput(std::stringLiteral("Need have FightBot win to use this teleporter: %1 with map: %2(%3,%4)").arg(teleporter.condition.value).arg(map->map_file).arg(x).arg(y));
+                    errorOutput("Need have FightBot win to use this teleporter: "+std::to_string(teleporter.condition.value)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
                     return false;
                 }
             break;
             case CatchChallenger::MapConditionType_Item:
-                if(!public_and_private_informations.items.contains(teleporter.condition.value))
+                if(public_and_private_informations.items.find(teleporter.condition.value)==public_and_private_informations.items.cend())
                 {
-                    errorOutput(std::stringLiteral("Need have item to use this teleporter: %1 with map: %2(%3,%4)").arg(teleporter.condition.value).arg(map->map_file).arg(x).arg(y));
+                    errorOutput("Need have item to use this teleporter: "+std::to_string(teleporter.condition.value)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
                     return false;
                 }
             break;
             case CatchChallenger::MapConditionType_Quest:
-                if(!public_and_private_informations.quests.contains(teleporter.condition.value))
+                if(public_and_private_informations.quests.find(teleporter.condition.value)==public_and_private_informations.quests.cend())
                 {
-                    errorOutput(std::stringLiteral("Need have quest to use this teleporter: %1 with map: %2(%3,%4)").arg(teleporter.condition.value).arg(map->map_file).arg(x).arg(y));
+                    errorOutput("Need have quest to use this teleporter: "+std::to_string(teleporter.condition.value)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
                     return false;
                 }
-                if(!public_and_private_informations.quests.value(teleporter.condition.value).finish_one_time)
+                if(!public_and_private_informations.quests.at(teleporter.condition.value).finish_one_time)
                 {
-                    errorOutput(std::stringLiteral("Need have finish the quest to use this teleporter: %1 with map: %2(%3,%4)").arg(teleporter.condition.value).arg(map->map_file).arg(x).arg(y));
+                    errorOutput("Need have finish the quest to use this teleporter: "+std::to_string(teleporter.condition.value)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
                     return false;
                 }
             break;
@@ -395,12 +391,15 @@ bool Client::singleMove(const Direction &direction)
     #endif
     this->x=x;
     this->y=y;
-    if(static_cast<MapServer*>(map)->rescue.contains(std::pair<uint8_t,uint8_t>(x,y)))
     {
-        unvalidated_rescue.map=map;
-        unvalidated_rescue.x=x;
-        unvalidated_rescue.y=y;
-        unvalidated_rescue.orientation=static_cast<MapServer*>(map)->rescue.value(std::pair<uint8_t,uint8_t>(x,y));
+        MapServer* mapServer=static_cast<MapServer*>(map);
+        if(mapServer->rescue.find(std::pair<uint8_t,uint8_t>(x,y))!=mapServer->rescue.cend())
+        {
+            unvalidated_rescue.map=map;
+            unvalidated_rescue.x=x;
+            unvalidated_rescue.y=y;
+            unvalidated_rescue.orientation=mapServer->rescue.at(std::pair<uint8_t,uint8_t>(x,y));
+        }
     }
     if(botFightCollision(map,x,y))
         return true;
@@ -408,9 +407,9 @@ bool Client::singleMove(const Direction &direction)
     {
         //merge the result event:
         std::vector<uint8_t> mergedEvents(GlobalServerData::serverPrivateVariables.events);
-        if(!oldEvents.oldEventList.isEmpty())
+        if(oldEvents.oldEventList.size()>0)
         {
-            int index=0;
+            unsigned int index=0;
             while(index<oldEvents.oldEventList.size())
             {
                 mergedEvents[oldEvents.oldEventList.at(index).event]=oldEvents.oldEventList.at(index).eventValue;
@@ -419,7 +418,7 @@ bool Client::singleMove(const Direction &direction)
         }
         if(generateWildFightIfCollision(map,x,y,public_and_private_informations.items,mergedEvents))
         {
-            normalOutput(std::stringLiteral("Client::singleMove(), now is in front of wild monster with map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
+            normalOutput("Client::singleMove(), now is in front of wild monster with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
             return true;
         }
     }
@@ -431,13 +430,13 @@ bool Client::singleMove(const Direction &direction)
     {
         if(this->x>=this->map->width)
         {
-            qDebug() << std::stringLiteral("x to out of map: %1 > %2 (%3)").arg(this->x).arg(this->map->width).arg(this->map->map_file);
+            std::cerr << "x to out of map: "+std::to_string(this->x)+" > "+std::to_string(this->map->width)+" ("+this->map->map_file+")" << std::endl;
             abort();
             return false;
         }
         if(this->y>=this->map->height)
         {
-            qDebug() << std::stringLiteral("y to out of map: %1 > %2 (%3)").arg(this->y).arg(this->map->height).arg(this->map->map_file);
+            std::cerr << "y to out of map: "+std::to_string(this->y)+" > "+std::to_string(this->map->height)+" ("+this->map->map_file+")" << std::endl;
             abort();
             return false;
         }
@@ -462,75 +461,75 @@ void Client::addObjectAndSend(const uint16_t &item,const uint32_t &quantity)
 
 void Client::addObject(const uint16_t &item,const uint32_t &quantity)
 {
-    if(!CommonDatapack::commonDatapack.items.item.contains(item))
+    if(CommonDatapack::commonDatapack.items.item.find(item)==CommonDatapack::commonDatapack.items.item.cend())
     {
         errorOutput("Object is not found into the item list");
         return;
     }
-    if(public_and_private_informations.items.contains(item))
+    if(public_and_private_informations.items.find(item)!=public_and_private_informations.items.cend())
     {
         public_and_private_informations.items[item]+=quantity;
-        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_item
-                 .arg(public_and_private_informations.items.value(item))
-                 .arg(item)
-                 .arg(character_id)
-                 );
+        std::string queryText=PreparedDBQueryCommon::db_query_update_item;
+        stringreplace(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
+        stringreplace(queryText,"%2",std::to_string(item));
+        stringreplace(queryText,"%3",std::to_string(character_id));
+        dbQueryWriteCommon(queryText);
     }
     else
     {
-        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_item
-                     .arg(item)
-                     .arg(character_id)
-                     .arg(quantity)
-                     );
+        std::string queryText=PreparedDBQueryCommon::db_query_insert_item;
+        stringreplace(queryText,"%1",std::to_string(item));
+        stringreplace(queryText,"%2",std::to_string(character_id));
+        stringreplace(queryText,"%3",std::to_string(quantity));
+        dbQueryWriteCommon(queryText);
         public_and_private_informations.items[item]=quantity;
     }
 }
 
 void Client::addWarehouseObject(const uint16_t &item,const uint32_t &quantity)
 {
-    if(public_and_private_informations.warehouse_items.contains(item))
+    if(public_and_private_informations.warehouse_items.find(item)!=public_and_private_informations.warehouse_items.cend())
     {
         public_and_private_informations.warehouse_items[item]+=quantity;
-        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_item_warehouse
-                 .arg(public_and_private_informations.items.value(item))
-                 .arg(item)
-                 .arg(character_id)
-                 );
+        std::string queryText=PreparedDBQueryCommon::db_query_update_item_warehouse;
+        stringreplace(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
+        stringreplace(queryText,"%2",std::to_string(item));
+        stringreplace(queryText,"%3",std::to_string(character_id));
+        dbQueryWriteCommon(queryText);
     }
     else
     {
-        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_item_warehouse
-                     .arg(item)
-                     .arg(character_id)
-                     .arg(quantity)
-                     );
+        std::string queryText=PreparedDBQueryCommon::db_query_insert_item_warehouse;
+        stringreplace(queryText,"%1",std::to_string(item));
+        stringreplace(queryText,"%2",std::to_string(character_id));
+        stringreplace(queryText,"%3",std::to_string(quantity));
+        dbQueryWriteCommon(queryText);
         public_and_private_informations.warehouse_items[item]=quantity;
     }
 }
 
 uint32_t Client::removeWarehouseObject(const uint16_t &item,const uint32_t &quantity)
 {
-    if(public_and_private_informations.warehouse_items.contains(item))
+    if(public_and_private_informations.warehouse_items.find(item)!=public_and_private_informations.warehouse_items.cend())
     {
-        if(public_and_private_informations.warehouse_items.value(item)>quantity)
+        if(public_and_private_informations.warehouse_items.at(item)>quantity)
         {
             public_and_private_informations.warehouse_items[item]-=quantity;
-            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_item_warehouse
-                     .arg(public_and_private_informations.items.value(item))
-                     .arg(item)
-                     .arg(character_id)
-                     );
+            std::string queryText=PreparedDBQueryCommon::db_query_update_item_warehouse;
+            stringreplace(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
+            stringreplace(queryText,"%2",std::to_string(item));
+            stringreplace(queryText,"%3",std::to_string(character_id));
+            dbQueryWriteCommon(queryText);
             return quantity;
         }
         else
         {
-            uint32_t removed_quantity=public_and_private_informations.warehouse_items.value(item);
-            public_and_private_informations.warehouse_items.remove(item);
-            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_item_warehouse
-                         .arg(item)
-                         .arg(character_id)
-                         );
+            const uint32_t removed_quantity=public_and_private_informations.warehouse_items.at(item);
+            public_and_private_informations.warehouse_items.erase(item);
+            std::string queryText=PreparedDBQueryCommon::db_query_delete_item_warehouse;
+            stringreplace(queryText,"%1",std::to_string(item));
+            stringreplace(queryText,"%2",std::to_string(character_id));
+            dbQueryWriteCommon(queryText);
             return removed_quantity;
         }
     }
@@ -540,45 +539,45 @@ uint32_t Client::removeWarehouseObject(const uint16_t &item,const uint32_t &quan
 
 void Client::saveObjectRetention(const uint16_t &item)
 {
-    if(public_and_private_informations.items.contains(item))
+    if(public_and_private_informations.items.find(item)!=public_and_private_informations.items.cend())
     {
-        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_item
-                 .arg(public_and_private_informations.items.value(item))
-                 .arg(item)
-                 .arg(character_id)
-                 );
+        std::string queryText=PreparedDBQueryCommon::db_query_update_item;
+        stringreplace(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
+        stringreplace(queryText,"%2",std::to_string(item));
+        stringreplace(queryText,"%3",std::to_string(character_id));
+        dbQueryWriteCommon(queryText);
     }
     else
     {
-        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_item
-                     .arg(item)
-                     .arg(character_id)
-                     );
+        std::string queryText=PreparedDBQueryCommon::db_query_delete_item;
+        stringreplace(queryText,"%1",std::to_string(item));
+        stringreplace(queryText,"%2",std::to_string(character_id));
+        dbQueryWriteCommon(queryText);
     }
 }
 
 uint32_t Client::removeObject(const uint16_t &item, const uint32_t &quantity)
 {
-    if(public_and_private_informations.items.contains(item))
+    if(public_and_private_informations.items.find(item)!=public_and_private_informations.items.cend())
     {
-        if(public_and_private_informations.items.value(item)>quantity)
+        if(public_and_private_informations.items.at(item)>quantity)
         {
             public_and_private_informations.items[item]-=quantity;
-            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_item
-                     .arg(public_and_private_informations.items.value(item))
-                     .arg(item)
-                     .arg(character_id)
-                     );
+            std::string queryText=PreparedDBQueryCommon::db_query_update_item;
+            stringreplace(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
+            stringreplace(queryText,"%2",std::to_string(item));
+            stringreplace(queryText,"%3",std::to_string(character_id));
+            dbQueryWriteCommon(queryText);
             return quantity;
         }
         else
         {
-            uint32_t removed_quantity=public_and_private_informations.items.value(item);
+            const uint32_t removed_quantity=public_and_private_informations.items.at(item);
             public_and_private_informations.items.remove(item);
-            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_item
-                         .arg(item)
-                         .arg(character_id)
-                         );
+            std::string queryText=PreparedDBQueryCommon::db_query_delete_item;
+            stringreplace(queryText,"%1",std::to_string(item));
+            stringreplace(queryText,"%2",std::to_string(character_id));
+            dbQueryWriteCommon(queryText);
             return removed_quantity;
         }
     }
