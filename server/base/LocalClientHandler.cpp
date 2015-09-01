@@ -1221,7 +1221,7 @@ bool Client::learnSkill(const uint32_t &monsterId, const uint16_t &skill)
         errorOutput("Wrong direction to use a learn skill");
         return false;
     }
-    const MapServer * const mapServer=static_cast<MapServer*>(this->map);
+    const MapServer * const mapServer=static_cast<MapServer*>(map);
     const std::pair<uint8_t,uint8_t> pos(x,y);
     if(mapServer->learn.find(pos)==mapServer->learn.end())
     {
@@ -1724,7 +1724,7 @@ void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uin
         errorOutput("Wrong direction to use a shop");
         return;
     }
-    const MapServer * const mapServer=static_cast<MapServer*>(this->map);
+    const MapServer * const mapServer=static_cast<MapServer*>(map);
     const std::pair<uint8_t,uint8_t> pos(x,y);
     //check if is shop
     if(mapServer->shops.find(pos)==mapServer->shops.cend())
@@ -1759,7 +1759,7 @@ void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uin
                 errorOutput("Wrong direction to use a shop");
                 return;
             }
-            const MapServer * const mapServer=static_cast<MapServer*>(this->map);
+            const MapServer * const mapServer=static_cast<MapServer*>(map);
             const std::pair<uint8_t,uint8_t> pos(x,y);
             if(mapServer->shops.find(pos)==mapServer->shops.cend())
             {
@@ -2061,40 +2061,40 @@ void Client::sellFactoryResource(const uint8_t &query_id,const uint16_t &factory
 {
     if(isInFight())
     {
-        errorOutput(std::stringLiteral("Try do inventory action when is in fight"));
+        errorOutput("Try do inventory action when is in fight");
         return;
     }
     if(captureCityInProgress())
     {
-        errorOutput(std::stringLiteral("Try do inventory action when is in capture city"));
+        errorOutput("Try do inventory action when is in capture city");
         return;
     }
-    if(!CommonDatapack::commonDatapack.industriesLink.contains(factoryId))
+    if(CommonDatapack::commonDatapack.industriesLink.find(factoryId)==CommonDatapack::commonDatapack.industriesLink.cend())
     {
-        errorOutput(std::stringLiteral("factory id not found"));
+        errorOutput("factory id not found");
         return;
     }
-    if(!CommonDatapack::commonDatapack.items.item.contains(objectId))
+    if(CommonDatapack::commonDatapack.items.item.find(objectId)==CommonDatapack::commonDatapack.items.item.cend())
     {
-        errorOutput(std::stringLiteral("object id not found"));
+        errorOutput("object id not found");
         return;
     }
     if(objectQuantity(objectId)<quantity)
     {
-        errorOutput(std::stringLiteral("you have not the object quantity to sell at this factory"));
+        errorOutput("you have not the object quantity to sell at this factory");
         return;
     }
-    if(!haveReputationRequirements(CommonDatapack::commonDatapack.industriesLink.value(factoryId).requirements.reputation))
+    if(!haveReputationRequirements(CommonDatapack::commonDatapack.industriesLink.at(factoryId).requirements.reputation))
     {
-        errorOutput(std::stringLiteral("The player have not the requirement: %1 to use the factory").arg(factoryId));
+        errorOutput("The player have not the requirement: "+std::to_string(factoryId)+" to use the factory");
         return;
     }
-    const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId).industry);
+    const Industry &industry=CommonDatapack::commonDatapack.industries.at(CommonDatapack::commonDatapack.industriesLink.at(factoryId).industry);
     IndustryStatus industryStatus;
-    if(!GlobalServerData::serverPrivateVariables.industriesStatus.contains(factoryId))
+    if(GlobalServerData::serverPrivateVariables.industriesStatus.find(factoryId)==GlobalServerData::serverPrivateVariables.industriesStatus.cend())
     {
         industryStatus.last_update=(QDateTime::currentMSecsSinceEpoch()/1000);
-        int index;
+        unsigned int index;
         //send the resource
         index=0;
         while(index<industry.resources.size())
@@ -2113,33 +2113,33 @@ void Client::sellFactoryResource(const uint8_t &query_id,const uint16_t &factory
         }
     }
     else
-        industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus.value(factoryId),industry);
+        industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus.at(factoryId),industry);
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     uint32_t resourcePrice;
     //check if not overfull
     {
-        int index=0;
+        unsigned int index=0;
         while(index<industry.resources.size())
         {
             const Industry::Resource &resource=industry.resources.at(index);
             if(resource.item==objectId)
             {
-                if((resource.quantity*industry.cycletobefull-industryStatus.resources.value(resource.item))<quantity)
+                if((resource.quantity*industry.cycletobefull-industryStatus.resources.at(resource.item))<quantity)
                 {
                     out << (uint8_t)0x03;
                     postReply(query_id,outputData.constData(),outputData.size());
                     return;
                 }
-                resourcePrice=FacilityLib::getFactoryResourcePrice(industryStatus.resources.value(resource.item),resource,industry);
+                resourcePrice=FacilityLib::getFactoryResourcePrice(industryStatus.resources.at(resource.item),resource,industry);
                 if(price>resourcePrice)
                 {
                     out << (uint8_t)0x04;
                     postReply(query_id,outputData.constData(),outputData.size());
                     return;
                 }
-                if((industryStatus.resources.value(resource.item)+quantity)==resource.quantity)
+                if((industryStatus.resources.at(resource.item)+quantity)==resource.quantity)
                 {
                     industryStatus.resources[resource.item]+=quantity;
                     industryStatus=FacilityLib::factoryCheckProductionStart(industryStatus,industry);
@@ -2152,7 +2152,7 @@ void Client::sellFactoryResource(const uint8_t &query_id,const uint16_t &factory
         }
         if(index==industry.resources.size())
         {
-            errorOutput(std::stringLiteral("internal bug, resource for the factory not found"));
+            errorOutput("internal bug, resource for the factory not found");
             return;
         }
     }
@@ -2166,7 +2166,7 @@ void Client::sellFactoryResource(const uint8_t &query_id,const uint16_t &factory
     removeObject(objectId,quantity);
     addCash(resourcePrice*quantity);
     saveIndustryStatus(factoryId,industryStatus,industry);
-    appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.value(factoryId).rewards.reputation);
+    appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.at(factoryId).rewards.reputation);
     postReply(query_id,outputData.constData(),outputData.size());
 }
 
@@ -2185,29 +2185,29 @@ bool CatchChallenger::operator==(const CatchChallenger::MonsterDrops &monsterDro
 
 void Client::appendAllow(const ActionAllow &allow)
 {
-    if(public_and_private_informations.allow.contains(allow))
+    if(public_and_private_informations.allow.find(allow)!=public_and_private_informations.allow.cend())
         return;
-    public_and_private_informations.allow << allow;
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_character_allow
-                 .arg(character_id)
-                 .arg(DictionaryLogin::dictionary_allow_internal_to_database.at(allow))
-                 );
+    public_and_private_informations.allow.insert(allow);
+    std::string queryText=PreparedDBQueryCommon::db_query_insert_character_allow;
+    stringreplace(queryText,"%1",std::to_string(character_id));
+    stringreplace(queryText,"%2",std::to_string(DictionaryLogin::dictionary_allow_internal_to_database.at(allow)));
+    dbQueryWriteCommon(queryText);
 }
 
 void Client::removeAllow(const ActionAllow &allow)
 {
-    if(!public_and_private_informations.allow.contains(allow))
+    if(public_and_private_informations.allow.find(allow)==public_and_private_informations.allow.cend())
         return;
-    public_and_private_informations.allow.remove(allow);
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_character_allow
-                 .arg(character_id)
-                 .arg(DictionaryLogin::dictionary_allow_internal_to_database.at(allow))
-                 );
+    public_and_private_informations.allow.erase(allow);
+    std::string queryText=PreparedDBQueryCommon::db_query_delete_character_allow;
+    stringreplace(queryText,"%1",std::to_string(character_id));
+    stringreplace(queryText,"%2",std::to_string(DictionaryLogin::dictionary_allow_internal_to_database.at(allow)));
+    dbQueryWriteCommon(queryText);
 }
 
 void Client::appendReputationRewards(const std::vector<ReputationRewards> &reputationList)
 {
-    int index=0;
+    unsigned int index=0;
     while(index<reputationList.size())
     {
         const ReputationRewards &reputationRewards=reputationList.at(index);
@@ -2221,67 +2221,55 @@ void Client::appendReputationPoint(const uint8_t &reputationId, const int32_t &p
 {
     if(point==0)
         return;
-    const Reputation &reputation=CommonDatapack::commonDatapack.reputation.value(reputationId);
+    const Reputation &reputation=CommonDatapack::commonDatapack.reputation.at(reputationId);
     bool isNewReputation=false;
     PlayerReputation *playerReputation=NULL;
     //search
     {
-        QMapIterator<uint8_t,PlayerReputation> i(public_and_private_informations.reputation);
-        while (i.hasNext()) {
-            i.next();
-            if(i.key()==reputationId)
-            {
-                playerReputation=const_cast<PlayerReputation *>(&i.value());
-                break;
-            }
-        }
-        if(playerReputation==NULL)
+        if(public_and_private_informations.reputation.find(reputationId)==public_and_private_informations.reputation.cend())
         {
             PlayerReputation temp;
             temp.point=0;
             temp.level=0;
             isNewReputation=true;
-            public_and_private_informations.reputation.insert(reputationId,temp);
-            playerReputation=&public_and_private_informations.reputation[reputationId];
+            public_and_private_informations.reputation[reputationId]=temp;
         }
     }
+    playerReputation=&public_and_private_informations.reputation[reputationId];
 
     #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
-    normalOutput(std::stringLiteral("Reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
+    normalOutput("Reputation "+std::to_string(reputationId)+" at level: "+std::to_string(playerReputation->level)+" with point: "+std::to_string(playerReputation->point));
     #endif
     FacilityLib::appendReputationPoint(playerReputation,point,reputation);
     if(isNewReputation)
     {
-        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_reputation
-                         .arg(character_id)
-                         .arg(reputation.reverse_database_id)
-                         .arg(playerReputation->point)
-                         .arg(playerReputation->level)
-                         );
+        std::string queryText=PreparedDBQueryCommon::db_query_insert_reputation;
+        stringreplace(queryText,"%1",std::to_string(character_id));
+        stringreplace(queryText,"%2",std::to_string(reputation.reverse_database_id));
+        stringreplace(queryText,"%3",std::to_string(playerReputation->point));
+        stringreplace(queryText,"%4",std::to_string(playerReputation->level));
+        dbQueryWriteCommon(queryText);
     }
     else
     {
-        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_reputation
-                     .arg(character_id)
-                     .arg(reputation.reverse_database_id)
-                     .arg(playerReputation->point)
-                     .arg(playerReputation->level)
-                     );
+        std::string queryText=PreparedDBQueryCommon::db_query_update_reputation;
+        stringreplace(queryText,"%1",std::to_string(character_id));
+        stringreplace(queryText,"%2",std::to_string(reputation.reverse_database_id));
+        stringreplace(queryText,"%3",std::to_string(playerReputation->point));
+        stringreplace(queryText,"%4",std::to_string(playerReputation->level));
+        dbQueryWriteCommon(queryText);
     }
-    #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
-    normalOutput(std::stringLiteral("New reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
-    #endif
 }
 
 void Client::heal()
 {
     if(isInFight())
     {
-        errorOutput(std::stringLiteral("Try do heal action when is in fight"));
+        errorOutput("Try do heal action when is in fight");
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(std::stringLiteral("ask heal at %1 (%2,%3)").arg(this->map->map_file).arg(this->x).arg(this->y));
+    normalOutput("ask heal at "+this->map->map_file+" ("+std::to_string(this->x)+","+std::to_string(this->y)+")");
     #endif
     CommonMap *map=this->map;
     uint8_t x=this->x;
@@ -2299,22 +2287,24 @@ void Client::heal()
             {
                 if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                 {
-                    errorOutput(std::stringLiteral("heal() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput("heal() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                     return;
                 }
             }
             else
             {
-                errorOutput(std::stringLiteral("No valid map in this direction"));
+                errorOutput("No valid map in this direction");
                 return;
             }
         break;
         default:
-        errorOutput(std::stringLiteral("Wrong direction to use a heal"));
+        errorOutput("Wrong direction to use a heal");
         return;
     }
+    const MapServer * const mapServer=static_cast<MapServer*>(map);
+    const std::pair<uint8_t,uint8_t> pos(x,y);
     //check if is shop
-    if(!static_cast<MapServer*>(this->map)->heal.contains(std::pair<uint8_t,uint8_t>(x,y)))
+    if(mapServer->heal.find(pos)==mapServer->heal.cend())
     {
         Direction direction=getLastDirection();
         switch(direction)
@@ -2328,23 +2318,25 @@ void Client::heal()
                 {
                     if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                     {
-                        errorOutput(std::stringLiteral("heal() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                        errorOutput("heal() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                         return;
                     }
                 }
                 else
                 {
-                    errorOutput(std::stringLiteral("No valid map in this direction"));
+                    errorOutput("No valid map in this direction");
                     return;
                 }
             break;
             default:
-            errorOutput(std::stringLiteral("Wrong direction to use a heal"));
+            errorOutput("Wrong direction to use a heal");
             return;
         }
-        if(!static_cast<MapServer*>(this->map)->heal.contains(std::pair<uint8_t,uint8_t>(x,y)))
+        const MapServer * const mapServer=static_cast<MapServer*>(map);
+        const std::pair<uint8_t,uint8_t> pos(x,y);
+        if(mapServer->heal.find(pos)==mapServer->heal.cend())
         {
-            errorOutput(std::stringLiteral("no heal point in this direction"));
+            errorOutput("no heal point in this direction");
             return;
         }
     }
@@ -2357,7 +2349,7 @@ void Client::requestFight(const uint16_t &fightId)
 {
     if(isInFight())
     {
-        errorOutput(std::stringLiteral("error: map: %1 (%2,%3), is in fight").arg(static_cast<MapServer *>(map)->map_file).arg(x).arg(y));
+        errorOutput("error: map: "+this->map->map_file+" ("+std::to_string(this->x)+","+std::to_string(this->y)+"), is in fight");
         return;
     }
     if(captureCityInProgress())
@@ -2365,13 +2357,13 @@ void Client::requestFight(const uint16_t &fightId)
         errorOutput("Try requestFight when is in capture city");
         return;
     }
-    if(public_and_private_informations.bot_already_beaten.contains(fightId))
+    if(public_and_private_informations.bot_already_beaten.find(fightId)!=public_and_private_informations.bot_already_beaten.cend())
     {
         errorOutput("You can't rebeat this fighter");
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(std::stringLiteral("request fight at %1 (%2,%3)").arg(this->map->map_file).arg(this->x).arg(this->y));
+    normalOutput("request fight at "+this->map->map_file+" ("+std::to_string(this->x)+","+std::to_string(this->y)+")");
     #endif
     CommonMap *map=this->map;
     uint8_t x=this->x;
@@ -2389,26 +2381,28 @@ void Client::requestFight(const uint16_t &fightId)
             {
                 if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                 {
-                    errorOutput(std::stringLiteral("requestFight() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput("requestFight() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                     return;
                 }
             }
             else
             {
-                errorOutput(std::stringLiteral("No valid map in this direction"));
+                errorOutput("No valid map in this direction");
                 return;
             }
         break;
         default:
-        errorOutput(std::stringLiteral("Wrong direction to use a shop"));
+        errorOutput("Wrong direction to use a shop");
         return;
     }
+    const MapServer * const mapServer=static_cast<MapServer*>(map);
+    const std::pair<uint8_t,uint8_t> pos(x,y);
     //check if is shop
     bool found=false;
-    if(static_cast<MapServer*>(this->map)->botsFight.contains(std::pair<uint8_t,uint8_t>(x,y)))
+    if(mapServer->botsFight.find(pos)!=mapServer->botsFight.cend())
     {
-        const std::vector<uint32_t> &botsFightList=static_cast<MapServer*>(this->map)->botsFight.values(std::pair<uint8_t,uint8_t>(x,y));
-        if(botsFightList.contains(fightId))
+        const std::vector<uint32_t> &botsFightList=mapServer->botsFight.at(pos);
+        if(vectorcontains(botsFightList,fightId))
             found=true;
     }
     if(!found)
@@ -2425,33 +2419,35 @@ void Client::requestFight(const uint16_t &fightId)
                 {
                     if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                     {
-                        errorOutput(std::stringLiteral("requestFight() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                        errorOutput("requestFight() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                         return;
                     }
                 }
                 else
                 {
-                    errorOutput(std::stringLiteral("No valid map in this direction"));
+                    errorOutput("No valid map in this direction");
                     return;
                 }
             break;
             default:
-            errorOutput(std::stringLiteral("Wrong direction to use a shop"));
+            errorOutput("Wrong direction to use a shop");
             return;
         }
-        if(static_cast<MapServer*>(this->map)->botsFight.contains(std::pair<uint8_t,uint8_t>(x,y)))
+        const MapServer * const mapServer=static_cast<MapServer*>(map);
+        const std::pair<uint8_t,uint8_t> pos(x,y);
+        if(mapServer->botsFight.find(pos)!=mapServer->botsFight.cend())
         {
-            const std::vector<uint32_t> &botsFightList=static_cast<MapServer*>(this->map)->botsFight.values(std::pair<uint8_t,uint8_t>(x,y));
-            if(botsFightList.contains(fightId))
+            const std::vector<uint32_t> &botsFightList=static_cast<MapServer*>(this->map)->botsFight.at(pos);
+            if(vectorcontains(botsFightList,fightId))
                 found=true;
         }
         if(!found)
         {
-            errorOutput(std::stringLiteral("no fight with id %1 in this direction").arg(fightId));
+            errorOutput("no fight with id "+std::to_string(fightId)+" in this direction");
             return;
         }
     }
-    normalOutput(std::stringLiteral("is now in fight (after a request) on map %1 (%2,%3) with the bot %4").arg(map->map_file).arg(x).arg(y).arg(fightId));
+    normalOutput("is now in fight (after a request) on map "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+") with the bot "+std::to_string(fightId));
     botFightStart(fightId);
 }
 
@@ -2464,17 +2460,17 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
         {
             if(public_and_private_informations.clan>0)
             {
-                errorOutput(std::stringLiteral("You are already in clan"));
+                errorOutput("You are already in clan");
                 return;
             }
-            if(text.isEmpty())
+            if(text.size()==0)
             {
-                errorOutput(std::stringLiteral("You can't create clan with empty name"));
+                errorOutput("You can't create clan with empty name");
                 return;
             }
-            if(!public_and_private_informations.allow.contains(ActionAllow_Clan))
+            if(public_and_private_informations.allow.find(ActionAllow_Clan)==public_and_private_informations.allow.cend())
             {
-                errorOutput(std::stringLiteral("You have not the right to create clan"));
+                errorOutput("You have not the right to create clan");
                 return;
             }
             ClanActionParam *clanActionParam=new ClanActionParam();
@@ -2482,11 +2478,12 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             clanActionParam->action=action;
             clanActionParam->text=text;
 
-            const std::string &queryText=PreparedDBQueryCommon::db_query_select_clan_by_name.arg(SqlFunction::quoteSqlVariable(text));
-            CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&Client::addClan_static);
+            std::string queryText=PreparedDBQueryCommon::db_query_select_clan_by_name;
+            stringreplace(queryText,"%1",SqlFunction::quoteSqlVariable(text));
+            CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.c_str(),this,&Client::addClan_static);
             if(callback==NULL)
             {
-                qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
+                std::cerr << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
 
                 QByteArray outputData;
                 QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -2498,11 +2495,11 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             }
             else
             {
-                paramToPassToCallBack << clanActionParam;
+                paramToPassToCallBack.push_back(clanActionParam);
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                paramToPassToCallBackType << std::stringLiteral("ClanActionParam");
+                paramToPassToCallBackType.push_back("ClanActionParam");
                 #endif
-                callbackRegistred << callback;
+                callbackRegistred.push_back(callback);
             }
             return;
         }
@@ -2512,12 +2509,12 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
         {
             if(public_and_private_informations.clan==0)
             {
-                errorOutput(std::stringLiteral("You have not a clan"));
+                errorOutput("You have not a clan");
                 return;
             }
             if(public_and_private_informations.clan_leader)
             {
-                errorOutput(std::stringLiteral("You can't leave if you are the leader"));
+                errorOutput("You can't leave if you are the leader");
                 return;
             }
             removeFromClan();
@@ -2529,7 +2526,9 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             out << (uint8_t)0x01;
             postReply(query_id,outputData.constData(),outputData.size());
             //update the db
-            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_clan.arg(character_id));
+            std::string queryText=PreparedDBQueryCommon::db_query_update_character_clan;
+            stringreplace(queryText,"%1",std::to_string(character_id));
+            dbQueryWriteCommon(queryText);
         }
         break;
         //dissolve
@@ -2537,20 +2536,20 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
         {
             if(public_and_private_informations.clan==0)
             {
-                errorOutput(std::stringLiteral("You have not a clan"));
+                errorOutput("You have not a clan");
                 return;
             }
             if(!public_and_private_informations.clan_leader)
             {
-                errorOutput(std::stringLiteral("You are not a leader to dissolve the clan"));
+                errorOutput("You are not a leader to dissolve the clan");
                 return;
             }
-            if(!clan->captureCityInProgress.isEmpty())
+            if(clan->captureCityInProgress.size()>0)
             {
-                errorOutput(std::stringLiteral("You can't disolv the clan if is in city capture"));
+                errorOutput("You can't disolv the clan if is in city capture");
                 return;
             }
-            const std::vector<Client *> &players=clanList.value(public_and_private_informations.clan)->players;
+            const std::vector<Client *> &players=clanList.at(public_and_private_informations.clan)->players;
             //send the network reply
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -2558,17 +2557,23 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             out << (uint8_t)0x01;
             postReply(query_id,outputData.constData(),outputData.size());
             //update the db
-            int index=0;
+            unsigned int index=0;
             while(index<players.size())
             {
-                dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_clan.arg(players.at(index)->getPlayerId()));
+                std::string queryText=PreparedDBQueryCommon::db_query_update_character_clan;
+                stringreplace(queryText,"%1",std::to_string(players.at(index)->getPlayerId()));
+                dbQueryWriteCommon(queryText);
                 index++;
             }
-            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_clan.arg(public_and_private_informations.clan));
-            dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_city.arg(clan->capturedCity));
+            std::string queryText=PreparedDBQueryCommon::db_query_delete_clan;
+            stringreplace(queryText,"%1",std::to_string(public_and_private_informations.clan));
+            dbQueryWriteCommon(queryText);
+            queryText=PreparedDBQueryServer::db_query_delete_city;
+            stringreplace(queryText,"%1",clan->capturedCity);
+            dbQueryWriteServer(queryText);
             //update the object
-            clanList.remove(public_and_private_informations.clan);
-            GlobalServerData::serverPrivateVariables.cityStatusListReverse.remove(clan->clanId);
+            clanList.erase(public_and_private_informations.clan);
+            GlobalServerData::serverPrivateVariables.cityStatusListReverse.erase(clan->clanId);
             GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=0;
             delete clan;
             index=0;
@@ -2591,26 +2596,26 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
         {
             if(public_and_private_informations.clan==0)
             {
-                errorOutput(std::stringLiteral("You have not a clan"));
+                errorOutput("You have not a clan");
                 return;
             }
             if(!public_and_private_informations.clan_leader)
             {
-                errorOutput(std::stringLiteral("You are not a leader to invite into the clan"));
+                errorOutput("You are not a leader to invite into the clan");
                 return;
             }
             bool haveAClan=true;
-            if(playerByPseudo.contains(text))
-                if(!playerByPseudo.value(text)->haveAClan())
+            if(playerByPseudo.find(text)!=playerByPseudo.cend())
+                if(!playerByPseudo.at(text)->haveAClan())
                     haveAClan=false;
-            bool isFound=playerByPseudo.contains(text);
+            bool isFound=playerByPseudo.find(text)!=playerByPseudo.cend();
             //send the network reply
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
             out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
             if(isFound && !haveAClan)
             {
-                if(playerByPseudo.value(text)->inviteToClan(public_and_private_informations.clan))
+                if(playerByPseudo.at(text)->inviteToClan(public_and_private_informations.clan))
                     out << (uint8_t)0x01;
                 else
                     out << (uint8_t)0x02;
@@ -2618,9 +2623,9 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             else
             {
                 if(!isFound)
-                    normalOutput(std::stringLiteral("Clan invite: Player %1 not found, is connected?").arg(text));
+                    normalOutput("Clan invite: Player "+text+" not found, is connected?");
                 if(haveAClan)
-                    normalOutput(std::stringLiteral("Clan invite: Player %1 is already into a clan").arg(text));
+                    normalOutput("Clan invite: Player "+text+" is already into a clan");
                 out << (uint8_t)0x02;
             }
             postReply(query_id,outputData.constData(),outputData.size());
@@ -2631,24 +2636,24 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
         {
             if(public_and_private_informations.clan==0)
             {
-                errorOutput(std::stringLiteral("You have not a clan"));
+                errorOutput("You have not a clan");
                 return;
             }
             if(!public_and_private_informations.clan_leader)
             {
-                errorOutput(std::stringLiteral("You are not a leader to invite into the clan"));
+                errorOutput("You are not a leader to invite into the clan");
                 return;
             }
             if(public_and_private_informations.public_informations.pseudo==text)
             {
-                errorOutput(std::stringLiteral("You can't eject your self"));
+                errorOutput("You can't eject your self");
                 return;
             }
             bool isIntoTheClan=false;
-            if(playerByPseudo.contains(text))
-                if(playerByPseudo.value(text)->getClanId()==public_and_private_informations.clan)
+            if(playerByPseudo.find(text)!=playerByPseudo.cend())
+                if(playerByPseudo.at(text)->getClanId()==public_and_private_informations.clan)
                     isIntoTheClan=true;
-            bool isFound=playerByPseudo.contains(text);
+            bool isFound=playerByPseudo.find(text)!=playerByPseudo.cend();
             //send the network reply
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -2658,15 +2663,18 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             else
             {
                 if(!isFound)
-                    normalOutput(std::stringLiteral("Clan invite: Player %1 not found, is connected?").arg(text));
+                    normalOutput("Clan invite: Player "+text+" not found, is connected?");
                 if(!isIntoTheClan)
-                    normalOutput(std::stringLiteral("Clan invite: Player %1 is not into your clan").arg(text));
+                    normalOutput("Clan invite: Player "+text+" is not into your clan");
                 out << (uint8_t)0x02;
             }
             postReply(query_id,outputData.constData(),outputData.size());
             if(!isFound)
             {
-                dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_clan_by_pseudo.arg(text).arg(public_and_private_informations.clan));
+                std::string queryText=PreparedDBQueryCommon::db_query_update_character_clan_by_pseudo;
+                stringreplace(queryText,"%1",SqlFunction::quoteSqlVariable(text));
+                stringreplace(queryText,"%2",std::to_string(public_and_private_informations.clan));
+                dbQueryWriteCommon(queryText);
                 return;
             }
             else if(isIntoTheClan)
@@ -2674,7 +2682,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
         }
         break;
         default:
-            errorOutput(std::stringLiteral("Action on the clan not found"));
+            errorOutput("Action on the clan not found");
         return;
     }
 }
@@ -2689,13 +2697,14 @@ void Client::addClan_static(void *object)
 void Client::addClan_object()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBack.isEmpty())
+    if(paramToPassToCallBack.size()==0)
     {
-        qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
+        std::cerr << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__ << std::endl;
         abort();
     }
     #endif
-    ClanActionParam *clanActionParam=static_cast<ClanActionParam *>(paramToPassToCallBack.takeFirst());
+    ClanActionParam *clanActionParam=static_cast<ClanActionParam *>(paramToPassToCallBack.front());
+    paramToPassToCallBack.erase(paramToPassToCallBack.begin());
     addClan_return(clanActionParam->query_id,clanActionParam->action,clanActionParam->text);
     delete clanActionParam;
 }
@@ -2703,13 +2712,14 @@ void Client::addClan_object()
 void Client::addClan_return(const uint8_t &query_id,const uint8_t &action,const std::string &text)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBackType.takeFirst()!=std::stringLiteral("ClanActionParam"))
+    if(paramToPassToCallBackType.front()!="ClanActionParam")
     {
-        qDebug() << "is not ClanActionParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
+        std::cerr << "is not ClanActionParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
         abort();
     }
+    paramToPassToCallBackType.erase(paramToPassToCallBackType.begin());
     #endif
-    callbackRegistred.removeFirst();
+    callbackRegistred.erase(callbackRegistred.begin());
     Q_UNUSED(action);
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
@@ -2743,11 +2753,11 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &action,const 
     out << (uint32_t)clanId;
     postReply(query_id,outputData.constData(),outputData.size());
     //add into db
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_clan
-             .arg(clanId)
-             .arg(SqlFunction::quoteSqlVariable(text))
-             .arg(QDateTime::currentMSecsSinceEpoch()/1000)
-             );
+    std::string queryText=PreparedDBQueryCommon::db_query_insert_clan;
+    stringreplace(queryText,"%1",std::to_string(clanId));
+    stringreplace(queryText,"%2",SqlFunction::quoteSqlVariable(text));
+    stringreplace(queryText,"%3",std::to_string(QDateTime::currentMSecsSinceEpoch()/1000));
+    dbQueryWriteCommon(queryText);
     insertIntoAClan(clanId);
 }
 
@@ -2760,7 +2770,7 @@ uint32_t Client::getPlayerId() const
 
 void Client::haveClanInfo(const uint32_t &clanId,const std::string &clanName,const quint64 &cash)
 {
-    normalOutput(std::stringLiteral("First client of the clan: %1, clanId: %2 to connect").arg(clanName).arg(clanId));
+    normalOutput("First client of the clan: "+clanName+", clanId: "+std::to_string(clanId)+" to connect");
     createMemoryClan();
     clanList[clanId]->name=clanName;
     clanList[clanId]->cash=cash;
@@ -2772,7 +2782,7 @@ void Client::sendClanInfo()
         return;
     if(clan==NULL)
         return;
-    normalOutput(std::stringLiteral("Send the clan info: %1, clanId: %2, get the info").arg(clan->name).arg(public_and_private_informations.clan));
+    normalOutput("Send the clan info: "+clan->name+", clanId: "+std::to_string(public_and_private_informations.clan)+", get the info");
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
@@ -2793,17 +2803,17 @@ void Client::dissolvedClan()
 
 bool Client::inviteToClan(const uint32_t &clanId)
 {
-    if(!inviteToClanList.isEmpty())
+    if(inviteToClanList.size()>0)
         return false;
     if(clan==NULL)
         return false;
-    inviteToClanList << clanId;
+    inviteToClanList.push_back(clanId);
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint32_t)clanId;
     out << clan->name;
-    sendFullPacket(0xC2,0x000B,outputData.constData(),outputData.size());
+    sendFullPacket(0xC2,0x0B,outputData.constData(),outputData.size());
     return false;
 }
 
@@ -2811,21 +2821,21 @@ void Client::clanInvite(const bool &accept)
 {
     if(!accept)
     {
-        normalOutput(std::stringLiteral("You have refused the clan invitation"));
-        inviteToClanList.removeFirst();
+        normalOutput("You have refused the clan invitation");
+        inviteToClanList.erase(inviteToClanList.begin());
         return;
     }
-    normalOutput(std::stringLiteral("You have accepted the clan invitation"));
-    if(inviteToClanList.isEmpty())
+    normalOutput("You have accepted the clan invitation");
+    if(inviteToClanList.size()==0)
     {
-        errorOutput(std::stringLiteral("Can't responde to clan invite, because no in suspend"));
+        errorOutput("Can't responde to clan invite, because no in suspend");
         return;
     }
     public_and_private_informations.clan_leader=false;
-    public_and_private_informations.clan=inviteToClanList.first();
+    public_and_private_informations.clan=inviteToClanList.front();
     createMemoryClan();
-    insertIntoAClan(inviteToClanList.first());
-    inviteToClanList.removeFirst();
+    insertIntoAClan(inviteToClanList.front());
+    inviteToClanList.erase(inviteToClanList.begin());
 }
 
 uint32_t Client::clanId() const
@@ -2851,11 +2861,11 @@ void Client::insertIntoAClan(const uint32_t &clanId)
         else
             clan_leader=Client::text_false;
     }
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_clan_and_leader
-             .arg(clanId)
-             .arg(clan_leader)
-             .arg(character_id)
-             );
+    std::string queryText=PreparedDBQueryCommon::db_query_update_character_clan_and_leader;
+    stringreplace(queryText,"%1",std::to_string(clanId));
+    stringreplace(queryText,"%2",clan_leader);
+    stringreplace(queryText,"%3",std::to_string(character_id));
+    dbQueryWriteCommon(queryText);
     sendClanInfo();
     clanChangeWithoutDb(public_and_private_informations.clan);
 }
@@ -2863,7 +2873,9 @@ void Client::insertIntoAClan(const uint32_t &clanId)
 void Client::ejectToClan()
 {
     dissolvedClan();
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_clan.arg(character_id));
+    std::string queryText=PreparedDBQueryCommon::db_query_update_character_clan;
+    stringreplace(queryText,"%1",std::to_string(character_id));
+    dbQueryWriteCommon(queryText);
 }
 
 uint32_t Client::getClanId() const
@@ -2880,23 +2892,23 @@ void Client::waitingForCityCaputre(const bool &cancel)
 {
     if(clan==NULL)
     {
-        errorOutput(std::stringLiteral("Try capture city when is not in clan"));
+        errorOutput("Try capture city when is not in clan");
         return;
     }
     if(!cancel)
     {
         if(captureCityInProgress())
         {
-            errorOutput(std::stringLiteral("Try capture city when is already into that's"));
+            errorOutput("Try capture city when is already into that's");
             return;
         }
         if(isInFight())
         {
-            errorOutput(std::stringLiteral("Try capture city when is in fight"));
+            errorOutput("Try capture city when is in fight");
             return;
         }
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        normalOutput(std::stringLiteral("ask zonecapture at %1 (%2,%3)").arg(this->map->map_file).arg(this->x).arg(this->y));
+        normalOutput("ask zonecapture at "+this->map->map_file+" ("+std::to_string(this->x)+","+std::to_string(this->y)+")");
         #endif
         CommonMap *map=this->map;
         uint8_t x=this->x;
@@ -2914,13 +2926,13 @@ void Client::waitingForCityCaputre(const bool &cancel)
                 {
                     if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                     {
-                        errorOutput(std::stringLiteral("waitingForCityCaputre() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                        errorOutput("waitingForCityCaputre() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                         return;
                     }
                 }
                 else
                 {
-                    errorOutput(std::stringLiteral("No valid map in this direction"));
+                    errorOutput("No valid map in this direction");
                     return;
                 }
             break;
@@ -2928,8 +2940,10 @@ void Client::waitingForCityCaputre(const bool &cancel)
             errorOutput("Wrong direction to use a zonecapture");
             return;
         }
-        //check if is shop
-        if(!static_cast<MapServer*>(this->map)->zonecapture.contains(std::pair<uint8_t,uint8_t>(x,y)))
+        const MapServer * const mapServer=static_cast<MapServer*>(map);
+        const std::pair<uint8_t,uint8_t> pos(x,y);
+        //check if is zonecapture
+        if(mapServer->zonecapture.find(pos)==mapServer->zonecapture.cend())
         {
             Direction direction=getLastDirection();
             switch(direction)
@@ -2943,31 +2957,33 @@ void Client::waitingForCityCaputre(const bool &cancel)
                     {
                         if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                         {
-                            errorOutput(std::stringLiteral("waitingForCityCaputre() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            errorOutput("waitingForCityCaputre() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                             return;
                         }
                     }
                     else
                     {
-                        errorOutput(std::stringLiteral("No valid map in this direction"));
+                        errorOutput("No valid map in this direction");
                         return;
                     }
                 break;
                 default:
-                errorOutput(std::stringLiteral("Wrong direction to use a zonecapture"));
+                errorOutput("Wrong direction to use a zonecapture");
                 return;
             }
-            if(!static_cast<MapServer*>(this->map)->zonecapture.contains(std::pair<uint8_t,uint8_t>(x,y)))
+            const MapServer * const mapServer=static_cast<MapServer*>(map);
+            const std::pair<uint8_t,uint8_t> pos(x,y);
+            if(mapServer->zonecapture.find(pos)==mapServer->zonecapture.cend())
             {
-                errorOutput(std::stringLiteral("no zonecapture point in this direction"));
+                errorOutput("no zonecapture point in this direction");
                 return;
             }
         }
         //send the zone capture
-        const std::string &zoneName=static_cast<MapServer*>(this->map)->zonecapture.value(std::pair<uint8_t,uint8_t>(x,y));
+        const std::string &zoneName=static_cast<MapServer*>(map)->zonecapture.at(std::pair<uint8_t,uint8_t>(x,y));
         if(!public_and_private_informations.clan_leader)
         {
-            if(clan->captureCityInProgress.isEmpty())
+            if(clan->captureCityInProgress.size()==0)
             {
                 QByteArray outputData;
                 QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -2979,7 +2995,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
         }
         else
         {
-            if(clan->captureCityInProgress.isEmpty())
+            if(clan->captureCityInProgress.size()==0)
                 clan->captureCityInProgress=zoneName;
         }
         if(clan->captureCityInProgress!=zoneName)
@@ -2994,22 +3010,22 @@ void Client::waitingForCityCaputre(const bool &cancel)
         }
         if(captureCity.count(zoneName)>0)
         {
-            errorOutput(std::stringLiteral("already in capture city"));
+            errorOutput("already in capture city");
             return;
         }
-        captureCity[zoneName] << this;
+        captureCity[zoneName].push_back(this);
         setInCityCapture(true);
     }
     else
     {
-        if(clan->captureCityInProgress.isEmpty())
+        if(clan->captureCityInProgress.size()==0)
         {
-            errorOutput(std::stringLiteral("your clan is not in capture city"));
+            errorOutput("your clan is not in capture city");
             return;
         }
-        if(!captureCity[clan->captureCityInProgress].removeOne(this))
+        if(!vectorremoveOne(captureCity[clan->captureCityInProgress],this))
         {
-            errorOutput(std::stringLiteral("not in capture city"));
+            errorOutput("not in capture city");
             return;
         }
         leaveTheCityCapture();
@@ -3020,28 +3036,28 @@ void Client::leaveTheCityCapture()
 {
     if(clan==NULL)
         return;
-    if(clan->captureCityInProgress.isEmpty())
+    if(clan->captureCityInProgress.size()==0)
         return;
-    if(captureCity[clan->captureCityInProgress].removeOne(this))
+    if(vectorremoveOne(captureCity[clan->captureCityInProgress],this))
     {
         //drop all the capture because no body clam it
-        if(captureCity.value(clan->captureCityInProgress).isEmpty())
+        if(captureCity.at(clan->captureCityInProgress).size()==0)
         {
-            captureCity.remove(clan->captureCityInProgress);
+            captureCity.erase(clan->captureCityInProgress);
             clan->captureCityInProgress.clear();
         }
         else
         {
             //drop the clan capture in no other player of the same clan is into it
-            int index=0;
-            const int &list_size=captureCity.value(clan->captureCityInProgress).size();
+            unsigned int index=0;
+            const unsigned int &list_size=captureCity.at(clan->captureCityInProgress).size();
             while(index<list_size)
             {
-                if(captureCity.value(clan->captureCityInProgress).at(index)->clanId()==clanId())
+                if(captureCity.at(clan->captureCityInProgress).at(index)->clanId()==clanId())
                     break;
                 index++;
             }
-            if(index==captureCity.value(clan->captureCityInProgress).size())
+            if(index==captureCity.at(clan->captureCityInProgress).size())
                 clan->captureCityInProgress.clear();
         }
     }
@@ -3051,11 +3067,11 @@ void Client::leaveTheCityCapture()
 
 void Client::startTheCityCapture()
 {
-    std::unordered_mapIterator<std::string,std::vector<Client *> > i(captureCity);
-    while (i.hasNext()) {
-        i.next();
+    auto i=captureCity.begin();
+    while(i!=captureCity.cend())
+    {
         //the city is not free to capture
-        if(captureCityValidatedList.contains(i.key()))
+        if(captureCityValidatedList.contains(i->first))
         {
             int index=0;
             while(index<i.value().size())
@@ -3068,26 +3084,26 @@ void Client::startTheCityCapture()
         else
         {
             CaptureCityValidated tempCaptureCityValidated;
-            if(!GlobalServerData::serverPrivateVariables.cityStatusList.contains(i.key()))
-                GlobalServerData::serverPrivateVariables.cityStatusList[i.key()].clan=0;
-            if(GlobalServerData::serverPrivateVariables.cityStatusList.value(i.key()).clan==0)
-                if(GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.contains(i.key()))
-                    tempCaptureCityValidated.bots=GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.value(i.key());
+            if(GlobalServerData::serverPrivateVariables.cityStatusList.find(i->first)==GlobalServerData::serverPrivateVariables.cityStatusList.cend())
+                GlobalServerData::serverPrivateVariables.cityStatusList[i->first].clan=0;
+            if(GlobalServerData::serverPrivateVariables.cityStatusList.at(i->first).clan==0)
+                if(GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.find(i->first)!=GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.cend())
+                    tempCaptureCityValidated.bots=GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.at(i->first);
             tempCaptureCityValidated.players=i.value();
-            int index;
-            int sub_index;
+            unsigned int index;
+            unsigned int sub_index;
             //do the clan count
             int player_count=tempCaptureCityValidated.players.size()+tempCaptureCityValidated.bots.size();
             int clan_count=0;
-            if(!tempCaptureCityValidated.bots.isEmpty())
+            if(tempCaptureCityValidated.bots.size()>0)
                 clan_count++;
-            if(!tempCaptureCityValidated.players.isEmpty())
+            if(tempCaptureCityValidated.players.size()>0)
             {
                 index=0;
                 while(index<tempCaptureCityValidated.players.size())
                 {
                     const uint32_t &clanId=tempCaptureCityValidated.players.at(index)->clanId();
-                    if(tempCaptureCityValidated.clanSize.contains(clanId))
+                    if(tempCaptureCityValidated.clanSize.find(clanId)!=tempCaptureCityValidated.clanSize.cend())
                         tempCaptureCityValidated.clanSize[clanId]++;
                     else
                         tempCaptureCityValidated.clanSize[clanId]=1;
@@ -3107,13 +3123,13 @@ void Client::startTheCityCapture()
                         tempCaptureCityValidated.players.at(index)->otherCityPlayerBattle=tempCaptureCityValidated.players.at(sub_index);
                         tempCaptureCityValidated.players.at(sub_index)->otherCityPlayerBattle=tempCaptureCityValidated.players.at(index);
                         tempCaptureCityValidated.players.at(index)->battleFakeAccepted(tempCaptureCityValidated.players.at(sub_index));
-                        tempCaptureCityValidated.playersInFight << tempCaptureCityValidated.players.at(index);
-                        tempCaptureCityValidated.playersInFight.last()->cityCaptureBattle(player_count,clan_count);
-                        tempCaptureCityValidated.playersInFight << tempCaptureCityValidated.players.at(sub_index);
-                        tempCaptureCityValidated.playersInFight.last()->cityCaptureBattle(player_count,clan_count);
-                        tempCaptureCityValidated.players.removeAt(index);
+                        tempCaptureCityValidated.playersInFight.push_back(tempCaptureCityValidated.players.at(index));
+                        tempCaptureCityValidated.playersInFight.back()->cityCaptureBattle(player_count,clan_count);
+                        tempCaptureCityValidated.playersInFight.push_back(tempCaptureCityValidated.players.at(sub_index));
+                        tempCaptureCityValidated.playersInFight.back()->cityCaptureBattle(player_count,clan_count);
+                        tempCaptureCityValidated.players.erase(tempCaptureCityValidated.players.begin()+index);
                         index--;
-                        tempCaptureCityValidated.players.removeAt(sub_index-1);
+                        tempCaptureCityValidated.players.erase(tempCaptureCityValidated.players.begin()+sub_index-1);
                         break;
                     }
                     sub_index++;
@@ -3121,20 +3137,21 @@ void Client::startTheCityCapture()
                 index++;
             }
             //bot the bot fight
-            while(!tempCaptureCityValidated.players.isEmpty() && !tempCaptureCityValidated.bots.isEmpty())
+            while(tempCaptureCityValidated.players.size()>0 && tempCaptureCityValidated.bots.size()>0)
             {
-                tempCaptureCityValidated.playersInFight << tempCaptureCityValidated.players.first();
-                tempCaptureCityValidated.playersInFight.last()->cityCaptureBotFight(player_count,clan_count,tempCaptureCityValidated.bots.first());
-                tempCaptureCityValidated.botsInFight << tempCaptureCityValidated.bots.first();
-                tempCaptureCityValidated.players.first()->botFightStart(tempCaptureCityValidated.bots.first());
-                tempCaptureCityValidated.players.removeFirst();
-                tempCaptureCityValidated.bots.removeFirst();
+                tempCaptureCityValidated.playersInFight.push_back(tempCaptureCityValidated.players.first());
+                tempCaptureCityValidated.playersInFight.back()->cityCaptureBotFight(player_count,clan_count,tempCaptureCityValidated.bots.first());
+                tempCaptureCityValidated.botsInFight.push_back(tempCaptureCityValidated.bots.first());
+                tempCaptureCityValidated.players.front()->botFightStart(tempCaptureCityValidated.bots.first());
+                tempCaptureCityValidated.players.erase(tempCaptureCityValidated.players.begin());
+                tempCaptureCityValidated.bots.erase(tempCaptureCityValidated.bots.begin());
             }
             //send the wait to the rest
             cityCaptureSendInWait(tempCaptureCityValidated,player_count,clan_count);
 
-            captureCityValidatedList[i.key()]=tempCaptureCityValidated;
+            captureCityValidatedList[i->first]=tempCaptureCityValidated;
         }
+        ++i;
     }
     captureCity.clear();
 }
@@ -3144,16 +3161,16 @@ void Client::fightOrBattleFinish(const bool &win, const uint32_t &fightId)
 {
     if(clan!=NULL)
     {
-        if(!clan->captureCityInProgress.isEmpty() && captureCityValidatedList.contains(clan->captureCityInProgress))
+        if(clan->captureCityInProgress.size()>0 && captureCityValidatedList.find(clan->captureCityInProgress)!=captureCityValidatedList.cend())
         {
             CaptureCityValidated &captureCityValidated=captureCityValidatedList[clan->captureCityInProgress];
             //check if this player is into the capture city with the other player of the team
-            if(captureCityValidated.playersInFight.contains(this))
+            if(captureCityValidated.playersInFight.find(this)!=captureCityValidated.playersInFight.cend())
             {
                 if(win)
                 {
                     if(fightId!=0)
-                        captureCityValidated.botsInFight.removeOne(fightId);
+                        vectorremoveOne(captureCityValidated.botsInFight,fightId);
                     else
                     {
                         if(otherCityPlayerBattle!=NULL)
@@ -3165,33 +3182,33 @@ void Client::fightOrBattleFinish(const bool &win, const uint32_t &fightId)
                     uint16_t player_count=cityCapturePlayerCount(captureCityValidated);
                     uint16_t clan_count=cityCaptureClanCount(captureCityValidated);
                     bool newFightFound=false;
-                    int index=0;
+                    unsigned int index=0;
                     while(index<captureCityValidated.players.size())
                     {
                         if(clanId()!=captureCityValidated.players.at(index)->clanId())
                         {
                             battleFakeAccepted(captureCityValidated.players.at(index));
-                            captureCityValidated.playersInFight << captureCityValidated.players.at(index);
-                            captureCityValidated.playersInFight.last()->cityCaptureBattle(player_count,clan_count);
+                            captureCityValidated.playersInFight.push_back(captureCityValidated.players.at(index));
+                            captureCityValidated.playersInFight.back()->cityCaptureBattle(player_count,clan_count);
                             cityCaptureBattle(player_count,clan_count);
-                            captureCityValidated.players.removeAt(index);
+                            captureCityValidated.players.erase(captureCityValidated.players.begin()+index);
                             newFightFound=true;
                             break;
                         }
                         index++;
                     }
-                    if(!newFightFound && !captureCityValidated.bots.isEmpty())
+                    if(!newFightFound && captureCityValidated.bots.size()>0)
                     {
-                        cityCaptureBotFight(player_count,clan_count,captureCityValidated.bots.first());
-                        captureCityValidated.botsInFight << captureCityValidated.bots.first();
-                        botFightStart(captureCityValidated.bots.first());
-                        captureCityValidated.bots.removeFirst();
+                        cityCaptureBotFight(player_count,clan_count,captureCityValidated.bots.front());
+                        captureCityValidated.botsInFight.push_back(captureCityValidated.bots.front());
+                        botFightStart(captureCityValidated.bots.front());
+                        captureCityValidated.bots.erase(captureCityValidated.bots.begin());
                         newFightFound=true;
                     }
                     if(!newFightFound)
                     {
-                        captureCityValidated.playersInFight.removeOne(this);
-                        captureCityValidated.players << this;
+                        vectorremoveOne(captureCityValidated.playersInFight,this);
+                        captureCityValidated.players.push_back(this);
                         otherCityPlayerBattle=NULL;
                     }
                 }
@@ -3199,47 +3216,53 @@ void Client::fightOrBattleFinish(const bool &win, const uint32_t &fightId)
                 {
                     if(fightId!=0)
                     {
-                        captureCityValidated.botsInFight.removeOne(fightId);
-                        captureCityValidated.bots.removeOne(fightId);
+                        vectorremoveOne(captureCityValidated.botsInFight,fightId);
+                        vectorremoveOne(captureCityValidated.bots,fightId);
                     }
                     else
                     {
-                        captureCityValidated.playersInFight.removeOne(this);
+                        vectorremoveOne(captureCityValidated.playersInFight,this);
                         otherCityPlayerBattle=NULL;
                     }
                     captureCityValidated.clanSize[clanId()]--;
-                    if(captureCityValidated.clanSize.value(clanId())==0)
-                        captureCityValidated.clanSize.remove(clanId());
+                    if(captureCityValidated.clanSize.at(clanId())==0)
+                        captureCityValidated.clanSize.erase(clanId());
                 }
                 uint16_t player_count=cityCapturePlayerCount(captureCityValidated);
                 uint16_t clan_count=cityCaptureClanCount(captureCityValidated);
                 //city capture
-                if(captureCityValidated.bots.isEmpty() && captureCityValidated.botsInFight.isEmpty() && captureCityValidated.playersInFight.isEmpty())
+                if(captureCityValidated.bots.size()==0 && captureCityValidated.botsInFight.size()==0 && captureCityValidated.playersInFight.size()==0)
                 {
                     if(clan->capturedCity==clan->captureCityInProgress)
                         clan->captureCityInProgress.clear();
                     else
                     {
-                        if(GlobalServerData::serverPrivateVariables.cityStatusList.contains(clan->capturedCity))
+                        if(GlobalServerData::serverPrivateVariables.cityStatusList.find(clan->capturedCity)!=GlobalServerData::serverPrivateVariables.cityStatusList.cend())
                         {
-                            GlobalServerData::serverPrivateVariables.cityStatusListReverse.remove(clan->clanId);
+                            GlobalServerData::serverPrivateVariables.cityStatusListReverse.erase(clan->clanId);
                             GlobalServerData::serverPrivateVariables.cityStatusList[clan->capturedCity].clan=0;
                         }
-                        dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_city.arg(clan->capturedCity));
+                        std::string queryText=PreparedDBQueryServer::db_query_delete_city;
+                        stringreplace(queryText,"%1",std::to_string(clan->capturedCity));
+                        dbQueryWriteServer(queryText);
                         if(!GlobalServerData::serverPrivateVariables.cityStatusList.contains(clan->captureCityInProgress))
                             GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=0;
+
                         if(GlobalServerData::serverPrivateVariables.cityStatusList.value(clan->captureCityInProgress).clan!=0)
-                            dbQueryWriteServer(PreparedDBQueryServer::db_query_update_city_clan.arg(clan->clanId).arg(clan->captureCityInProgress));
+                            queryText=PreparedDBQueryServer::db_query_update_city_clan;
                         else
-                            dbQueryWriteServer(PreparedDBQueryServer::db_query_insert_city.arg(clan->clanId).arg(clan->captureCityInProgress));
+                            queryText=PreparedDBQueryServer::db_query_insert_city;
+                        stringreplace(queryText,"%1",std::to_string(clan->clanId));
+                        stringreplace(queryText,"%2",clan->captureCityInProgress);
+                        dbQueryWriteServer(queryText);
                         GlobalServerData::serverPrivateVariables.cityStatusListReverse[clan->clanId]=clan->captureCityInProgress;
                         GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=clan->clanId;
                         clan->capturedCity=clan->captureCityInProgress;
                         clan->captureCityInProgress.clear();
-                        int index=0;
+                        unsigned int index=0;
                         while(index<captureCityValidated.players.size())
                         {
-                            captureCityValidated.players.last()->cityCaptureWin();
+                            captureCityValidated.players.back()->cityCaptureWin();
                             index++;
                         }
                     }
@@ -3254,10 +3277,10 @@ void Client::fightOrBattleFinish(const bool &win, const uint32_t &fightId)
 
 void Client::cityCaptureSendInWait(const CaptureCityValidated &captureCityValidated, const uint16_t &number_of_player, const uint16_t &number_of_clan)
 {
-    int index=0;
+    unsigned int index=0;
     while(index<captureCityValidated.players.size())
     {
-        captureCityValidated.playersInFight.last()->cityCaptureInWait(number_of_player,number_of_clan);
+        captureCityValidated.playersInFight.back()->cityCaptureInWait(number_of_player,number_of_clan);
         index++;
     }
 }
@@ -3269,7 +3292,7 @@ uint16_t Client::cityCapturePlayerCount(const CaptureCityValidated &captureCityV
 
 uint16_t Client::cityCaptureClanCount(const CaptureCityValidated &captureCityValidated)
 {
-    if(captureCityValidated.bots.isEmpty() && captureCityValidated.botsInFight.isEmpty())
+    if(captureCityValidated.bots.size()==0 && captureCityValidated.botsInFight.size()==0)
         return captureCityValidated.clanSize.size();
     else
         return captureCityValidated.clanSize.size()+1;
@@ -3339,14 +3362,14 @@ void Client::getMarketList(const uint32_t &query_id)
 {
     if(getInTrade() || isInFight())
     {
-        errorOutput(std::stringLiteral("You can't use the market in trade/fight"));
+        errorOutput("You can't use the market in trade/fight");
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint64)market_cash;
-    int index;
+    unsigned int index;
     std::vector<MarketItem> marketItemList,marketOwnItemList;
     std::vector<MarketPlayerMonster> marketPlayerMonsterList,marketOwnPlayerMonsterList;
     //object filter
@@ -3355,9 +3378,9 @@ void Client::getMarketList(const uint32_t &query_id)
     {
         const MarketItem &marketObject=GlobalServerData::serverPrivateVariables.marketItemList.at(index);
         if(marketObject.player==character_id)
-            marketOwnItemList << marketObject;
+            marketOwnItemList.push_back(marketObject);
         else
-            marketItemList << marketObject;
+            marketItemList.push_back(marketObject);
         index++;
     }
     //monster filter
@@ -3366,9 +3389,9 @@ void Client::getMarketList(const uint32_t &query_id)
     {
         const MarketPlayerMonster &marketPlayerMonster=GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.at(index);
         if(marketPlayerMonster.player==character_id)
-            marketOwnPlayerMonsterList << marketPlayerMonster;
+            marketOwnPlayerMonsterList.push_back(marketPlayerMonster);
         else
-            marketPlayerMonsterList << marketPlayerMonster;
+            marketPlayerMonsterList.push_back(marketPlayerMonster);
         index++;
     }
     //object
@@ -3427,19 +3450,19 @@ void Client::buyMarketObject(const uint32_t &query_id,const uint32_t &marketObje
 {
     if(getInTrade() || isInFight())
     {
-        errorOutput(std::stringLiteral("You can't use the market in trade/fight"));
+        errorOutput("You can't use the market in trade/fight");
         return;
     }
     if(quantity<=0)
     {
-        errorOutput(std::stringLiteral("You can't use the market with null quantity"));
+        errorOutput("You can't use the market with null quantity");
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     //search into the market
-    int index=0;
+    unsigned int index=0;
     while(index<GlobalServerData::serverPrivateVariables.marketItemList.size())
     {
         const MarketItem marketItem=GlobalServerData::serverPrivateVariables.marketItemList.at(index);
@@ -3461,17 +3484,20 @@ void Client::buyMarketObject(const uint32_t &query_id,const uint32_t &marketObje
             //apply the buy
             if(marketItem.quantity==quantity)
             {
-                dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_item_market.arg(marketItem.item).arg(marketItem.player));
+                std::string queryText=PreparedDBQueryServer::db_query_delete_item_market;
+                stringreplace(queryText,"%1",std::to_string(marketItem.item));
+                stringreplace(queryText,"%2",std::to_string(marketItem.player));
+                dbQueryWriteServer(queryText);
                 GlobalServerData::serverPrivateVariables.marketItemList.removeAt(index);
             }
             else
             {
                 GlobalServerData::serverPrivateVariables.marketItemList[index].quantity=marketItem.quantity-quantity;
-                dbQueryWriteServer(PreparedDBQueryServer::db_query_update_item_market
-                             .arg(marketItem.quantity-quantity)
-                             .arg(marketItem.item)
-                             .arg(marketItem.player)
-                             );
+                std::string queryText=PreparedDBQueryServer::db_query_update_item_market;
+                stringreplace(queryText,"%1",std::to_string(marketItem.quantity-quantity));
+                stringreplace(queryText,"%2",std::to_string(marketItem.item));
+                stringreplace(queryText,"%3",std::to_string(marketItem.player));
+                dbQueryWriteServer(queryText);
             }
             removeCash(quantity*marketItem.cash);
             if(playerById.contains(marketItem.player))
@@ -3479,10 +3505,10 @@ void Client::buyMarketObject(const uint32_t &query_id,const uint32_t &marketObje
                 if(!playerById.value(marketItem.player)->addMarketCashWithoutSave(quantity*marketItem.cash))
                     normalOutput(std::stringLiteral("Problem at market cash adding"));
             }
-            dbQueryWriteServer(PreparedDBQueryServer::db_query_update_charaters_market_cash
-                         .arg(quantity*marketItem.cash)
-                         .arg(marketItem.player)
-                         );
+            std::string queryText=PreparedDBQueryServer::db_query_update_charaters_market_cash;
+            stringreplace(queryText,"%1",std::to_string(quantity*marketItem.cash));
+            stringreplace(queryText,"%2",std::to_string(marketItem.player));
+            dbQueryWriteServer(queryText);
             addObject(marketItem.item,quantity);
             out << (uint8_t)0x01;
             postReply(query_id,outputData.constData(),outputData.size());
@@ -3498,7 +3524,7 @@ void Client::buyMarketMonster(const uint32_t &query_id,const uint32_t &monsterId
 {
     if(getInTrade() || isInFight())
     {
-        errorOutput(std::stringLiteral("You can't use the market in trade/fight"));
+        errorOutput("You can't use the market in trade/fight");
         return;
     }
     QByteArray outputData;
@@ -3511,7 +3537,7 @@ void Client::buyMarketMonster(const uint32_t &query_id,const uint32_t &monsterId
         return;
     }
     //search into the market
-    int index=0;
+    unsigned int index=0;
     while(index<GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size())
     {
         const MarketPlayerMonster marketPlayerMonster=GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.at(index);
@@ -3525,21 +3551,23 @@ void Client::buyMarketMonster(const uint32_t &query_id,const uint32_t &monsterId
                 return;
             }
             //apply the buy
-            GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.removeAt(index);
+            GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.erase(GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.begin()+index);
             removeCash(marketPlayerMonster.cash);
             //entry created at first server connexion
-            dbQueryWriteServer(PreparedDBQueryServer::db_query_update_charaters_market_cash
-                         .arg(marketPlayerMonster.cash)
-                         .arg(marketPlayerMonster.player)
-                         );
+            std::string queryText=PreparedDBQueryServer::db_query_update_charaters_market_cash;
+            stringreplace(queryText,"%1",std::to_string(marketPlayerMonster.cash));
+            stringreplace(queryText,"%2",std::to_string(marketPlayerMonster.player));
+            dbQueryWriteServer(queryText);
             addPlayerMonster(marketPlayerMonster.monster);
 
-            dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_monster_market_price.arg(marketPlayerMonster.monster.id));
-            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_move_to_new_player
-                               .arg(character_id)
-                               .arg(getPlayerMonster().size())
-                               .arg(marketPlayerMonster.monster.id)
-                               );
+            queryText=PreparedDBQueryServer::db_query_delete_monster_market_price;
+            stringreplace(queryText,"%1",std::to_string(marketPlayerMonster.monster.id));
+            dbQueryWriteServer(queryText);
+            queryText=PreparedDBQueryCommon::db_query_update_monster_move_to_new_player;
+            stringreplace(queryText,"%1",std::to_string(character_id));
+            stringreplace(queryText,"%2",std::to_string(getPlayerMonster().size()));
+            stringreplace(queryText,"%3",std::to_string(marketPlayerMonster.monster.id));
+            dbQueryWriteCommon(queryText);
             out << (uint8_t)0x01;
             postReply(query_id,outputData.constData(),outputData.size());
             return;
@@ -3554,12 +3582,12 @@ void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,c
 {
     if(getInTrade() || isInFight())
     {
-        errorOutput(std::stringLiteral("You can't use the market in trade/fight"));
+        errorOutput("You can't use the market in trade/fight");
         return;
     }
     if(quantity<=0)
     {
-        errorOutput(std::stringLiteral("You can't use the market with null quantity"));
+        errorOutput("You can't use the market with null quantity");
         return;
     }
     QByteArray outputData;
@@ -3572,7 +3600,7 @@ void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,c
         return;
     }
     //search into the market
-    int index=0;
+    unsigned int index=0;
     while(index<GlobalServerData::serverPrivateVariables.marketItemList.size())
     {
         const MarketItem &marketItem=GlobalServerData::serverPrivateVariables.marketItemList.at(index);
@@ -3583,39 +3611,39 @@ void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,c
             GlobalServerData::serverPrivateVariables.marketItemList[index].quantity+=quantity;
             out << (uint8_t)0x01;
             postReply(query_id,outputData.constData(),outputData.size());
-            dbQueryWriteServer(PreparedDBQueryServer::db_query_update_item_market_and_price
-                .arg(GlobalServerData::serverPrivateVariables.marketItemList[index].quantity)
-                .arg(price)
-                .arg(objectId)
-                .arg(character_id)
-                );
+            std::string queryText=PreparedDBQueryServer::db_query_update_item_market_and_price;
+            stringreplace(queryText,"%1",std::to_string(GlobalServerData::serverPrivateVariables.marketItemList.at(index).quantity));
+            stringreplace(queryText,"%2",std::to_string(price));
+            stringreplace(queryText,"%3",std::to_string(objectId));
+            stringreplace(queryText,"%4",std::to_string(character_id));
+            dbQueryWriteServer(queryText);
             return;
         }
         index++;
     }
-    if(marketObjectIdList.isEmpty())
+    if(marketObjectIdList.size()==0)
     {
         out << (uint8_t)0x02;
         postReply(query_id,outputData.constData(),outputData.size());
-        normalOutput(std::stringLiteral("No more id into marketObjectIdList"));
+        normalOutput("No more id into marketObjectIdList");
         return;
     }
     //append to the market
     removeObject(objectId,quantity);
-    dbQueryWriteServer(PreparedDBQueryServer::db_query_insert_item_market
-                 .arg(objectId)
-                 .arg(character_id)
-                 .arg(quantity)
-                 .arg(price)
-                 );
+    std::string queryText=PreparedDBQueryServer::db_query_insert_item_market;
+    stringreplace(queryText,"%1",std::to_string(objectId));
+    stringreplace(queryText,"%2",std::to_string(character_id));
+    stringreplace(queryText,"%3",std::to_string(quantity));
+    stringreplace(queryText,"%4",std::to_string(price));
+    dbQueryWriteServer(queryText);
     MarketItem marketItem;
     marketItem.cash=price;
     marketItem.item=objectId;
-    marketItem.marketObjectId=marketObjectIdList.first();
+    marketItem.marketObjectId=marketObjectIdList.front();
     marketItem.player=character_id;
     marketItem.quantity=quantity;
-    marketObjectIdList.removeFirst();
-    GlobalServerData::serverPrivateVariables.marketItemList << marketItem;
+    marketObjectIdList.erase(marketObjectIdList.begin());
+    GlobalServerData::serverPrivateVariables.marketItemList.push_back(marketItem);
     out << (uint8_t)0x01;
     postReply(query_id,outputData.constData(),outputData.size());
 }
@@ -3624,13 +3652,13 @@ void Client::putMarketMonster(const uint32_t &query_id,const uint32_t &monsterId
 {
     if(getInTrade() || isInFight())
     {
-        errorOutput(std::stringLiteral("You can't use the market in trade/fight"));
+        errorOutput("You can't use the market in trade/fight");
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    int index=0;
+    unsigned int index=0;
     while(index<public_and_private_informations.playerMonster.size())
     {
         const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
@@ -3638,7 +3666,7 @@ void Client::putMarketMonster(const uint32_t &query_id,const uint32_t &monsterId
         {
             if(!remainMonstersToFight(monsterId))
             {
-                normalOutput(std::stringLiteral("You can't put in market this msonter because you will be without monster to fight"));
+                normalOutput("You can't put in market this msonter because you will be without monster to fight");
                 out << (uint8_t)0x02;
                 postReply(query_id,outputData.constData(),outputData.size());
                 return;
@@ -3647,18 +3675,23 @@ void Client::putMarketMonster(const uint32_t &query_id,const uint32_t &monsterId
             marketPlayerMonster.cash=price;
             marketPlayerMonster.monster=playerMonster;
             marketPlayerMonster.player=character_id;
-            public_and_private_informations.playerMonster.removeAt(index);
-            GlobalServerData::serverPrivateVariables.marketPlayerMonsterList << marketPlayerMonster;
+            public_and_private_informations.playerMonster.erase(public_and_private_informations.playerMonster.begin()+index);
+            GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.push_back(marketPlayerMonster);
 
-            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_move_to_market.arg(marketPlayerMonster.monster.id));
-            dbQueryWriteServer(PreparedDBQueryServer::db_query_insert_monster_market_price.arg(marketPlayerMonster.monster.id).arg(price));
+            std::string queryText=PreparedDBQueryCommon::db_query_update_monster_move_to_market;
+            stringreplace(queryText,"%1",std::to_string(marketPlayerMonster.monster.id));
+            dbQueryWriteCommon(queryText);
+            queryText=PreparedDBQueryServer::db_query_insert_monster_market_price;
+            stringreplace(queryText,"%1",std::to_string(marketPlayerMonster.monster.id));
+            stringreplace(queryText,"%2",std::to_string(price));
+            dbQueryWriteServer(queryText);
             while(index<public_and_private_informations.playerMonster.size())
             {
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
-                dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_position
-                             .arg(index+1)
-                             .arg(playerMonster.id)
-                             );
+                std::string queryText=PreparedDBQueryCommon::db_query_update_monster_position;
+                stringreplace(queryText,"%1",std::to_string(index+1));
+                stringreplace(queryText,"%2",std::to_string(playerMonster.id));
+                dbQueryWriteCommon(queryText);
                 index++;
             }
             out << (uint8_t)0x01;
@@ -3675,7 +3708,7 @@ void Client::recoverMarketCash(const uint32_t &query_id)
 {
     if(getInTrade() || isInFight())
     {
-        errorOutput(std::stringLiteral("You can't use the market in trade/fight"));
+        errorOutput("You can't use the market in trade/fight");
         return;
     }
     QByteArray outputData;
@@ -3684,10 +3717,10 @@ void Client::recoverMarketCash(const uint32_t &query_id)
     out << (quint64)market_cash;
     public_and_private_informations.cash+=market_cash;
     market_cash=0;
-    dbQueryWriteServer(PreparedDBQueryServer::db_query_get_market_cash
-                 .arg(public_and_private_informations.cash)
-                 .arg(character_id)
-                 );
+    std::string queryText=PreparedDBQueryServer::db_query_get_market_cash;
+    stringreplace(queryText,"%1",std::to_string(public_and_private_informations.cash));
+    stringreplace(queryText,"%1",std::to_string(character_id));
+    dbQueryWriteServer(queryText);
     postReply(query_id,outputData.constData(),outputData.size());
 }
 
@@ -3695,18 +3728,18 @@ void Client::withdrawMarketObject(const uint32_t &query_id,const uint32_t &objec
 {
     if(getInTrade() || isInFight())
     {
-        errorOutput(std::stringLiteral("You can't use the market in trade/fight"));
+        errorOutput("You can't use the market in trade/fight");
         return;
     }
     if(quantity<=0)
     {
-        errorOutput(std::stringLiteral("You can't use the market with null quantity"));
+        errorOutput("You can't use the market with null quantity");
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    int index=0;
+    unsigned int index=0;
     while(index<GlobalServerData::serverPrivateVariables.marketItemList.size())
     {
         const MarketItem &marketItem=GlobalServerData::serverPrivateVariables.marketItemList.at(index);
@@ -3729,21 +3762,23 @@ void Client::withdrawMarketObject(const uint32_t &query_id,const uint32_t &objec
             out << marketItem.item;
             out << marketItem.quantity;
             GlobalServerData::serverPrivateVariables.marketItemList[index].quantity=marketItem.quantity-quantity;
-            if(GlobalServerData::serverPrivateVariables.marketItemList.value(index).quantity==0)
+            if(GlobalServerData::serverPrivateVariables.marketItemList.at(index).quantity==0)
             {
-                marketObjectIdList << marketItem.marketObjectId;
-                GlobalServerData::serverPrivateVariables.marketItemList.removeAt(index);
-                dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_item_market
-                             .arg(objectId)
-                             .arg(character_id)
-                             );
+                marketObjectIdList.push_back(marketItem.marketObjectId);
+                GlobalServerData::serverPrivateVariables.marketItemList.erase(GlobalServerData::serverPrivateVariables.marketItemList.begin()+index);
+                std::string queryText=PreparedDBQueryServer::db_query_delete_item_market;
+                stringreplace(queryText,"%1",std::to_string(objectId));
+                stringreplace(queryText,"%2",std::to_string(character_id));
+                dbQueryWriteServer(queryText);
             }
             else
-                dbQueryWriteServer(PreparedDBQueryServer::db_query_update_item_market
-                             .arg(GlobalServerData::serverPrivateVariables.marketItemList.value(index).quantity)
-                             .arg(objectId)
-                             .arg(character_id)
-                             );
+            {
+                std::string queryText=PreparedDBQueryServer::db_query_update_item_market;
+                stringreplace(queryText,"%1",std::to_string(GlobalServerData::serverPrivateVariables.marketItemList.value(index).quantity));
+                stringreplace(queryText,"%2",std::to_string(objectId));
+                stringreplace(queryText,"%3",std::to_string(character_id));
+                dbQueryWriteServer(queryText);
+            }
             addObject(objectId,quantity);
             postReply(query_id,outputData.constData(),outputData.size());
             return;
@@ -3758,13 +3793,13 @@ void Client::withdrawMarketMonster(const uint32_t &query_id,const uint32_t &mons
 {
     if(getInTrade() || isInFight())
     {
-        errorOutput(std::stringLiteral("You can't use the market in trade/fight"));
+        errorOutput("You can't use the market in trade/fight");
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    int index=0;
+    unsigned int index=0;
     while(index<GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size())
     {
         const MarketPlayerMonster &marketPlayerMonster=GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.at(index);
@@ -3782,10 +3817,14 @@ void Client::withdrawMarketMonster(const uint32_t &query_id,const uint32_t &mons
                 postReply(query_id,outputData.constData(),outputData.size());
                 return;
             }
-            GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.removeAt(index);
-            public_and_private_informations.playerMonster << marketPlayerMonster.monster;
-            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_move_to_player.arg(marketPlayerMonster.monster.id));
-            dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_monster_market_price.arg(marketPlayerMonster.monster.id));
+            GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.erase(GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.begin()+index);
+            public_and_private_informations.playerMonster.push_back(marketPlayerMonster.monster);
+            std::string queryText=PreparedDBQueryCommon::db_query_update_monster_move_to_player;
+            stringreplace(queryText,"%1",std::to_string(marketPlayerMonster.monster.id));
+            dbQueryWriteCommon(queryText);
+            queryText=PreparedDBQueryServer::db_query_delete_monster_market_price;
+            stringreplace(queryText,"%1",std::to_string(marketPlayerMonster.monster.id));
+            dbQueryWriteServer(queryText);
             out << (uint8_t)0x01;
             out << (uint8_t)0x02;
             const QByteArray newData(outputData+FacilityLib::privateMonsterToBinary(public_and_private_informations.playerMonster.last()));
@@ -3800,18 +3839,18 @@ void Client::withdrawMarketMonster(const uint32_t &query_id,const uint32_t &mons
 
 bool Client::haveReputationRequirements(const std::vector<ReputationRequirements> &reputationList) const
 {
-    int index=0;
+    unsigned int index=0;
     while(index<reputationList.size())
     {
         const CatchChallenger::ReputationRequirements &reputationRequierement=reputationList.at(index);
-        if(public_and_private_informations.reputation.contains(reputationRequierement.reputationId))
+        if(public_and_private_informations.reputation.find(reputationRequierement.reputationId)!=public_and_private_informations.reputation.cend())
         {
-            const PlayerReputation &playerReputation=public_and_private_informations.reputation.value(reputationRequierement.reputationId);
+            const PlayerReputation &playerReputation=public_and_private_informations.reputation.at(reputationRequierement.reputationId);
             if(!reputationRequierement.positif)
             {
                 if(-reputationRequierement.level<playerReputation.level)
                 {
-                    normalOutput(std::stringLiteral("reputation.level(%1)<playerReputation.level(%2)").arg(reputationRequierement.level).arg(playerReputation.level));
+                    normalOutput("reputation.level("+std::to_string(reputationRequierement.level)+")<playerReputation.level("+std::to_string(playerReputation.level)+")");
                     return false;
                 }
             }
@@ -3819,7 +3858,9 @@ bool Client::haveReputationRequirements(const std::vector<ReputationRequirements
             {
                 if(reputationRequierement.level>playerReputation.level || playerReputation.point<0)
                 {
-                    normalOutput(std::stringLiteral("reputation.level(%1)>playerReputation.level(%2) || playerReputation.point(%3)<0").arg(reputationRequierement.level).arg(playerReputation.level).arg(playerReputation.point));
+                    normalOutput("reputation.level("+std::to_string(reputationRequierement.level)+
+                                 ")>playerReputation.level("+std::to_string(playerReputation.level)+
+                                 ") || playerReputation.point("+std::to_string(playerReputation.point)+")<0");
                     return false;
                 }
             }
@@ -3827,7 +3868,8 @@ bool Client::haveReputationRequirements(const std::vector<ReputationRequirements
         else
             if(!reputationRequierement.positif)//default level is 0, but required level is negative
             {
-                normalOutput(std::stringLiteral("reputation.level(%1)<0 and no reputation.type=%2").arg(reputationRequierement.level).arg(CommonDatapack::commonDatapack.reputation.at(reputationRequierement.reputationId).name));
+                normalOutput("reputation.level("+std::to_string(reputationRequierement.level)+
+                             ")<0 and no reputation.type="+CommonDatapack::commonDatapack.reputation.at(reputationRequierement.reputationId).name);
                 return false;
             }
         index++;
