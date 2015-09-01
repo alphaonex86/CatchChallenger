@@ -274,8 +274,8 @@ int64_t stringtoint64(const std::string &string,bool *ok=NULL)
     }
 }
 
-template <class T>
-int vectorindexOf(const std::vector<T> &list,const T &item)
+template <class T, class U>
+int vectorindexOf(const std::vector<T> &list,const U &item)
 {
     const auto &r=std::find(list.begin(),list.end(),item);
     if(r==list.end())
@@ -292,6 +292,19 @@ std::vector<T> unordered_map_keys_vector(const std::unordered_map<T,U> &unordere
     for ( auto it = unordered_map_var.cbegin(); it != unordered_map_var.cend(); ++it )
         keyList.push_back(it->first);
     return keyList;
+}
+
+template <class T>
+unsigned int vectorRemoveEmpty(std::vector<T> &list)
+{
+    unsigned int removedEntryNumber=0;
+    for(auto it = list.begin();it != list.cend();++it)
+        if(it.size()==0)
+        {
+            list.erase(it);
+            ++removedEntryNumber;
+        }
+    return removedEntryNumber;
 }
 
 //s.find('q') == std::string::npos
