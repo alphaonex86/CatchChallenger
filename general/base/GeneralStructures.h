@@ -351,7 +351,7 @@ struct Player_private_and_public_informations
     std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t/*quantity*/> items,warehouse_items;
     //crafting
     std::unordered_set<uint16_t> recipes;
-    std::map<uint8_t,PlayerReputation> reputation;
+    std::unordered_map<uint8_t,PlayerReputation> reputation;
     //fight
     std::unordered_set<uint16_t> bot_already_beaten;
     /// \todo put out of here to have mutalised engine
