@@ -285,6 +285,31 @@ int vectorindexOf(const std::vector<T> &list,const U &item)
 }
 
 template <class T, class U>
+bool vectorremoveOne(const std::vector<T> &list,const U &item)
+{
+    const auto &r=std::find(list.begin(),list.end(),item);
+    if(r==list.end())
+    {
+        return false;
+    }
+    else
+    {
+        list.erase(r);
+        return true;
+    }
+}
+
+template <class T, class U>
+bool vectorcontains(const std::vector<T> &list,const U &item)
+{
+    const auto &r=std::find(list.begin(),list.end(),item);
+    if(r==list.end())
+        return false;
+    else
+        return true;
+}
+
+template <class T, class U>
 std::vector<T> unordered_map_keys_vector(const std::unordered_map<T,U> &unordered_map_var)
 {
     std::vector<T> keyList;
