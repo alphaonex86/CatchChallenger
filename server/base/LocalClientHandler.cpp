@@ -90,11 +90,11 @@ void Client::savePosition()
     //Orientation orientation;
     #ifdef DEBUG_MESSAGE_CLIENT_MOVE
     normalOutput(
-                QLatin1String("map->map_file: %1,x: %2,y: %3, orientation: %4")
-                .arg(map->map_file)
-                .arg(x)
-                .arg(y)
-                .arg(orientationString)
+                "map->map_file: "+
+                map->map_file+
+                ",x: "+std::to_string(x)+
+                ",y: "+std::to_string(y)+
+                ", orientation: "+std::to_string((int)last_direction)
                 );
     #endif
     /* disable because use memory, but useful only into less than < 0.1% of case
@@ -573,7 +573,7 @@ uint32_t Client::removeObject(const uint16_t &item, const uint32_t &quantity)
         else
         {
             const uint32_t removed_quantity=public_and_private_informations.items.at(item);
-            public_and_private_informations.items.remove(item);
+            public_and_private_informations.items.erase(item);
             std::string queryText=PreparedDBQueryCommon::db_query_delete_item;
             stringreplace(queryText,"%1",std::to_string(item));
             stringreplace(queryText,"%2",std::to_string(character_id));
@@ -597,10 +597,10 @@ void Client::sendRemoveObject(const uint16_t &item,const uint32_t &quantity)
     sendFullPacket(0xD0,0x03,outputData.constData(),outputData.size());
 }
 
-uint32_t Client::objectQuantity(const uint16_t &item)
+uint32_t Client::objectQuantity(const uint16_t &item) const
 {
-    if(public_and_private_informations.items.contains(item))
-        return public_and_private_informations.items.value(item);
+    if(public_and_private_informations.items.find(item)!=public_and_private_informations.items.cend())
+        return public_and_private_informations.items.at(item);
     else
         return 0;
 }
@@ -616,10 +616,10 @@ void Client::addCash(const quint64 &cash, const bool &forceSave)
     if(cash==0 && !forceSave)
         return;
     public_and_private_informations.cash+=cash;
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_cash
-                 .arg(public_and_private_informations.cash)
-                 .arg(character_id)
-                 );
+    std::string queryText=PreparedDBQueryCommon::db_query_update_cash;
+    stringreplace(queryText,"%1",std::to_string(public_and_private_informations.cash));
+    stringreplace(queryText,"%2",std::to_string(character_id));
+    dbQueryWriteCommon(queryText);
 }
 
 void Client::removeCash(const quint64 &cash)
@@ -627,10 +627,10 @@ void Client::removeCash(const quint64 &cash)
     if(cash==0)
         return;
     public_and_private_informations.cash-=cash;
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_cash
-                 .arg(public_and_private_informations.cash)
-                 .arg(character_id)
-                 );
+    std::string queryText=PreparedDBQueryCommon::db_query_update_cash;
+    stringreplace(queryText,"%1",std::to_string(public_and_private_informations.cash));
+    stringreplace(queryText,"%2",std::to_string(character_id));
+    dbQueryWriteCommon(queryText);
 }
 
 void Client::addWarehouseCash(const quint64 &cash, const bool &forceSave)
@@ -638,10 +638,10 @@ void Client::addWarehouseCash(const quint64 &cash, const bool &forceSave)
     if(cash==0 && !forceSave)
         return;
     public_and_private_informations.warehouse_cash+=cash;
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_warehouse_cash
-                 .arg(public_and_private_informations.warehouse_cash)
-                 .arg(character_id)
-                 );
+    std::string queryText=PreparedDBQueryCommon::db_query_update_warehouse_cash;
+    stringreplace(queryText,"%1",std::to_string(public_and_private_informations.warehouse_cash));
+    stringreplace(queryText,"%2",std::to_string(character_id));
+    dbQueryWriteCommon(queryText);
 }
 
 void Client::removeWarehouseCash(const quint64 &cash)
@@ -649,10 +649,10 @@ void Client::removeWarehouseCash(const quint64 &cash)
     if(cash==0)
         return;
     public_and_private_informations.warehouse_cash-=cash;
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_warehouse_cash
-                 .arg(public_and_private_informations.warehouse_cash)
-                 .arg(character_id)
-                 );
+    std::string queryText=PreparedDBQueryCommon::db_query_update_warehouse_cash;
+    stringreplace(queryText,"%1",std::to_string(public_and_private_informations.warehouse_cash));
+    stringreplace(queryText,"%2",std::to_string(character_id));
+    dbQueryWriteCommon(queryText);
 }
 
 void Client::wareHouseStore(const qint64 &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint32_t> &withdrawMonsters, const std::vector<uint32_t> &depositeMonsters)
@@ -660,7 +660,7 @@ void Client::wareHouseStore(const qint64 &cash, const std::vector<std::pair<uint
     if(!wareHouseStoreCheck(cash,items,withdrawMonsters,depositeMonsters))
         return;
     {
-        int index=0;
+        unsigned int index=0;
         while(index<items.size())
         {
             const std::pair<uint16_t, int32_t> &item=items.at(index);
@@ -689,19 +689,21 @@ void Client::wareHouseStore(const qint64 &cash, const std::vector<std::pair<uint
         addWarehouseCash(-cash);
     }
     {
-        int index=0;
+        unsigned int index=0;
         while(index<withdrawMonsters.size())
         {
-            int sub_index=0;
+            unsigned int sub_index=0;
             while(sub_index<public_and_private_informations.warehouse_playerMonster.size())
             {
                 const PlayerMonster &playerMonsterinWarehouse=public_and_private_informations.warehouse_playerMonster.at(sub_index);
                 if(playerMonsterinWarehouse.id==withdrawMonsters.at(index))
                 {
-
-                    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_move_to_player.arg(public_and_private_informations.playerMonster.size()+2).arg(playerMonsterinWarehouse.id));
-                    public_and_private_informations.playerMonster << public_and_private_informations.warehouse_playerMonster.at(sub_index);
-                    public_and_private_informations.warehouse_playerMonster.removeAt(sub_index);
+                    std::string queryText=PreparedDBQueryCommon::db_query_update_monster_move_to_player;
+                    stringreplace(queryText,"%1",std::to_string(public_and_private_informations.playerMonster.size()+2));
+                    stringreplace(queryText,"%2",std::to_string(playerMonsterinWarehouse.id));
+                    dbQueryWriteCommon(queryText);
+                    public_and_private_informations.playerMonster.push_back(public_and_private_informations.warehouse_playerMonster.at(sub_index));
+                    public_and_private_informations.warehouse_playerMonster.erase(public_and_private_informations.warehouse_playerMonster.cbegin()+sub_index);
                     break;
                 }
                 sub_index++;
@@ -710,18 +712,21 @@ void Client::wareHouseStore(const qint64 &cash, const std::vector<std::pair<uint
         }
     }
     {
-        int index=0;
+        unsigned int index=0;
         while(index<depositeMonsters.size())
         {
-            int sub_index=0;
+            unsigned int sub_index=0;
             while(sub_index<public_and_private_informations.playerMonster.size())
             {
                 const PlayerMonster &playerMonsterOnPlayer=public_and_private_informations.playerMonster.at(sub_index);
                 if(playerMonsterOnPlayer.id==depositeMonsters.at(index))
                 {
-                    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_move_to_warehouse.arg(public_and_private_informations.warehouse_playerMonster.size()+2).arg(playerMonsterOnPlayer.id));
-                    public_and_private_informations.warehouse_playerMonster << public_and_private_informations.playerMonster.at(sub_index);
-                    public_and_private_informations.playerMonster.removeAt(sub_index);
+                    std::string queryText=PreparedDBQueryCommon::db_query_update_monster_move_to_warehouse;
+                    stringreplace(queryText,"%1",std::to_string(public_and_private_informations.warehouse_playerMonster.size()+2));
+                    stringreplace(queryText,"%2",std::to_string(playerMonsterOnPlayer.id));
+                    dbQueryWriteCommon(queryText);
+                    public_and_private_informations.warehouse_playerMonster.push_back(public_and_private_informations.playerMonster.at(sub_index));
+                    public_and_private_informations.playerMonster.erase(public_and_private_informations.playerMonster.cbegin()+sub_index);
                     break;
                 }
                 sub_index++;
@@ -729,9 +734,9 @@ void Client::wareHouseStore(const qint64 &cash, const std::vector<std::pair<uint
             index++;
         }
     }
-    if(!depositeMonsters.isEmpty() || !withdrawMonsters.isEmpty())
+    if(depositeMonsters.size()>0 || withdrawMonsters.size()>0)
         if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheDisconnexion)
-            saveMonsterStat(public_and_private_informations.playerMonster.last());
+            saveMonsterStat(public_and_private_informations.playerMonster.back());
 }
 
 bool Client::wareHouseStoreCheck(const qint64 &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint32_t> &withdrawMonsters, const std::vector<uint32_t> &depositeMonsters)
@@ -743,18 +748,18 @@ bool Client::wareHouseStoreCheck(const qint64 &cash, const std::vector<std::pair
         return false;
     }
     {
-        int index=0;
+        unsigned int index=0;
         while(index<items.size())
         {
             const std::pair<uint16_t, int32_t> &item=items.at(index);
             if(item.second>0)
             {
-                if(!public_and_private_informations.warehouse_items.contains(item.first))
+                if(public_and_private_informations.warehouse_items.find(item.first)==public_and_private_informations.warehouse_items.cend())
                 {
                     errorOutput("warehouse item transfer is wrong due to missing");
                     return false;
                 }
-                if((qint64)public_and_private_informations.warehouse_items.value(item.first)<item.second)
+                if((qint64)public_and_private_informations.warehouse_items.at(item.first)<item.second)
                 {
                     errorOutput("warehouse item transfer is wrong due to wrong quantity");
                     return false;
@@ -762,12 +767,12 @@ bool Client::wareHouseStoreCheck(const qint64 &cash, const std::vector<std::pair
             }
             if(item.second<0)
             {
-                if(!public_and_private_informations.items.contains(item.first))
+                if(public_and_private_informations.items.find(item.first)==public_and_private_informations.items.cend())
                 {
                     errorOutput("item transfer is wrong due to missing");
                     return false;
                 }
-                if((qint64)public_and_private_informations.items.value(item.first)<-item.second)
+                if((qint64)public_and_private_informations.items.at(item.first)<-item.second)
                 {
                     errorOutput("item transfer is wrong due to wrong quantity");
                     return false;
@@ -778,10 +783,10 @@ bool Client::wareHouseStoreCheck(const qint64 &cash, const std::vector<std::pair
     }
     int count_change=0;
     {
-        int index=0;
+        unsigned int index=0;
         while(index<withdrawMonsters.size())
         {
-            int sub_index=0;
+            unsigned int sub_index=0;
             while(sub_index<public_and_private_informations.warehouse_playerMonster.size())
             {
                 if(public_and_private_informations.warehouse_playerMonster.at(sub_index).id==withdrawMonsters.at(index))
@@ -800,10 +805,10 @@ bool Client::wareHouseStoreCheck(const qint64 &cash, const std::vector<std::pair
         }
     }
     {
-        int index=0;
+        unsigned int index=0;
         while(index<depositeMonsters.size())
         {
-            int sub_index=0;
+            unsigned int sub_index=0;
             while(sub_index<public_and_private_informations.playerMonster.size())
             {
                 if(public_and_private_informations.playerMonster.at(sub_index).id==depositeMonsters.at(index))
@@ -834,65 +839,77 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
     if(command==Client::text_give)
     {
         bool ok;
-        std::vector<std::string> arguments=extraText.split(Client::text_space,std::string::SkipEmptyParts);
+        std::vector<std::string> arguments=stringsplit(extraText,' ');
+        vectorRemoveEmpty(arguments);
         if(arguments.size()==2)
-            arguments << Client::text_1;
+            arguments.push_back(Client::text_1);
         while(arguments.size()>3)
         {
-            const std::string &arg1=arguments.takeAt(arguments.size()-3);
-            const std::string &arg2=arguments.takeAt(arguments.size()-2);
-            arguments.insert(arguments.size()-1,arg1+Client::text_space+arg2);
+            const std::string arg1=arguments.at(arguments.size()-3);
+            arguments.erase(arguments.end()-3);
+            const std::string arg2=arguments.at(arguments.size()-2);
+            arguments.erase(arguments.end()-2);
+            arguments.insert(arguments.end(),arg1+Client::text_space+arg2);
         }
         if(arguments.size()!=3)
         {
-            receiveSystemText(std::stringLiteral("Wrong arguments number for the command, usage: /give objectId player [quantity=1]"));
+            receiveSystemText("Wrong arguments number for the command, usage: /give objectId player [quantity=1]");
             return;
         }
-        const uint32_t &objectId=arguments.first().toUInt(&ok);
+        const uint32_t &objectId=stringtouint32(arguments.at(0),&ok);
         if(!ok)
         {
-            receiveSystemText(std::stringLiteral("objectId is not a number, usage: /give objectId player [quantity=1]"));
+            receiveSystemText("objectId is not a number, usage: /give objectId player [quantity=1]");
             return;
         }
-        if(!CommonDatapack::commonDatapack.items.item.contains(objectId))
+        if(CommonDatapack::commonDatapack.items.item.find(objectId)==CommonDatapack::commonDatapack.items.item.cend())
         {
-            receiveSystemText(std::stringLiteral("objectId is not a valid item, usage: /give objectId player [quantity=1]"));
+            receiveSystemText("objectId is not a valid item, usage: /give objectId player [quantity=1]");
             return;
         }
         uint32_t quantity=1;
         if(arguments.size()==3)
         {
-            quantity=arguments.last().toUInt(&ok);
+            quantity=stringtouint32(arguments.back(),&ok);
             if(!ok)
             {
                 while(arguments.size()>2)
                 {
-                    const std::string &arg1=arguments.takeAt(arguments.size()-2);
-                    const std::string &arg2=arguments.takeAt(arguments.size()-1);
-                    arguments << arg1+Client::text_space+arg2;
+                    const std::string arg1=arguments.at(arguments.size()-2);
+                    arguments.erase(arguments.end()-2);
+                    const std::string arg2=arguments.at(arguments.size()-1);
+                    arguments.erase(arguments.end()-1);
+                    arguments.insert(arguments.end(),arg1+Client::text_space+arg2);
                 }
                 quantity=1;
                 //receiveSystemText(std::stringLiteral("quantity is not a number, usage: /give objectId player [quantity=1]"));
                 //return;
             }
         }
-        if(!playerByPseudo.contains(arguments.at(1)))
+        if(playerByPseudo.find(arguments.at(1))==playerByPseudo.cend())
         {
-            receiveSystemText(std::stringLiteral("player is not connected, usage: /give objectId player [quantity=1]"));
+            receiveSystemText("player is not connected, usage: /give objectId player [quantity=1]");
             return;
         }
-        normalOutput(std::stringLiteral("%1 have give to %2 the item with id: %3 in quantity: %4").arg(public_and_private_informations.public_informations.pseudo).arg(arguments.at(1)).arg(objectId).arg(quantity));
-        playerByPseudo.value(arguments.at(1))->addObjectAndSend(objectId,quantity);
+        normalOutput(public_and_private_informations.public_informations.pseudo+
+                     " have give to "+
+                     arguments.at(1)+
+                     " the item with id: "+
+                     std::to_string(objectId)+
+                     " in quantity: "+
+                     std::to_string(quantity));
+        playerByPseudo.at(arguments.at(1))->addObjectAndSend(objectId,quantity);
     }
     else if(command==Client::text_setevent)
     {
-        const std::vector<std::string> &arguments=extraText.split(Client::text_space,std::string::SkipEmptyParts);
+        std::vector<std::string> arguments=stringsplit(extraText,' ');
+        vectorRemoveEmpty(arguments);
         if(arguments.size()!=2)
         {
-            receiveSystemText(std::stringLiteral("Wrong arguments number for the command, usage: /give setevent [event] [value]"));
+            receiveSystemText("Wrong arguments number for the command, usage: /give setevent [event] [value]");
             return;
         }
-        int index=0,sub_index;
+        unsigned int index=0,sub_index;
         while(index<CommonDatapack::commonDatapack.events.size())
         {
             const Event &event=CommonDatapack::commonDatapack.events.at(index);
@@ -905,7 +922,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                     {
                         if(GlobalServerData::serverPrivateVariables.events.at(index)==sub_index)
                         {
-                            receiveSystemText(std::stringLiteral("The event have aready this value"));
+                            receiveSystemText("The event have aready this value");
                             return;
                         }
                         else
@@ -919,7 +936,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                 }
                 if(sub_index==event.values.size())
                 {
-                    receiveSystemText(std::stringLiteral("The event value is not found"));
+                    receiveSystemText("The event value is not found");
                     return;
                 }
                 break;
@@ -928,193 +945,196 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
         }
         if(index==CommonDatapack::commonDatapack.events.size())
         {
-            receiveSystemText(std::stringLiteral("The event is not found"));
+            receiveSystemText("The event is not found");
             return;
         }
     }
     else if(command==Client::text_take)
     {
         bool ok;
-        std::vector<std::string> arguments=extraText.split(Client::text_space,std::string::SkipEmptyParts);
+        std::vector<std::string> arguments=stringsplit(extraText,' ');
+        vectorRemoveEmpty(arguments);
         if(arguments.size()==2)
-            arguments << Client::text_1;
+            arguments.push_back(Client::text_1);
         if(arguments.size()!=3)
         {
-            receiveSystemText(std::stringLiteral("Wrong arguments number for the command, usage: /take objectId player [quantity=1]"));
+            receiveSystemText("Wrong arguments number for the command, usage: /take objectId player [quantity=1]");
             return;
         }
-        uint32_t objectId=arguments.first().toUInt(&ok);
+        const uint32_t objectId=stringtouint32(arguments.front(),&ok);
         if(!ok)
         {
-            receiveSystemText(std::stringLiteral("objectId is not a number, usage: /take objectId player [quantity=1]"));
+            receiveSystemText("objectId is not a number, usage: /take objectId player [quantity=1]");
             return;
         }
-        if(!CommonDatapack::commonDatapack.items.item.contains(objectId))
+        if(CommonDatapack::commonDatapack.items.item.find(objectId)==CommonDatapack::commonDatapack.items.item.cend())
         {
-            receiveSystemText(std::stringLiteral("objectId is not a valid item, usage: /take objectId player [quantity=1]"));
+            receiveSystemText("objectId is not a valid item, usage: /take objectId player [quantity=1]");
             return;
         }
-        uint32_t quantity=arguments.last().toUInt(&ok);
+        const uint32_t quantity=stringtouint32(arguments.back(),&ok);
         if(!ok)
         {
-            receiveSystemText(std::stringLiteral("quantity is not a number, usage: /take objectId player [quantity=1]"));
+            receiveSystemText("quantity is not a number, usage: /take objectId player [quantity=1]");
             return;
         }
-        if(!playerByPseudo.contains(arguments.at(1)))
+        if(playerByPseudo.find(arguments.at(1))==playerByPseudo.end())
         {
-            receiveSystemText(std::stringLiteral("player is not connected, usage: /take objectId player [quantity=1]"));
+            receiveSystemText("player is not connected, usage: /take objectId player [quantity=1]");
             return;
         }
-        normalOutput(std::stringLiteral("%1 have take to %2 the item with id: %3 in quantity: %4").arg(public_and_private_informations.public_informations.pseudo).arg(arguments.at(1)).arg(objectId).arg(quantity));
-        playerByPseudo.value(arguments.at(1))->sendRemoveObject(objectId,playerByPseudo.value(arguments.at(1))->removeObject(objectId,quantity));
+        normalOutput(public_and_private_informations.public_informations.pseudo+" have take to "+arguments.at(1)+" the item with id: "+std::to_string(objectId)+" in quantity: "+std::to_string(quantity));
+        playerByPseudo.at(arguments.at(1))->sendRemoveObject(objectId,playerByPseudo.at(arguments.at(1))->removeObject(objectId,quantity));
     }
     else if(command==Client::text_tp)
     {
-        std::vector<std::string> arguments=extraText.split(Client::text_space,std::string::SkipEmptyParts);
+        std::vector<std::string> arguments=stringsplit(extraText,' ');
+        vectorRemoveEmpty(arguments);
         if(arguments.size()==3)
         {
             if(arguments.at(1)!=Client::text_to)
             {
-                receiveSystemText(std::stringLiteral("wrong second arguement: %1, usage: /tp player1 to player2").arg(arguments.at(1)));
+                receiveSystemText("wrong second arguement: "+arguments.at(1)+", usage: /tp player1 to player2");
                 return;
             }
-            if(!playerByPseudo.contains(arguments.first()))
+            if(playerByPseudo.find(arguments.front())==playerByPseudo.end())
             {
-                receiveSystemText(std::stringLiteral("%1 is not connected, usage: /tp player1 to player2").arg(arguments.first()));
+                receiveSystemText(arguments.front()+" is not connected, usage: /tp player1 to player2");
                 return;
             }
-            if(!playerByPseudo.contains(arguments.last()))
+            if(playerByPseudo.find(arguments.back())==playerByPseudo.end())
             {
-                receiveSystemText(std::stringLiteral("%1 is not connected, usage: /tp player1 to player2").arg(arguments.last()));
+                receiveSystemText(arguments.back()+" is not connected, usage: /tp player1 to player2");
                 return;
             }
-            playerByPseudo.value(arguments.first())->receiveTeleportTo(playerByPseudo.value(arguments.last())->map,playerByPseudo.value(arguments.last())->x,playerByPseudo.value(arguments.last())->y,MoveOnTheMap::directionToOrientation(playerByPseudo.value(arguments.last())->getLastDirection()));
+            Client * const otherPlayerTo=playerByPseudo.at(arguments.back());
+            playerByPseudo.at(arguments.front())->receiveTeleportTo(otherPlayerTo->map,otherPlayerTo->x,otherPlayerTo->y,MoveOnTheMap::directionToOrientation(otherPlayerTo->getLastDirection()));
         }
         else
         {
-            receiveSystemText(std::stringLiteral("Wrong arguments number for the command, usage: /tp player1 to player2"));
+            receiveSystemText("Wrong arguments number for the command, usage: /tp player1 to player2");
             return;
         }
     }
     else if(command==Client::text_trade)
     {
-        if(extraText.isEmpty())
+        if(extraText.size()==0)
         {
-            receiveSystemText(std::stringLiteral("no player given, syntaxe: /trade player").arg(extraText));
+            receiveSystemText("no player given, syntaxe: /trade player");
             return;
         }
-        if(!playerByPseudo.contains(extraText))
+        if(playerByPseudo.find(extraText)==playerByPseudo.end())
         {
-            receiveSystemText(std::stringLiteral("%1 is not connected").arg(extraText));
+            receiveSystemText(extraText+" is not connected");
             return;
         }
         if(public_and_private_informations.public_informations.pseudo==extraText)
         {
-            receiveSystemText(std::stringLiteral("You can't trade with yourself").arg(extraText));
+            receiveSystemText("You can't trade with yourself");
             return;
         }
         if(getInTrade())
         {
-            receiveSystemText(std::stringLiteral("You are already in trade"));
+            receiveSystemText("You are already in trade");
             return;
         }
         if(isInBattle())
         {
-            receiveSystemText(std::stringLiteral("You are already in battle"));
+            receiveSystemText("You are already in battle");
             return;
         }
-        if(playerByPseudo.value(extraText)->getInTrade())
+        if(playerByPseudo.at(extraText)->getInTrade())
         {
-            receiveSystemText(std::stringLiteral("%1 is already in trade").arg(extraText));
+            receiveSystemText(extraText+" is already in trade");
             return;
         }
-        if(playerByPseudo.value(extraText)->isInBattle())
+        if(playerByPseudo.at(extraText)->isInBattle())
         {
-            receiveSystemText(std::stringLiteral("%1 is already in battle").arg(extraText));
+            receiveSystemText(extraText+" is already in battle");
             return;
         }
-        if(!otherPlayerIsInRange(playerByPseudo.value(extraText)))
+        if(!otherPlayerIsInRange(playerByPseudo.at(extraText)))
         {
-            receiveSystemText(std::stringLiteral("%1 is not in range").arg(extraText));
+            receiveSystemText(extraText+" is not in range");
             return;
         }
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        normalOutput(std::stringLiteral("Trade requested"));
+        normalOutput("Trade requested");
         #endif
-        otherPlayerTrade=playerByPseudo.value(extraText);
+        otherPlayerTrade=playerByPseudo.at(extraText);
         otherPlayerTrade->registerTradeRequest(this);
     }
     else if(command==Client::text_battle)
     {
-        if(extraText.isEmpty())
+        if(extraText.size()==0)
         {
-            receiveSystemText(std::stringLiteral("no player given, syntaxe: /battle player").arg(extraText));
+            receiveSystemText("no player given, syntaxe: /battle player");
             return;
         }
-        if(!playerByPseudo.contains(extraText))
+        if(playerByPseudo.find(extraText)==playerByPseudo.end())
         {
-            receiveSystemText(std::stringLiteral("%1 is not connected").arg(extraText));
+            receiveSystemText(extraText+" is not connected");
             return;
         }
         if(public_and_private_informations.public_informations.pseudo==extraText)
         {
-            receiveSystemText(std::stringLiteral("You can't battle with yourself").arg(extraText));
+            receiveSystemText("You can't battle with yourself");
             return;
         }
         if(isInBattle())
         {
-            receiveSystemText(std::stringLiteral("you are already in battle"));
+            receiveSystemText("you are already in battle");
             return;
         }
         if(getInTrade())
         {
-            receiveSystemText(std::stringLiteral("you are already in trade"));
+            receiveSystemText("you are already in trade");
             return;
         }
-        if(playerByPseudo.value(extraText)->isInBattle())
+        if(playerByPseudo.at(extraText)->isInBattle())
         {
-            receiveSystemText(std::stringLiteral("%1 is already in battle").arg(extraText));
+            receiveSystemText(extraText+" is already in battle");
             return;
         }
-        if(playerByPseudo.value(extraText)->getInTrade())
+        if(playerByPseudo.at(extraText)->getInTrade())
         {
-            receiveSystemText(std::stringLiteral("%1 is already in battle").arg(extraText));
+            receiveSystemText(extraText+" is already in battle");
             return;
         }
-        if(!otherPlayerIsInRange(playerByPseudo.value(extraText)))
+        if(!otherPlayerIsInRange(playerByPseudo.at(extraText)))
         {
-            receiveSystemText(std::stringLiteral("%1 is not in range").arg(extraText));
+            receiveSystemText(extraText+" is not in range");
             return;
         }
-        if(!playerByPseudo.value(extraText)->getAbleToFight())
+        if(!playerByPseudo.at(extraText)->getAbleToFight())
         {
-            receiveSystemText(std::stringLiteral("The other player can't fight"));
+            receiveSystemText("The other player can't fight");
             return;
         }
         if(!getAbleToFight())
         {
-            receiveSystemText(std::stringLiteral("You can't fight"));
+            receiveSystemText("You can't fight");
             return;
         }
-        if(playerByPseudo.value(extraText)->isInFight())
+        if(playerByPseudo.at(extraText)->isInFight())
         {
-            receiveSystemText(std::stringLiteral("The other player is in fight"));
+            receiveSystemText("The other player is in fight");
             return;
         }
         if(isInFight())
         {
-            receiveSystemText(std::stringLiteral("You are in fight"));
+            receiveSystemText("You are in fight");
             return;
         }
         if(captureCityInProgress())
         {
-            errorOutput(std::stringLiteral("Try battle when is in capture city"));
+            errorOutput("Try battle when is in capture city");
             return;
         }
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        normalOutput(std::stringLiteral("Battle requested"));
+        normalOutput("Battle requested");
         #endif
-        playerByPseudo.value(extraText)->registerBattleRequest(this);
+        playerByPseudo.at(extraText)->registerBattleRequest(this);
     }
 }
 
@@ -1123,18 +1143,20 @@ void Client::setEvent(const uint8_t &event, const uint8_t &new_value)
     const uint8_t &event_value=GlobalServerData::serverPrivateVariables.events.at(event);
     QDateTime currentDateTime=QDateTime::currentDateTime();
     std::vector<Client *> playerList;
-    std::unordered_mapIterator<std::string,Client *> i(playerByPseudo);
-    while (i.hasNext()) {
-        i.next();
-        i.value()->addEventInQueue(event,event_value,currentDateTime);
-        playerList << i.value();
+    playerList.reserve(playerByPseudo.size());
+    auto i=playerByPseudo.begin();
+    while(i!=playerByPseudo.cend())
+    {
+        i->second->addEventInQueue(event,event_value,currentDateTime);
+        playerList.push_back(i->second);
+        ++i;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << event;
     out << new_value;
-    int index=0;
+    unsigned int index=0;
     while(index<playerList.size())
     {
         playerList.at(index)->sendNewEvent(outputData);
@@ -1145,30 +1167,30 @@ void Client::setEvent(const uint8_t &event, const uint8_t &new_value)
 
 void Client::addEventInQueue(const uint8_t &event,const uint8_t &event_value,const QDateTime &currentDateTime)
 {
-    if(oldEvents.oldEventList.isEmpty())
+    if(oldEvents.oldEventList.size()==0)
         oldEvents.time=currentDateTime;
     OldEvents::OldEventEntry entry;
     entry.event=event;
     entry.eventValue=event_value;
-    oldEvents.oldEventList << entry;
+    oldEvents.oldEventList.push_back(entry);
 }
 
 void Client::removeFirstEventInQueue()
 {
-    if(oldEvents.oldEventList.isEmpty())
+    if(oldEvents.oldEventList.size()==00)
     {
-        errorOutput(QLatin1Literal("Not event in queue to remove"));
+        errorOutput("Not event in queue to remove");
         return;
     }
-    oldEvents.oldEventList.removeFirst();
-    if(!oldEvents.oldEventList.isEmpty())
+    oldEvents.oldEventList.erase(oldEvents.oldEventList.begin());
+    if(oldEvents.oldEventList.size()>0)
         oldEvents.time=QDateTime::currentDateTime();
 }
 
 bool Client::learnSkill(const uint32_t &monsterId, const uint16_t &skill)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(std::stringLiteral("learnSkill(%1,%2)").arg(monsterId).arg(skill));
+    normalOutput("learnSkill("+std::to_string(monsterId)+","+std::to_string(skill)+")");
     #endif
     CommonMap *map=this->map;
     uint8_t x=this->x;
@@ -1185,21 +1207,23 @@ bool Client::learnSkill(const uint32_t &monsterId, const uint16_t &skill)
             {
                 if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                 {
-                    errorOutput(std::stringLiteral("learnSkill() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput("learnSkill() Can't move at top from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                     return false;
                 }
             }
             else
             {
-                errorOutput(std::stringLiteral("No valid map in this direction"));
+                errorOutput("No valid map in this direction");
                 return false;
             }
         break;
         default:
-        errorOutput(std::stringLiteral("Wrong direction to use a learn skill"));
+        errorOutput("Wrong direction to use a learn skill");
         return false;
     }
-    if(!static_cast<MapServer*>(this->map)->learn.contains(std::pair<uint8_t,uint8_t>(x,y)))
+    const MapServer * const mapServer=static_cast<MapServer*>(this->map);
+    const std::pair<uint8_t,uint8_t> pos(x,y);
+    if(mapServer->learn.find(pos)==mapServer->learn.end())
     {
         switch(direction)
         {
@@ -1211,22 +1235,22 @@ bool Client::learnSkill(const uint32_t &monsterId, const uint16_t &skill)
                 {
                     if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                     {
-                        errorOutput(std::stringLiteral("learnSkill() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                        errorOutput("learnSkill() Can't move at top from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                         return false;
                     }
                 }
                 else
                 {
-                    errorOutput(std::stringLiteral("No valid map in this direction"));
+                    errorOutput("No valid map in this direction");
                     return false;
                 }
             break;
             default:
             break;
         }
-        if(!static_cast<MapServer*>(this->map)->learn.contains(std::pair<uint8_t,uint8_t>(x,y)))
+        if(mapServer->learn.find(pos)==mapServer->learn.end())
         {
-            errorOutput(std::stringLiteral("not learn skill into this direction"));
+            errorOutput("not learn skill into this direction");
             return false;
         }
     }
@@ -1242,28 +1266,28 @@ bool Client::otherPlayerIsInRange(Client * otherPlayer)
 
 void Client::destroyObject(const uint16_t &itemId,const uint32_t &quantity)
 {
-    normalOutput(std::stringLiteral("The player have destroy them self %1 item(s) with id: %2").arg(quantity).arg(itemId));
+    normalOutput("The player have destroy them self "+std::to_string(quantity)+" item(s) with id: "+std::to_string(itemId));
     removeObject(itemId,quantity);
 }
 
 bool Client::useObjectOnMonster(const uint16_t &object,const uint32_t &monster)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(std::stringLiteral("use the object: %1 on monster %2").arg(object).arg(monster));
+    normalOutput("use the object: "+std::to_string(object)+" on monster "+std::to_string(monster));
     #endif
-    if(!public_and_private_informations.items.contains(object))
+    if(public_and_private_informations.items.find(object)==public_and_private_informations.items.cend())
     {
-        errorOutput(std::stringLiteral("can't use the object: %1 because don't have into the inventory").arg(object));
+        errorOutput("can't use the object: "+std::to_string(object)+" because don't have into the inventory");
         return false;
     }
     if(objectQuantity(object)<1)
     {
-        errorOutput(std::stringLiteral("have not quantity to use this object: %1").arg(object));
+        errorOutput("have not quantity to use this object: "+std::to_string(object));
         return false;
     }
     if(CommonFightEngine::useObjectOnMonster(object,monster))
     {
-        if(CommonDatapack::commonDatapack.items.item.value(object).consumeAtUse)
+        if(CommonDatapack::commonDatapack.items.item.at(object).consumeAtUse)
             removeObject(object);
     }
     return true;
@@ -1272,35 +1296,35 @@ bool Client::useObjectOnMonster(const uint16_t &object,const uint32_t &monster)
 void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(std::stringLiteral("use the object: %1").arg(itemId));
+    normalOutput("use the object: "+std::to_string(itemId));
     #endif
-    if(!public_and_private_informations.items.contains(itemId))
+    if(public_and_private_informations.items.find(itemId)==public_and_private_informations.items.cend())
     {
-        errorOutput(std::stringLiteral("can't use the object: %1 because don't have into the inventory").arg(itemId));
+        errorOutput("can't use the object: "+std::to_string(itemId)+" because don't have into the inventory");
         return;
     }
     if(objectQuantity(itemId)<1)
     {
-        errorOutput(std::stringLiteral("have not quantity to use this object: %1 because recipe already registred").arg(itemId));
+        errorOutput("have not quantity to use this object: "+std::to_string(itemId)+" because recipe already registred");
         return;
     }
-    if(CommonDatapack::commonDatapack.items.item.value(itemId).consumeAtUse)
+    if(CommonDatapack::commonDatapack.items.item.at(itemId).consumeAtUse)
         removeObject(itemId);
     //if is crafting recipe
-    if(CommonDatapack::commonDatapack.itemToCrafingRecipes.contains(itemId))
+    if(CommonDatapack::commonDatapack.itemToCrafingRecipes.find(itemId)!=CommonDatapack::commonDatapack.itemToCrafingRecipes.cend())
     {
-        const uint32_t &recipeId=CommonDatapack::commonDatapack.itemToCrafingRecipes.value(itemId);
-        if(public_and_private_informations.recipes.contains(recipeId))
+        const uint32_t &recipeId=CommonDatapack::commonDatapack.itemToCrafingRecipes.at(itemId);
+        if(public_and_private_informations.recipes.find(recipeId)!=public_and_private_informations.recipes.cend())
         {
-            errorOutput(std::stringLiteral("can't use the object: %1").arg(itemId));
+            errorOutput("can't use the object: "+std::to_string(itemId));
             return;
         }
-        if(!haveReputationRequirements(CommonDatapack::commonDatapack.crafingRecipes.value(recipeId).requirements.reputation))
+        if(!haveReputationRequirements(CommonDatapack::commonDatapack.crafingRecipes.at(recipeId).requirements.reputation))
         {
-            errorOutput(std::stringLiteral("The player have not the requirement: %1 to to learn crafting recipe").arg(recipeId));
+            errorOutput("The player have not the requirement: "+std::to_string(recipeId)+" to to learn crafting recipe");
             return;
         }
-        public_and_private_informations.recipes << recipeId;
+        public_and_private_informations.recipes.insert(recipeId);
         //send the network reply
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -1308,22 +1332,22 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
         out << (uint8_t)ObjectUsage_correctlyUsed;
         postReply(query_id,outputData.constData(),outputData.size());
         //add into db
-        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_recipe
-                     .arg(character_id)
-                     .arg(recipeId)
-                     );
+        std::string queryText=PreparedDBQueryCommon::db_query_insert_recipe;
+        stringreplace(queryText,"%1",std::to_string(character_id));
+        stringreplace(queryText,"%2",std::to_string(recipeId));
+        dbQueryWriteCommon(queryText);
     }
     //use trap into fight
-    else if(CommonDatapack::commonDatapack.items.trap.contains(itemId))
+    else if(CommonDatapack::commonDatapack.items.trap.find(itemId)!=CommonDatapack::commonDatapack.items.trap.cend())
     {
         if(!isInFight())
         {
-            errorOutput(std::stringLiteral("is not in fight to use trap: %1").arg(itemId));
+            errorOutput("is not in fight to use trap: "+std::to_string(itemId));
             return;
         }
         if(!isInFightWithWild())
         {
-            errorOutput(std::stringLiteral("is not in fight with wild to use trap: %1").arg(itemId));
+            errorOutput("is not in fight with wild to use trap: "+std::to_string(itemId));
             return;
         }
         const uint32_t &maxMonsterId=tryCapture(itemId);
@@ -1339,9 +1363,9 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
         postReply(query_id,outputData.constData(),outputData.size());
     }
     //use repel into fight
-    else if(CommonDatapack::commonDatapack.items.repel.contains(itemId))
+    else if(CommonDatapack::commonDatapack.items.repel.find(itemId)!=CommonDatapack::commonDatapack.items.repel.cend())
     {
-        public_and_private_informations.repel_step+=CommonDatapack::commonDatapack.items.repel.value(itemId);
+        public_and_private_informations.repel_step+=CommonDatapack::commonDatapack.items.repel.at(itemId);
         //send the network reply
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -1351,7 +1375,7 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
     }
     else
     {
-        errorOutput(std::stringLiteral("can't use the object: %1 because don't have an usage").arg(itemId));
+        errorOutput("can't use the object: "+std::to_string(itemId)+" because don't have an usage");
         return;
     }
 }
@@ -1363,7 +1387,10 @@ void Client::receiveTeleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,con
 
 void Client::teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation)
 {
-    normalOutput(std::stringLiteral("teleportValidatedTo(%1,%2,%3,%4)").arg(map->map_file).arg(x).arg(y).arg((uint8_t)orientation));
+    normalOutput("teleportValidatedTo("+map->map_file+
+                                    ","+std::to_string(x)+
+                                    ","+std::to_string(y)+
+                                    ","+std::to_string((uint8_t)orientation)+")");
     #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     bool mapChange=this->map!=map;
     if(mapChange)
@@ -1402,11 +1429,11 @@ Direction Client::lookToMove(const Direction &direction)
 void Client::getShopList(const uint8_t &query_id,const uint16_t &shopId)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(std::stringLiteral("getShopList(%1,%2)").arg(query_id).arg(shopId));
+    normalOutput("getShopList("+std::to_string(query_id)+","+std::to_string(shopId)+")");
     #endif
-    if(!CommonDatapackServerSpec::commonDatapackServerSpec.shops.contains(shopId))
+    if(CommonDatapackServerSpec::commonDatapackServerSpec.shops.find(shopId)==CommonDatapackServerSpec::commonDatapackServerSpec.shops.cend())
     {
-        errorOutput(std::stringLiteral("shopId not found: %1").arg(shopId));
+        errorOutput("shopId not found: "+std::to_string(shopId));
         return;
     }
     CommonMap *map=this->map;
@@ -1425,25 +1452,28 @@ void Client::getShopList(const uint8_t &query_id,const uint16_t &shopId)
             {
                 if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                 {
-                    errorOutput(std::stringLiteral("getShopList() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput("getShopList() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                     return;
                 }
             }
             else
             {
-                errorOutput(std::stringLiteral("No valid map in this direction"));
+                errorOutput("No valid map in this direction");
                 return;
             }
         break;
         default:
-        errorOutput(std::stringLiteral("Wrong direction to use a shop"));
+        errorOutput("Wrong direction to use a shop");
         return;
     }
+    const MapServer * const mapServer=static_cast<MapServer*>(map);
+    const std::pair<uint8_t,uint8_t> pos(x,y);
     //check if is shop
-    if(static_cast<MapServer*>(this->map)->shops.contains(std::pair<uint8_t,uint8_t>(x,y)))
+    if(mapServer->shops.find(pos)==mapServer->shops.cend())
     {
-        std::vector<uint32_t> shops=static_cast<MapServer*>(this->map)->shops.values(std::pair<uint8_t,uint8_t>(x,y));
-        if(!shops.contains(shopId))
+        const std::vector<uint32_t> shops=mapServer->shops.at(pos);
+        const int indexOf=vectorindexOf(shops,shopId);
+        if(indexOf==-1)
         {
             switch(direction)
             {
@@ -1455,40 +1485,45 @@ void Client::getShopList(const uint8_t &query_id,const uint16_t &shopId)
                     {
                         if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                         {
-                            errorOutput(std::stringLiteral("getShopList() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            errorOutput("getShopList() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                             return;
                         }
                     }
                     else
                     {
-                        errorOutput(std::stringLiteral("No valid map in this direction"));
+                        errorOutput("No valid map in this direction");
                         return;
                     }
                 break;
                 default:
                 break;
             }
-            if(static_cast<MapServer*>(this->map)->shops.contains(std::pair<uint8_t,uint8_t>(x,y)))
             {
-                std::vector<uint32_t> shops=static_cast<MapServer*>(this->map)->shops.values(std::pair<uint8_t,uint8_t>(x,y));
-                if(!shops.contains(shopId))
+                const MapServer * const mapServer=static_cast<MapServer*>(map);
+                const std::pair<uint8_t,uint8_t> pos(x,y);
+                if(mapServer->shops.find(pos)==mapServer->shops.cend())
                 {
-                    errorOutput(std::stringLiteral("not shop into this direction"));
-                    return;
+                    const std::vector<uint32_t> shops=mapServer->shops.at(pos);
+                    const int indexOf=vectorindexOf(shops,shopId);
+                    if(indexOf==-1)
+                    {
+                        errorOutput("not shop into this direction");
+                        return;
+                    }
                 }
             }
         }
     }
     //send the shop items (no taxes from now)
-    const Shop &shop=CommonDatapackServerSpec::commonDatapackServerSpec.shops.value(shopId);
+    const Shop &shop=CommonDatapackServerSpec::commonDatapackServerSpec.shops.at(shopId);
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     QByteArray outputData2;
     QDataStream out2(&outputData2, QIODevice::WriteOnly);
     out2.setVersion(QDataStream::Qt_4_4);
-    int index=0;
-    int objectCount=0;
+    unsigned int index=0;
+    unsigned int objectCount=0;
     while(index<shop.items.size())
     {
         if(shop.prices.at(index)>0)
@@ -1511,16 +1546,16 @@ void Client::getShopList(const uint8_t &query_id,const uint16_t &shopId)
 void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(std::stringLiteral("getShopList(%1,%2)").arg(query_id).arg(shopId));
+    normalOutput("buyObject("+std::to_string(query_id)+","+std::to_string(shopId)+")");
     #endif
-    if(!CommonDatapackServerSpec::commonDatapackServerSpec.shops.contains(shopId))
+    if(CommonDatapackServerSpec::commonDatapackServerSpec.shops.find(shopId)==CommonDatapackServerSpec::commonDatapackServerSpec.shops.cend())
     {
-        errorOutput(std::stringLiteral("shopId not found: %1").arg(shopId));
+        errorOutput("shopId not found: "+std::to_string(shopId));
         return;
     }
     if(quantity<=0)
     {
-        errorOutput(std::stringLiteral("quantity wrong: %1").arg(quantity));
+        errorOutput("quantity wrong: "+std::to_string(quantity));
         return;
     }
     CommonMap *map=this->map;
@@ -1539,25 +1574,28 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint
             {
                 if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                 {
-                    errorOutput(std::stringLiteral("buyObject() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput("buyObject() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                     return;
                 }
             }
             else
             {
-                errorOutput(std::stringLiteral("No valid map in this direction"));
+                errorOutput("No valid map in this direction");
                 return;
             }
         break;
         default:
-        errorOutput(std::stringLiteral("Wrong direction to use a shop"));
+        errorOutput("Wrong direction to use a shop");
         return;
     }
+    const MapServer * const mapServer=static_cast<MapServer*>(map);
+    const std::pair<uint8_t,uint8_t> pos(x,y);
     //check if is shop
-    if(static_cast<MapServer*>(this->map)->shops.contains(std::pair<uint8_t,uint8_t>(x,y)))
+    if(mapServer->shops.find(pos)==mapServer->shops.cend())
     {
-        std::vector<uint32_t> shops=static_cast<MapServer*>(this->map)->shops.values(std::pair<uint8_t,uint8_t>(x,y));
-        if(!shops.contains(shopId))
+        const std::vector<uint32_t> shops=mapServer->shops.at(pos);
+        const int indexOf=vectorindexOf(shops,shopId);
+        if(indexOf==-1)
         {
             Direction direction=getLastDirection();
             switch(direction)
@@ -1571,33 +1609,36 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint
                     {
                         if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                         {
-                            errorOutput(std::stringLiteral("buyObject() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            errorOutput("buyObject() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                             return;
                         }
                     }
                     else
                     {
-                        errorOutput(std::stringLiteral("No valid map in this direction"));
+                        errorOutput("No valid map in this direction");
                         return;
                     }
                 break;
                 default:
-                errorOutput(std::stringLiteral("Wrong direction to use a shop"));
+                errorOutput("Wrong direction to use a shop");
                 return;
             }
-            if(static_cast<MapServer*>(this->map)->shops.contains(std::pair<uint8_t,uint8_t>(x,y)))
+            const MapServer * const mapServer=static_cast<MapServer*>(map);
+            const std::pair<uint8_t,uint8_t> pos(x,y);
+            if(mapServer->shops.find(pos)==mapServer->shops.cend())
             {
-                std::vector<uint32_t> shops=static_cast<MapServer*>(this->map)->shops.values(std::pair<uint8_t,uint8_t>(x,y));
-                if(!shops.contains(shopId))
+                const std::vector<uint32_t> shops=mapServer->shops.at(pos);
+                const int indexOf=vectorindexOf(shops,shopId);
+                if(indexOf==-1)
                 {
-                    errorOutput(std::stringLiteral("not shop into this direction"));
+                    errorOutput("not shop into this direction");
                     return;
                 }
             }
         }
     }
     //send the shop items (no taxes from now)
-    const int &priceIndex=CommonDatapackServerSpec::commonDatapackServerSpec.shops.value(shopId).items.indexOf(objectId);
+    const int &priceIndex=vectorindexOf(CommonDatapackServerSpec::commonDatapackServerSpec.shops.at(shopId).items,objectId);
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
@@ -1607,7 +1648,7 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint
         postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
-    const uint32_t &realprice=CommonDatapackServerSpec::commonDatapackServerSpec.shops.value(shopId).prices.at(priceIndex);
+    const uint32_t &realprice=CommonDatapackServerSpec::commonDatapackServerSpec.shops.at(shopId).prices.at(priceIndex);
     if(realprice==0)
     {
         out << (uint8_t)BuyStat_HaveNotQuantity;
@@ -1631,7 +1672,7 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint
         removeCash(realprice*quantity);
     else
     {
-        errorOutput(std::stringLiteral("The player have not the cash to buy %1 item of id: %2").arg(quantity).arg(objectId));
+        errorOutput("The player have not the cash to buy "+std::to_string(quantity)+" item of id: "+std::to_string(objectId));
         return;
     }
     addObject(objectId,quantity);
@@ -1641,16 +1682,16 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint
 void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(std::stringLiteral("getShopList(%1,%2)").arg(query_id).arg(shopId));
+    normalOutput("sellObject("+std::to_string(query_id)+","+std::to_string(shopId)+")");
     #endif
-    if(!CommonDatapackServerSpec::commonDatapackServerSpec.shops.contains(shopId))
+    if(CommonDatapackServerSpec::commonDatapackServerSpec.shops.find(shopId)==CommonDatapackServerSpec::commonDatapackServerSpec.shops.cend())
     {
-        errorOutput(std::stringLiteral("shopId not found: %1").arg(shopId));
+        errorOutput("shopId not found: "+std::to_string(shopId));
         return;
     }
     if(quantity<=0)
     {
-        errorOutput(std::stringLiteral("quantity wrong: %1").arg(quantity));
+        errorOutput("quantity wrong: "+std::to_string(quantity));
         return;
     }
     CommonMap *map=this->map;
@@ -1669,25 +1710,28 @@ void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uin
             {
                 if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                 {
-                    errorOutput(std::stringLiteral("sellObject() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput("sellObject() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                     return;
                 }
             }
             else
             {
-                errorOutput(std::stringLiteral("No valid map in this direction"));
+                errorOutput("No valid map in this direction");
                 return;
             }
         break;
         default:
-        errorOutput(std::stringLiteral("Wrong direction to use a shop"));
+        errorOutput("Wrong direction to use a shop");
         return;
     }
+    const MapServer * const mapServer=static_cast<MapServer*>(this->map);
+    const std::pair<uint8_t,uint8_t> pos(x,y);
     //check if is shop
-    if(static_cast<MapServer*>(this->map)->shops.contains(std::pair<uint8_t,uint8_t>(x,y)))
+    if(mapServer->shops.find(pos)==mapServer->shops.cend())
     {
-        std::vector<uint32_t> shops=static_cast<MapServer*>(this->map)->shops.values(std::pair<uint8_t,uint8_t>(x,y));
-        if(!shops.contains(shopId))
+        const std::vector<uint32_t> shops=mapServer->shops.at(pos);
+        const int indexOf=vectorindexOf(shops,shopId);
+        if(indexOf==-1)
         {
             Direction direction=getLastDirection();
             switch(direction)
@@ -1701,26 +1745,29 @@ void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uin
                     {
                         if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                         {
-                            errorOutput(std::stringLiteral("sellObject() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            errorOutput("sellObject() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                             return;
                         }
                     }
                     else
                     {
-                        errorOutput(std::stringLiteral("No valid map in this direction"));
+                        errorOutput("No valid map in this direction");
                         return;
                     }
                 break;
                 default:
-                errorOutput(std::stringLiteral("Wrong direction to use a shop"));
+                errorOutput("Wrong direction to use a shop");
                 return;
             }
-            if(static_cast<MapServer*>(this->map)->shops.contains(std::pair<uint8_t,uint8_t>(x,y)))
+            const MapServer * const mapServer=static_cast<MapServer*>(this->map);
+            const std::pair<uint8_t,uint8_t> pos(x,y);
+            if(mapServer->shops.find(pos)==mapServer->shops.cend())
             {
-                std::vector<uint32_t> shops=static_cast<MapServer*>(this->map)->shops.values(std::pair<uint8_t,uint8_t>(x,y));
-                if(!shops.contains(shopId))
+                const std::vector<uint32_t> shops=mapServer->shops.at(pos);
+                const int indexOf=vectorindexOf(shops,shopId);
+                if(indexOf==-1)
                 {
-                    errorOutput(std::stringLiteral("not shop into this direction"));
+                    errorOutput("not shop into this direction");
                     return;
                 }
             }
@@ -1730,22 +1777,22 @@ void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uin
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    if(!CommonDatapack::commonDatapack.items.item.contains(objectId))
+    if(CommonDatapack::commonDatapack.items.item.find(objectId)==CommonDatapack::commonDatapack.items.item.cend())
     {
-        errorOutput(std::stringLiteral("this item don't exists"));
+        errorOutput("this item don't exists");
         return;
     }
     if(objectQuantity(objectId)<quantity)
     {
-        errorOutput(std::stringLiteral("you have not this quantity to sell"));
+        errorOutput("you have not this quantity to sell");
         return;
     }
-    if(CommonDatapack::commonDatapack.items.item.value(objectId).price==0)
+    if(CommonDatapack::commonDatapack.items.item.at(objectId).price==0)
     {
-        errorOutput(std::stringLiteral("Can't sold %1").arg(objectId));
+        errorOutput("Can't sold %1"+std::to_string(objectId));
         return;
     }
-    const uint32_t &realPrice=CommonDatapack::commonDatapack.items.item.value(objectId).price/2;
+    const uint32_t &realPrice=CommonDatapack::commonDatapack.items.item.at(objectId).price/2;
     if(realPrice<price)
     {
         out << (uint8_t)SoldStat_PriceHaveChanged;
@@ -1767,14 +1814,14 @@ void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uin
 void Client::saveIndustryStatus(const uint32_t &factoryId,const IndustryStatus &industryStatus,const Industry &industry)
 {
     std::vector<std::string> resourcesStringList,productsStringList;
-    int index;
+    unsigned int index;
     //send the resource
     index=0;
     while(index<industry.resources.size())
     {
         const Industry::Resource &resource=industry.resources.at(index);
-        const uint32_t &quantityInStock=industryStatus.resources.value(resource.item);
-        resourcesStringList << std::stringLiteral("%1:%2").arg(resource.item).arg(quantityInStock);
+        const uint32_t &quantityInStock=industryStatus.resources.at(resource.item);
+        resourcesStringList.push_back(std::to_string(resource.item)+':'+std::to_string(quantityInStock));
         index++;
     }
     //send the product
@@ -1782,29 +1829,29 @@ void Client::saveIndustryStatus(const uint32_t &factoryId,const IndustryStatus &
     while(index<industry.products.size())
     {
         const Industry::Product &product=industry.products.at(index);
-        const uint32_t &quantityInStock=industryStatus.products.value(product.item);
-        productsStringList << std::stringLiteral("%1:%2").arg(product.item).arg(quantityInStock);
+        const uint32_t &quantityInStock=industryStatus.products.at(product.item);
+        productsStringList.push_back(std::to_string(product.item)+':'+std::to_string(quantityInStock));
         index++;
     }
 
     //save in db
-    if(!GlobalServerData::serverPrivateVariables.industriesStatus.contains(factoryId))
+    if(GlobalServerData::serverPrivateVariables.industriesStatus.find(factoryId)==GlobalServerData::serverPrivateVariables.industriesStatus.cend())
     {
-        dbQueryWriteServer(PreparedDBQueryServer::db_query_insert_factory
-                     .arg(factoryId)
-                     .arg(resourcesStringList.join(Client::text_dotcomma))
-                     .arg(productsStringList.join(Client::text_dotcomma))
-                     .arg(industryStatus.last_update)
-                     );
+        std::string queryText=PreparedDBQueryServer::db_query_insert_factory;
+        stringreplace(queryText,"%1",std::to_string(factoryId));
+        stringreplace(queryText,"%2",stringimplode(resourcesStringList,';'));
+        stringreplace(queryText,"%3",stringimplode(productsStringList,';'));
+        stringreplace(queryText,"%4",std::to_string(industryStatus.last_update));
+        dbQueryWriteServer(queryText);
     }
     else
     {
-        dbQueryWriteServer(PreparedDBQueryServer::db_query_update_factory
-                     .arg(factoryId)
-                     .arg(resourcesStringList.join(Client::text_dotcomma))
-                     .arg(productsStringList.join(Client::text_dotcomma))
-                     .arg(industryStatus.last_update)
-                     );
+        std::string queryText=PreparedDBQueryServer::db_query_update_factory;
+        stringreplace(queryText,"%1",std::to_string(factoryId));
+        stringreplace(queryText,"%2",stringimplode(resourcesStringList,';'));
+        stringreplace(queryText,"%3",stringimplode(productsStringList,';'));
+        stringreplace(queryText,"%4",std::to_string(industryStatus.last_update));
+        dbQueryWriteServer(queryText);
     }
     GlobalServerData::serverPrivateVariables.industriesStatus[factoryId]=industryStatus;
 }
@@ -1813,34 +1860,34 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
 {
     if(isInFight())
     {
-        errorOutput(std::stringLiteral("Try do inventory action when is in fight"));
+        errorOutput("Try do inventory action when is in fight");
         return;
     }
     if(captureCityInProgress())
     {
-        errorOutput(std::stringLiteral("Try do inventory action when is in capture city"));
+        errorOutput("Try do inventory action when is in capture city");
         return;
     }
-    if(!CommonDatapack::commonDatapack.industriesLink.contains(factoryId))
+    if(CommonDatapack::commonDatapack.industriesLink.find(factoryId)==CommonDatapack::commonDatapack.industriesLink.cend())
     {
-        errorOutput(std::stringLiteral("factory id not found"));
+        errorOutput("factory id not found");
         return;
     }
-    const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId).industry);
+    const Industry &industry=CommonDatapack::commonDatapack.industries.at(CommonDatapack::commonDatapack.industriesLink.at(factoryId).industry);
     //send the shop items (no taxes from now)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    if(!GlobalServerData::serverPrivateVariables.industriesStatus.contains(factoryId))
+    if(GlobalServerData::serverPrivateVariables.industriesStatus.find(factoryId)==GlobalServerData::serverPrivateVariables.industriesStatus.cend())
     {
         out << (uint32_t)0;
         out << (uint16_t)industry.resources.size();
-        int index=0;
+        unsigned int index=0;
         while(index<industry.resources.size())
         {
             const Industry::Resource &resource=industry.resources.at(index);
             out << (uint16_t)resource.item;
-            out << (uint32_t)CommonDatapack::commonDatapack.items.item.value(resource.item).price*(100+CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE)/100;
+            out << (uint32_t)CommonDatapack::commonDatapack.items.item.at(resource.item).price*(100+CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE)/100;
             out << (uint32_t)resource.quantity*industry.cycletobefull;
             index++;
         }
@@ -1848,8 +1895,8 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
     }
     else
     {
-        int index,count_item;
-        const IndustryStatus &industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus.value(factoryId),industry);
+        unsigned int index,count_item;
+        const IndustryStatus &industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus.at(factoryId),industry);
         quint64 currentTime=QDateTime::currentMSecsSinceEpoch()/1000;
         if(industryStatus.last_update>currentTime)
             out << (uint32_t)0;
@@ -1863,7 +1910,7 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
         while(index<industry.resources.size())
         {
             const Industry::Resource &resource=industry.resources.at(index);
-            const uint32_t &quantityInStock=industryStatus.resources.value(resource.item);
+            const uint32_t &quantityInStock=industryStatus.resources.at(resource.item);
             if(quantityInStock<resource.quantity*industry.cycletobefull)
                 count_item++;
             index++;
@@ -1873,7 +1920,7 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
         while(index<industry.resources.size())
         {
             const Industry::Resource &resource=industry.resources.at(index);
-            const uint32_t &quantityInStock=industryStatus.resources.value(resource.item);
+            const uint32_t &quantityInStock=industryStatus.resources.at(resource.item);
             if(quantityInStock<resource.quantity*industry.cycletobefull)
             {
                 out << (uint16_t)resource.item;
@@ -1888,7 +1935,7 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
         while(index<industry.products.size())
         {
             const Industry::Product &product=industry.products.at(index);
-            const uint32_t &quantityInStock=industryStatus.products.value(product.item);
+            const uint32_t &quantityInStock=industryStatus.products.at(product.item);
             if(quantityInStock>0)
                 count_item++;
             index++;
@@ -1898,7 +1945,7 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
         while(index<industry.products.size())
         {
             const Industry::Product &product=industry.products.at(index);
-            const uint32_t &quantityInStock=industryStatus.products.value(product.item);
+            const uint32_t &quantityInStock=industryStatus.products.at(product.item);
             if(quantityInStock>0)
             {
                 out << (uint16_t)product.item;
@@ -1915,36 +1962,36 @@ void Client::buyFactoryProduct(const uint8_t &query_id,const uint16_t &factoryId
 {
     if(isInFight())
     {
-        errorOutput(std::stringLiteral("Try do inventory action when is in fight"));
+        errorOutput("Try do inventory action when is in fight");
         return;
     }
     if(captureCityInProgress())
     {
-        errorOutput(std::stringLiteral("Try do inventory action when is in capture city"));
+        errorOutput("Try do inventory action when is in capture city");
         return;
     }
-    if(!CommonDatapack::commonDatapack.industriesLink.contains(factoryId))
+    if(CommonDatapack::commonDatapack.industriesLink.find(factoryId)==CommonDatapack::commonDatapack.industriesLink.cend())
     {
-        errorOutput(std::stringLiteral("factory id not found"));
+        errorOutput("factory id not found");
         return;
     }
-    if(!CommonDatapack::commonDatapack.items.item.contains(objectId))
+    if(CommonDatapack::commonDatapack.items.item.find(objectId)==CommonDatapack::commonDatapack.items.item.cend())
     {
-        errorOutput(std::stringLiteral("object id not found into the factory product list"));
+        errorOutput("object id not found into the factory product list");
         return;
     }
-    if(!GlobalServerData::serverPrivateVariables.industriesStatus.contains(factoryId))
+    if(GlobalServerData::serverPrivateVariables.industriesStatus.find(factoryId)==GlobalServerData::serverPrivateVariables.industriesStatus.cend())
     {
-        errorOutput(std::stringLiteral("factory id not found in active list"));
+        errorOutput("factory id not found in active list");
         return;
     }
-    if(!haveReputationRequirements(CommonDatapack::commonDatapack.industriesLink.value(factoryId).requirements.reputation))
+    if(!haveReputationRequirements(CommonDatapack::commonDatapack.industriesLink.at(factoryId).requirements.reputation))
     {
-        errorOutput(std::stringLiteral("The player have not the requirement: %1 to use the factory").arg(factoryId));
+        errorOutput("The player have not the requirement: "+std::to_string(factoryId)+" to use the factory");
         return;
     }
-    const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId).industry);
-    IndustryStatus industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus.value(factoryId),industry);
+    const Industry &industry=CommonDatapack::commonDatapack.industries.at(CommonDatapack::commonDatapack.industriesLink.at(factoryId).industry);
+    IndustryStatus industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus.at(factoryId),industry);
     uint32_t quantityInStock=0;
     uint32_t actualPrice=0;
     QByteArray outputData;
@@ -1953,13 +2000,13 @@ void Client::buyFactoryProduct(const uint8_t &query_id,const uint16_t &factoryId
     Industry::Product product;
     //get the right product
     {
-        int index=0;
+        unsigned int index=0;
         while(index<industry.products.size())
         {
             product=industry.products.at(index);
             if(product.item==objectId)
             {
-                quantityInStock=industryStatus.products.value(product.item);
+                quantityInStock=industryStatus.products.at(product.item);
                 actualPrice=FacilityLib::getFactoryProductPrice(quantityInStock,product,industry);
                 break;
             }
@@ -1967,13 +2014,13 @@ void Client::buyFactoryProduct(const uint8_t &query_id,const uint16_t &factoryId
         }
         if(index==industry.products.size())
         {
-            errorOutput(std::stringLiteral("internal bug, product for the factory not found"));
+            errorOutput("internal bug, product for the factory not found");
             return;
         }
     }
     if(public_and_private_informations.cash<(actualPrice*quantity))
     {
-        errorOutput(std::stringLiteral("have not the cash to buy into this factory"));
+        errorOutput("have not the cash to buy into this factory");
         return;
     }
     if(quantity>quantityInStock)
@@ -2006,7 +2053,7 @@ void Client::buyFactoryProduct(const uint8_t &query_id,const uint16_t &factoryId
     removeCash(actualPrice*quantity);
     saveIndustryStatus(factoryId,industryStatus,industry);
     addObject(objectId,quantity);
-    appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.value(factoryId).rewards.reputation);
+    appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.at(factoryId).rewards.reputation);
     postReply(query_id,outputData.constData(),outputData.size());
 }
 
