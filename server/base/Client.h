@@ -454,7 +454,7 @@ private:
     void saveObjectRetention(const uint16_t &item);
     uint32_t removeObject(const uint16_t &item,const uint32_t &quantity=1);
     void sendRemoveObject(const uint16_t &item,const uint32_t &quantity=1);
-    uint32_t objectQuantity(const uint16_t &item);
+    uint32_t objectQuantity(const uint16_t &item) const;
     bool addMarketCashWithoutSave(const quint64 &cash);
     void addCash(const quint64 &cash,const bool &forceSave=false);
     void removeCash(const quint64 &cash);

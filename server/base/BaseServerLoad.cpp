@@ -657,7 +657,7 @@ bool BaseServer::preload_the_map()
         if(std::regex_match(fileName,mapFilter) && !std::regex_match(fileName,mapExclude))
         {
             #ifdef DEBUG_MESSAGE_MAP_LOAD
-            DebugClass::debugConsole(std::stringLiteral("load the map: %1").arg(fileName));
+            std::cout << "load the map: " << fileName << std::endl;
             #endif
             std::string sortFileName=fileName;
             stringreplace(sortFileName,tmxRemove,"");
@@ -1483,6 +1483,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
             if(botFiles.find(bot_Semi.file)!=botFiles.end())
                 if(botFiles.at(bot_Semi.file).find(bot_Semi.id)!=botFiles.at(bot_Semi.file).end())
                 {
+                    const auto &step=botFiles.at(bot_Semi.file).at(bot_Semi.id).step;
                     #ifdef DEBUG_MESSAGE_MAP_LOAD
                     std::cout << "Bot "
                               << bot_Semi.id
@@ -1494,10 +1495,8 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                               << bot_Semi.point.x
                               << ","
                               << bot_Semi.point.y
-                              << "), for step: "
-                              << i->first;
+                              << ")";
                     #endif
-                    const auto &step=botFiles.at(bot_Semi.file).at(bot_Semi.id).step;
                     auto i=step.begin();
                     while (i!=step.end())
                     {
