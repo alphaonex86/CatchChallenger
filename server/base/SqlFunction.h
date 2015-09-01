@@ -8,7 +8,7 @@ class SqlFunction
 {
 public:
     //do a fake login
-    static std::string quoteSqlVariable(std::string variable);
+    static std::string quoteSqlVariable(const std::string &variable);
 protected:
     static std::string text_antislash;
     static std::string text_double_antislash;
