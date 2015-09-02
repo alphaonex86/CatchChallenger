@@ -5,7 +5,7 @@
 
 using namespace CatchChallenger;
 
-bool Client::getInTrade()
+bool Client::getInTrade() const
 {
     return (otherPlayerTrade!=NULL);
 }
@@ -14,11 +14,11 @@ void Client::registerTradeRequest(Client * otherPlayerTrade)
 {
     if(getInTrade())
     {
-        normalOutput(QLatin1String("Already in trade, internal error"));
+        normalOutput("Already in trade, internal error");
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(std::stringLiteral("%1 have requested trade with you").arg(otherPlayerTrade->public_and_private_informations.public_informations.pseudo));
+    normalOutput(otherPlayerTrade->public_and_private_informations.public_informations.pseudo+" have requested trade with you");
     #endif
     this->otherPlayerTrade=otherPlayerTrade;
     QByteArray outputData;
@@ -28,22 +28,22 @@ void Client::registerTradeRequest(Client * otherPlayerTrade)
     sendTradeRequest(otherPlayerTrade->rawPseudo+outputData);
 }
 
-bool Client::getIsFreezed()
+bool Client::getIsFreezed() const
 {
     return tradeIsFreezed;
 }
 
-quint64 Client::getTradeCash()
+quint64 Client::getTradeCash() const
 {
     return tradeCash;
 }
 
-std::unordered_map<uint32_t,uint32_t> Client::getTradeObjects()
+std::unordered_map<uint32_t,uint32_t> Client::getTradeObjects() const
 {
     return tradeObjects;
 }
 
-std::vector<PlayerMonster> Client::getTradeMonster()
+std::vector<PlayerMonster> Client::getTradeMonster() const
 {
     return tradeMonster;
 }
@@ -66,12 +66,12 @@ void Client::tradeFinished()
 {
     if(!tradeIsValidated)
     {
-        errorOutput(QLatin1String("Trade not valid"));
+        errorOutput("Trade not valid");
         return;
     }
     if(tradeIsFreezed)
     {
-        errorOutput(QLatin1String("Trade is freezed, unable to re-free"));
+        errorOutput("Trade is freezed, unable to re-free");
         return;
     }
     tradeIsFreezed=true;
@@ -85,31 +85,34 @@ void Client::tradeFinished()
         addCash(otherPlayerTrade->getTradeCash(),(tradeCash!=0));
 
         //object
-        std::unordered_mapIterator<uint32_t,uint32_t> i(tradeObjects);
-        while (i.hasNext()) {
-            i.next();
-            otherPlayerTrade->addObject(i.key(),i.value());
-            saveObjectRetention(i.key());
+        auto i=tradeObjects.begin();
+        while(i!=tradeObjects.cend())
+        {
+            otherPlayerTrade->addObject(i->first,i->second);
+            saveObjectRetention(i->first);
+            ++i;
         }
-        std::unordered_mapIterator<uint32_t,uint32_t> j(otherPlayerTrade->getTradeObjects());
-        while (j.hasNext()) {
-            j.next();
-            addObject(j.key(),j.value());
-            otherPlayerTrade->saveObjectRetention(j.key());
+        const std::unordered_map<uint32_t,uint32_t> otherPlayerTradeGetTradeObjects=otherPlayerTrade->getTradeObjects();
+        auto j=otherPlayerTradeGetTradeObjects.begin();
+        while (j!=otherPlayerTradeGetTradeObjects.cend())
+        {
+            addObject(j->first,j->second);
+            otherPlayerTrade->saveObjectRetention(j->first);
+            ++j;
         }
 
         //monster evolution
         {
-            int index=0;
+            unsigned int index=0;
             while(index<tradeMonster.size())
             {
-                GlobalServerData::serverPrivateVariables.tradedMonster << tradeMonster.at(index).id;
+                GlobalServerData::serverPrivateVariables.tradedMonster.insert(tradeMonster.at(index).id);
                 index++;
             }
             index=0;
             while(index<otherPlayerTrade->tradeMonster.size())
             {
-                GlobalServerData::serverPrivateVariables.tradedMonster << otherPlayerTrade->tradeMonster.at(index).id;
+                GlobalServerData::serverPrivateVariables.tradedMonster.insert(otherPlayerTrade->tradeMonster.at(index).id);
                 index++;
             }
         }
@@ -125,7 +128,7 @@ void Client::tradeFinished()
     else
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        normalOutput(QLatin1String("Trade freezed"));
+        normalOutput("Trade freezed");
         #endif
         otherPlayerTrade->sendFullPacket(0xD0,0x07);
     }
@@ -144,39 +147,42 @@ void Client::resetTheTrade()
 
 void Client::addExistingMonster(std::vector<PlayerMonster> tradeMonster)
 {
-    int index=0;
+    unsigned int index=0;
     while(index<tradeMonster.size())
     {
-        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_owner.arg(tradeMonster.at(index).id).arg(character_id));
+        std::string queryText=PreparedDBQueryCommon::db_query_update_monster_owner;
+        stringreplace(queryText,"%1",std::to_string(tradeMonster.at(index).id));
+        stringreplace(queryText,"%2",std::to_string(character_id));
+        dbQueryWriteCommon(queryText);
         index++;
     }
-    public_and_private_informations.playerMonster << tradeMonster;
+    public_and_private_informations.playerMonster.insert(public_and_private_informations.playerMonster.cend(),tradeMonster.cbegin(),tradeMonster.cend());
 }
 
 void Client::tradeAddTradeCash(const quint64 &cash)
 {
     if(!tradeIsValidated)
     {
-        errorOutput(QLatin1String("Trade not valid"));
+        errorOutput("Trade not valid");
         return;
     }
     if(tradeIsFreezed)
     {
-        errorOutput(QLatin1String("Trade is freezed, unable to change something"));
+        errorOutput("Trade is freezed, unable to change something");
         return;
     }
     if(cash==0)
     {
-        errorOutput(QLatin1String("Can't add 0 cash!"));
+        errorOutput("Can't add 0 cash!");
         return;
     }
     if(cash>public_and_private_informations.cash)
     {
-        errorOutput(QLatin1String("Trade cash superior to the actual cash"));
+        errorOutput("Trade cash superior to the actual cash");
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(std::stringLiteral("Add cash to trade: %1").arg(cash));
+    normalOutput("Add cash to trade: "+std::to_string(cash));
     #endif
     tradeCash+=cash;
     public_and_private_informations.cash-=cash;
@@ -192,34 +198,34 @@ void Client::tradeAddTradeObject(const uint16_t &item,const uint32_t &quantity)
 {
     if(!tradeIsValidated)
     {
-        errorOutput(QLatin1String("Trade not valid"));
+        errorOutput("Trade not valid");
         return;
     }
     if(tradeIsFreezed)
     {
-        errorOutput(QLatin1String("Trade is freezed, unable to change something"));
+        errorOutput("Trade is freezed, unable to change something");
         return;
     }
     if(quantity==0)
     {
-        errorOutput(QLatin1String("Can add 0 of quantity"));
+        errorOutput("Can add 0 of quantity");
         return;
     }
     if(quantity>objectQuantity(item))
     {
-        errorOutput(std::stringLiteral("Trade object %1 in quantity %2 superior to the actual quantity").arg(item).arg(quantity));
+        errorOutput("Trade object "+std::to_string(item)+" in quantity "+std::to_string(quantity)+" superior to the actual quantity");
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(std::stringLiteral("Add object to trade: %1 (quantity: %2)").arg(item).arg(quantity));
+    normalOutput("Add object to trade: "+std::to_string(item)+" (quantity: "+std::to_string(quantity)+")");
     #endif
-    if(tradeObjects.contains(item))
+    if(tradeObjects.find(item)!=tradeObjects.cend())
         tradeObjects[item]+=quantity;
     else
         tradeObjects[item]=quantity;
     public_and_private_informations.items[item]-=quantity;
-    if(public_and_private_informations.items.value(item)==0)
-        public_and_private_informations.items.remove(item);
+    if(public_and_private_informations.items.at(item)==0)
+        public_and_private_informations.items.erase(item);
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
@@ -233,45 +239,45 @@ void Client::tradeAddTradeMonster(const uint32_t &monsterId)
 {
     if(!tradeIsValidated)
     {
-        errorOutput(QLatin1String("Trade not valid"));
+        errorOutput("Trade not valid");
         return;
     }
     if(tradeIsFreezed)
     {
-        errorOutput(QLatin1String("Trade is freezed, unable to change something"));
+        errorOutput("Trade is freezed, unable to change something");
         return;
     }
     if(public_and_private_informations.playerMonster.size()<=1)
     {
-        errorOutput(QLatin1String("Unable to trade your last monster"));
+        errorOutput("Unable to trade your last monster");
         return;
     }
     if(isInFight())
     {
-        errorOutput(QLatin1String("You can't trade monster because you are in fight"));
+        errorOutput("You can't trade monster because you are in fight");
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(std::stringLiteral("Add monster to trade: %1").arg(monsterId));
+    normalOutput("Add monster to trade: "+std::to_string(monsterId));
     #endif
-    int index=0;
+    unsigned int index=0;
     while(index<public_and_private_informations.playerMonster.size())
     {
         if(public_and_private_informations.playerMonster.at(index).id==monsterId)
         {
             if(!remainMonstersToFight(monsterId))
             {
-                errorOutput(QLatin1String("You can't trade this msonter because you will be without monster to fight"));
+                errorOutput("You can't trade this msonter because you will be without monster to fight");
                 return;
             }
-            tradeMonster << public_and_private_informations.playerMonster.at(index);
-            public_and_private_informations.playerMonster.removeAt(index);
+            tradeMonster.push_back(public_and_private_informations.playerMonster.at(index));
+            public_and_private_informations.playerMonster.erase(public_and_private_informations.playerMonster.begin()+index);
             updateCanDoFight();
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
             out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
             out << (uint8_t)0x03;
-            const PlayerMonster &monster=tradeMonster.last();
+            const PlayerMonster &monster=tradeMonster.back();
             out << monster.id;
             out << monster.monster;
             out << monster.level;
@@ -305,14 +311,17 @@ void Client::tradeAddTradeMonster(const uint32_t &monsterId)
             while(index<public_and_private_informations.playerMonster.size())
             {
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
-                dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_position.arg(index+1).arg(playerMonster.id));
+                std::string queryText=PreparedDBQueryCommon::db_query_update_monster_position;
+                stringreplace(queryText,"%1",std::to_string(index+1));
+                stringreplace(queryText,"%2",std::to_string(playerMonster.id));
+                dbQueryWriteCommon(queryText);
                 index++;
             }
             return;
         }
         index++;
     }
-    errorOutput(QLatin1String("Trade monster not found"));
+    errorOutput("Trade monster not found");
 }
 
 void Client::internalTradeCanceled(const bool &send)
@@ -323,22 +332,23 @@ void Client::internalTradeCanceled(const bool &send)
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QLatin1String("Trade canceled"));
+    normalOutput("Trade canceled");
     #endif
     if(tradeIsValidated)
     {
         public_and_private_informations.cash+=tradeCash;
         tradeCash=0;
-        std::unordered_mapIterator<uint32_t,uint32_t> i(tradeObjects);
-        while (i.hasNext()) {
-            i.next();
-            if(public_and_private_informations.items.contains(i.key()))
-                public_and_private_informations.items[i.key()]+=i.value();
+        auto i=tradeObjects.begin();
+        while(i!=tradeObjects.cend())
+        {
+            if(public_and_private_informations.items.find(i->first)!=public_and_private_informations.items.cend())
+                public_and_private_informations.items[i->first]+=i->second;
             else
-                public_and_private_informations.items[i.key()]=i.value();
+                public_and_private_informations.items[i->first]=i->second;
+            ++i;
         }
         tradeObjects.clear();
-        public_and_private_informations.playerMonster << tradeMonster;
+        public_and_private_informations.playerMonster.insert(public_and_private_informations.playerMonster.cend(),tradeMonster.cbegin(),tradeMonster.cend());
         tradeMonster.clear();
         updateCanDoFight();
     }
@@ -348,7 +358,7 @@ void Client::internalTradeCanceled(const bool &send)
         if(tradeIsValidated)
             sendFullPacket(0xD0,0x06);
         else
-            receiveSystemText(QLatin1String("Trade declined"));
+            receiveSystemText("Trade declined");
     }
     tradeIsValidated=false;
 }
@@ -357,16 +367,16 @@ void Client::internalTradeAccepted(const bool &send)
 {
     if(otherPlayerTrade==NULL)
     {
-        normalOutput(QLatin1String("Can't accept trade if not in trade"));
+        normalOutput("Can't accept trade if not in trade");
         return;
     }
     if(tradeIsValidated)
     {
-        normalOutput(QLatin1String("Trade already validated"));
+        normalOutput("Trade already validated");
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QLatin1String("Trade accepted"));
+    normalOutput("Trade accepted");
     #endif
     tradeIsValidated=true;
     tradeIsFreezed=false;

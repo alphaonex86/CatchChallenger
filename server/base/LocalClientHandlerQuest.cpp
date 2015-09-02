@@ -10,18 +10,18 @@ using namespace CatchChallenger;
 //quest
 void Client::newQuestAction(const QuestAction &action,const uint32_t &questId)
 {
-    if(!CommonDatapackServerSpec::commonDatapackServerSpec.quests.contains(questId))
+    if(CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(questId)==CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
     {
-        errorOutput(std::stringLiteral("unknown questId: %1").arg(questId));
+        errorOutput("unknown questId: "+std::to_string(questId));
         return;
     }
-    const Quest &quest=CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId);
+    const Quest &quest=CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId);
     switch(action)
     {
         case QuestAction_Start:
             if(!haveStartQuestRequirement(quest))
             {
-                errorOutput(std::stringLiteral("have not quest requirement: %1").arg(questId));
+                errorOutput("have not quest requirement: "+std::to_string(questId));
                 return;
             }
             startQuest(quest);
@@ -32,13 +32,13 @@ void Client::newQuestAction(const QuestAction &action,const uint32_t &questId)
         case QuestAction_NextStep:
             if(!haveNextStepQuestRequirements(quest))
             {
-                errorOutput(std::stringLiteral("have not next step quest requirement: %1").arg(questId));
+                errorOutput("have not next step quest requirement: "+std::to_string(questId));
                 return;
             }
             nextStepQuest(quest);
         break;
         default:
-            errorOutput(std::stringLiteral("newQuestAction unknow: %1").arg(action));
+            errorOutput("newQuestAction unknow: "+std::to_string(action));
         return;
     }
 }
@@ -46,22 +46,22 @@ void Client::newQuestAction(const QuestAction &action,const uint32_t &questId)
 void Client::addQuestStepDrop(const uint32_t &questId,const uint8_t &questStep)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-    normalOutput(std::stringLiteral("addQuestStepDrop for quest: %1, step: %2").arg(questId).arg(questStep));
+    normalOutput("addQuestStepDrop for quest: "+std::to_string(questId)+", step: "+std::to_string(questStep));
     #endif
-    if(!CommonDatapackServerSpec::commonDatapackServerSpec.quests.contains(questId))
+    if(CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(questId)==CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
     {
         errorOutput("Quest not found for drops");
         return;
     }
-    const CatchChallenger::Quest &quest=CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId);
+    const CatchChallenger::Quest &quest=CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId);
     if(questStep<=0 || questStep>quest.steps.size())
     {
         errorOutput("Quest step out of range for drops");
         return;
     }
-    Quest::Step stepFull=quest.steps.value(questStep-1);
-    int index=0;
-    int sub_index;
+    Quest::Step stepFull=quest.steps.at(questStep-1);
+    unsigned int index=0;
+    unsigned int sub_index;
     while(index<stepFull.itemsMonster.size())
     {
         const Quest::ItemMonster &itemMonster=stepFull.itemsMonster.at(index);
@@ -79,22 +79,22 @@ void Client::addQuestStepDrop(const uint32_t &questId,const uint8_t &questStep)
 void Client::removeQuestStepDrop(const uint32_t &questId,const uint8_t &questStep)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-    normalOutput(std::stringLiteral("removeQuestStepDrop for quest: %1, step: %2").arg(questId).arg(questStep));
+    normalOutput("removeQuestStepDrop for quest: "+std::to_string(questId)+", step: "+std::to_string(questStep));
     #endif
-    if(!CommonDatapackServerSpec::commonDatapackServerSpec.quests.contains(questId))
+    if(CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(questId)==CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
     {
         errorOutput("Quest not found for drops");
         return;
     }
-    const CatchChallenger::Quest &quest=CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId);
+    const CatchChallenger::Quest &quest=CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId);
     if(questStep<=0 || questStep>quest.steps.size())
     {
         errorOutput("Quest step out of range for drops");
         return;
     }
-    Quest::Step stepFull=quest.steps.value(questStep-1);
-    int index=0;
-    int sub_index;
+    Quest::Step stepFull=quest.steps.at(questStep-1);
+    unsigned int index=0;
+    unsigned int sub_index;
     while(index<stepFull.itemsMonster.size())
     {
         const Quest::ItemMonster &itemMonster=stepFull.itemsMonster.at(index);
@@ -122,27 +122,27 @@ MonsterDrops Client::questItemMonsterToMonsterDrops(const Quest::ItemMonster &qu
 bool Client::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-    normalOutput(std::stringLiteral("check quest step requirement for: %1").arg(quest.id));
+    normalOutput("check quest step requirement for: "+std::to_string(quest.id));
     #endif
-    if(!public_and_private_informations.quests.contains(quest.id))
+    if(public_and_private_informations.quests.find(quest.id)==public_and_private_informations.quests.cend())
     {
-        normalOutput(std::stringLiteral("player quest not found: %1").arg(quest.id));
+        normalOutput("player quest not found: "+std::to_string(quest.id));
         return false;
     }
-    const uint8_t &step=public_and_private_informations.quests.value(quest.id).step;
+    const uint8_t &step=public_and_private_informations.quests.at(quest.id).step;
     if(step<=0 || step>quest.steps.size())
     {
-        normalOutput(std::stringLiteral("step out of range for: %1").arg(quest.id));
+        normalOutput("step out of range for:"+std::to_string(quest.id));
         return false;
     }
     const CatchChallenger::Quest::StepRequirements &requirements=quest.steps.at(step-1).requirements;
-    int index=0;
+    unsigned int index=0;
     while(index<requirements.items.size())
     {
         const CatchChallenger::Quest::Item &item=requirements.items.at(index);
         if(objectQuantity(item.item)<item.quantity)
         {
-            normalOutput(std::stringLiteral("quest requirement, have not the quantity for the item: %1").arg(item.item));
+            normalOutput("quest requirement, have not the quantity for the item: "+std::to_string(item.item));
             return false;
         }
         index++;
@@ -151,9 +151,9 @@ bool Client::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest)
     while(index<requirements.fightId.size())
     {
         const uint32_t &fightId=requirements.fightId.at(index);
-        if(!public_and_private_informations.bot_already_beaten.contains(fightId))
+        if(public_and_private_informations.bot_already_beaten.find(fightId)==public_and_private_informations.bot_already_beaten.cend())
         {
-            normalOutput(std::stringLiteral("quest requirement, have not beat the bot: %1").arg(fightId));
+            normalOutput("quest requirement, have not beat the bot: "+std::to_string(fightId));
             return false;
         }
         index++;
@@ -164,37 +164,37 @@ bool Client::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest)
 bool Client::haveStartQuestRequirement(const CatchChallenger::Quest &quest)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-    normalOutput(std::stringLiteral("check quest requirement for: %1").arg(quest.id));
+    normalOutput("check quest requirement for: "+std::to_string(quest.id));
     #endif
-    if(public_and_private_informations.quests.contains(quest.id))
+    if(public_and_private_informations.quests.find(quest.id)!=public_and_private_informations.quests.cend())
     {
-        if(public_and_private_informations.quests.value(quest.id).step!=0)
+        if(public_and_private_informations.quests.at(quest.id).step!=0)
         {
-            normalOutput(std::stringLiteral("can start the quest because is already running: %1").arg(quest.id));
+            normalOutput("can start the quest because is already running: "+std::to_string(quest.id));
             return false;
         }
-        if(public_and_private_informations.quests.value(quest.id).finish_one_time && !quest.repeatable)
+        if(public_and_private_informations.quests.at(quest.id).finish_one_time && !quest.repeatable)
         {
-            normalOutput(std::stringLiteral("done one time and no repeatable: %1").arg(quest.id));
+            normalOutput("done one time and no repeatable: "+std::to_string(quest.id));
             return false;
         }
     }
-    int index=0;
+    unsigned int index=0;
     while(index<quest.requirements.quests.size())
     {
         const uint16_t &questId=quest.requirements.quests.at(index).quest;
         if(
-                (!public_and_private_informations.quests.contains(questId) && !quest.requirements.quests.at(index).inverse)
+                (public_and_private_informations.quests.find(questId)==public_and_private_informations.quests.cend() && !quest.requirements.quests.at(index).inverse)
                 ||
-                (public_and_private_informations.quests.contains(questId) && quest.requirements.quests.at(index).inverse)
+                (public_and_private_informations.quests.find(questId)!=public_and_private_informations.quests.cend() && quest.requirements.quests.at(index).inverse)
             )
         {
-            normalOutput(std::stringLiteral("have never started the quest: %1").arg(questId));
+            normalOutput("have never started the quest: "+std::to_string(questId));
             return false;
         }
-        if(!public_and_private_informations.quests.value(questId).finish_one_time)
+        if(!public_and_private_informations.quests.at(questId).finish_one_time)
         {
-            normalOutput(std::stringLiteral("quest never finished: %1").arg(questId));
+            normalOutput("quest never finished: "+std::to_string(questId));
             return false;
         }
         index++;
@@ -205,47 +205,50 @@ bool Client::haveStartQuestRequirement(const CatchChallenger::Quest &quest)
 bool Client::nextStepQuest(const Quest &quest)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-    normalOutput(std::stringLiteral("drop quest step requirement for: %1").arg(quest.id));
+    normalOutput("drop quest step requirement for: "+std::to_string(quest.id));
     #endif
-    if(!public_and_private_informations.quests.contains(quest.id))
+    if(public_and_private_informations.quests.find(quest.id)==public_and_private_informations.quests.cend())
     {
-        normalOutput(std::stringLiteral("step out of range for: %1").arg(quest.id));
+        normalOutput("step out of range for: "+std::to_string(quest.id));
         return false;
     }
-    uint8_t step=public_and_private_informations.quests.value(quest.id).step;
+    const uint8_t step=public_and_private_informations.quests.at(quest.id).step;
     if(step<=0 || step>quest.steps.size())
     {
-        normalOutput(std::stringLiteral("step out of range for: %1").arg(quest.id));
+        normalOutput("step out of range for: "+std::to_string(quest.id));
         return false;
     }
     const CatchChallenger::Quest::StepRequirements &requirements=quest.steps.at(step-1).requirements;
-    int index=0;
+    unsigned int index=0;
     while(index<requirements.items.size())
     {
         const CatchChallenger::Quest::Item &item=requirements.items.at(index);
         removeObject(item.item,item.quantity);
         index++;
     }
-    removeQuestStepDrop(quest.id,public_and_private_informations.quests.value(quest.id).step);
+    removeQuestStepDrop(quest.id,public_and_private_informations.quests.at(quest.id).step);
     public_and_private_informations.quests[quest.id].step++;
-    if(public_and_private_informations.quests.value(quest.id).step>quest.steps.size())
+    if(public_and_private_informations.quests.at(quest.id).step>quest.steps.size())
     {
         #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-        normalOutput(std::stringLiteral("finish the quest: %1").arg(quest.id));
+        normalOutput("finish the quest: "+std::to_string(quest.id));
         #endif
-        dbQueryWriteServer(PreparedDBQueryServer::db_query_update_quest_finish.arg(character_id).arg(quest.id));
+        std::string queryText=PreparedDBQueryServer::db_query_update_quest_finish;
+        stringreplace(queryText,"%1",std::to_string(character_id));
+        stringreplace(queryText,"%2",std::to_string(quest.id));
+        dbQueryWriteServer(queryText);
         public_and_private_informations.quests[quest.id].step=0;
         public_and_private_informations.quests[quest.id].finish_one_time=true;
         index=0;
         while(index<quest.rewards.items.size())
         {
-            addObjectAndSend(quest.rewards.items.value(index).item,quest.rewards.items.value(index).quantity);
+            addObjectAndSend(quest.rewards.items.at(index).item,quest.rewards.items.at(index).quantity);
             index++;
         }
         index=0;
         while(index<quest.rewards.reputation.size())
         {
-            appendReputationPoint(quest.rewards.reputation.value(index).reputationId,quest.rewards.reputation.value(index).point);
+            appendReputationPoint(quest.rewards.reputation.at(index).reputationId,quest.rewards.reputation.at(index).point);
             index++;
         }
         index=0;
@@ -258,33 +261,36 @@ bool Client::nextStepQuest(const Quest &quest)
     else
     {
         #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-        normalOutput(std::stringLiteral("next step in the quest: %1").arg(quest.id));
+        normalOutput("next step in the quest: "+std::to_string(quest.id));
         #endif
-        dbQueryWriteServer(PreparedDBQueryServer::db_query_update_quest_step
-                     .arg(character_id)
-                     .arg(quest.id)
-                     .arg(public_and_private_informations.quests.value(quest.id).step)
-                     );
-        addQuestStepDrop(quest.id,public_and_private_informations.quests.value(quest.id).step);
+        std::string queryText=PreparedDBQueryServer::db_query_update_quest_step;
+        stringreplace(queryText,"%1",std::to_string(character_id));
+        stringreplace(queryText,"%2",std::to_string(quest.id));
+        stringreplace(queryText,"%3",std::to_string(public_and_private_informations.quests.at(quest.id).step));
+        dbQueryWriteServer(queryText);
+        addQuestStepDrop(quest.id,public_and_private_informations.quests.at(quest.id).step);
     }
     return true;
 }
 
 bool Client::startQuest(const Quest &quest)
 {
-    if(!public_and_private_informations.quests.contains(quest.id))
+    if(public_and_private_informations.quests.find(quest.id)==public_and_private_informations.quests.cend())
     {
-        dbQueryWriteServer(PreparedDBQueryServer::db_query_insert_quest
-                     .arg(character_id)
-                     .arg(quest.id)
-                     .arg(1)
-                     );
+        std::string queryText=PreparedDBQueryServer::db_query_insert_quest;
+        stringreplace(queryText,"%1",std::to_string(character_id));
+        stringreplace(queryText,"%2",std::to_string(quest.id));
+        stringreplace(queryText,"%3",std::to_string(1));
+        dbQueryWriteServer(queryText);
         public_and_private_informations.quests[quest.id].step=1;
         public_and_private_informations.quests[quest.id].finish_one_time=false;
     }
     else
     {
-        dbQueryWriteServer(PreparedDBQueryServer::db_query_update_quest_restart.arg(character_id).arg(quest.id));
+        std::string queryText=PreparedDBQueryServer::db_query_update_quest_restart;
+        stringreplace(queryText,"%1",std::to_string(character_id));
+        stringreplace(queryText,"%2",std::to_string(quest.id));
+        dbQueryWriteServer(queryText);
         public_and_private_informations.quests[quest.id].step=1;
     }
     addQuestStepDrop(quest.id,1);
