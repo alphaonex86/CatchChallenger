@@ -650,12 +650,12 @@ private:
 
     static uint32_t getMonsterId(bool * const ok);
     static uint32_t getClanId(bool * const ok);
-    bool getInTrade();
+    bool getInTrade() const;
     void registerTradeRequest(Client * otherPlayerTrade);
-    bool getIsFreezed();
-    quint64 getTradeCash();
-    std::unordered_map<uint32_t,uint32_t> getTradeObjects();
-    std::vector<PlayerMonster> getTradeMonster();
+    bool getIsFreezed() const;
+    quint64 getTradeCash() const;
+    std::unordered_map<uint32_t,uint32_t> getTradeObjects() const;
+    std::vector<PlayerMonster> getTradeMonster() const;
     void resetTheTrade();
     void addExistingMonster(std::vector<PlayerMonster> tradeMonster);
     PlayerMonster &getSelectedMonster();
