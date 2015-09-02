@@ -1061,7 +1061,25 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                         return;
                     }
                     QString name;
-                    in >> name;
+                    quint8 stringSize;
+                    in >> stringSize;
+                    if(stringSize>0)
+                    {
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)stringSize)
+                        {
+                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, stringSize: %3, data: %4, line: %5")
+                                          .arg(mainCodeType)
+                                          .arg(subCodeType)
+                                          .arg(stringSize)
+                                          .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                          .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
+                                          );
+                            return;
+                        }
+                        QByteArray stringRaw=data.mid(in.device()->pos(),stringSize);
+                        name=QString::fromUtf8(stringRaw.data(),stringRaw.size());
+                        in.device()->seek(in.device()->pos()+stringRaw.size());
+                    }
                     clanInformations(name);
                 }
                 break;
@@ -1081,7 +1099,25 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                         return;
                     }
                     QString name;
-                    in >> name;
+                    quint8 stringSize;
+                    in >> stringSize;
+                    if(stringSize>0)
+                    {
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)stringSize)
+                        {
+                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, stringSize: %3, data: %4, line: %5")
+                                          .arg(mainCodeType)
+                                          .arg(subCodeType)
+                                          .arg(stringSize)
+                                          .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                          .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
+                                          );
+                            return;
+                        }
+                        QByteArray stringRaw=data.mid(in.device()->pos(),stringSize);
+                        name=QString::fromUtf8(stringRaw.data(),stringRaw.size());
+                        in.device()->seek(in.device()->pos()+stringRaw.size());
+                    }
                     clanInvite(clanId,name);
                 }
                 break;
@@ -2505,9 +2541,25 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                     case 0x02:
                     {
                         QString city;
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || !checkStringIntegrity(data.right(data.size()-in.device()->pos())))
-                            return;
-                        in >> city;
+                        quint8 stringSize;
+                        in >> stringSize;
+                        if(stringSize>0)
+                        {
+                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)stringSize)
+                            {
+                                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, stringSize: %3, data: %4, line: %5")
+                                              .arg(mainCodeType)
+                                              .arg(subCodeType)
+                                              .arg(stringSize)
+                                              .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                              .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
+                                              );
+                                return;
+                            }
+                            QByteArray stringRaw=data.mid(in.device()->pos(),stringSize);
+                            city=QString::fromUtf8(stringRaw.data(),stringRaw.size());
+                            in.device()->seek(in.device()->pos()+stringRaw.size());
+                        }
                         captureCityYourLeaderHaveStartInOtherCity(city);
                     }
                     break;

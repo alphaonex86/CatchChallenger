@@ -285,7 +285,7 @@ int vectorindexOf(const std::vector<T> &list,const U &item)
 }
 
 template <class T, class U>
-bool vectorremoveOne(const std::vector<T> &list,const U &item)
+bool vectorremoveOne(std::vector<T> &list,const U &item)
 {
     const auto &r=std::find(list.begin(),list.end(),item);
     if(r==list.end())
@@ -324,7 +324,7 @@ unsigned int vectorRemoveEmpty(std::vector<T> &list)
 {
     unsigned int removedEntryNumber=0;
     for(auto it = list.begin();it != list.cend();++it)
-        if(it.size()==0)
+        if((*it).size()==0)
         {
             list.erase(it);
             ++removedEntryNumber;
