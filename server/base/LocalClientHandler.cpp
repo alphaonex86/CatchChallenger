@@ -1,7 +1,9 @@
 #include "Client.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/CommonDatapack.h"
+#include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/FacilityLib.h"
+#include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonDatapackServerSpec.h"
 #include "../../general/base/cpp11addition.h"
 #include "../base/PreparedDBQuery.h"
@@ -2786,7 +2788,11 @@ void Client::sendClanInfo()
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << clan->name;
+    {
+        const QByteArray outputText=FacilityLibGeneral::toUTF8WithHeader(clan->name);
+        outputData+=outputText;
+        out.device()->seek(out.device()->pos()+outputText.size());
+    }
     sendFullPacket(0xC2,0x0A,outputData.constData(),outputData.size());
 }
 
@@ -2812,7 +2818,11 @@ bool Client::inviteToClan(const uint32_t &clanId)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint32_t)clanId;
-    out << clan->name;
+    {
+        const QByteArray outputText=FacilityLibGeneral::toUTF8WithHeader(clan->name);
+        outputData+=outputText;
+        out.device()->seek(out.device()->pos()+outputText.size());
+    }
     sendFullPacket(0xC2,0x0B,outputData.constData(),outputData.size());
     return false;
 }
@@ -3004,7 +3014,11 @@ void Client::waitingForCityCaputre(const bool &cancel)
             QDataStream out(&outputData, QIODevice::WriteOnly);
             out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
             out << (uint8_t)0x02;
-            out << clan->captureCityInProgress;
+            {
+                const QByteArray outputText=FacilityLibGeneral::toUTF8WithHeader(clan->captureCityInProgress);
+                outputData+=outputText;
+                out.device()->seek(out.device()->pos()+outputText.size());
+            }
             sendFullPacket(0xF0,0x01,outputData.constData(),outputData.size());
             return;
         }
@@ -3071,12 +3085,12 @@ void Client::startTheCityCapture()
     while(i!=captureCity.cend())
     {
         //the city is not free to capture
-        if(captureCityValidatedList.contains(i->first))
+        if(captureCityValidatedList.find(i->first)!=captureCityValidatedList.cend())
         {
-            int index=0;
-            while(index<i.value().size())
+            unsigned int index=0;
+            while(index<i->second.size())
             {
-                i.value().at(index)->previousCityCaptureNotFinished();
+                i->second.at(index)->previousCityCaptureNotFinished();
                 index++;
             }
         }
@@ -3089,7 +3103,7 @@ void Client::startTheCityCapture()
             if(GlobalServerData::serverPrivateVariables.cityStatusList.at(i->first).clan==0)
                 if(GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.find(i->first)!=GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.cend())
                     tempCaptureCityValidated.bots=GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.at(i->first);
-            tempCaptureCityValidated.players=i.value();
+            tempCaptureCityValidated.players=i->second;
             unsigned int index;
             unsigned int sub_index;
             //do the clan count
@@ -3139,10 +3153,10 @@ void Client::startTheCityCapture()
             //bot the bot fight
             while(tempCaptureCityValidated.players.size()>0 && tempCaptureCityValidated.bots.size()>0)
             {
-                tempCaptureCityValidated.playersInFight.push_back(tempCaptureCityValidated.players.first());
-                tempCaptureCityValidated.playersInFight.back()->cityCaptureBotFight(player_count,clan_count,tempCaptureCityValidated.bots.first());
-                tempCaptureCityValidated.botsInFight.push_back(tempCaptureCityValidated.bots.first());
-                tempCaptureCityValidated.players.front()->botFightStart(tempCaptureCityValidated.bots.first());
+                tempCaptureCityValidated.playersInFight.push_back(tempCaptureCityValidated.players.front());
+                tempCaptureCityValidated.playersInFight.back()->cityCaptureBotFight(player_count,clan_count,tempCaptureCityValidated.bots.front());
+                tempCaptureCityValidated.botsInFight.push_back(tempCaptureCityValidated.bots.front());
+                tempCaptureCityValidated.players.front()->botFightStart(tempCaptureCityValidated.bots.front());
                 tempCaptureCityValidated.players.erase(tempCaptureCityValidated.players.begin());
                 tempCaptureCityValidated.bots.erase(tempCaptureCityValidated.bots.begin());
             }
@@ -3165,7 +3179,7 @@ void Client::fightOrBattleFinish(const bool &win, const uint32_t &fightId)
         {
             CaptureCityValidated &captureCityValidated=captureCityValidatedList[clan->captureCityInProgress];
             //check if this player is into the capture city with the other player of the team
-            if(captureCityValidated.playersInFight.find(this)!=captureCityValidated.playersInFight.cend())
+            if(vectorcontains(captureCityValidated.playersInFight,this))
             {
                 if(win)
                 {
@@ -3175,7 +3189,7 @@ void Client::fightOrBattleFinish(const bool &win, const uint32_t &fightId)
                     {
                         if(otherCityPlayerBattle!=NULL)
                         {
-                            captureCityValidated.playersInFight.removeOne(otherCityPlayerBattle);
+                            vectorremoveOne(captureCityValidated.playersInFight,otherCityPlayerBattle);
                             otherCityPlayerBattle=NULL;
                         }
                     }
@@ -3243,12 +3257,12 @@ void Client::fightOrBattleFinish(const bool &win, const uint32_t &fightId)
                             GlobalServerData::serverPrivateVariables.cityStatusList[clan->capturedCity].clan=0;
                         }
                         std::string queryText=PreparedDBQueryServer::db_query_delete_city;
-                        stringreplace(queryText,"%1",std::to_string(clan->capturedCity));
+                        stringreplace(queryText,"%1",clan->capturedCity);
                         dbQueryWriteServer(queryText);
-                        if(!GlobalServerData::serverPrivateVariables.cityStatusList.contains(clan->captureCityInProgress))
+                        if(GlobalServerData::serverPrivateVariables.cityStatusList.find(clan->captureCityInProgress)==GlobalServerData::serverPrivateVariables.cityStatusList.cend())
                             GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=0;
 
-                        if(GlobalServerData::serverPrivateVariables.cityStatusList.value(clan->captureCityInProgress).clan!=0)
+                        if(GlobalServerData::serverPrivateVariables.cityStatusList.at(clan->captureCityInProgress).clan!=0)
                             queryText=PreparedDBQueryServer::db_query_update_city_clan;
                         else
                             queryText=PreparedDBQueryServer::db_query_insert_city;
@@ -3488,7 +3502,7 @@ void Client::buyMarketObject(const uint32_t &query_id,const uint32_t &marketObje
                 stringreplace(queryText,"%1",std::to_string(marketItem.item));
                 stringreplace(queryText,"%2",std::to_string(marketItem.player));
                 dbQueryWriteServer(queryText);
-                GlobalServerData::serverPrivateVariables.marketItemList.removeAt(index);
+                GlobalServerData::serverPrivateVariables.marketItemList.erase(GlobalServerData::serverPrivateVariables.marketItemList.begin()+index);
             }
             else
             {
@@ -3500,10 +3514,10 @@ void Client::buyMarketObject(const uint32_t &query_id,const uint32_t &marketObje
                 dbQueryWriteServer(queryText);
             }
             removeCash(quantity*marketItem.cash);
-            if(playerById.contains(marketItem.player))
+            if(playerById.find(marketItem.player)!=playerById.cend())
             {
-                if(!playerById.value(marketItem.player)->addMarketCashWithoutSave(quantity*marketItem.cash))
-                    normalOutput(std::stringLiteral("Problem at market cash adding"));
+                if(!playerById.at(marketItem.player)->addMarketCashWithoutSave(quantity*marketItem.cash))
+                    normalOutput("Problem at market cash adding");
             }
             std::string queryText=PreparedDBQueryServer::db_query_update_charaters_market_cash;
             stringreplace(queryText,"%1",std::to_string(quantity*marketItem.cash));
@@ -3774,7 +3788,7 @@ void Client::withdrawMarketObject(const uint32_t &query_id,const uint32_t &objec
             else
             {
                 std::string queryText=PreparedDBQueryServer::db_query_update_item_market;
-                stringreplace(queryText,"%1",std::to_string(GlobalServerData::serverPrivateVariables.marketItemList.value(index).quantity));
+                stringreplace(queryText,"%1",std::to_string(GlobalServerData::serverPrivateVariables.marketItemList.at(index).quantity));
                 stringreplace(queryText,"%2",std::to_string(objectId));
                 stringreplace(queryText,"%3",std::to_string(character_id));
                 dbQueryWriteServer(queryText);
@@ -3827,7 +3841,7 @@ void Client::withdrawMarketMonster(const uint32_t &query_id,const uint32_t &mons
             dbQueryWriteServer(queryText);
             out << (uint8_t)0x01;
             out << (uint8_t)0x02;
-            const QByteArray newData(outputData+FacilityLib::privateMonsterToBinary(public_and_private_informations.playerMonster.last()));
+            const QByteArray newData(outputData+FacilityLib::privateMonsterToBinary(public_and_private_informations.playerMonster.back()));
             postReply(query_id,newData.constData(),newData.size());
             return;
         }

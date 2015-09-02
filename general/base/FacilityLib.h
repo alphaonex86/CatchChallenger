@@ -7,7 +7,6 @@
 #include <QDir>
 #include <QDateTime>
 #include "GeneralStructures.h"
-#include "CommonSettingsCommon.h"
 
 namespace CatchChallenger {
 class FacilityLib
