@@ -18,7 +18,7 @@ void DatabaseBase::clear()
 {
 }
 
-const char * DatabaseBase::databaseTypeToString(const DatabaseBase::DatabaseType &type)
+const std::string DatabaseBase::databaseTypeToString(const DatabaseBase::DatabaseType &type)
 {
     switch(type)
     {

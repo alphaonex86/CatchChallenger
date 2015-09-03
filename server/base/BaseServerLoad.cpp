@@ -288,7 +288,7 @@ void BaseServer::preload_map_semi_after_db_id()
                                     ;
                         break;
                     }
-                    if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText.c_str()))
+                    if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText))
                     {
                         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
                         criticalDatabaseQueryFailed();abort();//stop because can't resolv the name
@@ -391,7 +391,7 @@ void BaseServer::preload_map_semi_after_db_id()
                                     ;
                         break;
                     }
-                    if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText.c_str()))
+                    if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText))
                     {
                         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
                         criticalDatabaseQueryFailed();abort();//stop because can't resolv the name

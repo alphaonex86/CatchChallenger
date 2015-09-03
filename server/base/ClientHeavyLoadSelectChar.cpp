@@ -103,21 +103,21 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
     selectCharacterParam->characterId=characterId;
 
     const std::string &queryText=PreparedDBQueryCommon::db_query_character_by_id.arg(characterId);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&Client::selectCharacter_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::selectCharacter_static);
     if(callback==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
+        qDebug() << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_common->errorMessage();
         characterSelectionIsWrong(query_id,0x02,queryText+QLatin1String(": ")+GlobalServerData::serverPrivateVariables.db_common->errorMessage());
         delete selectCharacterParam;
         return;
     }
     else
     {
-        paramToPassToCallBack << selectCharacterParam;
+        paramToPassToCallBack.push_back(selectCharacterParam);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        paramToPassToCallBackType << std::stringLiteral("SelectCharacterParam");
+        paramToPassToCallBackType.push_back("SelectCharacterParam");
         #endif
-        callbackRegistred << callback;
+        callbackRegistred.push_back(callback);
     }
 }
 
@@ -151,7 +151,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBackType.takeFirst()!=std::stringLiteral("SelectCharacterParam"))
     {
-        qDebug() << "is not SelectCharacterParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
+        qDebug() << "is not SelectCharacterParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -352,21 +352,21 @@ void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &char
     selectCharacterParam->characterId=characterId;
 
     const std::string &queryText=PreparedDBQueryServer::db_query_character_server_by_id.arg(characterId);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&Client::selectCharacterServer_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&Client::selectCharacterServer_static);
     if(callback==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
+        qDebug() << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_server->errorMessage();
         characterSelectionIsWrong(query_id,0x02,queryText+QLatin1String(": ")+GlobalServerData::serverPrivateVariables.db_server->errorMessage());
         delete selectCharacterParam;
         return;
     }
     else
     {
-        paramToPassToCallBack << selectCharacterParam;
+        paramToPassToCallBack.push_back(selectCharacterParam);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        paramToPassToCallBackType << std::stringLiteral("SelectCharacterParam");
+        paramToPassToCallBackType.push_back("SelectCharacterParam");
         #endif
-        callbackRegistred << callback;
+        callbackRegistred.push_back(callback);
     }
 }
 
@@ -401,7 +401,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBackType.takeFirst()!=std::stringLiteral("SelectCharacterParam"))
     {
-        qDebug() << "is not SelectCharacterParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
+        qDebug() << "is not SelectCharacterParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -810,10 +810,10 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
             normalOutput(std::stringLiteral("First client of the clan: %1, get the info").arg(public_and_private_informations.clan));
             //do the query
             const std::string &queryText=PreparedDBQueryCommon::db_query_clan.arg(public_and_private_informations.clan);
-            CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&Client::selectClan_static);
+            CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::selectClan_static);
             if(callback==NULL)
             {
-                qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
+                qDebug() << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_common->errorMessage();
                 loadLinkedData();
                 return;
             }
@@ -844,10 +844,10 @@ void Client::loadItemOnMap()
     }
     #endif
     const std::string &queryText=PreparedDBQueryServer::db_query_select_itemOnMap.arg(character_id);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&Client::loadItemOnMap_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&Client::loadItemOnMap_static);
     if(callback==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
+        qDebug() << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_server->errorMessage();
         #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
         loadPlantOnMap();
         #else
@@ -920,10 +920,10 @@ void Client::loadPlantOnMap()
     }
     #endif
     const std::string &queryText=PreparedDBQueryServer::db_query_select_plant.arg(character_id);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&Client::loadPlantOnMap_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&Client::loadPlantOnMap_static);
     if(callback==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
+        qDebug() << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_server->errorMessage();
         characterIsRightFinalStep();
         return;
     }
