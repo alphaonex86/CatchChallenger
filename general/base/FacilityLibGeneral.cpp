@@ -27,7 +27,7 @@ QByteArray FacilityLibGeneral::toUTF8WithHeader(const std::string &text)
     return returnedData;
 }
 
-int FacilityLibGeneral::toUTF8WithHeader(const std::string &text,char * const data)
+unsigned int FacilityLibGeneral::toUTF8WithHeader(const std::string &text,char * const data)
 {
     if(text.isEmpty() || text.size()>255)
         return 0;
@@ -39,7 +39,7 @@ int FacilityLibGeneral::toUTF8WithHeader(const std::string &text,char * const da
     return 1+utf8data.size();
 }
 
-int FacilityLibGeneral::toUTF8With16BitsHeader(const std::string &text,char * const data)
+unsigned int FacilityLibGeneral::toUTF8With16BitsHeader(const std::string &text,char * const data)
 {
     if(text.isEmpty() || text.size()>65535)
         return 0;
