@@ -16,19 +16,19 @@ class EpollPostgresql : public CatchChallenger::DatabaseBase
 public:
     EpollPostgresql();
     ~EpollPostgresql();
-    bool syncConnect(const char * const host, const char * const dbname, const char * const user, const char * const password);
+    bool syncConnect(const std::string &host, const std::string &dbname, const std::string &user, const std::string &password);
     bool syncConnectInternal();
     void syncDisconnect();
     void syncReconnect();
-    CallBack * asyncRead(const char * const query,void * returnObject,CallBackDatabase method);
-    bool asyncWrite(const char * const query);
+    CallBack * asyncRead(const std::string &query,void * returnObject,CallBackDatabase method);
+    bool asyncWrite(const std::string &query);
     static void noticeReceiver(void *arg, const PGresult *res);
     static void noticeProcessor(void *arg, const char *message);
     bool epollEvent(const uint32_t &events);
     void clear();
-    const char * errorMessage() const;
+    const std::string errorMessage() const;
     bool next();
-    const char * value(const int &value) const;
+    const std::string value(const int &value) const;
     bool isConnected() const;
 private:
     PGconn *conn;

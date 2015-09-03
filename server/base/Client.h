@@ -53,12 +53,12 @@ public:
     BaseClassSwitch::EpollObjectType getType() const;
     #endif
     //to get some info
-    std::string getPseudo();
+    std::string getPseudo() const;
     void savePosition();
     static bool characterConnected(const uint32_t &characterId);
     void disconnectClient();
     static void disconnectClientById(const uint32_t &characterId);
-    Client *getClientFight();
+    Client *getClientFight() const;
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     void doDDOSCompute();
     #endif
@@ -273,9 +273,9 @@ private:
     static const std::string text_unabletofoundtheconnectedplayertokick;
     static const std::string text_unabletofoundthisrightslevel;
 
-    static const QRegularExpression commandRegExp;
-    static const QRegularExpression commandRegExpWithArgs;
-    static const QRegularExpression isolateTheMainCommand;
+    static const std::regex commandRegExp;
+    static const std::regex commandRegExpWithArgs;
+    static const std::regex isolateTheMainCommand;
     static const std::string text_server_full;
     static const std::string text_slashpmspace;
     static const std::string text_slash;
@@ -303,7 +303,7 @@ private:
     };
     //static std::unordered_map<std::string,uint32_t> datapack_file_list_cache_base,datapack_file_list_cache_main,datapack_file_list_cache_sub;//same than above
     static std::unordered_map<std::string,DatapackCacheFile> datapack_file_hash_cache_base,datapack_file_hash_cache_main,datapack_file_hash_cache_sub;
-    static QRegularExpression fileNameStartStringRegex;
+    static std::regex fileNameStartStringRegex;
     static std::string single_quote;
     static std::string antislash_single_quote;
     static const std::string text_dotslash;
@@ -792,6 +792,7 @@ protected:
     void errorOutput(const std::string &errorString);
     void kick();
     void normalOutput(const std::string &message) const;
+    std::string headerOutput() const;
     //drop all clients
     void dropAllClients();
     void dropAllBorderClients();

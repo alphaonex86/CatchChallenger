@@ -110,7 +110,7 @@ Client::Client(
         int index=0;
         while(index<256)
         {
-            queryNumberList << index;
+            queryNumberList.push_back(index);
             index++;
         }
     }
@@ -136,7 +136,7 @@ Client::~Client()
         delete socketString;
     #endif
     {
-        int index=0;
+        unsigned int index=0;
         while(index<callbackRegistred.size())
         {
             callbackRegistred.at(index)->object=NULL;
@@ -226,8 +226,8 @@ void Client::disconnectClient()
     if(character_loaded_in_progress)
     {
         character_loaded_in_progress=false;
-        GlobalServerData::serverPrivateVariables.connected_players_id_list.remove(character_id);
-        simplifiedIdList << public_and_private_informations.public_informations.simplifiedId;
+        GlobalServerData::serverPrivateVariables.connected_players_id_list.erase(character_id);
+        simplifiedIdList.push_back(public_and_private_informations.public_informations.simplifiedId);
     }
     else if(character_loaded)
     {
@@ -244,23 +244,30 @@ void Client::disconnectClient()
         battleCanceled();
         removeFromClan();
         GlobalServerData::serverPrivateVariables.connected_players--;
-        simplifiedIdList << public_and_private_informations.public_informations.simplifiedId;
-        GlobalServerData::serverPrivateVariables.connected_players_id_list.remove(character_id);
+        simplifiedIdList.push_back(public_and_private_informations.public_informations.simplifiedId);
+        GlobalServerData::serverPrivateVariables.connected_players_id_list.erase(character_id);
         #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         LinkToMaster::linkToMaster->characterDisconnected(character_id);
         #endif
-        playerByPseudo.remove(public_and_private_informations.public_informations.pseudo);
+        playerByPseudo.erase(public_and_private_informations.public_informations.pseudo);
         clanChangeWithoutDb(0);
-        clientBroadCastList.removeOne(this);
-        playerByPseudo.remove(public_and_private_informations.public_informations.pseudo);
-        playerById.remove(character_id);
+        vectorremoveOne(clientBroadCastList,this);
+        playerByPseudo.erase(public_and_private_informations.public_informations.pseudo);
+        playerById.erase(character_id);
         leaveTheCityCapture();
         const uint32_t &addTime=QDateTime::currentDateTime().toMSecsSinceEpoch()/1000-connectedSince.toMSecsSinceEpoch()/1000;
         if(addTime>5)
         {
-            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_played_time.arg(character_id).arg(addTime));
+            std::string queryText=PreparedDBQueryCommon::db_query_played_time;
+            stringreplace(queryText,"%1",std::to_string(character_id));
+            stringreplace(queryText,"%2",std::to_string(addTime));
+            dbQueryWriteCommon(queryText);
             #ifdef CATCHCHALLENGER_CLASS_ALLINONESERVER
-            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_server_time_played_time.arg(addTime).arg(0).arg(character_id));
+            queryText=PreparedDBQueryCommon::db_query_update_server_time_played_time;
+            stringreplace(queryText,"%1",std::to_string(addTime));
+            stringreplace(queryText,"%2",std::to_string(0));
+            stringreplace(queryText,"%3",std::to_string(character_id));
+            dbQueryWriteCommon(queryText);
             #endif
         }
         //save the monster
@@ -274,34 +281,38 @@ void Client::disconnectClient()
             {
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
                 if(CommonSettingsServer::commonSettingsServer.useSP)
-                    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_monster
-                                 .arg(playerMonster.id)
-                                 .arg(character_id)
-                                 .arg(playerMonster.hp)
-                                 .arg(playerMonster.remaining_xp)
-                                 .arg(playerMonster.level)
-                                 .arg(playerMonster.sp)
-                                 .arg(index+1)
-                                 );
+                {
+                    std::string queryText=PreparedDBQueryCommon::db_query_monster;
+                    stringreplace(queryText,"%1",std::to_string(playerMonster.id));
+                    stringreplace(queryText,"%2",std::to_string(character_id));
+                    stringreplace(queryText,"%3",std::to_string(playerMonster.hp));
+                    stringreplace(queryText,"%4",std::to_string(playerMonster.remaining_xp));
+                    stringreplace(queryText,"%5",std::to_string(playerMonster.level));
+                    stringreplace(queryText,"%6",std::to_string(playerMonster.sp));
+                    stringreplace(queryText,"%7",std::to_string(index+1));
+                    dbQueryWriteCommon(queryText);
+                }
                 else
-                    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_monster
-                                 .arg(playerMonster.id)
-                                 .arg(character_id)
-                                 .arg(playerMonster.hp)
-                                 .arg(playerMonster.remaining_xp)
-                                 .arg(playerMonster.level)
-                                 .arg(index+1)
-                                 );
+                {
+                    std::string queryText=PreparedDBQueryCommon::db_query_monster;
+                    stringreplace(queryText,"%1",std::to_string(playerMonster.id));
+                    stringreplace(queryText,"%2",std::to_string(character_id));
+                    stringreplace(queryText,"%3",std::to_string(playerMonster.hp));
+                    stringreplace(queryText,"%4",std::to_string(playerMonster.remaining_xp));
+                    stringreplace(queryText,"%5",std::to_string(playerMonster.level));
+                    stringreplace(queryText,"%6",std::to_string(index+1));
+                    dbQueryWriteCommon(queryText);
+                }
                 int sub_index=0;
                 const int &sub_size=playerMonster.skills.size();
                 while(sub_index<sub_size)
                 {
                     const PlayerMonster::PlayerSkill &playerSkill=playerMonster.skills.at(sub_index);
-                    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_monster_skill
-                                 .arg(playerSkill.endurance)
-                                 .arg(playerMonster.id)
-                                 .arg(playerSkill.skill)
-                                 );
+                    std::string queryText=PreparedDBQueryCommon::db_query_monster_skill;
+                    stringreplace(queryText,"%1",std::to_string(playerSkill.endurance));
+                    stringreplace(queryText,"%1",std::to_string(playerMonster.id));
+                    stringreplace(queryText,"%1",std::to_string(playerSkill.skill));
+                    dbQueryWriteCommon(queryText);
                     sub_index++;
                 }
                 index++;
@@ -338,31 +349,31 @@ void Client::errorOutput(const std::string &errorString)
 {
     if(account_id==0)
     {
-        normalOutput(std::stringLiteral("Kicked by: ")+errorString);
+        std::cerr << headerOutput() << "Kicked by: " << errorString << std::endl;
         disconnectClient();
         return;
     }
     if(character_loaded)
         sendSystemMessage(public_and_private_informations.public_informations.pseudo+" have been kicked from server, have try hack",false);
 
-    normalOutput(std::stringLiteral("Kicked by: ")+errorString);
+    std::cerr << headerOutput() << "Kicked by: " << errorString << std::endl;
     disconnectClient();
 }
 
 void Client::kick()
 {
-    normalOutput(std::stringLiteral("kicked()"));
+    std::cerr << headerOutput() << "kicked()" << std::endl;
     disconnectClient();
 }
 
-void Client::normalOutput(const std::string &message) const
+std::string Client::headerOutput() const
 {
-    if(!public_and_private_informations.public_informations.pseudo.isEmpty())
+    if(!public_and_private_informations.public_informations.pseudo.empty())
     {
         if(GlobalServerData::serverSettings.anonymous)
-            DebugClass::debugConsole(std::stringLiteral("%1: %2").arg(character_id).arg(message));
+            return std::to_string(character_id)+": ";
         else
-            DebugClass::debugConsole(std::stringLiteral("%1: %2").arg(public_and_private_informations.public_informations.pseudo).arg(message));
+            return public_and_private_informations.public_informations.pseudo+": ";
     }
     else
     {
@@ -374,31 +385,36 @@ void Client::normalOutput(const std::string &message) const
         {
             QHostAddress hostAddress=socket->peerAddress();
             if(hostAddress==QHostAddress::LocalHost || hostAddress==QHostAddress::LocalHostIPv6)
-                ip=std::stringLiteral("localhost:%1").arg(socket->peerPort());
+                ip="localhost:"+std::to_string(socket->peerPort());
             else if(hostAddress==QHostAddress::Null || hostAddress==QHostAddress::Any || hostAddress==QHostAddress::AnyIPv4 || hostAddress==QHostAddress::AnyIPv6 || hostAddress==QHostAddress::Broadcast)
                 ip="internal";
             else
-                ip=std::stringLiteral("%1:%2").arg(hostAddress.toString()).arg(socket->peerPort());
+                ip=hostAddress.toString().toStdString()+":"+std::to_string(socket->peerPort());
         }
         #else
         std::string ip;
         if(socketString==NULL)
-            ip=std::stringLiteral("[IP]:[PORT]");
+            ip="[IP]:[PORT]";
         else
-            ip=std::string::fromLatin1(QByteArray(socketString,socketStringSize));
+            ip=socketString;
         #endif
         if(GlobalServerData::serverSettings.anonymous)
         {
-            QCryptographicHash hash(QCryptographicHash::Sha1);
-            hash.addData(ip.toUtf8());
-            DebugClass::debugConsole(std::stringLiteral("%1: %2").arg(std::string(hash.result().toHex())).arg(message));
+            QCryptographicHash hash(QCryptographicHash::Sha224);
+            hash.addData(ip.data(),ip.size());
+            return QString(hash.result().toHex()).toStdString()+": ";
         }
         else
-            DebugClass::debugConsole(std::stringLiteral("%1: %2").arg(ip).arg(message));
+            return ip+": ";
     }
 }
 
-std::string Client::getPseudo()
+void Client::normalOutput(const std::string &message) const
+{
+    std::cout << headerOutput() << message << std::endl;
+}
+
+std::string Client::getPseudo() const
 {
     return public_and_private_informations.public_informations.pseudo;
 }
@@ -518,11 +534,11 @@ uint32_t Client::getClanId(bool * const ok)
 
 bool Client::characterConnected(const uint32_t &characterId)
 {
-    return playerById.contains(characterId);
+    return playerById.find(characterId)!=playerById.cend();
 }
 
 void Client::disconnectClientById(const uint32_t &characterId)
 {
-    if(playerById.contains(characterId))
-        playerById.value(characterId)->disconnectClient();
+    if(playerById.find(characterId)!=playerById.cend())
+        playerById.at(characterId)->disconnectClient();
 }
