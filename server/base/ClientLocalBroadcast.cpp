@@ -2,6 +2,8 @@
 #include "BroadCastWithoutSender.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/FacilityLib.h"
+#include "../../general/base/FacilityLibGeneral.h"
+#include "../../general/base/cpp11addition.h"
 #include "GlobalServerData.h"
 #include "MapServer.h"
 
@@ -14,7 +16,7 @@ void Client::sendLocalChatText(const std::string &text)
     static_cast<MapServer *>(map)->localChatDropNewValue++;
     if(map==NULL)
         return;
-    normalOutput(std::stringLiteral("[chat local] %1: %2").arg(this->public_and_private_informations.public_informations.pseudo).arg(text));
+    normalOutput("[chat local] "+this->public_and_private_informations.public_informations.pseudo+": "+text);
 
     QByteArray finalData;
     {
@@ -23,10 +25,10 @@ void Client::sendLocalChatText(const std::string &text)
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (uint8_t)Chat_type_local;
         {
-            const QByteArray &tempText=text.toUtf8();
-            if(tempText.size()>255)
+            const QByteArray &tempText=FacilityLibGeneral::toUTF8WithHeader(text);
+            if(tempText.size()==0)
             {
-                DebugClass::debugConsole(std::stringLiteral("text in Utf8 too big, line: %1").arg(__LINE__));
+                normalOutput("text in Utf8 too big, line: "+std::to_string(__LINE__));
                 return;
             }
             out << (uint8_t)tempText.size();
@@ -63,11 +65,11 @@ void Client::sendLocalChatText(const std::string &text)
 void Client::insertClientOnMap(CommonMap *map)
 {
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
-    if(static_cast<MapServer *>(map)->clientsForBroadcast.contains(this))
-        normalOutput(QLatin1String("static_cast<MapServer *>(map)->clientsForBroadcast already have this"));
+    if(vectorcontainsAtLeastOne(static_cast<MapServer *>(map)->clientsForBroadcast,this))
+        normalOutput("static_cast<MapServer *>(map)->clientsForBroadcast already have this");
     else
     #endif
-    static_cast<MapServer *>(map)->clientsForBroadcast << this;
+    static_cast<MapServer *>(map)->clientsForBroadcast.push_back(this);
 
     #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     sendNearPlant();
@@ -81,10 +83,10 @@ void Client::removeClientOnMap(CommonMap *map
                                )
 {
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
-    if(static_cast<MapServer *>(map)->clientsForBroadcast.count(this)!=1)
-        normalOutput(std::stringLiteral("static_cast<MapServer *>(map)->clientsForBroadcast.count(this)!=1: %1").arg(static_cast<MapServer *>(map)->clientsForBroadcast.count(this)));
+    if(vectorcontainsCount(static_cast<MapServer *>(map)->clientsForBroadcast,this)!=1)
+        normalOutput("static_cast<MapServer *>(map)->clientsForBroadcast.count(this)!=1: "+std::to_string(vectorcontainsCount(static_cast<MapServer *>(map)->clientsForBroadcast,this)));
     #endif
-    static_cast<MapServer *>(map)->clientsForBroadcast.removeOne(this);
+    vectorremoveOne(static_cast<MapServer *>(map)->clientsForBroadcast,this);
 
     #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     if(!withDestroy)

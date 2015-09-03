@@ -2404,7 +2404,7 @@ void Client::requestFight(const uint16_t &fightId)
     if(mapServer->botsFight.find(pos)!=mapServer->botsFight.cend())
     {
         const std::vector<uint32_t> &botsFightList=mapServer->botsFight.at(pos);
-        if(vectorcontains(botsFightList,fightId))
+        if(vectorcontainsAtLeastOne(botsFightList,fightId))
             found=true;
     }
     if(!found)
@@ -2440,7 +2440,7 @@ void Client::requestFight(const uint16_t &fightId)
         if(mapServer->botsFight.find(pos)!=mapServer->botsFight.cend())
         {
             const std::vector<uint32_t> &botsFightList=static_cast<MapServer*>(this->map)->botsFight.at(pos);
-            if(vectorcontains(botsFightList,fightId))
+            if(vectorcontainsAtLeastOne(botsFightList,fightId))
                 found=true;
         }
         if(!found)
@@ -2482,7 +2482,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
 
             std::string queryText=PreparedDBQueryCommon::db_query_select_clan_by_name;
             stringreplace(queryText,"%1",SqlFunction::quoteSqlVariable(text));
-            CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.c_str(),this,&Client::addClan_static);
+            CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::addClan_static);
             if(callback==NULL)
             {
                 std::cerr << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
@@ -3179,7 +3179,7 @@ void Client::fightOrBattleFinish(const bool &win, const uint32_t &fightId)
         {
             CaptureCityValidated &captureCityValidated=captureCityValidatedList[clan->captureCityInProgress];
             //check if this player is into the capture city with the other player of the team
-            if(vectorcontains(captureCityValidated.playersInFight,this))
+            if(vectorcontainsAtLeastOne(captureCityValidated.playersInFight,this))
             {
                 if(win)
                 {

@@ -54,7 +54,7 @@ void BaseServer::preload_zone_sql()
                 queryText="SELECT clan FROM city WHERE city='"+zoneCodeName+"' ORDER BY city";
             break;
         }
-        if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.c_str(),this,&BaseServer::preload_zone_static)==NULL)
+        if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&BaseServer::preload_zone_static)==NULL)
         {
             std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
             criticalDatabaseQueryFailed();return;//stop because can't do the first db access
@@ -94,7 +94,7 @@ void BaseServer::preload_pointOnMap_sql()
             queryText="SELECT id,map,x,y FROM dictionary_pointonmap ORDER BY map,x,y";
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.c_str(),this,&BaseServer::preload_pointOnMap_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&BaseServer::preload_pointOnMap_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         criticalDatabaseQueryFailed();return;//stop because can't do the first db access
@@ -249,7 +249,7 @@ void BaseServer::preload_dictionary_map()
             queryText="SELECT id,map FROM dictionary_map ORDER BY map";
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.c_str(),this,&BaseServer::preload_dictionary_map_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&BaseServer::preload_dictionary_map_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         criticalDatabaseQueryFailed();return;//stop because can't resolv the name
@@ -323,7 +323,7 @@ void BaseServer::preload_dictionary_map_return()
                     queryText="INSERT INTO dictionary_map(id,map) VALUES("+std::to_string(databaseMapId)+",'"+map+"');";
                 break;
             }
-            if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText.c_str()))
+            if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText))
             {
                 std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
                 criticalDatabaseQueryFailed();return;//stop because can't resolv the name
@@ -372,7 +372,7 @@ void BaseServer::preload_industries()
             queryText="SELECT id,resources,products,last_update FROM factory";
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.c_str(),this,&BaseServer::preload_industries_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&BaseServer::preload_industries_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         preload_finish();
@@ -540,7 +540,7 @@ void BaseServer::preload_market_monsters_prices_sql()
             queryText="SELECT id,market_price FROM monster_market_price ORDER BY id";
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.c_str(),this,&BaseServer::preload_market_monsters_prices_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&BaseServer::preload_market_monsters_prices_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         preload_market_monsters_sql();
@@ -616,7 +616,7 @@ void BaseServer::preload_market_monsters_sql()
                 queryText="SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character FROM monster WHERE id="+std::to_string(monsterSemiMarketList.at(0).id);
             break;
         }
-    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.c_str(),this,&BaseServer::preload_market_monsters_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&BaseServer::preload_market_monsters_static)==NULL)
     {
         monsterSemiMarketList.clear();
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
@@ -809,7 +809,7 @@ void BaseServer::preload_market_items()
             queryText="SELECT item,quantity,character,market_price FROM item_market ORDER BY item";
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.c_str(),this,&BaseServer::preload_market_items_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&BaseServer::preload_market_items_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
@@ -901,7 +901,7 @@ void BaseServer::loadMonsterBuffs(const uint32_t &index)
         break;
     }
 
-    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.c_str(),this,&BaseServer::loadMonsterBuffs_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&BaseServer::loadMonsterBuffs_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         loadMonsterSkills(0);
@@ -982,7 +982,7 @@ void BaseServer::loadMonsterSkills(const uint32_t &index)
             queryText="SELECT skill,level,endurance FROM monster_skill WHERE monster="+std::to_string(index)+" ORDER BY skill";
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.c_str(),this,&BaseServer::loadMonsterSkills_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&BaseServer::loadMonsterSkills_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         preload_market_items();
@@ -1067,7 +1067,7 @@ void BaseServer::load_clan_max_id()
             queryText="SELECT id FROM clan ORDER BY id DESC LIMIT 1;";
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.c_str(),this,&BaseServer::load_clan_max_id_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&BaseServer::load_clan_max_id_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         preload_industries();
@@ -1115,7 +1115,7 @@ void BaseServer::load_account_max_id()
             queryText="SELECT id FROM account ORDER BY id DESC LIMIT 1;";
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db_login->asyncRead(queryText.c_str(),this,&BaseServer::load_account_max_id_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_login->asyncRead(queryText,this,&BaseServer::load_account_max_id_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_login->errorMessage() << std::endl;
         if(CommonSettingsCommon::commonSettingsCommon.max_character)
@@ -1169,7 +1169,7 @@ void BaseServer::load_character_max_id()
             queryText="SELECT id FROM character ORDER BY id DESC LIMIT 1;";
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.c_str(),this,&BaseServer::load_character_max_id_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&BaseServer::load_character_max_id_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_base);

@@ -13,8 +13,8 @@ class FacilityLibGeneral
 {
 public:
     static QByteArray toUTF8WithHeader(const std::string &text);
-    static int toUTF8WithHeader(const std::string &text,char * const data);
-    static int toUTF8With16BitsHeader(const std::string &text,char * const data);
+    static unsigned int toUTF8WithHeader(const std::string &text,char * const data);
+    static unsigned int toUTF8With16BitsHeader(const std::string &text,char * const data);
     static std::vector<std::string > listFolder(const std::string& folder,const std::string& suffix=std::string());
     static std::string randomPassword(const std::string& string,const uint8_t& length);
     static std::vector<std::string > skinIdList(const std::string& skinPath);

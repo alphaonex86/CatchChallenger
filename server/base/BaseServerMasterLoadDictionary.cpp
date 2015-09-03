@@ -43,7 +43,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_allow()
             queryText="SELECT id,allow FROM dictionary_allow ORDER BY allow";
         break;
     }
-    if(databaseBaseBase->asyncRead(queryText.c_str(),this,&BaseServerMasterLoadDictionary::preload_dictionary_allow_static)==NULL)
+    if(databaseBaseBase->asyncRead(queryText,this,&BaseServerMasterLoadDictionary::preload_dictionary_allow_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseBase->errorMessage() << std::endl;
         abort();//stop because can't resolv the name
@@ -103,7 +103,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_allow_return()
                 queryText="INSERT INTO dictionary_allow(id,allow) VALUES("+std::to_string(lastId)+",'clan');";
             break;
         }
-        if(!databaseBaseBase->asyncWrite(queryText.c_str()))
+        if(!databaseBaseBase->asyncWrite(queryText))
         {
             std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseBase->errorMessage() << std::endl;
             abort();//stop because can't resolv the name
@@ -136,7 +136,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation()
             queryText="SELECT id,reputation FROM dictionary_reputation ORDER BY reputation";
         break;
     }
-    if(databaseBaseBase->asyncRead(queryText.c_str(),this,&BaseServerMasterLoadDictionary::preload_dictionary_reputation_static)==NULL)
+    if(databaseBaseBase->asyncRead(queryText,this,&BaseServerMasterLoadDictionary::preload_dictionary_reputation_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseBase->errorMessage() << std::endl;
         abort();//stop because can't resolv the name
@@ -205,7 +205,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
                     queryText="INSERT INTO dictionary_reputation(id,reputation) VALUES("+std::to_string(lastId)+",'"+reputation+"');";
                 break;
             }
-            if(!databaseBaseBase->asyncWrite(queryText.c_str()))
+            if(!databaseBaseBase->asyncWrite(queryText))
             {
                 std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseBase->errorMessage() << std::endl;
                 abort();//stop because can't resolv the name
@@ -240,7 +240,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin()
             queryText="SELECT id,skin FROM dictionary_skin ORDER BY skin";
         break;
     }
-    if(databaseBaseBase->asyncRead(queryText.c_str(),this,&BaseServerMasterLoadDictionary::preload_dictionary_skin_static)==NULL)
+    if(databaseBaseBase->asyncRead(queryText,this,&BaseServerMasterLoadDictionary::preload_dictionary_skin_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseBase->errorMessage() << std::endl;
         abort();//stop because can't resolv the name
@@ -309,7 +309,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
                     queryText="INSERT INTO dictionary_skin(id,skin) VALUES("+std::to_string(lastId)+",'"+skin+"');";
                 break;
             }
-            if(!databaseBaseBase->asyncWrite(queryText.c_str()))
+            if(!databaseBaseBase->asyncWrite(queryText))
             {
                 std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseBase->errorMessage() << std::endl;
                 abort();//stop because can't resolv the name
@@ -344,7 +344,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter()
             queryText="SELECT id,starter FROM dictionary_starter ORDER BY starter";
         break;
     }
-    if(databaseBaseBase->asyncRead(queryText.c_str(),this,&BaseServerMasterLoadDictionary::preload_dictionary_starter_static)==NULL)
+    if(databaseBaseBase->asyncRead(queryText,this,&BaseServerMasterLoadDictionary::preload_dictionary_starter_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseBase->errorMessage() << std::endl;
         abort();//stop because can't resolv the name
@@ -423,7 +423,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
                     queryText="INSERT INTO dictionary_starter(id,starter) VALUES("+std::to_string(lastId)+",'"+profile.id+"');";
                 break;
             }
-            if(!databaseBaseBase->asyncWrite(queryText.c_str()))
+            if(!databaseBaseBase->asyncWrite(queryText))
             {
                 std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseBase->errorMessage() << std::endl;
                 abort();//stop because can't resolv the name

@@ -300,13 +300,19 @@ bool vectorremoveOne(std::vector<T> &list,const U &item)
 }
 
 template <class T, class U>
-bool vectorcontains(const std::vector<T> &list,const U &item)
+bool vectorcontainsAtLeastOne(const std::vector<T> &list,const U &item)
 {
     const auto &r=std::find(list.begin(),list.end(),item);
     if(r==list.end())
         return false;
     else
         return true;
+}
+
+template <class T, class U>
+unsigned int vectorcontainsCount(const std::vector<T> &list,const U &item)
+{
+    return std::count(list.begin(), list.end(), item);
 }
 
 template <class T, class U>
