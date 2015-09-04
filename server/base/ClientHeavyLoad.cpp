@@ -78,7 +78,7 @@ void Client::askLogin(const uint8_t &query_id,const char *rawdata)
     askLoginParam->pass=QByteArray(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
 
     std::string queryText=PreparedDBQueryLogin::db_query_login;
-    stringreplace(queryText,"%1",QString(login.toHex()).toStdString());
+    stringreplaceOne(queryText,"%1",QString(login.toHex()).toStdString());
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_login->asyncRead(queryText,this,&Client::askLogin_static);
     if(callback==NULL)
     {
@@ -249,8 +249,8 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         }
     }
     std::string queryText=PreparedDBQueryCommon::db_query_characters;
-    stringreplace(queryText,"%1",std::to_string(account_id));
-    stringreplace(queryText,"%2",std::to_string(CommonSettingsCommon::commonSettingsCommon.max_character+1));
+    stringreplaceOne(queryText,"%1",std::to_string(account_id));
+    stringreplaceOne(queryText,"%2",std::to_string(CommonSettingsCommon::commonSettingsCommon.max_character+1));
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::character_list_static);
     if(callback==NULL)
     {
@@ -300,7 +300,7 @@ void Client::createAccount(const uint8_t &query_id, const char *rawdata)
     askLoginParam->pass=QByteArray(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
 
     std::string queryText=PreparedDBQueryLogin::db_query_login;
-    stringreplace(queryText,"%1",QString(login.toHex()).toStdString());
+    stringreplaceOne(queryText,"%1",QString(login.toHex()).toStdString());
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_login->asyncRead(queryText,this,&Client::createAccount_static);
     if(callback==NULL)
     {
@@ -371,10 +371,10 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         GlobalServerData::serverPrivateVariables.maxAccountId++;
         account_id=GlobalServerData::serverPrivateVariables.maxAccountId;
         std::string queryText=PreparedDBQueryLogin::db_query_insert_login;
-        stringreplace(queryText,"%1",std::to_string(account_id));
-        stringreplace(queryText,"%2",QString(askLoginParam->login.toHex()).toStdString());
-        stringreplace(queryText,"%3",QString(askLoginParam->pass.toHex()).toStdString());
-        stringreplace(queryText,"%4",std::to_string(QDateTime::currentDateTime().toTime_t()));
+        stringreplaceOne(queryText,"%1",std::to_string(account_id));
+        stringreplaceOne(queryText,"%2",QString(askLoginParam->login.toHex()).toStdString());
+        stringreplaceOne(queryText,"%3",QString(askLoginParam->pass.toHex()).toStdString());
+        stringreplaceOne(queryText,"%4",std::to_string(QDateTime::currentDateTime().toTime_t()));
         dbQueryWriteLogin(queryText);
         //send the network reply
         QByteArray outputData;
@@ -614,7 +614,7 @@ QByteArray Client::character_list_return(const uint8_t &query_id)
 bool Client::server_list()
 {
     std::string queryText=PreparedDBQueryCommon::db_query_select_server_time;
-    stringreplace(queryText,"%1",std::to_string(account_id));
+    stringreplaceOne(queryText,"%1",std::to_string(account_id));
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::server_list_static);
     if(callback==NULL)
     {
@@ -751,17 +751,17 @@ void Client::server_list_return(const uint8_t &query_id, const QByteArray &previ
     if(validServerCount==0)
     {
         std::string queryText=PreparedDBQueryCommon::db_query_insert_server_time;
-        stringreplace(queryText,"%1","0");
-        stringreplace(queryText,"%2",std::to_string(account_id));
-        stringreplace(queryText,"%3",std::to_string(QDateTime::currentDateTime().toTime_t()));
+        stringreplaceOne(queryText,"%1","0");
+        stringreplaceOne(queryText,"%2",std::to_string(account_id));
+        stringreplaceOne(queryText,"%3",std::to_string(QDateTime::currentDateTime().toTime_t()));
         dbQueryWriteCommon(queryText);
     }
     else
     {
         std::string queryText=PreparedDBQueryCommon::db_query_update_server_time_last_connect;
-        stringreplace(queryText,"%1",std::to_string(QDateTime::currentDateTime().toTime_t()));
-        stringreplace(queryText,"%2","0");
-        stringreplace(queryText,"%3",std::to_string(account_id));
+        stringreplaceOne(queryText,"%1",std::to_string(QDateTime::currentDateTime().toTime_t()));
+        stringreplaceOne(queryText,"%2","0");
+        stringreplaceOne(queryText,"%3",std::to_string(account_id));
         dbQueryWriteCommon(queryText);
     }
     #endif
@@ -838,11 +838,12 @@ void Client::deleteCharacterNow(const uint32_t &characterId)
     DeleteCharacterNow *deleteCharacterNow=new DeleteCharacterNow;
     deleteCharacterNow->characterId=characterId;
 
-    const std::string &queryText=PreparedDBQueryCommon::db_query_monster_by_character_id.arg(characterId);
+    std::string queryText=PreparedDBQueryCommon::db_query_monster_by_character_id;
+    stringreplaceOne(queryText,"%1",std::to_string(character_id));
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::deleteCharacterNow_static);
     if(callback==NULL)
     {
-        qDebug() << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_common->errorMessage();
+        std::cerr << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         delete deleteCharacterNow;
         return;
     }
@@ -885,34 +886,64 @@ void Client::deleteCharacterNow_object()
 void Client::deleteCharacterNow_return(const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBackType.takeFirst()!=std::stringLiteral("DeleteCharacterNow"))
+    if(paramToPassToCallBackType.front()!="DeleteCharacterNow")
     {
-        qDebug() << "is not DeleteCharacterNow" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__;
+        std::cerr << "is not DeleteCharacterNow" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
         abort();
     }
+    paramToPassToCallBackType.erase(paramToPassToCallBackType.begin());
     #endif
-    callbackRegistred.removeFirst();
+    callbackRegistred.erase(callbackRegistred.begin());
     bool ok;
+    std::string queryText;
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        const uint32_t &monsterId=std::string(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
+        const uint32_t &monsterId=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(ok)
         {
-            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_monster_buff.arg(monsterId));
-            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_monster_skill.arg(monsterId));
+            queryText=PreparedDBQueryCommon::db_query_delete_monster_buff;
+            stringreplaceOne(queryText,"%1",std::to_string(monsterId));
+            dbQueryWriteCommon(queryText);
+            queryText=PreparedDBQueryCommon::db_query_delete_monster_skill;
+            stringreplaceOne(queryText,"%1",std::to_string(monsterId));
+            dbQueryWriteCommon(queryText);
         }
     }
-    dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_bot_already_beaten.arg(characterId));
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_character.arg(characterId));
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_all_item.arg(characterId));
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_all_item_warehouse.arg(characterId));
-    dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_all_item_market.arg(characterId));
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_monster_by_character.arg(characterId));
-    dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_plant.arg(characterId));
-    dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_quest.arg(characterId));
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_recipes.arg(characterId));
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_reputation.arg(characterId));
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_allow.arg(characterId));
+
+    queryText=PreparedDBQueryCommon::db_query_delete_character;
+    stringreplaceOne(queryText,"%1",std::to_string(characterId));
+    dbQueryWriteCommon(queryText);
+    queryText=PreparedDBQueryCommon::db_query_delete_all_item;
+    stringreplaceOne(queryText,"%1",std::to_string(characterId));
+    dbQueryWriteCommon(queryText);
+    queryText=PreparedDBQueryCommon::db_query_delete_all_item_warehouse;
+    stringreplaceOne(queryText,"%1",std::to_string(characterId));
+    dbQueryWriteCommon(queryText);
+    queryText=PreparedDBQueryCommon::db_query_delete_monster_by_character;
+    stringreplaceOne(queryText,"%1",std::to_string(characterId));
+    dbQueryWriteCommon(queryText);
+    queryText=PreparedDBQueryCommon::db_query_delete_recipes;
+    stringreplaceOne(queryText,"%1",std::to_string(characterId));
+    dbQueryWriteCommon(queryText);
+    queryText=PreparedDBQueryCommon::db_query_delete_reputation;
+    stringreplaceOne(queryText,"%1",std::to_string(characterId));
+    dbQueryWriteCommon(queryText);
+    queryText=PreparedDBQueryCommon::db_query_delete_allow;
+    stringreplaceOne(queryText,"%1",std::to_string(characterId));
+    dbQueryWriteCommon(queryText);
+
+    queryText=PreparedDBQueryServer::db_query_delete_plant;
+    stringreplaceOne(queryText,"%1",std::to_string(characterId));
+    dbQueryWriteServer(queryText);
+    queryText=PreparedDBQueryServer::db_query_delete_quest;
+    stringreplaceOne(queryText,"%1",std::to_string(characterId));
+    dbQueryWriteServer(queryText);
+    queryText=PreparedDBQueryServer::db_query_delete_all_item_market;
+    stringreplaceOne(queryText,"%1",std::to_string(characterId));
+    dbQueryWriteServer(queryText);
+    queryText=PreparedDBQueryServer::db_query_delete_bot_already_beaten;
+    stringreplaceOne(queryText,"%1",std::to_string(characterId));
+    dbQueryWriteServer(queryText);
 }
 
 void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &skinId)
@@ -920,33 +951,33 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryCommon::db_query_select_character_by_pseudo.empty())
     {
-        errorOutput(std::stringLiteral("addCharacter() Query is empty, bug"));
+        errorOutput("addCharacter() Query is empty, bug");
         return;
     }
     if(PreparedDBQueryCommon::db_query_insert_monster.empty())
     {
-        errorOutput(std::stringLiteral("addCharacter() Query db_query_insert_monster is empty, bug"));
+        errorOutput("addCharacter() Query db_query_insert_monster is empty, bug");
         return;
     }
     if(PreparedDBQueryCommon::db_query_insert_monster_skill.empty())
     {
-        errorOutput(std::stringLiteral("addCharacter() Query db_query_insert_monster_skill is empty, bug"));
+        errorOutput("addCharacter() Query db_query_insert_monster_skill is empty, bug");
         return;
     }
     if(PreparedDBQueryCommon::db_query_insert_reputation.empty())
     {
-        errorOutput(std::stringLiteral("addCharacter() Query db_query_insert_reputation is empty, bug"));
+        errorOutput("addCharacter() Query db_query_insert_reputation is empty, bug");
         return;
     }
     if(PreparedDBQueryCommon::db_query_insert_item.empty())
     {
-        errorOutput(std::stringLiteral("addCharacter() Query db_query_insert_item is empty, bug"));
+        errorOutput("addCharacter() Query db_query_insert_item is empty, bug");
         return;
     }
     #endif
     if(GlobalServerData::serverPrivateVariables.skinList.empty())
     {
-        qDebug() << std::stringLiteral("Skin list is empty, unable to add charaters");
+        std::cerr << "Skin list is empty, unable to add charaters" << std::endl;
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
@@ -957,50 +988,50 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
     }
     if(number_of_character>=CommonSettingsCommon::commonSettingsCommon.max_character)
     {
-        errorOutput(std::stringLiteral("You can't create more account, you have already %1 on %2 allowed").arg(number_of_character).arg(CommonSettingsCommon::commonSettingsCommon.max_character));
+        errorOutput("You can't create more account, you have already "+std::to_string(number_of_character)+" on "+std::to_string(CommonSettingsCommon::commonSettingsCommon.max_character)+" allowed");
         return;
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(CommonDatapack::commonDatapack.profileList.size()!=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.size())
     {
-        errorOutput(std::stringLiteral("profile common and server don't match"));
+        errorOutput("profile common and server don't match");
         return;
     }
     if(CommonDatapack::commonDatapack.profileList.size()!=GlobalServerData::serverPrivateVariables.serverProfileInternalList.size())
     {
-        errorOutput(std::stringLiteral("profile common and server internal don't match"));
+        errorOutput("profile common and server internal don't match");
         return;
     }
     #endif
     if(profileIndex>=CommonDatapack::commonDatapack.profileList.size())
     {
-        errorOutput(std::stringLiteral("profile index: %1 out of range (profileList size: %2)").arg(profileIndex).arg(CommonDatapack::commonDatapack.profileList.size()));
+        errorOutput("profile index: "+std::to_string(profileIndex)+" out of range (profileList size: "+std::to_string(CommonDatapack::commonDatapack.profileList.size())+")");
         return;
     }
     if(!GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex).valid)
     {
-        errorOutput(std::stringLiteral("profile index: %1 profil not valid").arg(profileIndex));
+        errorOutput("profile index: "+std::to_string(profileIndex)+" profil not valid");
         return;
     }
     if(pseudo.empty())
     {
-        errorOutput(std::stringLiteral("pseudo is empty, not allowed"));
+        errorOutput("pseudo is empty, not allowed");
         return;
     }
     if(pseudo.size()>CommonSettingsCommon::commonSettingsCommon.max_pseudo_size)
     {
-        errorOutput(std::stringLiteral("pseudo size is too big: %1 because is greater than %2").arg(pseudo.size()).arg(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size));
+        errorOutput("pseudo size is too big: "+std::to_string(pseudo.size())+" because is greater than "+std::to_string(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size));
         return;
     }
     if(skinId>=GlobalServerData::serverPrivateVariables.skinList.size())
     {
-        errorOutput(std::stringLiteral("skin provided: %1 is not into skin listed").arg(skinId));
+        errorOutput("skin provided: "+std::to_string(skinId)+" is not into skin listed");
         return;
     }
     const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
-    if(!profile.forcedskin.empty() && !profile.forcedskin.contains(skinId))
+    if(!profile.forcedskin.empty() && !vectorcontainsAtLeastOne(profile.forcedskin,skinId))
     {
-        errorOutput(std::stringLiteral("skin provided: %1 is not into profile %2 forced skin list").arg(skinId).arg(profileIndex));
+        errorOutput("skin provided: "+std::to_string(skinId)+" is not into profile "+std::to_string(profileIndex)+" forced skin list");
         return;
     }
     AddCharacterParam *addCharacterParam=new AddCharacterParam();
@@ -1009,11 +1040,12 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
     addCharacterParam->pseudo=pseudo;
     addCharacterParam->skinId=skinId;
 
-    const std::string &queryText=PreparedDBQueryCommon::db_query_select_character_by_pseudo.arg(SqlFunction::quoteSqlVariable(pseudo));
+    std::string queryText=PreparedDBQueryCommon::db_query_select_character_by_pseudo;
+    stringreplaceOne(queryText,"%1",SqlFunction::quoteSqlVariable(pseudo));
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::addCharacter_static);
     if(callback==NULL)
     {
-        qDebug() << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_common->errorMessage();
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
 
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -1050,7 +1082,8 @@ void Client::addCharacter_object()
         abort();
     }
     #endif
-    AddCharacterParam *addCharacterParam=static_cast<AddCharacterParam *>(paramToPassToCallBack.takeFirst());
+    AddCharacterParam *addCharacterParam=static_cast<AddCharacterParam *>(paramToPassToCallBack.front());
+    paramToPassToCallBack.erase(paramToPassToCallBack.begin());
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(addCharacterParam==NULL)
         abort();
@@ -1063,13 +1096,14 @@ void Client::addCharacter_object()
 void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo,const uint8_t &skinId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBackType.takeFirst()!=std::stringLiteral("AddCharacterParam"))
+    if(paramToPassToCallBackType.front()!="AddCharacterParam")
     {
-        qDebug() << "is not AddCharacterParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__;
+        std::cerr << "is not AddCharacterParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
         abort();
     }
+    paramToPassToCallBackType.erase(paramToPassToCallBackType.begin());
     #endif
-    callbackRegistred.removeFirst();
+    callbackRegistred.erase(callbackRegistred.begin());
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         QByteArray outputData;
@@ -1090,7 +1124,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     std::vector<unsigned int> monsterIdList;
     {
         bool ok;
-        int index=0;
+        unsigned int index=0;
         while(index<profile.monsters.size())
         {
             monsterIdList.push_back(getMonsterId(&ok));
@@ -1110,26 +1144,26 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     }
 
     const uint32_t &characterId=GlobalServerData::serverPrivateVariables.maxCharacterId;
-    int index=0;
-    int monster_position=1;
+    unsigned int index=0;
+    unsigned int monster_position=1;
     dbQueryWriteCommon(serverProfileInternal.preparedQueryAdd.at(0)+
-                 std::string::number(characterId)+
+                 std::to_string(characterId)+
                  serverProfileInternal.preparedQueryAdd.at(1)+
-                 std::string::number(account_id)+
+                 std::to_string(account_id)+
                  serverProfileInternal.preparedQueryAdd.at(2)+
                  pseudo+
                  serverProfileInternal.preparedQueryAdd.at(3)+
-                 std::string::number(DictionaryLogin::dictionary_skin_internal_to_database.at(skinId))+
+                 std::to_string(DictionaryLogin::dictionary_skin_internal_to_database.at(skinId))+
                  serverProfileInternal.preparedQueryAdd.at(4)+
-                 std::string::number(QDateTime::currentDateTime().toTime_t())+
+                 std::to_string(QDateTime::currentDateTime().toTime_t())+
                  serverProfileInternal.preparedQueryAdd.at(5)
                  );
     while(index<profile.monsters.size())
     {
         const uint32_t &monsterId=profile.monsters.at(index).id;
-        if(CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(monsterId))
+        if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monsterId)!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
         {
-            const Monster &monster=CatchChallenger::CommonDatapack::commonDatapack.monsters.value(monsterId);
+            const Monster &monster=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monsterId);
             uint32_t gender=Gender_Unknown;
             if(monster.ratio_gender!=-1)
             {
@@ -1144,60 +1178,60 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
             const uint32_t &monster_id=monsterIdList.back();
             monsterIdList.pop_back();
             {
-                dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_monster
-                   .arg(monster_id)
-                   .arg(stat.hp)
-                   .arg(characterId)
-                   .arg(monsterId)
-                   .arg(profile.monsters.at(index).level)
-                   .arg(profile.monsters.at(index).captured_with)
-                   .arg(gender)
-                   .arg(monster_position)
-                    );
+                std::string queryText=PreparedDBQueryCommon::db_query_insert_monster;
+                stringreplaceOne(queryText,"%1",std::to_string(monster_id));
+                stringreplaceOne(queryText,"%1",std::to_string(stat.hp));
+                stringreplaceOne(queryText,"%1",std::to_string(characterId));
+                stringreplaceOne(queryText,"%1",std::to_string(monsterId));
+                stringreplaceOne(queryText,"%1",std::to_string(profile.monsters.at(index).level));
+                stringreplaceOne(queryText,"%1",std::to_string(profile.monsters.at(index).captured_with));
+                stringreplaceOne(queryText,"%1",std::to_string(gender));
+                stringreplaceOne(queryText,"%1",std::to_string(monster_position));
+                dbQueryWriteCommon(queryText);
                 monster_position++;
             }
-            int sub_index=0;
+            unsigned int sub_index=0;
             while(sub_index<skills.size())
             {
                 uint8_t endurance=0;
-                if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.contains(skills.value(sub_index).skill))
-                    if(skills.value(sub_index).level<=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(skills.value(sub_index).skill).level.size() && skills.value(sub_index).level>0)
-                        endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(skills.value(sub_index).skill).level.at(skills.value(sub_index).level-1).endurance;
-                dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_monster_skill
-                   .arg(monster_id)
-                   .arg(skills.value(sub_index).skill)
-                   .arg(skills.value(sub_index).level)
-                   .arg(endurance)
-                        );
+                if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.find(skills.at(sub_index).skill)!=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
+                    if(skills.at(sub_index).level<=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(skills.at(sub_index).skill).level.size() && skills.at(sub_index).level>0)
+                        endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(skills.at(sub_index).skill).level.at(skills.at(sub_index).level-1).endurance;
+                std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_skill;
+                stringreplaceOne(queryText,"%1",std::to_string(monster_id));
+                stringreplaceOne(queryText,"%2",std::to_string(skills.at(sub_index).skill));
+                stringreplaceOne(queryText,"%3",std::to_string(skills.at(sub_index).level));
+                stringreplaceOne(queryText,"%4",std::to_string(endurance));
+                dbQueryWriteCommon(queryText);
                 sub_index++;
             }
             index++;
         }
         else
         {
-            errorOutput(std::stringLiteral("monster not found to start: %1 is not into profile forced skin list: %2").arg(monsterId));
+            errorOutput("monster not found to start: "+std::to_string(monsterId)+" is not into profile forced skin list: "+std::to_string(profileIndex));
             return;
         }
     }
     index=0;
     while(index<profile.reputation.size())
     {
-        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_reputation
-           .arg(characterId)
-           .arg(CommonDatapack::commonDatapack.reputation.at(profile.reputation.at(index).reputationId).reverse_database_id)
-           .arg(profile.reputation.at(index).point)
-           .arg(profile.reputation.at(index).level)
-                );
+        std::string queryText=PreparedDBQueryCommon::db_query_insert_reputation;
+        stringreplaceOne(queryText,"%1",std::to_string(characterId));
+        stringreplaceOne(queryText,"%2",std::to_string(CommonDatapack::commonDatapack.reputation.at(profile.reputation.at(index).reputationId).reverse_database_id));
+        stringreplaceOne(queryText,"%3",std::to_string(profile.reputation.at(index).point));
+        stringreplaceOne(queryText,"%4",std::to_string(profile.reputation.at(index).level));
+        dbQueryWriteCommon(queryText);
         index++;
     }
     index=0;
     while(index<profile.items.size())
     {
-        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_item
-           .arg(profile.items.at(index).id)
-           .arg(characterId)
-           .arg(profile.items.at(index).quantity)
-                );
+        std::string queryText=PreparedDBQueryCommon::db_query_insert_item;
+        stringreplaceOne(queryText,"%1",std::to_string(profile.items.at(index).id));
+        stringreplaceOne(queryText,"%2",std::to_string(characterId));
+        stringreplaceOne(queryText,"%3",std::to_string(profile.items.at(index).quantity));
+        dbQueryWriteCommon(queryText);
         index++;
     }
 
@@ -1215,12 +1249,12 @@ void Client::removeCharacterLater(const uint8_t &query_id, const uint32_t &chara
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryCommon::db_query_account_time_to_delete_character_by_id.empty())
     {
-        errorOutput(std::stringLiteral("removeCharacter() Query is empty, bug"));
+        errorOutput("removeCharacter() Query is empty, bug");
         return;
     }
     if(PreparedDBQueryCommon::db_query_update_character_time_to_delete_by_id.empty())
     {
-        errorOutput(std::stringLiteral("removeCharacter() Query db_query_update_character_time_to_delete_by_id is empty, bug"));
+        errorOutput("removeCharacter() Query db_query_update_character_time_to_delete_by_id is empty, bug");
         return;
     }
     #endif
@@ -1228,11 +1262,12 @@ void Client::removeCharacterLater(const uint8_t &query_id, const uint32_t &chara
     removeCharacterParam->query_id=query_id;
     removeCharacterParam->characterId=characterId;
 
-    const std::string &queryText=PreparedDBQueryCommon::db_query_account_time_to_delete_character_by_id.arg(characterId);
+    std::string queryText=PreparedDBQueryCommon::db_query_account_time_to_delete_character_by_id;
+    stringreplaceOne(queryText,"%1",std::to_string(characterId));
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::removeCharacterLater_static);
     if(callback==NULL)
     {
-        qDebug() << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_common->errorMessage();
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
@@ -1267,7 +1302,8 @@ void Client::removeCharacterLater_object()
         abort();
     }
     #endif
-    RemoveCharacterParam *removeCharacterParam=static_cast<RemoveCharacterParam *>(paramToPassToCallBack.takeFirst());
+    RemoveCharacterParam *removeCharacterParam=static_cast<RemoveCharacterParam *>(paramToPassToCallBack.front());
+    paramToPassToCallBack.erase(paramToPassToCallBack.begin());
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(removeCharacterParam==NULL)
         abort();
@@ -1279,11 +1315,12 @@ void Client::removeCharacterLater_object()
 void Client::removeCharacterLater_return(const uint8_t &query_id,const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBackType.takeFirst()!=std::stringLiteral("RemoveCharacterParam"))
+    if(paramToPassToCallBackType.front()!="RemoveCharacterParam")
     {
-        qDebug() << "is not RemoveCharacterParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__;
+        std::cerr << "is not RemoveCharacterParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
         abort();
     }
+    paramToPassToCallBackType.erase(paramToPassToCallBackType.begin());
     #endif
     if(!GlobalServerData::serverPrivateVariables.db_common->next())
     {
@@ -1291,30 +1328,33 @@ void Client::removeCharacterLater_return(const uint8_t &query_id,const uint32_t 
         return;
     }
     bool ok;
-    const uint32_t &account_id=std::string(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
+    const uint32_t &account_id=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
     if(!ok)
     {
-        characterSelectionIsWrong(query_id,0x02,std::stringLiteral("Account for character: %1 is not an id").arg(GlobalServerData::serverPrivateVariables.db_common->value(0)));
+        characterSelectionIsWrong(query_id,0x02,"Account for character: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" is not an id");
         return;
     }
     if(this->account_id!=account_id)
     {
-        characterSelectionIsWrong(query_id,0x02,std::stringLiteral("Character: %1 is not owned by the account: %2").arg(characterId).arg(account_id));
+        characterSelectionIsWrong(query_id,0x02,"Character: "+std::to_string(characterId)+" is not owned by the account: "+std::to_string(account_id)+"");
         return;
     }
-    const uint32_t &time_to_delete=std::string(GlobalServerData::serverPrivateVariables.db_common->value(1)).toUInt(&ok);
+    const uint32_t &time_to_delete=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
     if(ok && time_to_delete>0)
     {
-        characterSelectionIsWrong(query_id,0x02,std::stringLiteral("Character: %1 is already in deleting for the account: %2").arg(characterId).arg(account_id));
+        characterSelectionIsWrong(query_id,0x02,"Character: "+std::to_string(characterId)+" is already in deleting for the account: "+std::to_string(account_id));
         return;
     }
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_time_to_delete_by_id.arg(characterId)
-                       .arg(
-                           //date to delete, not time (no sens)
-                           QDateTime::currentDateTime().toTime_t()+
-                           CommonSettingsCommon::commonSettingsCommon.character_delete_time
-                           )
-                       );
+    std::string queryText=PreparedDBQueryCommon::db_query_update_character_time_to_delete_by_id;
+    stringreplaceOne(queryText,"%1",std::to_string(characterId));
+    stringreplaceOne(queryText,"%2",
+                  //date to delete, not time (no sens on database, delete the date of removing
+                  std::to_string(
+                        QDateTime::currentDateTime().toTime_t()+
+                        CommonSettingsCommon::commonSettingsCommon.character_delete_time
+                    )
+                  );
+    dbQueryWriteCommon(queryText);
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
@@ -1332,9 +1372,9 @@ void Client::loadLinkedData()
 bool Client::loadTheRawUTF8String()
 {
     rawPseudo=FacilityLibGeneral::toUTF8WithHeader(public_and_private_informations.public_informations.pseudo);
-    if(rawPseudo.empty())
+    if(rawPseudo.isEmpty())
     {
-        normalOutput(std::stringLiteral("Unable to convert the pseudo to utf8: %1").arg(public_and_private_informations.public_informations.pseudo));
+        normalOutput("Unable to convert the pseudo to utf8: "+public_and_private_informations.public_informations.pseudo);
         return false;
     }
     return true;
@@ -1429,12 +1469,14 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
         #else
         const std::string &fileName=returnList.at(index);
         #endif
-        if(fileName.contains(GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+        if(std::regex_match(fileName,GlobalServerData::serverPrivateVariables.datapack_rightFileName))
         {
-            QFileInfo fileInfo(fileName);
-            if(!fileInfo.suffix().empty() && BaseServerMasterSendDatapack::extensionAllowed.contains(QFileInfo(fileName).suffix()))
+            QFileInfo fileInfo(QString::fromStdString(fileName));
+            if(!fileInfo.suffix().toStdString().empty() &&
+                    BaseServerMasterSendDatapack::extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())
+                    !=BaseServerMasterSendDatapack::extensionAllowed.cend())
             {
-                QFile file(path+returnList.at(index));
+                QFile file(QString::fromStdString(path+returnList.at(index)));
                 if(file.size()<=8*1024*1024)
                 {
                     if(file.open(QIODevice::ReadOnly))
@@ -1509,28 +1551,28 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
         {
             const std::string &fileName=files.at(index);
             const uint32_t &clientPartialHash=partialHashList.at(index);
-            if(fileName.contains(Client::text_dotslash) || fileName.contains(Client::text_antislash) || fileName.contains(Client::text_double_slash))
+            if(fileName.find(Client::text_dotslash) == std::string::npos || fileName.find(Client::text_antislash) == std::string::npos || fileName.find(Client::text_double_slash) == std::string::npos)
             {
-                errorOutput(std::stringLiteral("file name contains illegale char: %1").arg(fileName));
+                errorOutput("file name contains illegale char: "+fileName);
                 return;
             }
-            if(fileName.contains(fileNameStartStringRegex) || fileName.startsWith(Client::text_slash))
+            if(std::regex_match(fileName,fileNameStartStringRegex) || stringStartWith(fileName,Client::text_slash))
             {
-                errorOutput(std::stringLiteral("start with wrong string: %1").arg(fileName));
+                errorOutput("start with wrong string: "+fileName);
                 return;
             }
-            if(!fileName.contains(GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+            if(!std::regex_match(fileName,GlobalServerData::serverPrivateVariables.datapack_rightFileName))
             {
-                errorOutput(std::stringLiteral("file name sended wrong: %1").arg(fileName));
+                errorOutput("file name sended wrong: "+fileName);
                 return;
             }
-            if(filesListForSize.contains(fileName))
+            if(filesListForSize.find(fileName)!=filesListForSize.cend())
             {
-                const uint32_t &serverPartialHash=filesListForSize.value(fileName).partialHash;
+                const uint32_t &serverPartialHash=filesListForSize.at(fileName).partialHash;
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(serverPartialHash==0)
                 {
-                    errorOutput(std::stringLiteral("serverPartialHash==0 at %1").arg(__FILE__).arg(__LINE__));
+                    errorOutput("serverPartialHash==0 at " __FILE__ ":"+std::to_string(__LINE__));
                     abort();
                 }
                 #endif
@@ -1538,7 +1580,7 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
                     addDatapackListReply(false);//file found don't need be updated
                 else
                 {
-                    QFile file(datapackPath+fileName);
+                    QFile file(QString::fromStdString(datapackPath+fileName));
                     if(file.open(QIODevice::ReadOnly))
                     {
                         addDatapackListReply(false);//found but need an update
@@ -1546,29 +1588,30 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
                         datapckFileSize+=file.size();
                         FileToSend fileToSend;
                         fileToSend.file=fileName;
-                        fileToSendList << fileToSend;
+                        fileToSendList.push_back(fileToSend);
                         file.close();
                     }
                 }
-                filesListForSize.remove(fileName);
+                filesListForSize.erase(fileName);
             }
             else
                 addDatapackListReply(true);//to delete
             index++;
         }
-        std::unordered_mapIterator<std::string,DatapackCacheFile> i(filesListForSize);
-        while (i.hasNext()) {
-            i.next();
-            QFile file(datapackPath+i.key());
+        auto i=filesListForSize.begin();
+        while(i!=filesListForSize.cend())
+        {
+            QFile file(QString::fromStdString(datapackPath+i->first));
             if(file.open(QIODevice::ReadOnly))
             {
                 datapckFileNumber++;
                 datapckFileSize+=file.size();
                 FileToSend fileToSend;
-                fileToSend.file=i.key();
-                fileToSendList << fileToSend;
+                fileToSend.file=i->first;
+                fileToSendList.push_back(fileToSend);
                 file.close();
             }
+            ++i;
         }
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -1591,7 +1634,7 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
     }
     //send not in the list
     {
-        int index=0;
+        unsigned int index=0;
         while(index<fileToSendList.size())
         {
             if(!sendFile(datapackPath,fileToSendList.at(index).file))
@@ -1641,7 +1684,7 @@ bool CatchChallenger::operator!=(const CatchChallenger::PlayerMonster &monster1,
         return true;*/
     if(monster1.skills.size()!=monster2.skills.size())
         return true;
-    int index=0;
+    unsigned int index=0;
     while(index<monster1.skills.size())
     {
         const PlayerMonster::PlayerSkill &skill1=monster1.skills.at(index);
@@ -1730,7 +1773,7 @@ void Client::purgeDatapackListReply(const uint8_t &query_id)
         tempDatapackListReplySize=0;
         tempDatapackListReply=0;
     }
-    if(tempDatapackListReplyArray.empty())
+    if(tempDatapackListReplyArray.isEmpty())
         tempDatapackListReplyArray[0x00]=0x00;
     postReply(query_id,tempDatapackListReplyArray.constData(),tempDatapackListReplyArray.size());
     tempDatapackListReplyArray.clear();
@@ -1774,12 +1817,12 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
         return false;
     }
     const QByteArray &fileNameRaw=FacilityLibGeneral::toUTF8WithHeader(fileName);
-    if(fileNameRaw.size()>255 || fileNameRaw.empty())
+    if(fileNameRaw.size()>255 || fileNameRaw.isEmpty())
     {
         errorOutput("Unable to open into CatchChallenger::sendFile(): fileNameRaw.size()>255 || fileNameRaw.empty()");
         return false;
     }
-    QFile file(datapackPath+fileName);
+    QFile file(QString::fromStdString(datapackPath+fileName));
     if(file.open(QIODevice::ReadOnly))
     {
         const QByteArray &content=file.readAll();
@@ -1788,8 +1831,8 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (uint32_t)contentsize;
-        const std::string &suffix=QFileInfo(file).suffix();
-        if(BaseServerMasterSendDatapack::compressedExtension.contains(suffix) &&
+        const std::string &suffix=QFileInfo(file).suffix().toStdString();
+        if(BaseServerMasterSendDatapack::compressedExtension.find(suffix)!=BaseServerMasterSendDatapack::compressedExtension.cend() &&
                 ProtocolParsing::compressionTypeServer!=ProtocolParsing::CompressionType::None &&
                 (
                     contentsize<CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB*1024
@@ -1820,12 +1863,14 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if((1+fileNameRaw.size()+outputData.size()+contentsize)>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                 {
-                    normalOutput(std::string("Error: outputData2(%1)+fileNameRaw(%2)+outputData(%3)+content(%4)>CATCHCHALLENGER_MAX_PACKET_SIZE for file %5")
-                                 .arg(1)
-                                 .arg(fileNameRaw.size())
-                                 .arg(outputData.size())
-                                 .arg(contentsize)
-                                 .arg(fileName)
+                    normalOutput("Error: outputData2(1)+fileNameRaw("+
+                                 std::to_string(fileNameRaw.size())+
+                                 ")+outputData("+
+                                 std::to_string(outputData.size())+
+                                 ")+content("+
+                                 std::to_string(contentsize)+
+                                 ")>CATCHCHALLENGER_MAX_PACKET_SIZE for file "+
+                                 fileName
                                  );
                 }
                 #endif
@@ -1847,7 +1892,7 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
     }
     else
     {
-        errorOutput("Unable to open into CatchChallenger::sendFile(): "+file.errorString());
+        errorOutput("Unable to open into CatchChallenger::sendFile(): "+file.errorString().toStdString());
         return false;
     }
 }
@@ -1858,19 +1903,19 @@ void Client::dbQueryWriteLogin(const std::string &queryText)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(queryText.empty())
     {
-        errorOutput(std::stringLiteral("dbQueryWriteLogin() Query is empty, bug"));
+        errorOutput("dbQueryWriteLogin() Query is empty, bug");
         return;
     }
-    if(queryText.startsWith("SELECT"))
+    if(stringStartWith(queryText,"SELECT"))
     {
-            errorOutput(std::stringLiteral("dbQueryWriteLogin() Query is SELECT but here is the write queue, bug"));
+            errorOutput("dbQueryWriteLogin() Query is SELECT but here is the write queue, bug");
             return;
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    normalOutput(std::stringLiteral("Do db_login write: ")+queryText);
+    normalOutput("Do db_login write: "+queryText);
     #endif
-    GlobalServerData::serverPrivateVariables.db_login->asyncWrite(queryText.toUtf8());
+    GlobalServerData::serverPrivateVariables.db_login->asyncWrite(queryText);
 }
 #endif
 
@@ -1879,19 +1924,19 @@ void Client::dbQueryWriteCommon(const std::string &queryText)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(queryText.empty())
     {
-        errorOutput(std::stringLiteral("dbQueryWriteCommon() Query is empty, bug"));
+        errorOutput("dbQueryWriteCommon() Query is empty, bug");
         return;
     }
-    if(queryText.startsWith("SELECT"))
+    if(stringStartWith(queryText,"SELECT"))
     {
-            errorOutput(std::stringLiteral("dbQueryWriteCommon() Query is SELECT but here is the write queue, bug"));
+            errorOutput("dbQueryWriteCommon() Query is SELECT but here is the write queue, bug");
             return;
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    normalOutput(std::stringLiteral("Do db_common write: ")+queryText);
+    normalOutput("Do db_common write: "+queryText);
     #endif
-    GlobalServerData::serverPrivateVariables.db_common->asyncWrite(queryText.toUtf8());
+    GlobalServerData::serverPrivateVariables.db_common->asyncWrite(queryText);
 }
 
 void Client::dbQueryWriteServer(const std::string &queryText)
@@ -1899,19 +1944,19 @@ void Client::dbQueryWriteServer(const std::string &queryText)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(queryText.empty())
     {
-        errorOutput(std::stringLiteral("dbQueryWriteServer() Query is empty, bug"));
+        errorOutput("dbQueryWriteServer() Query is empty, bug");
         return;
     }
-    if(queryText.startsWith("SELECT"))
+    if(stringStartWith(queryText,"SELECT"))
     {
-            errorOutput(std::stringLiteral("dbQueryWriteServer() Query is SELECT but here is the write queue, bug"));
+            errorOutput("dbQueryWriteServer() Query is SELECT but here is the write queue, bug");
             return;
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    normalOutput(std::stringLiteral("Do db_server write: ")+queryText);
+    normalOutput("Do db_server write: "+queryText);
     #endif
-    GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText.toUtf8());
+    GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText);
 }
 
 void Client::loadReputation()
@@ -1919,20 +1964,21 @@ void Client::loadReputation()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryCommon::db_query_select_reputation_by_id.empty())
     {
-        errorOutput(std::stringLiteral("loadReputation() Query is empty, bug"));
+        errorOutput("loadReputation() Query is empty, bug");
         return;
     }
     #endif
-    const std::string &queryText=PreparedDBQueryCommon::db_query_select_reputation_by_id.arg(character_id);
+    std::string queryText=PreparedDBQueryCommon::db_query_select_reputation_by_id;
+    stringreplaceOne(queryText,"%1",std::to_string(character_id));
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::loadReputation_static);
     if(callback==NULL)
     {
-        qDebug() << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_common->errorMessage();
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         loadQuests();
         return;
     }
     else
-        callbackRegistred << callback;
+        callbackRegistred.push_back(callback);
 }
 
 void Client::loadReputation_static(void *object)
@@ -1943,90 +1989,98 @@ void Client::loadReputation_static(void *object)
 
 void Client::loadReputation_return()
 {
-    callbackRegistred.removeFirst();
+    callbackRegistred.erase(callbackRegistred.begin());
     bool ok;
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        const int &type=std::string(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
+        const unsigned int &type=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(!ok)
         {
-            normalOutput(std::stringLiteral("reputation type is not a number, skip: %1").arg(type));
+            normalOutput("reputation type is not a number, skip: "+std::to_string(type));
             continue;
         }
-        int32_t point=std::string(GlobalServerData::serverPrivateVariables.db_common->value(1)).toInt(&ok);
+        int32_t point=stringtoint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
         if(!ok)
         {
-            normalOutput(std::stringLiteral("reputation point is not a number, skip: %1").arg(type));
+            normalOutput("reputation point is not a number, skip: "+std::to_string(type));
             continue;
         }
-        const int32_t &level=std::string(GlobalServerData::serverPrivateVariables.db_common->value(2)).toInt(&ok);
+        const int32_t &level=stringtoint32(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
         if(!ok)
         {
-            normalOutput(std::stringLiteral("reputation level is not a number, skip: %1").arg(type));
+            normalOutput("reputation level is not a number, skip: "+std::to_string(type));
             continue;
         }
         if(level<-100 || level>100)
         {
-            normalOutput(std::stringLiteral("reputation level is <100 or >100, skip: %1").arg(type));
+            normalOutput("reputation level is <100 or >100, skip: "+std::to_string(type));
             continue;
         }
         if(type>=DictionaryLogin::dictionary_reputation_database_to_internal.size())
         {
-            normalOutput(std::stringLiteral("The reputation: %1 don't exist").arg(type));
+            normalOutput("The reputation: "+std::to_string(type)+" don't exist");
             continue;
         }
-        if(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)==-1)
+        if(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)==-1)
         {
-            normalOutput(std::stringLiteral("The reputation: %1 not resolved").arg(type));
+            normalOutput("The reputation: "+std::to_string(type)+" not resolved");
             continue;
         }
         if(level>=0)
         {
-            if(level>=CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)).reputation_positive.size())
+            if((uint32_t)level>=CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)).reputation_positive.size())
             {
-                normalOutput(std::stringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 > max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)).reputation_positive.size()));
+                normalOutput("The reputation level "+std::to_string(type)+
+                             " is wrong because is out of range (reputation level: "+std::to_string(level)+
+                             " > max level: "+
+                             std::to_string(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)).reputation_positive.size())+
+                             ")");
                 continue;
             }
         }
         else
         {
-            if((-level)>CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)).reputation_negative.size())
+            if((uint32_t)(-level)>CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)).reputation_negative.size())
             {
-                normalOutput(std::stringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 < max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)).reputation_negative.size()));
+                normalOutput("The reputation level "+std::to_string(type)+
+                             " is wrong because is out of range (reputation level: "+std::to_string(level)+
+                             " < max level: "+std::to_string(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)).reputation_negative.size())+")");
                 continue;
             }
         }
         if(point>0)
         {
-            if(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)).reputation_positive.size()==(level+1))//start at level 0 in positive
+            if(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)).reputation_positive.size()==(uint32_t)(level+1))//start at level 0 in positive
             {
-                normalOutput(std::stringLiteral("The reputation level is already at max, drop point"));
+                normalOutput("The reputation level is already at max, drop point");
                 point=0;
             }
-            if(point>=CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)).reputation_positive.at(level+1))//start at level 0 in positive
+            if(point>=CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)).reputation_positive.at(level+1))//start at level 0 in positive
             {
-                normalOutput(std::stringLiteral("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)).reputation_positive.at(level)));
+                normalOutput("The reputation point "+std::to_string(point)+
+                             " is greater than max "+std::to_string(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)).reputation_positive.at(level)));
                 continue;
             }
         }
         else if(point<0)
         {
-            if(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)).reputation_negative.size()==-level)//start at level -1 in negative
+            if(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)).reputation_negative.size()==(uint32_t)-level)//start at level -1 in negative
             {
-                normalOutput(std::stringLiteral("The reputation level is already at min, drop point"));
+                normalOutput("The reputation level is already at min, drop point");
                 point=0;
             }
-            if(point<CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)).reputation_negative.at(-level))//start at level -1 in negative
+            if(point<CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)).reputation_negative.at(-level))//start at level -1 in negative
             {
-                normalOutput(std::stringLiteral("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)).reputation_negative.at(level)));
+                normalOutput("The reputation point "+std::to_string(point)+
+                             " is greater than max "+std::to_string(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)).reputation_negative.at(level)));
                 continue;
             }
         }
         PlayerReputation playerReputation;
         playerReputation.level=level;
         playerReputation.point=point;
-        public_and_private_informations.reputation.insert(DictionaryLogin::dictionary_reputation_database_to_internal.value(type),playerReputation);
+        public_and_private_informations.reputation[DictionaryLogin::dictionary_reputation_database_to_internal.at(type)]=playerReputation;
     }
     loadQuests();
 }
@@ -2036,20 +2090,21 @@ void Client::loadQuests()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryServer::db_query_select_quest_by_id.empty())
     {
-        errorOutput(std::stringLiteral("loadQuests() Query is empty, bug"));
+        errorOutput("loadQuests() Query is empty, bug");
         return;
     }
     #endif
-    const std::string &queryText=PreparedDBQueryServer::db_query_select_quest_by_id.arg(character_id);
+    std::string queryText=PreparedDBQueryServer::db_query_select_quest_by_id;
+    stringreplaceOne(queryText,"%1",std::to_string(character_id));
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&Client::loadQuests_static);
     if(callback==NULL)
     {
-        qDebug() << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_server->errorMessage();
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         loadBotAlreadyBeaten();
         return;
     }
     else
-        callbackRegistred << callback;
+        callbackRegistred.push_back(callback);
 }
 
 void Client::loadQuests_static(void *object)
@@ -2060,34 +2115,34 @@ void Client::loadQuests_static(void *object)
 
 void Client::loadQuests_return()
 {
-    callbackRegistred.removeFirst();
+    callbackRegistred.erase(callbackRegistred.begin());
     //do the query
     bool ok,ok2;
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
         PlayerQuest playerQuest;
-        const uint32_t &id=std::string(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
-        playerQuest.finish_one_time=QVariant(GlobalServerData::serverPrivateVariables.db_server->value(1)).toBool();
-        playerQuest.step=std::string(GlobalServerData::serverPrivateVariables.db_server->value(2)).toUInt(&ok2);
+        const uint32_t &id=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
+        playerQuest.finish_one_time=stringtobool(GlobalServerData::serverPrivateVariables.db_server->value(1));
+        playerQuest.step=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok2);
         if(!ok || !ok2)
         {
-            normalOutput(std::stringLiteral("wrong value type for quest, skip: %1").arg(id));
+            normalOutput("wrong value type for quest, skip: "+std::to_string(id));
             continue;
         }
-        if(!CommonDatapackServerSpec::commonDatapackServerSpec.quests.contains(id))
+        if(CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(id)==CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
         {
-            normalOutput(std::stringLiteral("quest is not into the quests list, skip: %1").arg(id));
+            normalOutput("quest is not into the quests list, skip: "+std::to_string(id));
             continue;
         }
-        if((playerQuest.step<=0 && !playerQuest.finish_one_time) || playerQuest.step>CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(id).steps.size())
+        if((playerQuest.step<=0 && !playerQuest.finish_one_time) || playerQuest.step>CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(id).steps.size())
         {
-            normalOutput(std::stringLiteral("step out of quest range, skip: %1").arg(id));
+            normalOutput("step out of quest range, skip: "+std::to_string(id));
             continue;
         }
         if(playerQuest.step<=0 && !playerQuest.finish_one_time)
         {
-            normalOutput(std::stringLiteral("can't be to step 0 if have never finish the quest, skip: %1").arg(id));
+            normalOutput("can't be to step 0 if have never finish the quest, skip: "+std::to_string(id));
             continue;
         }
         public_and_private_informations.quests[id]=playerQuest;

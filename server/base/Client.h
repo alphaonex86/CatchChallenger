@@ -295,7 +295,7 @@ private:
     static uint8_t tempDatapackListReplySize;
     static QByteArray tempDatapackListReplyArray;
     static uint8_t tempDatapackListReply;
-    static int tempDatapackListReplyTestCount;
+    static unsigned int tempDatapackListReplyTestCount;
     struct DatapackCacheFile
     {
         //uint32_t mtime;

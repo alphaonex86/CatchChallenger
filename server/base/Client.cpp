@@ -259,14 +259,14 @@ void Client::disconnectClient()
         if(addTime>5)
         {
             std::string queryText=PreparedDBQueryCommon::db_query_played_time;
-            stringreplace(queryText,"%1",std::to_string(character_id));
-            stringreplace(queryText,"%2",std::to_string(addTime));
+            stringreplaceOne(queryText,"%1",std::to_string(character_id));
+            stringreplaceOne(queryText,"%2",std::to_string(addTime));
             dbQueryWriteCommon(queryText);
             #ifdef CATCHCHALLENGER_CLASS_ALLINONESERVER
             queryText=PreparedDBQueryCommon::db_query_update_server_time_played_time;
-            stringreplace(queryText,"%1",std::to_string(addTime));
-            stringreplace(queryText,"%2",std::to_string(0));
-            stringreplace(queryText,"%3",std::to_string(character_id));
+            stringreplaceOne(queryText,"%1",std::to_string(addTime));
+            stringreplaceOne(queryText,"%2",std::to_string(0));
+            stringreplaceOne(queryText,"%3",std::to_string(character_id));
             dbQueryWriteCommon(queryText);
             #endif
         }
@@ -283,24 +283,24 @@ void Client::disconnectClient()
                 if(CommonSettingsServer::commonSettingsServer.useSP)
                 {
                     std::string queryText=PreparedDBQueryCommon::db_query_monster;
-                    stringreplace(queryText,"%1",std::to_string(playerMonster.id));
-                    stringreplace(queryText,"%2",std::to_string(character_id));
-                    stringreplace(queryText,"%3",std::to_string(playerMonster.hp));
-                    stringreplace(queryText,"%4",std::to_string(playerMonster.remaining_xp));
-                    stringreplace(queryText,"%5",std::to_string(playerMonster.level));
-                    stringreplace(queryText,"%6",std::to_string(playerMonster.sp));
-                    stringreplace(queryText,"%7",std::to_string(index+1));
+                    stringreplaceOne(queryText,"%1",std::to_string(playerMonster.id));
+                    stringreplaceOne(queryText,"%2",std::to_string(character_id));
+                    stringreplaceOne(queryText,"%3",std::to_string(playerMonster.hp));
+                    stringreplaceOne(queryText,"%4",std::to_string(playerMonster.remaining_xp));
+                    stringreplaceOne(queryText,"%5",std::to_string(playerMonster.level));
+                    stringreplaceOne(queryText,"%6",std::to_string(playerMonster.sp));
+                    stringreplaceOne(queryText,"%7",std::to_string(index+1));
                     dbQueryWriteCommon(queryText);
                 }
                 else
                 {
                     std::string queryText=PreparedDBQueryCommon::db_query_monster;
-                    stringreplace(queryText,"%1",std::to_string(playerMonster.id));
-                    stringreplace(queryText,"%2",std::to_string(character_id));
-                    stringreplace(queryText,"%3",std::to_string(playerMonster.hp));
-                    stringreplace(queryText,"%4",std::to_string(playerMonster.remaining_xp));
-                    stringreplace(queryText,"%5",std::to_string(playerMonster.level));
-                    stringreplace(queryText,"%6",std::to_string(index+1));
+                    stringreplaceOne(queryText,"%1",std::to_string(playerMonster.id));
+                    stringreplaceOne(queryText,"%2",std::to_string(character_id));
+                    stringreplaceOne(queryText,"%3",std::to_string(playerMonster.hp));
+                    stringreplaceOne(queryText,"%4",std::to_string(playerMonster.remaining_xp));
+                    stringreplaceOne(queryText,"%5",std::to_string(playerMonster.level));
+                    stringreplaceOne(queryText,"%6",std::to_string(index+1));
                     dbQueryWriteCommon(queryText);
                 }
                 int sub_index=0;
@@ -309,9 +309,9 @@ void Client::disconnectClient()
                 {
                     const PlayerMonster::PlayerSkill &playerSkill=playerMonster.skills.at(sub_index);
                     std::string queryText=PreparedDBQueryCommon::db_query_monster_skill;
-                    stringreplace(queryText,"%1",std::to_string(playerSkill.endurance));
-                    stringreplace(queryText,"%1",std::to_string(playerMonster.id));
-                    stringreplace(queryText,"%1",std::to_string(playerSkill.skill));
+                    stringreplaceOne(queryText,"%1",std::to_string(playerSkill.endurance));
+                    stringreplaceOne(queryText,"%1",std::to_string(playerMonster.id));
+                    stringreplaceOne(queryText,"%1",std::to_string(playerSkill.skill));
                     dbQueryWriteCommon(queryText);
                     sub_index++;
                 }
