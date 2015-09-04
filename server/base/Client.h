@@ -722,8 +722,8 @@ private:
                       CommonMap* unvalidated_rescue_map, const /*COORD_TYPE*/ uint8_t &unvalidated_rescue_x, const /*COORD_TYPE*/ uint8_t &unvalidated_rescue_y, const Orientation &unvalidated_rescue_orientation
                       );
     void characterIsRightWithRescue(const uint8_t &query_id,uint32_t characterId,CommonMap* map,const /*COORD_TYPE*/ uint8_t &x,const /*COORD_TYPE*/ uint8_t &y,const Orientation &orientation,
-                      const QVariant &rescue_map,const QVariant &rescue_x,const QVariant &rescue_y,const QVariant &rescue_orientation,
-                      const QVariant &unvalidated_rescue_map,const QVariant &unvalidated_rescue_x,const QVariant &unvalidated_rescue_y,const QVariant &unvalidated_rescue_orientation
+                      const std::string &rescue_map,const std::string &rescue_x,const std::string &rescue_y,const std::string &rescue_orientation,
+                      const std::string &unvalidated_rescue_map,const std::string &unvalidated_rescue_x,const std::string &unvalidated_rescue_y,const std::string &unvalidated_rescue_orientation
                       );
     void characterIsRightFinalStep();
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
