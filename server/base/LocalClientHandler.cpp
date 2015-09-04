@@ -106,21 +106,21 @@ void Client::savePosition()
     const uint32_t &rescue_map_file_database_id=static_cast<MapServer *>(rescue.map)->reverse_db_id;
     const uint32_t &unvalidated_rescue_map_file_database_id=static_cast<MapServer *>(unvalidated_rescue.map)->reverse_db_id;
     updateMapPositionQuery=PreparedDBQueryServer::db_query_update_character_forserver_map_part1;
-    stringreplace(updateMapPositionQuery,"%1",std::to_string(map_file_database_id));
-    stringreplace(updateMapPositionQuery,"%2",std::to_string(x));
-    stringreplace(updateMapPositionQuery,"%3",std::to_string(y));
-    stringreplace(updateMapPositionQuery,"%4",std::to_string((uint8_t)getLastDirection()));
+    stringreplaceOne(updateMapPositionQuery,"%1",std::to_string(map_file_database_id));
+    stringreplaceOne(updateMapPositionQuery,"%2",std::to_string(x));
+    stringreplaceOne(updateMapPositionQuery,"%3",std::to_string(y));
+    stringreplaceOne(updateMapPositionQuery,"%4",std::to_string((uint8_t)getLastDirection()));
     updateMapPositionQuerySub=PreparedDBQueryServer::db_query_update_character_forserver_map_part2;
-    stringreplace(updateMapPositionQuerySub,"%1",std::to_string(rescue_map_file_database_id));
-    stringreplace(updateMapPositionQuerySub,"%2",std::to_string(rescue.x));
-    stringreplace(updateMapPositionQuerySub,"%3",std::to_string(rescue.y));
-    stringreplace(updateMapPositionQuerySub,"%4",std::to_string((uint8_t)rescue.orientation));
-    stringreplace(updateMapPositionQuerySub,"%5",std::to_string(unvalidated_rescue_map_file_database_id));
-    stringreplace(updateMapPositionQuerySub,"%6",std::to_string(unvalidated_rescue.x));
-    stringreplace(updateMapPositionQuerySub,"%7",std::to_string(unvalidated_rescue.y));
-    stringreplace(updateMapPositionQuerySub,"%8",std::to_string((uint8_t)unvalidated_rescue.orientation));
-    stringreplace(updateMapPositionQuery,"%5",updateMapPositionQuerySub);
-    stringreplace(updateMapPositionQuery,"%6",std::to_string(character_id));
+    stringreplaceOne(updateMapPositionQuerySub,"%1",std::to_string(rescue_map_file_database_id));
+    stringreplaceOne(updateMapPositionQuerySub,"%2",std::to_string(rescue.x));
+    stringreplaceOne(updateMapPositionQuerySub,"%3",std::to_string(rescue.y));
+    stringreplaceOne(updateMapPositionQuerySub,"%4",std::to_string((uint8_t)rescue.orientation));
+    stringreplaceOne(updateMapPositionQuerySub,"%5",std::to_string(unvalidated_rescue_map_file_database_id));
+    stringreplaceOne(updateMapPositionQuerySub,"%6",std::to_string(unvalidated_rescue.x));
+    stringreplaceOne(updateMapPositionQuerySub,"%7",std::to_string(unvalidated_rescue.y));
+    stringreplaceOne(updateMapPositionQuerySub,"%8",std::to_string((uint8_t)unvalidated_rescue.orientation));
+    stringreplaceOne(updateMapPositionQuery,"%5",updateMapPositionQuerySub);
+    stringreplaceOne(updateMapPositionQuery,"%6",std::to_string(character_id));
     dbQueryWriteServer(updateMapPositionQuery);
 /* do at moveDownMonster and moveUpMonster
  *     const std::vector<PlayerMonster> &playerMonsterList=getPlayerMonster();
@@ -472,17 +472,17 @@ void Client::addObject(const uint16_t &item,const uint32_t &quantity)
     {
         public_and_private_informations.items[item]+=quantity;
         std::string queryText=PreparedDBQueryCommon::db_query_update_item;
-        stringreplace(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
-        stringreplace(queryText,"%2",std::to_string(item));
-        stringreplace(queryText,"%3",std::to_string(character_id));
+        stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
+        stringreplaceOne(queryText,"%2",std::to_string(item));
+        stringreplaceOne(queryText,"%3",std::to_string(character_id));
         dbQueryWriteCommon(queryText);
     }
     else
     {
         std::string queryText=PreparedDBQueryCommon::db_query_insert_item;
-        stringreplace(queryText,"%1",std::to_string(item));
-        stringreplace(queryText,"%2",std::to_string(character_id));
-        stringreplace(queryText,"%3",std::to_string(quantity));
+        stringreplaceOne(queryText,"%1",std::to_string(item));
+        stringreplaceOne(queryText,"%2",std::to_string(character_id));
+        stringreplaceOne(queryText,"%3",std::to_string(quantity));
         dbQueryWriteCommon(queryText);
         public_and_private_informations.items[item]=quantity;
     }
@@ -494,17 +494,17 @@ void Client::addWarehouseObject(const uint16_t &item,const uint32_t &quantity)
     {
         public_and_private_informations.warehouse_items[item]+=quantity;
         std::string queryText=PreparedDBQueryCommon::db_query_update_item_warehouse;
-        stringreplace(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
-        stringreplace(queryText,"%2",std::to_string(item));
-        stringreplace(queryText,"%3",std::to_string(character_id));
+        stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
+        stringreplaceOne(queryText,"%2",std::to_string(item));
+        stringreplaceOne(queryText,"%3",std::to_string(character_id));
         dbQueryWriteCommon(queryText);
     }
     else
     {
         std::string queryText=PreparedDBQueryCommon::db_query_insert_item_warehouse;
-        stringreplace(queryText,"%1",std::to_string(item));
-        stringreplace(queryText,"%2",std::to_string(character_id));
-        stringreplace(queryText,"%3",std::to_string(quantity));
+        stringreplaceOne(queryText,"%1",std::to_string(item));
+        stringreplaceOne(queryText,"%2",std::to_string(character_id));
+        stringreplaceOne(queryText,"%3",std::to_string(quantity));
         dbQueryWriteCommon(queryText);
         public_and_private_informations.warehouse_items[item]=quantity;
     }
@@ -518,9 +518,9 @@ uint32_t Client::removeWarehouseObject(const uint16_t &item,const uint32_t &quan
         {
             public_and_private_informations.warehouse_items[item]-=quantity;
             std::string queryText=PreparedDBQueryCommon::db_query_update_item_warehouse;
-            stringreplace(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
-            stringreplace(queryText,"%2",std::to_string(item));
-            stringreplace(queryText,"%3",std::to_string(character_id));
+            stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
+            stringreplaceOne(queryText,"%2",std::to_string(item));
+            stringreplaceOne(queryText,"%3",std::to_string(character_id));
             dbQueryWriteCommon(queryText);
             return quantity;
         }
@@ -529,8 +529,8 @@ uint32_t Client::removeWarehouseObject(const uint16_t &item,const uint32_t &quan
             const uint32_t removed_quantity=public_and_private_informations.warehouse_items.at(item);
             public_and_private_informations.warehouse_items.erase(item);
             std::string queryText=PreparedDBQueryCommon::db_query_delete_item_warehouse;
-            stringreplace(queryText,"%1",std::to_string(item));
-            stringreplace(queryText,"%2",std::to_string(character_id));
+            stringreplaceOne(queryText,"%1",std::to_string(item));
+            stringreplaceOne(queryText,"%2",std::to_string(character_id));
             dbQueryWriteCommon(queryText);
             return removed_quantity;
         }
@@ -544,16 +544,16 @@ void Client::saveObjectRetention(const uint16_t &item)
     if(public_and_private_informations.items.find(item)!=public_and_private_informations.items.cend())
     {
         std::string queryText=PreparedDBQueryCommon::db_query_update_item;
-        stringreplace(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
-        stringreplace(queryText,"%2",std::to_string(item));
-        stringreplace(queryText,"%3",std::to_string(character_id));
+        stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
+        stringreplaceOne(queryText,"%2",std::to_string(item));
+        stringreplaceOne(queryText,"%3",std::to_string(character_id));
         dbQueryWriteCommon(queryText);
     }
     else
     {
         std::string queryText=PreparedDBQueryCommon::db_query_delete_item;
-        stringreplace(queryText,"%1",std::to_string(item));
-        stringreplace(queryText,"%2",std::to_string(character_id));
+        stringreplaceOne(queryText,"%1",std::to_string(item));
+        stringreplaceOne(queryText,"%2",std::to_string(character_id));
         dbQueryWriteCommon(queryText);
     }
 }
@@ -566,9 +566,9 @@ uint32_t Client::removeObject(const uint16_t &item, const uint32_t &quantity)
         {
             public_and_private_informations.items[item]-=quantity;
             std::string queryText=PreparedDBQueryCommon::db_query_update_item;
-            stringreplace(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
-            stringreplace(queryText,"%2",std::to_string(item));
-            stringreplace(queryText,"%3",std::to_string(character_id));
+            stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
+            stringreplaceOne(queryText,"%2",std::to_string(item));
+            stringreplaceOne(queryText,"%3",std::to_string(character_id));
             dbQueryWriteCommon(queryText);
             return quantity;
         }
@@ -577,8 +577,8 @@ uint32_t Client::removeObject(const uint16_t &item, const uint32_t &quantity)
             const uint32_t removed_quantity=public_and_private_informations.items.at(item);
             public_and_private_informations.items.erase(item);
             std::string queryText=PreparedDBQueryCommon::db_query_delete_item;
-            stringreplace(queryText,"%1",std::to_string(item));
-            stringreplace(queryText,"%2",std::to_string(character_id));
+            stringreplaceOne(queryText,"%1",std::to_string(item));
+            stringreplaceOne(queryText,"%2",std::to_string(character_id));
             dbQueryWriteCommon(queryText);
             return removed_quantity;
         }
@@ -619,8 +619,8 @@ void Client::addCash(const quint64 &cash, const bool &forceSave)
         return;
     public_and_private_informations.cash+=cash;
     std::string queryText=PreparedDBQueryCommon::db_query_update_cash;
-    stringreplace(queryText,"%1",std::to_string(public_and_private_informations.cash));
-    stringreplace(queryText,"%2",std::to_string(character_id));
+    stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.cash));
+    stringreplaceOne(queryText,"%2",std::to_string(character_id));
     dbQueryWriteCommon(queryText);
 }
 
@@ -630,8 +630,8 @@ void Client::removeCash(const quint64 &cash)
         return;
     public_and_private_informations.cash-=cash;
     std::string queryText=PreparedDBQueryCommon::db_query_update_cash;
-    stringreplace(queryText,"%1",std::to_string(public_and_private_informations.cash));
-    stringreplace(queryText,"%2",std::to_string(character_id));
+    stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.cash));
+    stringreplaceOne(queryText,"%2",std::to_string(character_id));
     dbQueryWriteCommon(queryText);
 }
 
@@ -641,8 +641,8 @@ void Client::addWarehouseCash(const quint64 &cash, const bool &forceSave)
         return;
     public_and_private_informations.warehouse_cash+=cash;
     std::string queryText=PreparedDBQueryCommon::db_query_update_warehouse_cash;
-    stringreplace(queryText,"%1",std::to_string(public_and_private_informations.warehouse_cash));
-    stringreplace(queryText,"%2",std::to_string(character_id));
+    stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.warehouse_cash));
+    stringreplaceOne(queryText,"%2",std::to_string(character_id));
     dbQueryWriteCommon(queryText);
 }
 
@@ -652,8 +652,8 @@ void Client::removeWarehouseCash(const quint64 &cash)
         return;
     public_and_private_informations.warehouse_cash-=cash;
     std::string queryText=PreparedDBQueryCommon::db_query_update_warehouse_cash;
-    stringreplace(queryText,"%1",std::to_string(public_and_private_informations.warehouse_cash));
-    stringreplace(queryText,"%2",std::to_string(character_id));
+    stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.warehouse_cash));
+    stringreplaceOne(queryText,"%2",std::to_string(character_id));
     dbQueryWriteCommon(queryText);
 }
 
@@ -701,8 +701,8 @@ void Client::wareHouseStore(const qint64 &cash, const std::vector<std::pair<uint
                 if(playerMonsterinWarehouse.id==withdrawMonsters.at(index))
                 {
                     std::string queryText=PreparedDBQueryCommon::db_query_update_monster_move_to_player;
-                    stringreplace(queryText,"%1",std::to_string(public_and_private_informations.playerMonster.size()+2));
-                    stringreplace(queryText,"%2",std::to_string(playerMonsterinWarehouse.id));
+                    stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.playerMonster.size()+2));
+                    stringreplaceOne(queryText,"%2",std::to_string(playerMonsterinWarehouse.id));
                     dbQueryWriteCommon(queryText);
                     public_and_private_informations.playerMonster.push_back(public_and_private_informations.warehouse_playerMonster.at(sub_index));
                     public_and_private_informations.warehouse_playerMonster.erase(public_and_private_informations.warehouse_playerMonster.cbegin()+sub_index);
@@ -724,8 +724,8 @@ void Client::wareHouseStore(const qint64 &cash, const std::vector<std::pair<uint
                 if(playerMonsterOnPlayer.id==depositeMonsters.at(index))
                 {
                     std::string queryText=PreparedDBQueryCommon::db_query_update_monster_move_to_warehouse;
-                    stringreplace(queryText,"%1",std::to_string(public_and_private_informations.warehouse_playerMonster.size()+2));
-                    stringreplace(queryText,"%2",std::to_string(playerMonsterOnPlayer.id));
+                    stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.warehouse_playerMonster.size()+2));
+                    stringreplaceOne(queryText,"%2",std::to_string(playerMonsterOnPlayer.id));
                     dbQueryWriteCommon(queryText);
                     public_and_private_informations.warehouse_playerMonster.push_back(public_and_private_informations.playerMonster.at(sub_index));
                     public_and_private_informations.playerMonster.erase(public_and_private_informations.playerMonster.cbegin()+sub_index);
@@ -1335,8 +1335,8 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
         postReply(query_id,outputData.constData(),outputData.size());
         //add into db
         std::string queryText=PreparedDBQueryCommon::db_query_insert_recipe;
-        stringreplace(queryText,"%1",std::to_string(character_id));
-        stringreplace(queryText,"%2",std::to_string(recipeId));
+        stringreplaceOne(queryText,"%1",std::to_string(character_id));
+        stringreplaceOne(queryText,"%2",std::to_string(recipeId));
         dbQueryWriteCommon(queryText);
     }
     //use trap into fight
@@ -1840,19 +1840,19 @@ void Client::saveIndustryStatus(const uint32_t &factoryId,const IndustryStatus &
     if(GlobalServerData::serverPrivateVariables.industriesStatus.find(factoryId)==GlobalServerData::serverPrivateVariables.industriesStatus.cend())
     {
         std::string queryText=PreparedDBQueryServer::db_query_insert_factory;
-        stringreplace(queryText,"%1",std::to_string(factoryId));
-        stringreplace(queryText,"%2",stringimplode(resourcesStringList,';'));
-        stringreplace(queryText,"%3",stringimplode(productsStringList,';'));
-        stringreplace(queryText,"%4",std::to_string(industryStatus.last_update));
+        stringreplaceOne(queryText,"%1",std::to_string(factoryId));
+        stringreplaceOne(queryText,"%2",stringimplode(resourcesStringList,';'));
+        stringreplaceOne(queryText,"%3",stringimplode(productsStringList,';'));
+        stringreplaceOne(queryText,"%4",std::to_string(industryStatus.last_update));
         dbQueryWriteServer(queryText);
     }
     else
     {
         std::string queryText=PreparedDBQueryServer::db_query_update_factory;
-        stringreplace(queryText,"%1",std::to_string(factoryId));
-        stringreplace(queryText,"%2",stringimplode(resourcesStringList,';'));
-        stringreplace(queryText,"%3",stringimplode(productsStringList,';'));
-        stringreplace(queryText,"%4",std::to_string(industryStatus.last_update));
+        stringreplaceOne(queryText,"%1",std::to_string(factoryId));
+        stringreplaceOne(queryText,"%2",stringimplode(resourcesStringList,';'));
+        stringreplaceOne(queryText,"%3",stringimplode(productsStringList,';'));
+        stringreplaceOne(queryText,"%4",std::to_string(industryStatus.last_update));
         dbQueryWriteServer(queryText);
     }
     GlobalServerData::serverPrivateVariables.industriesStatus[factoryId]=industryStatus;
@@ -2191,8 +2191,8 @@ void Client::appendAllow(const ActionAllow &allow)
         return;
     public_and_private_informations.allow.insert(allow);
     std::string queryText=PreparedDBQueryCommon::db_query_insert_character_allow;
-    stringreplace(queryText,"%1",std::to_string(character_id));
-    stringreplace(queryText,"%2",std::to_string(DictionaryLogin::dictionary_allow_internal_to_database.at(allow)));
+    stringreplaceOne(queryText,"%1",std::to_string(character_id));
+    stringreplaceOne(queryText,"%2",std::to_string(DictionaryLogin::dictionary_allow_internal_to_database.at(allow)));
     dbQueryWriteCommon(queryText);
 }
 
@@ -2202,8 +2202,8 @@ void Client::removeAllow(const ActionAllow &allow)
         return;
     public_and_private_informations.allow.erase(allow);
     std::string queryText=PreparedDBQueryCommon::db_query_delete_character_allow;
-    stringreplace(queryText,"%1",std::to_string(character_id));
-    stringreplace(queryText,"%2",std::to_string(DictionaryLogin::dictionary_allow_internal_to_database.at(allow)));
+    stringreplaceOne(queryText,"%1",std::to_string(character_id));
+    stringreplaceOne(queryText,"%2",std::to_string(DictionaryLogin::dictionary_allow_internal_to_database.at(allow)));
     dbQueryWriteCommon(queryText);
 }
 
@@ -2246,19 +2246,19 @@ void Client::appendReputationPoint(const uint8_t &reputationId, const int32_t &p
     if(isNewReputation)
     {
         std::string queryText=PreparedDBQueryCommon::db_query_insert_reputation;
-        stringreplace(queryText,"%1",std::to_string(character_id));
-        stringreplace(queryText,"%2",std::to_string(reputation.reverse_database_id));
-        stringreplace(queryText,"%3",std::to_string(playerReputation->point));
-        stringreplace(queryText,"%4",std::to_string(playerReputation->level));
+        stringreplaceOne(queryText,"%1",std::to_string(character_id));
+        stringreplaceOne(queryText,"%2",std::to_string(reputation.reverse_database_id));
+        stringreplaceOne(queryText,"%3",std::to_string(playerReputation->point));
+        stringreplaceOne(queryText,"%4",std::to_string(playerReputation->level));
         dbQueryWriteCommon(queryText);
     }
     else
     {
         std::string queryText=PreparedDBQueryCommon::db_query_update_reputation;
-        stringreplace(queryText,"%1",std::to_string(character_id));
-        stringreplace(queryText,"%2",std::to_string(reputation.reverse_database_id));
-        stringreplace(queryText,"%3",std::to_string(playerReputation->point));
-        stringreplace(queryText,"%4",std::to_string(playerReputation->level));
+        stringreplaceOne(queryText,"%1",std::to_string(character_id));
+        stringreplaceOne(queryText,"%2",std::to_string(reputation.reverse_database_id));
+        stringreplaceOne(queryText,"%3",std::to_string(playerReputation->point));
+        stringreplaceOne(queryText,"%4",std::to_string(playerReputation->level));
         dbQueryWriteCommon(queryText);
     }
 }
@@ -2481,7 +2481,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             clanActionParam->text=text;
 
             std::string queryText=PreparedDBQueryCommon::db_query_select_clan_by_name;
-            stringreplace(queryText,"%1",SqlFunction::quoteSqlVariable(text));
+            stringreplaceOne(queryText,"%1",SqlFunction::quoteSqlVariable(text));
             CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::addClan_static);
             if(callback==NULL)
             {
@@ -2529,7 +2529,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             postReply(query_id,outputData.constData(),outputData.size());
             //update the db
             std::string queryText=PreparedDBQueryCommon::db_query_update_character_clan;
-            stringreplace(queryText,"%1",std::to_string(character_id));
+            stringreplaceOne(queryText,"%1",std::to_string(character_id));
             dbQueryWriteCommon(queryText);
         }
         break;
@@ -2563,15 +2563,15 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             while(index<players.size())
             {
                 std::string queryText=PreparedDBQueryCommon::db_query_update_character_clan;
-                stringreplace(queryText,"%1",std::to_string(players.at(index)->getPlayerId()));
+                stringreplaceOne(queryText,"%1",std::to_string(players.at(index)->getPlayerId()));
                 dbQueryWriteCommon(queryText);
                 index++;
             }
             std::string queryText=PreparedDBQueryCommon::db_query_delete_clan;
-            stringreplace(queryText,"%1",std::to_string(public_and_private_informations.clan));
+            stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.clan));
             dbQueryWriteCommon(queryText);
             queryText=PreparedDBQueryServer::db_query_delete_city;
-            stringreplace(queryText,"%1",clan->capturedCity);
+            stringreplaceOne(queryText,"%1",clan->capturedCity);
             dbQueryWriteServer(queryText);
             //update the object
             clanList.erase(public_and_private_informations.clan);
@@ -2674,8 +2674,8 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             if(!isFound)
             {
                 std::string queryText=PreparedDBQueryCommon::db_query_update_character_clan_by_pseudo;
-                stringreplace(queryText,"%1",SqlFunction::quoteSqlVariable(text));
-                stringreplace(queryText,"%2",std::to_string(public_and_private_informations.clan));
+                stringreplaceOne(queryText,"%1",SqlFunction::quoteSqlVariable(text));
+                stringreplaceOne(queryText,"%2",std::to_string(public_and_private_informations.clan));
                 dbQueryWriteCommon(queryText);
                 return;
             }
@@ -2756,9 +2756,9 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &action,const 
     postReply(query_id,outputData.constData(),outputData.size());
     //add into db
     std::string queryText=PreparedDBQueryCommon::db_query_insert_clan;
-    stringreplace(queryText,"%1",std::to_string(clanId));
-    stringreplace(queryText,"%2",SqlFunction::quoteSqlVariable(text));
-    stringreplace(queryText,"%3",std::to_string(QDateTime::currentMSecsSinceEpoch()/1000));
+    stringreplaceOne(queryText,"%1",std::to_string(clanId));
+    stringreplaceOne(queryText,"%2",SqlFunction::quoteSqlVariable(text));
+    stringreplaceOne(queryText,"%3",std::to_string(QDateTime::currentMSecsSinceEpoch()/1000));
     dbQueryWriteCommon(queryText);
     insertIntoAClan(clanId);
 }
@@ -2872,9 +2872,9 @@ void Client::insertIntoAClan(const uint32_t &clanId)
             clan_leader=Client::text_false;
     }
     std::string queryText=PreparedDBQueryCommon::db_query_update_character_clan_and_leader;
-    stringreplace(queryText,"%1",std::to_string(clanId));
-    stringreplace(queryText,"%2",clan_leader);
-    stringreplace(queryText,"%3",std::to_string(character_id));
+    stringreplaceOne(queryText,"%1",std::to_string(clanId));
+    stringreplaceOne(queryText,"%2",clan_leader);
+    stringreplaceOne(queryText,"%3",std::to_string(character_id));
     dbQueryWriteCommon(queryText);
     sendClanInfo();
     clanChangeWithoutDb(public_and_private_informations.clan);
@@ -2884,7 +2884,7 @@ void Client::ejectToClan()
 {
     dissolvedClan();
     std::string queryText=PreparedDBQueryCommon::db_query_update_character_clan;
-    stringreplace(queryText,"%1",std::to_string(character_id));
+    stringreplaceOne(queryText,"%1",std::to_string(character_id));
     dbQueryWriteCommon(queryText);
 }
 
@@ -3257,7 +3257,7 @@ void Client::fightOrBattleFinish(const bool &win, const uint32_t &fightId)
                             GlobalServerData::serverPrivateVariables.cityStatusList[clan->capturedCity].clan=0;
                         }
                         std::string queryText=PreparedDBQueryServer::db_query_delete_city;
-                        stringreplace(queryText,"%1",clan->capturedCity);
+                        stringreplaceOne(queryText,"%1",clan->capturedCity);
                         dbQueryWriteServer(queryText);
                         if(GlobalServerData::serverPrivateVariables.cityStatusList.find(clan->captureCityInProgress)==GlobalServerData::serverPrivateVariables.cityStatusList.cend())
                             GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=0;
@@ -3266,8 +3266,8 @@ void Client::fightOrBattleFinish(const bool &win, const uint32_t &fightId)
                             queryText=PreparedDBQueryServer::db_query_update_city_clan;
                         else
                             queryText=PreparedDBQueryServer::db_query_insert_city;
-                        stringreplace(queryText,"%1",std::to_string(clan->clanId));
-                        stringreplace(queryText,"%2",clan->captureCityInProgress);
+                        stringreplaceOne(queryText,"%1",std::to_string(clan->clanId));
+                        stringreplaceOne(queryText,"%2",clan->captureCityInProgress);
                         dbQueryWriteServer(queryText);
                         GlobalServerData::serverPrivateVariables.cityStatusListReverse[clan->clanId]=clan->captureCityInProgress;
                         GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=clan->clanId;
@@ -3499,8 +3499,8 @@ void Client::buyMarketObject(const uint32_t &query_id,const uint32_t &marketObje
             if(marketItem.quantity==quantity)
             {
                 std::string queryText=PreparedDBQueryServer::db_query_delete_item_market;
-                stringreplace(queryText,"%1",std::to_string(marketItem.item));
-                stringreplace(queryText,"%2",std::to_string(marketItem.player));
+                stringreplaceOne(queryText,"%1",std::to_string(marketItem.item));
+                stringreplaceOne(queryText,"%2",std::to_string(marketItem.player));
                 dbQueryWriteServer(queryText);
                 GlobalServerData::serverPrivateVariables.marketItemList.erase(GlobalServerData::serverPrivateVariables.marketItemList.begin()+index);
             }
@@ -3508,9 +3508,9 @@ void Client::buyMarketObject(const uint32_t &query_id,const uint32_t &marketObje
             {
                 GlobalServerData::serverPrivateVariables.marketItemList[index].quantity=marketItem.quantity-quantity;
                 std::string queryText=PreparedDBQueryServer::db_query_update_item_market;
-                stringreplace(queryText,"%1",std::to_string(marketItem.quantity-quantity));
-                stringreplace(queryText,"%2",std::to_string(marketItem.item));
-                stringreplace(queryText,"%3",std::to_string(marketItem.player));
+                stringreplaceOne(queryText,"%1",std::to_string(marketItem.quantity-quantity));
+                stringreplaceOne(queryText,"%2",std::to_string(marketItem.item));
+                stringreplaceOne(queryText,"%3",std::to_string(marketItem.player));
                 dbQueryWriteServer(queryText);
             }
             removeCash(quantity*marketItem.cash);
@@ -3520,8 +3520,8 @@ void Client::buyMarketObject(const uint32_t &query_id,const uint32_t &marketObje
                     normalOutput("Problem at market cash adding");
             }
             std::string queryText=PreparedDBQueryServer::db_query_update_charaters_market_cash;
-            stringreplace(queryText,"%1",std::to_string(quantity*marketItem.cash));
-            stringreplace(queryText,"%2",std::to_string(marketItem.player));
+            stringreplaceOne(queryText,"%1",std::to_string(quantity*marketItem.cash));
+            stringreplaceOne(queryText,"%2",std::to_string(marketItem.player));
             dbQueryWriteServer(queryText);
             addObject(marketItem.item,quantity);
             out << (uint8_t)0x01;
@@ -3569,18 +3569,18 @@ void Client::buyMarketMonster(const uint32_t &query_id,const uint32_t &monsterId
             removeCash(marketPlayerMonster.cash);
             //entry created at first server connexion
             std::string queryText=PreparedDBQueryServer::db_query_update_charaters_market_cash;
-            stringreplace(queryText,"%1",std::to_string(marketPlayerMonster.cash));
-            stringreplace(queryText,"%2",std::to_string(marketPlayerMonster.player));
+            stringreplaceOne(queryText,"%1",std::to_string(marketPlayerMonster.cash));
+            stringreplaceOne(queryText,"%2",std::to_string(marketPlayerMonster.player));
             dbQueryWriteServer(queryText);
             addPlayerMonster(marketPlayerMonster.monster);
 
             queryText=PreparedDBQueryServer::db_query_delete_monster_market_price;
-            stringreplace(queryText,"%1",std::to_string(marketPlayerMonster.monster.id));
+            stringreplaceOne(queryText,"%1",std::to_string(marketPlayerMonster.monster.id));
             dbQueryWriteServer(queryText);
             queryText=PreparedDBQueryCommon::db_query_update_monster_move_to_new_player;
-            stringreplace(queryText,"%1",std::to_string(character_id));
-            stringreplace(queryText,"%2",std::to_string(getPlayerMonster().size()));
-            stringreplace(queryText,"%3",std::to_string(marketPlayerMonster.monster.id));
+            stringreplaceOne(queryText,"%1",std::to_string(character_id));
+            stringreplaceOne(queryText,"%2",std::to_string(getPlayerMonster().size()));
+            stringreplaceOne(queryText,"%3",std::to_string(marketPlayerMonster.monster.id));
             dbQueryWriteCommon(queryText);
             out << (uint8_t)0x01;
             postReply(query_id,outputData.constData(),outputData.size());
@@ -3626,10 +3626,10 @@ void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,c
             out << (uint8_t)0x01;
             postReply(query_id,outputData.constData(),outputData.size());
             std::string queryText=PreparedDBQueryServer::db_query_update_item_market_and_price;
-            stringreplace(queryText,"%1",std::to_string(GlobalServerData::serverPrivateVariables.marketItemList.at(index).quantity));
-            stringreplace(queryText,"%2",std::to_string(price));
-            stringreplace(queryText,"%3",std::to_string(objectId));
-            stringreplace(queryText,"%4",std::to_string(character_id));
+            stringreplaceOne(queryText,"%1",std::to_string(GlobalServerData::serverPrivateVariables.marketItemList.at(index).quantity));
+            stringreplaceOne(queryText,"%2",std::to_string(price));
+            stringreplaceOne(queryText,"%3",std::to_string(objectId));
+            stringreplaceOne(queryText,"%4",std::to_string(character_id));
             dbQueryWriteServer(queryText);
             return;
         }
@@ -3645,10 +3645,10 @@ void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,c
     //append to the market
     removeObject(objectId,quantity);
     std::string queryText=PreparedDBQueryServer::db_query_insert_item_market;
-    stringreplace(queryText,"%1",std::to_string(objectId));
-    stringreplace(queryText,"%2",std::to_string(character_id));
-    stringreplace(queryText,"%3",std::to_string(quantity));
-    stringreplace(queryText,"%4",std::to_string(price));
+    stringreplaceOne(queryText,"%1",std::to_string(objectId));
+    stringreplaceOne(queryText,"%2",std::to_string(character_id));
+    stringreplaceOne(queryText,"%3",std::to_string(quantity));
+    stringreplaceOne(queryText,"%4",std::to_string(price));
     dbQueryWriteServer(queryText);
     MarketItem marketItem;
     marketItem.cash=price;
@@ -3693,18 +3693,18 @@ void Client::putMarketMonster(const uint32_t &query_id,const uint32_t &monsterId
             GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.push_back(marketPlayerMonster);
 
             std::string queryText=PreparedDBQueryCommon::db_query_update_monster_move_to_market;
-            stringreplace(queryText,"%1",std::to_string(marketPlayerMonster.monster.id));
+            stringreplaceOne(queryText,"%1",std::to_string(marketPlayerMonster.monster.id));
             dbQueryWriteCommon(queryText);
             queryText=PreparedDBQueryServer::db_query_insert_monster_market_price;
-            stringreplace(queryText,"%1",std::to_string(marketPlayerMonster.monster.id));
-            stringreplace(queryText,"%2",std::to_string(price));
+            stringreplaceOne(queryText,"%1",std::to_string(marketPlayerMonster.monster.id));
+            stringreplaceOne(queryText,"%2",std::to_string(price));
             dbQueryWriteServer(queryText);
             while(index<public_and_private_informations.playerMonster.size())
             {
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
                 std::string queryText=PreparedDBQueryCommon::db_query_update_monster_position;
-                stringreplace(queryText,"%1",std::to_string(index+1));
-                stringreplace(queryText,"%2",std::to_string(playerMonster.id));
+                stringreplaceOne(queryText,"%1",std::to_string(index+1));
+                stringreplaceOne(queryText,"%2",std::to_string(playerMonster.id));
                 dbQueryWriteCommon(queryText);
                 index++;
             }
@@ -3732,8 +3732,8 @@ void Client::recoverMarketCash(const uint32_t &query_id)
     public_and_private_informations.cash+=market_cash;
     market_cash=0;
     std::string queryText=PreparedDBQueryServer::db_query_get_market_cash;
-    stringreplace(queryText,"%1",std::to_string(public_and_private_informations.cash));
-    stringreplace(queryText,"%1",std::to_string(character_id));
+    stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.cash));
+    stringreplaceOne(queryText,"%1",std::to_string(character_id));
     dbQueryWriteServer(queryText);
     postReply(query_id,outputData.constData(),outputData.size());
 }
@@ -3781,16 +3781,16 @@ void Client::withdrawMarketObject(const uint32_t &query_id,const uint32_t &objec
                 marketObjectIdList.push_back(marketItem.marketObjectId);
                 GlobalServerData::serverPrivateVariables.marketItemList.erase(GlobalServerData::serverPrivateVariables.marketItemList.begin()+index);
                 std::string queryText=PreparedDBQueryServer::db_query_delete_item_market;
-                stringreplace(queryText,"%1",std::to_string(objectId));
-                stringreplace(queryText,"%2",std::to_string(character_id));
+                stringreplaceOne(queryText,"%1",std::to_string(objectId));
+                stringreplaceOne(queryText,"%2",std::to_string(character_id));
                 dbQueryWriteServer(queryText);
             }
             else
             {
                 std::string queryText=PreparedDBQueryServer::db_query_update_item_market;
-                stringreplace(queryText,"%1",std::to_string(GlobalServerData::serverPrivateVariables.marketItemList.at(index).quantity));
-                stringreplace(queryText,"%2",std::to_string(objectId));
-                stringreplace(queryText,"%3",std::to_string(character_id));
+                stringreplaceOne(queryText,"%1",std::to_string(GlobalServerData::serverPrivateVariables.marketItemList.at(index).quantity));
+                stringreplaceOne(queryText,"%2",std::to_string(objectId));
+                stringreplaceOne(queryText,"%3",std::to_string(character_id));
                 dbQueryWriteServer(queryText);
             }
             addObject(objectId,quantity);
@@ -3834,10 +3834,10 @@ void Client::withdrawMarketMonster(const uint32_t &query_id,const uint32_t &mons
             GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.erase(GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.begin()+index);
             public_and_private_informations.playerMonster.push_back(marketPlayerMonster.monster);
             std::string queryText=PreparedDBQueryCommon::db_query_update_monster_move_to_player;
-            stringreplace(queryText,"%1",std::to_string(marketPlayerMonster.monster.id));
+            stringreplaceOne(queryText,"%1",std::to_string(marketPlayerMonster.monster.id));
             dbQueryWriteCommon(queryText);
             queryText=PreparedDBQueryServer::db_query_delete_monster_market_price;
-            stringreplace(queryText,"%1",std::to_string(marketPlayerMonster.monster.id));
+            stringreplaceOne(queryText,"%1",std::to_string(marketPlayerMonster.monster.id));
             dbQueryWriteServer(queryText);
             out << (uint8_t)0x01;
             out << (uint8_t)0x02;

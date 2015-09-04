@@ -39,7 +39,7 @@ void BaseServer::preload_zone_sql()
     while(entryListIndex<listsize)
     {
         std::string zoneCodeName=entryListZone.at(entryListIndex).fileName().toStdString();
-        stringreplace(zoneCodeName,BaseServer::text_dotxml,"");
+        stringreplaceOne(zoneCodeName,BaseServer::text_dotxml,"");
         std::string queryText;
         switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
         {
