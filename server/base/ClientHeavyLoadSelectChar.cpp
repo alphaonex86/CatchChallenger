@@ -82,19 +82,19 @@ void Client::purgeTokenAuthList()
 void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryCommon::db_query_character_by_id.isEmpty())
+    if(PreparedDBQueryCommon::db_query_character_by_id.empty())
     {
-        errorOutput(std::stringLiteral("selectCharacter() Query is empty, bug"));
+        errorOutput("selectCharacter() Query is empty, bug");
         return;
     }
-    if(PreparedDBQueryCommon::db_query_update_character_last_connect.isEmpty())
+    if(PreparedDBQueryCommon::db_query_update_character_last_connect.empty())
     {
-        errorOutput(std::stringLiteral("selectCharacter() Query db_query_update_character_last_connect is empty, bug"));
+        errorOutput("selectCharacter() Query db_query_update_character_last_connect is empty, bug");
         return;
     }
-    if(PreparedDBQueryCommon::db_query_update_character_time_to_delete.isEmpty())
+    if(PreparedDBQueryCommon::db_query_update_character_time_to_delete.empty())
     {
-        errorOutput(std::stringLiteral("selectCharacter() Query db_query_update_character_time_to_delete is empty, bug"));
+        errorOutput("selectCharacter() Query db_query_update_character_time_to_delete is empty, bug");
         return;
     }
     #endif
@@ -102,12 +102,13 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
     selectCharacterParam->query_id=query_id;
     selectCharacterParam->characterId=characterId;
 
-    const std::string &queryText=PreparedDBQueryCommon::db_query_character_by_id.arg(characterId);
+    std::string queryText=PreparedDBQueryCommon::db_query_character_by_id;
+    stringreplaceOne(queryText,"%1",std::to_string(characterId));
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::selectCharacter_static);
     if(callback==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
-        characterSelectionIsWrong(query_id,0x02,queryText+QLatin1String(": ")+GlobalServerData::serverPrivateVariables.db_common->errorMessage());
+        characterSelectionIsWrong(query_id,0x02,queryText+": "+GlobalServerData::serverPrivateVariables.db_common->errorMessage());
         delete selectCharacterParam;
         return;
     }
@@ -130,9 +131,9 @@ void Client::selectCharacter_static(void *object)
 void Client::selectCharacter_object()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBack.isEmpty())
+    if(paramToPassToCallBack.empty())
     {
-        qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
+        qDebug() << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -149,30 +150,31 @@ void Client::selectCharacter_object()
 void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBackType.takeFirst()!=std::stringLiteral("SelectCharacterParam"))
+    if(paramToPassToCallBackType.front()!="SelectCharacterParam")
     {
-        qDebug() << "is not SelectCharacterParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__;
+        std::cerr << "is not SelectCharacterParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
         abort();
     }
+    paramToPassToCallBackType.erase(paramToPassToCallBackType.begin());
     #endif
     /*account(0),pseudo(1),skin(2),type(3),clan(4),cash(5),
     warehouse_cash(6),clan_leader(7),time_to_delete(8),starter(9)*/
     callbackRegistred.erase(callbackRegistred.begin());
     if(!GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        qDebug() << std::stringLiteral("Try select %1 but not found with account %2").arg(characterId).arg(account_id);
-        characterSelectionIsWrong(query_id,0x02,QLatin1String("Result return query wrong"));
+        std::cerr << "Try select " << characterId << " but not found with account " << account_id << std::endl;
+        characterSelectionIsWrong(query_id,0x02,"Result return query wrong");
         return;
     }
 
     bool ok;
-    public_and_private_informations.clan=std::string(GlobalServerData::serverPrivateVariables.db_common->value(4)).toUInt(&ok);
+    public_and_private_informations.clan=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(4),&ok);
     if(!ok)
     {
         //normalOutput(std::stringLiteral("clan id is not an number, clan disabled"));
         public_and_private_informations.clan=0;//no clan
     }
-    public_and_private_informations.clan_leader=(std::string(GlobalServerData::serverPrivateVariables.db_common->value(7)).toUInt(&ok)==1);
+    public_and_private_informations.clan_leader=(stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(7),&ok)==1);
     if(!ok)
     {
         //normalOutput(std::stringLiteral("clan_leader id is not an number, clan_leader disabled"));
@@ -181,23 +183,23 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
 
     if(character_loaded)
     {
-        characterSelectionIsWrong(query_id,0x03,QLatin1String("character_loaded already to true"));
+        characterSelectionIsWrong(query_id,0x03,"character_loaded already to true");
         return;
     }
-    const uint32_t &account_id=std::string(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
+    const uint32_t &account_id=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
     if(!ok)
     {
-        characterSelectionIsWrong(query_id,0x02,std::stringLiteral("Account for character: %1 is not an id").arg(GlobalServerData::serverPrivateVariables.db_common->value(0)));
+        characterSelectionIsWrong(query_id,0x02,"Account for character: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" is not an id");
         return;
     }
     if(this->account_id!=account_id)
     {
-        characterSelectionIsWrong(query_id,0x02,std::stringLiteral("Character: %1 is not owned by the account: %2").arg(characterId).arg(this->account_id));
+        characterSelectionIsWrong(query_id,0x02,"Character: "+std::to_string(characterId)+" is not owned by the account: "+std::to_string(this->account_id));
         return;
     }
-    if(GlobalServerData::serverPrivateVariables.connected_players_id_list.contains(characterId))
+    if(GlobalServerData::serverPrivateVariables.connected_players_id_list.find(characterId)!=GlobalServerData::serverPrivateVariables.connected_players_id_list.cend())
     {
-        characterSelectionIsWrong(query_id,0x03,QLatin1String("Already logged"));
+        characterSelectionIsWrong(query_id,0x03,"Already logged");
         return;
     }
 
@@ -205,43 +207,50 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     if(!loadTheRawUTF8String())
     {
         if(GlobalServerData::serverSettings.anonymous)
-            characterSelectionIsWrong(query_id,0x04,std::stringLiteral("Unable to convert the pseudo to utf8 for character id: %1").arg(character_id));
+            characterSelectionIsWrong(query_id,0x04,"Unable to convert the pseudo to utf8 for character id: "+std::to_string(character_id));
         else
-            characterSelectionIsWrong(query_id,0x04,std::stringLiteral("Unable to convert the pseudo to utf8: %1").arg(public_and_private_informations.public_informations.pseudo));
+            characterSelectionIsWrong(query_id,0x04,"Unable to convert the pseudo to utf8: "+public_and_private_informations.public_informations.pseudo);
         return;
     }
 
     #ifndef SERVERBENCHMARK
     if(GlobalServerData::serverSettings.anonymous)
-        normalOutput(std::stringLiteral("Charater id is logged: %1").arg(characterId));
+        normalOutput("Charater id is logged: "+std::to_string(characterId));
     else
-        normalOutput(std::stringLiteral("Charater is logged: %1").arg(GlobalServerData::serverPrivateVariables.db_common->value(1)));
+        normalOutput("Charater is logged: "+GlobalServerData::serverPrivateVariables.db_common->value(1));
     #endif
-    const uint32_t &time_to_delete=std::string(GlobalServerData::serverPrivateVariables.db_common->value(8)).toUInt(&ok);
+    const uint32_t &time_to_delete=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(8),&ok);
     if(!ok || time_to_delete>0)
-        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_time_to_delete.arg(characterId));
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_last_connect.arg(characterId).arg(QDateTime::currentDateTime().toTime_t()));
+    {
+        std::string queryText=PreparedDBQueryCommon::db_query_update_character_time_to_delete;
+        stringreplaceOne(queryText,"%1",std::to_string(characterId));
+        dbQueryWriteCommon(queryText);
+    }
+    std::string queryText=PreparedDBQueryCommon::db_query_update_character_last_connect;
+    stringreplaceOne(queryText,"%1",std::to_string(characterId));
+    stringreplaceOne(queryText,"%2",std::to_string(QDateTime::currentDateTime().toTime_t()));
+    dbQueryWriteCommon(queryText);
 
-    const uint32_t &skin_database_id=std::string(GlobalServerData::serverPrivateVariables.db_common->value(2)).toUInt(&ok);
+    const uint32_t &skin_database_id=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
     if(!ok)
     {
-        normalOutput(std::stringLiteral("Skin is not a number"));
+        normalOutput("Skin is not a number");
         public_and_private_informations.public_informations.skinId=0;
     }
     else
     {
         if(skin_database_id<(uint32_t)DictionaryLogin::dictionary_skin_database_to_internal.size())
-            public_and_private_informations.public_informations.skinId=DictionaryLogin::dictionary_skin_database_to_internal.value(skin_database_id);
+            public_and_private_informations.public_informations.skinId=DictionaryLogin::dictionary_skin_database_to_internal.at(skin_database_id);
         else
         {
-            normalOutput(std::stringLiteral("Skin not found, or out of the 255 first folder, default of the first by order alphabetic if have"));
+            normalOutput("Skin not found, or out of the 255 first folder, default of the first by order alphabetic if have");
             public_and_private_informations.public_informations.skinId=0;
         }
     }
-    const uint32_t &type=std::string(GlobalServerData::serverPrivateVariables.db_common->value(3)).toUInt(&ok);
+    const uint32_t &type=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(3),&ok);
     if(!ok)
     {
-        normalOutput(std::stringLiteral("Player type is not a number, default to normal"));
+        normalOutput("Player type is not a number, default to normal");
         public_and_private_informations.public_informations.type=Player_type_normal;
     }
     else
@@ -250,20 +259,20 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             public_and_private_informations.public_informations.type=static_cast<Player_type>((type+1)*16);
         else
         {
-            normalOutput(std::stringLiteral("Mysql wrong type value").arg(type));
+            normalOutput("Player wrong type value: "+std::to_string(type));
             public_and_private_informations.public_informations.type=Player_type_normal;
         }
     }
-    public_and_private_informations.cash=std::string(GlobalServerData::serverPrivateVariables.db_common->value(5)).toUInt(&ok);
+    public_and_private_informations.cash=stringtouint64(GlobalServerData::serverPrivateVariables.db_common->value(5),&ok);
     if(!ok)
     {
-        normalOutput(std::stringLiteral("cash id is not an number, cash set to 0"));
+        normalOutput("cash id is not an number, cash set to 0");
         public_and_private_informations.cash=0;
     }
-    public_and_private_informations.warehouse_cash=std::string(GlobalServerData::serverPrivateVariables.db_common->value(6)).toUInt(&ok);
+    public_and_private_informations.warehouse_cash=stringtouint64(GlobalServerData::serverPrivateVariables.db_common->value(6),&ok);
     if(!ok)
     {
-        normalOutput(std::stringLiteral("warehouse cash id is not an number, warehouse cash set to 0"));
+        normalOutput("warehouse cash id is not an number, warehouse cash set to 0");
         public_and_private_informations.warehouse_cash=0;
     }
 
@@ -274,7 +283,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         return;
     }
 
-    const uint8_t &starter=std::string(GlobalServerData::serverPrivateVariables.db_common->value(9)).toUInt(&ok);
+    const uint8_t &starter=stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(9),&ok);
     if(!ok)
     {
         characterSelectionIsWrong(query_id,0x04,"start from base selection");
@@ -283,19 +292,21 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(CommonDatapack::commonDatapack.profileList.size()!=GlobalServerData::serverPrivateVariables.serverProfileInternalList.size())
     {
-        characterSelectionIsWrong(query_id,0x04,std::stringLiteral("profile common and server don't match"));
+        characterSelectionIsWrong(query_id,0x04,"profile common and server don't match");
         return;
     }
     #endif
     if(starter>=DictionaryLogin::dictionary_starter_database_to_internal.size())
     {
-        characterSelectionIsWrong(query_id,0x04,std::stringLiteral("starter %1 >= DictionaryLogin::dictionary_starter_database_to_internal.size() %2").arg(starter).arg(DictionaryLogin::dictionary_starter_database_to_internal.size()));
+        characterSelectionIsWrong(query_id,0x04,"starter "+std::to_string(starter)+
+                                  " >= DictionaryLogin::dictionary_starter_database_to_internal.size() "+std::to_string(DictionaryLogin::dictionary_starter_database_to_internal.size()));
         return;
     }
     profileIndex=DictionaryLogin::dictionary_starter_database_to_internal.at(starter);
     if(profileIndex>=CommonDatapack::commonDatapack.profileList.size())
     {
-        errorOutput(std::stringLiteral("profile index: %1 out of range (profileList size: %2)").arg(profileIndex).arg(CommonDatapack::commonDatapack.profileList.size()));
+        errorOutput("profile index: "+std::to_string(profileIndex)+
+                    " out of range (profileList size: "+std::to_string(CommonDatapack::commonDatapack.profileList.size())+")");
         #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         LinkToMaster::linkToMaster->characterDisconnected(characterId);
         #endif
@@ -303,7 +314,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     }
     if(!GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex).valid)
     {
-        characterSelectionIsWrong(query_id,0x04,std::stringLiteral("profile index: %1 profil not valid").arg(profileIndex));
+        characterSelectionIsWrong(query_id,0x04,"profile index: "+std::to_string(profileIndex)+" profil not valid");
         return;
     }
 
@@ -341,9 +352,9 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
 void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryServer::db_query_character_server_by_id.isEmpty())
+    if(PreparedDBQueryServer::db_query_character_server_by_id.empty())
     {
-        characterSelectionIsWrong(query_id,0x04,std::stringLiteral("selectCharacterServer() Query is empty, bug"));
+        characterSelectionIsWrong(query_id,0x04,"selectCharacterServer() Query is empty, bug");
         return;
     }
     #endif
@@ -351,12 +362,13 @@ void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &char
     selectCharacterParam->query_id=query_id;
     selectCharacterParam->characterId=characterId;
 
-    const std::string &queryText=PreparedDBQueryServer::db_query_character_server_by_id.arg(characterId);
+    std::string queryText=PreparedDBQueryServer::db_query_character_server_by_id;
+    stringreplaceOne(queryText,"%1",std::to_string(characterId));
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&Client::selectCharacterServer_static);
     if(callback==NULL)
     {
-        qDebug() << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_server->errorMessage();
-        characterSelectionIsWrong(query_id,0x02,queryText+QLatin1String(": ")+GlobalServerData::serverPrivateVariables.db_server->errorMessage());
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
+        characterSelectionIsWrong(query_id,0x02,queryText+": "+GlobalServerData::serverPrivateVariables.db_server->errorMessage());
         delete selectCharacterParam;
         return;
     }
@@ -380,13 +392,14 @@ void Client::selectCharacterServer_static(void *object)
 void Client::selectCharacterServer_object()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBack.isEmpty())
+    if(paramToPassToCallBack.empty())
     {
-        qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
+        qDebug() << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__;
         abort();
     }
     #endif
-    SelectCharacterParam *selectCharacterParam=static_cast<SelectCharacterParam *>(paramToPassToCallBack.front());paramToPassToCallBack.erase(paramToPassToCallBack.begin());
+    SelectCharacterParam *selectCharacterParam=static_cast<SelectCharacterParam *>(paramToPassToCallBack.front());
+    paramToPassToCallBack.erase(paramToPassToCallBack.begin());
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(selectCharacterParam==NULL)
         abort();
@@ -399,11 +412,12 @@ void Client::selectCharacterServer_object()
 void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBackType.takeFirst()!=std::stringLiteral("SelectCharacterParam"))
+    if(paramToPassToCallBackType.front()!="SelectCharacterParam")
     {
-        qDebug() << "is not SelectCharacterParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__;
+        std::cerr << "is not SelectCharacterParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
         abort();
     }
+    paramToPassToCallBackType.erase(paramToPassToCallBackType.begin());
     #endif
     /*map(0),x(1),y(2),orientation(3),
     rescue_map(4),rescue_x(5),rescue_y(6),rescue_orientation(7),
@@ -413,13 +427,18 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     if(!GlobalServerData::serverPrivateVariables.db_server->next())
     {
         const ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex);
+
         dbQueryWriteServer(serverProfileInternal.preparedQuerySelect.at(0)+
                      std::to_string(characterId)+
                      serverProfileInternal.preparedQuerySelect.at(1)+
                      std::to_string(QDateTime::currentDateTime().toTime_t())+
                      serverProfileInternal.preparedQuerySelect.at(2)
                      );
-        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_last_connect.arg(characterId).arg(QDateTime::currentDateTime().toTime_t()));
+        std::string queryText=PreparedDBQueryCommon::db_query_update_character_last_connect;
+        stringreplaceOne(queryText,"%1",std::to_string(characterId));
+        stringreplaceOne(queryText,"%2",std::to_string(QDateTime::currentDateTime().toTime_t()));
+        dbQueryWriteCommon(queryText);
+
         characterIsRightWithParsedRescue(query_id,
             characterId,
             serverProfileInternal.map,
@@ -448,7 +467,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         case MapVisibilityAlgorithmSelection_WithBorder:
         if(simplifiedIdList.size()<=0)
         {
-            characterSelectionIsWrong(query_id,0x04,QLatin1String("Not free id to login"));
+            characterSelectionIsWrong(query_id,0x04,"Not free id to login");
             return;
         }
         break;
@@ -456,10 +475,10 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         break;
     }
 
-    market_cash=std::string(GlobalServerData::serverPrivateVariables.db_server->value(12)).toULongLong(&ok);
+    market_cash=stringtouint64(GlobalServerData::serverPrivateVariables.db_server->value(12),&ok);
     if(!ok)
     {
-        characterSelectionIsWrong(query_id,0x04,std::stringLiteral("Market cash wrong: %1").arg(GlobalServerData::serverPrivateVariables.db_server->value(22)));
+        characterSelectionIsWrong(query_id,0x04,"Market cash wrong: "+GlobalServerData::serverPrivateVariables.db_server->value(22));
         return;
     }
 
@@ -470,7 +489,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         return;
     }
     Orientation orientation;
-    const uint32_t &orientationInt=std::string(GlobalServerData::serverPrivateVariables.db_server->value(3)).toUInt(&ok);
+    const uint32_t &orientationInt=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(3),&ok);
     if(ok)
     {
         if(orientationInt>=1 && orientationInt<=4)
@@ -478,52 +497,52 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         else
         {
             orientation=Orientation_bottom;
-            normalOutput(std::stringLiteral("Wrong orientation corrected with bottom"));
+            normalOutput("Wrong orientation corrected with bottom");
         }
     }
     else
     {
         orientation=Orientation_bottom;
-        normalOutput(std::stringLiteral("Wrong orientation (not number) corrected with bottom: %1").arg(std::string(GlobalServerData::serverPrivateVariables.db_server->value(5))));
+        normalOutput("Wrong orientation (not number) corrected with bottom: "+GlobalServerData::serverPrivateVariables.db_server->value(5));
     }
     //all is rights
-    const uint32_t &map_database_id=std::string(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
+    const uint32_t &map_database_id=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
     if(!ok)
     {
-        characterSelectionIsWrong(query_id,0x04,QLatin1String("map_database_id is not a number"));
+        characterSelectionIsWrong(query_id,0x04,"map_database_id is not a number");
         return;
     }
     if(map_database_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
     {
-        characterSelectionIsWrong(query_id,0x04,QLatin1String("map_database_id out of range"));
+        characterSelectionIsWrong(query_id,0x04,"map_database_id out of range");
         return;
     }
     CommonMap * const map=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(map_database_id));
     if(map==NULL)
     {
-        characterSelectionIsWrong(query_id,0x04,QLatin1String("map_database_id have not reverse"));
+        characterSelectionIsWrong(query_id,0x04,"map_database_id have not reverse");
         return;
     }
-    const uint8_t &x=std::string(GlobalServerData::serverPrivateVariables.db_server->value(1)).toUInt(&ok);
+    const uint8_t &x=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
     if(!ok)
     {
-        characterSelectionIsWrong(query_id,0x04,QLatin1String("x coord is not a number"));
+        characterSelectionIsWrong(query_id,0x04,"x coord is not a number");
         return;
     }
-    const uint8_t &y=std::string(GlobalServerData::serverPrivateVariables.db_server->value(2)).toUInt(&ok);
+    const uint8_t &y=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok);
     if(!ok)
     {
-        characterSelectionIsWrong(query_id,0x04,QLatin1String("y coord is not a number"));
+        characterSelectionIsWrong(query_id,0x04,"y coord is not a number");
         return;
     }
     if(x>=map->width)
     {
-        characterSelectionIsWrong(query_id,0x04,std::stringLiteral("x to out of map: %1 > %2 (%3)").arg(x).arg(map->width).arg(map->map_file));
+        characterSelectionIsWrong(query_id,0x04,"x to out of map: "+std::to_string(x)+" >= "+std::to_string(map->width)+" ("+map->map_file+")");
         return;
     }
     if(y>=map->height)
     {
-        characterSelectionIsWrong(query_id,0x04,std::stringLiteral("y to out of map: %1 > %2 (%3)").arg(y).arg(map->height).arg(map->map_file));
+        characterSelectionIsWrong(query_id,0x04,"y to out of map: "+std::to_string(y)+" >= "+std::to_string(map->height)+" ("+map->map_file+")");
         return;
     }
     characterIsRightWithRescue(query_id,
@@ -578,8 +597,8 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
 
 
 void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t characterId, CommonMap* map, const /*COORD_TYPE*/ uint8_t &x, const /*COORD_TYPE*/ uint8_t &y, const Orientation &orientation,
-                  const QVariant &rescue_map, const QVariant &rescue_x, const QVariant &rescue_y, const QVariant &rescue_orientation,
-                  const QVariant &unvalidated_rescue_map, const QVariant &unvalidated_rescue_x, const QVariant &unvalidated_rescue_y, const QVariant &unvalidated_rescue_orientation
+                  const std::string &rescue_map, const std::string &rescue_x, const std::string &rescue_y, const std::string &rescue_orientation,
+                  const std::string &unvalidated_rescue_map, const std::string &unvalidated_rescue_x, const std::string &unvalidated_rescue_y, const std::string &unvalidated_rescue_orientation
                                              )
 {
     bool ok;
@@ -748,7 +767,7 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
                   )
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryCommon::db_query_clan.isEmpty())
+    if(PreparedDBQueryCommon::db_query_clan.empty())
     {
         errorOutput(std::stringLiteral("loginIsRightWithParsedRescue() Query is empty, bug"));
         return;
@@ -837,7 +856,7 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
 void Client::loadItemOnMap()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryServer::db_query_select_itemOnMap.isEmpty())
+    if(PreparedDBQueryServer::db_query_select_itemOnMap.empty())
     {
         errorOutput(std::stringLiteral("loadBotAlreadyBeaten() Query is empty, bug"));
         return;
@@ -913,7 +932,7 @@ void Client::loadItemOnMap_return()
 void Client::loadPlantOnMap()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryServer::db_query_select_plant.isEmpty())
+    if(PreparedDBQueryServer::db_query_select_plant.empty())
     {
         errorOutput(std::stringLiteral("loadBotAlreadyBeaten() Query is empty, bug"));
         return;
@@ -1085,7 +1104,7 @@ void Client::characterIsRightFinalStep()
     outputData+=CommonSettingsServer::commonSettingsServer.datapackHashServerMain;
     out.device()->seek(out.device()->pos()+CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size());
     //sub hash
-    if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+    if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
     {
         if(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()!=28)
         {
@@ -1355,7 +1374,7 @@ void Client::loginIsWrong(const uint8_t &query_id, const uint8_t &returnCode, co
 
 void Client::loadPlayerAllow()
 {
-    if(!PreparedDBQueryCommon::db_query_select_allow.isEmpty())
+    if(!PreparedDBQueryCommon::db_query_select_allow.empty())
     {
         CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(PreparedDBQueryCommon::db_query_select_allow.arg(character_id).toLatin1(),this,&Client::loadPlayerAllow_static);
         if(callback==NULL)
