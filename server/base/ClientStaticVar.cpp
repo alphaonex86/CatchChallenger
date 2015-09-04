@@ -82,7 +82,7 @@ std::vector<uint16_t> Client::simplifiedIdList;
 uint8_t Client::tempDatapackListReplySize=0;
 uint8_t Client::tempDatapackListReply=0;
 QByteArray Client::tempDatapackListReplyArray;
-int Client::tempDatapackListReplyTestCount;
+unsigned int Client::tempDatapackListReplyTestCount;
 quint64 Client::datapack_list_cache_timestamp_base;
 quint64 Client::datapack_list_cache_timestamp_main;
 quint64 Client::datapack_list_cache_timestamp_sub;

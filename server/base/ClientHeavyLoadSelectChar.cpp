@@ -106,7 +106,7 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::selectCharacter_static);
     if(callback==NULL)
     {
-        qDebug() << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_common->errorMessage();
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         characterSelectionIsWrong(query_id,0x02,queryText+QLatin1String(": ")+GlobalServerData::serverPrivateVariables.db_common->errorMessage());
         delete selectCharacterParam;
         return;
@@ -136,7 +136,7 @@ void Client::selectCharacter_object()
         abort();
     }
     #endif
-    SelectCharacterParam *selectCharacterParam=static_cast<SelectCharacterParam *>(paramToPassToCallBack.takeFirst());
+    SelectCharacterParam *selectCharacterParam=static_cast<SelectCharacterParam *>(paramToPassToCallBack.front());paramToPassToCallBack.erase(paramToPassToCallBack.begin());
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(selectCharacterParam==NULL)
         abort();
@@ -157,7 +157,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     #endif
     /*account(0),pseudo(1),skin(2),type(3),clan(4),cash(5),
     warehouse_cash(6),clan_leader(7),time_to_delete(8),starter(9)*/
-    callbackRegistred.removeFirst();
+    callbackRegistred.erase(callbackRegistred.begin());
     if(!GlobalServerData::serverPrivateVariables.db_common->next())
     {
         qDebug() << std::stringLiteral("Try select %1 but not found with account %2").arg(characterId).arg(account_id);
@@ -386,7 +386,7 @@ void Client::selectCharacterServer_object()
         abort();
     }
     #endif
-    SelectCharacterParam *selectCharacterParam=static_cast<SelectCharacterParam *>(paramToPassToCallBack.takeFirst());
+    SelectCharacterParam *selectCharacterParam=static_cast<SelectCharacterParam *>(paramToPassToCallBack.front());paramToPassToCallBack.erase(paramToPassToCallBack.begin());
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(selectCharacterParam==NULL)
         abort();
@@ -409,14 +409,14 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     rescue_map(4),rescue_x(5),rescue_y(6),rescue_orientation(7),
     unvalidated_rescue_map(8),unvalidated_rescue_x(9),unvalidated_rescue_y(10),unvalidated_rescue_orientation(11),
     market_cash(12)*/
-    callbackRegistred.removeFirst();
+    callbackRegistred.erase(callbackRegistred.begin());
     if(!GlobalServerData::serverPrivateVariables.db_server->next())
     {
         const ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex);
         dbQueryWriteServer(serverProfileInternal.preparedQuerySelect.at(0)+
-                     std::string::number(characterId)+
+                     std::to_string(characterId)+
                      serverProfileInternal.preparedQuerySelect.at(1)+
-                     std::string::number(QDateTime::currentDateTime().toTime_t())+
+                     std::to_string(QDateTime::currentDateTime().toTime_t())+
                      serverProfileInternal.preparedQuerySelect.at(2)
                      );
         dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_last_connect.arg(characterId).arg(QDateTime::currentDateTime().toTime_t()));
@@ -813,7 +813,7 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
             CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::selectClan_static);
             if(callback==NULL)
             {
-                qDebug() << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_common->errorMessage();
+                std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
                 loadLinkedData();
                 return;
             }
@@ -867,7 +867,7 @@ void Client::loadItemOnMap_static(void *object)
 
 void Client::loadItemOnMap_return()
 {
-    callbackRegistred.removeFirst();
+    callbackRegistred.erase(callbackRegistred.begin());
     bool ok;
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db_server->next())
@@ -939,7 +939,7 @@ void Client::loadPlantOnMap_static(void *object)
 
 void Client::loadPlantOnMap_return()
 {
-    callbackRegistred.removeFirst();
+    callbackRegistred.erase(callbackRegistred.begin());
     bool ok;
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db_server->next())
@@ -1315,7 +1315,7 @@ void Client::selectClan_static(void *object)
 
 void Client::selectClan_return()
 {
-    callbackRegistred.removeFirst();
+    callbackRegistred.erase(callbackRegistred.begin());
     //parse the result
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
@@ -1379,7 +1379,7 @@ void Client::loadPlayerAllow_static(void *object)
 
 void Client::loadPlayerAllow_return()
 {
-    callbackRegistred.removeFirst();
+    callbackRegistred.erase(callbackRegistred.begin());
     bool ok;
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {

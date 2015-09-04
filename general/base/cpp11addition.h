@@ -26,8 +26,8 @@ public:
   }
 };
 
-bool stringreplace(std::string& str, const std::string& from, const std::string& to) {
-    size_t start_pos = str.find(from);
+bool stringreplaceOne(std::string& str, const std::string& from, const std::string& to) {
+    const size_t start_pos = str.find(from);
     if(start_pos == std::string::npos)
         return false;
     str.replace(start_pos, from.length(), to);
@@ -176,6 +176,37 @@ uint32_t stringtouint32(const std::string &string,bool *ok=NULL)
             *ok=false;
         return 0;
     }
+}
+
+bool stringtobool(const std::string &string,bool *ok=NULL)
+{
+    if(string=="1")
+    {
+        if(ok!=NULL)
+            *ok=true;
+        return true;
+    }
+    if(string=="0")
+    {
+        if(ok!=NULL)
+            *ok=true;
+        return false;
+    }
+    if(string=="true" || string=="TRUE")
+    {
+        if(ok!=NULL)
+            *ok=true;
+        return true;
+    }
+    if(string=="false" || string=="FALSE")
+    {
+        if(ok!=NULL)
+            *ok=true;
+        return false;
+    }
+    if(ok!=NULL)
+        *ok=false;
+    return false;
 }
 
 uint64_t stringtouint64(const std::string &string,bool *ok=NULL)
