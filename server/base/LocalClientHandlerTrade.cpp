@@ -151,8 +151,8 @@ void Client::addExistingMonster(std::vector<PlayerMonster> tradeMonster)
     while(index<tradeMonster.size())
     {
         std::string queryText=PreparedDBQueryCommon::db_query_update_monster_owner;
-        stringreplace(queryText,"%1",std::to_string(tradeMonster.at(index).id));
-        stringreplace(queryText,"%2",std::to_string(character_id));
+        stringreplaceOne(queryText,"%1",std::to_string(tradeMonster.at(index).id));
+        stringreplaceOne(queryText,"%2",std::to_string(character_id));
         dbQueryWriteCommon(queryText);
         index++;
     }
@@ -312,8 +312,8 @@ void Client::tradeAddTradeMonster(const uint32_t &monsterId)
             {
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
                 std::string queryText=PreparedDBQueryCommon::db_query_update_monster_position;
-                stringreplace(queryText,"%1",std::to_string(index+1));
-                stringreplace(queryText,"%2",std::to_string(playerMonster.id));
+                stringreplaceOne(queryText,"%1",std::to_string(index+1));
+                stringreplaceOne(queryText,"%2",std::to_string(playerMonster.id));
                 dbQueryWriteCommon(queryText);
                 index++;
             }

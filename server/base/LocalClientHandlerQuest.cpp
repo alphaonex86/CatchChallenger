@@ -234,8 +234,8 @@ bool Client::nextStepQuest(const Quest &quest)
         normalOutput("finish the quest: "+std::to_string(quest.id));
         #endif
         std::string queryText=PreparedDBQueryServer::db_query_update_quest_finish;
-        stringreplace(queryText,"%1",std::to_string(character_id));
-        stringreplace(queryText,"%2",std::to_string(quest.id));
+        stringreplaceOne(queryText,"%1",std::to_string(character_id));
+        stringreplaceOne(queryText,"%2",std::to_string(quest.id));
         dbQueryWriteServer(queryText);
         public_and_private_informations.quests[quest.id].step=0;
         public_and_private_informations.quests[quest.id].finish_one_time=true;
@@ -264,9 +264,9 @@ bool Client::nextStepQuest(const Quest &quest)
         normalOutput("next step in the quest: "+std::to_string(quest.id));
         #endif
         std::string queryText=PreparedDBQueryServer::db_query_update_quest_step;
-        stringreplace(queryText,"%1",std::to_string(character_id));
-        stringreplace(queryText,"%2",std::to_string(quest.id));
-        stringreplace(queryText,"%3",std::to_string(public_and_private_informations.quests.at(quest.id).step));
+        stringreplaceOne(queryText,"%1",std::to_string(character_id));
+        stringreplaceOne(queryText,"%2",std::to_string(quest.id));
+        stringreplaceOne(queryText,"%3",std::to_string(public_and_private_informations.quests.at(quest.id).step));
         dbQueryWriteServer(queryText);
         addQuestStepDrop(quest.id,public_and_private_informations.quests.at(quest.id).step);
     }
@@ -278,9 +278,9 @@ bool Client::startQuest(const Quest &quest)
     if(public_and_private_informations.quests.find(quest.id)==public_and_private_informations.quests.cend())
     {
         std::string queryText=PreparedDBQueryServer::db_query_insert_quest;
-        stringreplace(queryText,"%1",std::to_string(character_id));
-        stringreplace(queryText,"%2",std::to_string(quest.id));
-        stringreplace(queryText,"%3",std::to_string(1));
+        stringreplaceOne(queryText,"%1",std::to_string(character_id));
+        stringreplaceOne(queryText,"%2",std::to_string(quest.id));
+        stringreplaceOne(queryText,"%3",std::to_string(1));
         dbQueryWriteServer(queryText);
         public_and_private_informations.quests[quest.id].step=1;
         public_and_private_informations.quests[quest.id].finish_one_time=false;
@@ -288,8 +288,8 @@ bool Client::startQuest(const Quest &quest)
     else
     {
         std::string queryText=PreparedDBQueryServer::db_query_update_quest_restart;
-        stringreplace(queryText,"%1",std::to_string(character_id));
-        stringreplace(queryText,"%2",std::to_string(quest.id));
+        stringreplaceOne(queryText,"%1",std::to_string(character_id));
+        stringreplaceOne(queryText,"%2",std::to_string(quest.id));
         dbQueryWriteServer(queryText);
         public_and_private_informations.quests[quest.id].step=1;
     }
