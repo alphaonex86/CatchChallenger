@@ -599,7 +599,7 @@ void BaseServer::preload_zone_return()
             GlobalServerData::serverPrivateVariables.cityStatusListReverse[clanId]=zoneCodeName;
         }
         else
-            std::cerr << "clan id is failed to convert to number for city status" << std::endl;;
+            std::cerr << "clan id is failed to convert to number for city status" << std::endl;
     }
     GlobalServerData::serverPrivateVariables.db_server->clear();
     entryListIndex++;
@@ -624,7 +624,7 @@ bool BaseServer::preload_the_map()
             CommonSettingsServer::commonSettingsServer.mainDatapackCode+
             "/";
     #ifdef DEBUG_MESSAGE_MAP_LOAD
-    std::cout << "start preload the map, into: " << GlobalServerData::serverPrivateVariables.datapack_mapPath << std::endl;;
+    std::cout << "start preload the map, into: " << GlobalServerData::serverPrivateVariables.datapack_mapPath << std::endl;
     #endif
     Map_loader map_temp;
     std::vector<std::string> map_name;
@@ -634,12 +634,12 @@ bool BaseServer::preload_the_map()
 
     if(returnList.size()==0)
     {
-        std::cerr << "No file map to list" << std::endl;;
+        std::cerr << "No file map to list" << std::endl;
         abort();
     }
     if(!semi_loaded_map.size()==0 || GlobalServerData::serverPrivateVariables.flat_map_list!=NULL)
     {
-        std::cerr << "preload_the_map() already call" << std::endl;;
+        std::cerr << "preload_the_map() already call" << std::endl;
         abort();
     }
     //load the map
@@ -731,7 +731,10 @@ bool BaseServer::preload_the_map()
                 semi_loaded_map.push_back(map_semi);
             }
             else
-                std::cout << "error at loading: " << fileName << ", error: " << map_temp.errorString() << std::endl;;
+                std::cout << "error at loading: " << GlobalServerData::serverPrivateVariables.datapack_mapPath << fileName << ", error: " << map_temp.errorString()
+                          << "parsed due: " << "std::regex_match(" << fileName << ",\\.tmx$) && !std::regex_match("
+                          << fileName << ",[\"'])"
+                          << std::endl;
         }
         index++;
     }

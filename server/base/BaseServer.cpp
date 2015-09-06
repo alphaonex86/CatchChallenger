@@ -226,6 +226,8 @@ void BaseServer::preload_the_data()
     dataLoaded=true;
     GlobalServerData::serverPrivateVariables.stopIt=false;
 
+    std::cout << "Datapack, base: " << GlobalServerData::serverSettings.datapack_basePath
+              << std::endl;
     {
         QTime time;
         time.restart();
