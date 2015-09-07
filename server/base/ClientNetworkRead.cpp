@@ -37,7 +37,7 @@ void Client::doDDOSCompute()
             }
             if(movePacketKick[index]>GlobalServerData::serverSettings.ddos.kickLimitMove*2)
             {
-                errorOutput(std::string("index out of range in array for index %1, movePacketKick").arg(movePacketKick[index]));
+                errorOutput("index out of range in array for index "+std::to_string(movePacketKick[index])+", movePacketKick");
                 return;
             }
             #endif
@@ -113,18 +113,18 @@ void Client::sendNewEvent(const QByteArray &data)
 {
     if(queryNumberList.empty())
     {
-        errorOutput(std::stringLiteral("Sorry, no free query number to send this query of sendNewEvent"));
+        errorOutput("Sorry, no free query number to send this query of sendNewEvent");
         return;
     }
-    sendQuery(0x79,0x02,queryNumberList.first(),data.constData(),data.size());
-    queryNumberList.removeFirst();
+    sendQuery(0x79,0x02,queryNumberList.back(),data.constData(),data.size());
+    queryNumberList.erase(queryNumberList.cend());
 }
 
 void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation)
 {
     if(queryNumberList.empty())
     {
-        errorOutput(std::stringLiteral("Sorry, no free query number to send this query of teleportation"));
+        errorOutput("Sorry, no free query number to send this query of teleportation");
         return;
     }
     PlayerOnMap teleportationPoint;
@@ -132,7 +132,7 @@ void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*CO
     teleportationPoint.x=x;
     teleportationPoint.y=y;
     teleportationPoint.orientation=orientation;
-    lastTeleportation << teleportationPoint;
+    lastTeleportation.push_back(teleportationPoint);
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
@@ -145,30 +145,30 @@ void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*CO
     out << (COORD_TYPE)x;
     out << (COORD_TYPE)y;
     out << (uint8_t)orientation;
-    sendQuery(0x79,0x01,queryNumberList.first(),outputData.constData(),outputData.size());
-    queryNumberList.removeFirst();
+    sendQuery(0x79,0x01,queryNumberList.back(),outputData.constData(),outputData.size());
+    queryNumberList.erase(queryNumberList.cend());
 }
 
 void Client::sendTradeRequest(const QByteArray &data)
 {
     if(queryNumberList.empty())
     {
-        errorOutput(std::stringLiteral("Sorry, no free query number to send this query of trade"));
+        errorOutput("Sorry, no free query number to send this query of trade");
         return;
     }
-    sendQuery(0x80,0x01,queryNumberList.first(),data.constData(),data.size());
-    queryNumberList.removeFirst();
+    sendQuery(0x80,0x01,queryNumberList.back(),data.constData(),data.size());
+    queryNumberList.erase(queryNumberList.cend());
 }
 
 void Client::sendBattleRequest(const QByteArray &data)
 {
     if(queryNumberList.empty())
     {
-        errorOutput(std::stringLiteral("Sorry, no free query number to send this query of trade"));
+        errorOutput("Sorry, no free query number to send this query of trade");
         return;
     }
-    sendQuery(0x90,0x01,queryNumberList.first(),data.constData(),data.size());
-    queryNumberList.removeFirst();
+    sendQuery(0x90,0x01,queryNumberList.back(),data.constData(),data.size());
+    queryNumberList.erase(queryNumberList.cend());
 }
 
 void Client::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
@@ -177,7 +177,7 @@ void Client::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &q
     if(stopIt)
         return;
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    normalOutput(std::stringLiteral("parseInputBeforeLogin(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(std::string(data.toHex())));
+    normalOutput("parseInputBeforeLogin("+std::to_string(mainCodeType)+","+std::to_string(queryNumber)+","+QString(QByteArray(data,size).toHex()).toStdString()+")");
     #endif
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
@@ -195,7 +195,7 @@ void Client::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &q
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 removeFromQueryReceived(queryNumber);
                 #endif
-                replyOutputSize.remove(queryNumber);
+                replyOutputSize.erase(queryNumber);
                 if(GlobalServerData::serverPrivateVariables.connected_players>=GlobalServerData::serverSettings.max_players)
                 {
                     *(Client::protocolReplyServerFull+1)=queryNumber;
@@ -258,11 +258,12 @@ void Client::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &q
                         {
                             /// \todo check why client not disconnected if pass here
                             errorOutput(
-                                        std::stringLiteral("Not correct number of byte to generate the token readedByte!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT: %1!=%2, errno: %3")
-                                        .arg(readedByte)
-                                        .arg(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
-                                        .arg(errno)
-                                        );
+                                        "Not correct number of byte to generate the token readedByte!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT: "+
+                                        std::to_string(readedByte)+
+                                        "!="+
+                                        std::to_string(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)+
+                                        ", errno: "+
+                                        std::to_string(errno)+"");
                             return;
                         }
                     }
@@ -316,7 +317,7 @@ void Client::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &q
                 #endif
                 have_send_protocol=true;
                 #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-                normalOutput(std::stringLiteral("Protocol sended and replied"));
+                normalOutput("Protocol sended and replied");
                 #endif
             }
             else
@@ -386,7 +387,7 @@ void Client::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &q
         break;
         #endif
         default:
-            parseNetworkReadError("wrong data before login with mainIdent: "+std::string::number(mainCodeType));
+            parseNetworkReadError("wrong data before login with mainIdent: "+std::to_string(mainCodeType));
         break;
     }
 }
@@ -438,7 +439,7 @@ void Client::parseMessage(const uint8_t &mainCodeType,const char * const data,co
     #endif
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    normalOutput(std::stringLiteral("parsenormalOutput(%1,%2)").arg(mainCodeType).arg(std::string(data.toHex())));
+    normalOutput("parsenormalOutput("+std::to_string(mainCodeType)+","+QString(QByteArray(data,size).toHex()).toStdString()+")");
     #endif
     switch(mainCodeType)
     {
@@ -454,7 +455,7 @@ void Client::parseMessage(const uint8_t &mainCodeType,const char * const data,co
             const uint8_t &direction=*(data+sizeof(uint8_t));
             if(direction<1 || direction>8)
             {
-                parseNetworkReadError(std::stringLiteral("Bad direction number: %1").arg(direction));
+                parseNetworkReadError("Bad direction number: "+std::to_string(direction));
                 return;
             }
             moveThePlayer(static_cast<uint8_t>(*data),static_cast<Direction>(direction));
@@ -476,7 +477,7 @@ void Client::parseMessage(const uint8_t &mainCodeType,const char * const data,co
             in >> chatType;
             if(chatType!=Chat_type_local && chatType!=Chat_type_all && chatType!=Chat_type_clan && chatType!=Chat_type_pm)
             {
-                parseNetworkReadError("chat type error: "+std::string::number(chatType));
+                parseNetworkReadError("chat type error: "+std::to_string(chatType));
                 return;
             }
             if(chatType==Chat_type_pm)
@@ -500,7 +501,7 @@ void Client::parseMessage(const uint8_t &mainCodeType,const char * const data,co
                                 return;
                             }
                             const QByteArray &rawText=newData.mid(in.device()->pos(),textSize);
-                            text=std::string::fromUtf8(rawText.data(),rawText.size());
+                            text=std::string(rawText.data(),rawText.size());
                             in.device()->seek(in.device()->pos()+rawText.size());
                         }
                     }
@@ -521,7 +522,7 @@ void Client::parseMessage(const uint8_t &mainCodeType,const char * const data,co
                                 return;
                             }
                             const QByteArray &rawText=newData.mid(in.device()->pos(),pseudoSize);
-                            pseudo=std::string::fromUtf8(rawText.data(),rawText.size());
+                            pseudo=std::string(rawText.data(),rawText.size());
                             in.device()->seek(in.device()->pos()+rawText.size());
                         }
                     }
@@ -531,7 +532,7 @@ void Client::parseMessage(const uint8_t &mainCodeType,const char * const data,co
                 }
                 else
                 {
-                    parseNetworkReadError("can't send pm because is disabled: "+std::string::number(chatType));
+                    parseNetworkReadError("can't send pm because is disabled: "+std::to_string(chatType));
                     return;
                 }
             }
@@ -553,11 +554,11 @@ void Client::parseMessage(const uint8_t &mainCodeType,const char * const data,co
                         return;
                     }
                     const QByteArray &rawText=newData.mid(in.device()->pos(),textSize);
-                    text=std::string::fromUtf8(rawText.data(),rawText.size());
+                    text=std::string(rawText.data(),rawText.size());
                     in.device()->seek(in.device()->pos()+rawText.size());
                 }
 
-                if(!text.startsWith(Client::text_slash))
+                if(!stringStartWith(text,Client::text_slash))
                 {
                     if(chatType==Chat_type_local)
                     {
@@ -565,7 +566,7 @@ void Client::parseMessage(const uint8_t &mainCodeType,const char * const data,co
                             sendLocalChatText(text);
                         else
                         {
-                            parseNetworkReadError("can't send chat local because is disabled: "+std::string::number(chatType));
+                            parseNetworkReadError("can't send chat local because is disabled: "+std::to_string(chatType));
                             return;
                         }
                     }
@@ -575,24 +576,24 @@ void Client::parseMessage(const uint8_t &mainCodeType,const char * const data,co
                             sendChatText((Chat_type)chatType,text);
                         else
                         {
-                            parseNetworkReadError("can't send chat other because is disabled: "+std::string::number(chatType));
+                            parseNetworkReadError("can't send chat other because is disabled: "+std::to_string(chatType));
                             return;
                         }
                     }
                 }
                 else
                 {
-                    if(text.contains(commandRegExp))
+                    if(std::regex_match(text,commandRegExp))
                     {
                         //isolate the main command (the first word)
                         std::string command=text;
-                        command.replace(commandRegExp,Client::text_regexresult1);
+                        std::regex_replace(command,commandRegExp,Client::text_regexresult1);
 
                         //isolate the arguements
                         if(text.contains(commandRegExp))
                         {
-                            text.replace(commandRegExp,Client::text_regexresult2);
-                            text.replace(isolateTheMainCommand,Client::text_regexresult1);
+                            std::regex_replace(text,commandRegExp,Client::text_regexresult2);
+                            std::regex_replace(text,isolateTheMainCommand,Client::text_regexresult1);
                         }
                         else
                             text=std::string();
@@ -707,7 +708,7 @@ void Client::parseMessage(const uint8_t &mainCodeType,const char * const data,co
         }
         break;
         default:
-            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+std::to_string(mainCodeType));
             return;
         break;
     }
@@ -1211,7 +1212,7 @@ void Client::parseFullMessage(const uint8_t &mainCodeType,const uint8_t &subCode
             }
         break;
         default:
-            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+std::to_string(mainCodeType));
             return;
         break;
     }
@@ -1344,7 +1345,7 @@ void Client::parseFullQuery(const uint8_t &mainCodeType,const uint8_t &subCodeTy
                             return;
                         }
                         const QByteArray &rawText=data.mid(in.device()->pos(),textSize);
-                        pseudo=std::string::fromUtf8(rawText.data(),rawText.size());
+                        pseudo=std::string(rawText.data(),rawText.size());
                         in.device()->seek(in.device()->pos()+rawText.size());
                     }
                 }
@@ -1552,7 +1553,7 @@ void Client::parseFullQuery(const uint8_t &mainCodeType,const uint8_t &subCodeTy
                                 return;
                             }
                             const QByteArray &rawText=data.mid(in.device()->pos(),textSize);
-                            tempFileName=std::string::fromUtf8(rawText.data(),rawText.size());
+                            tempFileName=std::string(rawText.data(),rawText.size());
                             in.device()->seek(in.device()->pos()+rawText.size());
                         }
                     }
@@ -2032,7 +2033,7 @@ void Client::parseFullQuery(const uint8_t &mainCodeType,const uint8_t &subCodeTy
         }
         break;
         default:
-            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+std::to_string(mainCodeType));
             return;
         break;
     }
@@ -2187,7 +2188,7 @@ void Client::parseFullReplyData(const uint8_t &mainCodeType,const uint8_t &subCo
         }
         break;
         default:
-            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+std::to_string(mainCodeType));
             return;
         break;
     }

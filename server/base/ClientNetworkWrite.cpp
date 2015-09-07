@@ -13,12 +13,12 @@ void Client::sendFullPacket(const uint8_t &mainCodeType,const uint8_t &subCodeTy
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(!isConnected)
     {
-        normalOutput(std::stringLiteral("sendPacket(%1,%2,%3) when is not connected").arg(mainCodeType).arg(subCodeType).arg(std::string(QByteArray(data,size).toHex())));
+        normalOutput(std::stringLiteral("sendPacket("+std::to_string()+","+std::to_string()+","+std::to_string()+") when is not connected").arg(mainCodeType).arg(subCodeType).arg(std::string(QByteArray(data,size).toHex())));
         return;
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    normalOutput(std::stringLiteral("sendPacket(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(std::string(data.toHex())));
+    normalOutput("sendPacket("+std::to_string(mainCodeType)+","+std::to_string(subCodeType)+","+QString(QByteArray(data,size).toHex()).toStdString()+")");
     #endif
     if(!ProtocolParsingBase::packFullOutcommingData(mainCodeType,subCodeType,data,size))
         return;
@@ -41,12 +41,12 @@ void Client::sendPacket(const uint8_t &mainCodeType,const char * const data,cons
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(!isConnected)
     {
-        normalOutput(std::stringLiteral("sendPacket(%1,%2) when is not connected").arg(mainCodeType).arg(std::string(QByteArray(data,size).toHex())));
+        normalOutput(std::stringLiteral("sendPacket("+std::to_string()+","+std::to_string()+") when is not connected").arg(mainCodeType).arg(std::string(QByteArray(data,size).toHex())));
         return;
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    normalOutput(std::stringLiteral("sendPacket(%1,%2)").arg(mainCodeType).arg(std::string(data.toHex())));
+    normalOutput("sendPacket("+std::to_string(mainCodeType)+","+QString(QByteArray(data,size).toHex()).toStdString()+")");
     #endif
     if(!ProtocolParsingBase::packOutcommingData(mainCodeType,data,size))
         return;
@@ -64,12 +64,12 @@ void Client::sendRawSmallPacket(const char * const data,const unsigned int &size
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(!isConnected)
     {
-        normalOutput(std::stringLiteral("sendRawSmallPacket(%1) when is not connected").arg(std::string(QByteArray(data,size).toHex())));
+        normalOutput(std::stringLiteral("sendRawSmallPacket("+std::to_string()+") when is not connected").arg(std::string(QByteArray(data,size).toHex())));
         return;
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    normalOutput(std::stringLiteral("sendRawSmallPacket(%1)").arg(std::string(QByteArray(data,size).toHex())));
+    normalOutput("sendRawSmallPacket("+QString(QByteArray(data,size).toHex()).toStdString()+")");
     #endif
     if(!ProtocolParsingBase::internalSendRawSmallPacket(data,size))
         return;
@@ -92,12 +92,12 @@ void Client::sendQuery(const uint8_t &mainIdent,const uint8_t &subIdent,const ui
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(!isConnected)
     {
-        normalOutput(std::stringLiteral("sendQuery(%1,%2,%3,%4) when is not connected").arg(mainIdent).arg(subIdent).arg(queryNumber).arg(std::string(QByteArray(data,size).toHex())));
+        normalOutput(std::stringLiteral("sendQuery("+std::to_string()+","+std::to_string()+","+std::to_string()+","+std::to_string()+") when is not connected").arg(mainIdent).arg(subIdent).arg(queryNumber).arg(std::string(QByteArray(data,size).toHex())));
         return;
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    normalOutput(std::stringLiteral("sendQuery(%1,%2,%3)").arg(mainIdent).arg(subIdent).arg(std::string(data.toHex())));
+    normalOutput("sendQuery("+std::to_string(mainIdent)+","+std::to_string(subIdent)+","+QString(QByteArray(data,size).toHex()).toStdString()+")");
     #endif
     if(!ProtocolParsingBase::packFullOutcommingQuery(mainIdent,subIdent,queryNumber,data,size))
         return;
@@ -121,16 +121,16 @@ void Client::postReply(const uint8_t &queryNumber,const char * const data,const 
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(!isConnected)
     {
-        normalOutput(std::stringLiteral("postReply(%1,%2) when is not connected").arg(queryNumber).arg(std::string(QByteArray(data,size).toHex())));
+        normalOutput(std::stringLiteral("postReply("+std::to_string()+","+std::to_string()+") when is not connected").arg(queryNumber).arg(std::string(QByteArray(data,size).toHex())));
         return;
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    normalOutput(std::stringLiteral("postReply(%1,%2)").arg(queryNumber).arg(std::string(QByteArray(data,size).toHex())));
+    normalOutput("postReply("+std::to_string(queryNumber)+","+QString(QByteArray(data,size).toHex()).toStdString()+")");
     #endif
     if(!ProtocolParsingBase::postReplyData(queryNumber,data,size))
     {
-        normalOutput(std::stringLiteral("can't' send reply: postReply(%1,%2)").arg(queryNumber).arg(std::string(QByteArray(data,size).toHex())));
+        normalOutput("can't send reply: postReply("+std::to_string(queryNumber)+","+QString(QByteArray(data,size).toHex()).toStdString()+")");
         return;
     }
     #ifndef EPOLLCATCHCHALLENGERSERVER
