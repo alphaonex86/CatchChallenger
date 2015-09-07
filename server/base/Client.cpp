@@ -136,11 +136,10 @@ Client::~Client()
         delete socketString;
     #endif
     {
-        unsigned int index=0;
-        while(index<callbackRegistred.size())
+        while(!callbackRegistred.empty())
         {
-            callbackRegistred.at(index)->object=NULL;
-            index++;
+            callbackRegistred.front()->object=NULL;
+            callbackRegistred.pop();
         }
     }
 }

@@ -2,6 +2,7 @@
 #define CATCHCHALLENGER_CPP11ADDITION_H
 
 #include <vector>
+#include <queue>
 #include <string>
 #include <regex>
 #include <unordered_map>
@@ -104,6 +105,23 @@ std::string stringimplode(const std::vector<std::string>& elems, char delim)
 {
     std::string s;
     return stringimplode(elems, delim, s);
+}
+
+std::string stringimplode(const std::queue<std::string>& elems, char delim)
+{
+    std::string newString;
+    std::queue<std::string> copy=elems;
+    unsigned int count=0;
+    while(!copy.empty())
+    {
+        if(count>0)
+            newString+=delim;
+        newString+=copy.front();
+        copy.pop();
+        ++count;
+    }
+
+    return newString;
 }
 
 uint8_t stringtouint8(const std::string &string,bool *ok=NULL)

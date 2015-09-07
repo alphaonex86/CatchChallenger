@@ -115,11 +115,11 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
     }
     else
     {
-        paramToPassToCallBack.push_back(selectCharacterParam);
+        paramToPassToCallBack.push(selectCharacterParam);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        paramToPassToCallBackType.push_back("SelectCharacterParam");
+        paramToPassToCallBackType.push("SelectCharacterParam");
         #endif
-        callbackRegistred.push_back(callback);
+        callbackRegistred.push(callback);
     }
 }
 
@@ -138,7 +138,8 @@ void Client::selectCharacter_object()
         abort();
     }
     #endif
-    SelectCharacterParam *selectCharacterParam=static_cast<SelectCharacterParam *>(paramToPassToCallBack.front());paramToPassToCallBack.erase(paramToPassToCallBack.begin());
+    SelectCharacterParam *selectCharacterParam=static_cast<SelectCharacterParam *>(paramToPassToCallBack.front());
+    paramToPassToCallBack.pop();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(selectCharacterParam==NULL)
         abort();
@@ -156,11 +157,11 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         std::cerr << "is not SelectCharacterParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
         abort();
     }
-    paramToPassToCallBackType.erase(paramToPassToCallBackType.begin());
+    paramToPassToCallBackType.pop();
     #endif
     /*account(0),pseudo(1),skin(2),type(3),clan(4),cash(5),
     warehouse_cash(6),clan_leader(7),time_to_delete(8),starter(9)*/
-    callbackRegistred.erase(callbackRegistred.begin());
+    callbackRegistred.pop();
     if(!GlobalServerData::serverPrivateVariables.db_common->next())
     {
         std::cerr << "Try select " << characterId << " but not found with account " << account_id << std::endl;
@@ -375,11 +376,11 @@ void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &char
     }
     else
     {
-        paramToPassToCallBack.push_back(selectCharacterParam);
+        paramToPassToCallBack.push(selectCharacterParam);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        paramToPassToCallBackType.push_back("SelectCharacterParam");
+        paramToPassToCallBackType.push("SelectCharacterParam");
         #endif
-        callbackRegistred.push_back(callback);
+        callbackRegistred.push(callback);
     }
 }
 
@@ -400,7 +401,7 @@ void Client::selectCharacterServer_object()
     }
     #endif
     SelectCharacterParam *selectCharacterParam=static_cast<SelectCharacterParam *>(paramToPassToCallBack.front());
-    paramToPassToCallBack.erase(paramToPassToCallBack.begin());
+    paramToPassToCallBack.pop();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(selectCharacterParam==NULL)
         abort();
@@ -418,13 +419,13 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         std::cerr << "is not SelectCharacterParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
         abort();
     }
-    paramToPassToCallBackType.erase(paramToPassToCallBackType.begin());
+    paramToPassToCallBackType.pop();
     #endif
     /*map(0),x(1),y(2),orientation(3),
     rescue_map(4),rescue_x(5),rescue_y(6),rescue_orientation(7),
     unvalidated_rescue_map(8),unvalidated_rescue_x(9),unvalidated_rescue_y(10),unvalidated_rescue_orientation(11),
     market_cash(12)*/
-    callbackRegistred.erase(callbackRegistred.begin());
+    callbackRegistred.pop();
     if(!GlobalServerData::serverPrivateVariables.db_server->next())
     {
         const ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex);
@@ -840,7 +841,7 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
                 return;
             }
             else
-                callbackRegistred.push_back(callback);
+                callbackRegistred.push(callback);
         }
     }
     else
@@ -879,7 +880,7 @@ void Client::loadItemOnMap()
         return;
     }
     else
-        callbackRegistred.push_back(callback);
+        callbackRegistred.push(callback);
 }
 
 void Client::loadItemOnMap_static(void *object)
@@ -890,7 +891,7 @@ void Client::loadItemOnMap_static(void *object)
 
 void Client::loadItemOnMap_return()
 {
-    callbackRegistred.erase(callbackRegistred.begin());
+    callbackRegistred.pop();
     bool ok;
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db_server->next())
@@ -952,7 +953,7 @@ void Client::loadPlantOnMap()
         return;
     }
     else
-        callbackRegistred.push_back(callback);
+        callbackRegistred.push(callback);
 }
 
 void Client::loadPlantOnMap_static(void *object)
@@ -963,7 +964,7 @@ void Client::loadPlantOnMap_static(void *object)
 
 void Client::loadPlantOnMap_return()
 {
-    callbackRegistred.erase(callbackRegistred.begin());
+    callbackRegistred.pop();
     bool ok;
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db_server->next())
@@ -1352,7 +1353,7 @@ void Client::selectClan_static(void *object)
 
 void Client::selectClan_return()
 {
-    callbackRegistred.erase(callbackRegistred.begin());
+    callbackRegistred.pop();
     //parse the result
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
@@ -1404,7 +1405,7 @@ void Client::loadPlayerAllow()
             return;
         }
         else
-            callbackRegistred.push_back(callback);
+            callbackRegistred.push(callback);
     }
 }
 
@@ -1416,7 +1417,7 @@ void Client::loadPlayerAllow_static(void *object)
 
 void Client::loadPlayerAllow_return()
 {
-    callbackRegistred.erase(callbackRegistred.begin());
+    callbackRegistred.pop();
     bool ok;
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {

@@ -2497,11 +2497,11 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             }
             else
             {
-                paramToPassToCallBack.push_back(clanActionParam);
+                paramToPassToCallBack.push(clanActionParam);
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                paramToPassToCallBackType.push_back("ClanActionParam");
+                paramToPassToCallBackType.push("ClanActionParam");
                 #endif
-                callbackRegistred.push_back(callback);
+                callbackRegistred.push(callback);
             }
             return;
         }
@@ -2706,7 +2706,7 @@ void Client::addClan_object()
     }
     #endif
     ClanActionParam *clanActionParam=static_cast<ClanActionParam *>(paramToPassToCallBack.front());
-    paramToPassToCallBack.erase(paramToPassToCallBack.begin());
+    paramToPassToCallBack.pop();
     addClan_return(clanActionParam->query_id,clanActionParam->action,clanActionParam->text);
     delete clanActionParam;
 }
@@ -2719,9 +2719,9 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &action,const 
         std::cerr << "is not ClanActionParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
         abort();
     }
-    paramToPassToCallBackType.erase(paramToPassToCallBackType.begin());
+    paramToPassToCallBackType.pop();
     #endif
-    callbackRegistred.erase(callbackRegistred.begin());
+    callbackRegistred.pop();
     Q_UNUSED(action);
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
