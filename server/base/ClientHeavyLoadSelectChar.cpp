@@ -8,6 +8,7 @@
 #include "../../general/base/CommonMap.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/ProtocolParsingCheck.h"
+#include "../../general/base/cpp11addition.h"
 #include "SqlFunction.h"
 #include "PreparedDBQuery.h"
 #include "DictionaryLogin.h"
@@ -602,59 +603,59 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
                                              )
 {
     bool ok;
-    const uint32_t &rescue_map_database_id=rescue_map.toUInt(&ok);
+    const uint32_t &rescue_map_database_id=stringtouint32(rescue_map,&ok);
     if(!ok)
     {
-        normalOutput(QLatin1String("rescue_map_database_id is not a number"));
+        normalOutput("rescue_map_database_id is not a number");
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(rescue_map_database_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
     {
-        normalOutput(QLatin1String("rescue_map_database_id out of range"));
+        normalOutput("rescue_map_database_id out of range");
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(DictionaryServer::dictionary_map_database_to_internal.at(rescue_map_database_id)==NULL)
     {
-        normalOutput(QLatin1String("rescue_map_database_id have not reverse"));
+        normalOutput("rescue_map_database_id have not reverse");
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     CommonMap *rescue_map_final=DictionaryServer::dictionary_map_database_to_internal.at(rescue_map_database_id);
     if(rescue_map_final==NULL)
     {
-        normalOutput(std::stringLiteral("rescue map not resolved"));
+        normalOutput("rescue map not resolved");
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    const uint8_t &rescue_new_x=rescue_x.toUInt(&ok);
+    const uint8_t &rescue_new_x=stringtouint32(rescue_x,&ok);
     if(!ok)
     {
-        normalOutput(std::stringLiteral("rescue x coord is not a number"));
+        normalOutput("rescue x coord is not a number");
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    const uint8_t &rescue_new_y=rescue_y.toUInt(&ok);
+    const uint8_t &rescue_new_y=stringtouint32(rescue_y,&ok);
     if(!ok)
     {
-        normalOutput(std::stringLiteral("rescue y coord is not a number"));
+        normalOutput("rescue y coord is not a number");
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(rescue_new_x>=rescue_map_final->width)
     {
-        normalOutput(std::stringLiteral("rescue x to out of map"));
+        normalOutput("rescue x to out of map");
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(rescue_new_y>=rescue_map_final->height)
     {
-        normalOutput(std::stringLiteral("rescue y to out of map"));
+        normalOutput("rescue y to out of map");
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    const uint32_t &orientationInt=rescue_orientation.toUInt(&ok);
+    const uint32_t &orientationInt=stringtouint32(rescue_orientation,&ok);
     Orientation rescue_new_orientation;
     if(ok)
     {
@@ -663,73 +664,73 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
         else
         {
             rescue_new_orientation=Orientation_bottom;
-            normalOutput(std::stringLiteral("Wrong rescue orientation corrected with bottom"));
+            normalOutput("Wrong rescue orientation corrected with bottom");
         }
     }
     else
     {
         rescue_new_orientation=Orientation_bottom;
-        normalOutput(std::stringLiteral("Wrong rescue orientation (not number) corrected with bottom"));
+        normalOutput("Wrong rescue orientation (not number) corrected with bottom");
     }
 
 
 
 
 
-    const uint32_t &unvalidated_rescue_map_database_id=unvalidated_rescue_map.toUInt(&ok);
+    const uint32_t &unvalidated_rescue_map_database_id=stringtouint32(unvalidated_rescue_map,&ok);
     if(!ok)
     {
-        normalOutput(QLatin1String("unvalidated_rescue_map_database_id is not a number"));
+        normalOutput("unvalidated_rescue_map_database_id is not a number");
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(unvalidated_rescue_map_database_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
     {
-        normalOutput(QLatin1String("unvalidated_rescue_map_database_id out of range"));
+        normalOutput("unvalidated_rescue_map_database_id out of range");
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(DictionaryServer::dictionary_map_database_to_internal.at(unvalidated_rescue_map_database_id)==NULL)
     {
-        normalOutput(QLatin1String("unvalidated_rescue_map_database_id have not reverse"));
+        normalOutput("unvalidated_rescue_map_database_id have not reverse");
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     CommonMap *unvalidated_rescue_map_final=DictionaryServer::dictionary_map_database_to_internal.at(unvalidated_rescue_map_database_id);
     if(unvalidated_rescue_map_final==NULL)
     {
-        normalOutput(std::stringLiteral("unvalidated rescue map not resolved"));
+        normalOutput("unvalidated rescue map not resolved");
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    const uint8_t &unvalidated_rescue_new_x=unvalidated_rescue_x.toUInt(&ok);
+    const uint8_t &unvalidated_rescue_new_x=stringtouint32(unvalidated_rescue_x,&ok);
     if(!ok)
     {
-        normalOutput(std::stringLiteral("unvalidated rescue x coord is not a number"));
+        normalOutput("unvalidated rescue x coord is not a number");
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    const uint8_t &unvalidated_rescue_new_y=unvalidated_rescue_y.toUInt(&ok);
+    const uint8_t &unvalidated_rescue_new_y=stringtouint32(unvalidated_rescue_y,&ok);
     if(!ok)
     {
-        normalOutput(std::stringLiteral("unvalidated rescue y coord is not a number"));
+        normalOutput("unvalidated rescue y coord is not a number");
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(unvalidated_rescue_new_x>=unvalidated_rescue_map_final->width)
     {
-        normalOutput(std::stringLiteral("unvalidated rescue x to out of map"));
+        normalOutput("unvalidated rescue x to out of map");
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(unvalidated_rescue_new_y>=unvalidated_rescue_map_final->height)
     {
-        normalOutput(std::stringLiteral("unvalidated rescue y to out of map"));
+        normalOutput("unvalidated rescue y to out of map");
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     Orientation unvalidated_rescue_new_orientation;
-    const uint32_t &unvalidated_orientationInt=unvalidated_rescue_orientation.toUInt(&ok);
+    const uint32_t &unvalidated_orientationInt=stringtouint32(unvalidated_rescue_orientation,&ok);
     if(ok)
     {
         if(unvalidated_orientationInt>=1 && unvalidated_orientationInt<=4)
@@ -737,13 +738,13 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
         else
         {
             unvalidated_rescue_new_orientation=Orientation_bottom;
-            normalOutput(std::stringLiteral("Wrong unvalidated orientation corrected with bottom"));
+            normalOutput("Wrong unvalidated orientation corrected with bottom");
         }
     }
     else
     {
         unvalidated_rescue_new_orientation=Orientation_bottom;
-        normalOutput(std::stringLiteral("Wrong unvalidated orientation (not number) corrected with bottom"));
+        normalOutput("Wrong unvalidated orientation (not number) corrected with bottom");
     }
 
 
@@ -769,20 +770,21 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryCommon::db_query_clan.empty())
     {
-        errorOutput(std::stringLiteral("loginIsRightWithParsedRescue() Query is empty, bug"));
+        errorOutput("loginIsRightWithParsedRescue() Query is empty, bug");
         return;
     }
     #endif
     //load the variables
     character_id=characterId;
     character_loaded_in_progress=true;
-    GlobalServerData::serverPrivateVariables.connected_players_id_list << characterId;
+    GlobalServerData::serverPrivateVariables.connected_players_id_list.insert(characterId);
     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
     {
         default:
         case MapVisibilityAlgorithmSelection_Simple:
         case MapVisibilityAlgorithmSelection_WithBorder:
-        public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.takeFirst();
+        public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.front();
+        simplifiedIdList.erase(simplifiedIdList.begin());
         break;
         case MapVisibilityAlgorithmSelection_None:
         public_and_private_informations.public_informations.simplifiedId = 0;
@@ -807,7 +809,7 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
     this->unvalidated_rescue.x=unvalidated_rescue_x;
     this->unvalidated_rescue.y=unvalidated_rescue_y;
     this->unvalidated_rescue.orientation=unvalidated_rescue_orientation;
-    selectCharacterQueryId << query_id;
+    selectCharacterQueryId.push_back(query_id);
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
@@ -818,17 +820,18 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
 
     if(public_and_private_informations.clan!=0)
     {
-        if(GlobalServerData::serverPrivateVariables.clanList.contains(public_and_private_informations.clan))
+        if(GlobalServerData::serverPrivateVariables.clanList.find(public_and_private_informations.clan)!=GlobalServerData::serverPrivateVariables.clanList.cend())
         {
-            GlobalServerData::serverPrivateVariables.clanList[public_and_private_informations.clan]->players << this;
+            GlobalServerData::serverPrivateVariables.clanList[public_and_private_informations.clan]->players.push_back(this);
             loadLinkedData();
             return;
         }
         else
         {
-            normalOutput(std::stringLiteral("First client of the clan: %1, get the info").arg(public_and_private_informations.clan));
+            normalOutput("First client of the clan: "+std::to_string(public_and_private_informations.clan)+", get the info");
             //do the query
-            const std::string &queryText=PreparedDBQueryCommon::db_query_clan.arg(public_and_private_informations.clan);
+            std::string queryText=PreparedDBQueryCommon::db_query_clan;
+            stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.clan));
             CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::selectClan_static);
             if(callback==NULL)
             {
@@ -837,7 +840,7 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
                 return;
             }
             else
-                callbackRegistred << callback;
+                callbackRegistred.push_back(callback);
         }
     }
     else
@@ -858,15 +861,16 @@ void Client::loadItemOnMap()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryServer::db_query_select_itemOnMap.empty())
     {
-        errorOutput(std::stringLiteral("loadBotAlreadyBeaten() Query is empty, bug"));
+        errorOutput("loadBotAlreadyBeaten() Query is empty, bug");
         return;
     }
     #endif
-    const std::string &queryText=PreparedDBQueryServer::db_query_select_itemOnMap.arg(character_id);
+    std::string queryText=PreparedDBQueryServer::db_query_select_itemOnMap;
+    stringreplaceOne(queryText,"%1",std::to_string(character_id));
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&Client::loadItemOnMap_static);
     if(callback==NULL)
     {
-        qDebug() << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_server->errorMessage();
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
         loadPlantOnMap();
         #else
@@ -875,7 +879,7 @@ void Client::loadItemOnMap()
         return;
     }
     else
-        callbackRegistred << callback;
+        callbackRegistred.push_back(callback);
 }
 
 void Client::loadItemOnMap_static(void *object)
@@ -891,34 +895,34 @@ void Client::loadItemOnMap_return()
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
-        const uint16_t &pointOnMapDatabaseId=std::string(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
+        const uint16_t &pointOnMapDatabaseId=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
         if(!ok)
         {
-            normalOutput(std::stringLiteral("wrong value type for item on map, skip: %1").arg(pointOnMapDatabaseId));
+            normalOutput("wrong value type for item on map, skip: "+std::to_string(pointOnMapDatabaseId));
             continue;
         }
         if(pointOnMapDatabaseId>=DictionaryServer::dictionary_pointOnMap_database_to_internal.size())
         {
-            normalOutput(std::stringLiteral("item on map is not into the map list (1), skip: %1").arg(pointOnMapDatabaseId));
+            normalOutput("item on map is not into the map list (1), skip: "+std::to_string(pointOnMapDatabaseId));
             continue;
         }
         if(DictionaryServer::dictionary_pointOnMap_database_to_internal.value(pointOnMapDatabaseId).map==NULL)
         {
-            normalOutput(std::stringLiteral("item on map is not into the map list (2), skip: %1").arg(pointOnMapDatabaseId));
+            normalOutput("item on map is not into the map list (2), skip: "+std::to_string(pointOnMapDatabaseId));
             continue;
         }
         const uint8_t &indexOfItemOnMap=DictionaryServer::dictionary_pointOnMap_database_to_internal.value(pointOnMapDatabaseId).indexOfItemOnMap;
         if(indexOfItemOnMap==255)
         {
-            normalOutput(std::stringLiteral("item on map is not into the map list (3), skip: %1").arg(pointOnMapDatabaseId));
+            normalOutput("item on map is not into the map list (3), skip: "+std::to_string(pointOnMapDatabaseId));
             continue;
         }
         if(indexOfItemOnMap>=Client::indexOfItemOnMap)
         {
-            normalOutput(std::stringLiteral("item on map is not into the map list (4), skip: %1 on %2").arg(indexOfItemOnMap).arg(Client::indexOfItemOnMap));
+            normalOutput("item on map is not into the map list (4), skip: "+std::to_string(indexOfItemOnMap)+" on "+std::to_string(Client::indexOfItemOnMap));
             continue;
         }
-        public_and_private_informations.itemOnMap << indexOfItemOnMap;
+        public_and_private_informations.itemOnMap.insert(indexOfItemOnMap);
     }
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     loadPlantOnMap();
@@ -934,20 +938,21 @@ void Client::loadPlantOnMap()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryServer::db_query_select_plant.empty())
     {
-        errorOutput(std::stringLiteral("loadBotAlreadyBeaten() Query is empty, bug"));
+        errorOutput("loadBotAlreadyBeaten() Query is empty, bug");
         return;
     }
     #endif
-    const std::string &queryText=PreparedDBQueryServer::db_query_select_plant.arg(character_id);
+    std::string queryText=PreparedDBQueryServer::db_query_select_plant;
+    stringreplaceOne(queryText,"%1",std::to_string(character_id));
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&Client::loadPlantOnMap_static);
     if(callback==NULL)
     {
-        qDebug() << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_server->errorMessage();
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         characterIsRightFinalStep();
         return;
     }
     else
-        callbackRegistred << callback;
+        callbackRegistred.push_back(callback);
 }
 
 void Client::loadPlantOnMap_static(void *object)
@@ -963,55 +968,55 @@ void Client::loadPlantOnMap_return()
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
-        const uint16_t &pointOnMapDatabaseId=std::string(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
+        const uint16_t &pointOnMapDatabaseId=stringtouint16(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
         if(!ok)
         {
-            normalOutput(std::stringLiteral("wrong value type for dirt on map, skip: %1").arg(pointOnMapDatabaseId));
+            normalOutput("wrong value type for dirt on map, skip: "+std::to_string(pointOnMapDatabaseId));
             continue;
         }
         if(pointOnMapDatabaseId>=DictionaryServer::dictionary_pointOnMap_database_to_internal.size())
         {
-            normalOutput(std::stringLiteral("dirt on map is not into the map list (1), skip: %1").arg(pointOnMapDatabaseId));
+            normalOutput("dirt on map is not into the map list (1), skip: "+std::to_string(pointOnMapDatabaseId));
             continue;
         }
-        if(DictionaryServer::dictionary_pointOnMap_database_to_internal.value(pointOnMapDatabaseId).map==NULL)
+        if(DictionaryServer::dictionary_pointOnMap_database_to_internal.at(pointOnMapDatabaseId).map==NULL)
         {
-            normalOutput(std::stringLiteral("dirt on map is not into the map list (2), skip: %1").arg(pointOnMapDatabaseId));
+            normalOutput("dirt on map is not into the map list (2), skip: "+std::to_string(pointOnMapDatabaseId));
             continue;
         }
-        const uint8_t &indexOfDirtOnMap=DictionaryServer::dictionary_pointOnMap_database_to_internal.value(pointOnMapDatabaseId).indexOfDirtOnMap;
+        const uint8_t &indexOfDirtOnMap=DictionaryServer::dictionary_pointOnMap_database_to_internal.at(pointOnMapDatabaseId).indexOfDirtOnMap;
         if(indexOfDirtOnMap==255)
         {
-            normalOutput(std::stringLiteral("dirt on map is not into the map list (3), skip: %1").arg(pointOnMapDatabaseId));
+            normalOutput("dirt on map is not into the map list (3), skip: "+std::to_string(pointOnMapDatabaseId));
             continue;
         }
         if(indexOfDirtOnMap>=Client::indexOfDirtOnMap)
         {
-            normalOutput(std::stringLiteral("dirt on map is not into the map list (4), skip: %1").arg(pointOnMapDatabaseId));
+            normalOutput("dirt on map is not into the map list (4), skip: "+std::to_string(pointOnMapDatabaseId));
             continue;
         }
 
-        const uint32_t &plant=std::string(GlobalServerData::serverPrivateVariables.db_server->value(1)).toUInt(&ok);
+        const uint32_t &plant=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
         if(!ok)
         {
-            normalOutput(std::stringLiteral("wrong value type for dirt plant id on map, skip: %1").arg(pointOnMapDatabaseId));
+            normalOutput("wrong value type for dirt plant id on map, skip: "+std::to_string(pointOnMapDatabaseId));
             continue;
         }
-        if(!CommonDatapack::commonDatapack.plants.contains(plant))
+        if(CommonDatapack::commonDatapack.plants.find(plant)==CommonDatapack::commonDatapack.plants.cend())
         {
-            normalOutput(std::stringLiteral("wrong value type for plant dirt on map, skip: %1").arg(plant));
+            normalOutput("wrong value type for plant dirt on map, skip: "+std::to_string(plant));
             continue;
         }
-        const uint32_t &plant_timestamps=std::string(GlobalServerData::serverPrivateVariables.db_server->value(2)).toUInt(&ok);
+        const uint32_t &plant_timestamps=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok);
         if(!ok)
         {
-            normalOutput(std::stringLiteral("wrong value type for plant timestamps on map, skip: %1").arg(pointOnMapDatabaseId));
+            normalOutput("wrong value type for plant timestamps on map, skip: "+std::to_string(pointOnMapDatabaseId));
             continue;
         }
         {
             PlayerPlant playerPlant;
             playerPlant.plant=plant;
-            playerPlant.mature_at=plant_timestamps+CommonDatapack::commonDatapack.plants.value(plant).fruits_seconds;
+            playerPlant.mature_at=plant_timestamps+CommonDatapack::commonDatapack.plants.at(plant).fruits_seconds;
             public_and_private_informations.plantOnMap[indexOfDirtOnMap]=playerPlant;
         }
     }
@@ -1033,7 +1038,8 @@ void Client::characterIsRightFinalStep()
     character_loaded_in_progress=false;
     character_loaded=true;
 
-    const uint8_t &query_id=selectCharacterQueryId.takeFirst();
+    const uint8_t &query_id=selectCharacterQueryId.front();
+    selectCharacterQueryId.erase(selectCharacterQueryId.begin());
     //send the network reply
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -1135,9 +1141,12 @@ void Client::characterIsRightFinalStep()
     }
     out << (uint8_t)public_and_private_informations.allow.size();
     {
-        Std::unordered_SetIterator<ActionAllow> i(public_and_private_informations.allow);
-        while (i.hasNext())
-            out << (uint8_t)i.next();
+        auto i=public_and_private_informations.allow.begin();
+        while(i!=public_and_private_informations.allow.cend())
+        {
+            out << (uint8_t)(*i);
+            ++i;
+        }
     }
 
     //clan related
@@ -1150,12 +1159,12 @@ void Client::characterIsRightFinalStep()
     //send the event
     {
         std::vector<std::pair<uint8_t,uint8_t> > events;
-        int index=0;
+        unsigned int index=0;
         while(index<GlobalServerData::serverPrivateVariables.events.size())
         {
             const uint8_t &value=GlobalServerData::serverPrivateVariables.events.at(index);
             if(value!=0)
-                events << std::pair<uint8_t,uint8_t>(index,value);
+                events.push_back(std::pair<uint8_t,uint8_t>(index,value));
             index++;
         }
         index=0;
@@ -1173,24 +1182,28 @@ void Client::characterIsRightFinalStep()
     out << (quint64)public_and_private_informations.warehouse_cash;
     out << (uint8_t)public_and_private_informations.itemOnMap.size();
     {
-        Std::unordered_SetIterator<uint8_t> i(public_and_private_informations.itemOnMap);
-        while (i.hasNext())
-            out << i.next();
+        auto i=public_and_private_informations.itemOnMap.begin();
+        while (i!=public_and_private_informations.itemOnMap.cend())
+        {
+            out << (uint8_t)(*i);
+            ++i;
+        }
     }
 
     //send plant on map
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     const quint64 &time=QDateTime::currentDateTime().toMSecsSinceEpoch()/1000;
     out << (uint8_t)public_and_private_informations.plantOnMap.size();
-    std::unordered_mapIterator<uint8_t/*dirtOnMap*/,PlayerPlant> i(public_and_private_informations.plantOnMap);
-    while (i.hasNext()) {
-        i.next();
-        out << i.key();
-        out << i.value().plant;
-        if(time<i.value().mature_at)
-            out << (uint16_t)(i.value().mature_at-time);
+    auto i=public_and_private_informations.plantOnMap.begin();
+    while(i!=public_and_private_informations.plantOnMap.cend())
+    {
+        out << i->first;
+        out << i->second.plant;
+        if(time<i->second.mature_at)
+            out << (uint16_t)(i->second.mature_at-time);
         else
             out << (uint16_t)0;
+        ++i;
     }
     #endif
 
@@ -1202,9 +1215,12 @@ void Client::characterIsRightFinalStep()
     {
         index=0;
         out << (uint16_t)public_and_private_informations.recipes.size();
-        Std::unordered_SetIterator<uint16_t> k(public_and_private_informations.recipes);
-        while (k.hasNext())
-            out << k.next();
+        auto k=public_and_private_informations.recipes.begin();
+        while(k!=public_and_private_informations.recipes.cend())
+        {
+            out << (*k);
+            ++k;
+        }
     }
 
     //send monster
@@ -1233,12 +1249,13 @@ void Client::characterIsRightFinalStep()
     //send reputation
     {
         out << (uint8_t)public_and_private_informations.reputation.size();
-        QMapIterator<uint8_t,PlayerReputation> i(public_and_private_informations.reputation);
-        while (i.hasNext()) {
-            i.next();
-            out << i.key();
-            out << i.value().level;
-            out << i.value().point;
+        auto i=public_and_private_informations.reputation.begin();
+        while(i!=public_and_private_informations.reputation.cend())
+        {
+            out << i->first;
+            out << i->second.level;
+            out << i->second.point;
+            ++i;
         }
     }
 
@@ -1246,21 +1263,25 @@ void Client::characterIsRightFinalStep()
     //send quest
     {
         out << (uint16_t)public_and_private_informations.quests.size();
-        std::unordered_mapIterator<uint16_t,PlayerQuest> j(public_and_private_informations.quests);
-        while (j.hasNext()) {
-            j.next();
-            out << j.key();
-            out << j.value().step;
-            out << j.value().finish_one_time;
+        auto j=public_and_private_informations.quests.begin();
+        while(j!=public_and_private_informations.quests.cend())
+        {
+            out << j->first;
+            out << j->second.step;
+            out << j->second.finish_one_time;
+            ++j;
         }
     }
 
     //send bot_already_beaten
     {
         out << (uint16_t)public_and_private_informations.bot_already_beaten.size();
-        Std::unordered_SetIterator<uint16_t> k(public_and_private_informations.bot_already_beaten);
-        while (k.hasNext())
-            out << k.next();
+        auto k=public_and_private_informations.bot_already_beaten.begin();
+        while(k!=public_and_private_informations.bot_already_beaten.cend())
+        {
+            out << (*k);
+            ++k;
+        }
     }
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -1283,16 +1304,13 @@ void Client::characterIsRightFinalStep()
 
     //send signals into the server
     #ifndef SERVERBENCHMARK
-    normalOutput(std::stringLiteral("Logged: %1 on the map: %2 (%3,%4)")
-                 .arg(public_and_private_informations.public_informations.pseudo)
-                 .arg(map->map_file)
-                 .arg(x)
-                 .arg(y)
-                 );
+    normalOutput("Logged: "+public_and_private_informations.public_informations.pseudo+
+                 " on the map: "+map->map_file+
+                 " ("+std::to_string(x)+","+std::to_string(y)+")");
     #endif
 
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(std::stringLiteral("load the normal player id: %1, simplified id: %2").arg(character_id).arg(public_and_private_informations.public_informations.simplifiedId));
+    normalOutput("load the normal player id: "+std::to_string(character_id)+", simplified id: "+std::to_string(public_and_private_informations.public_informations.simplifiedId));
     #endif
     #ifndef EPOLLCATCHCHALLENGERSERVER
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_player_is_connected(public_and_private_informations);
@@ -1301,7 +1319,7 @@ void Client::characterIsRightFinalStep()
     if(GlobalServerData::serverSettings.sendPlayerNumber)
         GlobalServerData::serverPrivateVariables.player_updater.addConnectedPlayer();
     playerByPseudo[public_and_private_informations.public_informations.pseudo]=this;
-    clientBroadCastList << this;
+    clientBroadCastList.push_back(this);
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
@@ -1339,18 +1357,18 @@ void Client::selectClan_return()
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         bool ok;
-        quint64 cash=std::string(GlobalServerData::serverPrivateVariables.db_common->value(1)).toULongLong(&ok);
+        quint64 cash=stringtouint64(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
         if(!ok)
         {
             cash=0;
-            normalOutput(std::stringLiteral("Warning: clan linked: %1 have wrong cash value, then reseted to 0"));
+            normalOutput("Warning: clan linked: have wrong cash value, then reseted to 0");
         }
         haveClanInfo(public_and_private_informations.clan,GlobalServerData::serverPrivateVariables.db_common->value(0),cash);
     }
     else
     {
         public_and_private_informations.clan=0;
-        normalOutput(std::stringLiteral("Warning: clan linked: %1 is not found into db"));
+        normalOutput("Warning: clan linked: %1 is not found into db");
     }
     loadLinkedData();
 }
@@ -1364,7 +1382,7 @@ void Client::loginIsWrong(const uint8_t &query_id, const uint8_t &returnCode, co
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     removeFromQueryReceived(query_id);
     #endif
-    replyOutputSize.remove(query_id);
+    replyOutputSize.erase(query_id);
     internalSendRawSmallPacket(reinterpret_cast<char *>(Client::loginIsWrongBuffer),sizeof(Client::loginIsWrongBuffer));
 
     //send to server to stop the connection
@@ -1376,17 +1394,17 @@ void Client::loadPlayerAllow()
 {
     if(!PreparedDBQueryCommon::db_query_select_allow.empty())
     {
-        CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(PreparedDBQueryCommon::db_query_select_allow.arg(character_id).toLatin1(),this,&Client::loadPlayerAllow_static);
+        std::string queryText=PreparedDBQueryCommon::db_query_select_allow;
+        stringreplaceOne(queryText,"%1",std::to_string(character_id));
+        CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::loadPlayerAllow_static);
         if(callback==NULL)
         {
-            qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(PreparedDBQueryCommon::db_query_select_allow).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
+            std::cerr << "Sql error for: " << PreparedDBQueryCommon::db_query_select_allow << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
             loadItems();
             return;
         }
         else
-        {
-            callbackRegistred << callback;
-        }
+            callbackRegistred.push_back(callback);
     }
 }
 
@@ -1402,28 +1420,28 @@ void Client::loadPlayerAllow_return()
     bool ok;
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        const uint32_t &allowCode=std::string(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
+        const uint32_t &allowCode=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(ok)
         {
             if(allowCode<(uint32_t)DictionaryLogin::dictionary_allow_database_to_internal.size())
             {
                 const ActionAllow &allow=DictionaryLogin::dictionary_allow_database_to_internal.at(allowCode);
                 if(allow!=ActionAllow_Nothing)
-                    public_and_private_informations.allow << allow;
+                    public_and_private_informations.allow.insert(allow);
                 else
                 {
                     ok=false;
-                    normalOutput(std::stringLiteral("allow id: %1 is not reverse").arg(GlobalServerData::serverPrivateVariables.db_common->value(0)));
+                    normalOutput("allow id: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" is not reverse");
                 }
             }
             else
             {
                 ok=false;
-                normalOutput(std::stringLiteral("allow id: %1 out of reverse list").arg(GlobalServerData::serverPrivateVariables.db_common->value(0)));
+                normalOutput("allow id: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" out of reverse list");
             }
         }
         else
-            normalOutput(std::stringLiteral("allow id: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(0)));
+            normalOutput("allow id: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" is not a number");
     }
     loadItems();
 }
