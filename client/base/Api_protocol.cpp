@@ -805,7 +805,7 @@ void Api_protocol::getFactoryList(const quint16 &factoryId)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint16)factoryId;
-    is_logged=character_selected=packFullOutcommingQuery(0x10,0x000D,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x10,0x0D,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::buyFactoryProduct(const quint16 &factoryId,const quint16 &objectId,const quint32 &quantity,const quint32 &price)
@@ -1051,8 +1051,17 @@ void Api_protocol::createClan(const QString &name)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x01;
-    out << name;
-    is_logged=character_selected=packFullOutcommingQuery(0x02,0x000D,queryNumber(),outputData.constData(),outputData.size());
+    {
+        const QByteArray &rawText=FacilityLibGeneral::toUTF8WithHeader(name.toStdString());
+        if(rawText.size()>255 || rawText.isEmpty())
+        {
+            DebugClass::debugConsole(QStringLiteral("rawText too big or not compatible with utf8"));
+            return false;
+        }
+        outputData+=rawText;
+        out.device()->seek(out.device()->size());
+    }
+    is_logged=character_selected=packFullOutcommingQuery(0x02,0x0D,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::leaveClan()
@@ -1071,7 +1080,7 @@ void Api_protocol::leaveClan()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x02;
-    is_logged=character_selected=packFullOutcommingQuery(0x02,0x000D,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x02,0x0D,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::dissolveClan()
@@ -1090,7 +1099,7 @@ void Api_protocol::dissolveClan()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x03;
-    is_logged=character_selected=packFullOutcommingQuery(0x02,0x000D,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x02,0x0D,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::inviteClan(const QString &pseudo)
@@ -1109,8 +1118,17 @@ void Api_protocol::inviteClan(const QString &pseudo)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x04;
-    out << pseudo;
-    is_logged=character_selected=packFullOutcommingQuery(0x02,0x000D,queryNumber(),outputData.constData(),outputData.size());
+    {
+        const QByteArray &rawText=FacilityLibGeneral::toUTF8WithHeader(pseudo.toStdString());
+        if(rawText.size()>255 || rawText.isEmpty())
+        {
+            DebugClass::debugConsole(QStringLiteral("rawText too big or not compatible with utf8"));
+            return false;
+        }
+        outputData+=rawText;
+        out.device()->seek(out.device()->size());
+    }
+    is_logged=character_selected=packFullOutcommingQuery(0x02,0x0D,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::ejectClan(const QString &pseudo)
@@ -1129,8 +1147,17 @@ void Api_protocol::ejectClan(const QString &pseudo)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x05;
-    out << pseudo;
-    is_logged=character_selected=packFullOutcommingQuery(0x02,0x000D,queryNumber(),outputData.constData(),outputData.size());
+    {
+        const QByteArray &rawText=FacilityLibGeneral::toUTF8WithHeader(pseudo.toStdString());
+        if(rawText.size()>255 || rawText.isEmpty())
+        {
+            DebugClass::debugConsole(QStringLiteral("rawText too big or not compatible with utf8"));
+            return false;
+        }
+        outputData+=rawText;
+        out.device()->seek(out.device()->size());
+    }
+    is_logged=character_selected=packFullOutcommingQuery(0x02,0x0D,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::inviteAccept(const bool &accept)
