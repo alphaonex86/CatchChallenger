@@ -88,11 +88,11 @@ void Client::askLogin(const uint8_t &query_id,const char *rawdata)
     }
     else
     {
-        paramToPassToCallBack.push_back(askLoginParam);
+        paramToPassToCallBack.push(askLoginParam);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        paramToPassToCallBackType.push_back("AskLoginParam");
+        paramToPassToCallBackType.push("AskLoginParam");
         #endif
-        callbackRegistred.push_back(callback);
+        callbackRegistred.push(callback);
     }
 }
 
@@ -119,7 +119,7 @@ void Client::askLogin_object()
     }
     #endif
     AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.front());
-    paramToPassToCallBack.erase(paramToPassToCallBack.begin());
+    paramToPassToCallBack.pop();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(askLoginParam==NULL)
         abort();
@@ -136,9 +136,9 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         std::cerr << "is not AskLoginParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
         abort();
     }
-    paramToPassToCallBackType.erase(paramToPassToCallBackType.begin());
+    paramToPassToCallBackType.pop();
     #endif
-    callbackRegistred.erase(callbackRegistred.begin());
+    callbackRegistred.pop();
     {
         bool ok;
         if(!GlobalServerData::serverPrivateVariables.db_login->next())
@@ -261,11 +261,11 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
     }
     else
     {
-        paramToPassToCallBack.push_back(askLoginParam);
+        paramToPassToCallBack.push(askLoginParam);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        paramToPassToCallBackType.push_back("AskLoginParam");
+        paramToPassToCallBackType.push("AskLoginParam");
         #endif
-        callbackRegistred.push_back(callback);
+        callbackRegistred.push(callback);
     }
 }
 
@@ -312,11 +312,11 @@ void Client::createAccount(const uint8_t &query_id, const char *rawdata)
     else
     {
         number_of_character++;
-        paramToPassToCallBack.push_back(askLoginParam);
+        paramToPassToCallBack.push(askLoginParam);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        paramToPassToCallBackType.push_back("AskLoginParam");
+        paramToPassToCallBackType.push("AskLoginParam");
         #endif
-        callbackRegistred.push_back(callback);
+        callbackRegistred.push(callback);
     }
 }
 
@@ -342,7 +342,7 @@ void Client::createAccount_object()
     }
     #endif
     AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.front());
-    paramToPassToCallBack.erase(paramToPassToCallBack.begin());
+    paramToPassToCallBack.pop();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(askLoginParam==NULL)
         abort();
@@ -359,9 +359,9 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         std::cerr << "is not AskLoginParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
         abort();
     }
-    paramToPassToCallBackType.erase(paramToPassToCallBackType.begin());
+    paramToPassToCallBackType.pop();
     #endif
-    callbackRegistred.erase(callbackRegistred.begin());
+    callbackRegistred.pop();
     if(!GlobalServerData::serverPrivateVariables.db_login->next())
     {
         //network send
@@ -407,7 +407,7 @@ void Client::character_list_object()
     }
     #endif
     AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.front());
-    paramToPassToCallBack.erase(paramToPassToCallBack.begin());
+    paramToPassToCallBack.pop();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(askLoginParam==NULL)
         abort();
@@ -421,7 +421,7 @@ void Client::character_list_object()
     //re use
     //delete askLoginParam;
     if(server_list())
-        paramToPassToCallBack.push_back(askLoginParam);
+        paramToPassToCallBack.push(askLoginParam);
 }
 
 QByteArray Client::character_list_return(const uint8_t &query_id)
@@ -432,9 +432,9 @@ QByteArray Client::character_list_return(const uint8_t &query_id)
         std::cerr << "is not AskLoginParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
         abort();
     }
-    paramToPassToCallBackType.erase(paramToPassToCallBackType.begin());
+    paramToPassToCallBackType.pop();
     #endif
-    callbackRegistred.erase(callbackRegistred.begin());
+    callbackRegistred.pop();
     //send signals into the server
     #ifndef SERVERBENCHMARK
     normalOutput("Logged the account "+std::to_string(account_id));
@@ -624,7 +624,7 @@ bool Client::server_list()
     }
     else
     {
-        callbackRegistred.push_back(callback);
+        callbackRegistred.push(callback);
         return true;
     }
 }
@@ -650,7 +650,7 @@ void Client::server_list_object()
     }
     #endif
     AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.front());
-    paramToPassToCallBack.erase(paramToPassToCallBack.begin());
+    paramToPassToCallBack.pop();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(askLoginParam==NULL)
         abort();
@@ -661,7 +661,7 @@ void Client::server_list_object()
 
 void Client::server_list_return(const uint8_t &query_id, const QByteArray &previousData)
 {
-    callbackRegistred.erase(callbackRegistred.begin());
+    callbackRegistred.pop();
     //send signals into the server
 
     //C20F
@@ -849,11 +849,11 @@ void Client::deleteCharacterNow(const uint32_t &characterId)
     }
     else
     {
-        paramToPassToCallBack.push_back(deleteCharacterNow);
+        paramToPassToCallBack.push(deleteCharacterNow);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        paramToPassToCallBackType.push_back("DeleteCharacterNow");
+        paramToPassToCallBackType.push("DeleteCharacterNow");
         #endif
-        callbackRegistred.push_back(callback);
+        callbackRegistred.push(callback);
     }
 }
 
@@ -874,7 +874,7 @@ void Client::deleteCharacterNow_object()
     }
     #endif
     DeleteCharacterNow *deleteCharacterNow=static_cast<DeleteCharacterNow *>(paramToPassToCallBack.front());
-    paramToPassToCallBack.erase(paramToPassToCallBack.begin());
+    paramToPassToCallBack.pop();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(deleteCharacterNow==NULL)
         abort();
@@ -891,9 +891,9 @@ void Client::deleteCharacterNow_return(const uint32_t &characterId)
         std::cerr << "is not DeleteCharacterNow" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
         abort();
     }
-    paramToPassToCallBackType.erase(paramToPassToCallBackType.begin());
+    paramToPassToCallBackType.pop();
     #endif
-    callbackRegistred.erase(callbackRegistred.begin());
+    callbackRegistred.pop();
     bool ok;
     std::string queryText;
     while(GlobalServerData::serverPrivateVariables.db_common->next())
@@ -1058,11 +1058,11 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
     }
     else
     {
-        paramToPassToCallBack.push_back(addCharacterParam);
+        paramToPassToCallBack.push(addCharacterParam);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        paramToPassToCallBackType.push_back("AddCharacterParam");
+        paramToPassToCallBackType.push("AddCharacterParam");
         #endif
-        callbackRegistred.push_back(callback);
+        callbackRegistred.push(callback);
     }
 }
 
@@ -1083,7 +1083,7 @@ void Client::addCharacter_object()
     }
     #endif
     AddCharacterParam *addCharacterParam=static_cast<AddCharacterParam *>(paramToPassToCallBack.front());
-    paramToPassToCallBack.erase(paramToPassToCallBack.begin());
+    paramToPassToCallBack.pop();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(addCharacterParam==NULL)
         abort();
@@ -1101,9 +1101,9 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
         std::cerr << "is not AddCharacterParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
         abort();
     }
-    paramToPassToCallBackType.erase(paramToPassToCallBackType.begin());
+    paramToPassToCallBackType.pop();
     #endif
-    callbackRegistred.erase(callbackRegistred.begin());
+    callbackRegistred.pop();
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         QByteArray outputData;
@@ -1278,10 +1278,10 @@ void Client::removeCharacterLater(const uint8_t &query_id, const uint32_t &chara
     }
     else
     {
-        callbackRegistred.push_back(callback);
-        paramToPassToCallBack.push_back(removeCharacterParam);
+        callbackRegistred.push(callback);
+        paramToPassToCallBack.push(removeCharacterParam);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        paramToPassToCallBackType.push_back("RemoveCharacterParam");
+        paramToPassToCallBackType.push("RemoveCharacterParam");
         #endif
     }
 }
@@ -1303,7 +1303,7 @@ void Client::removeCharacterLater_object()
     }
     #endif
     RemoveCharacterParam *removeCharacterParam=static_cast<RemoveCharacterParam *>(paramToPassToCallBack.front());
-    paramToPassToCallBack.erase(paramToPassToCallBack.begin());
+    paramToPassToCallBack.pop();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(removeCharacterParam==NULL)
         abort();
@@ -1320,7 +1320,7 @@ void Client::removeCharacterLater_return(const uint8_t &query_id,const uint32_t 
         std::cerr << "is not RemoveCharacterParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
         abort();
     }
-    paramToPassToCallBackType.erase(paramToPassToCallBackType.begin());
+    paramToPassToCallBackType.pop();
     #endif
     if(!GlobalServerData::serverPrivateVariables.db_common->next())
     {
@@ -1978,7 +1978,7 @@ void Client::loadReputation()
         return;
     }
     else
-        callbackRegistred.push_back(callback);
+        callbackRegistred.push(callback);
 }
 
 void Client::loadReputation_static(void *object)
@@ -1989,7 +1989,7 @@ void Client::loadReputation_static(void *object)
 
 void Client::loadReputation_return()
 {
-    callbackRegistred.erase(callbackRegistred.begin());
+    callbackRegistred.pop();
     bool ok;
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db_common->next())
@@ -2104,7 +2104,7 @@ void Client::loadQuests()
         return;
     }
     else
-        callbackRegistred.push_back(callback);
+        callbackRegistred.push(callback);
 }
 
 void Client::loadQuests_static(void *object)
@@ -2115,7 +2115,7 @@ void Client::loadQuests_static(void *object)
 
 void Client::loadQuests_return()
 {
-    callbackRegistred.erase(callbackRegistred.begin());
+    callbackRegistred.pop();
     //do the query
     bool ok,ok2;
     //parse the result

@@ -21,6 +21,7 @@
 #endif
 #include <unordered_map>
 #include <vector>
+#include <queue>
 #include <iostream>
 
 namespace CatchChallenger {
@@ -121,7 +122,7 @@ public:
 protected:
     QByteArray rawPseudo;
     bool character_loaded,character_loaded_in_progress;
-    std::vector<CatchChallenger::DatabaseBase::CallBack *> callbackRegistred;
+    std::queue<CatchChallenger::DatabaseBase::CallBack *> callbackRegistred;
 
     struct ClanActionParam
     {
@@ -199,9 +200,9 @@ private:
     DatapackStatus datapackStatus;
 
     int32_t connected_players;//it's th last number of connected player send
-    std::vector<void *> paramToPassToCallBack;
+    std::queue<void *> paramToPassToCallBack;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    std::vector<std::string > paramToPassToCallBackType;
+    std::queue<std::string > paramToPassToCallBackType;
     #endif
     static std::vector<uint8_t> selectCharacterQueryId;
 
@@ -224,7 +225,7 @@ private:
     uint8_t otherPacketKickNewValue;
     #endif
     uint8_t profileIndex;
-    std::vector<PlayerOnMap> lastTeleportation;
+    std::queue<PlayerOnMap> lastTeleportation;
     std::vector<uint8_t> queryNumberList;
 
     Client *otherPlayerBattle;
