@@ -19,10 +19,10 @@ void Client::sendSystemMessage(const std::string &text,const bool &important)
         else
             out << (uint8_t)0x07;
         {
-            const QByteArray &tempText=text.toUtf8();
+            const QByteArray tempText(text.data(),text.size());
             if(tempText.size()>255)
             {
-                DebugClass::debugConsole(std::stringLiteral("text in Utf8 too big, line: %1").arg(__LINE__));
+                errorOutput("text in Utf8 too big, line: "+std::to_string(__LINE__));
                 return;
             }
             out << (uint8_t)tempText.size();
@@ -51,10 +51,10 @@ void Client::clanChangeWithoutDb(const uint32_t &clanId)
 {
     if(clan!=NULL)
     {
-        clan->players.removeOne(this);
-        if(clan->players.isEmpty())
+        vectorremoveOne(clan->players,this);
+        if(clan->players.empty())
         {
-            clanList.remove(public_and_private_informations.clan);
+            clanList.erase(public_and_private_informations.clan);
             delete clan;
         }
         clan=NULL;
@@ -62,11 +62,11 @@ void Client::clanChangeWithoutDb(const uint32_t &clanId)
     }
     if(clanId>0)
     {
-        if(clanList.contains(clanId))
+        if(clanList.find(clanId)!=clanList.cend())
         {
             public_and_private_informations.clan=clanId;
             clan=clanList[clanId];
-            clan->players << this;
+            clan->players.push_back(this);
         }
         else
             errorOutput("Clan not found for insert");
@@ -80,24 +80,24 @@ void Client::sendPM(const std::string &text,const std::string &pseudo)
     privateChatDropNewValue++;
     if(this->public_and_private_informations.public_informations.pseudo==pseudo)
     {
-        errorOutput(QLatin1String("Can't send them self the PM"));
+        errorOutput("Can't send them self the PM");
         return;
     }
-    if(!playerByPseudo.contains(pseudo))
+    if(playerByPseudo.find(pseudo)==playerByPseudo.cend())
     {
-        receiveSystemText(std::stringLiteral("unable to found the connected player: pseudo: \"%1\"").arg(pseudo),false);
+        receiveSystemText("unable to found the connected player: pseudo: \""+pseudo+"\"",false);
         if(GlobalServerData::serverSettings.anonymous)
-            normalOutput(std::stringLiteral("%1 have try send message to not connected user").arg(character_id));
+            normalOutput(std::to_string(character_id)+" have try send message to not connected user");
         else
-            normalOutput(std::stringLiteral("%1 have try send message to not connected user: %2").arg(this->public_and_private_informations.public_informations.pseudo).arg(pseudo));
+            normalOutput(this->public_and_private_informations.public_informations.pseudo+" have try send message to not connected user: "+pseudo);
         return;
     }
     if(!GlobalServerData::serverSettings.anonymous)
-        normalOutput(std::stringLiteral("[chat PM]: %1 -> %2: %3").arg(this->public_and_private_informations.public_informations.pseudo).arg(pseudo).arg(text));
+        normalOutput("[chat PM]: "+this->public_and_private_informations.public_informations.pseudo+" -> "+pseudo+": "+text);
     #ifndef EPOLLCATCHCHALLENGERSERVER
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(this->public_and_private_informations.public_informations.pseudo,Chat_type_pm,std::stringLiteral("to %1: %2").arg(pseudo).arg(text));
     #endif
-    playerByPseudo.value(pseudo)->receiveChatText(Chat_type_pm,text,this);
+    playerByPseudo.at(pseudo)->receiveChatText(Chat_type_pm,text,this);
 }
 
 void Client::receiveChatText(const Chat_type &chatType,const std::string &text,const Client *sender_informations)
@@ -107,10 +107,10 @@ void Client::receiveChatText(const Chat_type &chatType,const std::string &text,c
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)chatType;
     {
-        const QByteArray &tempText=text.toUtf8();
+        const QByteArray tempText(text.data(),text.size());
         if(tempText.size()>255)
         {
-            DebugClass::debugConsole(std::stringLiteral("text in Utf8 too big, line: %1").arg(__LINE__));
+            std::cerr << "text in Utf8 too big, line: " << __LINE__ << std::endl;
             return;
         }
         out << (uint8_t)tempText.size();
@@ -139,10 +139,10 @@ void Client::receiveSystemText(const std::string &text,const bool &important)
     else
         out << (uint8_t)Chat_type_system;
     {
-        const QByteArray &tempText=text.toUtf8();
+        const QByteArray tempText(text.data(),text.size());
         if(tempText.size()>255)
         {
-            DebugClass::debugConsole(std::stringLiteral("text in Utf8 too big, line: %1").arg(__LINE__));
+            std::cerr << "text in Utf8 too big, line: " << __LINE__ << std::endl;
             return;
         }
         out << (uint8_t)tempText.size();
@@ -159,11 +159,13 @@ void Client::sendChatText(const Chat_type &chatType,const std::string &text)
         if((clanChatDropTotalCache+clanChatDropNewValue)>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessageLocalClan)
             return;
         if(clan==0)
-            errorOutput(QLatin1String("Unable to chat with clan, you have not clan"));
+            errorOutput("Unable to chat with clan, you have not clan");
         else
         {
             if(!GlobalServerData::serverSettings.anonymous)
-                normalOutput(std::stringLiteral("[chat] %1: To the clan %2: %3").arg(public_and_private_informations.public_informations.pseudo).arg(clan->name).arg(text));
+                normalOutput("[chat] "+public_and_private_informations.public_informations.pseudo+
+                             ": To the clan "+clan->name+": "+text
+                            );
             #ifndef EPOLLCATCHCHALLENGERSERVER
             BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(public_and_private_informations.public_informations.pseudo,chatType,text);
             #endif
@@ -176,10 +178,10 @@ void Client::sendChatText(const Chat_type &chatType,const std::string &text)
                 out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
                 out << (uint8_t)chatType;
                 {
-                    const QByteArray &tempText=text.toUtf8();
+                    const QByteArray tempText(text.data(),text.size());
                     if(tempText.size()>255)
                     {
-                        DebugClass::debugConsole(std::stringLiteral("text in Utf8 too big, line: %1").arg(__LINE__));
+                        errorOutput("text in Utf8 too big, line: "+std::to_string(__LINE__));
                         return;
                     }
                     out << (uint8_t)tempText.size();
@@ -221,7 +223,7 @@ void Client::sendChatText(const Chat_type &chatType,const std::string &text)
         if((generalChatDropTotalCache+generalChatDropNewValue)>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessageGeneral)
             return;
         if(!GlobalServerData::serverSettings.anonymous)
-            normalOutput(std::stringLiteral("[chat all] %1: %2").arg(public_and_private_informations.public_informations.pseudo).arg(text));
+            normalOutput("[chat all] "+public_and_private_informations.public_informations.pseudo+": "+text);
         #ifndef EPOLLCATCHCHALLENGERSERVER
         BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(public_and_private_informations.public_informations.pseudo,chatType,text);
         #endif
@@ -233,10 +235,10 @@ void Client::sendChatText(const Chat_type &chatType,const std::string &text)
             out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
             out << (uint8_t)chatType;
             {
-                const QByteArray &tempText=text.toUtf8();
+                const QByteArray tempText(text.data(),text.size());
                 if(tempText.size()>255)
                 {
-                    DebugClass::debugConsole(std::stringLiteral("text in Utf8 too big, line: %1").arg(__LINE__));
+                    errorOutput("text in Utf8 too big, line: "+std::to_string(__LINE__));
                     return;
                 }
                 out << (uint8_t)tempText.size();
@@ -291,23 +293,23 @@ void Client::sendBroadCastCommand(const std::string &command,const std::string &
     normalOutput(Client::text_command+command+Client::text_space+extraText);
     if(command==Client::text_chat)
     {
-        std::vector<std::string> list=extraText.split(Client::text_space);
+        std::vector<std::string> list=stringsplit(extraText,' ');
         if(list.size()<2)
         {
             receiveSystemText(Client::text_commandnotunderstand+command+Client::text_space+extraText);
             normalOutput(Client::text_commandnotunderstand+command+Client::text_space+extraText);
             return;
         }
-        if(list.first()==Client::text_system)
+        if(list.front()==Client::text_system)
         {
-            list.removeFirst();
-            sendChatText(Chat_type_system,list.join(Client::text_space));
+            list.erase(list.begin());
+            sendChatText(Chat_type_system,stringimplode(list,' '));
             return;
         }
-        if(list.first()==Client::text_system_important)
+        if(list.front()==Client::text_system_important)
         {
-            list.removeFirst();
-            sendChatText(Chat_type_system_important,list.join(Client::text_space));
+            list.erase(list.begin());
+            sendChatText(Chat_type_system_important,stringimplode(list,' '));
             return;
         }
         else
@@ -319,38 +321,38 @@ void Client::sendBroadCastCommand(const std::string &command,const std::string &
     }
     else if(command==Client::text_setrights)
     {
-        std::vector<std::string> list=extraText.split(Client::text_space);
+        std::vector<std::string> list=stringsplit(extraText,' ');
         if(list.size()!=2)
         {
             receiveSystemText(Client::text_commandnotunderstand+command+Client::text_space+extraText);
             normalOutput(Client::text_commandnotunderstand+command+Client::text_space+extraText);
             return;
         }
-        if(!playerByPseudo.contains(list.first()))
+        if(playerByPseudo.find(list.front())==playerByPseudo.cend())
         {
             receiveSystemText(Client::text_unabletofoundtheconnectedplayertokick+extraText);
             normalOutput(Client::text_unabletofoundtheconnectedplayertokick+extraText);
             return;
         }
-        Client * client=playerByPseudo.value(list.first());
+        Client * client=playerByPseudo.at(list.front());
         if(client==NULL)
         {
             qDebug() << "Internal bug";
             normalOutput(Client::text_unabletofoundtheconnectedplayertokick+extraText);
             return;
         }
-        if(list.last()==Client::text_normal)
+        if(list.back()==Client::text_normal)
             client->setRights(Player_type_normal);
-        else if(list.last()==Client::text_premium)
+        else if(list.back()==Client::text_premium)
             client->setRights(Player_type_premium);
-        else if(list.last()==Client::text_gm)
+        else if(list.back()==Client::text_gm)
             client->setRights(Player_type_gm);
-        else if(list.last()==Client::text_dev)
+        else if(list.back()==Client::text_dev)
             client->setRights(Player_type_dev);
         else
         {
-            receiveSystemText(Client::text_unabletofoundthisrightslevel+list.last());
-            normalOutput(Client::text_unabletofoundthisrightslevel+list.last());
+            receiveSystemText(Client::text_unabletofoundthisrightslevel+list.back());
+            normalOutput(Client::text_unabletofoundthisrightslevel+list.back());
             return;
         }
     }
@@ -361,14 +363,13 @@ void Client::sendBroadCastCommand(const std::string &command,const std::string &
         else
         {
             std::vector<std::string> playerStringList;
-            std::unordered_map<std::string,Client *>::const_iterator i_playerByPseudo=playerByPseudo.constBegin();
-            std::unordered_map<std::string,Client *>::const_iterator i_playerByPseudo_end=playerByPseudo.constEnd();
-            while(i_playerByPseudo != i_playerByPseudo_end)
+            auto i=playerByPseudo.begin();
+            while(i!=playerByPseudo.cend())
             {
-                playerStringList << Client::text_startbold+i_playerByPseudo.value()->public_and_private_informations.public_informations.pseudo+Client::text_stopbold;
-                ++i_playerByPseudo;
+                playerStringList.push_back(Client::text_startbold+i->second->public_and_private_informations.public_informations.pseudo+Client::text_stopbold);
+                ++i;
             }
-            receiveSystemText(Client::text_playersconnectedspace+playerStringList.join(Client::text_commaspace));
+            receiveSystemText(Client::text_playersconnectedspace+stringimplode(playerStringList,Client::text_commaspace));
         }
         return;
     }
@@ -377,29 +378,32 @@ void Client::sendBroadCastCommand(const std::string &command,const std::string &
         if(playerByPseudo.size()==1)
             receiveSystemText(Client::text_Youarealoneontheserver);
         else
-            receiveSystemText(Client::text_startbold+std::string::number(playerByPseudo.size())+Client::text_stopbold+Client::text_playersconnected);
+            receiveSystemText(Client::text_startbold+std::to_string(playerByPseudo.size())+Client::text_stopbold+Client::text_playersconnected);
         return;
     }
     else if(command==Client::text_kick)
     {
         //drop, and do the command here to separate the loop
-        if(!playerByPseudo.contains(extraText))
+        if(playerByPseudo.find(extraText)==playerByPseudo.cend())
         {
             receiveSystemText(Client::text_unabletofoundtheconnectedplayertokick+extraText);
             normalOutput(Client::text_unabletofoundtheconnectedplayertokick+extraText);
             return;
         }
-        playerByPseudo.value(extraText)->kick();
+        playerByPseudo.at(extraText)->kick();
         sendSystemMessage(extraText+Client::text_havebeenkickedby+public_and_private_informations.public_informations.pseudo);
         return;
     }
     else
-        normalOutput(Client::text_unknowcommand.arg(command).arg(extraText));
+        normalOutput("unknow command: "+command+", text: "+extraText);
 }
 
 void Client::setRights(const Player_type& type)
 {
     public_and_private_informations.public_informations.type=type;
     const int &newType=type/0x10-1;
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_change_right.arg(account_id).arg(newType));
+    std::string queryText=PreparedDBQueryCommon::db_query_change_right;
+    stringreplaceOne(queryText,"%1",std::to_string(account_id));
+    stringreplaceOne(queryText,"%2",std::to_string(newType));
+    dbQueryWriteCommon(queryText);
 }
