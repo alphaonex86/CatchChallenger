@@ -178,7 +178,7 @@ void BaseServer::preload_pointOnMap_return()
                                             #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
                                             mapAndPoint.indexOfDirtOnMap=255;
                                             #endif
-                                            DictionaryServer::dictionary_pointOnMap_database_to_internal << mapAndPoint;
+                                            DictionaryServer::dictionary_pointOnMap_database_to_internal.push_back(mapAndPoint);
                                         }
 
                                         DictionaryServer::MapAndPoint mapAndPoint;

@@ -14,7 +14,7 @@ class DictionaryServer
 public:
     static std::vector<MapServer *> dictionary_map_database_to_internal;
     ///used only at map loading, \see BaseServer::preload_the_map()
-    static std::unordered_map<std::string,std::unordered_map<std::pair<quint8/*x*/,quint8/*y*/>,quint16/*db code*/,pairhash> > dictionary_pointOnMap_internal_to_database;
+    static std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/,pairhash> > dictionary_pointOnMap_internal_to_database;
 
     struct MapAndPoint
     {
@@ -27,7 +27,7 @@ public:
         #endif
         quint8 indexOfItemOnMap;
     };
-    static QList<MapAndPoint> dictionary_pointOnMap_database_to_internal;
+    static std::vector<MapAndPoint> dictionary_pointOnMap_database_to_internal;
 };
 }
 

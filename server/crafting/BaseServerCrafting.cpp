@@ -3,7 +3,6 @@
 #include "../VariableServer.h"
 #include "../base/MapServer.h"
 #include "../../general/base/GeneralVariable.h"
-#include "../../general/base/DebugClass.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/MoveOnTheMap.h"
 #include "../../general/base/DatapackGeneralLoader.h"
