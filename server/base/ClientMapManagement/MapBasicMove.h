@@ -1,9 +1,7 @@
 #ifndef CATCHCHALLENGER_MapBasicMove_H
 #define CATCHCHALLENGER_MapBasicMove_H
 
-#include <QObject>
-#include <QList>
-#include <QString>
+#include <string>
 
 #include "../../../general/base/GeneralVariable.h"
 #include "../../../general/base/MoveOnTheMap.h"
@@ -35,8 +33,8 @@ public:
     virtual void teleportValidatedTo(CommonMap *map, const quint8 &x, const quint8 &y, const Orientation &orientation);
 protected:
     //normal management related
-    virtual void errorOutput(const QString &errorString);
-    virtual void normalOutput(const QString &message) const;
+    virtual void errorOutput(const std::string &errorString);
+    virtual void normalOutput(const std::string &message) const;
     virtual bool singleMove(const Direction &direction) = 0;
 };
 }
