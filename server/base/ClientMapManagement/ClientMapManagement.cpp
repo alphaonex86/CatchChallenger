@@ -1,5 +1,7 @@
 #include "ClientMapManagement.h"
 #include "../../VariableServer.h"
+#include <iostream>
+#include <string>
 
 using namespace CatchChallenger;
 
@@ -15,7 +17,11 @@ using namespace CatchChallenger;
 bool ClientMapManagement::moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_MOVE
-    message(std::stringLiteral("ClientMapManagement::moveThePlayer (%1,%2): %3, direction: %4, previousMovedUnit: %5").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(MoveOnTheMap::directionToString(direction)).arg(previousMovedUnit));
+    std::cout << "ClientMapManagement::moveThePlayer (" << std::to_string(x)
+            << "," << std::to_string(y)
+            << "), direction: " << MoveOnTheMap::directionToString(direction)
+            << ", previousMovedUnit: " << std::to_string(previousMovedUnit)
+            ;
     #endif
     if(Q_UNLIKELY(!MapBasicMove::moveThePlayer(previousMovedUnit,direction)))
         return false;
