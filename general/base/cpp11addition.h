@@ -90,7 +90,7 @@ bool stringStartWith(std::string const &fullString, std::string const &starting)
 
 std::string& stringimplode(const std::vector<std::string>& elems, char delim, std::string& s)
 {
-    for (std::vector<std::string>::const_iterator ii = elems.begin(); ii != elems.end(); ++ii)
+    for (std::vector<std::string>::const_iterator ii = elems.begin(); ii != elems.cend(); ++ii)
     {
         s += (*ii);
         if ( ii + 1 != elems.end() ) {
@@ -121,6 +121,19 @@ std::string stringimplode(const std::queue<std::string>& elems, char delim)
         ++count;
     }
 
+    return newString;
+}
+
+std::string stringimplode(const std::vector<std::string>& elems, const std::string &delim)
+{
+    std::string newString;
+    for (std::vector<std::string>::const_iterator ii = elems.begin(); ii != elems.cend(); ++ii)
+    {
+        newString += (*ii);
+        if ( ii + 1 != elems.end() ) {
+            newString += delim;
+        }
+    }
     return newString;
 }
 

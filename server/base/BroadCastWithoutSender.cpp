@@ -39,7 +39,7 @@ void BroadCastWithoutSender::receive_instant_player_number(const qint16 &connect
 {
     if(GlobalServerData::serverSettings.sendPlayerNumber)
     {
-        if(Client::clientBroadCastList.isEmpty())
+        if(Client::clientBroadCastList.empty())
             return;
 
         quint8 outputSize;

@@ -52,7 +52,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::insertClient()
         if(Q_UNLIKELY(loop_size>=GlobalServerData::serverSettings.mapVisibility.simple.max))
         {
             #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-            normalOutput(std::stringLiteral("insertClient() too many client, hide now, into: %1").arg(map->map_file));
+            normalOutput("insertClient() too many client, hide now, into: "+map->map_file);
             #endif
             temp_map->show=false;
             //drop all show client because it have excess the limit
@@ -67,13 +67,13 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::insertClient()
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(this->x>=this->map->width)
             {
-                qDebug() << std::stringLiteral("x to out of map: %1 > %2 (%3)").arg(this->x).arg(this->map->width).arg(this->map->map_file);
+                std::cerr << "x to out of map: " << this->x << " > " << this->map->width << " (" << this->map->map_file << ")" << std::endl;
                 abort();
                 return;
             }
             if(this->y>=this->map->height)
             {
-                qDebug() << std::stringLiteral("y to out of map: %1 > %2 (%3)").arg(this->y).arg(this->map->height).arg(this->map->map_file);
+                std::cerr << "y to out of map: " << this->y << " > " << this->map->height << " (" << this->map->map_file << ")" << std::endl;
                 abort();
                 return;
             }
@@ -84,14 +84,14 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::insertClient()
             //insert the new client
             to_send_insert=true;
             haveNewMove=false;
-            temp_map->to_send_remove.removeOne(public_and_private_informations.public_informations.simplifiedId);
+            vectorremoveOne(temp_map->to_send_remove,public_and_private_informations.public_informations.simplifiedId);
             temp_map->to_send_insert=true;
         }
     }
     else
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        normalOutput(std::stringLiteral("insertClient() already too many client, into: %1").arg(map->map_file));
+        normalOutput("insertClient() already too many client, into: "+map->map_file);
         #endif
     }
     //auto insert to know where it have spawn, now in charge of ClientLocalCalcule
@@ -106,7 +106,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::moveClient(const uint8_t &move
     if(Q_UNLIKELY(mapHaveChanged))
     {
         #ifdef DEBUG_MESSAGE_CLIENT_MOVE
-        normalOutput(std::stringLiteral("map have change, direction: %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(public_and_private_informations.public_informations.simplifiedId).arg(MoveOnTheMap::directionToString(direction)).arg(loop_size-1));
+        normalOutput("map have change, direction: %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(public_and_private_informations.public_informations.simplifiedId).arg(MoveOnTheMap::directionToString(direction)).arg(loop_size-1));
         #endif
         if(Q_LIKELY(temp_map->show))
         {
