@@ -73,12 +73,6 @@ private:
     static int purgeBuffer_indexMovement;
     static bool mapHaveChanged;
     static map_management_move purgeBuffer_move;
-    static std::unordered_map<SIMPLIFIED_PLAYER_ID_TYPE, std::vector<map_management_movement> >::const_iterator i_move;
-    static std::unordered_map<SIMPLIFIED_PLAYER_ID_TYPE, std::vector<map_management_movement> >::const_iterator i_move_end;
-    static std::unordered_map<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_WithBorder_StoreOnSender *>::const_iterator i_insert;
-    static std::unordered_map<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_WithBorder_StoreOnSender *>::const_iterator i_insert_end;
-    static std::unordered_set<SIMPLIFIED_PLAYER_ID_TYPE>::const_iterator i_remove;
-    static std::unordered_set<SIMPLIFIED_PLAYER_ID_TYPE>::const_iterator i_remove_end;
     static CommonMap*			old_map;
     bool haveBufferToPurge;
 

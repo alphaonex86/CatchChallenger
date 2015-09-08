@@ -20,7 +20,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
     if(send_drop_all)
     {
         unsigned const char mainCode[]={0xC4};
-        int index=0;
+        unsigned int index=0;
         while(index<clients.size())
         {
             //clients.at(index)->dropAllClients();
@@ -54,7 +54,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                 out << (uint8_t)clients.size();
             else
                 out << (uint16_t)clients.size();
-            int index=0;
+            unsigned int index=0;
             while(index<clients.size())
             {
                 if(GlobalServerData::serverSettings.max_players<=255)
@@ -81,7 +81,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                 ++index;
             }
         }
-        int index=0;
+        unsigned int index=0;
         while(index<clients.size())
         {
             clients.at(index)->sendPacket(0xC0,purgeBuffer_outputData.constData(),purgeBuffer_outputData.size());
@@ -91,10 +91,10 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         return;
     }
 
-    if(clients.size()<=1 && to_send_remove.isEmpty())
+    if(clients.size()<=1 && to_send_remove.empty())
         return;
-    int clientsToSendDataSizeNewClients=0;
-    int clientsToSendDataSizeOldClients=0;
+    unsigned int clientsToSendDataSizeNewClients=0;
+    unsigned int clientsToSendDataSizeOldClients=0;
     /// \todo use simplified id with max visible player and updater http://catchchallenger.first-world.info/wiki/Base_protocol_messages#C0
     if(to_send_insert)
     {
@@ -103,7 +103,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             //count the player will be insered
             int insert_player=0;
             {
-                int index=0;
+                unsigned int index=0;
                 while(index<clients.size())
                 {
                     if(clients.at(index)->to_send_insert)
@@ -132,7 +132,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         out << (uint8_t)(insert_player);
                     else
                         out << (uint16_t)(insert_player);
-                    int index=0;
+                    unsigned int index=0;
                     while(index<clients.size())
                     {
                         MapVisibilityAlgorithm_Simple_StoreOnSender * client=clients.at(index);
@@ -168,7 +168,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                 qDebug() << "insert_player count is null!";
             //send the packet
             {
-                int index=0;
+                unsigned int index=0;
                 while(index<clients.size())
                 {
                     MapVisibilityAlgorithm_Simple_StoreOnSender * client=clients.at(index);
@@ -190,7 +190,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         //insert old + new (excluding them self) on new
         {
             //count the player will be insered
-            int index=0;
+            unsigned int index=0;
             while(index<clients.size())
             {
                 if(clients.at(index)->to_send_insert)
@@ -212,7 +212,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         out << (uint8_t)(clients.size()-1);
                     else
                         out << (uint16_t)(clients.size()-1);
-                    int index_subindex=0;
+                    unsigned int index_subindex=0;
                     while(index_subindex<clients.size())
                     {
                         MapVisibilityAlgorithm_Simple_StoreOnSender * client=clients.at(index_subindex);
@@ -251,7 +251,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
     }
     else
     {
-        int index=0;
+        unsigned int index=0;
         while(index<clients.size())
         {
             clientsToSendDataOldClients[clientsToSendDataSizeOldClients]=clients.at(index);
@@ -260,7 +260,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         }
     }
     //send drop
-    if(!to_send_remove.isEmpty())
+    if(!to_send_remove.empty())
     {
         if(GlobalServerData::serverSettings.max_players<=255)
         {
@@ -268,7 +268,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             {
                 char buffer[sizeof(uint8_t)+to_send_remove.size()*sizeof(uint8_t)];
                 buffer[0]=(uint8_t)to_send_remove.size();
-                int index_subindex=0;
+                unsigned int index_subindex=0;
                 while(index_subindex<to_send_remove.size())
                 {
                     buffer[sizeof(uint8_t)+index_subindex*sizeof(uint8_t)]=(uint8_t)to_send_remove.at(index_subindex);
@@ -291,7 +291,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             if((sizeof(uint16_t)+to_send_remove.size()*sizeof(uint16_t))<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
             {
                 *reinterpret_cast<uint16_t *>(buffer+0)=(uint16_t)htole16((uint16_t)to_send_remove.size());
-                int index_subindex=0;
+                unsigned int index_subindex=0;
                 while(index_subindex<to_send_remove.size())
                 {
                     *reinterpret_cast<uint16_t *>(buffer+sizeof(uint16_t)+index_subindex*sizeof(uint16_t))=(uint16_t)htole16((uint16_t)to_send_remove.at(index_subindex));
@@ -317,12 +317,12 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
     {
         if(GlobalServerData::serverSettings.mapVisibility.simple.reemit)
         {
-            int real_reinsert_count;
-            int index_subindex;
+            unsigned int real_reinsert_count;
+            unsigned int index_subindex;
 
             real_reinsert_count=0;
             index_subindex=0;
-            int bufferSizeToHave;
+            unsigned int bufferSizeToHave;
             while(index_subindex<clientsToSendDataSizeOldClients)
             {
                 if(clientsToSendDataOldClients[index_subindex]->haveNewMove)
@@ -376,7 +376,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                             }
                             index_subindex++;
                         }
-                    int index=0;
+                    unsigned int index=0;
                     while(index<clientsToSendDataSizeOldClients)
                     {
                         clientsToSendDataOldClients[index]->packOutcommingData(0xC5,buffer,bufferCursor);
@@ -391,11 +391,11 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         }
         else
         {
-            int real_reinsert_count=0;
-            int index_subindex=0;
-            int bufferCursor;
-            int bufferBaseCursor;
-            int bufferSizeToHave;
+            unsigned int real_reinsert_count=0;
+            unsigned int index_subindex=0;
+            unsigned int bufferCursor;
+            unsigned int bufferBaseCursor;
+            unsigned int bufferSizeToHave;
             if(GlobalServerData::serverSettings.max_players<=255)
                 bufferBaseCursor=sizeof(uint8_t);
             else
@@ -415,12 +415,12 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     bufferSizeToHave=sizeof(uint16_t)+real_reinsert_count*(sizeof(uint16_t)+sizeof(uint8_t)*3);
                 if(bufferSizeToHave<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
                 {
-                    int index=0;
+                    unsigned int index=0;
                     if(GlobalServerData::serverSettings.max_players<=255)
                     {
                         while(index<clientsToSendDataSizeOldClients)
                         {
-                            int temp_reinsert=real_reinsert_count;
+                            unsigned int temp_reinsert=real_reinsert_count;
                             if(clientsToSendDataOldClients[index]->haveNewMove)
                                 temp_reinsert--;
                             bufferCursor=bufferBaseCursor;
@@ -449,7 +449,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     {
                         while(index<clientsToSendDataSizeOldClients)
                         {
-                            int temp_reinsert=real_reinsert_count;
+                            unsigned int temp_reinsert=real_reinsert_count;
                             if(clientsToSendDataOldClients[index]->haveNewMove)
                                 temp_reinsert--;
                             bufferCursor=bufferBaseCursor;
@@ -484,7 +484,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
     }
     //purge
     {
-        int index_subindex=0;
+        unsigned int index_subindex=0;
         while(index_subindex<clients.size())
         {
             MapVisibilityAlgorithm_Simple_StoreOnSender * client=clients.at(index_subindex);
