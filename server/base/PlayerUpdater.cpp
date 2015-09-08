@@ -1,5 +1,4 @@
 #include "PlayerUpdater.h"
-#include "../../general/base/DebugClass.h"
 #include "GlobalServerData.h"
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
