@@ -69,12 +69,12 @@ void MapBasicMove::put_on_the_map(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
     if(this->x>(map->width-1))
     {
-        normalOutput(std::stringLiteral("put_on_the_map(): Wrong x: %1").arg(x));
+        normalOutput("put_on_the_map(): Wrong x: "+std::to_string(x));
         this->x=map->width-1;
     }
     if(this->y>(map->height-1))
     {
-        normalOutput(std::stringLiteral("put_on_the_map(): Wrong y: %1").arg(y));
+        normalOutput("put_on_the_map(): Wrong y: "+std::to_string(y));
         this->y=map->height-1;
     }
     #endif
@@ -92,7 +92,7 @@ bool MapBasicMove::moveThePlayer(const uint8_t &previousMovedUnit,const Directio
     uint8_t moveThePlayer_index_move=0;
     if(Q_UNLIKELY(last_direction==direction))
     {
-        errorOutput(std::stringLiteral("Previous action is same direction: %1").arg(last_direction));
+        errorOutput("Previous action is same direction: "+std::to_string(last_direction));
         return false;
     }
     switch(last_direction)
@@ -116,7 +116,7 @@ bool MapBasicMove::moveThePlayer(const uint8_t &previousMovedUnit,const Directio
                 } while(ledge==ParsedLayerLedges_LedgesTop);
                 if(ledge!=ParsedLayerLedges_NoLedges)
                 {
-                    errorOutput(std::stringLiteral("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
+                    errorOutput("Try pass on wrong ledge, direction: "+std::to_string(last_direction)+", ledge: "+std::to_string(ledge));
                     return false;
                 }
                 moveThePlayer_index_move++;
@@ -150,7 +150,7 @@ bool MapBasicMove::moveThePlayer(const uint8_t &previousMovedUnit,const Directio
                 } while(ledge==ParsedLayerLedges_LedgesRight);
                 if(ledge!=ParsedLayerLedges_NoLedges)
                 {
-                    errorOutput(std::stringLiteral("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
+                    errorOutput("Try pass on wrong ledge, direction: "+std::to_string(last_direction)+", ledge: "+std::to_string(ledge));
                     return false;
                 }
                 moveThePlayer_index_move++;
@@ -184,7 +184,7 @@ bool MapBasicMove::moveThePlayer(const uint8_t &previousMovedUnit,const Directio
                 } while(ledge==ParsedLayerLedges_LedgesBottom);
                 if(ledge!=ParsedLayerLedges_NoLedges)
                 {
-                    errorOutput(std::stringLiteral("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
+                    errorOutput("Try pass on wrong ledge, direction: "+std::to_string(last_direction)+", ledge: "+std::to_string(ledge));
                     return false;
                 }
                 moveThePlayer_index_move++;
@@ -218,7 +218,7 @@ bool MapBasicMove::moveThePlayer(const uint8_t &previousMovedUnit,const Directio
                 } while(ledge==ParsedLayerLedges_LedgesLeft);
                 if(ledge!=ParsedLayerLedges_NoLedges)
                 {
-                    errorOutput(std::stringLiteral("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
+                    errorOutput("Try pass on wrong ledge, direction: "+std::to_string(last_direction)+", ledge: "+std::to_string(ledge));
                     return false;
                 }
                 moveThePlayer_index_move++;
@@ -234,7 +234,7 @@ bool MapBasicMove::moveThePlayer(const uint8_t &previousMovedUnit,const Directio
             }*/
         break;
         default:
-            errorOutput(std::stringLiteral("moveThePlayer(): direction not managed"));
+            errorOutput("moveThePlayer(): direction not managed");
             return false;
         break;
     }

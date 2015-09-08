@@ -305,7 +305,7 @@ void BaseServer::preload_map_semi_after_db_id()
                         #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
                         mapAndPoint.indexOfDirtOnMap=255;
                         #endif
-                        DictionaryServer::dictionary_pointOnMap_database_to_internal << mapAndPoint;
+                        DictionaryServer::dictionary_pointOnMap_database_to_internal.push_back(mapAndPoint);
                     }
                     {
                         DictionaryServer::MapAndPoint mapAndPoint;
@@ -408,7 +408,7 @@ void BaseServer::preload_map_semi_after_db_id()
                         mapAndPoint.indexOfDirtOnMap=255;
                         #endif
                         mapAndPoint.indexOfItemOnMap=255;
-                        DictionaryServer::dictionary_pointOnMap_database_to_internal << mapAndPoint;
+                        DictionaryServer::dictionary_pointOnMap_database_to_internal.push_back(mapAndPoint);
                     }
                     {
                         DictionaryServer::MapAndPoint mapAndPoint;

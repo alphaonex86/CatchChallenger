@@ -907,12 +907,12 @@ void Client::loadItemOnMap_return()
             normalOutput("item on map is not into the map list (1), skip: "+std::to_string(pointOnMapDatabaseId));
             continue;
         }
-        if(DictionaryServer::dictionary_pointOnMap_database_to_internal.value(pointOnMapDatabaseId).map==NULL)
+        if(DictionaryServer::dictionary_pointOnMap_database_to_internal.at(pointOnMapDatabaseId).map==NULL)
         {
             normalOutput("item on map is not into the map list (2), skip: "+std::to_string(pointOnMapDatabaseId));
             continue;
         }
-        const uint8_t &indexOfItemOnMap=DictionaryServer::dictionary_pointOnMap_database_to_internal.value(pointOnMapDatabaseId).indexOfItemOnMap;
+        const uint8_t &indexOfItemOnMap=DictionaryServer::dictionary_pointOnMap_database_to_internal.at(pointOnMapDatabaseId).indexOfItemOnMap;
         if(indexOfItemOnMap==255)
         {
             normalOutput("item on map is not into the map list (3), skip: "+std::to_string(pointOnMapDatabaseId));
