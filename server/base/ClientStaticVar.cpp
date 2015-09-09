@@ -69,7 +69,7 @@ int Client::privateChatDropTotalCache=0;
 int Client::privateChatDropNewValue=0;
 std::vector<uint16_t> Client::marketObjectIdList;
 #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-std::vector<Client::PlantInWaiting> Client::plant_list_in_waiting;
+std::queue<Client::PlantInWaiting> Client::plant_list_in_waiting;
 #endif
 uint8_t Client::indexOfItemOnMap;
 #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
