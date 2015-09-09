@@ -176,7 +176,7 @@ private:
     PlayerOnMap map_entry;
     PlayerOnMap rescue;
     PlayerOnMap unvalidated_rescue;
-    QMultiHash<uint32_t,MonsterDrops> questsDrop;
+    std::unordered_map<uint32_t,std::vector<MonsterDrops> > questsDrop;
     QDateTime connectedSince;
     struct OldEvents
     {
@@ -696,9 +696,9 @@ private:
         uint8_t x,y;
     };
     #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-    static std::vector<PlantInWaiting> plant_list_in_waiting;
+    static std::queue<PlantInWaiting> plant_list_in_waiting;
     #else
-    std::vector<PlantInWaiting> plant_list_in_waiting;
+    std::queue<PlantInWaiting> plant_list_in_waiting;
     #endif
 
     void parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data,const unsigned int &size);
