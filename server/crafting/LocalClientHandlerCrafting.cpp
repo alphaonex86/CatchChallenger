@@ -9,20 +9,20 @@ using namespace CatchChallenger;
 
 void Client::useSeed(const uint8_t &plant_id)
 {
-    if(!haveReputationRequirements(CommonDatapack::commonDatapack.plants.value(plant_id).requirements.reputation))
+    if(!haveReputationRequirements(CommonDatapack::commonDatapack.plants.at(plant_id).requirements.reputation))
     {
-        errorOutput(std::stringLiteral("The player have not the requirement: %1 to plant as seed").arg(CommonDatapack::commonDatapack.plants.value(plant_id).itemUsed));
+        errorOutput("Don't have the requirement: "+std::to_string(CommonDatapack::commonDatapack.plants.at(plant_id).itemUsed)+" to plant as seed");
         return;
     }
-    else if(objectQuantity(CommonDatapack::commonDatapack.plants.value(plant_id).itemUsed)==0)
+    else if(objectQuantity(CommonDatapack::commonDatapack.plants.at(plant_id).itemUsed)==0)
     {
-        errorOutput(std::stringLiteral("The player have not the item id: %1 to plant as seed").arg(CommonDatapack::commonDatapack.plants.value(plant_id).itemUsed));
+        errorOutput("Don't have the item id: "+std::to_string(CommonDatapack::commonDatapack.plants.at(plant_id).itemUsed)+" to plant as seed");
         return;
     }
     else
     {
-        appendReputationRewards(CommonDatapack::commonDatapack.plants.value(plant_id).rewards.reputation);
-        removeObject(CommonDatapack::commonDatapack.plants.value(plant_id).itemUsed);
+        appendReputationRewards(CommonDatapack::commonDatapack.plants.at(plant_id).rewards.reputation);
+        removeObject(CommonDatapack::commonDatapack.plants.at(plant_id).itemUsed);
         seedValidated();
     }
 }
@@ -30,12 +30,12 @@ void Client::useSeed(const uint8_t &plant_id)
 void Client::useRecipe(const uint8_t &query_id,const uint32_t &recipe_id)
 {
     //don't check if the recipe exists, because the loading of the know recide do that's
-    if(!public_and_private_informations.recipes.contains(recipe_id))
+    if(public_and_private_informations.recipes.find(recipe_id)==public_and_private_informations.recipes.cend())
     {
-        errorOutput(std::stringLiteral("The player have not this recipe as know: %1").arg(recipe_id));
+        errorOutput("The player have not this recipe as know: "+std::to_string(recipe_id));
         return;
     }
-    const CrafingRecipe &recipe=CommonDatapack::commonDatapack.crafingRecipes.value(recipe_id);
+    const CrafingRecipe &recipe=CommonDatapack::commonDatapack.crafingRecipes.at(recipe_id);
     //check if have material
     int index=0;
     const int &materials_size=recipe.materials.size();
@@ -43,7 +43,7 @@ void Client::useRecipe(const uint8_t &query_id,const uint32_t &recipe_id)
     {
         if(objectQuantity(recipe.materials.at(index).item)<recipe.materials.at(index).quantity)
         {
-            errorOutput(std::stringLiteral("The player have only: %1 of item: %2, can't craft").arg(objectQuantity(recipe.materials.at(index).item)).arg(recipe.materials.at(index).item));
+            errorOutput("Have only: "+std::to_string(objectQuantity(recipe.materials.at(index).item))+" of item: "+std::to_string(recipe.materials.at(index).item)+", can't craft");
             return;
         }
         index++;
@@ -80,7 +80,7 @@ void Client::useRecipe(const uint8_t &query_id,const uint32_t &recipe_id)
 void Client::takeAnObjectOnMap()
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(std::stringLiteral("takeAnObjectOnMap()"));
+    normalOutput("takeAnObjectOnMap()");
     #endif
     CommonMap *map=this->map;
     uint8_t x=this->x;
@@ -93,7 +93,7 @@ void Client::takeAnObjectOnMap()
             {
                 if(!MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y,false))
                 {
-                    errorOutput(std::stringLiteral("takeAnObjectOnMap() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput("takeAnObjectOnMap() Can't move at top from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                     return;
                 }
             }
@@ -108,7 +108,7 @@ void Client::takeAnObjectOnMap()
             {
                 if(!MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y,false))
                 {
-                    errorOutput(std::stringLiteral("takeAnObjectOnMap() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput("takeAnObjectOnMap() Can't move at right from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                     return;
                 }
             }
@@ -123,7 +123,7 @@ void Client::takeAnObjectOnMap()
             {
                 if(!MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y,false))
                 {
-                    errorOutput(std::stringLiteral("takeAnObjectOnMap() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput("takeAnObjectOnMap() Can't move at bottom from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                     return;
                 }
             }
@@ -138,7 +138,7 @@ void Client::takeAnObjectOnMap()
             {
                 if(!MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y,false))
                 {
-                    errorOutput(std::stringLiteral("takeAnObjectOnMap() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput("takeAnObjectOnMap() Can't move at left from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                     return;
                 }
             }
@@ -153,23 +153,26 @@ void Client::takeAnObjectOnMap()
         return;
     }
     //check if is dirt
-    if(!static_cast<MapServer *>(map)->itemsOnMap.contains(std::pair<uint8_t,uint8_t>(x,y)))
+    if(static_cast<MapServer *>(map)->itemsOnMap.find(std::pair<uint8_t,uint8_t>(x,y))==static_cast<MapServer *>(map)->itemsOnMap.cend())
     {
         errorOutput("Not on map item on this place");
         return;
     }
-    const MapServer::ItemOnMap &item=static_cast<MapServer *>(map)->itemsOnMap.value(std::pair<uint8_t,uint8_t>(x,y));
+    const MapServer::ItemOnMap &item=static_cast<MapServer *>(map)->itemsOnMap.at(std::pair<uint8_t,uint8_t>(x,y));
     //add get item from db
     if(!item.infinite)
     {
-        if(public_and_private_informations.itemOnMap.contains(item.pointOnMapDbCode))
+        if(public_and_private_informations.itemOnMap.find(item.pointOnMapDbCode)!=public_and_private_informations.itemOnMap.cend())
         {
             errorOutput("Have already this item");
             return;
         }
-        public_and_private_informations.itemOnMap << item.pointOnMapDbCode;
+        public_and_private_informations.itemOnMap.insert(item.pointOnMapDbCode);
 
-        dbQueryWriteServer(PreparedDBQueryServer::db_query_insert_itemonmap.arg(character_id).arg(item.pointOnMapDbCode));
+        std::string queryText=PreparedDBQueryServer::db_query_insert_itemonmap;
+        stringreplaceOne(queryText,"%1",std::to_string(character_id));
+        stringreplaceOne(queryText,"%2",std::to_string(item.pointOnMapDbCode));
+        dbQueryWriteServer(queryText);
     }
     addObject(item.item);
 }
