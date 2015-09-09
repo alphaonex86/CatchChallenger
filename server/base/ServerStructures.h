@@ -303,7 +303,7 @@ struct ServerPrivateVariables
     std::regex datapack_rightFolderName;
 
     //fight
-    std::unordered_multimap<uint16_t,MonsterDrops> monsterDrops;
+    std::unordered_map<uint16_t,std::vector<MonsterDrops> > monsterDrops;
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     std::vector<uint32_t> maxMonsterId;
     std::vector<uint32_t> maxClanId;

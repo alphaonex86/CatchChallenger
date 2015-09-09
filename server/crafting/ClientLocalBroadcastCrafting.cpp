@@ -17,11 +17,15 @@ void Client::plantSeed(
         const uint8_t &plant_id)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(std::stringLiteral("plantSeed(%1,%2)").arg(query_id).arg(plant_id));
+    normalOutput("plantSeed("+
+                 #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+                 std::to_string(query_id)+","+
+                 #endif
+                 std::to_string(plant_id)+")");
     #endif
-    if(!CommonDatapack::commonDatapack.plants.contains(plant_id))
+    if(CommonDatapack::commonDatapack.plants.find(plant_id)==CommonDatapack::commonDatapack.plants.cend())
     {
-        errorOutput(std::stringLiteral("plant_id not found: %1").arg(plant_id));
+        errorOutput("plant_id not found: "+std::to_string(plant_id));
         return;
     }
     CommonMap *map=this->map;
@@ -35,7 +39,7 @@ void Client::plantSeed(
             {
                 if(!MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y,false))
                 {
-                    errorOutput(std::stringLiteral("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput("plantSeed() Can't move at top from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                     return;
                 }
             }
@@ -50,7 +54,7 @@ void Client::plantSeed(
             {
                 if(!MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y,false))
                 {
-                    errorOutput(std::stringLiteral("plantSeed() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput("plantSeed() Can't move at right from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                     return;
                 }
             }
@@ -65,7 +69,7 @@ void Client::plantSeed(
             {
                 if(!MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y,false))
                 {
-                    errorOutput(std::stringLiteral("plantSeed() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput("plantSeed() Can't move at bottom from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                     return;
                 }
             }
@@ -80,7 +84,7 @@ void Client::plantSeed(
             {
                 if(!MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y,false))
                 {
-                    errorOutput(std::stringLiteral("plantSeed() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput("plantSeed() Can't move at left from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                     return;
                 }
             }
@@ -95,16 +99,16 @@ void Client::plantSeed(
         return;
     }
     //check if is dirt
-    if(!static_cast<MapServer *>(map)->plants.contains(std::pair<uint8_t,uint8_t>(x,y)))
+    if(static_cast<MapServer *>(map)->plants.find(std::pair<uint8_t,uint8_t>(x,y))==static_cast<MapServer *>(map)->plants.cend())
     {
         errorOutput("Try put seed out of the dirt");
         return;
     }
     //check if is free
     {
-        const MapServer::PlantOnMap &plantOnMap=static_cast<MapServer *>(map)->plants.value(std::pair<uint8_t,uint8_t>(x,y));
+        const MapServer::PlantOnMap &plantOnMap=static_cast<MapServer *>(map)->plants.at(std::pair<uint8_t,uint8_t>(x,y));
         #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-        if(public_and_private_informations.plantOnMap.contains(plantOnMap.indexOfOnMap))
+        if(public_and_private_informations.plantOnMap.find(plantOnMap.indexOfOnMap)!=public_and_private_informations.plantOnMap.cend())
         {
             errorOutput("Have already a plant in plantOnlyVisibleByPlayer==true");
             return;
@@ -129,14 +133,14 @@ void Client::plantSeed(
     plantInWaiting.x=x;
     plantInWaiting.y=y;
 
-    plant_list_in_waiting << plantInWaiting;
+    plant_list_in_waiting.push(plantInWaiting);
     useSeed(plant_id);
 }
 
 void Client::seedValidated()
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(std::stringLiteral("seedValidated()"));
+    normalOutput("seedValidated()");
     #endif
     /* useless, clean the protocol
     if(!ok)
@@ -169,35 +173,37 @@ void Client::seedValidated()
     #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     QByteArray data;
     data[0]=0x01;
-    postReply(plant_list_in_waiting.first().query_id,data.constData(),data.size());
+    postReply(plant_list_in_waiting.front().query_id,data.constData(),data.size());
     #endif
 
     const quint64 &current_time=QDateTime::currentMSecsSinceEpoch()/1000;
-    const std::pair<uint8_t,uint8_t> pos(plant_list_in_waiting.first().x,plant_list_in_waiting.first().y);
+    const std::pair<uint8_t,uint8_t> pos(plant_list_in_waiting.front().x,plant_list_in_waiting.front().y);
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-    const MapServer::PlantOnMap &plantOnMap=static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.value(pos);
+    const MapServer::PlantOnMap &plantOnMap=static_cast<MapServer *>(plant_list_in_waiting.front().map)->plants.at(pos);
     {
         PlayerPlant plantOnMapPlayer;
-        plantOnMapPlayer.plant=plant_list_in_waiting.first().plant_id;
-        plantOnMapPlayer.mature_at=current_time+CommonDatapack::commonDatapack.plants.value(plantOnMapPlayer.plant).fruits_seconds;
+        plantOnMapPlayer.plant=plant_list_in_waiting.front().plant_id;
+        plantOnMapPlayer.mature_at=current_time+CommonDatapack::commonDatapack.plants.at(plantOnMapPlayer.plant).fruits_seconds;
         public_and_private_informations.plantOnMap[plantOnMap.indexOfOnMap]=plantOnMapPlayer;
     }
     #else
     MapServer::PlantOnMap &plantOnMap=static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants[pos];
     {
-        plantOnMap.plant=plant_list_in_waiting.first().plant_id;
+        plantOnMap.plant=plant_list_in_waiting.front().plant_id;
         plantOnMap.character=character_id;
-        plantOnMap.mature_at=current_time+CommonDatapack::commonDatapack.plants.value(plantOnMap.plant).fruits_seconds;
-        plantOnMap.player_owned_expire_at=current_time+CommonDatapack::commonDatapack.plants.value(plantOnMap.plant).fruits_seconds+CATCHCHALLENGER_SERVER_OWNER_TIMEOUT;
+        plantOnMap.mature_at=current_time+CommonDatapack::commonDatapack.plants.at(plantOnMap.plant).fruits_seconds;
+        plantOnMap.player_owned_expire_at=current_time+CommonDatapack::commonDatapack.plants.at(plantOnMap.plant).fruits_seconds+CATCHCHALLENGER_SERVER_OWNER_TIMEOUT;
         static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants[pos]=plantOnMap;
     }
     #endif
-    dbQueryWriteServer(PreparedDBQueryServer::db_query_insert_plant
-                 .arg(character_id)
-                 .arg(plantOnMap.pointOnMapDbCode)
-                 .arg(plant_list_in_waiting.first().plant_id)
-                 .arg(current_time)
-                 );
+    {
+        std::string queryText=PreparedDBQueryServer::db_query_insert_plant;
+        stringreplaceOne(queryText,"%1",std::to_string(character_id));
+        stringreplaceOne(queryText,"%2",std::to_string(plantOnMap.pointOnMapDbCode));
+        stringreplaceOne(queryText,"%3",std::to_string(plant_list_in_waiting.front().plant_id));
+        stringreplaceOne(queryText,"%4",std::to_string(current_time));
+        dbQueryWriteServer(queryText);
+    }
 
     //send to all player
     #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
@@ -245,7 +251,7 @@ void Client::seedValidated()
     }
     #endif
 
-    plant_list_in_waiting.removeFirst();
+    plant_list_in_waiting.pop();
 }
 
 #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
@@ -336,7 +342,11 @@ void Client::collectPlant(
         )
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(std::stringLiteral("collectPlant(%1)").arg(query_id));
+    #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+    normalOutput("collectPlant("+std::to_string(query_id)+")");
+    #else
+    normalOutput("collectPlant()");
+    #endif
     #endif
     CommonMap *map=this->map;
     uint8_t x=this->x;
@@ -349,7 +359,7 @@ void Client::collectPlant(
             {
                 if(!MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y,false))
                 {
-                    errorOutput(std::stringLiteral("collectPlant() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput("collectPlant() Can't move at top from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                     return;
                 }
             }
@@ -364,7 +374,7 @@ void Client::collectPlant(
             {
                 if(!MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y,false))
                 {
-                    errorOutput(std::stringLiteral("collectPlant() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput("collectPlant() Can't move at right from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                     return;
                 }
             }
@@ -379,7 +389,7 @@ void Client::collectPlant(
             {
                 if(!MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y,false))
                 {
-                    errorOutput(std::stringLiteral("collectPlant() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput("collectPlant() Can't move at bottom from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                     return;
                 }
             }
@@ -394,7 +404,7 @@ void Client::collectPlant(
             {
                 if(!MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y,false))
                 {
-                    errorOutput(std::stringLiteral("collectPlant() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput("collectPlant() Can't move at left from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                     return;
                 }
             }
@@ -416,29 +426,32 @@ void Client::collectPlant(
     }
     //check if is free
     const quint64 &current_time=QDateTime::currentMSecsSinceEpoch()/1000;
-    const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.value(std::pair<uint8_t,uint8_t>(x,y));
+    const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.at(std::pair<uint8_t,uint8_t>(x,y));
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-    if(public_and_private_informations.plantOnMap.contains(plant.indexOfOnMap))
+    if(public_and_private_informations.plantOnMap.find(plant.indexOfOnMap)!=public_and_private_informations.plantOnMap.cend())
     {
-        const PlayerPlant &playerPlant=public_and_private_informations.plantOnMap.value(plant.indexOfOnMap);
+        const PlayerPlant &playerPlant=public_and_private_informations.plantOnMap.at(plant.indexOfOnMap);
         if(current_time<playerPlant.mature_at)
         {
             errorOutput("current_time<plant.mature_at");
             return;
         }
         //remove from db
-        dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_plant_by_index.arg(character_id).arg(plant.pointOnMapDbCode));
+        std::string queryText=PreparedDBQueryServer::db_query_delete_plant_by_index;
+        stringreplaceOne(queryText,"%1",std::to_string(character_id));
+        stringreplaceOne(queryText,"%2",std::to_string(plant.pointOnMapDbCode));
+        dbQueryWriteServer(queryText);
 
         //add into the inventory
-        float quantity=CommonDatapack::commonDatapack.plants.value(playerPlant.plant).fix_quantity;
-        if((rand()%RANDOM_FLOAT_PART_DIVIDER)<=CommonDatapack::commonDatapack.plants.value(playerPlant.plant).random_quantity)
+        float quantity=CommonDatapack::commonDatapack.plants.at(playerPlant.plant).fix_quantity;
+        if((rand()%RANDOM_FLOAT_PART_DIVIDER)<=CommonDatapack::commonDatapack.plants.at(playerPlant.plant).random_quantity)
             quantity++;
 
         //send the object collected to the current character
-        addObjectAndSend(CommonDatapack::commonDatapack.plants.value(playerPlant.plant).itemUsed,quantity);
+        addObjectAndSend(CommonDatapack::commonDatapack.plants.at(playerPlant.plant).itemUsed,quantity);
 
         //clear the server dirt
-        public_and_private_informations.plantOnMap.remove(plant.indexOfOnMap);
+        public_and_private_informations.plantOnMap.erase(plant.indexOfOnMap);
         return;
     }
     else

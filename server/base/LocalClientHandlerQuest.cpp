@@ -69,7 +69,7 @@ void Client::addQuestStepDrop(const uint32_t &questId,const uint8_t &questStep)
         const MonsterDrops &monsterDrops=questItemMonsterToMonsterDrops(itemMonster);
         while(sub_index<itemMonster.monsters.size())
         {
-            questsDrop.insert(itemMonster.monsters.at(sub_index),monsterDrops);
+            questsDrop[itemMonster.monsters.at(sub_index)].push_back(monsterDrops);
             sub_index++;
         }
         index++;
@@ -102,7 +102,7 @@ void Client::removeQuestStepDrop(const uint32_t &questId,const uint8_t &questSte
         const MonsterDrops &monsterDrops=questItemMonsterToMonsterDrops(itemMonster);
         while(sub_index<itemMonster.monsters.size())
         {
-            questsDrop.remove(itemMonster.monsters.at(sub_index),monsterDrops);
+            vectorremoveOne(questsDrop[itemMonster.monsters.at(sub_index)],monsterDrops);
             sub_index++;
         }
         index++;
