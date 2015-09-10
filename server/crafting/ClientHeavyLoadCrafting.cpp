@@ -12,22 +12,24 @@ void Client::loadRecipes()
 {
     //recipes
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryCommon::db_query_select_recipes_by_player_id.isEmpty())
+    if(PreparedDBQueryCommon::db_query_select_recipes_by_player_id.empty())
     {
-        errorOutput(std::stringLiteral("loadRecipes() Query is empty, bug"));
+        errorOutput("loadRecipes() Query is empty, bug");
         return;
     }
     #endif
-    const std::string &queryText=PreparedDBQueryCommon::db_query_select_recipes_by_player_id.arg(character_id);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&Client::loadRecipes_static);
+    std::string queryText=PreparedDBQueryCommon::db_query_select_recipes_by_player_id;
+    stringreplaceOne(queryText,"%1",std::to_string(character_id));
+
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::loadRecipes_static);
     if(callback==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         loadMonsters();
         return;
     }
     else
-        callbackRegistred << callback;
+        callbackRegistred.push(callback);
 }
 
 void Client::loadRecipes_static(void *object)
@@ -38,20 +40,20 @@ void Client::loadRecipes_static(void *object)
 
 void Client::loadRecipes_return()
 {
-    callbackRegistred.removeFirst();
+    callbackRegistred.pop();
     bool ok;
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        const uint32_t &recipeId=std::string(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
+        const uint32_t &recipeId=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(ok)
         {
-            if(CommonDatapack::commonDatapack.crafingRecipes.contains(recipeId))
-                public_and_private_informations.recipes << recipeId;
+            if(CommonDatapack::commonDatapack.crafingRecipes.find(recipeId)!=CommonDatapack::commonDatapack.crafingRecipes.cend())
+                public_and_private_informations.recipes.insert(recipeId);
             else
-                normalOutput(std::stringLiteral("recipeId: %1 is not into recipe list").arg(recipeId));
+                normalOutput("recipeId: "+std::to_string(recipeId)+" is not into recipe list");
         }
         else
-            normalOutput(std::stringLiteral("recipeId: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(0)));
+            normalOutput("recipeId: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" is not a number");
     }
     loadMonsters();
 }
@@ -60,22 +62,23 @@ void Client::loadItems()
 {
     //do the query
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryCommon::db_query_select_items_by_player_id.isEmpty())
+    if(PreparedDBQueryCommon::db_query_select_items_by_player_id.empty())
     {
-        errorOutput(std::stringLiteral("loadItems() Query is empty, bug"));
+        errorOutput("loadItems() Query is empty, bug");
         return;
     }
     #endif
-    const std::string &queryText=PreparedDBQueryCommon::db_query_select_items_by_player_id.arg(character_id);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&Client::loadItems_static);
+    std::string queryText=PreparedDBQueryCommon::db_query_select_items_by_player_id;
+    stringreplaceOne(queryText,"%1",std::to_string(character_id));
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::loadItems_static);
     if(callback==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         loadItemsWarehouse();
         return;
     }
     else
-        callbackRegistred << callback;
+        callbackRegistred.push(callback);
 }
 
 void Client::loadItems_static(void *object)
@@ -86,31 +89,31 @@ void Client::loadItems_static(void *object)
 
 void Client::loadItems_return()
 {
-    callbackRegistred.removeFirst();
+    callbackRegistred.pop();
     bool ok;
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        const uint32_t &id=std::string(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
+        const uint32_t &id=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(!ok)
         {
-            normalOutput(QLatin1String("item id is not a number, skip"));
+            normalOutput("item id is not a number, skip");
             continue;
         }
-        const uint32_t &quantity=std::string(GlobalServerData::serverPrivateVariables.db_common->value(1)).toUInt(&ok);
+        const uint32_t &quantity=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
         if(!ok)
         {
-            normalOutput(QLatin1String("quantity is not a number, skip"));
+            normalOutput("quantity is not a number, skip");
             continue;
         }
         if(quantity==0)
         {
-            normalOutput(std::stringLiteral("The item %1 have been dropped because the quantity is 0").arg(id));
+            normalOutput("The item "+std::to_string(id)+" have been dropped because the quantity is 0");
             continue;
         }
-        if(!CommonDatapack::commonDatapack.items.item.contains(id))
+        if(CommonDatapack::commonDatapack.items.item.find(id)==CommonDatapack::commonDatapack.items.item.cend())
         {
-            normalOutput(std::stringLiteral("The item %1 is ignored because it's not into the items list").arg(id));
+            normalOutput("The item "+std::to_string(id)+" is ignored because it's not into the items list");
             continue;
         }
         public_and_private_informations.items[id]=quantity;
@@ -122,22 +125,23 @@ void Client::loadItemsWarehouse()
 {
     //do the query
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryCommon::db_query_select_items_warehouse_by_player_id.isEmpty())
+    if(PreparedDBQueryCommon::db_query_select_items_warehouse_by_player_id.empty())
     {
-        errorOutput(std::stringLiteral("loadItems() Query is empty, bug"));
+        errorOutput("loadItems() Query is empty, bug");
         return;
     }
     #endif
-    const std::string &queryText=PreparedDBQueryCommon::db_query_select_items_warehouse_by_player_id.arg(character_id);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&Client::loadItemsWarehouse_static);
+    std::string queryText=PreparedDBQueryCommon::db_query_select_items_warehouse_by_player_id;
+    stringreplaceOne(queryText,"%1",std::to_string(character_id));
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::loadItemsWarehouse_static);
     if(callback==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         loadRecipes();
         return;
     }
     else
-        callbackRegistred << callback;
+        callbackRegistred.push(callback);
 }
 
 void Client::loadItemsWarehouse_static(void *object)
@@ -148,31 +152,31 @@ void Client::loadItemsWarehouse_static(void *object)
 
 void Client::loadItemsWarehouse_return()
 {
-    callbackRegistred.removeFirst();
+    callbackRegistred.pop();
     bool ok;
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        const uint32_t &id=std::string(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
+        const uint32_t &id=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(!ok)
         {
-            normalOutput(QLatin1String("item id is not a number, skip"));
+            normalOutput("item id is not a number, skip");
             continue;
         }
-        const uint32_t &quantity=std::string(GlobalServerData::serverPrivateVariables.db_common->value(1)).toUInt(&ok);
+        const uint32_t &quantity=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
         if(!ok)
         {
-            normalOutput(QLatin1String("quantity is not a number, skip"));
+            normalOutput("quantity is not a number, skip");
             continue;
         }
         if(quantity==0)
         {
-            normalOutput(std::stringLiteral("The item %1 have been dropped because the quantity is 0").arg(id));
+            normalOutput("The item "+std::to_string(id)+" have been dropped because the quantity is 0");
             continue;
         }
-        if(!CommonDatapack::commonDatapack.items.item.contains(id))
+        if(CommonDatapack::commonDatapack.items.item.find(id)==CommonDatapack::commonDatapack.items.item.cend())
         {
-            normalOutput(std::stringLiteral("The item %1 is ignored because it's not into the items list").arg(id));
+            normalOutput("The item "+std::to_string(id)+" is ignored because it's not into the items list");
             continue;
         }
         public_and_private_informations.warehouse_items[id]=quantity;
@@ -188,18 +192,24 @@ void Client::sendInventory()
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
     out << (uint16_t)public_and_private_informations.items.size();
-    std::unordered_mapIterator<uint16_t,uint32_t> i(public_and_private_informations.items);
-    while (i.hasNext()) {
-        i.next();
-        out << (uint16_t)i.key();
-        out << (uint32_t)i.value();
+    {
+        auto i=public_and_private_informations.items.begin();
+        while(i!=public_and_private_informations.items.cend())
+        {
+            out << (uint16_t)i->first;
+            out << (uint32_t)i->second;
+            ++i;
+        }
     }
     out << (uint16_t)public_and_private_informations.warehouse_items.size();
-    std::unordered_mapIterator<uint16_t,uint32_t> j(public_and_private_informations.warehouse_items);
-    while (j.hasNext()) {
-        j.next();
-        out << (uint16_t)j.key();
-        out << (uint32_t)j.value();
+    {
+        auto  j=public_and_private_informations.warehouse_items.begin();
+        while(j!=public_and_private_informations.warehouse_items.cend())
+        {
+            out << (uint16_t)j->first;
+            out << (uint32_t)j->second;
+            ++j;
+        }
     }
     //send the items
     sendFullPacket(0xD0,0x01,outputData.constData(),outputData.size());
