@@ -112,7 +112,7 @@ protected:
     void load_sql_monsters_max_id();
     static void load_monsters_max_id_static(void *object);
     void load_monsters_max_id_return();
-    std::unordered_map<quint16,MonsterDrops> loadMonsterDrop(const std::string &file, std::unordered_map<quint16,Item> items,const std::unordered_map<quint16,Monster> &monsters);
+    std::unordered_map<uint16_t,std::vector<MonsterDrops> > loadMonsterDrop(const std::string &file, std::unordered_map<quint16,Item> items,const std::unordered_map<quint16,Monster> &monsters);
     virtual void criticalDatabaseQueryFailed();
     virtual void quitForCriticalDatabaseQueryFailed() = 0;
 
