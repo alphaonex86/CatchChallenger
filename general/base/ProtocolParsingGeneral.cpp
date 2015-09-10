@@ -314,7 +314,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
         case InitialiseTheVariableType::LoginServer:
         case InitialiseTheVariableType::AllInOne:
         default:
-            if(!mainCodeWithoutSubCodeTypeClientToServer.isEmpty())
+            if(!mainCodeWithoutSubCodeTypeClientToServer.empty())
                 return;
 
             #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
@@ -332,11 +332,11 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             ProtocolParsing::replyCodeClientToServer=0x41;
 
             //def query without the sub code
-            mainCodeWithoutSubCodeTypeServerToClient << 0xC0 << 0xC3 << 0xC4 << 0xC5 << 0xC6 << 0xC7 << 0xC8 << 0xCA << 0xD1 << 0xD2;
-            mainCodeWithoutSubCodeTypeClientToServer << 0x01 << 0x03 << 0x04 << 0x05  << 0x07 << 0x08 << 0x40 << 0x43 << 0x61;
+            mainCodeWithoutSubCodeTypeServerToClient={0xC0,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8,0xCA,0xD1,0xD2};
+            mainCodeWithoutSubCodeTypeClientToServer={0x01,0x03,0x04,0x05,0x07,0x08,0x40,0x43,0x61};
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            toDebugValidMainCodeServerToClient << 0x79 << 0xC2 << 0x90 << 0xE0 << 0xE1 << 0xD0 << 0x80 << 0x81 << 0xF0;
-            toDebugValidMainCodeClientToServer << 0x02 << 0x42 << 0x60 << 0x50 << 0x6a;
+            toDebugValidMainCodeServerToClient={0x79,0xC2,0x90,0xE0,0xE1,0xD0,0x80,0x81,0xF0};
+            toDebugValidMainCodeClientToServer={0x02,0x42,0x60,0x50,0x6a};
             #endif
 
             //define the size of direct query
@@ -419,21 +419,21 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             replySizeMultipleCodePacketServerToClient[0x11][0x08]=5*4;
 
             #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            compressionMultipleCodePacketClientToServer[0x02] << 0x0C;
-            compressionMultipleCodePacketServerToClient[0xC2] << 0x04;
-            compressionMultipleCodePacketServerToClient[0xC2] << 0x0E;
-            compressionMultipleCodePacketServerToClient[0xC2] << 0x0F;
-            compressionMultipleCodePacketServerToClient[0xC2] << 0x10;
+            compressionMultipleCodePacketClientToServer[0x02].insert(0x0C);
+            compressionMultipleCodePacketServerToClient[0xC2].insert(0x04);
+            compressionMultipleCodePacketServerToClient[0xC2].insert(0x0E);
+            compressionMultipleCodePacketServerToClient[0xC2].insert(0x0F);
+            compressionMultipleCodePacketServerToClient[0xC2].insert(0x10);
             //define the compression of the reply
             /** \note previously send by: sizeMultipleCodePacketClientToServer */
-            replyComressionMultipleCodePacketServerToClient[0x02] << 0x000C;
-            replyComressionMultipleCodePacketServerToClient[0x02] << 0x0002;
-            replyComressionMultipleCodePacketServerToClient[0x02] << 0x0005;
+            replyComressionMultipleCodePacketServerToClient[0x02].insert(0x000C);
+            replyComressionMultipleCodePacketServerToClient[0x02].insert(0x0002);
+            replyComressionMultipleCodePacketServerToClient[0x02].insert(0x0005);
             #endif
 
             //main code for query with reply
-            ProtocolParsing::mainCode_IsQueryClientToServer << 0x01 << 0x02 << 0x03 << 0x04 << 0x05 << 0x07 << 0x08 << 0x09 << 0x10 << 0x20 << 0x30;//replySizeMultipleCodePacketServerToClient
-            ProtocolParsing::mainCode_IsQueryServerToClient << 0x79 << 0x80 << 0x81 << 0x90 << 0xA0;//replySizeMultipleCodePacketClientToServer
+            ProtocolParsing::mainCode_IsQueryClientToServer={0x01,0x02,0x03,0x04,0x05,0x07,0x08,0x09,0x10,0x20,0x30};//replySizeMultipleCodePacketServerToClient
+            ProtocolParsing::mainCode_IsQueryServerToClient={0x79,0x80,0x81,0x90,0xA0};//replySizeMultipleCodePacketClientToServer
 
             //register meta type
             #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -451,8 +451,8 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             #endif
         break;
     }
-    mainCodeWithoutSubCodeTypeServerToClient << ProtocolParsing::replyCodeServerToClient;
-    mainCodeWithoutSubCodeTypeClientToServer << ProtocolParsing::replyCodeClientToServer;
+    mainCodeWithoutSubCodeTypeServerToClient.insert(ProtocolParsing::replyCodeServerToClient);
+    mainCodeWithoutSubCodeTypeClientToServer.insert(ProtocolParsing::replyCodeClientToServer);
 }
 
 void ProtocolParsing::setMaxPlayers(const uint16_t &maxPlayers)
@@ -531,12 +531,12 @@ bool ProtocolParsingBase::checkStringIntegrity(const char * const data, const un
     const uint32_t &stringSize=le32toh(tempInt);
     if(stringSize>65535)
     {
-        errorParsingLayer(std::stringLiteral("String size is wrong: %1").arg(stringSize));
+        errorParsingLayer("String size is wrong: "+std::to_string(stringSize));
         return false;
     }
     if(size<stringSize)
     {
-        errorParsingLayer(std::stringLiteral("String size is greater than the data: %1>%2").arg(size).arg(stringSize));
+        errorParsingLayer("String size is greater than the data: "+std::to_string(size)+">"+std::to_string(stringSize));
         return false;
     }
     return true;
