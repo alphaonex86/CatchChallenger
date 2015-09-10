@@ -2,7 +2,7 @@
 #define FIGHTLOADER_H
 
 #include <unordered_map>
-#include <std::string>
+#include <string>
 
 #include "../base/GeneralStructures.h"
 #include "../base/DatapackGeneralLoader.h"
@@ -27,7 +27,7 @@ public:
                                                  );
     #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
     static std::unordered_map<uint16_t/*item*/, std::unordered_map<uint16_t/*monster*/,uint16_t/*evolveTo*/> > loadMonsterEvolutionItems(const std::unordered_map<uint16_t,Monster> &monsters);
-    static std::unordered_map<uint16_t/*item*/, Std::unordered_Set<uint16_t/*monster*/> > loadMonsterItemToLearn(const std::unordered_map<uint16_t,Monster> &monsters, const std::unordered_map<uint16_t/*item*/, std::unordered_map<uint16_t/*monster*/,uint16_t/*evolveTo*/> > &evolutionItem);
+    static std::unordered_map<uint16_t/*item*/, std::unordered_set<uint16_t/*monster*/> > loadMonsterItemToLearn(const std::unordered_map<uint16_t,Monster> &monsters, const std::unordered_map<uint16_t/*item*/, std::unordered_map<uint16_t/*monster*/,uint16_t/*evolveTo*/> > &evolutionItem);
     static std::unordered_map<uint8_t,Buff> loadMonsterBuff(const std::string &folder);
     static std::unordered_map<uint16_t,BotFight> loadFight(const std::string &folder, const std::unordered_map<uint16_t,Monster> &monsters, const std::unordered_map<uint16_t, Skill> &monsterSkills, const std::unordered_map<uint16_t, Item> &items);
     #endif

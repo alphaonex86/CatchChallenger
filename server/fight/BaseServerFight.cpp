@@ -1,14 +1,13 @@
 #include "../base/BaseServer.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/CommonDatapack.h"
-#include "../../general/base/DebugClass.h"
 #include "../../general/base/CommonMap.h"
 #include "../../general/fight/FightLoader.h"
 #include "../base/GlobalServerData.h"
 #include "../VariableServer.h"
 
 #include <QFile>
-#include <std::string>
+#include <string>
 #include <QByteArray>
 #include <QDomDocument>
 #include <QDomElement>
@@ -17,15 +16,15 @@ using namespace CatchChallenger;
 
 void BaseServer::preload_monsters_drops()
 {
-    GlobalServerData::serverPrivateVariables.monsterDrops=loadMonsterDrop(GlobalServerData::serverSettings.datapack_basePath+std::stringLiteral(DATAPACK_BASE_PATH_MONSTERS)+std::stringLiteral("monster.xml"),CommonDatapack::commonDatapack.items.item,CommonDatapack::commonDatapack.monsters);
+    GlobalServerData::serverPrivateVariables.monsterDrops=loadMonsterDrop(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_MONSTERS+"monster.xml",CommonDatapack::commonDatapack.items.item,CommonDatapack::commonDatapack.monsters);
 
-    DebugClass::debugConsole(std::stringLiteral("%1 monster drop(s) loaded").arg(CommonDatapack::commonDatapack.monsters.size()));
+    std::cout << CommonDatapack::commonDatapack.monsters.size() << " monster drop(s) loaded" << std::endl;
 }
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void BaseServer::load_sql_monsters_max_id()
 {
-    DebugClass::debugConsole(std::stringLiteral("%1 SQL city loaded").arg(GlobalServerData::serverPrivateVariables.cityStatusList.size()));
+    std::cout << GlobalServerData::serverPrivateVariables.cityStatusList.size() << " SQL city loaded" << std::endl;
 
     //start to 0 due to pre incrementation before use
     GlobalServerData::serverPrivateVariables.maxMonsterId=1;
@@ -34,18 +33,18 @@ void BaseServer::load_sql_monsters_max_id()
     {
         default:
         case DatabaseBase::DatabaseType::Mysql:
-            queryText=std::stringLiteral("SELECT `id` FROM `monster` ORDER BY `id` DESC LIMIT 0,1;");
+            queryText="SELECT `id` FROM `monster` ORDER BY `id` DESC LIMIT 0,1;";
         break;
         case DatabaseBase::DatabaseType::SQLite:
-            queryText=std::stringLiteral("SELECT id FROM monster ORDER BY id DESC LIMIT 0,1;");
+            queryText="SELECT id FROM monster ORDER BY id DESC LIMIT 0,1;";
         break;
         case DatabaseBase::DatabaseType::PostgreSQL:
-            queryText=std::stringLiteral("SELECT id FROM monster ORDER BY id DESC LIMIT 1;");
+            queryText="SELECT id FROM monster ORDER BY id DESC LIMIT 1;";
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::load_monsters_max_id_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&BaseServer::load_monsters_max_id_static)==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
+        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         abort();//stop because can't do the first db access
         load_clan_max_id();
     }
@@ -62,10 +61,10 @@ void BaseServer::load_monsters_max_id_return()
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         bool ok;
-        const uint32_t &maxMonsterId=std::string(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
+        const uint32_t &maxMonsterId=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(!ok)
         {
-            DebugClass::debugConsole(std::stringLiteral("Max monster id is failed to convert to number"));
+            std::cerr << "Max monster id is failed to convert to number" << std::endl;
             continue;
         }
         else
@@ -76,10 +75,10 @@ void BaseServer::load_monsters_max_id_return()
 }
 #endif
 
-std::unordered_map<uint16_t,MonsterDrops> BaseServer::loadMonsterDrop(const std::string &file, std::unordered_map<uint16_t,Item> items,const std::unordered_map<uint16_t,Monster> &monsters)
+std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterDrop(const std::string &file, std::unordered_map<uint16_t,Item> items,const std::unordered_map<uint16_t,Monster> &monsters)
 {
     QDomDocument domDocument;
-    QMultiHash<uint16_t,MonsterDrops> monsterDrops;
+    std::unordered_map<uint16_t,std::vector<MonsterDrops> > monsterDrops;
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
@@ -87,20 +86,20 @@ std::unordered_map<uint16_t,MonsterDrops> BaseServer::loadMonsterDrop(const std:
     else
     {
         #endif
-        QFile xmlFile(file);
+        QFile xmlFile(QString::fromStdString(file));
         QByteArray xmlContent;
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
-            DebugClass::debugConsole(std::stringLiteral("Unable to open the xml monsters drop file: %1, error: %2").arg(file).arg(xmlFile.errorString()));
+            std::cerr << "Unable to open the xml monsters drop file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
             return monsterDrops;
         }
         xmlContent=xmlFile.readAll();
         xmlFile.close();
-        std::string errorStr;
+        QString errorStr;
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
-            DebugClass::debugConsole(std::stringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+            std::cerr << "Unable to open the xml file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
             return monsterDrops;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -108,56 +107,56 @@ std::unordered_map<uint16_t,MonsterDrops> BaseServer::loadMonsterDrop(const std:
     }
     #endif
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=BaseServer::text_monsters)
+    if(root.tagName().toStdString()!=BaseServer::text_monsters)
     {
-        DebugClass::debugConsole(std::stringLiteral("Unable to open the xml file: %1, \"monsters\" root balise not found for the xml file").arg(file));
+        std::cerr << "Unable to open the xml file: " << file << ", \"monsters\" root balise not found for the xml file" << std::endl;
         return monsterDrops;
     }
 
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement(BaseServer::text_monster);
+    QDomElement item = root.firstChildElement(QString::fromStdString(BaseServer::text_monster));
     while(!item.isNull())
     {
         if(item.isElement())
         {
-            if(item.hasAttribute(BaseServer::text_id))
+            if(item.hasAttribute(QString::fromStdString(BaseServer::text_id)))
             {
-                const uint16_t &id=item.attribute(BaseServer::text_id).toUShort(&ok);
+                const uint16_t &id=item.attribute(QString::fromStdString(BaseServer::text_id)).toUShort(&ok);
                 if(!ok)
-                    DebugClass::debugConsole(std::stringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                else if(!monsters.contains(id))
-                    DebugClass::debugConsole(std::stringLiteral("Unable to open the xml file: %1, id into the monster list, skip: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    std::cerr << "Unable to open the xml file: " << file << ", id not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                else if(monsters.find(id)==monsters.cend())
+                    std::cerr << "Unable to open the xml file: " << file << ", id into the monster list, skip: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                 else
                 {
-                    QDomElement drops = item.firstChildElement(BaseServer::text_drops);
+                    QDomElement drops = item.firstChildElement(QString::fromStdString(BaseServer::text_drops));
                     if(!drops.isNull())
                     {
                         if(drops.isElement())
                         {
-                            QDomElement drop = drops.firstChildElement(BaseServer::text_drop);
+                            QDomElement drop = drops.firstChildElement(QString::fromStdString(BaseServer::text_drop));
                             while(!drop.isNull())
                             {
                                 if(drop.isElement())
                                 {
-                                    if(drop.hasAttribute(BaseServer::text_item))
+                                    if(drop.hasAttribute(QString::fromStdString(BaseServer::text_item)))
                                     {
                                         MonsterDrops dropVar;
-                                        if(drop.hasAttribute(BaseServer::text_quantity_min))
+                                        if(drop.hasAttribute(QString::fromStdString(BaseServer::text_quantity_min)))
                                         {
-                                            dropVar.quantity_min=drop.attribute(BaseServer::text_quantity_min).toUInt(&ok);
+                                            dropVar.quantity_min=drop.attribute(QString::fromStdString(BaseServer::text_quantity_min)).toUInt(&ok);
                                             if(!ok)
-                                                DebugClass::debugConsole(std::stringLiteral("Unable to open the xml file: %1, quantity_min is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
+                                                std::cerr << "Unable to open the xml file: " << file << ", quantity_min is not a number: child.tagName(): " << drop.tagName().toStdString() << " (at line: " << drop.lineNumber() << ")" << std::endl;
                                         }
                                         else
                                             dropVar.quantity_min=1;
                                         if(ok)
                                         {
-                                            if(drop.hasAttribute(BaseServer::text_quantity_max))
+                                            if(drop.hasAttribute(QString::fromStdString(BaseServer::text_quantity_max)))
                                             {
-                                                dropVar.quantity_max=drop.attribute(BaseServer::text_quantity_max).toUInt(&ok);
+                                                dropVar.quantity_max=drop.attribute(QString::fromStdString(BaseServer::text_quantity_max)).toUInt(&ok);
                                                 if(!ok)
-                                                    DebugClass::debugConsole(std::stringLiteral("Unable to open the xml file: %1, quantity_max is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
+                                                    std::cerr << "Unable to open the xml file: " << file << ", quantity_max is not a number: child.tagName(): " << drop.tagName().toStdString() << " (at line: " << drop.lineNumber() << ")" << std::endl;
                                             }
                                             else
                                                 dropVar.quantity_max=1;
@@ -167,7 +166,7 @@ std::unordered_map<uint16_t,MonsterDrops> BaseServer::loadMonsterDrop(const std:
                                             if(dropVar.quantity_min<=0)
                                             {
                                                 ok=false;
-                                                DebugClass::debugConsole(std::stringLiteral("Unable to open the xml file: %1, dropVar.quantity_min is 0: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
+                                                std::cerr << "Unable to open the xml file: " << file << ", dropVar.quantity_min is 0: child.tagName(): " << drop.tagName().toStdString() << " (at line: " << drop.lineNumber() << ")" << std::endl;
                                             }
                                         }
                                         if(ok)
@@ -175,7 +174,7 @@ std::unordered_map<uint16_t,MonsterDrops> BaseServer::loadMonsterDrop(const std:
                                             if(dropVar.quantity_max<=0)
                                             {
                                                 ok=false;
-                                                DebugClass::debugConsole(std::stringLiteral("Unable to open the xml file: %1, dropVar.quantity_max is 0: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
+                                                std::cerr << "Unable to open the xml file: " << file << ", dropVar.quantity_max is 0: child.tagName(): " << drop.tagName().toStdString() << " (at line: " << drop.lineNumber() << ")" << std::endl;
                                             }
                                         }
                                         if(ok)
@@ -183,18 +182,20 @@ std::unordered_map<uint16_t,MonsterDrops> BaseServer::loadMonsterDrop(const std:
                                             if(dropVar.quantity_max<dropVar.quantity_min)
                                             {
                                                 ok=false;
-                                                DebugClass::debugConsole(std::stringLiteral("Unable to open the xml file: %1, dropVar.quantity_max<dropVar.quantity_min: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
+                                                std::cerr << "Unable to open the xml file: " << file << ", dropVar.quantity_max<dropVar.quantity_min: child.tagName(): " << drop.tagName().toStdString() << " (at line: " << drop.lineNumber() << ")" << std::endl;
                                             }
                                         }
                                         if(ok)
                                         {
-                                            if(drop.hasAttribute(BaseServer::text_luck))
+                                            if(drop.hasAttribute(QString::fromStdString(BaseServer::text_luck)))
                                             {
-                                                std::string luck=drop.attribute(BaseServer::text_luck);
-                                                luck.remove(BaseServer::text_percent);
-                                                dropVar.luck=luck.toUShort(&ok);
+                                                std::string luck=drop.attribute(QString::fromStdString(BaseServer::text_luck)).toStdString();
+                                                if(!luck.empty())
+                                                    if(luck.back()=='%')
+                                                        luck.resize(luck.size()-1);
+                                                dropVar.luck=stringtouint32(luck,&ok);
                                                 if(!ok)
-                                                    DebugClass::debugConsole(std::stringLiteral("Unable to open the xml file: %1, luck is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
+                                                    std::cerr << "Unable to open the xml file: " << file << ", luck is not a number: child.tagName(): " << drop.tagName().toStdString() << " (at line: " << drop.lineNumber() << ")" << std::endl;
                                             }
                                             else
                                                 dropVar.luck=100;
@@ -204,31 +205,31 @@ std::unordered_map<uint16_t,MonsterDrops> BaseServer::loadMonsterDrop(const std:
                                             if(dropVar.luck<=0)
                                             {
                                                 ok=false;
-                                                DebugClass::debugConsole(std::stringLiteral("Unable to open the xml file: %1, luck is 0!: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
+                                                std::cerr << "Unable to open the xml file: " << file << ", luck is 0!: child.tagName(): " << drop.tagName().toStdString() << " (at line: " << drop.lineNumber() << ")" << std::endl;
                                             }
                                             if(dropVar.luck>100)
                                             {
                                                 ok=false;
-                                                DebugClass::debugConsole(std::stringLiteral("Unable to open the xml file: %1, luck is greater than 100: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
+                                                std::cerr << "Unable to open the xml file: " << file << ", luck is greater than 100: child.tagName(): " << drop.tagName().toStdString() << " (at line: " << drop.lineNumber() << ")" << std::endl;
                                             }
                                         }
                                         if(ok)
                                         {
-                                            if(drop.hasAttribute(BaseServer::text_item))
+                                            if(drop.hasAttribute(QString::fromStdString(BaseServer::text_item)))
                                             {
-                                                dropVar.item=drop.attribute(BaseServer::text_item).toUInt(&ok);
+                                                dropVar.item=drop.attribute(QString::fromStdString(BaseServer::text_item)).toUInt(&ok);
                                                 if(!ok)
-                                                    DebugClass::debugConsole(std::stringLiteral("Unable to open the xml file: %1, item is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
+                                                    std::cerr << "Unable to open the xml file: " << file << ", item is not a number: child.tagName(): " << drop.tagName().toStdString() << " (at line: " << drop.lineNumber() << ")" << std::endl;
                                             }
                                             else
                                                 dropVar.luck=100;
                                         }
                                         if(ok)
                                         {
-                                            if(!items.contains(dropVar.item))
+                                            if(items.find(dropVar.item)==items.cend())
                                             {
                                                 ok=false;
-                                                DebugClass::debugConsole(std::stringLiteral("Unable to open the xml file: %1, the item %4 is not into the item list: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()).arg(dropVar.item));
+                                                std::cerr << "Unable to open the xml file: " << file << ", the item " << dropVar.item << " is not into the item list: child.tagName(): %2 (at line: %3)" << std::endl;
                                             }
                                         }
                                         if(ok)
@@ -245,28 +246,28 @@ std::unordered_map<uint16_t,MonsterDrops> BaseServer::loadMonsterDrop(const std:
                                                     dropVar.luck=(100.0*targetAverage)/currentAverage;
                                                 }
                                             }
-                                            monsterDrops.insert(id,dropVar);
+                                            monsterDrops[id].push_back(dropVar);
                                         }
                                     }
                                     else
-                                        DebugClass::debugConsole(std::stringLiteral("Unable to open the xml file: %1, as not item attribute: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
+                                        std::cerr << "Unable to open the xml file: " << file << ", as not item attribute: child.tagName(): " << drop.tagName().toStdString() << " (at line: " << drop.lineNumber() << ")" << std::endl;
                                 }
                                 else
-                                    DebugClass::debugConsole(std::stringLiteral("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
-                                drop = drop.nextSiblingElement(BaseServer::text_drop);
+                                    std::cerr << "Unable to open the xml file: " << file << ", effect balise is not an element: child.tagName(): " << drop.tagName().toStdString() << " (at line: " << drop.lineNumber() << ")" << std::endl;
+                                drop = drop.nextSiblingElement(QString::fromStdString(BaseServer::text_drop));
                             }
                         }
                         else
-                            DebugClass::debugConsole(std::stringLiteral("Unable to open the xml file: %1, drops balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                            std::cerr << "Unable to open the xml file: " << file << ", drops balise is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     }
                 }
             }
             else
-                DebugClass::debugConsole(std::stringLiteral("Unable to open the xml file: %1, have not the monster id: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                std::cerr << "Unable to open the xml file: " << file << ", have not the monster id: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
         }
         else
-            DebugClass::debugConsole(std::stringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-        item = item.nextSiblingElement(BaseServer::text_monster);
+            std::cerr << "Unable to open the xml file: " << file << ", is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+        item = item.nextSiblingElement(QString::fromStdString(BaseServer::text_monster));
     }
     return monsterDrops;
 }
