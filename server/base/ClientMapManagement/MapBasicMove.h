@@ -28,9 +28,9 @@ public:
     COORD_TYPE getY() const;
 public:
     //map slots, transmited by the current ClientNetworkRead
-    virtual void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
-    virtual bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
-    virtual void teleportValidatedTo(CommonMap *map, const quint8 &x, const quint8 &y, const Orientation &orientation);
+    virtual void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
+    virtual bool moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction);
+    virtual void teleportValidatedTo(CommonMap *map, const uint8_t &x, const uint8_t &y, const Orientation &orientation);
 protected:
     //normal management related
     virtual void errorOutput(const std::string &errorString);

@@ -701,16 +701,13 @@ private:
     std::queue<PlantInWaiting> plant_list_in_waiting;
     #endif
 
-    void parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data,const unsigned int &size);
+    void parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data,const unsigned int &size);
     //have message without reply
-    void parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size);
-    void parseFullMessage(const uint8_t &mainCodeType, const uint8_t &subCodeType, const char * const rawData, const unsigned int &size);
+    void parseMessage(const uint8_t &packetCode,const char * const data,const unsigned int &size);
     //have query with reply
-    void parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
-    void parseFullQuery(const uint8_t &mainCodeType, const uint8_t &subCodeType, const uint8_t &queryNumber, const char * const rawData, const unsigned int &size);
+    void parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
     //send reply
-    void parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
-    void parseFullReplyData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    void parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
 
     void parseNetworkReadError(const std::string &errorString);
 
