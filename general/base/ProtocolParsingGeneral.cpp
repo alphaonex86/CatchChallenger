@@ -13,51 +13,18 @@ using namespace CatchChallenger;
 #ifdef EPOLLCATCHCHALLENGERSERVER
 char ProtocolParsingInputOutput::commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];
 #endif
-const uint16_t ProtocolParsingBase::sizeHeaderNulluint16_t=0;
+const uint16_t ProtocolParsingBase::sizeHeaderNulluint16_t=0xFFFF;
 #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
 char ProtocolParsingBase::tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
 #endif
+const char ProtocolParsingBase::packetFixedSize[256+128];
 
-std::unordered_set<uint8_t>                        ProtocolParsing::mainCodeWithoutSubCodeTypeServerToClient;//if need sub code or not
-//if is a query
-std::unordered_set<uint8_t>                        ProtocolParsing::mainCode_IsQueryClientToServer;
-
-#ifdef CATCHCHALLENGER_EXTRA_CHECK
-std::unordered_set<uint8_t> ProtocolParsing::toDebugValidMainCodeServerToClient;//if need sub code or not
-std::unordered_set<uint8_t> ProtocolParsing::toDebugValidMainCodeClientToServer;//if need sub code or not
-#endif
-
-uint8_t                              ProtocolParsing::replyCodeClientToServer;
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
 ProtocolParsing::CompressionType    ProtocolParsing::compressionTypeClient=CompressionType::None;
 #endif
 ProtocolParsing::CompressionType    ProtocolParsing::compressionTypeServer=CompressionType::None;
 uint8_t ProtocolParsing::compressionLevel=6;
-#endif
-//predefined size
-std::unordered_map<uint8_t,uint16_t>                   ProtocolParsing::sizeOnlyMainCodePacketClientToServer;
-std::unordered_map<uint8_t,std::unordered_map<uint16_t,uint16_t> >	ProtocolParsing::sizeMultipleCodePacketClientToServer;
-std::unordered_map<uint8_t,uint16_t>                   ProtocolParsing::replySizeOnlyMainCodePacketClientToServer;
-std::unordered_map<uint8_t,std::unordered_map<uint16_t,uint16_t> >	ProtocolParsing::replySizeMultipleCodePacketClientToServer;
-
-std::unordered_set<uint8_t>                            ProtocolParsing::mainCodeWithoutSubCodeTypeClientToServer;//if need sub code or not
-//if is a query
-std::unordered_set<uint8_t>                            ProtocolParsing::mainCode_IsQueryServerToClient;
-uint8_t                                  ProtocolParsing::replyCodeServerToClient;
-//predefined size
-std::unordered_map<uint8_t,uint16_t>                   ProtocolParsing::sizeOnlyMainCodePacketServerToClient;
-std::unordered_map<uint8_t,std::unordered_map<uint16_t,uint16_t> >	ProtocolParsing::sizeMultipleCodePacketServerToClient;
-std::unordered_map<uint8_t,uint16_t>                   ProtocolParsing::replySizeOnlyMainCodePacketServerToClient;
-std::unordered_map<uint8_t,std::unordered_map<uint16_t,uint16_t> >	ProtocolParsing::replySizeMultipleCodePacketServerToClient;
-
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-std::unordered_map<uint8_t,std::unordered_set<uint16_t> >    ProtocolParsing::compressionMultipleCodePacketClientToServer;
-std::unordered_map<uint8_t,std::unordered_set<uint16_t> >    ProtocolParsing::compressionMultipleCodePacketServerToClient;
-std::unordered_map<uint8_t,std::unordered_set<uint16_t> >    ProtocolParsing::replyComressionMultipleCodePacketClientToServer;
-std::unordered_map<uint8_t,std::unordered_set<uint16_t> >    ProtocolParsing::replyComressionMultipleCodePacketServerToClient;
-std::unordered_set<uint8_t>                    ProtocolParsing::replyComressionOnlyMainCodePacketClientToServer;
-std::unordered_set<uint8_t>                    ProtocolParsing::replyComressionOnlyMainCodePacketServerToClient;
 #endif
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
@@ -327,113 +294,85 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             #endif
             #endif
 
-            //reply code
-            ProtocolParsing::replyCodeServerToClient=0xC1;
-            ProtocolParsing::replyCodeClientToServer=0x41;
-
-            //def query without the sub code
-            mainCodeWithoutSubCodeTypeServerToClient={0xC0,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8,0xCA,0xD1,0xD2};
-            mainCodeWithoutSubCodeTypeClientToServer={0x01,0x03,0x04,0x05,0x07,0x08,0x40,0x43,0x61};
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            toDebugValidMainCodeServerToClient={0x79,0xC2,0x90,0xE0,0xE1,0xD0,0x80,0x81,0xF0};
-            toDebugValidMainCodeClientToServer={0x02,0x42,0x60,0x50,0x6a};
-            #endif
+            char *writePacketFixedSize=const_cast<char *>(ProtocolParsingBase::packetFixedSize);
+            memset(writePacketFixedSize,0,sizeof(writePacketFixedSize));
 
             //define the size of direct query
             {
                 //default like is was more than 255 players
-                sizeOnlyMainCodePacketServerToClient[0xC3]=2;
+                writePacketFixedSize[0x61]=2;
             }
-            sizeOnlyMainCodePacketServerToClient[0xC4]=0;
-            sizeOnlyMainCodePacketClientToServer[0x01]=9;
-            sizeOnlyMainCodePacketClientToServer[0x40]=2;
-            sizeOnlyMainCodePacketClientToServer[0x03]=5;
-            sizeOnlyMainCodePacketClientToServer[0x08]=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE;
-            sizeOnlyMainCodePacketClientToServer[0x04]=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE*2;
-            sizeOnlyMainCodePacketClientToServer[0x05]=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE*2;
-            sizeOnlyMainCodePacketClientToServer[0x61]=2;
-            sizeMultipleCodePacketClientToServer[0x02][0x04]=1+4;
-            sizeMultipleCodePacketClientToServer[0x02][0x05]=1+4+4;
-            sizeMultipleCodePacketClientToServer[0x02][0x06]=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER;
-            sizeMultipleCodePacketClientToServer[0x02][0x07]=1+4+4+4;
-            sizeMultipleCodePacketClientToServer[0x10][0x07]=0;
-            sizeMultipleCodePacketClientToServer[0x10][0x08]=2;
-            sizeMultipleCodePacketClientToServer[0x10][0x09]=2;
-            sizeMultipleCodePacketClientToServer[0x10][0x0A]=2;
-            sizeMultipleCodePacketClientToServer[0x10][0x0B]=2*2+2*4;
-            sizeMultipleCodePacketClientToServer[0x10][0x0C]=2*2+2*4;
-            sizeMultipleCodePacketClientToServer[0x10][0x0D]=2;
-            sizeMultipleCodePacketClientToServer[0x10][0x0E]=2*2+2*4;
-            sizeMultipleCodePacketClientToServer[0x10][0x0F]=2*2+2*4;
-            sizeMultipleCodePacketClientToServer[0x10][0x10]=0;
-            sizeMultipleCodePacketClientToServer[0x10][0x13]=0;
-            sizeMultipleCodePacketClientToServer[0x11][0x01]=0;
-            sizeMultipleCodePacketClientToServer[0x11][0x02]=4;
-            sizeMultipleCodePacketClientToServer[0x11][0x03]=4;
-            sizeMultipleCodePacketClientToServer[0x11][0x04]=4;
-            sizeMultipleCodePacketClientToServer[0x11][0x07]=0;
-            sizeMultipleCodePacketClientToServer[0x11][0x08]=0;
-            sizeMultipleCodePacketClientToServer[0x45][0x01]=4;
-            sizeMultipleCodePacketClientToServer[0x45][0x02]=2;
-            sizeMultipleCodePacketClientToServer[0x50][0x02]=2+4;
-            sizeMultipleCodePacketClientToServer[0x50][0x04]=0;
-            sizeMultipleCodePacketClientToServer[0x50][0x05]=0;
-            sizeMultipleCodePacketClientToServer[0x50][0x07]=0;
-            sizeMultipleCodePacketClientToServer[0x50][0x08]=1;
-            sizeMultipleCodePacketClientToServer[0x50][0x09]=0;
-            sizeMultipleCodePacketClientToServer[0x60][0x02]=0;
-            sizeMultipleCodePacketClientToServer[0x60][0x03]=1;
-            sizeMultipleCodePacketClientToServer[0x60][0x04]=4+2;
-            sizeMultipleCodePacketClientToServer[0x60][0x06]=0;
-            sizeMultipleCodePacketClientToServer[0x60][0x07]=2;
-            sizeMultipleCodePacketClientToServer[0x60][0x08]=2;
-            sizeMultipleCodePacketClientToServer[0x60][0x09]=4;//monster id in db
-            sizeMultipleCodePacketClientToServer[0x6a][0x01]=2;
-            sizeMultipleCodePacketClientToServer[0x6a][0x02]=2;
-            sizeMultipleCodePacketClientToServer[0x6a][0x03]=2;
-            sizeMultipleCodePacketClientToServer[0x6a][0x04]=2;
-            sizeMultipleCodePacketClientToServer[0x6a][0x05]=1;
-            sizeMultipleCodePacketClientToServer[0x42][0x04]=1;
+            writePacketFixedSize[0x62]=0;
+            writePacketFixedSize[0xB8]=9;
+            writePacketFixedSize[0x02]=2;
+            writePacketFixedSize[0xA0]=5;
+            writePacketFixedSize[0xBD]=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE;
+            writePacketFixedSize[0xA8]=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE*2;
+            writePacketFixedSize[0xA9]=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE*2;
+            writePacketFixedSize[0x11]=2;
+            writePacketFixedSize[0xAB]=1+4;
+            writePacketFixedSize[0xAC]=1+4+4;
+            writePacketFixedSize[0x93]=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER;
+            writePacketFixedSize[0xBE]=1+4+4+4;
+            writePacketFixedSize[0x84]=0;
+            writePacketFixedSize[0x85]=2;
+            writePacketFixedSize[0x86]=2;
+            writePacketFixedSize[0x87]=2;
+            writePacketFixedSize[0x88]=2*2+2*4;
+            writePacketFixedSize[0x89]=2*2+2*4;
+            writePacketFixedSize[0x8A]=2;
+            writePacketFixedSize[0x8B]=2*2+2*4;
+            writePacketFixedSize[0x8C]=2*2+2*4;
+            writePacketFixedSize[0x8D]=0;
+            writePacketFixedSize[0x90]=0;
+            writePacketFixedSize[0xBF]=0;
+            writePacketFixedSize[0xC0]=4;
+            writePacketFixedSize[0xC1]=4;
+            writePacketFixedSize[0xB0]=0;
+            writePacketFixedSize[0xB1]=0;
+            writePacketFixedSize[0x3E]=4;
+            writePacketFixedSize[0x3F]=2;
+            writePacketFixedSize[0x13]=2+4;
+            writePacketFixedSize[0x15]=0;
+            writePacketFixedSize[0x16]=0;
+            writePacketFixedSize[0x18]=0;
+            writePacketFixedSize[0x19]=1;
+            writePacketFixedSize[0x1A]=0;
+            writePacketFixedSize[0x07]=0;
+            writePacketFixedSize[0x08]=1;
+            writePacketFixedSize[0x09]=4+2;
+            writePacketFixedSize[0x0B]=0;
+            writePacketFixedSize[0x0C]=2;
+            writePacketFixedSize[0x0D]=2;
+            writePacketFixedSize[0x0E]=4;//monster id in db
+            writePacketFixedSize[0x1B]=2;
+            writePacketFixedSize[0x1C]=2;
+            writePacketFixedSize[0x1D]=2;
+            writePacketFixedSize[0x1E]=2;
+            writePacketFixedSize[0x1F]=1;
+            writePacketFixedSize[0x04]=1;
+            writePacketFixedSize[0x5E]=0;
+            writePacketFixedSize[0x59]=0;
+            writePacketFixedSize[0x5A]=0;
+            writePacketFixedSize[0x5B]=0;
+            writePacketFixedSize[0x51]=0;
+            writePacketFixedSize[0x4D]=4;
+            writePacketFixedSize[0xF8]=4+4;
+            writePacketFixedSize[0xE2]=2;
 
-            sizeMultipleCodePacketServerToClient[0xC2][0x09]=0;
-            sizeMultipleCodePacketServerToClient[0xD0][0x06]=0;
-            sizeMultipleCodePacketServerToClient[0xD0][0x07]=0;
-            sizeMultipleCodePacketServerToClient[0xD0][0x08]=0;
-            sizeMultipleCodePacketServerToClient[0xE0][0x07]=0;
-            sizeMultipleCodePacketServerToClient[0xE1][0x02]=4;
-            sizeMultipleCodePacketServerToClient[0x81][0x01]=4+4;
-            sizeMultipleCodePacketServerToClient[0x79][0x02]=2;
             //define the size of the reply
             /** \note previously send by: sizeMultipleCodePacketServerToClient */
-            replySizeMultipleCodePacketClientToServer[0x79][0x01]=0;
-            replySizeMultipleCodePacketClientToServer[0x79][0x02]=0;
+            writePacketFixedSize[256+0xE1]=0;
+            writePacketFixedSize[256+0xE2]=0;
             /** \note previously send by: sizeMultipleCodePacketClientToServer */
-            replySizeMultipleCodePacketServerToClient[0x10][0x06]=1;
-            replySizeMultipleCodePacketServerToClient[0x10][0x07]=1;
-            replySizeMultipleCodePacketServerToClient[0x80][0x01]=1;
-            replySizeMultipleCodePacketServerToClient[0x11][0x01]=50*4;
-            replySizeMultipleCodePacketServerToClient[0x11][0x02]=50*4;
-            replySizeMultipleCodePacketServerToClient[0x11][0x03]=50*4;
-            replySizeMultipleCodePacketServerToClient[0x11][0x04]=5*4;
-            replySizeMultipleCodePacketServerToClient[0x11][0x07]=50*4;
-            replySizeMultipleCodePacketServerToClient[0x11][0x08]=5*4;
-
-            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            compressionMultipleCodePacketClientToServer[0x02].insert(0x0C);
-            compressionMultipleCodePacketServerToClient[0xC2].insert(0x04);
-            compressionMultipleCodePacketServerToClient[0xC2].insert(0x0E);
-            compressionMultipleCodePacketServerToClient[0xC2].insert(0x0F);
-            compressionMultipleCodePacketServerToClient[0xC2].insert(0x10);
-            //define the compression of the reply
-            /** \note previously send by: sizeMultipleCodePacketClientToServer */
-            replyComressionMultipleCodePacketServerToClient[0x02].insert(0x000C);
-            replyComressionMultipleCodePacketServerToClient[0x02].insert(0x0002);
-            replyComressionMultipleCodePacketServerToClient[0x02].insert(0x0005);
-            #endif
-
-            //main code for query with reply
-            ProtocolParsing::mainCode_IsQueryClientToServer={0x01,0x02,0x03,0x04,0x05,0x07,0x08,0x09,0x10,0x20,0x30};//replySizeMultipleCodePacketServerToClient
-            ProtocolParsing::mainCode_IsQueryServerToClient={0x79,0x80,0x81,0x90,0xA0};//replySizeMultipleCodePacketClientToServer
+            writePacketFixedSize[256+0x83]=1;
+            writePacketFixedSize[256+0x64]=1;
+            writePacketFixedSize[256+0xE0]=1;
+            writePacketFixedSize[256+0xBF]=50*4;
+            writePacketFixedSize[256+0xC0]=50*4;
+            writePacketFixedSize[256+0xC1]=50*4;
+            writePacketFixedSize[256+0xB0]=50*4;
+            writePacketFixedSize[256+0xB1]=5*4;
 
             //register meta type
             #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -450,22 +389,6 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             qRegisterMetaType<QSslSocket::SslMode>("QSslSocket::SslMode");
             #endif
         break;
-    }
-    mainCodeWithoutSubCodeTypeServerToClient.insert(ProtocolParsing::replyCodeServerToClient);
-    mainCodeWithoutSubCodeTypeClientToServer.insert(ProtocolParsing::replyCodeClientToServer);
-}
-
-void ProtocolParsing::setMaxPlayers(const uint16_t &maxPlayers)
-{
-    if(maxPlayers<=255)
-    {
-        ProtocolParsing::sizeOnlyMainCodePacketServerToClient[0xC3]=1;
-    }
-    else
-    {
-        //NO: this case do into initialiseTheVariable()
-        //YES: reinitialise because the initialise already done, but this object can be reused
-        ProtocolParsing::sizeOnlyMainCodePacketServerToClient[0xC3]=2;
     }
 }
 
@@ -493,7 +416,7 @@ ProtocolParsingBase::ProtocolParsingBase(
     need_subCodeType(false),
     need_query_number(false),
     have_query_number(false),
-    mainCodeType(0),
+    packetCode(0),
     subCodeType(0),
     queryNumber(0)
 {
@@ -510,38 +433,6 @@ ProtocolParsingBase::~ProtocolParsingBase()
 {
 }
 
-bool ProtocolParsingBase::checkStringIntegrity(const QByteArray &data)
-{
-    return checkStringIntegrity(data.constData(),data.size());
-}
-
-bool ProtocolParsingBase::checkStringIntegrity(const char * const data, const unsigned int &size)
-{
-    if(size<(int)sizeof(unsigned int))
-    {
-        errorParsingLayer("header size not suffisient");
-        return false;
-    }
-    const uint32_t &tempInt=*reinterpret_cast<const uint32_t *>(data);
-    if(tempInt==4294967295)
-    {
-        //null string
-        return true;
-    }
-    const uint32_t &stringSize=le32toh(tempInt);
-    if(stringSize>65535)
-    {
-        errorParsingLayer("String size is wrong: "+std::to_string(stringSize));
-        return false;
-    }
-    if(size<stringSize)
-    {
-        errorParsingLayer("String size is greater than the data: "+std::to_string(size)+">"+std::to_string(stringSize));
-        return false;
-    }
-    return true;
-}
-
 #ifndef EPOLLCATCHCHALLENGERSERVER
 quint64 ProtocolParsingInputOutput::getRXSize() const
 {
@@ -556,7 +447,7 @@ quint64 ProtocolParsingInputOutput::getTXSize() const
 
 void ProtocolParsingBase::reset()
 {
-    waitedReply_mainCodeType.clear();
+    waitedReply_packetCode.clear();
     waitedReply_subCodeType.clear();
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     replyOutputCompression.clear();
