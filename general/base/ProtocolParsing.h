@@ -67,42 +67,9 @@ public:
     static CompressionType compressionTypeServer;
     static uint8_t compressionLevel;
     #endif
+    static const char packetFixedSize[256+128];
     ProtocolParsing();
     static void initialiseTheVariable(const InitialiseTheVariableType &initialiseTheVariableType=InitialiseTheVariableType::AllInOne);
-    static void setMaxPlayers(const uint16_t &maxPlayers);
-protected:
-    /********************** static *********************/
-    //connexion parameters
-    static std::unordered_set<uint8_t> mainCodeWithoutSubCodeTypeServerToClient;//if need sub code or not
-    static std::unordered_set<uint8_t> mainCodeWithoutSubCodeTypeClientToServer;//if need sub code or not
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    static std::unordered_set<uint8_t> toDebugValidMainCodeServerToClient;//if need sub code or not
-    static std::unordered_set<uint8_t> toDebugValidMainCodeClientToServer;//if need sub code or not
-    #endif
-    //if is a query
-    static std::unordered_set<uint8_t> mainCode_IsQueryClientToServer;
-    static uint8_t replyCodeClientToServer;
-    static std::unordered_set<uint8_t> mainCode_IsQueryServerToClient;
-    static uint8_t replyCodeServerToClient;
-    //predefined size
-    static std::unordered_map<uint8_t,uint16_t> sizeOnlyMainCodePacketClientToServer;
-    static std::unordered_map<uint8_t,std::unordered_map<uint16_t,uint16_t> > sizeMultipleCodePacketClientToServer;
-    static std::unordered_map<uint8_t,uint16_t> replySizeOnlyMainCodePacketClientToServer;
-    static std::unordered_map<uint8_t,std::unordered_map<uint16_t,uint16_t> > replySizeMultipleCodePacketClientToServer;
-    static std::unordered_map<uint8_t,uint16_t> sizeOnlyMainCodePacketServerToClient;
-    static std::unordered_map<uint8_t,std::unordered_map<uint16_t,uint16_t> > sizeMultipleCodePacketServerToClient;
-    static std::unordered_map<uint8_t,uint16_t> replySizeOnlyMainCodePacketServerToClient;
-    static std::unordered_map<uint8_t,std::unordered_map<uint16_t,uint16_t> > replySizeMultipleCodePacketServerToClient;
-
-    //compression not found single main code because is reserved to fast/small message
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    static std::unordered_map<uint8_t,std::unordered_set<uint16_t> > compressionMultipleCodePacketClientToServer;
-    static std::unordered_map<uint8_t,std::unordered_set<uint16_t> > compressionMultipleCodePacketServerToClient;
-    static std::unordered_map<uint8_t,std::unordered_set<uint16_t> > replyComressionMultipleCodePacketClientToServer;
-    static std::unordered_map<uint8_t,std::unordered_set<uint16_t> > replyComressionMultipleCodePacketServerToClient;
-    static std::unordered_set<uint8_t> replyComressionOnlyMainCodePacketClientToServer;
-    static std::unordered_set<uint8_t> replyComressionOnlyMainCodePacketServerToClient;
-    #endif
 protected:
     virtual void errorParsingLayer(const std::string &error) = 0;
     virtual void messageParsingLayer(const std::string &message) const = 0;
@@ -121,8 +88,6 @@ public:
     virtual ~ProtocolParsingBase();
     friend class ProtocolParsing;
     friend class ProtocolParsingCheck;
-    bool checkStringIntegrity(const char * const data, const unsigned int &size);
-    bool checkStringIntegrity(const QByteArray &data);
     virtual ssize_t read(char * data, const size_t &size) = 0;
     virtual ssize_t write(const char * const data, const size_t &size) = 0;
 public:
@@ -131,6 +96,10 @@ public:
     std::vector<std::string> getQueryRunningList();
     #endif
 protected:
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    //internal fast path to boost the move on map performance
+    virtual void moveClientFastPath(const uint8_t &previousMovedUnit,const uint8_t &direction) = 0;
+    #endif
     bool parseHeader(const char * const commonBuffer, const uint32_t &size, uint32_t &cursor);
     bool parseQueryNumber(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
     bool parseDataSize(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
@@ -142,14 +111,11 @@ protected:
     QByteArray header_cut;
 protected:
     //have message without reply
-    virtual void parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size) = 0;
-    virtual void parseFullMessage(const uint8_t &mainCodeType,const uint8_t &subCodeType,const char * const data,const unsigned int &size) = 0;
+    virtual bool parseMessage(const uint8_t &packetCode,const char * const data,const unsigned int &size) = 0;
     //have query with reply
-    virtual void parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size) = 0;
-    virtual void parseFullQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size) = 0;
+    virtual bool parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size) = 0;
     //send reply
-    virtual void parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size) = 0;
-    virtual void parseFullReplyData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size) = 0;
+    virtual bool parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size) = 0;
 
     virtual void reset();
 private:
@@ -161,26 +127,18 @@ private:
     uint8_t data_size_size;
     uint32_t dataSize;
     //to parse the netwrok stream
-    bool have_subCodeType,need_subCodeType,need_query_number,have_query_number;
+    bool need_query_number,have_query_number;
     // function
     void dataClear();
 public:
     //reply to the query
-    std::unordered_map<uint8_t,uint8_t> waitedReply_mainCodeType;
-    std::unordered_map<uint8_t,uint8_t> waitedReply_subCodeType;
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    std::unordered_set<uint8_t> replyOutputCompression;
-    #endif
-    std::unordered_map<uint8_t,uint16_t> replyOutputSize;
+    std::unordered_map<uint8_t,uint8_t> waitedReply_packetCode;
 public:
-    void newOutputQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber);
-    void newFullOutputQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber);
+    void newOutputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
     //send message without reply
-    bool packOutcommingData(const uint8_t &mainCodeType,const char * const data,const int &size);
-    bool packFullOutcommingData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const char * const data,const int &size);
+    bool packOutcommingData(const uint8_t &packetCode,const char * const data,const int &size);
     //send query with reply
-    bool packOutcommingQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const int &size);
-    bool packFullOutcommingQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const int &size);
+    bool packOutcommingQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const int &size);
     //send reply
     bool postReplyData(const uint8_t &queryNumber, const char * const data,const int &size);
 
@@ -191,26 +149,14 @@ public:
             const bool &isClient,
             #endif
             char *buffer,
-            const uint8_t &mainCodeType,const char * const data,const int &size);
-    static int computeFullOutcommingData(
-            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            const bool &isClient,
-            #endif
-            char *buffer,
-            const uint8_t &mainCodeType,const uint8_t &subCodeType,const char * const data,const int &size);
+            const uint8_t &packetCode,const char * const data,const int &size);
     //send query with reply
     static int computeOutcommingQuery(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             const bool &isClient,
             #endif
             char *buffer,
-            const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const int &size);
-    static int computeFullOutcommingQuery(
-            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            const bool &isClient,
-            #endif
-            char *buffer,
-            const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const int &size);
+            const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const int &size);
     //send reply
     static int computeReplyData(
         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -231,15 +177,13 @@ private:
     static qint8 encodeSize(char *data,const uint32_t &size);
 
     // for data
-    uint8_t mainCodeType;
-    uint8_t subCodeType;
+    uint8_t packetCode;
     uint8_t queryNumber;
     static QByteArray lzmaCompress(QByteArray data);
     static QByteArray lzmaUncompress(QByteArray data);
     static const uint16_t sizeHeaderNulluint16_t;
 public:
-    virtual void storeInputQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber);
-    virtual void storeFullInputQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber);
+    virtual void storeInputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
 protected:
     //reply to the query
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -279,8 +223,7 @@ public:
     quint64 getTXSize() const;
     quint64 getRXSize() const;
     #endif
-    void storeInputQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber);
-    void storeFullInputQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber);
+    void storeInputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
 
     void closeSocket();
 protected:

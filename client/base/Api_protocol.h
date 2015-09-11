@@ -126,23 +126,17 @@ protected:
 protected:
     //have message without reply
     virtual void parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size);
-    virtual void parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const data,const unsigned int &size);
     //have query with reply
     virtual void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
-    virtual void parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
     //send reply
     virtual void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
-    virtual void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
 
     //have message without reply
     virtual void parseMessage(const quint8 &mainCodeType,const QByteArray &data);
-    virtual void parseFullMessage(const quint8 &mainCodeType, const quint8 &subCodeType, const QByteArray &data);
     //have query with reply
     virtual void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
-    virtual void parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
     //send reply
     virtual void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
-    virtual void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
 
     //servers list
     LogicialGroup * addLogicalGroup(const QString &path, const QString &xml, const QString &language);
