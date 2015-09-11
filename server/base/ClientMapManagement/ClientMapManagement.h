@@ -20,12 +20,12 @@ class ClientMapManagement : public MapBasicMove
 public:
     /// \bug is not thread safe, and called by another thread, error can occure
     //map slots, transmited by the current ClientNetworkRead
-    bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
+    bool moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction);
     virtual void purgeBuffer() = 0;
 protected:
     //pass to the Map management visibility algorithm
     virtual void insertClient() = 0;
-    virtual void moveClient(const quint8 &previousMovedUnit,const Direction &direction) = 0;
+    virtual void moveClient(const uint8_t &previousMovedUnit,const Direction &direction) = 0;
 };
 }
 
