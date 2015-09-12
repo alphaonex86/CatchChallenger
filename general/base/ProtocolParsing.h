@@ -86,6 +86,7 @@ public:
     #endif
     );
     virtual ~ProtocolParsingBase();
+    void setMaxPlayers(const uint16_t &maxPlayers);
     friend class ProtocolParsing;
     friend class ProtocolParsingCheck;
     virtual ssize_t read(char * data, const size_t &size) = 0;
