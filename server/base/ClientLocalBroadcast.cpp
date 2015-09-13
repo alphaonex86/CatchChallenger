@@ -56,8 +56,9 @@ void Client::sendLocalChatText(const std::string &text)
     int index=0;
     while(index<size)
     {
-        if(static_cast<MapServer *>(map)->clientsForBroadcast.at(index)!=this)
-            static_cast<MapServer *>(map)->clientsForBroadcast.at(index)->sendRawSmallPacket(finalData.constData(),finalData.size());
+        Client * const client=static_cast<MapServer *>(map)->clientsForBroadcast.at(index);
+        if(client!=this)
+            client->sendRawBlock(finalData.constData(),finalData.size());
         index++;
     }
 }

@@ -12,7 +12,7 @@ using namespace CatchChallenger;
 
 void ProtocolParsingBase::newOutputQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber)
 {
-    if(waitedReply_packetCode.find(queryNumber)!=waitedReply_packetCode.cend())
+    if(outputQueryNumberToPacketCode.find(queryNumber)!=outputQueryNumberToPacketCode.cend())
     {
         errorParsingLayer("Query with this query number already found");
         return;
@@ -88,12 +88,12 @@ void ProtocolParsingBase::newOutputQuery(const uint8_t &mainCodeType,const uint8
                 #endif
     std::stringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2").arg(queryNumber).arg(mainCodeType));
     #endif
-    waitedReply_packetCode[queryNumber]=mainCodeType;
+    outputQueryNumberToPacketCode[queryNumber]=mainCodeType;
 }
 
 void ProtocolParsingBase::newFullOutputQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber)
 {
-    if(waitedReply_packetCode.find(queryNumber)!=waitedReply_packetCode.cend())
+    if(outputQueryNumberToPacketCode.find(queryNumber)!=outputQueryNumberToPacketCode.cend())
     {
         errorParsingLayer("Query with this query number already found");
         return;
@@ -175,7 +175,7 @@ void ProtocolParsingBase::newFullOutputQuery(const uint8_t &mainCodeType,const u
                 #endif
     std::stringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
     #endif
-    waitedReply_packetCode[queryNumber]=mainCodeType;
+    outputQueryNumberToPacketCode[queryNumber]=mainCodeType;
     waitedReply_subCodeType[queryNumber]=subCodeType;
 }
 
@@ -526,22 +526,21 @@ qint8 ProtocolParsingBase::encodeSize(char *data,const uint32_t &size)
 {
     if(size<0xFF)
     {
-        memcpy(data,&size,sizeof(uint8_t));
-        return sizeof(uint8_t);
+        data[0x00]=size;
+        return 1;//sizeof(uint8_t)
     }
     else if(size<0xFFFF)
     {
-        const uint16_t &newSize=htole16(size);
-        memcpy(data,&ProtocolParsingBase::sizeHeaderNulluint16_t,sizeof(uint8_t));
-        memcpy(data+sizeof(uint8_t),&newSize,sizeof(newSize));
-        return sizeof(uint8_t)+sizeof(uint16_t);
+        data[0x00]=0xFF;
+        *reinterpret_cast<quint16 *>(data+0x01)=htole16(size);
+        return 3;//sizeof(uint8_t)+sizeof(uint16_t)
     }
     else
     {
-        const uint32_t &newSize=htole32(size);
-        memcpy(data,&ProtocolParsingBase::sizeHeaderNulluint16_t,sizeof(uint16_t));
-        memcpy(data+sizeof(uint16_t),&newSize,sizeof(newSize));
-        return sizeof(uint16_t)+sizeof(uint32_t);
+        data[0x00]=0xFF;
+        data[0x01]=0xFF;
+        *reinterpret_cast<quint32 *>(data+0x02)=htole32(size);
+        return 6;//sizeof(uint16_t)+sizeof(uint32_t)
     }
 }
 
@@ -1715,11 +1714,11 @@ int ProtocolParsingBase::computeReplyData(
 
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     if(isClient)
-        memcpy(dataBuffer,&replyCodeClientToServer,sizeof(uint8_t));
+        dataBuffer[0x00]=replyCodeClientToServer;
     else
     #endif
-        memcpy(dataBuffer,&replyCodeServerToClient,sizeof(uint8_t));
-    memcpy(dataBuffer+sizeof(uint8_t),&queryNumber,sizeof(uint8_t));
+        dataBuffer[0x00]=replyCodeServerToClient;
+    dataBuffer[0x01]=queryNumber;
 
     if(replyOutputSizeInt==-1)
     {

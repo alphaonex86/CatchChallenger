@@ -120,8 +120,8 @@ void Client::tradeFinished()
         otherPlayerTrade->addExistingMonster(tradeMonster);
         addExistingMonster(otherPlayerTrade->tradeMonster);
 
-        otherPlayerTrade->sendFullPacket(0xD0,0x08);
-        sendFullPacket(0xD0,0x08);
+        otherPlayerTrade->sendMessage(0x5B);
+        sendMessage(0x5B);
         otherPlayerTrade->resetTheTrade();
         resetTheTrade();
     }
@@ -130,7 +130,7 @@ void Client::tradeFinished()
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         normalOutput("Trade freezed");
         #endif
-        otherPlayerTrade->sendFullPacket(0xD0,0x07);
+        otherPlayerTrade->sendMessage(0x5A);
     }
 }
 
@@ -191,7 +191,7 @@ void Client::tradeAddTradeCash(const quint64 &cash)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x01;
     out << cash;
-    otherPlayerTrade->sendFullPacket(0xD0,0x04,outputData.constData(),outputData.size());
+    otherPlayerTrade->sendMessage(0x57,outputData.constData(),outputData.size());
 }
 
 void Client::tradeAddTradeObject(const uint16_t &item,const uint32_t &quantity)
@@ -232,7 +232,7 @@ void Client::tradeAddTradeObject(const uint16_t &item,const uint32_t &quantity)
     out << (uint8_t)0x02;
     out << item;
     out << quantity;
-    otherPlayerTrade->sendFullPacket(0xD0,0x04,outputData.constData(),outputData.size());
+    otherPlayerTrade->sendMessage(0x57,outputData.constData(),outputData.size());
 }
 
 void Client::tradeAddTradeMonster(const uint32_t &monsterId)
@@ -307,7 +307,7 @@ void Client::tradeAddTradeMonster(const uint32_t &monsterId)
                 out << monster.skills.at(sub_index).level;
                 sub_index++;
             }
-            otherPlayerTrade->sendFullPacket(0xD0,0x04,outputData.constData(),outputData.size());
+            otherPlayerTrade->sendMessage(0x57,outputData.constData(),outputData.size());
             while(index<public_and_private_informations.playerMonster.size())
             {
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
@@ -356,7 +356,7 @@ void Client::internalTradeCanceled(const bool &send)
     if(send)
     {
         if(tradeIsValidated)
-            sendFullPacket(0xD0,0x06);
+            sendMessage(0x59);
         else
             receiveSystemText("Trade declined");
     }
@@ -388,6 +388,6 @@ void Client::internalTradeAccepted(const bool &send)
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << otherPlayerTrade->public_and_private_informations.public_informations.skinId;
         const QByteArray newData(otherPlayerTrade->rawPseudo+outputData);
-        sendFullPacket(0xD0,0x05,newData.constData(),newData.size());
+        sendMessage(0x58,newData.constData(),newData.size());
     }
 }

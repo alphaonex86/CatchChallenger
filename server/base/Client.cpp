@@ -420,12 +420,12 @@ std::string Client::getPseudo() const
 
 void Client::dropAllClients()
 {
-    sendPacket(0xC4);
+    sendMessage(0x62);
 }
 
 void Client::dropAllBorderClients()
 {
-    sendPacket(0xC9);
+    sendMessage(0x67);
 }
 
 QByteArray Client::getRawPseudo() const

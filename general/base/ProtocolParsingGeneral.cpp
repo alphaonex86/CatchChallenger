@@ -484,6 +484,7 @@ ProtocolParsingBase::ProtocolParsingBase(
     #else
     ProtocolParsing(),
     #endif
+    flags(0),
     // for data
     haveData(false),
     haveData_dataSize(0),
@@ -505,6 +506,7 @@ ProtocolParsingBase::ProtocolParsingBase(
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     isClient=(packetModeTransmission==PacketModeTransmission_Client);
     #endif
+    memset(outputQueryNumberToPacketCode,0x00,sizeof(outputQueryNumberToPacketCode));
 }
 
 void ProtocolParsing::setMaxPlayers(const uint16_t &maxPlayers)
@@ -539,7 +541,7 @@ quint64 ProtocolParsingInputOutput::getTXSize() const
 
 void ProtocolParsingBase::reset()
 {
-    waitedReply_packetCode.clear();
+    outputQueryNumberToPacketCode.clear();
     waitedReply_subCodeType.clear();
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     replyOutputCompression.clear();
@@ -599,6 +601,7 @@ ProtocolParsingInputOutput::ProtocolParsingInputOutput(
     RXSize=0;
     TXSize=0;
     #endif
+    memset(inputQueryNumberToPacketCode,0x00,sizeof(inputQueryNumberToPacketCode));
 }
 
 ProtocolParsingInputOutput::~ProtocolParsingInputOutput()
