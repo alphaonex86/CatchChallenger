@@ -70,6 +70,7 @@ public:
     static const char packetFixedSize[256+128];
     ProtocolParsing();
     static void initialiseTheVariable(const InitialiseTheVariableType &initialiseTheVariableType=InitialiseTheVariableType::AllInOne);
+    static void setMaxPlayers(const uint16_t &maxPlayers);
 protected:
     virtual void errorParsingLayer(const std::string &error) = 0;
     virtual void messageParsingLayer(const std::string &message) const = 0;
@@ -106,9 +107,6 @@ protected:
     bool parseDataSize(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
     bool parseData(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
     bool parseDispatch(const char * const data,const int &size);
-    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-    bool isClient;
-    #endif
     QByteArray header_cut;
 protected:
     //have message without reply
@@ -120,20 +118,20 @@ protected:
 
     virtual void reset();
 private:
-    // for data
-    bool haveData;
-    bool haveData_dataSize;
-    bool is_reply;
+    uint8_t flags;
+    /* flags & 0x80 = haveData
+     * flags & 0x40 = haveData_dataSize
+     * flags & 0x20 = have_query_number
+     * flags & 0x10 = isClient
+     * flags & 0x03: 0=8Bits, 1=16Bits, 2=32Bits */
+
     QByteArray dataToWithoutHeader;
-    uint8_t data_size_size;
     uint32_t dataSize;
-    //to parse the netwrok stream
-    bool need_query_number,have_query_number;
     // function
     void dataClear();
 public:
     //reply to the query
-    std::unordered_map<uint8_t,uint8_t> waitedReply_packetCode;
+    char outputQueryNumberToPacketCode[256];
 public:
     void newOutputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
     //send message without reply
@@ -182,7 +180,6 @@ private:
     uint8_t queryNumber;
     static QByteArray lzmaCompress(QByteArray data);
     static QByteArray lzmaUncompress(QByteArray data);
-    static const uint16_t sizeHeaderNulluint16_t;
 public:
     virtual void storeInputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
 protected:
@@ -258,6 +255,7 @@ protected:
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     int parseIncommingDataCount;//by object
     #endif
+    char inputQueryNumberToPacketCode[256];//invalidation packet code: 0x00
 };
 
 }

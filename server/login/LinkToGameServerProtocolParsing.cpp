@@ -7,7 +7,7 @@
 
 using namespace CatchChallenger;
 
-void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char *data, const unsigned int &size)
+bool LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char *data, const unsigned int &size)
 {
     Q_UNUSED(queryNumber);
     Q_UNUSED(size);
@@ -103,10 +103,7 @@ void LinkToGameServer::parseQuery(const quint8 &mainCodeType,const quint8 &query
 {
     Q_UNUSED(data);
     if(stat!=Stat::Logged)
-    {
-        parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
-        return;
-    }
+        return parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
     if(client!=NULL)
         client->packOutcommingQuery(mainCodeType,queryNumber,data,size);
 }

@@ -76,11 +76,9 @@ public:
     uint32_t getClanId() const;
     bool haveAClan() const;
 
-    void sendFullPacket(const uint8_t &mainIdent,const uint8_t &subIdent,const char * const data,const unsigned int &size);
-    void sendPacket(const uint8_t &mainIdent,const char * const data,const unsigned int &size);
-    void sendFullPacket(const uint8_t &mainIdent,const uint8_t &subIdent);
-    void sendPacket(const uint8_t &mainIdent);
-    void sendRawSmallPacket(const char * const data,const unsigned int &size);
+    void sendMessage(const uint8_t &mainIdent,const char * const data,const unsigned int &size);
+    void sendMessage(const uint8_t &mainIdent);
+    void sendRawBlock(const char * const data,const unsigned int &size);
 
     static std::vector<int> generalChatDrop;
     static int generalChatDropTotalCache;
@@ -357,8 +355,8 @@ private:
     void clanChangeWithoutDb(const uint32_t &clanId);
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    void askLogin(const uint8_t &query_id, const char *rawdata);
-    void createAccount(const uint8_t &query_id, const char *rawdata);
+    bool askLogin(const uint8_t &query_id, const char *rawdata);
+    bool createAccount(const uint8_t &query_id, const char *rawdata);
     static void createAccount_static(void *object);
     void createAccount_object();
     void createAccount_return(AskLoginParam *askLoginParam);
@@ -667,8 +665,8 @@ private:
     void insertIntoAClan(const uint32_t &clanId);
     void ejectToClan();
 
-    void sendQuery(const uint8_t &mainIdent,const uint8_t &subIdent,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
-    void sendQuery(const uint8_t &mainIdent,const uint8_t &subIdent,const uint8_t &queryNumber);
+    void sendQuery(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const unsigned int &size);
+    void sendQuery(const uint8_t &packetCode, const uint8_t &queryNumber);
     void postReply(const uint8_t &queryNumber,const char * const data,const unsigned int &size);
     void postReply(const uint8_t &queryNumber);
 
@@ -701,15 +699,13 @@ private:
     std::queue<PlantInWaiting> plant_list_in_waiting;
     #endif
 
-    void parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data,const unsigned int &size);
+    bool parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data,const unsigned int &size);
     //have message without reply
-    void parseMessage(const uint8_t &packetCode,const char * const data,const unsigned int &size);
+    bool parseMessage(const uint8_t &packetCode,const char * const data,const unsigned int &size);
     //have query with reply
-    void parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    bool parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
     //send reply
-    void parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
-
-    void parseNetworkReadError(const std::string &errorString);
+    bool parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
 
     // ------------------------------
     bool sendFile(const std::string &datapackPath,const std::string &fileName);
