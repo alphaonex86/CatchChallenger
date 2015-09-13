@@ -47,23 +47,23 @@
 using namespace CatchChallenger;
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-void Client::askLogin(const uint8_t &query_id,const char *rawdata)
+bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryLogin::db_query_login.empty())
     {
         errorOutput("askLogin() Query login is empty, bug");
-        return;
+        return false;
     }
     if(PreparedDBQueryLogin::db_query_insert_login.empty())
     {
         errorOutput("askLogin() Query inset login is empty, bug");
-        return;
+        return false;
     }
     if(PreparedDBQueryCommon::db_query_characters.empty())
     {
         errorOutput("askLogin() Query characters is empty, bug");
-        return;
+        return false;
     }
     #endif
     QByteArray login;
@@ -84,7 +84,7 @@ void Client::askLogin(const uint8_t &query_id,const char *rawdata)
     {
         loginIsWrong(askLoginParam->query_id,0x04,"Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_login->errorMessage());
         delete askLoginParam;
-        return;
+        return false;
     }
     else
     {
@@ -93,6 +93,7 @@ void Client::askLogin(const uint8_t &query_id,const char *rawdata)
         paramToPassToCallBackType.push("AskLoginParam");
         #endif
         callbackRegistred.push(callback);
+        return true;
     }
 }
 
@@ -151,7 +152,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 removeFromQueryReceived(askLoginParam->query_id);
                 #endif
-                replyOutputSize.erase(askLoginParam->query_id);
+                inputQueryNumberToPacketCode[askLoginParam->query_id]=0;
                 internalSendRawSmallPacket(reinterpret_cast<char *>(Client::loginIsWrongBuffer),sizeof(Client::loginIsWrongBuffer));
                 delete askLoginParam;
                 is_logging_in_progess=false;
@@ -269,28 +270,28 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
     }
 }
 
-void Client::createAccount(const uint8_t &query_id, const char *rawdata)
+bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryLogin::db_query_login.empty())
     {
         errorOutput("createAccount() Query login is empty, bug");
-        return;
+        return false;
     }
     if(PreparedDBQueryLogin::db_query_insert_login.empty())
     {
         errorOutput("createAccount() Query inset login is empty, bug");
-        return;
+        return false;
     }
     if(PreparedDBQueryCommon::db_query_characters.empty())
     {
         errorOutput("createAccount() Query characters is empty, bug");
-        return;
+        return false;
     }
     if(!GlobalServerData::serverSettings.automatic_account_creation)
     {
         errorOutput("createAccount() Creation account not premited");
-        return;
+        return false;
     }
     #endif
     const QByteArray login=QByteArray(rawdata,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
@@ -307,7 +308,7 @@ void Client::createAccount(const uint8_t &query_id, const char *rawdata)
         is_logging_in_progess=false;
         loginIsWrong(askLoginParam->query_id,0x03,"Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_login->errorMessage());
         delete askLoginParam;
-        return;
+        return false;
     }
     else
     {
@@ -317,6 +318,7 @@ void Client::createAccount(const uint8_t &query_id, const char *rawdata)
         paramToPassToCallBackType.push("AskLoginParam");
         #endif
         callbackRegistred.push(callback);
+        return true;
     }
 }
 
@@ -671,7 +673,7 @@ void Client::server_list_return(const uint8_t &query_id, const QByteArray &previ
         outputData[0]=0x01;
         outputData[1]=0x00;
         outputData[2]=0x00;outputData[3]=0x00;//16Bits
-        sendFullPacket(0xC2,0x0F,outputData.constData(),outputData.size());
+        sendMessage(0x44,outputData.constData(),outputData.size());
     }
     //C20E
     {
@@ -709,7 +711,7 @@ void Client::server_list_return(const uint8_t &query_id, const QByteArray &previ
                 out << (uint16_t)65535;
             out << (uint16_t)255/2;//current player
         }
-        sendFullPacket(0xC2,0x0E,outputData.constData(),outputData.size());
+        sendMessage(0x40,outputData.constData(),outputData.size());
     }
     //send the network reply
     char * const tempRawData=new char[4*1024];
@@ -1618,7 +1620,7 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (uint32_t)datapckFileNumber;
         out << (uint32_t)datapckFileSize;
-        sendFullPacket(0xC2,0x0C,outputData.constData(),outputData.size());
+        sendMessage(0x75,outputData.constData(),outputData.size());
     }
     if(fileToSendList.empty())
     {
@@ -1788,7 +1790,7 @@ void Client::sendFileContent()
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (uint8_t)BaseServerMasterSendDatapack::rawFilesBufferCount;
         const QByteArray newData(outputData+BaseServerMasterSendDatapack::rawFilesBuffer);
-        sendFullPacket(0xC2,0x03,newData.constData(),newData.size());
+        sendMessage(0x76,newData.constData(),newData.size());
         BaseServerMasterSendDatapack::rawFilesBuffer.clear();
         BaseServerMasterSendDatapack::rawFilesBufferCount=0;
     }
@@ -1803,7 +1805,7 @@ void Client::sendCompressedFileContent()
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (uint8_t)BaseServerMasterSendDatapack::compressedFilesBufferCount;
         const QByteArray newData(outputData+BaseServerMasterSendDatapack::compressedFilesBuffer);
-        sendFullPacket(0xC2,0x04,newData.constData(),newData.size());
+        sendMessage(0x77,newData.constData(),newData.size());
         BaseServerMasterSendDatapack::compressedFilesBuffer.clear();
         BaseServerMasterSendDatapack::compressedFilesBufferCount=0;
     }
@@ -1877,7 +1879,7 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
                 QByteArray outputData2;
                 outputData2[0x00]=0x01;
                 const QByteArray newData(outputData2+fileNameRaw+outputData+content);
-                sendFullPacket(0xC2,0x03,newData.constData(),newData.size());
+                sendMessage(0x76,newData.constData(),newData.size());
             }
             else
             {

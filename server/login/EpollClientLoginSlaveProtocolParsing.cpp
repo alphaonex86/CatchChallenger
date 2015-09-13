@@ -148,19 +148,19 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
                             index++;
                         }
                         //don't work:memmove(BaseServerLogin::tokenForAuth,BaseServerLogin::tokenForAuth+sizeof(TokenLink),BaseServerLogin::tokenForAuthSize*sizeof(TokenLink));
+                        //don't set the last wrong entry to improve performance againts DDOS
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
                         if(BaseServerLogin::tokenForAuth[0].client==NULL)
                             abort();
                         #endif
                     }
-                    return;
                 }
                 BaseServerLogin::TokenLink *token=&BaseServerLogin::tokenForAuth[BaseServerLogin::tokenForAuthSize];
                 {
                     token->client=this;
                     if(BaseServerLogin::fpRandomFile==NULL)
                     {
-                        //insercure implementation
+                        //insecure implementation
                         abort();
                         int index=0;
                         while(index<TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)

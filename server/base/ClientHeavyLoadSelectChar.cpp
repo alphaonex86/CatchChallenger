@@ -1383,7 +1383,7 @@ void Client::loginIsWrong(const uint8_t &query_id, const uint8_t &returnCode, co
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     removeFromQueryReceived(query_id);
     #endif
-    replyOutputSize.erase(query_id);
+    inputQueryNumberToPacketCode[query_id]=0;
     internalSendRawSmallPacket(reinterpret_cast<char *>(Client::loginIsWrongBuffer),sizeof(Client::loginIsWrongBuffer));
 
     //send to server to stop the connection

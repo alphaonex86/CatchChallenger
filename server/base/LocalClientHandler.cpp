@@ -180,7 +180,7 @@ void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE 
     }
     out << public_and_private_informations.public_informations.skinId;
 
-    sendPacket(0xC0,outputData.constData(),outputData.size());
+    sendMessage(0x68,outputData.constData(),outputData.size());
 
     //load the first time the random number list
     generateRandomNumber();
@@ -458,7 +458,7 @@ void Client::addObjectAndSend(const uint16_t &item,const uint32_t &quantity)
     out << (uint16_t)1;
     out << (uint16_t)item;
     out << (uint32_t)quantity;
-    sendFullPacket(0xD0,0x02,outputData.constData(),outputData.size());
+    sendMessage(0x55,outputData.constData(),outputData.size());
 }
 
 void Client::addObject(const uint16_t &item,const uint32_t &quantity)
@@ -596,7 +596,7 @@ void Client::sendRemoveObject(const uint16_t &item,const uint32_t &quantity)
     out << (uint32_t)1;
     out << (uint16_t)item;
     out << (uint32_t)quantity;
-    sendFullPacket(0xD0,0x03,outputData.constData(),outputData.size());
+    sendMessage(0x56,outputData.constData(),outputData.size());
 }
 
 uint32_t Client::objectQuantity(const uint16_t &item) const
@@ -2793,7 +2793,7 @@ void Client::sendClanInfo()
         outputData+=outputText;
         out.device()->seek(out.device()->pos()+outputText.size());
     }
-    sendFullPacket(0xC2,0x0A,outputData.constData(),outputData.size());
+    sendMessage(0x5F,outputData.constData(),outputData.size());
 }
 
 void Client::dissolvedClan()
@@ -2803,7 +2803,7 @@ void Client::dissolvedClan()
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    sendFullPacket(0xC2,0x09);
+    sendMessage(0x5E);
     clanChangeWithoutDb(public_and_private_informations.clan);
 }
 
@@ -2823,7 +2823,7 @@ bool Client::inviteToClan(const uint32_t &clanId)
         outputData+=outputText;
         out.device()->seek(out.device()->pos()+outputText.size());
     }
-    sendFullPacket(0xC2,0x0B,outputData.constData(),outputData.size());
+    sendMessage(0x60,outputData.constData(),outputData.size());
     return false;
 }
 
@@ -2999,7 +2999,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
                 QDataStream out(&outputData, QIODevice::WriteOnly);
                 out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
                 out << (uint8_t)0x01;
-                sendFullPacket(0xF0,0x01,outputData.constData(),outputData.size());
+                sendMessage(0x5B,outputData.constData(),outputData.size());
                 return;
             }
         }
@@ -3019,7 +3019,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
                 outputData+=outputText;
                 out.device()->seek(out.device()->pos()+outputText.size());
             }
-            sendFullPacket(0xF0,0x01,outputData.constData(),outputData.size());
+            sendMessage(0x5B,outputData.constData(),outputData.size());
             return;
         }
         if(captureCity.count(zoneName)>0)
@@ -3320,7 +3320,7 @@ void Client::cityCaptureBattle(const uint16_t &number_of_player,const uint16_t &
     out << (uint8_t)0x04;
     out << (uint16_t)number_of_player;
     out << (uint16_t)number_of_clan;
-    sendFullPacket(0xF0,0x01,outputData.constData(),outputData.size());
+    sendMessage(0x5B,outputData.constData(),outputData.size());
 }
 
 void Client::cityCaptureBotFight(const uint16_t &number_of_player,const uint16_t &number_of_clan,const uint32_t &fightId)
@@ -3332,7 +3332,7 @@ void Client::cityCaptureBotFight(const uint16_t &number_of_player,const uint16_t
     out << (uint16_t)number_of_player;
     out << (uint16_t)number_of_clan;
     out << (uint32_t)fightId;
-    sendFullPacket(0xF0,0x01,outputData.constData(),outputData.size());
+    sendMessage(0x5B,outputData.constData(),outputData.size());
 }
 
 void Client::cityCaptureInWait(const uint16_t &number_of_player,const uint16_t &number_of_clan)
@@ -3343,7 +3343,7 @@ void Client::cityCaptureInWait(const uint16_t &number_of_player,const uint16_t &
     out << (uint8_t)0x05;
     out << (uint16_t)number_of_player;
     out << (uint16_t)number_of_clan;
-    sendFullPacket(0xF0,0x01,outputData.constData(),outputData.size());
+    sendMessage(0x5B,outputData.constData(),outputData.size());
 }
 
 void Client::cityCaptureWin()
@@ -3352,7 +3352,7 @@ void Client::cityCaptureWin()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x06;
-    sendFullPacket(0xF0,0x01,outputData.constData(),outputData.size());
+    sendMessage(0x5B,outputData.constData(),outputData.size());
 }
 
 void Client::previousCityCaptureNotFinished()
@@ -3361,7 +3361,7 @@ void Client::previousCityCaptureNotFinished()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x02;
-    sendFullPacket(0xF0,0x03,outputData.constData(),outputData.size());
+    sendMessage(0x5B,outputData.constData(),outputData.size());
 }
 
 void Client::moveMonster(const bool &up,const uint8_t &number)

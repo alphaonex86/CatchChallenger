@@ -165,7 +165,6 @@ struct GameServerSettings
     Database database_server;
 
     //connection
-    bool tolerantMode;
     bool automatic_account_creation;
 
     //visibility algorithm
