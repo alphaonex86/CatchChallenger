@@ -103,7 +103,6 @@ BaseServer::BaseServer() :
 
     GlobalServerData::serverSettings.automatic_account_creation             = false;
     GlobalServerData::serverSettings.max_players                            = 1;
-    GlobalServerData::serverSettings.tolerantMode                           = false;
     GlobalServerData::serverSettings.sendPlayerNumber                       = true;
     GlobalServerData::serverSettings.pvp                                    = true;
     GlobalServerData::serverSettings.benchmark                              = false;

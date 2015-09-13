@@ -295,15 +295,13 @@ bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const uint
         have_subCodeType=false;
         have_query_number=false;
         is_reply=false;
-        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-        if(isClient)
-            need_subCodeType=mainCodeWithoutSubCodeTypeServerToClient.find(packetCode)==mainCodeWithoutSubCodeTypeServerToClient.cend();
-        else
-        #endif
-            need_subCodeType=mainCodeWithoutSubCodeTypeClientToServer.find(packetCode)==mainCodeWithoutSubCodeTypeClientToServer.cend();
         need_query_number=false;
         /// \todo remplace by char*
-        data_size_size=0;
+        data_size_size=ProtocolParsingBase::packetFixedSize[packetCode];
+        if(haveData_dataSize==0xFF)
+            return false;//packetCode code wrong
+        else if(haveData_dataSize!=0xFE)
+            haveData_dataSize=true;
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(cursor==0 && !haveData)
@@ -561,9 +559,9 @@ bool ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,const
         // it's reply
         if(is_reply)
         {
-            if(waitedReply_packetCode.find(queryNumber)!=waitedReply_packetCode.cend())
+            if(outputQueryNumberToPacketCode.find(queryNumber)!=outputQueryNumberToPacketCode.cend())
             {
-                packetCode=waitedReply_packetCode.at(queryNumber);
+                packetCode=outputQueryNumberToPacketCode.at(queryNumber);
                 if(waitedReply_subCodeType.find(queryNumber)==waitedReply_subCodeType.cend())
                 {
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -1177,7 +1175,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
             //reply
             if(waitedReply_subCodeType.find(queryNumber)==waitedReply_subCodeType.cend())
             {
-                waitedReply_packetCode.erase(queryNumber);
+                outputQueryNumberToPacketCode.erase(queryNumber);
                 #ifdef ProtocolParsingInputOutputDEBUG
                 messageParsingLayer(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -1302,7 +1300,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
             }
             else
             {
-                waitedReply_packetCode.erase(queryNumber);
+                outputQueryNumberToPacketCode.erase(queryNumber);
                 waitedReply_subCodeType.erase(queryNumber);
                 #ifdef ProtocolParsingInputOutputDEBUG
                 messageParsingLayer(
@@ -1472,7 +1470,7 @@ void ProtocolParsingBase::storeFullInputQuery(const uint8_t &mainCodeType,const 
 void ProtocolParsingInputOutput::storeInputQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    protocolParsingCheck->waitedReply_packetCode[queryNumber]=mainCodeType;
+    protocolParsingCheck->outputQueryNumberToPacketCode[queryNumber]=mainCodeType;
     if(queryReceived.find(queryNumber)!=queryReceived.cend())
     {
         messageParsingLayer(
@@ -1513,7 +1511,7 @@ void ProtocolParsingInputOutput::storeInputQuery(const uint8_t &mainCodeType,con
             #endif
             #endif
             //register the size of the reply to send
-            replyOutputSize[queryNumber]=replySizeOnlyMainCodePacketServerToClient.at(mainCodeType);
+            inputQueryNumberToPacketCode[queryNumber]=replySizeOnlyMainCodePacketServerToClient.at(mainCodeType);
         }
         else
         {
@@ -1564,7 +1562,7 @@ void ProtocolParsingInputOutput::storeInputQuery(const uint8_t &mainCodeType,con
             #endif
             #endif
             //register the size of the reply to send
-            replyOutputSize[queryNumber]=replySizeOnlyMainCodePacketClientToServer.at(mainCodeType);
+            inputQueryNumberToPacketCode[queryNumber]=replySizeOnlyMainCodePacketClientToServer.at(mainCodeType);
         }
         else
         {
@@ -1589,7 +1587,7 @@ void ProtocolParsingInputOutput::storeInputQuery(const uint8_t &mainCodeType,con
 void ProtocolParsingInputOutput::storeFullInputQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    protocolParsingCheck->waitedReply_packetCode[queryNumber]=mainCodeType;
+    protocolParsingCheck->outputQueryNumberToPacketCode[queryNumber]=mainCodeType;
     protocolParsingCheck->waitedReply_subCodeType[queryNumber]=subCodeType;
     if(queryReceived.find(queryNumber)!=queryReceived.cend())
     {
@@ -1647,7 +1645,7 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const uint8_t &mainCodeType
                                     ") compression can't be enabled with fixed size");
                 #endif
                 #endif
-                replyOutputSize[queryNumber]=replySizeMultipleCodePacketClientToServer.at(mainCodeType).at(subCodeType);
+                inputQueryNumberToPacketCode[queryNumber]=replySizeMultipleCodePacketClientToServer.at(mainCodeType).at(subCodeType);
             }
             else
             {
@@ -1743,7 +1741,7 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const uint8_t &mainCodeType
                                     ") compression can't be enabled with fixed size");
                 #endif
                 #endif
-                replyOutputSize[queryNumber]=replySizeMultipleCodePacketServerToClient.at(mainCodeType).at(subCodeType);
+                inputQueryNumberToPacketCode[queryNumber]=replySizeMultipleCodePacketServerToClient.at(mainCodeType).at(subCodeType);
             }
             else
             {
