@@ -203,7 +203,7 @@ bool ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer,
         return false;
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(cursor==0 && !haveData)
+    if(cursor==0 && !(flags & 0x80))
     {
         qDebug() << "Critical bug";
         abort();
@@ -217,7 +217,7 @@ bool ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer,
         return false;
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(cursor==0 && !haveData)
+    if(cursor==0 && !(flags & 0x80))
     {
         qDebug() << "Critical bug";
         abort();
@@ -231,7 +231,7 @@ bool ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer,
         return false;
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(cursor==0 && !haveData)
+    if(cursor==0 && !(flags & 0x80))
     {
         qDebug() << "Critical bug";
         abort();
@@ -249,305 +249,54 @@ bool ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer,
     return true;
 }
 
+bool ProtocolParsingBase::isReply() const
+{
+    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+    if(flags & 0x10)
+    {
+        if(packetCode==0x7F)
+            return true;
+    }
+    else
+    #endif
+    {
+        if(packetCode==0x01)
+            return false;
+    }
+    return false;
+}
+
 bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const uint32_t &size,uint32_t &cursor)
 {
-    if(!haveData)
+    if(!(flags & 0x80))
     {
         if((size-cursor)<sizeof(uint8_t))//ignore because first int is cuted!
             return false;
         packetCode=*(commonBuffer+cursor);
         cursor+=sizeof(uint8_t);
+
         //def query without the sub code
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-        if(isClient)
-        {
-            if(mainCodeWithoutSubCodeTypeServerToClient.find(packetCode)==mainCodeWithoutSubCodeTypeServerToClient.cend() && toDebugValidMainCodeServerToClient.find(packetCode)==toDebugValidMainCodeServerToClient.cend() && sizeMultipleCodePacketServerToClient.find(packetCode)==sizeMultipleCodePacketServerToClient.cend())
-            {
-                //errorParsingLayer("Critical bug, mainCodeType not valid");//flood when web browser try connect on it
-                return false;
-            }
-        }
-        else
-        #endif
-        {
-            if(mainCodeWithoutSubCodeTypeClientToServer.find(packetCode)==mainCodeWithoutSubCodeTypeClientToServer.cend() && toDebugValidMainCodeClientToServer.find(packetCode)==toDebugValidMainCodeClientToServer.cend() && sizeMultipleCodePacketClientToServer.find(packetCode)==sizeMultipleCodePacketClientToServer.cend())
-            {
-                //errorParsingLayer("Critical bug, mainCodeType not valid");//flood when web browser try connect on it
-                return false;
-            }
-        }
-        if(cursor==0)
-        {
-            qDebug() << "Critical bug";
-            abort();
-        }
-        #endif
-        #ifdef PROTOCOLPARSINGDEBUG
-        messageParsingLayer(
-                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    std::to_string(isClient)+
-                    #endif
-        std::stringLiteral(" parseIncommingData(): !haveData, mainCodeType: %1").arg(mainCodeType));
-        #endif
-        haveData=true;
-        haveData_dataSize=false;
-        have_subCodeType=false;
-        have_query_number=false;
-        is_reply=false;
-        need_query_number=false;
-        /// \todo remplace by char*
-        data_size_size=ProtocolParsingBase::packetFixedSize[packetCode];
-        if(haveData_dataSize==0xFF)
-            return false;//packetCode code wrong
-        else if(haveData_dataSize!=0xFE)
-            haveData_dataSize=true;
-    }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(cursor==0 && !haveData)
-    {
-        qDebug() << "Critical bug";
-        abort();
-    }
-    #endif
 
-    if(!have_subCodeType)
-    {
-        #ifdef PROTOCOLPARSINGDEBUG
-        messageParsingLayer(
-                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    std::to_string(isClient)+
-                    #endif
-        std::stringLiteral(" parseIncommingData(): !have_subCodeType"));
-        #endif
-        if(!need_subCodeType)
-        {
-            #ifdef PROTOCOLPARSINGDEBUG
-            messageParsingLayer(
-                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        std::to_string(isClient)+
-                        #endif
-            std::stringLiteral(" parseIncommingData(): !need_subCodeType"));
-            #endif
-            //if is a reply
-            if(
-                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    (isClient && packetCode==replyCodeServerToClient) || (!isClient && packetCode==replyCodeClientToServer)
-                    #else
-                    mainCodeType==replyCodeClientToServer
-                    #endif
-            )
-            {
-                #ifdef PROTOCOLPARSINGDEBUG
-                messageParsingLayer(
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            std::to_string(isClient)+
-                            #endif
-                std::stringLiteral(" parseIncommingData(): need_query_number=true"));
-                #endif
-                is_reply=true;
-                need_query_number=true;
-                //the size with be resolved later
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if(cursor==0 && !haveData)
-                {
-                    qDebug() << "Critical bug";
-                    abort();
-                }
-                #endif
-            }
-            else
-            {
-                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                if(isClient)
-                {
-                    //if is query with reply
-                    if(mainCode_IsQueryServerToClient.find(packetCode)!=mainCode_IsQueryServerToClient.cend())
-                    {
-                        #ifdef PROTOCOLPARSINGDEBUG
-                        messageParsingLayer(
-                                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                    std::to_string(isClient)+
-                                    #endif
-                        std::stringLiteral(" parseIncommingData(): need_query_number=true, query with reply"));
-                        #endif
-                        need_query_number=true;
-                    }
-
-                    //check if have defined size
-                    if(sizeOnlyMainCodePacketServerToClient.find(packetCode)!=sizeOnlyMainCodePacketServerToClient.cend())
-                    {
-                        //have fixed size
-                        dataSize=sizeOnlyMainCodePacketServerToClient.at(packetCode);
-                        haveData_dataSize=true;
-                    }
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(cursor==0 && !haveData)
-                    {
-                        qDebug() << "Critical bug";
-                        abort();
-                    }
-                    #endif
-                }
-                else
-                #endif
-                {
-                    //if is query with reply
-                    if(mainCode_IsQueryClientToServer.find(packetCode)!=mainCode_IsQueryClientToServer.cend())
-                        need_query_number=true;
-
-                    //check if have defined size
-                    if(sizeOnlyMainCodePacketClientToServer.find(packetCode)!=sizeOnlyMainCodePacketClientToServer.cend())
-                    {
-                        //have fixed size
-                        dataSize=sizeOnlyMainCodePacketClientToServer.at(packetCode);
-                        haveData_dataSize=true;
-                    }
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(cursor==0 && !haveData)
-                    {
-                        qDebug() << "Critical bug";
-                        abort();
-                    }
-                    #endif
-                }
-            }
-        }
+        if(isReply())
+            return true;
         else
         {
-            #ifdef PROTOCOLPARSINGDEBUG
-            messageParsingLayer(
-                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        std::to_string(isClient)+
-                        #endif
-            std::stringLiteral(" parseIncommingData(): need_subCodeType"));
-            #endif
-            subCodeType=commonBuffer[cursor];
-            cursor+=sizeof(uint8_t);
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(cursor==0 && !haveData)
-            {
-                qDebug() << "Critical bug";
-                abort();
-            }
-            #endif
-
-            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            if(isClient)
-            {
-                #ifdef PROTOCOLPARSINGDEBUG
-                messageParsingLayer(
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            std::to_string(isClient)+
-                            #endif
-                std::stringLiteral(" parseIncommingData(): isClient"));
-                #endif
-                //if is query with reply
-                if(mainCode_IsQueryServerToClient.find(packetCode)!=mainCode_IsQueryServerToClient.cend())
-                {
-                    #ifdef PROTOCOLPARSINGDEBUG
-                    messageParsingLayer(
-                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                std::to_string(isClient)+
-                                #endif
-                    std::stringLiteral(" parseIncommingData(): need_query_number=true, query with reply (mainCode_IsQueryClientToServer)"));
-                    #endif
-                    need_query_number=true;
-                }
-
-                //check if have defined size
-                if(sizeMultipleCodePacketServerToClient.find(packetCode)!=sizeMultipleCodePacketServerToClient.cend())
-                {
-                    if(sizeMultipleCodePacketServerToClient.at(packetCode).find(subCodeType)!=sizeMultipleCodePacketServerToClient.at(packetCode).cend())
-                    {
-                        //have fixed size
-                        dataSize=sizeMultipleCodePacketServerToClient.at(packetCode).at(subCodeType);
-                        haveData_dataSize=true;
-                    }
-                }
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if(cursor==0 && !haveData)
-                {
-                    qDebug() << "Critical bug";
-                    abort();
-                }
-                #endif
-            }
-            else
-            #endif
-            {
-                #ifdef PROTOCOLPARSINGDEBUG
-                messageParsingLayer(
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            std::to_string(isClient)+
-                            #endif
-                std::stringLiteral(" parseIncommingData(): !isClient"));
-                #endif
-                //if is query with reply
-                if(mainCode_IsQueryClientToServer.find(packetCode)!=mainCode_IsQueryClientToServer.cend())
-                {
-                    #ifdef PROTOCOLPARSINGDEBUG
-                    messageParsingLayer(
-                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                std::to_string(isClient)+
-                                #endif
-                    std::stringLiteral(" parseIncommingData(): need_query_number=true, query with reply (mainCode_IsQueryServerToClient)"));
-                    #endif
-                    need_query_number=true;
-                }
-
-                //check if have defined size
-                if(sizeMultipleCodePacketClientToServer.find(packetCode)!=sizeMultipleCodePacketClientToServer.cend())
-                {
-                    if(sizeMultipleCodePacketClientToServer.at(packetCode).find(subCodeType)!=sizeMultipleCodePacketClientToServer.at(packetCode).cend())
-                    {
-                        //have fixed size
-                        dataSize=sizeMultipleCodePacketClientToServer.at(packetCode).at(subCodeType);
-                        haveData_dataSize=true;
-                    }
-                }
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if(cursor==0 && !haveData)
-                {
-                    qDebug() << "Critical bug";
-                    abort();
-                }
-                #endif
-            }
+            dataSize=ProtocolParsingBase::packetFixedSize[packetCode];
+            if(dataSize==0xFF)
+                return false;//packetCode code wrong
+            else if(dataSize!=0xFE)
+                flags |= 0x40;
+            return true;
         }
-
-        //set this parsing step is done
-        have_subCodeType=true;
     }
-    #ifdef PROTOCOLPARSINGDEBUG
     else
-        messageParsingLayer(
-                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    std::to_string(isClient)+
-                    #endif
-        std::stringLiteral(" parseIncommingData(): have_subCodeType"));
-    #endif
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(cursor==0 && !haveData)
-    {
-        qDebug() << "Critical bug";
-        abort();
-    }
-    #endif
-    return true;
+        return true;
 }
 
 bool ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,const uint32_t &size,uint32_t &cursor)
 {
-    if(!have_query_number && need_query_number)
+    if(!(flags & 0x20) && (isReply() || packetCode>=0x80))
     {
-        #ifdef PROTOCOLPARSINGDEBUG
-        messageParsingLayer(
-                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    std::to_string(isClient)+
-                    #endif
-        std::stringLiteral(" parseIncommingData(): need_query_number"));
-        #endif
         if((size-cursor)<sizeof(uint8_t))
         {
             //todo, write message: need more bytes
@@ -557,119 +306,27 @@ bool ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,const
         cursor+=sizeof(uint8_t);
 
         // it's reply
-        if(is_reply)
+        if(isReply())
         {
-            if(outputQueryNumberToPacketCode.find(queryNumber)!=outputQueryNumberToPacketCode.cend())
-            {
-                packetCode=outputQueryNumberToPacketCode.at(queryNumber);
-                if(waitedReply_subCodeType.find(queryNumber)==waitedReply_subCodeType.cend())
-                {
-                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    if(isClient)
-                    {
-                        if(replySizeOnlyMainCodePacketServerToClient.find(packetCode)!=replySizeOnlyMainCodePacketServerToClient.cend())
-                        {
-                            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                            if(replyComressionOnlyMainCodePacketServerToClient.find(packetCode)!=replyComressionOnlyMainCodePacketServerToClient.cend())
-                            {
-                                errorParsingLayer("Can't be compressed and fixed size");
-                                return false;
-                            }
-                            #endif
-                            #endif
-                            dataSize=replySizeOnlyMainCodePacketServerToClient.at(packetCode);
-                            haveData_dataSize=true;
-                        }
-                    }
-                    else
-                    #endif
-                    {
-                        if(replySizeOnlyMainCodePacketClientToServer.find(packetCode)!=replySizeOnlyMainCodePacketClientToServer.cend())
-                        {
-                            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                            if(replyComressionOnlyMainCodePacketClientToServer.find(packetCode)!=replyComressionOnlyMainCodePacketClientToServer.cend())
-                            {
-                                errorParsingLayer("Can't be compressed and fixed size");
-                                return false;
-                            }
-                            #endif
-                            #endif
-                            dataSize=replySizeOnlyMainCodePacketClientToServer.at(packetCode);
-                            haveData_dataSize=true;
-                        }
-                    }
-                }
-                else
-                {
-                    subCodeType=waitedReply_subCodeType.at(queryNumber);
-                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    if(isClient)
-                    {
-                        if(replySizeMultipleCodePacketServerToClient.find(packetCode)!=replySizeMultipleCodePacketServerToClient.cend())
-                        {
-                            if(replySizeMultipleCodePacketServerToClient.at(packetCode).find(subCodeType)!=replySizeMultipleCodePacketServerToClient.at(packetCode).cend())
-                            {
-                                #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                                #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                                if(replyComressionMultipleCodePacketServerToClient.find(packetCode)!=replyComressionMultipleCodePacketServerToClient.cend())
-                                {
-                                    errorParsingLayer("Can't be compressed and fixed size");
-                                    return false;
-                                }
-                                #endif
-                                #endif
-                                dataSize=replySizeMultipleCodePacketServerToClient.at(packetCode).at(subCodeType);
-                                haveData_dataSize=true;
-                            }
-                        }
-                    }
-                    else
-                    #endif
-                    {
-                        if(replySizeMultipleCodePacketClientToServer.find(packetCode)!=replySizeMultipleCodePacketClientToServer.cend())
-                        {
-                            if(replySizeMultipleCodePacketClientToServer.at(packetCode).find(subCodeType)!=replySizeMultipleCodePacketClientToServer.at(packetCode).cend())
-                            {
-                                #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                                #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                                if(replyComressionMultipleCodePacketClientToServer.find(packetCode)!=replyComressionMultipleCodePacketClientToServer.cend())
-                                {
-                                    errorParsingLayer("Can't be compressed and fixed size");
-                                    return false;
-                                }
-                                #endif
-                                #endif
-                                dataSize=replySizeMultipleCodePacketClientToServer.at(packetCode).at(subCodeType);
-                                haveData_dataSize=true;
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                errorParsingLayer("It's not reply to a query");
+            const uint8_t &replyTo=outputQueryNumberToPacketCode[queryNumber];
+            //not a reply to a query
+            if(replyTo==0x00)
                 return false;
-            }
+            dataSize=ProtocolParsingBase::packetFixedSize[256+replyTo-128];
+            if(dataSize==0xFF)
+                abort();//packetCode code wrong, how the output allow this! filter better the output
+            else if(dataSize!=0xFE)
+                flags |= 0x40;
         }
         else // it's query with reply
         {
             //size resolved before, into subCodeType step
         }
-
-        //set this parsing step is done
-        have_query_number=true;
     }
-    #ifdef PROTOCOLPARSINGDEBUG
-    else
-        messageParsingLayer(
-                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    std::to_string(isClient)+
-                    #endif
-        std::stringLiteral(" parseIncommingData(): not need_query_number"));
-    #endif
+
+    //set this parsing step is done
+    flags |= 0x20;
+
     return true;
 }
 
@@ -690,27 +347,21 @@ bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const u
         uint32_t temp_size_32Bits;
         if(!haveData_dataSize)
         {
-            switch(data_size_size)
+            switch(flags & 0x03)
             {
                 case 0:
                 {
                     if((size-cursor)<sizeof(uint8_t))
                         return false;
                     temp_size_8Bits=*(commonBuffer+cursor);
-                    data_size_size+=sizeof(uint8_t);
                     cursor+=sizeof(uint8_t);
                     if(temp_size_8Bits!=0xFF)
                     {
                         dataSize=temp_size_8Bits;
-                        haveData_dataSize=true;
-                        #ifdef PROTOCOLPARSINGDEBUG
-                        messageParsingLayer(
-                                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                    std::to_string(isClient)+
-                                    #endif
-                        std::stringLiteral(" parseIncommingData(): have 8Bits data size"));
-                        #endif
+                        number |= 0x40;
+                        return true;
                     }
+                    flags |= 1;
                 }
                 case sizeof(uint8_t):
                 {
@@ -727,18 +378,13 @@ bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const u
                         cursor+=sizeof(uint16_t);
 
                         dataSize=temp_size_16Bits;
-                        haveData_dataSize=true;
-                        #ifdef PROTOCOLPARSINGDEBUG
-                        messageParsingLayer(
-                                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                    std::to_string(isClient)+
-                                    #endif
-                        std::stringLiteral(" parseIncommingData(): have 16Bits data size: %1, temp_size_16Bits: %2").arg(dataSize).arg(data_size_size));
-                        #endif
+                        number |= 0x40;
+                        return true;
                     }
                     else
                     {
-                        data_size_size+=sizeof(uint8_t);
+                        flags &= ~1;
+                        flags |= 2;
                         cursor+=sizeof(uint8_t);//2x 0xFF when 32Bits size
                     }
                 }
@@ -753,8 +399,15 @@ bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const u
                     temp_size_32Bits=le32toh(*reinterpret_cast<const uint32_t *>(commonBuffer+cursor));
                     cursor+=sizeof(uint32_t);
 
+                    if(dataSize>16*1024*1024)
+                    {
+                        errorParsingLayer("packet size too big");
+                        return false;
+                    }
+
                     dataSize=temp_size_32Bits;
-                    haveData_dataSize=true;
+                    number |= 0x40;
+                    return true;
                 }
                 break;
                 default:
@@ -762,33 +415,6 @@ bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const u
                 return false;
             }
         }
-    }
-    #ifdef PROTOCOLPARSINGDEBUG
-    else
-        messageParsingLayer(
-                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    std::to_string(isClient)+
-                    #endif
-        std::stringLiteral(" parseIncommingData(): haveData_dataSize"));
-    #endif
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(!haveData_dataSize)
-    {
-        errorParsingLayer("have not the size here!");
-        return false;
-    }
-    #endif
-    #ifdef PROTOCOLPARSINGDEBUG
-    messageParsingLayer(
-                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                std::to_string(isClient)+
-                #endif
-    std::stringLiteral(" parseIncommingData(): header informations is ready, dataSize: %1").arg(dataSize));
-    #endif
-    if(dataSize>16*1024*1024)
-    {
-        errorParsingLayer("packet size too big");
-        return false;
     }
     return true;
 }
@@ -803,7 +429,7 @@ bool ProtocolParsingBase::parseData(const char * const commonBuffer, const uint3
         if(dataSize<=(size-cursor))
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(cursor==0 && !haveData)
+            if(cursor==0 && !(flags & 0x80))
             {
                 qDebug() << "Critical bug";
                 abort();
@@ -862,7 +488,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
 {
     #ifdef ProtocolParsingInputOutputDEBUG
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-    if(isClient)
+    if(flags & 0x10)
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                     std::to_string(isClient)+
@@ -885,557 +511,50 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
     std::stringLiteral(" parseIncommingData(): data: %1").arg(std::string(data.toHex())));
     #endif
     //message
-    if(!need_query_number)
+    if(isReply())
     {
-        if(!need_subCodeType)
-        {
-            #ifdef ProtocolParsingInputOutputDEBUG
-            messageParsingLayer(
-                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        std::to_string(isClient)+
-                        #endif
-            std::stringLiteral(" parseIncommingData(): !need_query_number && !need_subCodeType, mainCodeType: %1").arg(mainCodeType));
-            #endif
-            return parseMessage(packetCode,data,size);
-        }
-        else
-        {
-            #ifdef ProtocolParsingInputOutputDEBUG
-            messageParsingLayer(
-                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        std::to_string(isClient)+
-                        #endif
-            std::stringLiteral(" parseIncommingData(): !need_query_number && need_subCodeType, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
-            #endif
-            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            if(isClient)
-            {
-                #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                if(compressionMultipleCodePacketServerToClient.find(packetCode)!=compressionMultipleCodePacketServerToClient.cend())
-                    if(compressionMultipleCodePacketServerToClient.at(packetCode).find(subCodeType)!=compressionMultipleCodePacketServerToClient.at(packetCode).cend())
-                    {
-                        switch(getCompressType())
-                        {
-                            case CompressionType::None:
-                                parseFullMessage(packetCode,subCodeType,data,size);
-                            break;
-                            case CompressionType::Zlib:
-                            default:
-                            {
-                                const QByteArray &newData=qUncompress(QByteArray(data,size));
-                                if(newData.isEmpty())
-                                {
-                                    errorParsingLayer("Compressed data corrupted");
-                                    return false;
-                                }
-                                parseFullMessage(packetCode,subCodeType,newData.constData(),newData.size());
-                            }
-                            break;
-                            case CompressionType::Xz:
-                            {
-                                const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
-                                if(newData.isEmpty())
-                                {
-                                    errorParsingLayer("Compressed data corrupted");
-                                    return false;
-                                }
-                                parseFullMessage(packetCode,subCodeType,newData.constData(),newData.size());
-                            }
-                            break;
-                            case CompressionType::Lz4:
-                            {
-                                QByteArray newData;
-                                newData.resize(size*4);
-                                const int &newSize=LZ4_decompress_safe(data,newData.data(),size,newData.size());
-                                if(newSize<0)
-                                {
-                                    errorParsingLayer("Compressed data corrupted");
-                                    return false;
-                                }
-                                newData.resize(newSize);
-                                parseFullMessage(packetCode,subCodeType,newData.constData(),newData.size());
-                            }
-                            break;
-                        }
-                        return true;
-                    }
-                #endif
-                parseFullMessage(packetCode,subCodeType,data,size);
-                return true;
-            }
-            else
-            #endif
-            {
-                #ifdef CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION
-                    parseFullMessage(mainCodeType,subCodeType,data,size);
-                #else
-                #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                if(compressionMultipleCodePacketClientToServer.find(packetCode)!=compressionMultipleCodePacketClientToServer.cend())
-                    if(compressionMultipleCodePacketClientToServer.at(packetCode).find(subCodeType)!=compressionMultipleCodePacketClientToServer.at(packetCode).cend())
-                    {
-                        switch(getCompressType())
-                        {
-                            case CompressionType::None:
-                                parseFullMessage(packetCode,subCodeType,data,size);
-                            break;
-                            case CompressionType::Zlib:
-                            default:
-                            {
-                                const QByteArray &newData=qUncompress(QByteArray(data,size));
-                                if(newData.isEmpty())
-                                {
-                                    errorParsingLayer("Compressed data corrupted");
-                                    return false;
-                                }
-                                parseFullMessage(packetCode,subCodeType,newData.constData(),newData.size());
-                            }
-                            break;
-                            case CompressionType::Xz:
-                            {
-                                const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
-                                if(newData.isEmpty())
-                                {
-                                    errorParsingLayer("Compressed data corrupted");
-                                    return false;
-                                }
-                                parseFullMessage(packetCode,subCodeType,newData.constData(),newData.size());
-                            }
-                            break;
-                            case CompressionType::Lz4:
-                            {
-                                QByteArray newData;
-                                newData.resize(size*4);
-                                const int &newSize=LZ4_decompress_safe(data,newData.data(),size,newData.size());
-                                if(newSize<0)
-                                {
-                                    errorParsingLayer("Compressed data corrupted");
-                                    return false;
-                                }
-                                newData.resize(newSize);
-                                parseFullMessage(packetCode,subCodeType,newData.constData(),newData.size());
-                            }
-                            break;
-                        }
-                        return true;
-                    }
-                #endif
-                parseFullMessage(packetCode,subCodeType,data,size);
-                return true;
-                #endif
-            }
-        }
+        #ifdef ProtocolParsingInputOutputDEBUG
+        messageParsingLayer(
+                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                    std::to_string(isClient)+
+                    #endif
+        std::stringLiteral(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, mainCodeType: %2").arg(queryNumber).arg(mainCodeType));
+        #endif
+        const uint8_t &replyTo=outputQueryNumberToPacketCode[queryNumber];
+        const bool &returnValue=parseReplyData(replyTo,queryNumber,data,size);
+        outputQueryNumberToPacketCode[queryNumber]=0x00;
+        return returnValue;
+    }
+    if(packetCode<0x80)
+    {
+        #ifdef ProtocolParsingInputOutputDEBUG
+        messageParsingLayer(
+                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                    std::to_string(isClient)+
+                    #endif
+        std::stringLiteral(" parseIncommingData(): !need_query_number && !need_subCodeType, mainCodeType: %1").arg(mainCodeType));
+        #endif
+        return parseMessage(packetCode,data,size);
     }
     else
     {
         //query
-        if(!is_reply)
-        {
-            if(!need_subCodeType)
-            {
-                #ifdef ProtocolParsingInputOutputDEBUG
-                messageParsingLayer(
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            std::to_string(isClient)+
-                            #endif
-                std::stringLiteral(" parseIncommingData(): need_query_number && !is_reply, mainCodeType: %1").arg(mainCodeType));
-                #endif
-                storeInputQuery(packetCode,queryNumber);
-                return parseQuery(packetCode,queryNumber,data,size);
-            }
-            else
-            {
-                #ifdef ProtocolParsingInputOutputDEBUG
-                messageParsingLayer(
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            std::to_string(isClient)+
-                            #endif
-                std::stringLiteral(" parseIncommingData(): need_query_number && !is_reply, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
-                #endif
-                storeFullInputQuery(packetCode,subCodeType,queryNumber);
-                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                if(isClient)
-                {
-                    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                    if(compressionMultipleCodePacketServerToClient.find(packetCode)!=compressionMultipleCodePacketServerToClient.cend())
-                        if(compressionMultipleCodePacketServerToClient.at(packetCode).find(subCodeType)!=compressionMultipleCodePacketServerToClient.at(packetCode).cend())
-                        {
-                            switch(getCompressType())
-                            {
-                                case CompressionType::None:
-                                    parseFullQuery(packetCode,subCodeType,queryNumber,data,size);
-                                break;
-                                case CompressionType::Zlib:
-                                default:
-                                {
-                                    const QByteArray &newData=qUncompress(QByteArray(data,size));
-                                    if(newData.isEmpty())
-                                    {
-                                        errorParsingLayer("Compressed data corrupted");
-                                        return false;
-                                    }
-                                    parseFullQuery(packetCode,subCodeType,queryNumber,newData.constData(),newData.size());
-                                }
-                                break;
-                                case CompressionType::Xz:
-                                {
-                                    const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
-                                    if(newData.isEmpty())
-                                    {
-                                        errorParsingLayer("Compressed data corrupted");
-                                        return false;
-                                    }
-                                    parseFullQuery(packetCode,subCodeType,queryNumber,newData.constData(),newData.size());
-                                }
-                                break;
-                                case CompressionType::Lz4:
-                                {
-                                    QByteArray newData;
-                                    newData.resize(size*4);
-                                    const int &newSize=LZ4_decompress_safe(data,newData.data(),size,newData.size());
-                                    if(newSize<0)
-                                    {
-                                        errorParsingLayer("Compressed data corrupted");
-                                        return false;
-                                    }
-                                    newData.resize(newSize);
-                                    parseFullQuery(packetCode,subCodeType,queryNumber,newData.constData(),newData.size());
-                                }
-                                break;
-                            }
-                            return true;
-                        }
+        #ifdef ProtocolParsingInputOutputDEBUG
+        messageParsingLayer(
+                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                    std::to_string(isClient)+
                     #endif
-                    parseFullQuery(packetCode,subCodeType,queryNumber,data,size);
-                    return true;
-                }
-                else
-                #endif
-                {
-                    #ifdef CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION
-                        parseFullQuery(mainCodeType,subCodeType,queryNumber,data,size);
-                    #else
-                    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                    if(compressionMultipleCodePacketClientToServer.find(packetCode)!=compressionMultipleCodePacketClientToServer.cend())
-                        if(compressionMultipleCodePacketClientToServer.at(packetCode).find(subCodeType)!=compressionMultipleCodePacketClientToServer.at(packetCode).cend())
-                        {
-                            switch(getCompressType())
-                            {
-                                case CompressionType::None:
-                                    parseFullQuery(packetCode,subCodeType,queryNumber,data,size);
-                                break;
-                                case CompressionType::Zlib:
-                                default:
-                                {
-                                    const QByteArray &newData=qUncompress(QByteArray(data,size));
-                                    if(newData.isEmpty())
-                                    {
-                                        errorParsingLayer("Compressed data corrupted");
-                                        return false;
-                                    }
-                                    parseFullQuery(packetCode,subCodeType,queryNumber,newData.constData(),newData.size());
-                                }
-                                break;
-                                case CompressionType::Xz:
-                                {
-                                    const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
-                                    if(newData.isEmpty())
-                                    {
-                                        errorParsingLayer("Compressed data corrupted");
-                                        return false;
-                                    }
-                                    parseFullQuery(packetCode,subCodeType,queryNumber,newData.constData(),newData.size());
-                                }
-                                break;
-                                case CompressionType::Lz4:
-                                {
-                                    QByteArray newData;
-                                    newData.resize(size*4);
-                                    const int &newSize=LZ4_decompress_safe(data,newData.data(),size,newData.size());
-                                    if(newSize<0)
-                                    {
-                                        errorParsingLayer("Compressed data corrupted");
-                                        return false;
-                                    }
-                                    newData.resize(newSize);
-                                    parseFullQuery(packetCode,subCodeType,queryNumber,newData.constData(),newData.size());
-                                }
-                                break;
-                            }
-                            return true;
-                        }
-                    #endif
-                    parseFullQuery(packetCode,subCodeType,queryNumber,data,size);
-                    return true;
-                    #endif
-                }
-            }
-        }
-        else
-        {
-            //reply
-            if(waitedReply_subCodeType.find(queryNumber)==waitedReply_subCodeType.cend())
-            {
-                outputQueryNumberToPacketCode.erase(queryNumber);
-                #ifdef ProtocolParsingInputOutputDEBUG
-                messageParsingLayer(
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            std::to_string(isClient)+
-                            #endif
-                std::stringLiteral(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, mainCodeType: %2").arg(queryNumber).arg(mainCodeType));
-                #endif
-                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                if(isClient)
-                {
-                    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                    if(replyComressionOnlyMainCodePacketServerToClient.find(packetCode)!=replyComressionOnlyMainCodePacketServerToClient.cend())
-                    {
-                        switch(getCompressType())
-                        {
-                            case CompressionType::None:
-                                return parseReplyData(packetCode,queryNumber,data,size);
-                            break;
-                            case CompressionType::Zlib:
-                            default:
-                            {
-                                const QByteArray &newData=qUncompress(QByteArray(data,size));
-                                if(newData.isEmpty())
-                                {
-                                    errorParsingLayer("Compressed data corrupted");
-                                    return false;
-                                }
-                                return parseReplyData(packetCode,queryNumber,newData.constData(),newData.size());
-                            }
-                            break;
-                            case CompressionType::Xz:
-                            {
-                                const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
-                                if(newData.isEmpty())
-                                {
-                                    errorParsingLayer("Compressed data corrupted");
-                                    return false;
-                                }
-                                return parseReplyData(packetCode,queryNumber,newData.constData(),newData.size());
-                            }
-                            break;
-                            case CompressionType::Lz4:
-                            {
-                                QByteArray newData;
-                                newData.resize(size*4);
-                                const int &newSize=LZ4_decompress_safe(data,newData.data(),size,newData.size());
-                                if(newSize<0)
-                                {
-                                    errorParsingLayer("Compressed data corrupted");
-                                    return false;
-                                }
-                                newData.resize(newSize);
-                                return parseReplyData(packetCode,queryNumber,newData.constData(),newData.size());
-                            }
-                            break;
-                        }
-                        return true;
-                    }
-                    #endif
-                    return parseReplyData(packetCode,queryNumber,data,size);
-                    return true;
-                }
-                else
-                #endif
-                {
-                    #ifdef CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION
-                        return parseReplyData(mainCodeType,queryNumber,data,size);
-                    #else
-                    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                    if(replyComressionOnlyMainCodePacketClientToServer.find(packetCode)!=replyComressionOnlyMainCodePacketClientToServer.cend())
-                    {
-                        switch(getCompressType())
-                        {
-                            case CompressionType::None:
-                                return parseReplyData(packetCode,queryNumber,data,size);
-                            break;
-                            case CompressionType::Zlib:
-                            default:
-                            {
-                                const QByteArray &newData=qUncompress(QByteArray(data,size));
-                                if(newData.isEmpty())
-                                {
-                                    errorParsingLayer("Compressed data corrupted");
-                                    return false;
-                                }
-                                return parseReplyData(packetCode,queryNumber,newData.constData(),newData.size());
-                            }
-                            break;
-                            case CompressionType::Xz:
-                            {
-                                const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
-                                if(newData.isEmpty())
-                                {
-                                    errorParsingLayer("Compressed data corrupted");
-                                    return false;
-                                }
-                                return parseReplyData(packetCode,queryNumber,newData.constData(),newData.size());
-                            }
-                            break;
-                            case CompressionType::Lz4:
-                            {
-                                QByteArray newData;
-                                newData.resize(size*4);
-                                const int &newSize=LZ4_decompress_safe(data,newData.data(),size,newData.size());
-                                if(newSize<0)
-                                {
-                                    errorParsingLayer("Compressed data corrupted");
-                                    return false;
-                                }
-                                newData.resize(newSize);
-                                return parseReplyData(packetCode,queryNumber,newData.constData(),newData.size());
-                            }
-                            break;
-                        }
-                        return true;
-                    }
-                    #endif
-                    return parseReplyData(packetCode,queryNumber,data,size);
-                    return true;
-                    #endif
-                }
-            }
-            else
-            {
-                outputQueryNumberToPacketCode.erase(queryNumber);
-                waitedReply_subCodeType.erase(queryNumber);
-                #ifdef ProtocolParsingInputOutputDEBUG
-                messageParsingLayer(
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            std::to_string(isClient)+
-                            #endif
-                std::stringLiteral(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, mainCodeType: %2, subCodeType: %3").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
-                #endif
-                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                if(isClient)
-                {
-                    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                    if(replyComressionMultipleCodePacketServerToClient.find(packetCode)!=replyComressionMultipleCodePacketServerToClient.cend())
-                        if(replyComressionMultipleCodePacketServerToClient.at(packetCode).find(subCodeType)!=replyComressionMultipleCodePacketServerToClient.at(packetCode).cend())
-                        {
-                            switch(getCompressType())
-                            {
-                                case CompressionType::None:
-                                    parseFullReplyData(packetCode,subCodeType,queryNumber,data,size);
-                                break;
-                                case CompressionType::Zlib:
-                                default:
-                                {
-                                    const QByteArray &newData=qUncompress(QByteArray(data,size));
-                                    if(newData.isEmpty())
-                                    {
-                                        errorParsingLayer("Compressed data is buggy");
-                                        return false;
-                                    }
-                                    parseFullReplyData(packetCode,subCodeType,queryNumber,newData.constData(),newData.size());
-                                }
-                                break;
-                                case CompressionType::Xz:
-                                {
-                                    const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
-                                    if(newData.isEmpty())
-                                    {
-                                        errorParsingLayer("Compressed data is buggy");
-                                        return false;
-                                    }
-                                    parseFullReplyData(packetCode,subCodeType,queryNumber,newData.constData(),newData.size());
-                                }
-                                break;
-                                case CompressionType::Lz4:
-                                {
-                                    QByteArray newData;
-                                    newData.resize(size*4);
-                                    const int &newSize=LZ4_decompress_safe(data,newData.data(),size,newData.size());
-                                    if(newSize<0)
-                                    {
-                                        errorParsingLayer("Compressed data corrupted");
-                                        return false;
-                                    }
-                                    newData.resize(newSize);
-                                    parseFullReplyData(packetCode,subCodeType,queryNumber,newData.constData(),newData.size());
-                                }
-                                break;
-                            }
-                            return true;
-                        }
-                    #endif
-                    parseFullReplyData(packetCode,subCodeType,queryNumber,data,size);
-                    return true;
-                }
-                else
-                #endif
-                {
-                    #ifdef CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION
-                        parseFullReplyData(mainCodeType,subCodeType,queryNumber,data,size);
-                    #else
-                    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                    if(replyComressionMultipleCodePacketClientToServer.find(packetCode)!=replyComressionMultipleCodePacketClientToServer.cend())
-                        if(replyComressionMultipleCodePacketClientToServer.at(packetCode).find(subCodeType)!=replyComressionMultipleCodePacketClientToServer.at(packetCode).cend())
-                        {
-                            switch(getCompressType())
-                            {
-                                case CompressionType::None:
-                                    parseFullReplyData(packetCode,subCodeType,queryNumber,data,size);
-                                break;
-                                case CompressionType::Zlib:
-                                default:
-                                {
-                                    const QByteArray &newData=qUncompress(QByteArray(data,size));
-                                    if(newData.isEmpty())
-                                    {
-                                        errorParsingLayer("Compressed data is buggy");
-                                        return false;
-                                    }
-                                    parseFullReplyData(packetCode,subCodeType,queryNumber,newData.constData(),newData.size());
-                                }
-                                break;
-                                case CompressionType::Xz:
-                                {
-                                    const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
-                                    if(newData.isEmpty())
-                                    {
-                                        errorParsingLayer("Compressed data is buggy");
-                                        return false;
-                                    }
-                                    parseFullReplyData(packetCode,subCodeType,queryNumber,newData.constData(),newData.size());
-                                }
-                                break;
-                                case CompressionType::Lz4:
-                                {
-                                    QByteArray newData;
-                                    newData.resize(size*4);
-                                    const int &newSize=LZ4_decompress_safe(data,newData.data(),size,newData.size());
-                                    if(newSize<0)
-                                    {
-                                        errorParsingLayer("Compressed data corrupted");
-                                        return false;
-                                    }
-                                    newData.resize(newSize);
-                                    parseFullReplyData(packetCode,subCodeType,queryNumber,newData.constData(),newData.size());
-                                }
-                                break;
-                            }
-                            return true;
-                        }
-                    #endif
-                    parseFullReplyData(packetCode,subCodeType,queryNumber,data,size);
-                    return true;
-                    #endif
-                }
-            }
-        }
+        std::stringLiteral(" parseIncommingData(): need_query_number && !is_reply, mainCodeType: %1").arg(mainCodeType));
+        #endif
+        storeInputQuery(packetCode,queryNumber);
+        return parseQuery(packetCode,queryNumber,data,size);
     }
-    return true;
 }
 
 void ProtocolParsingBase::dataClear()
 {
     dataToWithoutHeader.clear();
-    dataSize=0;
-    haveData=false;
+    flags &= 0x10;
 }
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -1483,7 +602,7 @@ void ProtocolParsingInputOutput::storeInputQuery(const uint8_t &mainCodeType,con
     queryReceived.insert(queryNumber);
     #endif
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-    if(isClient)
+    if(flags & 0x10)
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeServerToClient.find(mainCodeType)==mainCodeWithoutSubCodeTypeServerToClient.cend())
@@ -1604,7 +723,7 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const uint8_t &mainCodeType
     queryReceived.insert(queryNumber);
     #endif
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-    if(isClient)
+    if(flags & 0x10)
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeServerToClient.find(mainCodeType)!=mainCodeWithoutSubCodeTypeServerToClient.cend())
