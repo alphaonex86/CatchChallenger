@@ -13,11 +13,10 @@ using namespace CatchChallenger;
 #ifdef EPOLLCATCHCHALLENGERSERVER
 char ProtocolParsingInputOutput::commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];
 #endif
-const uint16_t ProtocolParsingBase::sizeHeaderNulluint16_t=0xFFFF;
 #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
 char ProtocolParsingBase::tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
 #endif
-const char ProtocolParsingBase::packetFixedSize[256+128];
+const uint8_t ProtocolParsing::packetFixedSize[]={0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -281,7 +280,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
         case InitialiseTheVariableType::LoginServer:
         case InitialiseTheVariableType::AllInOne:
         default:
-            if(!mainCodeWithoutSubCodeTypeClientToServer.empty())
+            if(ProtocolParsingBase::tempBigBufferForOutput[0x02]==2)
                 return;
 
             #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
@@ -294,8 +293,8 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             #endif
             #endif
 
-            char *writePacketFixedSize=const_cast<char *>(ProtocolParsingBase::packetFixedSize);
-            memset(writePacketFixedSize,0xFF,sizeof(writePacketFixedSize));
+            uint8_t *writePacketFixedSize=const_cast<uint8_t *>(ProtocolParsingBase::packetFixedSize);
+            memset(writePacketFixedSize,0xFF,sizeof(ProtocolParsingBase::packetFixedSize));
 
             //Value: 0xFF not found (blocked), 0xFE not fixed size
             writePacketFixedSize[0x02]=2;
@@ -486,17 +485,9 @@ ProtocolParsingBase::ProtocolParsingBase(
     #endif
     flags(0),
     // for data
-    haveData(false),
-    haveData_dataSize(0),
-    is_reply(false),
     dataSize(0),
     //to parse the netwrok stream
-    have_subCodeType(false),
-    need_subCodeType(false),
-    need_query_number(false),
-    have_query_number(false),
     packetCode(0),
-    subCodeType(0),
     queryNumber(0)
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -504,23 +495,21 @@ ProtocolParsingBase::ProtocolParsingBase(
     //    messageParsingLayer(std::string::number(isClient)+std::stringLiteral(" ProtocolParsingInputOutput::ProtocolParsingInputOutput(): can't connect the object"));
     #endif
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-    isClient=(packetModeTransmission==PacketModeTransmission_Client);
+    flags |= (packetModeTransmission==PacketModeTransmission_Client);
     #endif
     memset(outputQueryNumberToPacketCode,0x00,sizeof(outputQueryNumberToPacketCode));
 }
 
 void ProtocolParsing::setMaxPlayers(const uint16_t &maxPlayers)
 {
+    uint8_t *writePacketFixedSize=const_cast<uint8_t *>(ProtocolParsingBase::packetFixedSize);
+
     if(maxPlayers<=255)
-    {
-        ProtocolParsing::sizeOnlyMainCodePacketServerToClient[0x61]=1;
-    }
+        writePacketFixedSize[0x61]=1;
     else
-    {
         //NO: this case do into initialiseTheVariable()
         //YES: reinitialise because the initialise already done, but this object can be reused
-        ProtocolParsing::sizeOnlyMainCodePacketServerToClient[0x61]=2;
-    }
+        writePacketFixedSize[0x61]=2;
 }
 
 ProtocolParsingBase::~ProtocolParsingBase()
@@ -541,12 +530,7 @@ quint64 ProtocolParsingInputOutput::getTXSize() const
 
 void ProtocolParsingBase::reset()
 {
-    outputQueryNumberToPacketCode.clear();
-    waitedReply_subCodeType.clear();
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    replyOutputCompression.clear();
-    #endif
-    replyOutputSize.clear();
+    //outputQueryNumberToPacketCode.clear();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     queryReceived.clear();
     #endif
@@ -588,7 +572,7 @@ ProtocolParsingInputOutput::ProtocolParsingInputOutput(
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-        isClient=(packetModeTransmission==PacketModeTransmission_Client);
+        flags |= (packetModeTransmission==PacketModeTransmission_Client);
         if(packetModeTransmission==PacketModeTransmission_Client)
             protocolParsingCheck=new ProtocolParsingCheck(PacketModeTransmission_Server);
         else
@@ -615,7 +599,7 @@ ProtocolParsingInputOutput::~ProtocolParsingInputOutput()
 ProtocolParsing::CompressionType ProtocolParsingInputOutput::getCompressType() const
 {
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-    if(isClient)
+    if(flags & 0x10)
         return compressionTypeClient;
     else
     #endif
