@@ -18,7 +18,7 @@ void ProtocolParsingBase::newOutputQuery(const uint8_t &mainCodeType,const uint8
         return;
     }
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-    if(isClient)
+    if(flags & 0x10)
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeClientToServer.find(mainCodeType)==mainCodeWithoutSubCodeTypeClientToServer.cend())
@@ -99,7 +99,7 @@ void ProtocolParsingBase::newFullOutputQuery(const uint8_t &mainCodeType,const u
         return;
     }
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-    if(isClient)
+    if(flags & 0x10)
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeClientToServer.find(mainCodeType)!=mainCodeWithoutSubCodeTypeClientToServer.cend())
@@ -554,7 +554,7 @@ int ProtocolParsingBase::computeOutcommingData(
     buffer[0]=mainCodeType;
 
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-    if(isClient)
+    if(flags & 0x10)
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeClientToServer.find(mainCodeType)==mainCodeWithoutSubCodeTypeClientToServer.cend())
@@ -723,7 +723,7 @@ int ProtocolParsingBase::computeOutcommingQuery(
     buffer[1]=queryNumber;
 
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-    if(isClient)
+    if(flags & 0x10)
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeClientToServer.find(mainCodeType)==mainCodeWithoutSubCodeTypeClientToServer.cend())
@@ -902,7 +902,7 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
     buffer[2]=queryNumber;
 
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-    if(isClient)
+    if(flags & 0x10)
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeClientToServer.find(mainCodeType)!=mainCodeWithoutSubCodeTypeClientToServer.cend())
@@ -1320,7 +1320,7 @@ int ProtocolParsingBase::computeFullOutcommingData(
     buffer[1]=subCodeType;
 
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-    if(isClient)
+    if(flags & 0x10)
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
@@ -1713,7 +1713,7 @@ int ProtocolParsingBase::computeReplyData(
 {
 
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-    if(isClient)
+    if(flags & 0x10)
         dataBuffer[0x00]=replyCodeClientToServer;
     else
     #endif

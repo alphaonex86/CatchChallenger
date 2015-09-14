@@ -38,6 +38,10 @@ void ProtocolParsingCheck::parseFullMessage(const uint8_t &mainCodeType,const ui
     valid=true;
 }
 
+void ProtocolParsingCheck::moveClientFastPath(const uint8_t &previousMovedUnit,const uint8_t &direction)
+{
+}
+
 void ProtocolParsingCheck::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     Q_UNUSED(mainCodeType);
