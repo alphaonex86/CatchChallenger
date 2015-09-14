@@ -41,8 +41,9 @@ void Client::sendSystemMessage(const std::string &text,const bool &important)
     int index=0;
     while(index<size)
     {
-        if(clientBroadCastList.at(index)!=this)
-            clientBroadCastList.at(index)->sendRawSmallPacket(finalData.constData(),finalData.size());
+        Client * const client=clientBroadCastList.at(index);
+        if(client!=this)
+            client->sendRawBlock(finalData.constData(),finalData.size());
         index++;
     }
 }
@@ -126,7 +127,7 @@ void Client::receiveChatText(const Chat_type &chatType,const std::string &text,c
     else
         out2 << (uint8_t)sender_informations->public_and_private_informations.public_informations.type;
     const QByteArray newData(outputData+sender_informations->rawPseudo+outputData2);
-    sendPacket(0xCA,newData.constData(),newData.size());
+    sendMessage(0x5C,newData.constData(),newData.size());
 }
 
 void Client::receiveSystemText(const std::string &text,const bool &important)
@@ -149,7 +150,7 @@ void Client::receiveSystemText(const std::string &text,const bool &important)
         outputData+=tempText;
         out.device()->seek(out.device()->pos()+tempText.size());
     }
-    sendPacket(0xCA,outputData.constData(),outputData.size());
+    sendMessage(0x5C,outputData.constData(),outputData.size());
 }
 
 void Client::sendChatText(const Chat_type &chatType,const std::string &text)
@@ -209,8 +210,9 @@ void Client::sendChatText(const Chat_type &chatType,const std::string &text)
             int index=0;
             while(index<size)
             {
-                if(playerWithSameClan.at(index)!=this)
-                    playerWithSameClan.at(index)->sendRawSmallPacket(finalData.constData(),finalData.size());
+                Client * const client=playerWithSameClan.at(index);
+                if(client!=this)
+                    client->sendRawBlock(finalData.constData(),finalData.size());
                 index++;
             }
         }
@@ -266,8 +268,9 @@ void Client::sendChatText(const Chat_type &chatType,const std::string &text)
         int index=0;
         while(index<size)
         {
-            if(clientBroadCastList.at(index)!=this)
-                clientBroadCastList.at(index)->sendRawSmallPacket(finalData.constData(),finalData.size());
+            Client * const client=clientBroadCastList.at(index);
+            if(client!=this)
+                client->sendRawBlock(finalData.constData(),finalData.size());
             index++;
         }
         return;
@@ -285,7 +288,7 @@ void Client::receive_instant_player_number(const uint16_t &connected_players, co
     if(this->connected_players==connected_players)
         return;
     this->connected_players=connected_players;
-    sendRawSmallPacket(data,size);
+    sendRawBlock(data,size);
 }
 
 void Client::sendBroadCastCommand(const std::string &command,const std::string &extraText)
