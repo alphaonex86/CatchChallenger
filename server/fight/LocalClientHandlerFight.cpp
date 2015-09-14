@@ -581,8 +581,8 @@ void Client::internalBattleCanceled(const bool &send)
     otherPlayerBattle=NULL;
     if(send)
     {
-            sendFullPacket(0xE0,0x07);
-            receiveSystemText("Battle declined");
+        sendMessage(0x51);
+        receiveSystemText("Battle declined");
     }
     battleIsValidated=false;
     mHaveCurrentSkill=false;
@@ -640,7 +640,7 @@ void Client::internalBattleAccepted(const bool &send)
         out << (uint8_t)selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());
         QByteArray firstValidOtherPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(FacilityLib::playerMonsterToPublicPlayerMonster(*otherPlayerBattle->getCurrentMonster()));
         const QByteArray newData(otherPlayerBattle->rawPseudo+outputData+firstValidOtherPlayerMonster);
-        sendFullPacket(0xE0,0x08,newData.constData(),newData.size());
+        sendMessage(0x52,newData.constData(),newData.size());
     }
 }
 
@@ -756,7 +756,7 @@ void Client::sendBattleReturn()
     attackReturn.clear();
 
     const QByteArray newData(outputData+binarypublicPlayerMonster);
-    sendFullPacket(0xE0,0x06,newData.constData(),newData.size());
+    sendMessage(0x50,newData.constData(),newData.size());
 }
 
 void Client::sendBattleMonsterChange()
@@ -769,7 +769,7 @@ void Client::sendBattleMonsterChange()
     out << (uint8_t)selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());;
     binarypublicPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(*getOtherMonster());
     const QByteArray newData(outputData+binarypublicPlayerMonster);
-    sendFullPacket(0xE0,0x06,newData.constData(),newData.size());
+    sendMessage(0x50,newData.constData(),newData.size());
 }
 
 //return true if change level, multiplicator do at datapack loading
