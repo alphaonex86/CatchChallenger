@@ -212,5 +212,5 @@ void Client::sendInventory()
         }
     }
     //send the items
-    sendFullPacket(0xD0,0x01,outputData.constData(),outputData.size());
+    sendMessage(0x54,outputData.constData(),outputData.size());
 }

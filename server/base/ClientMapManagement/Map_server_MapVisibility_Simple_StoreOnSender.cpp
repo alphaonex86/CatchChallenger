@@ -23,8 +23,9 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         unsigned int index=0;
         while(index<clients.size())
         {
-            //clients.at(index)->dropAllClients();
-            clients.at(index)->sendRawSmallPacket(reinterpret_cast<const char *>(mainCode),sizeof(mainCode));
+            Client * const client=clients.at(index);
+            //clientdropAllClients();
+            client->sendRawBlock(reinterpret_cast<const char *>(mainCode),sizeof(mainCode));
             index++;
         }
         send_drop_all=false;
@@ -84,7 +85,8 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         unsigned int index=0;
         while(index<clients.size())
         {
-            clients.at(index)->sendPacket(0xC0,purgeBuffer_outputData.constData(),purgeBuffer_outputData.size());
+            Client * const client=clients.at(index);
+            client->sendMessage(0x68,purgeBuffer_outputData.constData(),purgeBuffer_outputData.size());
             index++;
         }
         send_reinsert_all=true;
@@ -179,7 +181,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     }
                     else
                     {
-                        client->sendPacket(0xC0,purgeBuffer_outputData.constData(),purgeBuffer_outputData.size());
+                        client->sendMessage(0x68,purgeBuffer_outputData.constData(),purgeBuffer_outputData.size());
                         clientsToSendDataOldClients[clientsToSendDataSizeOldClients]=client;
                         clientsToSendDataSizeOldClients++;
                     }
@@ -242,7 +244,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         }
                         ++index_subindex;
                     }
-                    clients.at(index)->sendPacket(0xC0,purgeBuffer_outputData.constData(),purgeBuffer_outputData.size());
+                    clients.at(index)->sendMessage(0x68,purgeBuffer_outputData.constData(),purgeBuffer_outputData.size());
                 }
                 index++;
             }
