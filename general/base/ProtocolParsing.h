@@ -67,7 +67,7 @@ public:
     static CompressionType compressionTypeServer;
     static uint8_t compressionLevel;
     #endif
-    static const char packetFixedSize[256+128];
+    static const uint8_t packetFixedSize[256+128];
     ProtocolParsing();
     static void initialiseTheVariable(const InitialiseTheVariableType &initialiseTheVariableType=InitialiseTheVariableType::AllInOne);
     static void setMaxPlayers(const uint16_t &maxPlayers);
@@ -107,7 +107,14 @@ protected:
     bool parseDataSize(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
     bool parseData(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
     bool parseDispatch(const char * const data,const int &size);
+    inline bool isReply() const;
     QByteArray header_cut;
+    uint8_t flags;
+    /* flags & 0x80 = haveData
+     * flags & 0x40 = haveData_dataSize
+     * flags & 0x20 = have_query_number
+     * flags & 0x10 = isClient
+     * flags & 0x03: 0=8Bits, 1=16Bits, 2=32Bits */
 protected:
     //have message without reply
     virtual bool parseMessage(const uint8_t &packetCode,const char * const data,const unsigned int &size) = 0;
@@ -118,17 +125,10 @@ protected:
 
     virtual void reset();
 private:
-    uint8_t flags;
-    /* flags & 0x80 = haveData
-     * flags & 0x40 = haveData_dataSize
-     * flags & 0x20 = have_query_number
-     * flags & 0x10 = isClient
-     * flags & 0x03: 0=8Bits, 1=16Bits, 2=32Bits */
-
     QByteArray dataToWithoutHeader;
     uint32_t dataSize;
     // function
-    void dataClear();
+    inline void dataClear();
 public:
     //reply to the query
     char outputQueryNumberToPacketCode[256];
