@@ -672,7 +672,7 @@ void Client::generateRandomNumber()
             return;
         }
         #endif
-        sendFullPacket(0xE0,0x09,newData.constData(),newData.size());
+        sendMessage(0x53,newData.constData(),newData.size());
     }
     else
     {
@@ -694,7 +694,7 @@ void Client::generateRandomNumber()
             return;
         }
         #endif
-        sendFullPacket(0xE0,0x09,newData.constData(),newData.size());
+        sendMessage(0x53,newData.constData(),newData.size());
     }
     randomSize+=CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE;
 }
