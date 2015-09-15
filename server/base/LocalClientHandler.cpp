@@ -1387,14 +1387,21 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
 
         removeFromQueryReceived(query_id);
         //send the network reply
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (uint8_t)ObjectUsage_correctlyUsed;
 
-        set size too
+        uint32_t pos=0;
 
-        postReply(query_id,outputData.constData(),outputData.size());
+        ProtocolParsingBase::tempBigBufferForOutput[pos]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        pos=+1;
+        ProtocolParsingBase::tempBigBufferForOutput[pos]=query_id;
+        pos=+1;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+pos)=htole32(1);
+        pos=+4;
+
+        //type
+        ProtocolParsingBase::tempBigBufferForOutput[pos]=(uint8_t)ObjectUsage_correctlyUsed;
+        pos+=1;
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,pos);
         //add into db
         std::string queryText=PreparedDBQueryCommon::db_query_insert_recipe;
         stringreplaceOne(queryText,"%1",std::to_string(character_id));
