@@ -25,7 +25,26 @@ void Client::registerTradeRequest(Client * otherPlayerTrade)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << otherPlayerTrade->public_and_private_informations.public_informations.skinId;
-    sendTradeRequest(otherPlayerTrade->rawPseudo+outputData);
+
+    uint32_t pos=0;
+
+    ProtocolParsingBase::tempBigBufferForOutput[pos]=0xE0;
+    pos=1+4+1;
+
+    //sender pseudo
+    const std::string &pseudo=otherPlayerTrade->public_and_private_informations.public_informations.pseudo;
+    ProtocolParsingBase::tempBigBufferForOutput[pos]=pseudo.size();
+    pos+=1;
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput+pos,pseudo.data(),pseudo.size());
+    pos+=pseudo.size();
+    //skin
+    ProtocolParsingBase::tempBigBufferForOutput[pos]=otherPlayerTrade->public_and_private_informations.public_informations.skinId;
+    pos+=1;
+
+    //set the dynamic size
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(pos-1-4);
+
+    sendTradeRequest(ProtocolParsingBase::tempBigBufferForOutput,pos);
 }
 
 bool Client::getIsFreezed() const

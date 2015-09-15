@@ -149,26 +149,30 @@ void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*CO
     queryNumberList.erase(queryNumberList.cend());
 }
 
-void Client::sendTradeRequest(const QByteArray &data)
+void Client::sendTradeRequest(char * const data,const uint32_t &size)
 {
     if(queryNumberList.empty())
     {
         errorOutput("Sorry, no free query number to send this query of trade");
         return;
     }
-    sendQuery(0xE0,queryNumberList.back(),data.constData(),data.size());
-    queryNumberList.erase(queryNumberList.cend());
+    data[1+4]=queryNumberList.back();
+    registerOutputQuery(0xE0,queryNumberList.back());
+    sendRawBlock(data,size);
+    queryNumberList.pop_back();
 }
 
-void Client::sendBattleRequest(const QByteArray &data)
+void Client::sendBattleRequest(char * const data, const uint32_t &size)
 {
     if(queryNumberList.empty())
     {
         errorOutput("Sorry, no free query number to send this query of trade");
         return;
     }
-    sendQuery(0x05,queryNumberList.back(),data.constData(),data.size());
-    queryNumberList.erase(queryNumberList.cend());
+    data[1+4]=queryNumberList.back();
+    registerOutputQuery(0xDF,queryNumberList.back());
+    sendRawBlock(data,size);
+    queryNumberList.pop_back();
 }
 
 bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
