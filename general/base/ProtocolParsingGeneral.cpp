@@ -10,13 +10,9 @@
 
 using namespace CatchChallenger;
 
-#ifdef EPOLLCATCHCHALLENGERSERVER
-char ProtocolParsingInputOutput::tempBigBufferForUncompressedInput[CATCHCHALLENGER_COMMONBUFFERSIZE];
-#endif
-#ifdef CATCHCHALLENGER_BIGBUFFERSIZE
-char ProtocolParsingBase::tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
-char ProtocolParsingBase::tempBigBufferForCompressedOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
-#endif
+char ProtocolParsingBase::tempBigBufferForUncompressedInput[];
+char ProtocolParsingBase::tempBigBufferForOutput[];
+char ProtocolParsingBase::tempBigBufferForCompressedOutput[];
 const uint8_t ProtocolParsing::packetFixedSize[]={0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
@@ -284,9 +280,10 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             if(ProtocolParsingBase::tempBigBufferForOutput[0x02]==2)
                 return;
 
-            #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
             memset(ProtocolParsingBase::tempBigBufferForOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForOutput));
-            #endif
+            memset(ProtocolParsingBase::tempBigBufferForCompressedOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForCompressedOutput));
+            memset(ProtocolParsingBase::tempBigBufferForUncompressedInput,0,sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput));
+            memset(ProtocolParsingBase::tempBigBufferForOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForOutput));
             #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
             ProtocolParsing::compressionTypeServer=CompressionType::Zlib;
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT

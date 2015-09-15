@@ -123,6 +123,14 @@ protected:
     void messageParsingLayer(const QString &message) const;
 
     void parseCharacterBlock(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+
+    inline void registerOutputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
+    //send message without reply
+    bool packOutcommingData(const uint8_t &packetCode,const char * const data,const int &size);
+    //send query with reply
+    bool packOutcommingQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const int &size);
+    //send reply
+    bool postReplyData(const uint8_t &queryNumber, const char * const data,const int &size);
 protected:
     //have message without reply
     virtual void parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size);

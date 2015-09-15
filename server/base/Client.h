@@ -76,8 +76,6 @@ public:
     uint32_t getClanId() const;
     bool haveAClan() const;
 
-    void sendMessage(const uint8_t &mainIdent,const char * const data,const unsigned int &size);
-    void sendMessage(const uint8_t &mainIdent);
     void sendRawBlock(const char * const data,const unsigned int &size);
 
     static std::vector<int> generalChatDrop;
@@ -118,7 +116,6 @@ public:
 
     static const unsigned char protocolHeaderToMatch[5];
 protected:
-    QByteArray rawPseudo;
     bool character_loaded,character_loaded_in_progress;
     std::queue<CatchChallenger::DatabaseBase::CallBack *> callbackRegistred;
 
@@ -422,8 +419,8 @@ private:
 
     void sendNewEvent(const QByteArray &data);
     void teleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
-    void sendTradeRequest(const QByteArray &data);
-    void sendBattleRequest(const QByteArray &data);
+    void sendTradeRequest(char * const data,const uint32_t &size);
+    void sendBattleRequest(char * const data,const uint32_t &size);
 
     //chat
     void sendLocalChatText(const std::string &text);
@@ -664,11 +661,6 @@ private:
     bool inviteToClan(const uint32_t &clanId);
     void insertIntoAClan(const uint32_t &clanId);
     void ejectToClan();
-
-    void sendQuery(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const unsigned int &size);
-    void sendQuery(const uint8_t &packetCode, const uint8_t &queryNumber);
-    void postReply(const uint8_t &queryNumber,const char * const data,const unsigned int &size);
-    void postReply(const uint8_t &queryNumber);
 
     void insertClientOnMap(CommonMap *map);
     void removeClientOnMap(CommonMap *map

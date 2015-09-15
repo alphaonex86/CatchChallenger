@@ -20,8 +20,8 @@
 #define CATCHCHALLENGER_COMMONBUFFERSIZE 4096
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
-    //#define CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION
-    #define CATCHCHALLENGER_BIGBUFFERSIZE 10*1024*1024
+    //#define CATCHCHALLENGER_BIGBUFFERSIZE 256*1024 without datapack send
+    #define CATCHCHALLENGER_BIGBUFFERSIZE 8*1024*1024
     #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_MAX_PACKET_SIZE
     #error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_MAX_PACKET_SIZE
     #endif
@@ -92,6 +92,7 @@ public:
     friend class ProtocolParsingCheck;
     virtual ssize_t read(char * data, const size_t &size) = 0;
     virtual ssize_t write(const char * const data, const size_t &size) = 0;
+    virtual inline void registerOutputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
 public:
     bool parseIncommingDataRaw(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -113,8 +114,7 @@ protected:
     /* flags & 0x80 = haveData
      * flags & 0x40 = haveData_dataSize
      * flags & 0x20 = have_query_number
-     * flags & 0x10 = isClient
-     * flags & 0x03: 0=8Bits, 1=16Bits, 2=32Bits */
+     * flags & 0x10 = isClient */
 protected:
     //have message without reply
     virtual bool parseMessage(const uint8_t &packetCode,const char * const data,const unsigned int &size) = 0;
@@ -131,49 +131,10 @@ private:
     void dataClear();
 public:
     //reply to the query
-    char outputQueryNumberToPacketCode[256];
-public:
-    void newOutputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
-    //send message without reply
-    bool packOutcommingData(const uint8_t &packetCode,const char * const data,const int &size);
-    //send query with reply
-    bool packOutcommingQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const int &size);
-    //send reply
-    bool postReplyData(const uint8_t &queryNumber, const char * const data,const int &size);
-
-    //compute some packet
-    //send message without reply
-    static int computeOutcommingData(
-            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            const bool &isClient,
-            #endif
-            char *buffer,
-            const uint8_t &packetCode,const char * const data,const int &size);
-    //send query with reply
-    static int computeOutcommingQuery(
-            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            const bool &isClient,
-            #endif
-            char *buffer,
-            const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const int &size);
-    //send reply
-    static int computeReplyData(
-        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-        const bool &isClient,
-        #endif
-        char *dataBuffer, const uint8_t &queryNumber, const char * const data, const int &size,
-        const int32_t &replyOutputSizeInt
-        #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-        , const CompressionType &compressionType
-        #endif
-        );
-    //compression
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    static QByteArray computeCompression(const QByteArray &data, const CompressionType &compressionType);
-    #endif
+    char outputQueryNumberToPacketCode[256];//invalidation packet code: 0x00, store the packetCode
+    char inputQueryNumberToPacketCode[256];//invalidation packet code: 0x00, store the packetCode, store size is useless because the resolution or is do at send or at receive, then no performance gain
 private:
     bool internalPackOutcommingData(const char * const data,const int &size);
-    static qint8 encodeSize(char *data,const uint32_t &size);
 
     // for data
     uint8_t packetCode;
@@ -184,14 +145,10 @@ public:
     virtual void storeInputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
 protected:
     //reply to the query
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     bool removeFromQueryReceived(const uint8_t &queryNumber);
-    std::unordered_set<uint8_t> queryReceived;
-    #endif
-    #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     static char tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
     static char tempBigBufferForCompressedOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
-    #endif
+    static char tempBigBufferForUncompressedInput[CATCHCHALLENGER_BIGBUFFERSIZE];
     bool internalSendRawSmallPacket(const char * const data,const int &size);
     virtual void disconnectClient() = 0;
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
@@ -248,15 +205,12 @@ protected:
     quint64 TXSize;
     quint64 RXSize;
     #endif
-    #ifdef EPOLLCATCHCHALLENGERSERVER
-    static char tempBigBufferForUncompressedInput[CATCHCHALLENGER_COMMONBUFFERSIZE];
-    #else
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     char commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];
     #endif
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     int parseIncommingDataCount;//by object
     #endif
-    char inputQueryNumberToPacketCode[256];//invalidation packet code: 0x00
 };
 
 }

@@ -342,76 +342,23 @@ bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const u
         std::stringLiteral(" parseIncommingData(): !haveData_dataSize"));
         #endif
         //temp data
-        uint8_t temp_size_8Bits;
-        uint16_t temp_size_16Bits;
-        uint32_t temp_size_32Bits;
-        switch(flags & 0x03)
+        if((size-cursor)<sizeof(uint32_t))
         {
-            case 0:
-            {
-                if((size-cursor)<sizeof(uint8_t))
-                    return false;
-                temp_size_8Bits=*(commonBuffer+cursor);
-                cursor+=sizeof(uint8_t);
-                if(temp_size_8Bits!=0xFF)
-                {
-                    dataSize=temp_size_8Bits;
-                    flags |= 0x40;
-                    return true;
-                }
-                flags |= 1;
-            }
-            case sizeof(uint8_t):
-            {
-                if((size-cursor)<sizeof(uint16_t))
-                {
-                    if((size-cursor)>0)
-                        header_cut.append(commonBuffer+cursor,(size-cursor));
-                    return false;
-                }
-                temp_size_8Bits=*(commonBuffer+cursor);
-                if(temp_size_8Bits!=0xFF)
-                {
-                    temp_size_16Bits=le16toh(*(reinterpret_cast<const uint16_t *>(commonBuffer+cursor)));
-                    cursor+=sizeof(uint16_t);
-
-                    dataSize=temp_size_16Bits;
-                    flags |= 0x40;
-                    return true;
-                }
-                else
-                {
-                    flags &= ~1;
-                    flags |= 2;
-                    cursor+=sizeof(uint8_t);//2x 0xFF when 32Bits size
-                }
-            }
-            case sizeof(uint16_t):
-            {
-                if((size-cursor)<sizeof(uint32_t))
-                {
-                    if((size-cursor)>0)
-                        header_cut.append(commonBuffer+cursor,(size-cursor));
-                    return false;
-                }
-                temp_size_32Bits=le32toh(*reinterpret_cast<const uint32_t *>(commonBuffer+cursor));
-                cursor+=sizeof(uint32_t);
-
-                if(dataSize>16*1024*1024)
-                {
-                    errorParsingLayer("packet size too big");
-                    return false;
-                }
-
-                dataSize=temp_size_32Bits;
-                flags |= 0x40;
-                return true;
-            }
-            break;
-            default:
-            errorParsingLayer("size not understand, internal bug: "+std::to_string(flags & 0x03));
+            if((size-cursor)>0)
+                header_cut.append(commonBuffer+cursor,(size-cursor));
             return false;
         }
+        dataSize=le32toh(*reinterpret_cast<const uint32_t *>(commonBuffer+cursor));
+        cursor+=sizeof(uint32_t);
+
+        if(dataSize>16*1024*1024)
+        {
+            errorParsingLayer("packet size too big");
+            return false;
+        }
+
+        dataSize=temp_size_32Bits;
+        flags |= 0x40;
     }
     return true;
 }
@@ -481,6 +428,37 @@ bool ProtocolParsingBase::parseData(const char * const commonBuffer, const uint3
     }
 }
 
+QByteArray ProtocolParsingBase::computeDecompression(const QByteArray &data, const CompressionType &compressionType)
+{
+    switch(compressionType)
+    {
+        case CompressionType::None:
+            return data;
+        break;
+        case CompressionType::Zlib:
+        default:
+        {
+            const QByteArray &newData=qUncompress(data);
+            return newData;
+        }
+        break;
+        case CompressionType::Xz:
+        {
+            const QByteArray &newData=lzmaUncompress(data);
+            return newData;
+        }
+        break;
+        case CompressionType::Lz4:
+        {
+            const int &newSize=LZ4_decompress_safe(data.constData(),ProtocolParsingBase::tempBigBufferForUncompressedInput,data.size(),sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput));
+            if(newSize<0)
+                return QByteArray();//Compressed data corrupted
+            return QByteArray(ProtocolParsingBase::tempBigBufferForUncompressedInput,newSize);
+        }
+        break;
+    }
+}
+
 bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size)
 {
     #ifdef ProtocolParsingInputOutputDEBUG
@@ -518,6 +496,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
         std::stringLiteral(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, packetCode: %2").arg(queryNumber).arg(packetCode));
         #endif
         const uint8_t &replyTo=outputQueryNumberToPacketCode[queryNumber];
+
         const bool &returnValue=parseReplyData(replyTo,queryNumber,data,size);
         outputQueryNumberToPacketCode[queryNumber]=0x00;
         return returnValue;
@@ -579,7 +558,6 @@ void ProtocolParsingBase::storeInputQuery(const uint8_t &packetCode,const uint8_
 void ProtocolParsingInputOutput::storeInputQuery(const uint8_t &packetCode,const uint8_t &queryNumber)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    protocolParsingCheck->outputQueryNumberToPacketCode[queryNumber]=packetCode;
     if(queryReceived.find(queryNumber)!=queryReceived.cend())
     {
         messageParsingLayer(

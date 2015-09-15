@@ -2119,3 +2119,1391 @@ void Api_protocol::saveCert(const QString &file)
         }
     }
 }
+
+bool ProtocolParsingBase::postReplyData(const uint8_t &queryNumber, const char * const data,const int &size)
+{
+    const uint8_t packetCode=inputQueryNumberToPacketCode[queryNumber];
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    //check if reply to a query
+    if(packetCode==0x00)
+    {
+        std::cerr <<
+                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                    std::to_string(flags & 0x10) <<
+                    #endif
+                    " postReplyData("
+                    << std::to_string(queryNumber)
+                    << ",{}) not a reply to actual query"
+                    << std::endl;
+        abort();
+    }
+    #endif
+    //check if have forced size
+    const uint8_t forcedSize=packetFixedSize[queryNumber];
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    //check if the forced size same as real
+    if(forcedSize==0xFF)
+    {
+        std::cerr <<
+                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                    std::to_string(flags & 0x10) <<
+                    #endif
+                    " postReplyData("
+                    << std::to_string(queryNumber)
+                    << ",{}) queryNumber not found"
+                    << std::endl;
+        abort();
+    }
+    if(forcedSize<0xFE && size!=forcedSize)
+    {
+        std::cerr <<
+                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                    std::to_string(flags & 0x10) <<
+                    #endif
+                    " postReplyData("
+                    << std::to_string(queryNumber)
+                    << ",{}) forcedSize<0xFE && size!=forcedSize"
+                    << std::endl;
+        abort();
+    }
+    #endif
+
+    //set into the reverse order
+    //Packet size (for packet without fixed size)
+    if(forcedSize==0xFE)
+    {
+
+    }
+    //Query number (8Bits, optional)
+    //Packet code (8Bits, first byte is true if query, else is message without need of reply)
+
+    inputQueryNumberToPacketCode[queryNumber]=0;
+
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    CompressionType compressionType=CompressionType::None;
+    if(replyOutputSizeInt==-1)
+    {
+        if(replyOutputCompression.find(queryNumber)!=replyOutputCompression.cend())
+        {
+            compressionType=getCompressType();
+            replyOutputCompression.erase(queryNumber);
+        }
+    }
+    else
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(replyOutputCompression.find(queryNumber)!=replyOutputCompression.cend())
+        {
+            std::cerr <<
+                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                        std::to_string(flags & 0x10) <<
+                        #endif
+                        " postReplyData("
+                        << std::to_string(queryNumber)
+                        << ",{}) compression disabled because have fixed size"
+                        << std::endl;
+            abort();
+        }
+        #endif
+    }
+    #endif
+
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
+    {
+        errorParsingLayer("Buffer in input is too big and will do buffer overflow, size: "+std::to_string(size)+", line "+std::to_string(__LINE__));
+        abort();
+    }
+    #endif
+
+    const int &newSize=ProtocolParsingBase::computeReplyData(
+                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                flags & 0x10,
+                #endif
+                ProtocolParsingBase::tempBigBufferForOutput,queryNumber,data,size
+                #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+                ,compressionType
+                #endif
+                );
+    if(newSize==0)
+        return false;
+    return internalPackOutcommingData(ProtocolParsingBase::tempBigBufferForOutput,newSize);
+}
+
+#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+QByteArray ProtocolParsingBase::computeCompression(const QByteArray &data,const CompressionType &compressionType)
+{
+    switch(compressionType)
+    {
+        case CompressionType::None:
+            return data;
+        break;
+        case CompressionType::Zlib:
+        default:
+            return qCompress(data,ProtocolParsing::compressionLevel);
+        break;
+        case CompressionType::Xz:
+            return lzmaCompress(data);
+        break;
+        case CompressionType::Lz4:
+            QByteArray dest;
+            dest.resize(LZ4_compressBound(data.size()));
+            dest.resize(LZ4_compress_default(data.constData(),dest.data(),data.size(),dest.size()));
+            return dest;
+        break;
+    }
+}
+#endif
+
+bool ProtocolParsingBase::packFullOutcommingData(const uint8_t &packetCode,const uint8_t &subCodeType,const char * const data,const int &size)
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
+    {
+        errorParsingLayer("Buffer in input is too big and will do buffer overflow, size: "+std::to_string(size)+", line "+std::to_string(__LINE__));
+        abort();
+    }
+    #endif
+
+    const int &newSize=computeFullOutcommingData(
+                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                flags & 0x10,
+                #endif
+                ProtocolParsingBase::tempBigBufferForOutput,
+                packetCode,subCodeType,data,size);
+    if(newSize==0)
+        return false;
+    return internalPackOutcommingData(ProtocolParsingBase::tempBigBufferForOutput,newSize);
+}
+
+bool ProtocolParsingBase::packOutcommingData(const uint8_t &packetCode,const char * const data,const int &size)
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
+    {
+        errorParsingLayer("Buffer in input is too big and will do buffer overflow, size: "+std::to_string(size)+", line "+std::to_string(__LINE__));
+        abort();
+    }
+    #endif
+
+    const int &newSize=computeOutcommingData(
+            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+            flags & 0x10,
+            #endif
+            ProtocolParsingBase::tempBigBufferForOutput,
+            packetCode,data,size);
+    if(newSize==0)
+        return false;
+    return internalPackOutcommingData(ProtocolParsingBase::tempBigBufferForOutput,newSize);
+}
+
+bool ProtocolParsingBase::packOutcommingQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const int &size)
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
+    {
+        errorParsingLayer("Buffer in input is too big and will do buffer overflow, size: "+std::to_string(size)+", line "+std::to_string(__LINE__));
+        abort();
+    }
+    #endif
+
+    const int &newSize=computeOutcommingQuery(
+            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+            flags & 0x10,
+            #endif
+            ProtocolParsingBase::tempBigBufferForOutput,
+            packetCode,queryNumber,data,size);
+    if(newSize==0)
+        return false;
+    registerOutputQuery(packetCode,queryNumber);
+    return internalPackOutcommingData(ProtocolParsingBase::tempBigBufferForOutput,newSize);
+}
+
+bool ProtocolParsingBase::packFullOutcommingQuery(const uint8_t &packetCode,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const int &size)
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
+    {
+        errorParsingLayer("Buffer in input is too big and will do buffer overflow, size: "+std::to_string(size)+", line "+std::to_string(__LINE__));
+        abort();
+    }
+    #endif
+
+    const int &newSize=computeFullOutcommingQuery(
+            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+            flags & 0x10,
+            #endif
+            ProtocolParsingBase::tempBigBufferForOutput,
+            packetCode,subCodeType,queryNumber,data,size);
+    if(newSize==0)
+        return false;
+    newFullOutputQuery(packetCode,subCodeType,queryNumber);
+    return internalPackOutcommingData(ProtocolParsingBase::tempBigBufferForOutput,newSize);
+}
+
+uint8_t ProtocolParsingBase::addHeaderForReplyData(
+    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+    const bool &isClient,
+    #endif
+    const uint8_t &queryNumber, const char * const data, const int &size
+    )
+{
+
+    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+    if(flags & 0x10)
+        dataBuffer[0x00]=replyCodeClientToServer;
+    else
+    #endif
+        dataBuffer[0x00]=replyCodeServerToClient;
+    dataBuffer[0x01]=queryNumber;
+
+    if(replyOutputSizeInt==-1)
+    {
+        #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+        if(compressionType!=CompressionType::None)
+        {
+            #ifdef PROTOCOLPARSINGDEBUG
+            std::cerr <<
+                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                        isClient <<
+                        #endif
+            std::stringLiteral(" postReplyData(%1) is now compressed").arg(queryNumber));
+            #endif
+            switch(compressionType)
+            {
+                case CompressionType::Xz:
+                case CompressionType::Zlib:
+                default:
+                {
+                    const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionType));
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    if(compressedData.size()==0)
+                    {
+                        std::cerr <<
+                                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                    isClient <<
+                                    #endif
+                        std::stringLiteral(" postReplyData(%1,{}) dropped because can be size==0 if not fixed size").arg(queryNumber));
+                        return 0;
+                    }
+                    #endif
+                    const uint8_t &fullSize=sizeof(uint8_t)*2+encodeSize(dataBuffer+sizeof(uint8_t)*2,compressedData.size());
+                    if(compressedData.size()>0)
+                    {
+                        memcpy(dataBuffer+fullSize,compressedData.constData(),compressedData.size());
+                        return fullSize+compressedData.size();
+                    }
+                    else
+                        return fullSize;
+                }
+                break;
+            }
+        }
+        #endif
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(size==0)
+        {
+            std::cerr <<
+                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                        isClient <<
+                        #endif
+            std::stringLiteral(" postReplyData(%1,{}) dropped because can be size==0 if not fixed size").arg(queryNumber));
+            return 0;
+        }
+        #endif
+        const uint8_t &fullSize=sizeof(uint8_t)*2+encodeSize(dataBuffer+sizeof(uint8_t)*2,size);
+        if(size>0)
+        {
+            memcpy(dataBuffer+fullSize,data,size);
+            return fullSize+size;
+        }
+        else
+            return fullSize;
+    }
+    else
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+        if(compressionType!=CompressionType::None)
+        {
+            std::cerr <<
+                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                        isClient <<
+                        #endif
+            std::stringLiteral(" postReplyData(%1,{}) compression disabled because have fixed size").arg(queryNumber));
+            abort();
+        }
+        #endif
+        if(size!=replyOutputSizeInt)
+        {
+            std::cerr <<
+                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                        isClient <<
+                        #endif
+            std::stringLiteral(" postReplyData(%1,{}) dropped because can be size!=fixed size").arg(queryNumber));
+            return 0;
+        }
+        #endif
+        if(size>0)
+        {
+            memcpy(dataBuffer+sizeof(uint8_t)*2,data,size);
+            return sizeof(uint8_t)*2+size;
+        }
+        else
+            return sizeof(uint8_t)*2;
+    }
+}
+
+int ProtocolParsingBase::computeOutcommingQueryWithSpaceForHeader(
+        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+        const bool &isClient,
+        #endif
+        char *buffer,
+        const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const int &size)
+{
+    buffer[0]=packetCode;
+    buffer[1]=queryNumber;
+
+    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+    if(flags & 0x10)
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(mainCode_IsQueryClientToServer.find(packetCode)==mainCode_IsQueryClientToServer.cend())
+        {
+            std::cerr <<
+                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                        isClient <<
+                        #endif
+                        " ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: "
+                        << queryNumber
+                        << ", packetCode: "
+                        << packetCode
+                        << ", try send as query, but not registred as is"
+                        << std::endl;
+            return 0;
+        }
+        #endif
+        if(sizeOnlyMainCodePacketClientToServer.find(packetCode)==sizeOnlyMainCodePacketClientToServer.cend())
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(size==0)
+            {
+                std::cerr <<
+                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                            isClient <<
+                            #endif
+                            " packOutcommingQuery("
+                            << packetCode
+                            << ",{}) dropped because can be size==0 if not fixed size"
+                            << std::endl;
+                return 0;
+            }
+            #endif
+            const int &newSize=encodeSize(buffer+2,size);
+            if(size>0)
+            {
+                memcpy(buffer+2+newSize,data,size);
+                return 2+newSize+size;
+            }
+            else
+                return 2+newSize;
+        }
+        else
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(size!=sizeOnlyMainCodePacketClientToServer.at(packetCode))
+            {
+                std::cerr <<
+                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                            isClient <<
+                            #endif
+                            " packOutcommingQuery("
+                            << packetCode
+                            << ",{}) dropped because can be size!=fixed size"
+                            << std::endl;
+                return 0;
+            }
+            #endif
+            if(size>0)
+            {
+                memcpy(buffer+2,data,size);
+                return 2+size;
+            }
+            else
+                return 2;
+        }
+    }
+    else
+    #endif
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(mainCode_IsQueryServerToClient.find(packetCode)==mainCode_IsQueryServerToClient.cend())
+        {
+            std::cerr <<
+                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                        isClient <<
+                        #endif
+                        " ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: "
+                        << queryNumber
+                        << ", packetCode: "
+                        << packetCode
+                        << ", try send as query, but not registred as is"
+                        << std::endl;
+            return 0;
+        }
+        #endif
+        if(sizeOnlyMainCodePacketServerToClient.find(packetCode)==sizeOnlyMainCodePacketServerToClient.cend())
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(size==0)
+            {
+                std::cerr <<
+                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                            isClient <<
+                            #endif
+                            " packOutcommingQuery("
+                            << packetCode
+                            << ",{}) dropped because can be size==0 if not fixed size"
+                            << std::endl;
+                return 0;
+            }
+            #endif
+            const int &newSize=encodeSize(buffer+2,size);
+            if(size>0)
+            {
+                memcpy(buffer+2+newSize,data,size);
+                return 2+newSize+size;
+            }
+            else
+                return 2+newSize;
+        }
+        else
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(size!=sizeOnlyMainCodePacketServerToClient.at(packetCode))
+            {
+                std::cerr <<
+                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                            isClient <<
+                            #endif
+                            " packOutcommingQuery("
+                            << packetCode
+                            << ",{}) dropped because can be size!=fixed size"
+                            << std::endl;
+                return 0;
+            }
+            #endif
+            if(size>0)
+            {
+                memcpy(buffer+2,data,size);
+                return 2+size;
+            }
+            else
+                return 2;
+        }
+    }
+}
+
+int ProtocolParsingBase::computeFullOutcommingQuery(
+        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+        const bool &isClient,
+        #endif
+        char *buffer,
+        const uint8_t &packetCode,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const int &size)
+{
+    buffer[0]=packetCode;
+    buffer[1]=subCodeType;
+    buffer[2]=queryNumber;
+
+    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+    if(flags & 0x10)
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(mainCode_IsQueryClientToServer.find(packetCode)==mainCode_IsQueryClientToServer.cend())
+        {
+            std::cerr <<
+                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                        isClient <<
+                        #endif
+                        " ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: "
+                        << queryNumber
+                        << ", packetCode: "
+                        << packetCode
+                        << ", subCodeType: "
+                        << subCodeType
+                        << ", try send as query, but not registred as is"
+                        << std::endl;
+            return 0;
+        }
+        #endif
+        if(sizeMultipleCodePacketClientToServer.find(packetCode)==sizeMultipleCodePacketClientToServer.cend())
+        {
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            if(compressionMultipleCodePacketClientToServer.find(packetCode)!=compressionMultipleCodePacketClientToServer.cend())
+                if(compressionMultipleCodePacketClientToServer.at(packetCode).find(subCodeType)!=compressionMultipleCodePacketClientToServer.at(packetCode).cend())
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    std::cerr <<
+                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                isClient <<
+                                #endif
+                    std::stringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(packetCode).arg(subCodeType).arg(queryNumber));
+                    #endif
+                    switch(compressionTypeClient)
+                    {
+                        case CompressionType::Xz:
+                        case CompressionType::Zlib:
+                        default:
+                        {
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeClient));
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(size==0)
+                            {
+                                std::cerr <<
+                                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                            isClient <<
+                                            #endif
+                                            " packOutcommingQuery("
+                                            << packetCode
+                                            << ","
+                                            << subCodeType
+                                            << ",{}) dropped because can be size==0 if not fixed size"
+                                            << std::endl;
+                                return 0;
+                            }
+                            #endif
+                            const int &newSize=encodeSize(buffer+3,compressedData.size());
+                            if(compressedData.size()>0)
+                            {
+                                memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
+                                return 3+newSize+compressedData.size();
+                            }
+                            else
+                                return 3+newSize;
+                        }
+                        break;
+                        case CompressionType::None:
+                        break;
+                    }
+                }
+            #endif
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(size==0)
+            {
+                std::cerr <<
+                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                            isClient <<
+                            #endif
+                            " packOutcommingQuery("
+                            << packetCode
+                            << ","
+                            << subCodeType
+                            << ",{}) dropped because can be size==0 if not fixed size"
+                            << std::endl;
+                return 0;
+            }
+            #endif
+            const int &newSize=encodeSize(buffer+3,size);
+            if(size>0)
+            {
+                memcpy(buffer+3+newSize,data,size);
+                return 3+newSize+size;
+            }
+            else
+                return 3+newSize;
+        }
+        else if(sizeMultipleCodePacketClientToServer.at(packetCode).find(subCodeType)==sizeMultipleCodePacketClientToServer.at(packetCode).cend())
+        {
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            if(compressionMultipleCodePacketClientToServer.find(packetCode)!=compressionMultipleCodePacketClientToServer.cend())
+                if(compressionMultipleCodePacketClientToServer.at(packetCode).find(subCodeType)!=compressionMultipleCodePacketClientToServer.at(packetCode).cend())
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    std::cerr <<
+                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                isClient <<
+                                #endif
+                    std::stringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(packetCode).arg(subCodeType).arg(queryNumber));
+                    #endif
+                    switch(compressionTypeClient)
+                    {
+                        case CompressionType::Xz:
+                        case CompressionType::Zlib:
+                        default:
+                        {
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeClient));
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(size==0)
+                            {
+                                std::cerr <<
+                                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                            isClient <<
+                                            #endif
+                                            " packOutcommingQuery("
+                                            << packetCode
+                                            << ","
+                                            << subCodeType
+                                            << ",{}) dropped because can be size==0 if not fixed size"
+                                            << std::endl;
+                                return 0;
+                            }
+                            #endif
+                            const int &newSize=encodeSize(buffer+3,compressedData.size());
+                            if(compressedData.size()>0)
+                            {
+                                memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
+                                return 3+newSize+compressedData.size();
+                            }
+                            else
+                                return 3+newSize;
+                        }
+                        break;
+                        case CompressionType::None:
+                        break;
+                    }
+                }
+            #endif
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(size==0)
+            {
+                std::cerr <<
+                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                            isClient <<
+                            #endif
+                            " packOutcommingQuery("
+                            << packetCode
+                            << ","
+                            << subCodeType
+                            << ",{}) dropped because can be size==0 if not fixed size"
+                            << std::endl;
+                return 0;
+            }
+            #endif
+            const int &newSize=encodeSize(buffer+3,size);
+            if(size>0)
+            {
+                memcpy(buffer+3+newSize,data,size);
+                return 3+newSize+size;
+            }
+            else
+                return 3+newSize;
+        }
+        else
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            if(compressionMultipleCodePacketClientToServer.contains(packetCode))
+                if(compressionMultipleCodePacketClientToServer.value(packetCode).contains(subCodeType))
+                    std::cerr <<
+                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                isClient <<
+                                #endif
+                    std::stringLiteral(" packOutcommingQuery(%1,%2,%3) compression can't be enabled due to fixed size").arg(packetCode).arg(subCodeType).arg(queryNumber));
+            #endif
+            if(size!=sizeMultipleCodePacketClientToServer.value(packetCode).value(subCodeType))
+            {
+                std::cerr <<
+                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                            isClient <<
+                            #endif
+                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(packetCode).arg(subCodeType));
+                return 0;
+            }
+            #endif
+            if(size>0)
+            {
+                memcpy(buffer+3,data,size);
+                return 3+size;
+            }
+            else
+                return 3;
+        }
+    }
+    else
+    #endif
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(!packetCode>=0x80)
+        {
+            std::cerr <<
+                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                        isClient <<
+                        #endif
+            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, packetCode: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(packetCode).arg(subCodeType));
+            return 0;
+        }
+        #endif
+        if(!sizeMultipleCodePacketServerToClient.contains(packetCode))
+        {
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            if(compressionMultipleCodePacketServerToClient.contains(packetCode))
+                if(compressionMultipleCodePacketServerToClient.value(packetCode).contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    std::cerr <<
+                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                isClient <<
+                                #endif
+                    std::stringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(packetCode).arg(subCodeType).arg(queryNumber));
+                    #endif
+                    switch(compressionTypeServer)
+                    {
+                        case CompressionType::Xz:
+                        case CompressionType::Zlib:
+                        default:
+                        {
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeServer));
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(size==0)
+                            {
+                                std::cerr <<
+                                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                            isClient <<
+                                            #endif
+                                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
+                                return 0;
+                            }
+                            #endif
+                            const int &newSize=encodeSize(buffer+3,compressedData.size());
+                            if(compressedData.size()>0)
+                            {
+                                memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
+                                return 3+newSize+compressedData.size();
+                            }
+                            else
+                                return 3+newSize;
+                        }
+                        break;
+                        case CompressionType::None:
+                        break;
+                    }
+                }
+            #endif
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(size==0)
+            {
+                std::cerr <<
+                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                            isClient <<
+                            #endif
+                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
+                return 0;
+            }
+            #endif
+            const int &newSize=encodeSize(buffer+3,size);
+            if(size>0)
+            {
+                memcpy(buffer+3+newSize,data,size);
+                return 3+newSize+size;
+            }
+            else
+                return 3+newSize;
+        }
+        else if(!sizeMultipleCodePacketServerToClient.value(packetCode).contains(subCodeType))
+        {
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            if(compressionMultipleCodePacketServerToClient.contains(packetCode))
+                if(compressionMultipleCodePacketServerToClient.value(packetCode).contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    std::cerr <<
+                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                isClient <<
+                                #endif
+                    std::stringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(packetCode).arg(subCodeType).arg(queryNumber));
+                    #endif
+                    switch(compressionTypeServer)
+                    {
+                        case CompressionType::Xz:
+                        case CompressionType::Zlib:
+                        default:
+                        {
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeServer));
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(size==0)
+                            {
+                                std::cerr <<
+                                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                            isClient <<
+                                            #endif
+                                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
+                                return 0;
+                            }
+                            #endif
+                            const int &newSize=encodeSize(buffer+3,compressedData.size());
+                            if(compressedData.size()>0)
+                            {
+                                memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
+                                return 3+newSize+compressedData.size();
+                            }
+                            else
+                                return 3+newSize;
+                        }
+                        break;
+                        case CompressionType::None:
+                        break;
+                    }
+                }
+            #endif
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(size==0)
+            {
+                std::cerr <<
+                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                            isClient <<
+                            #endif
+                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
+                return 0;
+            }
+            #endif
+            const int &newSize=encodeSize(buffer+3,size);
+            if(size>0)
+            {
+                memcpy(buffer+3+newSize,data,size);
+                return 3+newSize+size;
+            }
+            else
+                return 3+newSize;
+        }
+        else
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            if(compressionMultipleCodePacketServerToClient.contains(packetCode))
+                if(compressionMultipleCodePacketServerToClient.value(packetCode).contains(subCodeType))
+                    std::cerr <<
+                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                isClient <<
+                                #endif
+                    std::stringLiteral(" packOutcommingQuery(%1,%2,%3) compression can't be enabled due to fixed size").arg(packetCode).arg(subCodeType).arg(queryNumber));
+            #endif
+            if(size!=sizeMultipleCodePacketServerToClient.value(packetCode).value(subCodeType))
+            {
+                std::cerr <<
+                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                            isClient <<
+                            #endif
+                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(packetCode).arg(subCodeType));
+                return 0;
+            }
+            #endif
+            if(size>0)
+            {
+                memcpy(buffer+3,data,size);
+                return 3+size;
+            }
+            else
+                return 3;
+        }
+    }
+}
+
+int ProtocolParsingBase::computeFullOutcommingData(
+        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+        const bool &isClient,
+        #endif
+        char *buffer,
+        const uint8_t &packetCode,const uint8_t &subCodeType,const char * const data,const int &size)
+{
+    buffer[0]=packetCode;
+    buffer[1]=subCodeType;
+
+    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+    if(flags & 0x10)
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(packetCode>=0x80)
+        {
+            std::cerr <<
+                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                        isClient <<
+                        #endif
+            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): packetCode: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(packetCode).arg(subCodeType));
+            return 0;
+        }
+        #endif
+        if(!sizeMultipleCodePacketClientToServer.contains(packetCode))
+        {
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            if(compressionMultipleCodePacketClientToServer.contains(packetCode))
+                if(compressionMultipleCodePacketClientToServer.value(packetCode).contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    std::cerr <<
+                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                isClient <<
+                                #endif
+                    std::stringLiteral(" packOutcommingData(%1,%2) compression enabled").arg(packetCode).arg(subCodeType));
+                    #endif
+                    switch(compressionTypeClient)
+                    {
+                        case CompressionType::Xz:
+                        case CompressionType::Zlib:
+                        default:
+                        {
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeClient));
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(compressedData.size()==0)
+                            {
+                                std::cerr <<
+                                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                            isClient <<
+                                            #endif
+                                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
+                                return 0;
+                            }
+                            #endif
+                            const int &newSize=encodeSize(buffer+2,compressedData.size());
+                            if(compressedData.size()>0)
+                            {
+                                memcpy(buffer+2+newSize,compressedData.constData(),compressedData.size());
+                                return 2+newSize+compressedData.size();
+                            }
+                            else
+                                return 2+newSize;
+                        }
+                        break;
+                        case CompressionType::None:
+                        break;
+                    }
+                }
+            #endif
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(size==0)
+            {
+                std::cerr <<
+                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                            isClient <<
+                            #endif
+                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
+                return 0;
+            }
+            #endif
+            const int &newSize=encodeSize(buffer+2,size);
+            if(size>0)
+            {
+                memcpy(buffer+2+newSize,data,size);
+                return 2+newSize+size;
+            }
+            else
+                return 2+newSize+size;
+        }
+        else if(!sizeMultipleCodePacketClientToServer.value(packetCode).contains(subCodeType))
+        {
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            if(compressionMultipleCodePacketClientToServer.contains(packetCode))
+                if(compressionMultipleCodePacketClientToServer.value(packetCode).contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    std::cerr <<
+                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                isClient <<
+                                #endif
+                    std::stringLiteral(" packOutcommingData(%1,%2) compression enabled").arg(packetCode).arg(subCodeType));
+                    #endif
+                    switch(compressionTypeClient)
+                    {
+                        case CompressionType::Xz:
+                        case CompressionType::Zlib:
+                        default:
+                        {
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeClient));
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(compressedData.size()==0)
+                            {
+                                std::cerr <<
+                                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                            isClient <<
+                                            #endif
+                                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
+                                return 0;
+                            }
+                            #endif
+                            const int &newSize=encodeSize(buffer+2,compressedData.size());
+                            if(compressedData.size()>0)
+                            {
+                                memcpy(buffer+2+newSize,compressedData.constData(),compressedData.size());
+                                return 2+newSize+compressedData.size();
+                            }
+                            else
+                                return 2+newSize;
+                        }
+                        break;
+                        case CompressionType::None:
+                        break;
+                    }
+                }
+            #endif
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(size==0)
+            {
+                std::cerr <<
+                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                            isClient <<
+                            #endif
+                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
+                return 0;
+            }
+            #endif
+            const int &newSize=encodeSize(buffer+2,size);
+            if(size>0)
+            {
+                memcpy(buffer+2+newSize,data,size);
+                return 2+newSize+size;
+            }
+            else
+                return 2+newSize;
+        }
+        else
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            if(compressionMultipleCodePacketClientToServer.contains(packetCode))
+                if(compressionMultipleCodePacketClientToServer.value(packetCode).contains(subCodeType))
+                    std::cerr <<
+                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                isClient <<
+                                #endif
+                    std::stringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(packetCode).arg(subCodeType));
+            #endif
+            if(size!=sizeMultipleCodePacketClientToServer.value(packetCode).value(subCodeType))
+            {
+                std::cerr <<
+                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                            isClient <<
+                            #endif
+                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(packetCode).arg(subCodeType));
+                return 0;
+            }
+            #endif
+            if(size>0)
+            {
+                memcpy(buffer+2,data,size);
+                return 2+size;
+            }
+            else
+                return 2;
+        }
+    }
+    else
+    #endif
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(packetCode>=0x80)
+        {
+            std::cerr <<
+                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                        isClient <<
+                        #endif
+            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): packetCode: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(packetCode).arg(subCodeType));
+            return 0;
+        }
+        #endif
+        if(!sizeMultipleCodePacketServerToClient.contains(packetCode))
+        {
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            if(compressionMultipleCodePacketServerToClient.contains(packetCode))
+                if(compressionMultipleCodePacketServerToClient.value(packetCode).contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    std::cerr <<
+                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                isClient <<
+                                #endif
+                    std::stringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(packetCode).arg(subCodeType));
+                    #endif
+                    switch(compressionTypeServer)
+                    {
+                        case CompressionType::Xz:
+                        case CompressionType::Zlib:
+                        default:
+                        {
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeServer));
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(compressedData.size()==0)
+                            {
+                                std::cerr <<
+                                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                            isClient <<
+                                            #endif
+                                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
+                                return 0;
+                            }
+                            #endif
+                            const int &newSize=encodeSize(buffer+2,compressedData.size());
+                            if(compressedData.size()>0)
+                            {
+                                memcpy(buffer+2+newSize,compressedData.constData(),compressedData.size());
+                                return 2+newSize+compressedData.size();
+                            }
+                            else
+                                return 2+newSize;
+                        }
+                        break;
+                        case CompressionType::None:
+                        break;
+                    }
+                }
+            #endif
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(size==0)
+            {
+                std::cerr <<
+                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                            isClient <<
+                            #endif
+                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
+                return 0;
+            }
+            #endif
+            const int &newSize=encodeSize(buffer+2,size);
+            if(size>0)
+            {
+                memcpy(buffer+2+newSize,data,size);
+                return 2+newSize+size;
+            }
+            else
+                return 2+newSize;
+        }
+        else if(!sizeMultipleCodePacketServerToClient.value(packetCode).contains(subCodeType))
+        {
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            if(compressionMultipleCodePacketServerToClient.contains(packetCode))
+                if(compressionMultipleCodePacketServerToClient.value(packetCode).contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    std::cerr <<
+                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                isClient <<
+                                #endif
+                    std::stringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(packetCode).arg(subCodeType));
+                    #endif
+                    switch(compressionTypeServer)
+                    {
+                        case CompressionType::Xz:
+                        case CompressionType::Zlib:
+                        default:
+                        {
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeServer));
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(compressedData.size()==0)
+                            {
+                                std::cerr <<
+                                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                            isClient <<
+                                            #endif
+                                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
+                                return 0;
+                            }
+                            #endif
+                            const int &newSize=encodeSize(buffer+2,compressedData.size());
+                            if(compressedData.size()>0)
+                            {
+                                memcpy(buffer+2+newSize,compressedData.constData(),compressedData.size());
+                                return 2+newSize+compressedData.size();
+                            }
+                            else
+                                return 2+newSize;
+                        }
+                        break;
+                        case CompressionType::None:
+                        break;
+                    }
+                }
+            #endif
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(size==0)
+            {
+                std::cerr <<
+                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                            isClient <<
+                            #endif
+                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
+                return 0;
+            }
+            #endif
+            const int &newSize=encodeSize(buffer+2,size);
+            if(size>0)
+            {
+                memcpy(buffer+2+newSize,data,size);
+                return 2+newSize+size;
+            }
+            else
+                return 2+newSize;
+        }
+        else
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            if(compressionMultipleCodePacketClientToServer.contains(packetCode))
+                if(compressionMultipleCodePacketClientToServer.value(packetCode).contains(subCodeType))
+                    std::cerr <<
+                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                isClient <<
+                                #endif
+                    std::stringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(packetCode).arg(subCodeType));
+            #endif
+            if(size!=sizeMultipleCodePacketServerToClient.value(packetCode).value(subCodeType))
+            {
+                std::cerr <<
+                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                            isClient <<
+                            #endif
+                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(packetCode).arg(subCodeType));
+                return 0;
+            }
+            #endif
+            if(size>0)
+            {
+                memcpy(buffer+2,data,size);
+                return 2+size;
+            }
+            else
+                return 2;
+        }
+    }
+}
+
+int ProtocolParsingBase::computeOutcommingDataWithSpaceForHeader(
+        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+        const bool &isClient,
+        #endif
+        char *buffer,
+        const uint8_t &packetCode,const char * const data,const int &size)
+{
+    buffer[0]=packetCode;
+
+    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+    if(flags & 0x10)
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(mainCode_IsQueryClientToServer.find(packetCode)!=mainCode_IsQueryClientToServer.cend())
+        {
+            std::cerr <<
+                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                        isClient <<
+                        #endif
+                        " ProtocolParsingInputOutput::packOutcommingQuery(): packetCode: "
+                        << packetCode
+                        << ", try send as normal data, but not registred as is" << std::endl;
+            return 0;
+        }
+        #endif
+        if(sizeOnlyMainCodePacketClientToServer.find(packetCode)==sizeOnlyMainCodePacketClientToServer.cend())
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(size==0)
+            {
+                std::cerr <<
+                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                            isClient <<
+                            #endif
+                            " packOutcommingData("
+                            << packetCode
+                            << ",{}) dropped because can be size==0 if not fixed size"
+                            << std::endl;
+                return 0;
+            }
+            #endif
+            const int &newSize=encodeSize(buffer+1,size);
+            if(size>0)
+            {
+                memcpy(buffer+1+newSize,data,size);
+                return 1+newSize+size;
+            }
+            else
+                return 1+newSize;
+        }
+        else
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(size!=sizeOnlyMainCodePacketClientToServer.at(packetCode))
+            {
+                std::cerr <<
+                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                            isClient <<
+                            #endif
+                            " packOutcommingData("
+                            << packetCode
+                            << ",{}) dropped because can be size!=fixed size"
+                            << std::endl;
+                return 0;
+            }
+            #endif
+            if(size>0)
+            {
+                memcpy(buffer+1,data,size);
+                return 1+size;
+            }
+            else
+                return 1;
+        }
+    }
+    else
+    #endif
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(mainCode_IsQueryServerToClient.find(packetCode)!=mainCode_IsQueryServerToClient.cend())
+        {
+            std::cerr <<
+                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                        isClient <<
+                        #endif
+                        " ProtocolParsingInputOutput::packOutcommingQuery(): packetCode: "
+                        << packetCode
+                        << ", try send as normal data, but not registred as is"
+                        << std::endl;
+            return 0;
+        }
+        #endif
+        if(sizeOnlyMainCodePacketServerToClient.find(packetCode)==sizeOnlyMainCodePacketServerToClient.cend())
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(size==0)
+            {
+                std::cerr <<
+                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                            isClient <<
+                            #endif
+                            " packOutcommingData("
+                            << packetCode
+                            << ",{}) dropped because can be size==0 if not fixed size"
+                            << std::endl;
+                return 0;
+            }
+            #endif
+            const int &newSize=encodeSize(buffer+1,size);
+            if(size>0)
+            {
+                memcpy(buffer+1+newSize,data,size);
+                return 1+newSize+size;
+            }
+            else
+                return 1+newSize;
+        }
+        else
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(size!=sizeOnlyMainCodePacketServerToClient.at(packetCode))
+            {
+                std::cerr <<
+                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                            isClient <<
+                            #endif
+                            " packOutcommingData("
+                            << packetCode
+                            << ",{}) dropped because can be size!=fixed size"
+                            << std::endl;
+                return 0;
+            }
+            #endif
+            if(size>0)
+            {
+                memcpy(buffer+1,data,size);
+                return 1+size;
+            }
+            else
+                return 1;
+        }
+    }
+}
