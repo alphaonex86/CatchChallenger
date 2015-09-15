@@ -11,10 +11,11 @@
 using namespace CatchChallenger;
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
-char ProtocolParsingInputOutput::commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];
+char ProtocolParsingInputOutput::tempBigBufferForUncompressedInput[CATCHCHALLENGER_COMMONBUFFERSIZE];
 #endif
 #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
 char ProtocolParsingBase::tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
+char ProtocolParsingBase::tempBigBufferForCompressedOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
 #endif
 const uint8_t ProtocolParsing::packetFixedSize[]={0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
 
