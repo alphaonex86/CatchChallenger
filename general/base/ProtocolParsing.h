@@ -31,6 +31,9 @@
     #endif
 #endif
 
+#define CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT 0x7F
+#define CATCHCHALLENGER_PROTOCOL_REPLY_CLIENT_TO_SERVER 0x01
+
 namespace CatchChallenger {
 
 class ProtocolParsingCheck;
