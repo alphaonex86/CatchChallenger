@@ -128,7 +128,7 @@ private:
     QByteArray dataToWithoutHeader;
     uint32_t dataSize;
     // function
-    inline void dataClear();
+    void dataClear();
 public:
     //reply to the query
     char outputQueryNumberToPacketCode[256];
@@ -190,6 +190,7 @@ protected:
     #endif
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     static char tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
+    static char tempBigBufferForCompressedOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
     #endif
     bool internalSendRawSmallPacket(const char * const data,const int &size);
     virtual void disconnectClient() = 0;
@@ -248,7 +249,7 @@ protected:
     quint64 RXSize;
     #endif
     #ifdef EPOLLCATCHCHALLENGERSERVER
-    static char commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];
+    static char tempBigBufferForUncompressedInput[CATCHCHALLENGER_COMMONBUFFERSIZE];
     #else
     char commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];
     #endif
