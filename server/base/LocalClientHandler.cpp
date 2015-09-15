@@ -142,45 +142,79 @@ void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE 
     MapBasicMove::put_on_the_map(map,x,y,orientation);
     insertClientOnMap(map);
 
-    //send to the client the position of the player
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    uint32_t pos=0;
 
-    out << (uint8_t)0x01;
+    //packet code
+    ProtocolParsingBase::tempBigBufferForOutput[pos]=0x68;
+    pos=1+4;
+
+    //map list size, only one because packet only for this player
+    ProtocolParsingBase::tempBigBufferForOutput[pos]=0x01;
+    pos+=1;
+
+    //send the current map of the player
     if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
-        out << (uint8_t)map->id;
+    {
+        ProtocolParsingBase::tempBigBufferForOutput[pos]=map->id;
+        pos+=1;
+    }
     else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
-        out << (uint16_t)map->id;
+    {
+        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+pos)=htole16(map->id);
+        pos+=2;
+    }
     else
-        out << (uint32_t)map->id;
+    {
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+pos)=htole32(map->id);
+        pos+=4;
+    }
+    //send only for this player
     if(GlobalServerData::serverSettings.max_players<=255)
     {
-        out << (uint8_t)0x01;
-        out << (uint8_t)public_and_private_informations.public_informations.simplifiedId;
+        ProtocolParsingBase::tempBigBufferForOutput[pos]=0x01;
+        pos+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[pos]=public_and_private_informations.public_informations.simplifiedId;;
+        pos+=1;
     }
     else
     {
-        out << (uint16_t)0x0001;
-        out << (uint16_t)public_and_private_informations.public_informations.simplifiedId;
+        ProtocolParsingBase::tempBigBufferForOutput[pos]=0x01;
+        pos+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[pos]=0x00;
+        pos+=1;
+        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+pos)=htole16(public_and_private_informations.public_informations.simplifiedId);
+        pos+=2;
     }
-    out << x;
-    out << y;
+    ProtocolParsingBase::tempBigBufferForOutput[pos]=x;
+    pos+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[pos]=y;
+    pos+=1;
     if(GlobalServerData::serverSettings.dontSendPlayerType)
-        out << uint8_t((uint8_t)orientation | (uint8_t)Player_type_normal);
+        ProtocolParsingBase::tempBigBufferForOutput[pos]=uint8_t((uint8_t)orientation | (uint8_t)Player_type_normal);
     else
-        out << uint8_t((uint8_t)orientation | (uint8_t)public_and_private_informations.public_informations.type);
+        ProtocolParsingBase::tempBigBufferForOutput[pos]=uint8_t((uint8_t)orientation | (uint8_t)public_and_private_informations.public_informations.type);
+    pos+=1;
     if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
-        out << public_and_private_informations.public_informations.speed;
+    {
+        ProtocolParsingBase::tempBigBufferForOutput[pos]=public_and_private_informations.public_informations.speed;
+        pos+=1;
+    }
 
     if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
     {
-        outputData+=rawPseudo;
-        out.device()->seek(out.device()->pos()+rawPseudo.size());
+        ProtocolParsingBase::tempBigBufferForOutput[pos]=public_and_private_informations.public_informations.pseudo.size();
+        pos+=1;
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+pos,public_and_private_informations.public_informations.pseudo.data(),public_and_private_informations.public_informations.pseudo.size());
+        pos+=public_and_private_informations.public_informations.pseudo.size();
     }
-    out << public_and_private_informations.public_informations.skinId;
 
-    sendMessage(0x68,outputData.constData(),outputData.size());
+    ProtocolParsingBase::tempBigBufferForOutput[pos]=public_and_private_informations.public_informations.skinId;
+    pos+=1;
+
+    //set the dynamic size
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(pos-1-4);
+
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,pos);
 
     //load the first time the random number list
     generateRandomNumber();
@@ -452,13 +486,26 @@ void Client::addObjectAndSend(const uint16_t &item,const uint32_t &quantity)
 {
     addObject(item,quantity);
     //add into the inventory
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint16_t)1;
-    out << (uint16_t)item;
-    out << (uint32_t)quantity;
-    sendMessage(0x55,outputData.constData(),outputData.size());
+    uint32_t pos=0;
+
+    ProtocolParsingBase::tempBigBufferForOutput[pos]=0x55;
+    pos=1;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(2+2+4);
+    pos+=4;
+
+    ProtocolParsingBase::tempBigBufferForOutput[pos]=0x01;
+    pos+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[pos]=0x00;
+    pos+=1;
+    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole16(item);
+    pos+=2;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(quantity);
+    pos+=4;
+
+    //set the dynamic size
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(pos-1-4);
+
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,pos);
 }
 
 void Client::addObject(const uint16_t &item,const uint32_t &quantity)
@@ -589,14 +636,24 @@ uint32_t Client::removeObject(const uint16_t &item, const uint32_t &quantity)
 
 void Client::sendRemoveObject(const uint16_t &item,const uint32_t &quantity)
 {
-    //add into the inventory
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint32_t)1;
-    out << (uint16_t)item;
-    out << (uint32_t)quantity;
-    sendMessage(0x56,outputData.constData(),outputData.size());
+    //remove into the inventory
+    uint32_t pos=0;
+
+    ProtocolParsingBase::tempBigBufferForOutput[pos]=0x56;
+    pos=1;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(2+2+4);
+    pos+=4;
+
+    ProtocolParsingBase::tempBigBufferForOutput[pos]=0x01;
+    pos+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[pos]=0x00;
+    pos+=1;
+    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole16(item);
+    pos+=2;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(quantity);
+    pos+=4;
+
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,pos);
 }
 
 uint32_t Client::objectQuantity(const uint16_t &item) const
@@ -1327,11 +1384,16 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
             return;
         }
         public_and_private_informations.recipes.insert(recipeId);
+
+        removeFromQueryReceived(query_id);
         //send the network reply
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (uint8_t)ObjectUsage_correctlyUsed;
+
+        set size too
+
         postReply(query_id,outputData.constData(),outputData.size());
         //add into db
         std::string queryText=PreparedDBQueryCommon::db_query_insert_recipe;

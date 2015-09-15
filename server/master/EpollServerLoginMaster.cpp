@@ -507,7 +507,7 @@ QStringList EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
 void EpollServerLoginMaster::charactersGroupListReply(QStringList &charactersGroupList)
 {
     rawServerListForC211[0x00]=CommonSettingsCommon::commonSettingsCommon.automatic_account_creation;
-    *reinterpret_cast<quint32 *>(rawServerListForC211+0x01)=(quint32)htole32((quint32)CommonSettingsCommon::commonSettingsCommon.character_delete_time);
+    *reinterpret_cast<quint32 *>(rawServerListForC211+0x01)=htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time);
     rawServerListForC211[0x05]=CommonSettingsCommon::commonSettingsCommon.min_character;
     rawServerListForC211[0x06]=CommonSettingsCommon::commonSettingsCommon.max_character;
     rawServerListForC211[0x07]=CommonSettingsCommon::commonSettingsCommon.max_pseudo_size;
@@ -696,7 +696,7 @@ void EpollServerLoginMaster::doTheServerList()
                 }
                 else
                 {
-                    *reinterpret_cast<quint16 *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=(quint16)htole16((quint16)utf8data.size());
+                    *reinterpret_cast<quint16 *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=htole16(utf8data.size());
                     rawServerListSize+=2;
                     memcpy(EpollClientLoginMaster::serverPartialServerList+rawServerListSize,utf8data.constData(),utf8data.size());
                     rawServerListSize+=utf8data.size();
