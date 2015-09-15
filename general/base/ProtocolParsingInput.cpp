@@ -254,13 +254,13 @@ bool ProtocolParsingBase::isReply() const
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     if(flags & 0x10)
     {
-        if(packetCode==0x7F)
+        if(packetCode==CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT)
             return true;
     }
     else
     #endif
     {
-        if(packetCode==0x01)
+        if(packetCode==CATCHCHALLENGER_PROTOCOL_REPLY_CLIENT_TO_SERVER)
             return false;
     }
     return false;
