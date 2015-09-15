@@ -14,6 +14,7 @@ void Client::sendSystemMessage(const std::string &text,const bool &important)
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+        out.device()->seek(out.device()->pos()+8);//jump to have space for the header: packetCode 1Byte, query number 1Byte optional, size 6Bytes optional, aligned to 64Bits
         if(important)
             out << (uint8_t)0x08;
         else
@@ -29,12 +30,14 @@ void Client::sendSystemMessage(const std::string &text,const bool &important)
             outputData+=tempText;
             out.device()->seek(out.device()->pos()+tempText.size());
         }
-        finalData.resize(16+outputData.size());
-        finalData.resize(ProtocolParsingBase::computeOutcommingData(
+
+        const uint8_t &addedSize=ProtocolParsingBase::addHeaderForOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             false,
             #endif
-                    finalData.data(),0xCA,outputData.constData(),outputData.size()));
+                    0x5C,finalData.data()+8,finalData.size()-8);
+        if(addedSize<8)
+            finalData.remove(0,8-addedSize);//align the data for faster copy after
     }
 
     const int &size=clientBroadCastList.size();
@@ -174,9 +177,10 @@ void Client::sendChatText(const Chat_type &chatType,const std::string &text)
 
             QByteArray finalData;
             {
-                QByteArray outputData;
-                QDataStream out(&outputData, QIODevice::WriteOnly);
+                QByteArray finalData;
+                QDataStream out(&finalData, QIODevice::WriteOnly);
                 out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+                out.device()->seek(out.device()->pos()+8);//jump to have space for the header: packetCode 1Byte, query number 1Byte optional, size 6Bytes optional, aligned to 64Bits
                 out << (uint8_t)chatType;
                 {
                     const QByteArray tempText(text.data(),text.size());
@@ -186,24 +190,25 @@ void Client::sendChatText(const Chat_type &chatType,const std::string &text)
                         return;
                     }
                     out << (uint8_t)tempText.size();
-                    outputData+=tempText;
+                    finalData+=tempText;
                     out.device()->seek(out.device()->pos()+tempText.size());
                 }
 
-                QByteArray outputData2;
-                QDataStream out2(&outputData2, QIODevice::WriteOnly);
-                out2.setVersion(QDataStream::Qt_4_4);
+                finalData+=rawPseudo;
+                out.device()->seek(out.device()->pos()+rawPseudo.size());
+
                 if(GlobalServerData::serverSettings.dontSendPlayerType)
-                    out2 << (uint8_t)Player_type_normal;
+                    out << (uint8_t)Player_type_normal;
                 else
-                    out2 << (uint8_t)this->public_and_private_informations.public_informations.type;
-                QByteArray tempBuffer(outputData+rawPseudo+outputData2);
-                finalData.resize(16+tempBuffer.size());
-                finalData.resize(ProtocolParsingBase::computeOutcommingData(
-            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            false,
-            #endif
-                    finalData.data(),0xCA,tempBuffer.data(),tempBuffer.size()));
+                    out << (uint8_t)this->public_and_private_informations.public_informations.type;
+
+                const uint8_t &addedSize=ProtocolParsingBase::addHeaderForOutcommingData(
+                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                    false,
+                    #endif
+                            0x5C,finalData.data()+8,finalData.size()-8);
+                if(addedSize<8)
+                    finalData.remove(0,8-addedSize);//align the data for faster copy after
             }
 
             const int &size=playerWithSameClan.size();
@@ -232,9 +237,9 @@ void Client::sendChatText(const Chat_type &chatType,const std::string &text)
 
         QByteArray finalData;
         {
-            QByteArray outputData;
-            QDataStream out(&outputData, QIODevice::WriteOnly);
+            QDataStream out(&finalData, QIODevice::WriteOnly);
             out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+            out.device()->seek(out.device()->pos()+8);//jump to have space for the header: packetCode 1Byte, query number 1Byte optional, size 6Bytes optional, aligned to 64Bits
             out << (uint8_t)chatType;
             {
                 const QByteArray tempText(text.data(),text.size());
@@ -244,24 +249,25 @@ void Client::sendChatText(const Chat_type &chatType,const std::string &text)
                     return;
                 }
                 out << (uint8_t)tempText.size();
-                outputData+=tempText;
+                finalData+=tempText;
                 out.device()->seek(out.device()->pos()+tempText.size());
             }
 
-            QByteArray outputData2;
-            QDataStream out2(&outputData2, QIODevice::WriteOnly);
-            out2.setVersion(QDataStream::Qt_4_4);
+            finalData+=rawPseudo;
+            out.device()->seek(out.device()->pos()+rawPseudo.size());
+
             if(GlobalServerData::serverSettings.dontSendPlayerType)
-                out2 << (uint8_t)Player_type_normal;
+                out << (uint8_t)Player_type_normal;
             else
-                out2 << (uint8_t)this->public_and_private_informations.public_informations.type;
-            QByteArray tempBuffer(outputData+rawPseudo+outputData2);
-            finalData.resize(16+tempBuffer.size());
-            finalData.resize(ProtocolParsingBase::computeOutcommingData(
-            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            false,
-            #endif
-                    finalData.data(),0xCA,tempBuffer.constData(),tempBuffer.size()));
+                out << (uint8_t)this->public_and_private_informations.public_informations.type;
+
+            const uint8_t &addedSize=ProtocolParsingBase::addHeaderForOutcommingData(
+                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                false,
+                #endif
+                        0x5C,finalData.data()+8,finalData.size()-8);
+            if(addedSize<8)
+                finalData.remove(0,8-addedSize);//align the data for faster copy after
         }
 
         const int &size=clientBroadCastList.size();
