@@ -57,6 +57,8 @@ void BaseServer::unload_the_data()
     unload_the_static_data();
     unload_the_ddos();
     unload_the_events();
+    unload_randomBlock();
+    unload_other();
     BaseServerLogin::unload();
 
     CommonDatapack::commonDatapack.unload();
@@ -185,4 +187,19 @@ void BaseServer::unload_the_datapack()
 void BaseServer::unload_the_players()
 {
     Client::simplifiedIdList.clear();
+}
+
+void BaseServer::unload_randomBlock()
+{
+}
+
+void BaseServer::unload_other()
+{
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    if(Client::protocolMessageLogicalGroupAndServerList!=NULL)
+    {
+        delete Client::protocolMessageLogicalGroupAndServerList;
+        Client::protocolMessageLogicalGroupAndServerList=NULL;
+    }
+    #endif
 }

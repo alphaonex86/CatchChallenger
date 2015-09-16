@@ -139,8 +139,11 @@ void Client::tradeFinished()
         otherPlayerTrade->addExistingMonster(tradeMonster);
         addExistingMonster(otherPlayerTrade->tradeMonster);
 
-        otherPlayerTrade->sendMessage(0x5B);
-        sendMessage(0x5B);
+        //send the network message
+        ProtocolParsingBase::tempBigBufferForOutput[0x01]=0x5B;
+
+        otherPlayerTrade->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,0x01);
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,0x01);
         otherPlayerTrade->resetTheTrade();
         resetTheTrade();
     }
@@ -149,7 +152,12 @@ void Client::tradeFinished()
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         normalOutput("Trade freezed");
         #endif
-        otherPlayerTrade->sendMessage(0x5A);
+
+        //send the network message
+        ProtocolParsingBase::tempBigBufferForOutput[0x01]=0x5A;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=0;//set the dynamic size
+
+        otherPlayerTrade->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+4);
     }
 }
 
@@ -205,12 +213,20 @@ void Client::tradeAddTradeCash(const quint64 &cash)
     #endif
     tradeCash+=cash;
     public_and_private_informations.cash-=cash;
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x01;
-    out << cash;
-    otherPlayerTrade->sendMessage(0x57,outputData.constData(),outputData.size());
+
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x57;
+    posOutput=+1+4;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+8);//set the dynamic size
+
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+    posOutput+=1;
+    const quint64 converted_cash=htole64(cash);
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&converted_cash,8);
+    posOutput+=8;
+
+    otherPlayerTrade->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::tradeAddTradeObject(const uint16_t &item,const uint32_t &quantity)
@@ -245,13 +261,22 @@ void Client::tradeAddTradeObject(const uint16_t &item,const uint32_t &quantity)
     public_and_private_informations.items[item]-=quantity;
     if(public_and_private_informations.items.at(item)==0)
         public_and_private_informations.items.erase(item);
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x02;
-    out << item;
-    out << quantity;
-    otherPlayerTrade->sendMessage(0x57,outputData.constData(),outputData.size());
+
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x57;
+    posOutput=+1+4;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+8);//set the dynamic size
+
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+    posOutput+=1;
+    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(item);
+    posOutput+=2;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(quantity);
+    posOutput+=4;
+
+
+    otherPlayerTrade->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::tradeAddTradeMonster(const uint32_t &monsterId)
@@ -292,41 +317,67 @@ void Client::tradeAddTradeMonster(const uint32_t &monsterId)
             tradeMonster.push_back(public_and_private_informations.playerMonster.at(index));
             public_and_private_informations.playerMonster.erase(public_and_private_informations.playerMonster.begin()+index);
             updateCanDoFight();
-            QByteArray outputData;
-            QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-            out << (uint8_t)0x03;
+
+            //send the network message
+            uint32_t posOutput=0;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x57;
+            posOutput=+1+4;
+
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
+            posOutput+=1;
             const PlayerMonster &monster=tradeMonster.back();
-            out << monster.id;
-            out << monster.monster;
-            out << monster.level;
-            out << monster.remaining_xp;
-            out << monster.hp;
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.id);
+            posOutput+=4;
+            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(monster.monster);
+            posOutput+=2;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=monster.level;
+            posOutput+=1;
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.remaining_xp);
+            posOutput+=4;
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.hp);
+            posOutput+=4;
             if(CommonSettingsServer::commonSettingsServer.useSP)
-                out << monster.sp;
-            out << monster.catched_with;
-            out << (uint8_t)monster.gender;
-            out << monster.egg_step;
-            out << monster.character_origin;
+            {
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.sp);
+                posOutput+=4;
+            }
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(monster.catched_with);
+            posOutput+=2;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)monster.gender;
+            posOutput+=1;
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.egg_step);
+            posOutput+=4;
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.character_origin);
+            posOutput+=4;
+
             int sub_index=0;
             int sub_size=monster.buffs.size();
-            out << (uint32_t)sub_size;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=sub_size;
+            posOutput+=1;
             while(sub_index<sub_size)
             {
-                out << monster.buffs.at(sub_index).buff;
-                out << monster.buffs.at(sub_index).level;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=monster.buffs.at(sub_index).buff;
+                posOutput+=1;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=monster.buffs.at(sub_index).level;
+                posOutput+=1;
                 sub_index++;
             }
             sub_index=0;
             sub_size=monster.skills.size();
-            out << (uint32_t)sub_size;
+            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(sub_size);
+            posOutput+=2;
             while(sub_index<sub_size)
             {
-                out << monster.skills.at(sub_index).skill;
-                out << monster.skills.at(sub_index).level;
+                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(monster.skills.at(sub_index).skill);
+                posOutput+=2;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=monster.skills.at(sub_index).level;
+                posOutput+=1;
                 sub_index++;
             }
-            otherPlayerTrade->sendMessage(0x57,outputData.constData(),outputData.size());
+
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+            otherPlayerTrade->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
             while(index<public_and_private_informations.playerMonster.size())
             {
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
@@ -375,7 +426,10 @@ void Client::internalTradeCanceled(const bool &send)
     if(send)
     {
         if(tradeIsValidated)
-            sendMessage(0x59);
+        {
+            ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x59;
+            sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,0x01);
+        }
         else
             receiveSystemText("Trade declined");
     }
@@ -402,11 +456,10 @@ void Client::internalTradeAccepted(const bool &send)
     tradeCash=0;
     if(send)
     {
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << otherPlayerTrade->public_and_private_informations.public_informations.skinId;
-        const QByteArray newData(otherPlayerTrade->rawPseudo+outputData);
-        sendMessage(0x58,newData.constData(),newData.size());
+        //send the network message
+        ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x58;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1);//set the dynamic size
+        ProtocolParsingBase::tempBigBufferForOutput[1+4]=otherPlayerTrade->public_and_private_informations.public_informations.skinId;
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+4+1);
     }
 }

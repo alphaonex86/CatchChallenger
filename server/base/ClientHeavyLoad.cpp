@@ -378,10 +378,21 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         stringreplaceOne(queryText,"%3",QString(askLoginParam->pass.toHex()).toStdString());
         stringreplaceOne(queryText,"%4",std::to_string(QDateTime::currentDateTime().toTime_t()));
         dbQueryWriteLogin(queryText);
+
         //send the network reply
-        QByteArray outputData;
-        outputData[0x00]=0x01;
-        postReply(askLoginParam->query_id,outputData.constData(),outputData.size());
+        removeFromQueryReceived(askLoginParam->query_id);
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        posOutput=+1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=askLoginParam->query_id;
+        posOutput=+1+4;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+        posOutput+=1;
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
         is_logging_in_progess=false;
     }
     else
@@ -666,53 +677,9 @@ void Client::server_list_return(const uint8_t &query_id, const QByteArray &previ
     callbackRegistred.pop();
     //send signals into the server
 
-    //C20F
-    {
-        //no logical group
-        QByteArray outputData;
-        outputData[0]=0x01;
-        outputData[1]=0x00;
-        outputData[2]=0x00;outputData[3]=0x00;//16Bits
-        sendMessage(0x44,outputData.constData(),outputData.size());
-    }
-    //C20E
-    {
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (uint8_t)0x02;//Server mode, unique then proxy
-        out << (uint8_t)0x01;//server list size, only this alone server
-        out << (uint8_t)0x00;//charactersgroup empty
-        out << (uint32_t)0x00000000;//unique key, useless here
-        {
-            QByteArray utf8data;
-            utf8data.resize(65536);
-            utf8data.resize(FacilityLibGeneral::toUTF8With16BitsHeader(CommonSettingsServer::commonSettingsServer.exportedXml,utf8data.data()));
-            if(utf8data.size()==0)
-            {
-                errorOutput("text converted big with utf8 for exported xml");
-                return;
-            }
-            *reinterpret_cast<uint16_t *>(outputData.data()+out.device()->pos()+0)=(uint16_t)htole16((uint16_t)utf8data.size());
-            memcpy(out.device()->pos()+outputData.data()+2,utf8data.constData(),utf8data.size());
-            out.device()->seek(out.device()->pos()+2+utf8data.size());
-        }
-        out << (uint8_t)0x00;//logical group empty
-        if(GlobalServerData::serverSettings.sendPlayerNumber)
-        {
-            out << (uint16_t)GlobalServerData::serverSettings.max_players;
-            out << (uint16_t)Client::clientBroadCastList.size();//charactersgroup empty
-        }
-        else
-        {
-            if(GlobalServerData::serverSettings.max_players<=255)
-                out << (uint16_t)255;
-            else
-                out << (uint16_t)65535;
-            out << (uint16_t)255/2;//current player
-        }
-        sendMessage(0x40,outputData.constData(),outputData.size());
-    }
+    //C20F and C2OE, logical block and server list
+    sendRawBlock((char *)Client::protocolMessageLogicalGroupAndServerList,Client::protocolMessageLogicalGroupAndServerListSize);
+
     //send the network reply
     char * const tempRawData=new char[4*1024];
     //memset(tempRawData,0x00,sizeof(4*1024));
@@ -770,7 +737,28 @@ void Client::server_list_return(const uint8_t &query_id, const QByteArray &previ
     tempRawData[0]=validServerCount;
 
     const QByteArray newData(previousData+QByteArray(tempRawData,tempRawDataSize));
-    postReply(query_id,newData.constData(),newData.size());
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(newData.size()>1024*256)
+    {
+        std::cerr << "Too big data " << __FILE__ << __LINE__ << std::endl;
+        abort();
+    }
+    #endif
+
+    //send the network reply
+    removeFromQueryReceived(query_id);
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput=+1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput=+1+4;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(newData.size());//set the dynamic size
+
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput,newData.constData(),newData.size());
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)SoldStat_PriceHaveChanged;
+    posOutput+=newData.size();
+
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::deleteCharacterNow(const uint32_t &characterId)
