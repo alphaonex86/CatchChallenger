@@ -359,7 +359,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             writePacketFixedSize[0x66]=0xFE;
             writePacketFixedSize[0x67]=0;
             writePacketFixedSize[0x68]=0xFE;
-            writePacketFixedSize[0x75]=0xFE;
+            writePacketFixedSize[0x75]=4+4;
             writePacketFixedSize[0x76]=0xFE;
             writePacketFixedSize[0x77]=0xFE;
             writePacketFixedSize[0x7F]=0xFE;
