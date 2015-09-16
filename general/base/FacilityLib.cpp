@@ -124,43 +124,61 @@ QDateTime FacilityLib::nextCaptureTime(const City &city)
     return nextCityCapture;
 }
 
-QByteArray FacilityLib::privateMonsterToBinary(const PlayerMonster &monster)
+uint32_t FacilityLib::privateMonsterToBinary(char *data,const PlayerMonster &monster)
 {
     //send the network reply
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    uint32_t posOutput=0;
 
-    out << monster.id;
-    out << monster.monster;
-    out << monster.level;
-    out << monster.remaining_xp;
-    out << monster.hp;
-    out << monster.sp;
-    out << monster.catched_with;
-    out << (uint8_t)monster.gender;
-    out << monster.egg_step;
-    out << monster.character_origin;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.id);
+    posOutput+=4;
+    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(monster.monster);
+    posOutput+=2;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=monster.level;
+    posOutput+=1;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.remaining_xp);
+    posOutput+=4;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.hp);
+    posOutput+=4;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.sp);
+    posOutput+=4;
+    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(monster.catched_with);
+    posOutput+=2;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)monster.gender;
+    posOutput+=1;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.egg_step);
+    posOutput+=4;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.character_origin);
+    posOutput+=4;
+
     int sub_index=0;
     int sub_size=monster.buffs.size();
-    out << (uint8_t)sub_size;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=sub_size;
+    posOutput+=1;
     while(sub_index<sub_size)
     {
-        out << monster.buffs.at(sub_index).buff;
-        out << monster.buffs.at(sub_index).level;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)SoldStat_PriceHaveChanged;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)SoldStat_PriceHaveChanged;
+        posOutput+=1;
+
         sub_index++;
     }
     sub_index=0;
     sub_size=monster.skills.size();
-    out << (uint16_t)sub_size;
+    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(sub_size);
+    posOutput+=2;
     while(sub_index<sub_size)
     {
-        out << monster.skills.at(sub_index).skill;
-        out << monster.skills.at(sub_index).level;
-        out << monster.skills.at(sub_index).endurance;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=monster.skills.at(sub_index).skill;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=monster.skills.at(sub_index).level;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=monster.skills.at(sub_index).endurance;
+        posOutput+=1;
+
         sub_index++;
     }
-    return outputData;
+    return posOutput;
 }
 
 //apply on after FacilityLib::industryStatusWithCurrentTime()

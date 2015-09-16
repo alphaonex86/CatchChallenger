@@ -531,7 +531,7 @@ private:
     void buyMarketMonster(const uint32_t &query_id,const uint32_t &monsterId);
     void putMarketObject(const uint32_t &query_id,const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price);
     void putMarketMonster(const uint32_t &query_id, const uint32_t &monsterId, const uint32_t &price);
-    void recoverMarketCash(const uint32_t &query_id);
+    void withdrawMarketCash(const uint32_t &query_id);
     void withdrawMarketObject(const uint32_t &query_id,const uint32_t &objectId,const uint32_t &quantity);
     void withdrawMarketMonster(const uint32_t &query_id, const uint32_t &monsterId);
 
