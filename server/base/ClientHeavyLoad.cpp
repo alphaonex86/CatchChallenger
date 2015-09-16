@@ -968,12 +968,22 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
     if(GlobalServerData::serverPrivateVariables.skinList.empty())
     {
         std::cerr << "Skin list is empty, unable to add charaters" << std::endl;
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (uint8_t)0x02;
-        out << (uint32_t)0x00000000;
-        postReply(query_id,outputData.constData(),outputData.size());
+
+        //send the network reply
+        removeFromQueryReceived(query_id);
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        posOutput=+1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+        posOutput=+1+4;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
+
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+        posOutput+=1;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
+        posOutput+=4;
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
     }
     if(number_of_character>=CommonSettingsCommon::commonSettingsCommon.max_character)
@@ -1037,12 +1047,22 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
 
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (uint8_t)0x02;
-        out << (uint32_t)0x00000000;
-        postReply(query_id,outputData.constData(),outputData.size());
+        //send the network reply
+        removeFromQueryReceived(query_id);
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        posOutput=+1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+        posOutput=+1+4;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
+
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+        posOutput+=1;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
+        posOutput+=4;
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
         delete addCharacterParam;
         return;
     }
@@ -1096,12 +1116,22 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     callbackRegistred.pop();
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (uint8_t)0x01;
-        out << (uint32_t)0x00000000;
-        postReply(query_id,outputData.constData(),outputData.size());
+        //send the network reply
+        removeFromQueryReceived(query_id);
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        posOutput=+1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+        posOutput=+1+4;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
+
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+        posOutput+=1;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
+        posOutput+=4;
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
         return;
     }
     const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
@@ -1121,12 +1151,23 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
             if(!ok)
             {
                 qDebug() << "getMonsterId(&ok) have failed, no more id to get?" << __FILE__ << __LINE__;
-                QByteArray outputData;
-                QDataStream out(&outputData, QIODevice::WriteOnly);
-                out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-                out << (uint8_t)0x03;
-                out << (uint32_t)0x00000000;
-                postReply(query_id,outputData.constData(),outputData.size());
+
+                //send the network reply
+                removeFromQueryReceived(query_id);
+                uint32_t posOutput=0;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+                posOutput=+1;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+                posOutput=+1+4;
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
+
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
+                posOutput+=1;
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
+                posOutput+=4;
+
+                sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
                 return;
             }
             index++;
@@ -1226,12 +1267,20 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     }
 
     //send the network reply
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x00;
-    out << characterId;
-    postReply(query_id,outputData.constData(),outputData.size());
+    removeFromQueryReceived(query_id);
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput=+1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput=+1+4;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
+
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
+    posOutput+=1;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(characterId);
+    posOutput+=4;
+
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::removeCharacterLater(const uint8_t &query_id, const uint32_t &characterId)
@@ -1258,11 +1307,20 @@ void Client::removeCharacterLater(const uint8_t &query_id, const uint32_t &chara
     if(callback==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (uint8_t)0x02;
-        postReply(query_id,outputData.constData(),outputData.size());
+
+        //send the network reply
+        removeFromQueryReceived(query_id);
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        posOutput=+1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+        posOutput=+1;
+
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+        posOutput+=1;
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
         delete removeCharacterParam;
         return;
     }
@@ -1345,11 +1403,19 @@ void Client::removeCharacterLater_return(const uint8_t &query_id,const uint32_t 
                     )
                   );
     dbQueryWriteCommon(queryText);
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x02;
-    postReply(query_id,outputData.constData(),outputData.size());
+
+    //send the network reply
+    removeFromQueryReceived(query_id);
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput=+1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput=+1;
+
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+    posOutput+=1;
+
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 #endif
 
@@ -1357,17 +1423,6 @@ void Client::removeCharacterLater_return(const uint8_t &query_id,const uint32_t 
 void Client::loadLinkedData()
 {
     loadPlayerAllow();
-}
-
-bool Client::loadTheRawUTF8String()
-{
-    rawPseudo=FacilityLibGeneral::toUTF8WithHeader(public_and_private_informations.public_informations.pseudo);
-    if(rawPseudo.isEmpty())
-    {
-        normalOutput("Unable to convert the pseudo to utf8: "+public_and_private_informations.public_informations.pseudo);
-        return false;
-    }
-    return true;
 }
 
 std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file_list_cached_base()
@@ -1603,12 +1658,19 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
             }
             ++i;
         }
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (uint32_t)datapckFileNumber;
-        out << (uint32_t)datapckFileSize;
-        sendMessage(0x75,outputData.constData(),outputData.size());
+        {
+            //send the network message
+            uint32_t posOutput=0;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x75;
+            posOutput=+1;
+
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(datapckFileNumber);
+            posOutput+=4;
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(datapckFileSize);
+            posOutput+=4;
+
+            sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+        }
     }
     if(fileToSendList.empty())
     {
@@ -1765,7 +1827,27 @@ void Client::purgeDatapackListReply(const uint8_t &query_id)
     }
     if(tempDatapackListReplyArray.isEmpty())
         tempDatapackListReplyArray[0x00]=0x00;
-    postReply(query_id,tempDatapackListReplyArray.constData(),tempDatapackListReplyArray.size());
+
+    {
+        //send the network reply
+        removeFromQueryReceived(query_id);
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        posOutput=+1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+        posOutput=+1+4;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(tempDatapackListReplyArray.size());//set the dynamic size
+
+        if(tempDatapackListReplyArray.size()>64*1024)
+        {
+            errorOutput("Client::purgeDatapackListReply too big to reply");
+            return;
+        }
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput,tempDatapackListReplyArray.constData(),tempDatapackListReplyArray.size());
+        posOutput+=tempDatapackListReplyArray.size();
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    }
     tempDatapackListReplyArray.clear();
 }
 
@@ -1773,12 +1855,24 @@ void Client::sendFileContent()
 {
     if(BaseServerMasterSendDatapack::rawFilesBuffer.size()>0 && BaseServerMasterSendDatapack::rawFilesBufferCount>0)
     {
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (uint8_t)BaseServerMasterSendDatapack::rawFilesBufferCount;
-        const QByteArray newData(outputData+BaseServerMasterSendDatapack::rawFilesBuffer);
-        sendMessage(0x76,newData.constData(),newData.size());
+        //send the network message
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x76;
+        posOutput=+1+4;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+BaseServerMasterSendDatapack::rawFilesBuffer.size());//set the dynamic size
+
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=BaseServerMasterSendDatapack::rawFilesBufferCount;
+        posOutput+=1;
+        if(BaseServerMasterSendDatapack::rawFilesBuffer.size()>CATCHCHALLENGER_MAX_PACKET_SIZE)
+        {
+            errorOutput("Client::sendFileContent too big to reply");
+            return;
+        }
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput,BaseServerMasterSendDatapack::rawFilesBuffer.constData(),BaseServerMasterSendDatapack::rawFilesBuffer.size());
+        posOutput+=BaseServerMasterSendDatapack::rawFilesBuffer.size();
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
         BaseServerMasterSendDatapack::rawFilesBuffer.clear();
         BaseServerMasterSendDatapack::rawFilesBufferCount=0;
     }
@@ -1788,12 +1882,24 @@ void Client::sendCompressedFileContent()
 {
     if(BaseServerMasterSendDatapack::compressedFilesBuffer.size()>0 && BaseServerMasterSendDatapack::compressedFilesBufferCount>0)
     {
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (uint8_t)BaseServerMasterSendDatapack::compressedFilesBufferCount;
-        const QByteArray newData(outputData+BaseServerMasterSendDatapack::compressedFilesBuffer);
-        sendMessage(0x77,newData.constData(),newData.size());
+        //send the network message
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x77;
+        posOutput=+1+4;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+BaseServerMasterSendDatapack::rawFilesBuffer.size());//set the dynamic size
+
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=BaseServerMasterSendDatapack::rawFilesBufferCount;
+        posOutput+=1;
+        if(BaseServerMasterSendDatapack::rawFilesBuffer.size()>CATCHCHALLENGER_MAX_PACKET_SIZE)
+        {
+            errorOutput("Client::sendFileContent too big to reply");
+            return;
+        }
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput,BaseServerMasterSendDatapack::rawFilesBuffer.constData(),BaseServerMasterSendDatapack::rawFilesBuffer.size());
+        posOutput+=BaseServerMasterSendDatapack::rawFilesBuffer.size();
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
         BaseServerMasterSendDatapack::compressedFilesBuffer.clear();
         BaseServerMasterSendDatapack::compressedFilesBufferCount=0;
     }
@@ -1850,7 +1956,6 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
         {
             if(contentsize>CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB*1024)
             {
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if((1+fileNameRaw.size()+outputData.size()+contentsize)>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                 {
                     normalOutput("Error: outputData2(1)+fileNameRaw("+
@@ -1862,12 +1967,25 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
                                  ")>CATCHCHALLENGER_MAX_PACKET_SIZE for file "+
                                  fileName
                                  );
+                    return false;
                 }
-                #endif
-                QByteArray outputData2;
-                outputData2[0x00]=0x01;
-                const QByteArray newData(outputData2+fileNameRaw+outputData+content);
-                sendMessage(0x76,newData.constData(),newData.size());
+
+                //send the network message
+                uint32_t posOutput=0;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x76;
+                posOutput=+1+4;
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+BaseServerMasterSendDatapack::rawFilesBuffer.size());//set the dynamic size
+
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=1;
+                posOutput+=1;
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput,fileNameRaw.constData(),fileNameRaw.size());
+                posOutput+=fileNameRaw.size();
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput,outputData.constData(),outputData.size());
+                posOutput+=outputData.size();
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput,content.constData(),content.size());
+                posOutput+=content.size();
+
+                sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             }
             else
             {

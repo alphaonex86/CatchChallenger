@@ -21,12 +21,18 @@ using namespace CatchChallenger;
 
 void Client::characterSelectionIsWrong(const uint8_t &query_id,const uint8_t &returnCode,const std::string &debugMessage)
 {
-    //network send
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)returnCode;
-    postReply(query_id,outputData.constData(),outputData.size());
+    //send the network reply
+    removeFromQueryReceived(query_id);
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput=+1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput=+1;
+
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=returnCode;
+    posOutput+=1;
+
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
     //send to server to stop the connection
     errorOutput(debugMessage);
@@ -206,14 +212,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     }
 
     public_and_private_informations.public_informations.pseudo=std::string(GlobalServerData::serverPrivateVariables.db_common->value(1));
-    if(!loadTheRawUTF8String())
-    {
-        if(GlobalServerData::serverSettings.anonymous)
-            characterSelectionIsWrong(query_id,0x04,"Unable to convert the pseudo to utf8 for character id: "+std::to_string(character_id));
-        else
-            characterSelectionIsWrong(query_id,0x04,"Unable to convert the pseudo to utf8: "+public_and_private_informations.public_informations.pseudo);
-        return;
-    }
 
     #ifndef SERVERBENCHMARK
     if(GlobalServerData::serverSettings.anonymous)
@@ -279,11 +277,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     }
 
     public_and_private_informations.public_informations.speed=CATCHCHALLENGER_SERVER_NORMAL_SPEED;
-    if(!loadTheRawUTF8String())
-    {
-        characterSelectionIsWrong(query_id,0x04,"Convert into utf8 have wrong size");
-        return;
-    }
 
     const uint8_t &starter=stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(9),&ok);
     if(!ok)
@@ -485,11 +478,6 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     }
 
     public_and_private_informations.public_informations.speed=CATCHCHALLENGER_SERVER_NORMAL_SPEED;
-    if(!loadTheRawUTF8String())
-    {
-        characterSelectionIsWrong(query_id,0x04,"Convert into utf8 have wrong size");
-        return;
-    }
     Orientation orientation;
     const uint32_t &orientationInt=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(3),&ok);
     if(ok)
@@ -1041,122 +1029,55 @@ void Client::characterIsRightFinalStep()
 
     const uint8_t &query_id=selectCharacterQueryId.front();
     selectCharacterQueryId.erase(selectCharacterQueryId.begin());
+
     //send the network reply
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)01;// all is good
+    removeFromQueryReceived(query_id);
 
-    if(GlobalServerData::serverSettings.sendPlayerNumber)
-        out << (uint16_t)GlobalServerData::serverSettings.max_players;
-    else
-    {
-        if(GlobalServerData::serverSettings.max_players<=255)
-            out << (uint16_t)255;
-        else
-            out << (uint16_t)65535;
-    }
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(GlobalServerData::serverPrivateVariables.timer_city_capture==NULL)
-        out << (uint32_t)0x00000000;
-    else if(GlobalServerData::serverPrivateVariables.timer_city_capture->isActive())
-    {
-        const qint64 &time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
-        out << (uint32_t)time/1000;
-    }
-    else
-        out << (uint32_t)0x00000000;
-    #else
-    out << (uint32_t)0x00000000;
-    #endif
-    out << (uint8_t)GlobalServerData::serverSettings.city.capture.frenquency;
-
-    //common settings
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer;
-    out << (uint32_t)CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.forcedSpeed;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.useSP;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.tcpCork;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.autoLearn;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.dontSendPseudo;
-    out << (float)CommonSettingsServer::commonSettingsServer.rates_xp;
-    out << (float)CommonSettingsServer::commonSettingsServer.rates_gold;
-    out << (float)CommonSettingsServer::commonSettingsServer.rates_xp_pow;
-    out << (float)CommonSettingsServer::commonSettingsServer.rates_drop;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.chat_allow_all;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.chat_allow_local;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.chat_allow_private;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.chat_allow_clan;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.factoryPriceChange;
-
-    //Main type code
-    {
-        const QByteArray &httpDatapackMirrorRaw=FacilityLibGeneral::toUTF8WithHeader(CommonSettingsServer::commonSettingsServer.mainDatapackCode);
-        outputData+=httpDatapackMirrorRaw;
-        out.device()->seek(out.device()->pos()+httpDatapackMirrorRaw.size());
-    }
-    //Sub type cod
-    {
-        const QByteArray &httpDatapackMirrorRaw=FacilityLibGeneral::toUTF8WithHeader(CommonSettingsServer::commonSettingsServer.subDatapackCode);
-        outputData+=httpDatapackMirrorRaw;
-        out.device()->seek(out.device()->pos()+httpDatapackMirrorRaw.size());
-    }
-    if(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()!=28)
-    {
-        qDebug() << "CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()!=28";
-        abort();
-    }
-    //main hash
-    outputData+=CommonSettingsServer::commonSettingsServer.datapackHashServerMain;
-    out.device()->seek(out.device()->pos()+CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size());
-    //sub hash
-    if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
-    {
-        if(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()!=28)
-        {
-            qDebug() << "CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()!=28";
-            abort();
-        }
-        outputData+=CommonSettingsServer::commonSettingsServer.datapackHashServerSub;
-        out.device()->seek(out.device()->pos()+CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size());
-    }
-    //mirror
-    {
-        const QByteArray &httpDatapackMirrorRaw=FacilityLibGeneral::toUTF8WithHeader(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer);
-        outputData+=httpDatapackMirrorRaw;
-        out.device()->seek(out.device()->pos()+httpDatapackMirrorRaw.size());
-    }
-
+    uint32_t posOutput=Client::characterIsRightFinalStepHeaderSize;
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput,Client::characterIsRightFinalStepHeader,Client::characterIsRightFinalStepHeaderSize);
+    ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
 
     //temporary character id
     if(GlobalServerData::serverSettings.max_players<=255)
-        out << (uint8_t)public_and_private_informations.public_informations.simplifiedId;
+    {
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.public_informations.simplifiedId;
+        posOutput+=1;
+    }
     else
-        out << (uint16_t)public_and_private_informations.public_informations.simplifiedId;
+    {
+        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.public_informations.simplifiedId);
+        posOutput+=2;
+    }
     //pseudo
     {
-        const QByteArray &httpDatapackMirrorRaw=FacilityLibGeneral::toUTF8WithHeader(public_and_private_informations.public_informations.pseudo);
-        outputData+=httpDatapackMirrorRaw;
-        out.device()->seek(out.device()->pos()+httpDatapackMirrorRaw.size());
+        const std::string &text=public_and_private_informations.public_informations.pseudo;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+        posOutput+=1;
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+        posOutput+=text.size();
     }
-    out << (uint8_t)public_and_private_informations.allow.size();
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.allow.size();
+    posOutput+=1;
     {
         auto i=public_and_private_informations.allow.begin();
         while(i!=public_and_private_informations.allow.cend())
         {
-            out << (uint8_t)(*i);
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=*i;
+            posOutput+=1;
             ++i;
         }
     }
 
     //clan related
-    out << (uint32_t)public_and_private_informations.clan;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(public_and_private_informations.clan);
+    posOutput+=4;
     if(public_and_private_informations.clan_leader)
-        out << (uint8_t)0x01;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
     else
-        out << (uint8_t)0x00;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
+    posOutput+=1;
 
+    /// \todo optimise and cache this block
     //send the event
     {
         std::vector<std::pair<uint8_t,uint8_t> > events;
@@ -1169,24 +1090,39 @@ void Client::characterIsRightFinalStep()
             index++;
         }
         index=0;
-        out << (uint8_t)events.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=events.size();
+        posOutput+=1;
+        out << (uint8_t);
         while(index<events.size())
         {
             const std::pair<uint8_t,uint8_t> &event=events.at(index);
-            out << (uint8_t)event.first;
-            out << (uint8_t)event.second;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=event.first;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=event.second;
+            posOutput+=1;
             index++;
         }
     }
 
-    out << (quint64)public_and_private_informations.cash;
-    out << (quint64)public_and_private_informations.warehouse_cash;
-    out << (uint8_t)public_and_private_informations.itemOnMap.size();
+    {
+        const quint64 cash=htole64(public_and_private_informations.cash);
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&cash,8);
+        posOutput=+8;
+    }
+    {
+        const quint64 cash=htole64(public_and_private_informations.warehouse_cash);
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&cash,8);
+        posOutput=+8;
+    }
+
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.itemOnMap.size();
+    posOutput+=1;
     {
         auto i=public_and_private_informations.itemOnMap.begin();
         while (i!=public_and_private_informations.itemOnMap.cend())
         {
-            out << (uint8_t)(*i);
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=*i;
+            posOutput+=1;
             ++i;
         }
     }
@@ -1194,16 +1130,20 @@ void Client::characterIsRightFinalStep()
     //send plant on map
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     const quint64 &time=QDateTime::currentDateTime().toMSecsSinceEpoch()/1000;
-    out << (uint8_t)public_and_private_informations.plantOnMap.size();
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.plantOnMap.size();
+    posOutput+=1;
     auto i=public_and_private_informations.plantOnMap.begin();
     while(i!=public_and_private_informations.plantOnMap.cend())
     {
-        out << i->first;
-        out << i->second.plant;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i->first;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=second.plant;
+        posOutput+=1;
         if(time<i->second.mature_at)
-            out << (uint16_t)(i->second.mature_at-time);
+            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(i->second.mature_at-time);
         else
-            out << (uint16_t)0;
+            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+        posOutput+=2;
         ++i;
     }
     #endif
@@ -1215,11 +1155,13 @@ void Client::characterIsRightFinalStep()
     //send recipes
     {
         index=0;
-        out << (uint16_t)public_and_private_informations.recipes.size();
+        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.recipes.size());
+        posOutput+=2;
         auto k=public_and_private_informations.recipes.begin();
         while(k!=public_and_private_informations.recipes.cend())
         {
-            out << (*k);
+            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(*k);
+            posOutput+=2;
             ++k;
         }
     }
@@ -1227,22 +1169,20 @@ void Client::characterIsRightFinalStep()
     //send monster
     index=0;
     size=public_and_private_informations.playerMonster.size();
-    out << (uint8_t)size;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=size;
+    posOutput+=1;
     while(index<size)
     {
-        const QByteArray &data=FacilityLib::privateMonsterToBinary(public_and_private_informations.playerMonster.at(index));
-        outputData+=data;
-        out.device()->seek(out.device()->pos()+data.size());
+        posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.playerMonster.at(index));
         index++;
     }
     index=0;
     size=public_and_private_informations.warehouse_playerMonster.size();
-    out << (uint8_t)size;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=size;
+    posOutput+=1;
     while(index<size)
     {
-        const QByteArray &data=FacilityLib::privateMonsterToBinary(public_and_private_informations.warehouse_playerMonster.at(index));
-        outputData+=data;
-        out.device()->seek(out.device()->pos()+data.size());
+        posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.warehouse_playerMonster.at(index));
         index++;
     }
 
@@ -1292,7 +1232,9 @@ void Client::characterIsRightFinalStep()
     }
     #endif
 
-    postReply(query_id,outputData.constData(),outputData.size());
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
     sendInventory();
     updateCanDoFight();
 

@@ -99,6 +99,8 @@ public:
 
     static unsigned char protocolReplyProtocolNotSupported[4];
     static unsigned char protocolReplyServerFull[4];
+    static unsigned char *characterIsRightFinalStepHeader;
+    static uint32_t characterIsRightFinalStepHeaderSize;
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     static unsigned char protocolReplyCompressionNone[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     static unsigned char protocolReplyCompresssionZlib[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
@@ -776,7 +778,6 @@ private:
     void generateRandomNumber();
     uint32_t randomSeedsSize() const;
 protected:
-    bool loadTheRawUTF8String();//virtual to load dynamic max to_send_move
     //normal management related
     void errorOutput(const std::string &errorString);
     void kick();
