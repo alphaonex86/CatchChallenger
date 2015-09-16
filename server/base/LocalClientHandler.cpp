@@ -142,79 +142,79 @@ void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE 
     MapBasicMove::put_on_the_map(map,x,y,orientation);
     insertClientOnMap(map);
 
-    uint32_t pos=0;
+    uint32_t posOutput=0;
 
     //packet code
-    ProtocolParsingBase::tempBigBufferForOutput[pos]=0x68;
-    pos=1+4;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x68;
+    posOutput=1+4;
 
     //map list size, only one because packet only for this player
-    ProtocolParsingBase::tempBigBufferForOutput[pos]=0x01;
-    pos+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+    posOutput+=1;
 
     //send the current map of the player
     if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
     {
-        ProtocolParsingBase::tempBigBufferForOutput[pos]=map->id;
-        pos+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=map->id;
+        posOutput+=1;
     }
     else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
     {
-        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+pos)=htole16(map->id);
-        pos+=2;
+        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(map->id);
+        posOutput+=2;
     }
     else
     {
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+pos)=htole32(map->id);
-        pos+=4;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(map->id);
+        posOutput+=4;
     }
     //send only for this player
     if(GlobalServerData::serverSettings.max_players<=255)
     {
-        ProtocolParsingBase::tempBigBufferForOutput[pos]=0x01;
-        pos+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[pos]=public_and_private_informations.public_informations.simplifiedId;;
-        pos+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.public_informations.simplifiedId;
+        posOutput+=1;
     }
     else
     {
-        ProtocolParsingBase::tempBigBufferForOutput[pos]=0x01;
-        pos+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[pos]=0x00;
-        pos+=1;
-        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+pos)=htole16(public_and_private_informations.public_informations.simplifiedId);
-        pos+=2;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
+        posOutput+=1;
+        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.public_informations.simplifiedId);
+        posOutput+=2;
     }
-    ProtocolParsingBase::tempBigBufferForOutput[pos]=x;
-    pos+=1;
-    ProtocolParsingBase::tempBigBufferForOutput[pos]=y;
-    pos+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=x;
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=y;
+    posOutput+=1;
     if(GlobalServerData::serverSettings.dontSendPlayerType)
-        ProtocolParsingBase::tempBigBufferForOutput[pos]=uint8_t((uint8_t)orientation | (uint8_t)Player_type_normal);
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=uint8_t((uint8_t)orientation | (uint8_t)Player_type_normal);
     else
-        ProtocolParsingBase::tempBigBufferForOutput[pos]=uint8_t((uint8_t)orientation | (uint8_t)public_and_private_informations.public_informations.type);
-    pos+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=uint8_t((uint8_t)orientation | (uint8_t)public_and_private_informations.public_informations.type);
+    posOutput+=1;
     if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
     {
-        ProtocolParsingBase::tempBigBufferForOutput[pos]=public_and_private_informations.public_informations.speed;
-        pos+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.public_informations.speed;
+        posOutput+=1;
     }
 
     if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
     {
-        ProtocolParsingBase::tempBigBufferForOutput[pos]=public_and_private_informations.public_informations.pseudo.size();
-        pos+=1;
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+pos,public_and_private_informations.public_informations.pseudo.data(),public_and_private_informations.public_informations.pseudo.size());
-        pos+=public_and_private_informations.public_informations.pseudo.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.public_informations.pseudo.size();
+        posOutput+=1;
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.public_informations.pseudo.data(),public_and_private_informations.public_informations.pseudo.size());
+        posOutput+=public_and_private_informations.public_informations.pseudo.size();
     }
 
-    ProtocolParsingBase::tempBigBufferForOutput[pos]=public_and_private_informations.public_informations.skinId;
-    pos+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.public_informations.skinId;
+    posOutput+=1;
 
     //set the dynamic size
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(pos-1-4);
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);
 
-    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,pos);
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
     //load the first time the random number list
     generateRandomNumber();
@@ -486,26 +486,23 @@ void Client::addObjectAndSend(const uint16_t &item,const uint32_t &quantity)
 {
     addObject(item,quantity);
     //add into the inventory
-    uint32_t pos=0;
+    uint32_t posOutput=0;
 
-    ProtocolParsingBase::tempBigBufferForOutput[pos]=0x55;
-    pos=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x55;
+    posOutput=1;
     *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(2+2+4);
-    pos+=4;
+    posOutput+=4;
 
-    ProtocolParsingBase::tempBigBufferForOutput[pos]=0x01;
-    pos+=1;
-    ProtocolParsingBase::tempBigBufferForOutput[pos]=0x00;
-    pos+=1;
-    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole16(item);
-    pos+=2;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(quantity);
-    pos+=4;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
+    posOutput+=1;
+    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(item);
+    posOutput+=2;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(quantity);
+    posOutput+=4;
 
-    //set the dynamic size
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(pos-1-4);
-
-    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,pos);
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::addObject(const uint16_t &item,const uint32_t &quantity)
@@ -637,23 +634,23 @@ uint32_t Client::removeObject(const uint16_t &item, const uint32_t &quantity)
 void Client::sendRemoveObject(const uint16_t &item,const uint32_t &quantity)
 {
     //remove into the inventory
-    uint32_t pos=0;
+    uint32_t posOutput=0;
 
-    ProtocolParsingBase::tempBigBufferForOutput[pos]=0x56;
-    pos=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x56;
+    posOutput=1;
     *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(2+2+4);
-    pos+=4;
+    posOutput+=4;
 
-    ProtocolParsingBase::tempBigBufferForOutput[pos]=0x01;
-    pos+=1;
-    ProtocolParsingBase::tempBigBufferForOutput[pos]=0x00;
-    pos+=1;
-    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole16(item);
-    pos+=2;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(quantity);
-    pos+=4;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
+    posOutput+=1;
+    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(item);
+    posOutput+=2;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(quantity);
+    posOutput+=4;
 
-    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,pos);
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 uint32_t Client::objectQuantity(const uint16_t &item) const
@@ -1388,20 +1385,20 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
         removeFromQueryReceived(query_id);
         //send the network reply
 
-        uint32_t pos=0;
+        uint32_t posOutput=0;
 
-        ProtocolParsingBase::tempBigBufferForOutput[pos]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-        pos=+1;
-        ProtocolParsingBase::tempBigBufferForOutput[pos]=query_id;
-        pos=+1;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+pos)=htole32(1);
-        pos=+4;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        posOutput=+1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+        posOutput=+1;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(1);
+        posOutput=+4;
 
         //type
-        ProtocolParsingBase::tempBigBufferForOutput[pos]=(uint8_t)ObjectUsage_correctlyUsed;
-        pos+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)ObjectUsage_correctlyUsed;
+        posOutput+=1;
 
-        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,pos);
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         //add into db
         std::string queryText=PreparedDBQueryCommon::db_query_insert_recipe;
         stringreplaceOne(queryText,"%1",std::to_string(character_id));
@@ -1422,27 +1419,52 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
             return;
         }
         const uint32_t &maxMonsterId=tryCapture(itemId);
+
+        removeFromQueryReceived(query_id);
         //send the network reply
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (uint8_t)ObjectUsage_correctlyUsed;
+
+        uint32_t posOutput=0;
+
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        posOutput=+1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+        posOutput=+1;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(1+4);
+        posOutput=+4;
+
+        //type
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)ObjectUsage_correctlyUsed;
+        posOutput+=1;
         if(maxMonsterId>0)
-            out << (uint32_t)maxMonsterId;
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(maxMonsterId);
         else
-            out << (uint32_t)0x00000000;
-        postReply(query_id,outputData.constData(),outputData.size());
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(0x00000000);
+        posOutput=+4;
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     }
     //use repel into fight
     else if(CommonDatapack::commonDatapack.items.repel.find(itemId)!=CommonDatapack::commonDatapack.items.repel.cend())
     {
         public_and_private_informations.repel_step+=CommonDatapack::commonDatapack.items.repel.at(itemId);
+
+        removeFromQueryReceived(query_id);
         //send the network reply
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (uint8_t)ObjectUsage_correctlyUsed;
-        postReply(query_id,outputData.constData(),outputData.size());
+
+        uint32_t posOutput=0;
+
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        posOutput=+1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+        posOutput=+1;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(1);
+        posOutput=+4;
+
+        //type
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)ObjectUsage_correctlyUsed;
+        posOutput+=1;
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     }
     else
     {
@@ -1587,31 +1609,47 @@ void Client::getShopList(const uint8_t &query_id,const uint16_t &shopId)
     }
     //send the shop items (no taxes from now)
     const Shop &shop=CommonDatapackServerSpec::commonDatapackServerSpec.shops.at(shopId);
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    QByteArray outputData2;
-    QDataStream out2(&outputData2, QIODevice::WriteOnly);
-    out2.setVersion(QDataStream::Qt_4_4);
-    unsigned int index=0;
-    unsigned int objectCount=0;
-    while(index<shop.items.size())
+
+    removeFromQueryReceived(query_id);
+    //send the network reply
+
     {
-        if(shop.prices.at(index)>0)
+        uint32_t posOutput=0;
+
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        posOutput=+1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+        posOutput=+1+4;
+
+        //size
+        posOutput+=2;
+
+        unsigned int index=0;
+        unsigned int objectCount=0;
+        while(index<shop.items.size())
         {
             if(shop.prices.at(index)>0)
             {
-                out2 << (uint16_t)shop.items.at(index);
-                out2 << (uint32_t)shop.prices.at(index);
-                out2 << (uint32_t)0;
-                objectCount++;
+                if(shop.prices.at(index)>0)
+                {
+                    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(shop.items.at(index));
+                    posOutput+=2;
+                    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(shop.prices.at(index));
+                    posOutput+=4;
+                    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(0);
+                    posOutput+=4;
+                    objectCount++;
+                }
             }
+            index++;
         }
-        index++;
+        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1+4)=htole16(objectCount);
+
+        //set the dynamic size
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     }
-    out << (uint16_t)objectCount;
-    const QByteArray outputNew(outputData+outputData2);
-    postReply(query_id,outputNew.constData(),outputNew.size());
 }
 
 void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
@@ -1709,36 +1747,65 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint
         }
     }
     //send the shop items (no taxes from now)
-    const int &priceIndex=vectorindexOf(CommonDatapackServerSpec::commonDatapackServerSpec.shops.at(shopId).items,objectId);
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    const Shop &shop=CommonDatapackServerSpec::commonDatapackServerSpec.shops.at(shopId);
+    const int &priceIndex=vectorindexOf(shop.items,objectId);
+
+    removeFromQueryReceived(query_id);
+    //send the network reply
+
+    uint32_t posOutput=0;
+
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput=+1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput=+1+4;
+
     if(priceIndex==-1)
     {
-        out << (uint8_t)BuyStat_HaveNotQuantity;
-        postReply(query_id,outputData.constData(),outputData.size());
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)BuyStat_HaveNotQuantity;
+        posOutput+=1;
+
+        //set the dynamic size
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
     }
     const uint32_t &realprice=CommonDatapackServerSpec::commonDatapackServerSpec.shops.at(shopId).prices.at(priceIndex);
     if(realprice==0)
     {
-        out << (uint8_t)BuyStat_HaveNotQuantity;
-        postReply(query_id,outputData.constData(),outputData.size());
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)BuyStat_HaveNotQuantity;
+        posOutput+=1;
+
+        //set the dynamic size
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
     }
     if(realprice>price)
     {
-        out << (uint8_t)BuyStat_PriceHaveChanged;
-        postReply(query_id,outputData.constData(),outputData.size());
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)BuyStat_PriceHaveChanged;
+        posOutput+=1;
+
+        //set the dynamic size
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
     }
     if(realprice<price)
     {
-        out << (uint8_t)BuyStat_BetterPrice;
-        out << (uint32_t)price;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)BuyStat_BetterPrice;
+        posOutput+=1;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(price);
+        posOutput+=4;
     }
     else
-        out << (uint8_t)BuyStat_Done;
+    {
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)BuyStat_Done;
+        posOutput+=1;
+    }
     if(public_and_private_informations.cash>=(realprice*quantity))
         removeCash(realprice*quantity);
     else
@@ -1747,7 +1814,11 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint
         return;
     }
     addObject(objectId,quantity);
-    postReply(query_id,outputData.constData(),outputData.size());
+
+    //set the dynamic size
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);
+
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
@@ -1844,10 +1915,16 @@ void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uin
             }
         }
     }
+    removeFromQueryReceived(query_id);
+    //send the network reply
+
     //send the shop items (no taxes from now)
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    uint32_t posOutput=0;
+
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput=+1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput=+1+4;
     if(CommonDatapack::commonDatapack.items.item.find(objectId)==CommonDatapack::commonDatapack.items.item.cend())
     {
         errorOutput("this item don't exists");
@@ -1866,20 +1943,34 @@ void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uin
     const uint32_t &realPrice=CommonDatapack::commonDatapack.items.item.at(objectId).price/2;
     if(realPrice<price)
     {
-        out << (uint8_t)SoldStat_PriceHaveChanged;
-        postReply(query_id,outputData.constData(),outputData.size());
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)SoldStat_PriceHaveChanged;
+        posOutput+=1;
+
+        //set the dynamic size
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
     }
     if(realPrice>price)
     {
-        out << (uint8_t)SoldStat_BetterPrice;
-        out << (uint32_t)realPrice;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)SoldStat_BetterPrice;
+        posOutput+=1;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(realPrice);
+        posOutput+=4;
     }
     else
-        out << (uint8_t)SoldStat_Done;
+    {
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)SoldStat_Done;
+        posOutput+=1;
+    }
     removeObject(objectId,quantity);
     addCash(realPrice*quantity);
-    postReply(query_id,outputData.constData(),outputData.size());
+
+    //set the dynamic size
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);
+
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::saveIndustryStatus(const uint32_t &factoryId,const IndustryStatus &industryStatus,const Industry &industry)
@@ -1946,23 +2037,36 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
     }
     const Industry &industry=CommonDatapack::commonDatapack.industries.at(CommonDatapack::commonDatapack.industriesLink.at(factoryId).industry);
     //send the shop items (no taxes from now)
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    removeFromQueryReceived(query_id);
+    //send the network reply
+
+    uint32_t posOutput=0;
+
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput=+1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput=+1+4;
+
     if(GlobalServerData::serverPrivateVariables.industriesStatus.find(factoryId)==GlobalServerData::serverPrivateVariables.industriesStatus.cend())
     {
-        out << (uint32_t)0;
-        out << (uint16_t)industry.resources.size();
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+        posOutput+=4;
+        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(industry.resources.size());
+        posOutput+=2;
         unsigned int index=0;
         while(index<industry.resources.size())
         {
             const Industry::Resource &resource=industry.resources.at(index);
-            out << (uint16_t)resource.item;
-            out << (uint32_t)CommonDatapack::commonDatapack.items.item.at(resource.item).price*(100+CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE)/100;
-            out << (uint32_t)resource.quantity*industry.cycletobefull;
+            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(resource.item);
+            posOutput+=2;
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonDatapack::commonDatapack.items.item.at(resource.item).price*(100+CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE)/100);
+            posOutput+=4;
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(resource.quantity*industry.cycletobefull);
+            posOutput+=4;
             index++;
         }
-        out << (uint16_t)0x0000;//no product do
+        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+        posOutput+=2;
     }
     else
     {
@@ -1970,11 +2074,20 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
         const IndustryStatus &industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus.at(factoryId),industry);
         quint64 currentTime=QDateTime::currentMSecsSinceEpoch()/1000;
         if(industryStatus.last_update>currentTime)
-            out << (uint32_t)0;
+        {
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+            posOutput+=4;
+        }
         else if((currentTime-industryStatus.last_update)>industry.time)
-            out << (uint32_t)0;
+        {
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+            posOutput+=4;
+        }
         else
-            out << (uint32_t)(industry.time-(currentTime-industryStatus.last_update));
+        {
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(industry.time-(currentTime-industryStatus.last_update));
+            posOutput+=4;
+        }
         //send the resource
         count_item=0;
         index=0;
@@ -1986,7 +2099,8 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
                 count_item++;
             index++;
         }
-        out << (uint16_t)count_item;
+        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(count_item);
+        posOutput+=2;
         index=0;
         while(index<industry.resources.size())
         {
@@ -1994,9 +2108,12 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
             const uint32_t &quantityInStock=industryStatus.resources.at(resource.item);
             if(quantityInStock<resource.quantity*industry.cycletobefull)
             {
-                out << (uint16_t)resource.item;
-                out << (uint32_t)FacilityLib::getFactoryResourcePrice(quantityInStock,resource,industry);
-                out << (uint32_t)resource.quantity*industry.cycletobefull-quantityInStock;
+                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(resource.item);
+                posOutput+=2;
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(FacilityLib::getFactoryResourcePrice(quantityInStock,resource,industry));
+                posOutput+=4;
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(resource.quantity*industry.cycletobefull-quantityInStock);
+                posOutput+=4;
             }
             index++;
         }
@@ -2011,7 +2128,8 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
                 count_item++;
             index++;
         }
-        out << (uint16_t)count_item;
+        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(count_item);
+        posOutput+=2;
         index=0;
         while(index<industry.products.size())
         {
@@ -2019,14 +2137,21 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
             const uint32_t &quantityInStock=industryStatus.products.at(product.item);
             if(quantityInStock>0)
             {
-                out << (uint16_t)product.item;
-                out << (uint32_t)FacilityLib::getFactoryProductPrice(quantityInStock,product,industry);
-                out << (uint32_t)quantityInStock;
+                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(product.item);
+                posOutput+=2;
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(FacilityLib::getFactoryProductPrice(quantityInStock,product,industry));
+                posOutput+=4;
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(quantityInStock);
+                posOutput+=4;
             }
             index++;
         }
     }
-    postReply(query_id,outputData.constData(),outputData.size());
+
+    //set the dynamic size
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);
+
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::buyFactoryProduct(const uint8_t &query_id,const uint16_t &factoryId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
@@ -2065,9 +2190,7 @@ void Client::buyFactoryProduct(const uint8_t &query_id,const uint16_t &factoryId
     IndustryStatus industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus.at(factoryId),industry);
     uint32_t quantityInStock=0;
     uint32_t actualPrice=0;
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+
     Industry::Product product;
     //get the right product
     {
@@ -2094,24 +2217,50 @@ void Client::buyFactoryProduct(const uint8_t &query_id,const uint16_t &factoryId
         errorOutput("have not the cash to buy into this factory");
         return;
     }
+
+    removeFromQueryReceived(query_id);
+    //send the network reply
+
+    uint32_t posOutput=0;
+
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput=+1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput=+1+4;
+
     if(quantity>quantityInStock)
     {
-        out << (uint8_t)0x03;
-        postReply(query_id,outputData.constData(),outputData.size());
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
+        posOutput+=1;
+
+        //set the dynamic size
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
     }
     if(actualPrice>price)
     {
-        out << (uint8_t)0x04;
-        postReply(query_id,outputData.constData(),outputData.size());
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x04;
+        posOutput+=1;
+
+        //set the dynamic size
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
     }
     if(actualPrice==price)
-        out << (uint8_t)0x01;
+    {
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+        posOutput+=1;
+    }
     else
     {
-        out << (uint8_t)0x02;
-        out << (uint32_t)actualPrice;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+        posOutput+=1;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(actualPrice);
+        posOutput+=4;
     }
     quantityInStock-=quantity;
     if(quantityInStock==(product.item*industry.cycletobefull))
@@ -2125,7 +2274,8 @@ void Client::buyFactoryProduct(const uint8_t &query_id,const uint16_t &factoryId
     saveIndustryStatus(factoryId,industryStatus,industry);
     addObject(objectId,quantity);
     appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.at(factoryId).rewards.reputation);
-    postReply(query_id,outputData.constData(),outputData.size());
+
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::sellFactoryResource(const uint8_t &query_id,const uint16_t &factoryId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
@@ -2185,9 +2335,14 @@ void Client::sellFactoryResource(const uint8_t &query_id,const uint16_t &factory
     }
     else
         industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus.at(factoryId),industry);
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    //send the network reply
+    removeFromQueryReceived(query_id);
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput=+1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput=+1+4;
+
     uint32_t resourcePrice;
     //check if not overfull
     {
@@ -2199,15 +2354,19 @@ void Client::sellFactoryResource(const uint8_t &query_id,const uint16_t &factory
             {
                 if((resource.quantity*industry.cycletobefull-industryStatus.resources.at(resource.item))<quantity)
                 {
-                    out << (uint8_t)0x03;
-                    postReply(query_id,outputData.constData(),outputData.size());
+                    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
+                    posOutput+=1;
+                    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                     return;
                 }
                 resourcePrice=FacilityLib::getFactoryResourcePrice(industryStatus.resources.at(resource.item),resource,industry);
                 if(price>resourcePrice)
                 {
-                    out << (uint8_t)0x04;
-                    postReply(query_id,outputData.constData(),outputData.size());
+                    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x04;
+                    posOutput+=1;
+                    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                     return;
                 }
                 if((industryStatus.resources.at(resource.item)+quantity)==resource.quantity)
@@ -2228,17 +2387,26 @@ void Client::sellFactoryResource(const uint8_t &query_id,const uint16_t &factory
         }
     }
     if(price==resourcePrice)
-        out << (uint8_t)0x01;
+    {
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+        posOutput+=1;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(quantity);
+        posOutput+=4;
+    }
     else
     {
-        out << (uint8_t)0x02;
-        out << (uint32_t)resourcePrice;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+        posOutput+=1;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(resourcePrice);
+        posOutput+=4;
     }
     removeObject(objectId,quantity);
     addCash(resourcePrice*quantity);
     saveIndustryStatus(factoryId,industryStatus,industry);
     appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.at(factoryId).rewards.reputation);
-    postReply(query_id,outputData.constData(),outputData.size());
+
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 bool CatchChallenger::operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchChallenger::MonsterDrops &monsterDrops2)
@@ -2524,6 +2692,14 @@ void Client::requestFight(const uint16_t &fightId)
 
 void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std::string &text)
 {
+    //send the network reply
+    removeFromQueryReceived(query_id);
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput=+1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput=+1+4;
+
     switch(action)
     {
         //create
@@ -2556,11 +2732,11 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             {
                 std::cerr << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
 
-                QByteArray outputData;
-                QDataStream out(&outputData, QIODevice::WriteOnly);
-                out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-                out << (uint8_t)0x02;
-                postReply(query_id,outputData.constData(),outputData.size());
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+                posOutput+=1;
+                sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
                 delete clanActionParam;
                 return;
             }
@@ -2591,11 +2767,10 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             removeFromClan();
             clanChangeWithoutDb(public_and_private_informations.clan);
             //send the network reply
-            QByteArray outputData;
-            QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-            out << (uint8_t)0x01;
-            postReply(query_id,outputData.constData(),outputData.size());
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+            posOutput+=1;
+            sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             //update the db
             std::string queryText=PreparedDBQueryCommon::db_query_update_character_clan;
             stringreplaceOne(queryText,"%1",std::to_string(character_id));
@@ -2622,11 +2797,10 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             }
             const std::vector<Client *> &players=clanList.at(public_and_private_informations.clan)->players;
             //send the network reply
-            QByteArray outputData;
-            QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-            out << (uint8_t)0x01;
-            postReply(query_id,outputData.constData(),outputData.size());
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+            posOutput+=1;
+            sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             //update the db
             unsigned int index=0;
             while(index<players.size())
@@ -2681,15 +2855,13 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                     haveAClan=false;
             bool isFound=playerByPseudo.find(text)!=playerByPseudo.cend();
             //send the network reply
-            QByteArray outputData;
-            QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
             if(isFound && !haveAClan)
             {
                 if(playerByPseudo.at(text)->inviteToClan(public_and_private_informations.clan))
-                    out << (uint8_t)0x01;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
                 else
-                    out << (uint8_t)0x02;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
             }
             else
             {
@@ -2697,9 +2869,10 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                     normalOutput("Clan invite: Player "+text+" not found, is connected?");
                 if(haveAClan)
                     normalOutput("Clan invite: Player "+text+" is already into a clan");
-                out << (uint8_t)0x02;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
             }
-            postReply(query_id,outputData.constData(),outputData.size());
+            posOutput+=1;
+            sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         }
         break;
         //eject
@@ -2726,20 +2899,20 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                     isIntoTheClan=true;
             bool isFound=playerByPseudo.find(text)!=playerByPseudo.cend();
             //send the network reply
-            QByteArray outputData;
-            QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
             if(isFound && isIntoTheClan)
-                out << (uint8_t)0x01;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             else
             {
                 if(!isFound)
                     normalOutput("Clan invite: Player "+text+" not found, is connected?");
                 if(!isIntoTheClan)
                     normalOutput("Clan invite: Player "+text+" is not into your clan");
-                out << (uint8_t)0x02;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
             }
-            postReply(query_id,outputData.constData(),outputData.size());
+            posOutput+=1;
+            sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
             if(!isFound)
             {
                 std::string queryText=PreparedDBQueryCommon::db_query_update_character_clan_by_pseudo;
@@ -2792,24 +2965,31 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &action,const 
     #endif
     callbackRegistred.pop();
     Q_UNUSED(action);
+
+    //send the network reply
+    removeFromQueryReceived(query_id);
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput=+1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput=+1+4;
+
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (uint8_t)0x02;
-        postReply(query_id,outputData.constData(),outputData.size());
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+        posOutput+=1;
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
     }
     bool ok;
     const uint32_t clanId=getClanId(&ok);
     if(!ok)
     {
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (uint8_t)0x02;
-        postReply(query_id,outputData.constData(),outputData.size());
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+        posOutput+=1;
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
     }
     public_and_private_informations.clan=clanId;
@@ -2817,12 +2997,12 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &action,const 
     clan->name=text;
     public_and_private_informations.clan_leader=true;
     //send the network reply
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x01;
-    out << (uint32_t)clanId;
-    postReply(query_id,outputData.constData(),outputData.size());
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+    posOutput+=1;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(clanId);
+    posOutput+=4;
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     //add into db
     std::string queryText=PreparedDBQueryCommon::db_query_insert_clan;
     stringreplaceOne(queryText,"%1",std::to_string(clanId));
@@ -2854,25 +3034,35 @@ void Client::sendClanInfo()
     if(clan==NULL)
         return;
     normalOutput("Send the clan info: "+clan->name+", clanId: "+std::to_string(public_and_private_informations.clan)+", get the info");
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5F;
+    posOutput=+1+4;
+
     {
-        const QByteArray outputText=FacilityLibGeneral::toUTF8WithHeader(clan->name);
-        outputData+=outputText;
-        out.device()->seek(out.device()->pos()+outputText.size());
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=clan->name.size();
+        posOutput+=1;
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,clan->name.data(),clan->name.size());
+        posOutput+=clan->name.size();
     }
-    sendMessage(0x5F,outputData.constData(),outputData.size());
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::dissolvedClan()
 {
     public_and_private_informations.clan=0;
     clan=NULL;
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    sendMessage(0x5E);
+
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5E;
+    posOutput=+1+4;
+
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=0;//set the dynamic size
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
     clanChangeWithoutDb(public_and_private_informations.clan);
 }
 
@@ -2883,17 +3073,25 @@ bool Client::inviteToClan(const uint32_t &clanId)
     if(clan==NULL)
         return false;
     inviteToClanList.push_back(clanId);
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint32_t)clanId;
+
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x60;
+    posOutput=+1+4;
+
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(clanId);
+    posOutput+=4;
     {
-        const QByteArray outputText=FacilityLibGeneral::toUTF8WithHeader(clan->name);
-        outputData+=outputText;
-        out.device()->seek(out.device()->pos()+outputText.size());
+        const std::string &text=clan->name;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+        posOutput+=1;
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+        posOutput+=text.size();
     }
-    sendMessage(0x60,outputData.constData(),outputData.size());
-    return false;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
+    return true;
 }
 
 void Client::clanInvite(const bool &accept)
@@ -3064,11 +3262,16 @@ void Client::waitingForCityCaputre(const bool &cancel)
         {
             if(clan->captureCityInProgress.size()==0)
             {
-                QByteArray outputData;
-                QDataStream out(&outputData, QIODevice::WriteOnly);
-                out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-                out << (uint8_t)0x01;
-                sendMessage(0x5B,outputData.constData(),outputData.size());
+                //send the network message
+                uint32_t posOutput=0;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5B;
+                posOutput=+1+4;
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1);//set the dynamic size
+
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+                posOutput+=1;
+
+                sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                 return;
             }
         }
@@ -3079,16 +3282,23 @@ void Client::waitingForCityCaputre(const bool &cancel)
         }
         if(clan->captureCityInProgress!=zoneName)
         {
-            QByteArray outputData;
-            QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-            out << (uint8_t)0x02;
+            //send the network message
+            uint32_t posOutput=0;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5B;
+            posOutput=+1+4;
+
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+            posOutput+=1;
+
             {
-                const QByteArray outputText=FacilityLibGeneral::toUTF8WithHeader(clan->captureCityInProgress);
-                outputData+=outputText;
-                out.device()->seek(out.device()->pos()+outputText.size());
+                const std::string &text=clan->captureCityInProgress;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                posOutput+=1;
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+                posOutput+=text.size();
             }
-            sendMessage(0x5B,outputData.constData(),outputData.size());
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+            sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             return;
         }
         if(captureCity.count(zoneName)>0)
@@ -3383,54 +3593,86 @@ uint16_t Client::cityCaptureClanCount(const CaptureCityValidated &captureCityVal
 
 void Client::cityCaptureBattle(const uint16_t &number_of_player,const uint16_t &number_of_clan)
 {
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x04;
-    out << (uint16_t)number_of_player;
-    out << (uint16_t)number_of_clan;
-    sendMessage(0x5B,outputData.constData(),outputData.size());
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5B;
+    posOutput=+1+4;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+2+2);//set the dynamic size
+
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x04;
+    posOutput+=1;
+    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_player);
+    posOutput+=2;
+    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_clan);
+    posOutput+=2;
+
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::cityCaptureBotFight(const uint16_t &number_of_player,const uint16_t &number_of_clan,const uint32_t &fightId)
 {
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x04;
-    out << (uint16_t)number_of_player;
-    out << (uint16_t)number_of_clan;
-    out << (uint32_t)fightId;
-    sendMessage(0x5B,outputData.constData(),outputData.size());
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5B;
+    posOutput=+1+4;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+2+2+4);//set the dynamic size
+
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x04;
+    posOutput+=1;
+    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_player);
+    posOutput+=2;
+    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_clan);
+    posOutput+=2;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(fightId);
+    posOutput+=4;
+
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::cityCaptureInWait(const uint16_t &number_of_player,const uint16_t &number_of_clan)
 {
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x05;
-    out << (uint16_t)number_of_player;
-    out << (uint16_t)number_of_clan;
-    sendMessage(0x5B,outputData.constData(),outputData.size());
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5B;
+    posOutput=+1+4;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+2+2);//set the dynamic size
+
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x05;
+    posOutput+=1;
+    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_player);
+    posOutput+=2;
+    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_clan);
+    posOutput+=2;
+
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::cityCaptureWin()
 {
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x06;
-    sendMessage(0x5B,outputData.constData(),outputData.size());
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5B;
+    posOutput=+1+4;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1);//set the dynamic size
+
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x06;
+    posOutput+=1;
+
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::previousCityCaptureNotFinished()
 {
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x02;
-    sendMessage(0x5B,outputData.constData(),outputData.size());
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5B;
+    posOutput=+1+4;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1);//set the dynamic size
+
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+    posOutput+=1;
+
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::moveMonster(const bool &up,const uint8_t &number)
@@ -3448,10 +3690,18 @@ void Client::getMarketList(const uint32_t &query_id)
         errorOutput("You can't use the market in trade/fight");
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint64)market_cash;
+    //send the network reply
+    removeFromQueryReceived(query_id);
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput=+1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput=+1+4;
+
+    const quint64 converted_market_cash=htole64(market_cash);
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&converted_market_cash,8);
+    posOutput=+8;
+
     unsigned int index;
     std::vector<MarketItem> marketItemList,marketOwnItemList;
     std::vector<MarketPlayerMonster> marketPlayerMonsterList,marketOwnPlayerMonsterList;
@@ -3478,55 +3728,76 @@ void Client::getMarketList(const uint32_t &query_id)
         index++;
     }
     //object
-    out << (uint32_t)marketItemList.size();
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketItemList.size());
+    posOutput+=4;
     index=0;
     while(index<marketItemList.size())
     {
         const MarketItem &marketObject=marketItemList.at(index);
-        out << marketObject.marketObjectId;
-        out << marketObject.item;
-        out << marketObject.quantity;
-        out << marketObject.cash;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.marketObjectId);
+        posOutput+=4;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.item);
+        posOutput+=4;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.quantity);
+        posOutput+=4;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.cash);
+        posOutput+=4;
         index++;
     }
     //monster
-    out << (uint32_t)marketPlayerMonsterList.size();
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonsterList.size());
+    posOutput+=4;
     index=0;
     while(index<marketPlayerMonsterList.size())
     {
         const MarketPlayerMonster &marketPlayerMonster=marketPlayerMonsterList.at(index);
-        out << marketPlayerMonster.monster.id;
-        out << marketPlayerMonster.monster.monster;
-        out << marketPlayerMonster.monster.level;
-        out << marketPlayerMonster.cash;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonster.monster.id);
+        posOutput+=4;
+        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(marketPlayerMonster.monster.monster);
+        posOutput+=2;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=marketPlayerMonster.monster.level;
+        posOutput+=1;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonster.cash);
+        posOutput+=4;
         index++;
     }
     //own object
-    out << (uint32_t)marketOwnItemList.size();
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketOwnItemList.size());
+    posOutput+=4;
     index=0;
     while(index<marketOwnItemList.size())
     {
         const MarketItem &marketObject=marketOwnItemList.at(index);
-        out << marketObject.marketObjectId;
-        out << marketObject.item;
-        out << marketObject.quantity;
-        out << marketObject.cash;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.marketObjectId);
+        posOutput+=4;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.item);
+        posOutput+=4;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.quantity);
+        posOutput+=4;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.cash);
+        posOutput+=4;
         index++;
     }
     //own monster
-    out << (uint32_t)marketPlayerMonsterList.size();
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonsterList.size());
+    posOutput+=4;
     index=0;
     while(index<marketPlayerMonsterList.size())
     {
         const MarketPlayerMonster &marketPlayerMonster=marketPlayerMonsterList.at(index);
-        out << marketPlayerMonster.monster.id;
-        out << marketPlayerMonster.monster.monster;
-        out << marketPlayerMonster.monster.level;
-        out << marketPlayerMonster.cash;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonster.monster.id);
+        posOutput+=4;
+        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(marketPlayerMonster.monster.monster);
+        posOutput+=2;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=marketPlayerMonster.monster.level;
+        posOutput+=1;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonster.cash);
+        posOutput+=4;
         index++;
     }
 
-    postReply(query_id,outputData.constData(),outputData.size());
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::buyMarketObject(const uint32_t &query_id,const uint32_t &marketObjectId,const uint32_t &quantity)
@@ -3541,9 +3812,14 @@ void Client::buyMarketObject(const uint32_t &query_id,const uint32_t &marketObje
         errorOutput("You can't use the market with null quantity");
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    //send the network reply
+    removeFromQueryReceived(query_id);
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput=+1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput=+1+4;
+
     //search into the market
     unsigned int index=0;
     while(index<GlobalServerData::serverPrivateVariables.marketItemList.size())
@@ -3553,15 +3829,19 @@ void Client::buyMarketObject(const uint32_t &query_id,const uint32_t &marketObje
         {
             if(marketItem.quantity<quantity)
             {
-                out << (uint8_t)0x02;
-                postReply(query_id,outputData.constData(),outputData.size());
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+                posOutput+=1;
+                sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                 return;
             }
             //check if have the price
             if((quantity*marketItem.cash)>public_and_private_informations.cash)
             {
-                out << (uint8_t)0x03;
-                postReply(query_id,outputData.constData(),outputData.size());
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
+                posOutput+=1;
+                sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                 return;
             }
             //apply the buy
@@ -3593,14 +3873,19 @@ void Client::buyMarketObject(const uint32_t &query_id,const uint32_t &marketObje
             stringreplaceOne(queryText,"%2",std::to_string(marketItem.player));
             dbQueryWriteServer(queryText);
             addObject(marketItem.item,quantity);
-            out << (uint8_t)0x01;
-            postReply(query_id,outputData.constData(),outputData.size());
+
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+            posOutput+=1;
+            sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             return;
         }
         index++;
     }
-    out << (uint8_t)0x03;
-    postReply(query_id,outputData.constData(),outputData.size());
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
+    posOutput+=1;
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::buyMarketMonster(const uint32_t &query_id,const uint32_t &monsterId)
@@ -3610,13 +3895,20 @@ void Client::buyMarketMonster(const uint32_t &query_id,const uint32_t &monsterId
         errorOutput("You can't use the market in trade/fight");
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    //send the network reply
+    removeFromQueryReceived(query_id);
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput=+1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput=+1+4;
+
     if(public_and_private_informations.playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
     {
-        out << (uint8_t)0x02;
-        postReply(query_id,outputData.constData(),outputData.size());
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+        posOutput+=1;
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
     }
     //search into the market
@@ -3629,8 +3921,10 @@ void Client::buyMarketMonster(const uint32_t &query_id,const uint32_t &monsterId
             //check if have the price
             if(marketPlayerMonster.cash>public_and_private_informations.cash)
             {
-                out << (uint8_t)0x03;
-                postReply(query_id,outputData.constData(),outputData.size());
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
+                posOutput+=1;
+                sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                 return;
             }
             //apply the buy
@@ -3651,14 +3945,19 @@ void Client::buyMarketMonster(const uint32_t &query_id,const uint32_t &monsterId
             stringreplaceOne(queryText,"%2",std::to_string(getPlayerMonster().size()));
             stringreplaceOne(queryText,"%3",std::to_string(marketPlayerMonster.monster.id));
             dbQueryWriteCommon(queryText);
-            out << (uint8_t)0x01;
-            postReply(query_id,outputData.constData(),outputData.size());
+
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+            posOutput+=1;
+            sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             return;
         }
         index++;
     }
-    out << (uint8_t)0x03;
-    postReply(query_id,outputData.constData(),outputData.size());
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
+    posOutput+=1;
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price)
@@ -3673,13 +3972,20 @@ void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,c
         errorOutput("You can't use the market with null quantity");
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    //send the network reply
+    removeFromQueryReceived(query_id);
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput=+1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput=+1+4;
+
     if(objectQuantity(objectId)<quantity)
     {
-        out << (uint8_t)0x02;
-        postReply(query_id,outputData.constData(),outputData.size());
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+        posOutput+=1;
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
     }
     //search into the market
@@ -3692,8 +3998,12 @@ void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,c
             removeObject(objectId,quantity);
             GlobalServerData::serverPrivateVariables.marketItemList[index].cash=price;
             GlobalServerData::serverPrivateVariables.marketItemList[index].quantity+=quantity;
-            out << (uint8_t)0x01;
-            postReply(query_id,outputData.constData(),outputData.size());
+
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+            posOutput+=1;
+            sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
             std::string queryText=PreparedDBQueryServer::db_query_update_item_market_and_price;
             stringreplaceOne(queryText,"%1",std::to_string(GlobalServerData::serverPrivateVariables.marketItemList.at(index).quantity));
             stringreplaceOne(queryText,"%2",std::to_string(price));
@@ -3706,8 +4016,11 @@ void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,c
     }
     if(marketObjectIdList.size()==0)
     {
-        out << (uint8_t)0x02;
-        postReply(query_id,outputData.constData(),outputData.size());
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+        posOutput+=1;
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
         normalOutput("No more id into marketObjectIdList");
         return;
     }
@@ -3727,8 +4040,11 @@ void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,c
     marketItem.quantity=quantity;
     marketObjectIdList.erase(marketObjectIdList.begin());
     GlobalServerData::serverPrivateVariables.marketItemList.push_back(marketItem);
-    out << (uint8_t)0x01;
-    postReply(query_id,outputData.constData(),outputData.size());
+
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+    posOutput+=1;
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::putMarketMonster(const uint32_t &query_id,const uint32_t &monsterId,const uint32_t &price)
@@ -3738,9 +4054,14 @@ void Client::putMarketMonster(const uint32_t &query_id,const uint32_t &monsterId
         errorOutput("You can't use the market in trade/fight");
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    //send the network reply
+    removeFromQueryReceived(query_id);
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput=+1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput=+1+4;
+
     unsigned int index=0;
     while(index<public_and_private_informations.playerMonster.size())
     {
@@ -3749,9 +4070,12 @@ void Client::putMarketMonster(const uint32_t &query_id,const uint32_t &monsterId
         {
             if(!remainMonstersToFight(monsterId))
             {
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+                posOutput+=1;
+                sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
                 normalOutput("You can't put in market this msonter because you will be without monster to fight");
-                out << (uint8_t)0x02;
-                postReply(query_id,outputData.constData(),outputData.size());
                 return;
             }
             MarketPlayerMonster marketPlayerMonster;
@@ -3777,34 +4101,50 @@ void Client::putMarketMonster(const uint32_t &query_id,const uint32_t &monsterId
                 dbQueryWriteCommon(queryText);
                 index++;
             }
-            out << (uint8_t)0x01;
-            postReply(query_id,outputData.constData(),outputData.size());
+
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+            posOutput+=1;
+            sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
             return;
         }
         index++;
     }
-    out << (uint8_t)0x02;
-    postReply(query_id,outputData.constData(),outputData.size());
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+    posOutput+=1;
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
-void Client::recoverMarketCash(const uint32_t &query_id)
+void Client::withdrawMarketCash(const uint32_t &query_id)
 {
     if(getInTrade() || isInFight())
     {
         errorOutput("You can't use the market in trade/fight");
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint64)market_cash;
+    //send the network reply
+    removeFromQueryReceived(query_id);
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput=+1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput=+1+4;
+
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(8);//set the dynamic size
+    const quint64 converted_market_cash=htole64(market_cash);
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&converted_market_cash,8);
+    posOutput=+8;
+
     public_and_private_informations.cash+=market_cash;
     market_cash=0;
     std::string queryText=PreparedDBQueryServer::db_query_get_market_cash;
     stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.cash));
-    stringreplaceOne(queryText,"%1",std::to_string(character_id));
+    stringreplaceOne(queryText,"%2",std::to_string(character_id));
     dbQueryWriteServer(queryText);
-    postReply(query_id,outputData.constData(),outputData.size());
+
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::withdrawMarketObject(const uint32_t &query_id,const uint32_t &objectId,const uint32_t &quantity)
@@ -3819,9 +4159,14 @@ void Client::withdrawMarketObject(const uint32_t &query_id,const uint32_t &objec
         errorOutput("You can't use the market with null quantity");
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    //send the network reply
+    removeFromQueryReceived(query_id);
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput=+1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput=+1+4;
+
     unsigned int index=0;
     while(index<GlobalServerData::serverPrivateVariables.marketItemList.size())
     {
@@ -3830,20 +4175,29 @@ void Client::withdrawMarketObject(const uint32_t &query_id,const uint32_t &objec
         {
             if(marketItem.player!=character_id)
             {
-                out << (uint8_t)0x02;
-                postReply(query_id,outputData.constData(),outputData.size());
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+                posOutput+=1;
+                sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                 return;
             }
             if(marketItem.quantity<quantity)
             {
-                out << (uint8_t)0x02;
-                postReply(query_id,outputData.constData(),outputData.size());
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+                posOutput+=1;
+                sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                 return;
             }
-            out << (uint8_t)0x01;
-            out << (uint8_t)0x01;
-            out << marketItem.item;
-            out << marketItem.quantity;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+            posOutput+=1;
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketItem.item);
+            posOutput+=4;
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketItem.quantity);
+            posOutput+=4;
+
             GlobalServerData::serverPrivateVariables.marketItemList[index].quantity=marketItem.quantity-quantity;
             if(GlobalServerData::serverPrivateVariables.marketItemList.at(index).quantity==0)
             {
@@ -3863,13 +4217,18 @@ void Client::withdrawMarketObject(const uint32_t &query_id,const uint32_t &objec
                 dbQueryWriteServer(queryText);
             }
             addObject(objectId,quantity);
-            postReply(query_id,outputData.constData(),outputData.size());
+
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+            sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
             return;
         }
         index++;
     }
-    out << (uint8_t)0x02;
-    postReply(query_id,outputData.constData(),outputData.size());
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+    posOutput+=1;
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::withdrawMarketMonster(const uint32_t &query_id,const uint32_t &monsterId)
@@ -3879,9 +4238,14 @@ void Client::withdrawMarketMonster(const uint32_t &query_id,const uint32_t &mons
         errorOutput("You can't use the market in trade/fight");
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    //send the network reply
+    removeFromQueryReceived(query_id);
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput=+1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput=+1+4;
+
     unsigned int index=0;
     while(index<GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size())
     {
@@ -3890,14 +4254,18 @@ void Client::withdrawMarketMonster(const uint32_t &query_id,const uint32_t &mons
         {
             if(marketPlayerMonster.player!=character_id)
             {
-                out << (uint8_t)0x02;
-                postReply(query_id,outputData.constData(),outputData.size());
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+                posOutput+=1;
+                sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                 return;
             }
             if(public_and_private_informations.playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
             {
-                out << (uint8_t)0x02;
-                postReply(query_id,outputData.constData(),outputData.size());
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+                posOutput+=1;
+                sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                 return;
             }
             GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.erase(GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.begin()+index);
@@ -3908,16 +4276,24 @@ void Client::withdrawMarketMonster(const uint32_t &query_id,const uint32_t &mons
             queryText=PreparedDBQueryServer::db_query_delete_monster_market_price;
             stringreplaceOne(queryText,"%1",std::to_string(marketPlayerMonster.monster.id));
             dbQueryWriteServer(queryText);
-            out << (uint8_t)0x01;
-            out << (uint8_t)0x02;
-            const QByteArray newData(outputData+FacilityLib::privateMonsterToBinary(public_and_private_informations.playerMonster.back()));
-            postReply(query_id,newData.constData(),newData.size());
+
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+            posOutput+=1;
+
+            posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.playerMonster.back());
+
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+            sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             return;
         }
         index++;
     }
-    out << (uint8_t)0x02;
-    postReply(query_id,outputData.constData(),outputData.size());
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+    posOutput+=1;
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 bool Client::haveReputationRequirements(const std::vector<ReputationRequirements> &reputationList) const

@@ -1525,7 +1525,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         break;
         //Withdraw cash
         case 0x90:
-            recoverMarketCash(queryNumber);
+            withdrawMarketCash(queryNumber);
             return true;
         break;
         //Withdraw object
