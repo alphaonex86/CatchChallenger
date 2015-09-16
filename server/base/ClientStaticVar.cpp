@@ -54,6 +54,10 @@ unsigned char Client::loginIsWrongBuffer[]={0xC1/*reply server to client*/,0x00/
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 const unsigned char Client::protocolHeaderToMatch[] = PROTOCOL_HEADER_LOGIN;
+
+unsigned char * Client::protocolMessageLogicalGroupAndServerList=NULL;
+uint16_t Client::protocolMessageLogicalGroupAndServerListSize=0;
+uint16_t Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber=0;
 #else
 const unsigned char Client::protocolHeaderToMatch[] = PROTOCOL_HEADER_GAMESERVER;
 #endif

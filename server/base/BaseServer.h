@@ -88,6 +88,7 @@ protected:
     };
 
     void preload_randomBlock();
+    void preload_other();
     void preload_the_data();
     void preload_the_events();
     void preload_the_ddos();
@@ -136,6 +137,7 @@ protected:
     void preload_dictionary_map_return();
     void preload_map_semi_after_db_id();
 
+    void unload_other();
     void unload_randomBlock();
     void unload_industries();
     void unload_zone();

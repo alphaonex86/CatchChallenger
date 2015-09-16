@@ -172,6 +172,7 @@ void PlayerUpdater::exec()
     if(GlobalServerData::serverSettings.sendPlayerNumber && sended_connected_players!=connected_players)
     {
         sended_connected_players=connected_players;
+        *reinterpret_cast<quint16 *>(Client::protocolMessageLogicalGroupAndServerList+Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber)=htole16(connected_players);
         #ifndef EPOLLCATCHCHALLENGERSERVER
         /*emit */newConnectedPlayer(connected_players);
         #else

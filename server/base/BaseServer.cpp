@@ -236,6 +236,7 @@ void BaseServer::preload_the_data()
     }
     timeDatapack.restart();
     preload_the_randomData();
+    preload_other();
     preload_randomBlock();
     preload_the_events();
     preload_the_ddos();

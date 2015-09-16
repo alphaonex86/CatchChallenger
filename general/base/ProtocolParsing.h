@@ -95,7 +95,7 @@ public:
     friend class ProtocolParsingCheck;
     virtual ssize_t read(char * data, const size_t &size) = 0;
     virtual ssize_t write(const char * const data, const size_t &size) = 0;
-    virtual inline void registerOutputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
+    virtual void registerOutputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
 public:
     bool parseIncommingDataRaw(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
     #ifndef EPOLLCATCHCHALLENGERSERVER
