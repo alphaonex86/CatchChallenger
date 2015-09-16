@@ -51,81 +51,210 @@ void BaseServer::preload_randomBlock()
 void BaseServer::preload_other()
 {
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    if(CommonSettingsServer::commonSettingsServer.exportedXml.size()>(1024-64))
+    //game server only, the server data message
     {
-        std::cerr << "The server is alonem why do you need more than 900 char for description? Limited to 900 to limit the memory usage" << std::endl;
-        abort();
-    }
-    Client::protocolMessageLogicalGroupAndServerListSize=0;
-    //C20F
-    {
-        //no logical group
-        //send the network message
-        ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x44;
-        //size
-        ProtocolParsingBase::tempBigBufferForOutput[0x01]=0x04;
-        ProtocolParsingBase::tempBigBufferForOutput[0x02]=0x00;
-        ProtocolParsingBase::tempBigBufferForOutput[0x03]=0x00;
-        ProtocolParsingBase::tempBigBufferForOutput[0x04]=0x00;
-        //one logical group
-        ProtocolParsingBase::tempBigBufferForOutput[0x05]=0x01;
-        //empty string
-        ProtocolParsingBase::tempBigBufferForOutput[0x06]=0x00;
-        ProtocolParsingBase::tempBigBufferForOutput[0x07]=0x00;
-        ProtocolParsingBase::tempBigBufferForOutput[0x08]=0x00;
-
-        Client::protocolMessageLogicalGroupAndServerListSize+=9;
-    }
-    //C20E
-    {
-        uint32_t posOutput=Client::protocolMessageLogicalGroupAndServerListSize;
-        //send the network message
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x40;
-        posOutput=+1+4;
-
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;//Server mode, unique then proxy
-        posOutput+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;//server list size, only this alone server
-        posOutput+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;//charactersgroup empty
-        posOutput+=1;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;//unique key, useless here
-        posOutput+=4;
+        if(CommonSettingsServer::commonSettingsServer.exportedXml.size()>(1024-64))
         {
-            const std::string &text=CommonSettingsServer::commonSettingsServer.exportedXml;
-            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(text.size());
-            posOutput+=2;
-            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-            posOutput+=text.size();
+            std::cerr << "The server is alonem why do you need more than 900 char for description? Limited to 900 to limit the memory usage" << std::endl;
+            abort();
         }
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;//logical group empty
+        Client::protocolMessageLogicalGroupAndServerListSize=0;
+        //C20F
+        {
+            //no logical group
+            //send the network message
+            ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x44;
+            //size
+            ProtocolParsingBase::tempBigBufferForOutput[0x01]=0x04;
+            ProtocolParsingBase::tempBigBufferForOutput[0x02]=0x00;
+            ProtocolParsingBase::tempBigBufferForOutput[0x03]=0x00;
+            ProtocolParsingBase::tempBigBufferForOutput[0x04]=0x00;
+            //one logical group
+            ProtocolParsingBase::tempBigBufferForOutput[0x05]=0x01;
+            //empty string
+            ProtocolParsingBase::tempBigBufferForOutput[0x06]=0x00;
+            ProtocolParsingBase::tempBigBufferForOutput[0x07]=0x00;
+            ProtocolParsingBase::tempBigBufferForOutput[0x08]=0x00;
+
+            Client::protocolMessageLogicalGroupAndServerListSize+=9;
+        }
+        //C20E
+        {
+            uint32_t posOutput=Client::protocolMessageLogicalGroupAndServerListSize;
+            //send the network message
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x40;
+            posOutput=+1+4;
+
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;//Server mode, unique then proxy
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;//server list size, only this alone server
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;//charactersgroup empty
+            posOutput+=1;
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;//unique key, useless here
+            posOutput+=4;
+            {
+                const std::string &text=CommonSettingsServer::commonSettingsServer.exportedXml;
+                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(text.size());
+                posOutput+=2;
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+                posOutput+=text.size();
+            }
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;//logical group empty
+            posOutput+=1;
+            if(GlobalServerData::serverSettings.sendPlayerNumber)
+            {
+                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(GlobalServerData::serverSettings.max_players);
+                posOutput+=2;
+                Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber=posOutput;
+                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+                posOutput+=2;
+            }
+            else
+            {
+                if(GlobalServerData::serverSettings.max_players<=255)
+                    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(255);
+                else
+                    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65535);
+                posOutput+=2;
+                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(255/2);
+                posOutput+=2;
+            }
+            *reinterpret_cast<quint32 *>(Client::protocolMessageLogicalGroupAndServerListSize+1)=htole32(posOutput-Client::protocolMessageLogicalGroupAndServerListSize-1-4);//set the dynamic size
+            Client::protocolMessageLogicalGroupAndServerListSize=posOutput;
+        }
+        if(Client::protocolMessageLogicalGroupAndServerList!=NULL)
+            delete Client::protocolMessageLogicalGroupAndServerList;
+        Client::protocolMessageLogicalGroupAndServerList=(unsigned char *)malloc(Client::protocolMessageLogicalGroupAndServerListSize);
+        memcpy(Client::protocolMessageLogicalGroupAndServerList,ProtocolParsingBase::tempBigBufferForOutput,Client::protocolMessageLogicalGroupAndServerListSize);
+    }
+    #endif
+
+
+
+
+    //load the character reply header
+    {
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        posOutput=+1+1+4;
+
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;// all is good
         posOutput+=1;
+
         if(GlobalServerData::serverSettings.sendPlayerNumber)
-        {
             *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(GlobalServerData::serverSettings.max_players);
-            posOutput+=2;
-            Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber=posOutput;
-            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
-            posOutput+=2;
-        }
         else
         {
             if(GlobalServerData::serverSettings.max_players<=255)
                 *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(255);
             else
                 *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65535);
-            posOutput+=2;
-            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(255/2);
-            posOutput+=2;
         }
-        *reinterpret_cast<quint32 *>(Client::protocolMessageLogicalGroupAndServerListSize+1)=htole32(posOutput-Client::protocolMessageLogicalGroupAndServerListSize-1-4);//set the dynamic size
-        Client::protocolMessageLogicalGroupAndServerListSize=posOutput;
+        posOutput+=2;
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        if(GlobalServerData::serverPrivateVariables.timer_city_capture==NULL)
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
+        else if(GlobalServerData::serverPrivateVariables.timer_city_capture->isActive())
+        {
+            const qint64 &time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(time/1000);
+        }
+        else
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
+        #else
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
+        #endif
+        posOutput+=4;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=GlobalServerData::serverSettings.city.capture.frenquency;
+        posOutput+=1;
+
+        //common settings
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer;
+        posOutput+=1;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick);
+        posOutput+=4;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.forcedSpeed;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.useSP;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.tcpCork;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.autoLearn;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.dontSendPseudo;
+        posOutput+=1;
+        *reinterpret_cast<float *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsServer::commonSettingsServer.rates_xp);
+        posOutput+=4;
+        *reinterpret_cast<float *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsServer::commonSettingsServer.rates_gold);
+        posOutput+=4;
+        *reinterpret_cast<float *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsServer::commonSettingsServer.rates_xp_pow);
+        posOutput+=4;
+        *reinterpret_cast<float *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsServer::commonSettingsServer.rates_drop);
+        posOutput+=4;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.chat_allow_all;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.chat_allow_local;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.chat_allow_private;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.chat_allow_clan;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.factoryPriceChange;
+        posOutput+=1;
+
+        //Main type code
+        {
+            const std::string &text=CommonSettingsServer::commonSettingsServer.mainDatapackCode;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+            posOutput+=1;
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+            posOutput+=text.size();
+        }
+        //Sub type cod
+        {
+            const std::string &text=CommonSettingsServer::commonSettingsServer.subDatapackCode;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+            posOutput+=1;
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+            posOutput+=text.size();
+        }
+        if(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()!=28)
+        {
+            qDebug() << "CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()!=28";
+            abort();
+        }
+        //main hash
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,CommonSettingsServer::commonSettingsServer.datapackHashServerMain.constData(),28);
+        posOutput+=28;
+        //sub hash
+        if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
+        {
+            if(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()!=28)
+            {
+                qDebug() << "CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()!=28";
+                abort();
+            }
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,CommonSettingsServer::commonSettingsServer.datapackHashServerSub.constData(),28);
+            posOutput+=28;
+        }
+        //mirror
+        {
+            const std::string &text=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+            posOutput+=1;
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+            posOutput+=text.size();
+        }
+
+        if(Client::characterIsRightFinalStepHeader!=NULL)
+            delete Client::characterIsRightFinalStepHeader;
+        Client::characterIsRightFinalStepHeaderSize=posOutput;
+        Client::characterIsRightFinalStepHeader=(unsigned char *)malloc(Client::characterIsRightFinalStepHeaderSize);
+        memcpy(Client::characterIsRightFinalStepHeader,ProtocolParsingBase::tempBigBufferForOutput,Client::characterIsRightFinalStepHeaderSize);
     }
-    if(Client::protocolMessageLogicalGroupAndServerList!=NULL)
-        delete Client::protocolMessageLogicalGroupAndServerList;
-    Client::protocolMessageLogicalGroupAndServerList=(unsigned char *)malloc(Client::protocolMessageLogicalGroupAndServerListSize);
-    memcpy(Client::protocolMessageLogicalGroupAndServerList,ProtocolParsingBase::tempBigBufferForOutput,Client::protocolMessageLogicalGroupAndServerListSize);
-    #endif
 }
 
 

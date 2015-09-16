@@ -202,4 +202,9 @@ void BaseServer::unload_other()
         Client::protocolMessageLogicalGroupAndServerList=NULL;
     }
     #endif
+    if(Client::characterIsRightFinalStepHeader!=NULL)
+    {
+        delete Client::characterIsRightFinalStepHeader;
+        Client::characterIsRightFinalStepHeader=NULL;
+    }
 }
