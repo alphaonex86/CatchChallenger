@@ -236,7 +236,6 @@ void BaseServer::preload_the_data()
     }
     timeDatapack.restart();
     preload_the_randomData();
-    preload_other();
     preload_randomBlock();
     preload_the_events();
     preload_the_ddos();
@@ -301,6 +300,7 @@ void BaseServer::preload_finish()
     std::cout << plant_on_the_map << " SQL plant on map" << std::endl;
     std::cout << GlobalServerData::serverPrivateVariables.marketItemList.size() << " SQL market item" << std::endl;
     std::cout << "Loaded the server SQL datapack into " << timeDatapack.elapsed() << "ms" << std::endl;
+    preload_other();
 }
 
 bool BaseServer::load_next_city_capture()
