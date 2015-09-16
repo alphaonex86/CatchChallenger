@@ -420,17 +420,14 @@ std::string Client::getPseudo() const
 
 void Client::dropAllClients()
 {
-    sendMessage(0x62);
+    ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x62;
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,0x01);
 }
 
 void Client::dropAllBorderClients()
 {
-    sendMessage(0x67);
-}
-
-QByteArray Client::getRawPseudo() const
-{
-    return rawPseudo;
+    ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x67;
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,0x01);
 }
 
 #ifndef EPOLLCATCHCHALLENGERSERVER

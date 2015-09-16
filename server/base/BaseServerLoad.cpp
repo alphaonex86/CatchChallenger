@@ -48,6 +48,87 @@ void BaseServer::preload_randomBlock()
     }
 }
 
+void BaseServer::preload_other()
+{
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    if(CommonSettingsServer::commonSettingsServer.exportedXml.size()>(1024-64))
+    {
+        std::cerr << "The server is alonem why do you need more than 900 char for description? Limited to 900 to limit the memory usage" << std::endl;
+        abort();
+    }
+    Client::protocolMessageLogicalGroupAndServerListSize=0;
+    //C20F
+    {
+        //no logical group
+        //send the network message
+        ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x44;
+        //size
+        ProtocolParsingBase::tempBigBufferForOutput[0x01]=0x04;
+        ProtocolParsingBase::tempBigBufferForOutput[0x02]=0x00;
+        ProtocolParsingBase::tempBigBufferForOutput[0x03]=0x00;
+        ProtocolParsingBase::tempBigBufferForOutput[0x04]=0x00;
+        //one logical group
+        ProtocolParsingBase::tempBigBufferForOutput[0x05]=0x01;
+        //empty string
+        ProtocolParsingBase::tempBigBufferForOutput[0x06]=0x00;
+        ProtocolParsingBase::tempBigBufferForOutput[0x07]=0x00;
+        ProtocolParsingBase::tempBigBufferForOutput[0x08]=0x00;
+
+        Client::protocolMessageLogicalGroupAndServerListSize+=9;
+    }
+    //C20E
+    {
+        uint32_t posOutput=Client::protocolMessageLogicalGroupAndServerListSize;
+        //send the network message
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x40;
+        posOutput=+1+4;
+
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;//Server mode, unique then proxy
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;//server list size, only this alone server
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;//charactersgroup empty
+        posOutput+=1;
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;//unique key, useless here
+        posOutput+=4;
+        {
+            const std::string &text=CommonSettingsServer::commonSettingsServer.exportedXml;
+            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(text.size());
+            posOutput+=2;
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+            posOutput+=text.size();
+        }
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;//logical group empty
+        posOutput+=1;
+        if(GlobalServerData::serverSettings.sendPlayerNumber)
+        {
+            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(GlobalServerData::serverSettings.max_players);
+            posOutput+=2;
+            Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber=posOutput;
+            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+            posOutput+=2;
+        }
+        else
+        {
+            if(GlobalServerData::serverSettings.max_players<=255)
+                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(255);
+            else
+                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65535);
+            posOutput+=2;
+            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(255/2);
+            posOutput+=2;
+        }
+        *reinterpret_cast<quint32 *>(Client::protocolMessageLogicalGroupAndServerListSize+1)=htole32(posOutput-Client::protocolMessageLogicalGroupAndServerListSize-1-4);//set the dynamic size
+        Client::protocolMessageLogicalGroupAndServerListSize=posOutput;
+    }
+    if(Client::protocolMessageLogicalGroupAndServerList!=NULL)
+        delete Client::protocolMessageLogicalGroupAndServerList;
+    Client::protocolMessageLogicalGroupAndServerList=(unsigned char *)malloc(Client::protocolMessageLogicalGroupAndServerListSize);
+    memcpy(Client::protocolMessageLogicalGroupAndServerList,ProtocolParsingBase::tempBigBufferForOutput,Client::protocolMessageLogicalGroupAndServerListSize);
+    #endif
+}
+
+
 void BaseServer::preload_the_events()
 {
     GlobalServerData::serverPrivateVariables.events.clear();
