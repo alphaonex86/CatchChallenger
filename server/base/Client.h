@@ -64,7 +64,6 @@ public:
     void doDDOSCompute();
     #endif
     void receive_instant_player_number(const uint16_t &connected_players, const char * const data, const uint8_t &size);
-    QByteArray getRawPseudo() const;
     void parseIncommingData();
     static void startTheCityCapture();
     static void setEvent(const uint8_t &event, const uint8_t &new_value);
@@ -104,6 +103,10 @@ public:
     static unsigned char protocolReplyCompressionNone[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     static unsigned char protocolReplyCompresssionZlib[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     static unsigned char protocolReplyCompressionXz[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+
+    static unsigned char *protocolMessageLogicalGroupAndServerList;
+    static uint16_t protocolMessageLogicalGroupAndServerListSize;
+    static uint16_t protocolMessageLogicalGroupAndServerListPosPlayerNumber;
     #else
     static unsigned char protocolReplyCompressionNone[4];
     static unsigned char protocolReplyCompresssionZlib[4];
