@@ -18,7 +18,7 @@ public:
     static PlayerMonster botFightMonsterToPlayerMonster(const BotFight::BotFightMonster &botFightMonster, const Monster::Stat &stat);
     static std::string genderToString(const Gender &gender);
     static QDateTime nextCaptureTime(const City &city);
-    static QByteArray privateMonsterToBinary(const PlayerMonster &monster);
+    static uint32_t privateMonsterToBinary(char *data, const PlayerMonster &monster);
     static IndustryStatus industryStatusWithCurrentTime(const IndustryStatus &industryStatus, const Industry &industry);
     static uint32_t getFactoryResourcePrice(const uint32_t &quantityInStock,const Industry::Resource &resource,const Industry &industry);
     static uint32_t getFactoryProductPrice(const uint32_t &quantityInStock,const Industry::Product &product,const Industry &industry);
