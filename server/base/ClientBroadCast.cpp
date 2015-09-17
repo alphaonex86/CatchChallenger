@@ -9,36 +9,24 @@ using namespace CatchChallenger;
 //without verification of rights
 void Client::sendSystemMessage(const std::string &text,const bool &important)
 {
-    QByteArray finalData;
-    {
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out.device()->seek(out.device()->pos()+8);//jump to have space for the header: packetCode 1Byte, query number 1Byte optional, size 6Bytes optional, aligned to 64Bits
-        if(important)
-            out << (uint8_t)0x08;
-        else
-            out << (uint8_t)0x07;
-        {
-            const QByteArray tempText(text.data(),text.size());
-            if(tempText.size()>255)
-            {
-                errorOutput("text in Utf8 too big, line: "+std::to_string(__LINE__));
-                return;
-            }
-            out << (uint8_t)tempText.size();
-            outputData+=tempText;
-            out.device()->seek(out.device()->pos()+tempText.size());
-        }
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5F;
+    posOutput=+1+4;
 
-        const uint8_t &addedSize=ProtocolParsingBase::addHeaderForOutcommingData(
-            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            false,
-            #endif
-                    0x5C,finalData.data()+8,finalData.size()-8);
-        if(addedSize<8)
-            finalData.remove(0,8-addedSize);//align the data for faster copy after
+    if(important)
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x08;
+    else
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x07;
+    posOutput+=1;
+    {
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+        posOutput+=1;
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+        posOutput+=text.size();
     }
+
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
 
     const int &size=clientBroadCastList.size();
     int index=0;
@@ -46,7 +34,7 @@ void Client::sendSystemMessage(const std::string &text,const bool &important)
     {
         Client * const client=clientBroadCastList.at(index);
         if(client!=this)
-            client->sendRawBlock(finalData.constData(),finalData.size());
+            client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         index++;
     }
 }
@@ -106,58 +94,66 @@ void Client::sendPM(const std::string &text,const std::string &pseudo)
 
 void Client::receiveChatText(const Chat_type &chatType,const std::string &text,const Client *sender_informations)
 {
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)chatType;
-    {
-        const QByteArray tempText(text.data(),text.size());
-        if(tempText.size()>255)
-        {
-            std::cerr << "text in Utf8 too big, line: " << __LINE__ << std::endl;
-            return;
-        }
-        out << (uint8_t)tempText.size();
-        outputData+=tempText;
-        out.device()->seek(out.device()->pos()+tempText.size());
-    }
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5F;
+    posOutput=+1+4;
 
-    QByteArray outputData2;
-    QDataStream out2(&outputData2, QIODevice::WriteOnly);
-    out2.setVersion(QDataStream::Qt_4_4);
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)chatType;
+    posOutput+=1;
+    {
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+        posOutput+=1;
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+        posOutput+=text.size();
+    }
+    {
+        const std::string &text=sender_informations->public_and_private_informations.public_informations.pseudo;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+        posOutput+=1;
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+        posOutput+=text.size();
+    }
     if(GlobalServerData::serverSettings.dontSendPlayerType)
-        out2 << (uint8_t)Player_type_normal;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)Player_type_normal;
     else
-        out2 << (uint8_t)sender_informations->public_and_private_informations.public_informations.type;
-    const QByteArray newData(outputData+sender_informations->rawPseudo+outputData2);
-    sendMessage(0x5C,newData.constData(),newData.size());
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)sender_informations->public_and_private_informations.public_informations.type;
+    posOutput+=1;
+
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::receiveSystemText(const std::string &text,const bool &important)
 {
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5F;
+    posOutput=+1+4;
+
     if(important)
-        out << (uint8_t)Chat_type_system_important;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)Chat_type_system_important;
     else
-        out << (uint8_t)Chat_type_system;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)Chat_type_system;
+    posOutput+=1;
     {
-        const QByteArray tempText(text.data(),text.size());
-        if(tempText.size()>255)
-        {
-            std::cerr << "text in Utf8 too big, line: " << __LINE__ << std::endl;
-            return;
-        }
-        out << (uint8_t)tempText.size();
-        outputData+=tempText;
-        out.device()->seek(out.device()->pos()+tempText.size());
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+        posOutput+=1;
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+        posOutput+=text.size();
     }
-    sendMessage(0x5C,outputData.constData(),outputData.size());
+
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::sendChatText(const Chat_type &chatType,const std::string &text)
 {
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5F;
+    posOutput=+1+4;
+
     if(chatType==Chat_type_clan)
     {
         if((clanChatDropTotalCache+clanChatDropNewValue)>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessageLocalClan)
@@ -175,41 +171,28 @@ void Client::sendChatText(const Chat_type &chatType,const std::string &text)
             #endif
             const std::vector<Client *> &playerWithSameClan = clan->players;
 
-            QByteArray finalData;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)chatType;
+            posOutput+=1;
             {
-                QByteArray finalData;
-                QDataStream out(&finalData, QIODevice::WriteOnly);
-                out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-                out.device()->seek(out.device()->pos()+8);//jump to have space for the header: packetCode 1Byte, query number 1Byte optional, size 6Bytes optional, aligned to 64Bits
-                out << (uint8_t)chatType;
-                {
-                    const QByteArray tempText(text.data(),text.size());
-                    if(tempText.size()>255)
-                    {
-                        errorOutput("text in Utf8 too big, line: "+std::to_string(__LINE__));
-                        return;
-                    }
-                    out << (uint8_t)tempText.size();
-                    finalData+=tempText;
-                    out.device()->seek(out.device()->pos()+tempText.size());
-                }
-
-                finalData+=rawPseudo;
-                out.device()->seek(out.device()->pos()+rawPseudo.size());
-
-                if(GlobalServerData::serverSettings.dontSendPlayerType)
-                    out << (uint8_t)Player_type_normal;
-                else
-                    out << (uint8_t)this->public_and_private_informations.public_informations.type;
-
-                const uint8_t &addedSize=ProtocolParsingBase::addHeaderForOutcommingData(
-                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    false,
-                    #endif
-                            0x5C,finalData.data()+8,finalData.size()-8);
-                if(addedSize<8)
-                    finalData.remove(0,8-addedSize);//align the data for faster copy after
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                posOutput+=1;
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+                posOutput+=text.size();
             }
+            {
+                const std::string &text=public_and_private_informations.public_informations.pseudo;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                posOutput+=1;
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+                posOutput+=text.size();
+            }
+            if(GlobalServerData::serverSettings.dontSendPlayerType)
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)Player_type_normal;
+            else
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)public_and_private_informations.public_informations.type;
+            posOutput+=1;
+
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
 
             const int &size=playerWithSameClan.size();
             int index=0;
@@ -217,7 +200,7 @@ void Client::sendChatText(const Chat_type &chatType,const std::string &text)
             {
                 Client * const client=playerWithSameClan.at(index);
                 if(client!=this)
-                    client->sendRawBlock(finalData.constData(),finalData.size());
+                    client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                 index++;
             }
         }
@@ -235,40 +218,28 @@ void Client::sendChatText(const Chat_type &chatType,const std::string &text)
         BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(public_and_private_informations.public_informations.pseudo,chatType,text);
         #endif
 
-        QByteArray finalData;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)chatType;
+        posOutput+=1;
         {
-            QDataStream out(&finalData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-            out.device()->seek(out.device()->pos()+8);//jump to have space for the header: packetCode 1Byte, query number 1Byte optional, size 6Bytes optional, aligned to 64Bits
-            out << (uint8_t)chatType;
-            {
-                const QByteArray tempText(text.data(),text.size());
-                if(tempText.size()>255)
-                {
-                    errorOutput("text in Utf8 too big, line: "+std::to_string(__LINE__));
-                    return;
-                }
-                out << (uint8_t)tempText.size();
-                finalData+=tempText;
-                out.device()->seek(out.device()->pos()+tempText.size());
-            }
-
-            finalData+=rawPseudo;
-            out.device()->seek(out.device()->pos()+rawPseudo.size());
-
-            if(GlobalServerData::serverSettings.dontSendPlayerType)
-                out << (uint8_t)Player_type_normal;
-            else
-                out << (uint8_t)this->public_and_private_informations.public_informations.type;
-
-            const uint8_t &addedSize=ProtocolParsingBase::addHeaderForOutcommingData(
-                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                false,
-                #endif
-                        0x5C,finalData.data()+8,finalData.size()-8);
-            if(addedSize<8)
-                finalData.remove(0,8-addedSize);//align the data for faster copy after
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+            posOutput+=1;
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+            posOutput+=text.size();
         }
+        {
+            const std::string &text=public_and_private_informations.public_informations.pseudo;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+            posOutput+=1;
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+            posOutput+=text.size();
+        }
+        if(GlobalServerData::serverSettings.dontSendPlayerType)
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)Player_type_normal;
+        else
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)public_and_private_informations.public_informations.type;
+        posOutput+=1;
+
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
 
         const int &size=clientBroadCastList.size();
         int index=0;
@@ -276,7 +247,7 @@ void Client::sendChatText(const Chat_type &chatType,const std::string &text)
         {
             Client * const client=clientBroadCastList.at(index);
             if(client!=this)
-                client->sendRawBlock(finalData.constData(),finalData.size());
+                client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             index++;
         }
         return;
