@@ -1,5 +1,6 @@
 #include "PlayerUpdater.h"
 #include "GlobalServerData.h"
+#include "Client.h"
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
 #include "BroadCastWithoutSender.h"

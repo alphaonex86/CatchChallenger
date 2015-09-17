@@ -109,15 +109,21 @@ void Client::doDDOSCompute()
 }
 #endif
 
-void Client::sendNewEvent(const QByteArray &data)
+void Client::sendNewEvent(char * const data, const uint32_t &size)
 {
     if(queryNumberList.empty())
     {
         errorOutput("Sorry, no free query number to send this query of sendNewEvent");
         return;
     }
-    sendQuery(0xE2,queryNumberList.back(),data.constData(),data.size());
-    queryNumberList.erase(queryNumberList.cend());
+
+    //send the network reply
+    data[0x01]=queryNumberList.back();
+    registerOutputQuery(0xE2,queryNumberList.back());
+
+    sendRawBlock(data,size);
+
+    queryNumberList.pop_back();
 }
 
 void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation)
@@ -133,20 +139,42 @@ void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*CO
     teleportationPoint.y=y;
     teleportationPoint.orientation=orientation;
     lastTeleportation.push(teleportationPoint);
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+
+    //send the network reply
+    ProtocolParsingBase::tempBigBufferForOutput[0x00]=0xE1;
+    ProtocolParsingBase::tempBigBufferForOutput[0x01]=queryNumberList.back();
+
     if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
-        out << (uint8_t)map->id;
+    {
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+1+1+1);//set the dynamic size
+        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+0]=map->id;
+        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+1]=x;
+        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+2]=y;
+        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+3]=(uint8_t)orientation;
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,4);
+    }
     else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
-        out << (uint16_t)map->id;
+    {
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+1+1+2);//set the dynamic size
+        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1+4)=htole16(map->id);
+        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+2]=x;
+        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+3]=y;
+        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+4]=(uint8_t)orientation;
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,5);
+    }
     else
-        out << (uint32_t)map->id;
-    out << (COORD_TYPE)x;
-    out << (COORD_TYPE)y;
-    out << (uint8_t)orientation;
-    sendQuery(0xE1,queryNumberList.back(),outputData.constData(),outputData.size());
-    queryNumberList.erase(queryNumberList.cend());
+    {
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+1+1+4);//set the dynamic size
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1+4)=htole32(map->id);
+        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+4]=x;
+        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+5]=y;
+        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+6]=(uint8_t)orientation;
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,7);
+    }
+
+    registerOutputQuery(0xE1,queryNumberList.back());
+    queryNumberList.pop_back();
 }
 
 void Client::sendTradeRequest(char * const data,const uint32_t &size)

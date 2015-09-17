@@ -30,7 +30,6 @@ public:
 
     static MapVisibilityAlgorithm_Simple_StoreOnSender * clientsToSendDataNewClients[65535];
     static MapVisibilityAlgorithm_Simple_StoreOnSender * clientsToSendDataOldClients[65535];
-    static char buffer[CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER];
 };
 }
 

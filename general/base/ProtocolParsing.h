@@ -136,6 +136,10 @@ public:
     //reply to the query
     char outputQueryNumberToPacketCode[256];//invalidation packet code: 0x00, store the packetCode
     char inputQueryNumberToPacketCode[256];//invalidation packet code: 0x00, store the packetCode, store size is useless because the resolution or is do at send or at receive, then no performance gain
+
+    static char tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
+    static char tempBigBufferForCompressedOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
+    static char tempBigBufferForUncompressedInput[CATCHCHALLENGER_BIGBUFFERSIZE];
 private:
     bool internalPackOutcommingData(const char * const data,const int &size);
 
@@ -149,9 +153,6 @@ public:
 protected:
     //reply to the query
     bool removeFromQueryReceived(const uint8_t &queryNumber);
-    static char tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
-    static char tempBigBufferForCompressedOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
-    static char tempBigBufferForUncompressedInput[CATCHCHALLENGER_BIGBUFFERSIZE];
     bool internalSendRawSmallPacket(const char * const data,const int &size);
     virtual void disconnectClient() = 0;
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION

@@ -1092,7 +1092,6 @@ void Client::characterIsRightFinalStep()
         index=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=events.size();
         posOutput+=1;
-        out << (uint8_t);
         while(index<events.size())
         {
             const std::pair<uint8_t,uint8_t> &event=events.at(index);
@@ -1137,8 +1136,9 @@ void Client::characterIsRightFinalStep()
     {
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i->first;
         posOutput+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=second.plant;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i->second.plant;
         posOutput+=1;
+        /// \todo Can essaylly int 16 ovbertflow
         if(time<i->second.mature_at)
             *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(i->second.mature_at-time);
         else
@@ -1189,13 +1189,17 @@ void Client::characterIsRightFinalStep()
     /// \todo force to 255 max
     //send reputation
     {
-        out << (uint8_t)public_and_private_informations.reputation.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.reputation.size();
+        posOutput+=1;
         auto i=public_and_private_informations.reputation.begin();
         while(i!=public_and_private_informations.reputation.cend())
         {
-            out << i->first;
-            out << i->second.level;
-            out << i->second.point;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i->first;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i->second.level;
+            posOutput+=1;
+            *reinterpret_cast<qint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(i->second.point);
+            posOutput+=4;
             ++i;
         }
     }
@@ -1203,24 +1207,30 @@ void Client::characterIsRightFinalStep()
     /// \todo force to 255 max
     //send quest
     {
-        out << (uint16_t)public_and_private_informations.quests.size();
+        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.quests.size());
+        posOutput+=2;
         auto j=public_and_private_informations.quests.begin();
         while(j!=public_and_private_informations.quests.cend())
         {
-            out << j->first;
-            out << j->second.step;
-            out << j->second.finish_one_time;
+            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(j->first);
+            posOutput+=2;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=j->second.step;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=j->second.finish_one_time;
+            posOutput+=1;
             ++j;
         }
     }
 
     //send bot_already_beaten
     {
-        out << (uint16_t)public_and_private_informations.bot_already_beaten.size();
+        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.bot_already_beaten.size());
+        posOutput+=2;
         auto k=public_and_private_informations.bot_already_beaten.begin();
         while(k!=public_and_private_informations.bot_already_beaten.cend())
         {
-            out << (*k);
+            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(*k);
+            posOutput+=2;
             ++k;
         }
     }

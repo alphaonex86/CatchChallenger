@@ -346,19 +346,24 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             writePacketFixedSize[0x59]=0;
             writePacketFixedSize[0x5A]=0;
             writePacketFixedSize[0x5B]=0;
+
             writePacketFixedSize[0x5C]=0xFE;
             writePacketFixedSize[0x5D]=0xFE;
             writePacketFixedSize[0x5E]=0;
             writePacketFixedSize[0x5F]=0xFE;
             writePacketFixedSize[0x60]=0xFE;
-            writePacketFixedSize[0x61]=2;//default like is was more than 255 players
-            writePacketFixedSize[0x62]=0;
+            writePacketFixedSize[0x61]=0xFE;
+            writePacketFixedSize[0x62]=0xFE;
             writePacketFixedSize[0x63]=0xFE;
-            writePacketFixedSize[0x64]=0xFE;
-            writePacketFixedSize[0x65]=0xFE;
+            writePacketFixedSize[0x64]=2;//default like is was more than 255 players
+            writePacketFixedSize[0x65]=0;
             writePacketFixedSize[0x66]=0xFE;
-            writePacketFixedSize[0x67]=0;
+            writePacketFixedSize[0x67]=0xFE;
             writePacketFixedSize[0x68]=0xFE;
+            writePacketFixedSize[0x69]=0xFE;
+            writePacketFixedSize[0x6A]=0;
+            writePacketFixedSize[0x6B]=0xFE;
+
             writePacketFixedSize[0x75]=4+4;
             writePacketFixedSize[0x76]=0xFE;
             writePacketFixedSize[0x77]=0xFE;
