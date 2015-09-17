@@ -39,8 +39,6 @@ protected:
     void mapVisiblity_unloadFromTheMap();
     void reinsertClientForOthersOnSameMap();
 private:
-    static int index;
-    static int loop_size;
     static MapVisibilityAlgorithm_WithBorder_StoreOnSender *current_client;//static to drop down the memory
     //overwrite
     //remove the move/remove
@@ -66,13 +64,7 @@ private:
     bool singleMove(const Direction &direction);
 
     //temp variable for purge buffer
-    static QByteArray purgeBuffer_outputData;
-    static int purgeBuffer_index;
-    static int purgeBuffer_list_size;
-    static int purgeBuffer_list_size_internal;
-    static int purgeBuffer_indexMovement;
     static bool mapHaveChanged;
-    static map_management_move purgeBuffer_move;
     static CommonMap*			old_map;
     bool haveBufferToPurge;
 

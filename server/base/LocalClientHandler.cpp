@@ -1207,15 +1207,16 @@ void Client::setEvent(const uint8_t &event, const uint8_t &new_value)
         playerList.push_back(i->second);
         ++i;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << event;
-    out << new_value;
+
+    //send the network reply
+    ProtocolParsingBase::tempBigBufferForOutput[0x00]=0xE2;
+    ProtocolParsingBase::tempBigBufferForOutput[0x02]=event;
+    ProtocolParsingBase::tempBigBufferForOutput[0x03]=new_value;
+
     unsigned int index=0;
     while(index<playerList.size())
     {
-        playerList.at(index)->sendNewEvent(outputData);
+        playerList.at(index)->sendNewEvent(ProtocolParsingBase::tempBigBufferForOutput,4);
         index++;
     }
     GlobalServerData::serverPrivateVariables.events[event]=new_value;
@@ -3037,7 +3038,7 @@ void Client::sendClanInfo()
 
     //send the network message
     uint32_t posOutput=0;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5F;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x62;
     posOutput=+1+4;
 
     {
@@ -3057,7 +3058,7 @@ void Client::dissolvedClan()
 
     //send the network message
     uint32_t posOutput=0;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5E;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x61;
     posOutput=+1+4;
 
     *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=0;//set the dynamic size
@@ -3076,7 +3077,7 @@ bool Client::inviteToClan(const uint32_t &clanId)
 
     //send the network message
     uint32_t posOutput=0;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x60;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x63;
     posOutput=+1+4;
 
     *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(clanId);
@@ -3264,7 +3265,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
             {
                 //send the network message
                 uint32_t posOutput=0;
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5B;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5E;
                 posOutput=+1+4;
                 *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1);//set the dynamic size
 
@@ -3284,7 +3285,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
         {
             //send the network message
             uint32_t posOutput=0;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5B;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5E;
             posOutput=+1+4;
 
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
@@ -3595,7 +3596,7 @@ void Client::cityCaptureBattle(const uint16_t &number_of_player,const uint16_t &
 {
     //send the network message
     uint32_t posOutput=0;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5B;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5E;
     posOutput=+1+4;
     *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+2+2);//set the dynamic size
 
@@ -3613,7 +3614,7 @@ void Client::cityCaptureBotFight(const uint16_t &number_of_player,const uint16_t
 {
     //send the network message
     uint32_t posOutput=0;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5B;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5E;
     posOutput=+1+4;
     *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+2+2+4);//set the dynamic size
 
@@ -3633,7 +3634,7 @@ void Client::cityCaptureInWait(const uint16_t &number_of_player,const uint16_t &
 {
     //send the network message
     uint32_t posOutput=0;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5B;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5E;
     posOutput=+1+4;
     *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+2+2);//set the dynamic size
 
@@ -3651,7 +3652,7 @@ void Client::cityCaptureWin()
 {
     //send the network message
     uint32_t posOutput=0;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5B;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5E;
     posOutput=+1+4;
     *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1);//set the dynamic size
 
@@ -3665,7 +3666,7 @@ void Client::previousCityCaptureNotFinished()
 {
     //send the network message
     uint32_t posOutput=0;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5B;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5E;
     posOutput=+1+4;
     *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1);//set the dynamic size
 
