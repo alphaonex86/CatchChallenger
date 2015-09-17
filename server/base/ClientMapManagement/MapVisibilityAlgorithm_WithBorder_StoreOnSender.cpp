@@ -4,17 +4,9 @@
 
 using namespace CatchChallenger;
 
-int MapVisibilityAlgorithm_WithBorder_StoreOnSender::index;
-int MapVisibilityAlgorithm_WithBorder_StoreOnSender::loop_size;
 MapVisibilityAlgorithm_WithBorder_StoreOnSender *MapVisibilityAlgorithm_WithBorder_StoreOnSender::current_client;
 
 //temp variable for purge buffer
-QByteArray MapVisibilityAlgorithm_WithBorder_StoreOnSender::purgeBuffer_outputData;
-int MapVisibilityAlgorithm_WithBorder_StoreOnSender::purgeBuffer_index;
-int MapVisibilityAlgorithm_WithBorder_StoreOnSender::purgeBuffer_list_size;
-int MapVisibilityAlgorithm_WithBorder_StoreOnSender::purgeBuffer_list_size_internal;
-int MapVisibilityAlgorithm_WithBorder_StoreOnSender::purgeBuffer_indexMovement;
-map_management_move MapVisibilityAlgorithm_WithBorder_StoreOnSender::purgeBuffer_move;
 CommonMap* MapVisibilityAlgorithm_WithBorder_StoreOnSender::old_map;
 bool MapVisibilityAlgorithm_WithBorder_StoreOnSender::mapHaveChanged;
 
@@ -61,7 +53,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::insertClient()
     //local map
     if(Q_LIKELY(temp_map->show))
     {
-        loop_size=temp_map->clients.size();
+        const uint16_t &loop_size=temp_map->clients.size();
         if(Q_LIKELY(temp_map->showWithBorder))
         {
             if(Q_UNLIKELY((loop_size+temp_map->clientsOnBorder)>=GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder))
@@ -76,7 +68,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::insertClient()
                 {}
                 else
                 {
-                    index=0;
+                    uint16_t index=0;
                     while(index<loop_size)
                     {
                         temp_map->clients.at(index)->dropAllBorderClients();
@@ -93,7 +85,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::insertClient()
             temp_map->show=false;
             //drop all show client because it have excess the limit
             //drop on all client
-            index=0;
+            uint16_t index=0;
             while(index<loop_size)
             {
                 temp_map->clients.at(index)->dropAllClients();
@@ -107,7 +99,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::insertClient()
             #endif
             //insert the new client
             const SIMPLIFIED_PLAYER_ID_TYPE &thisSimplifiedId=public_and_private_informations.public_informations.simplifiedId;
-            index=0;
+            uint16_t index=0;
             while(index<loop_size)
             {
                 current_client=temp_map->clients.at(index);
@@ -128,16 +120,16 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::insertClient()
 
     //border map
     {
-        int border_map_index=0;
-        const int &border_map_loop_size=map->border_map.size();
+        uint8_t border_map_index=0;
+        const uint8_t &border_map_loop_size=map->border_map.size();
         while(border_map_index<border_map_loop_size)
         {
             Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map->border_map.at(border_map_index));
-            loop_size=temp_border_map->clients.size();
+            const uint16_t &loop_size=temp_border_map->clients.size();
             //insert border player on current player
             if(temp_map->showWithBorder)
             {
-                index=0;
+                uint16_t index=0;
                 while(index<loop_size)
                 {
                     this->insertAnotherClient(temp_border_map->clients.at(index));
@@ -156,7 +148,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::insertClient()
                     temp_border_map->showWithBorder=false;
                     //drop all show client because it have excess the limit
                     //drop on all client
-                    index=0;
+                    uint16_t index=0;
                     while(index<loop_size)
                     {
                         temp_border_map->clients.at(index)->dropAllBorderClients();
@@ -169,7 +161,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::insertClient()
                     normalOutput("insertClient() insert the client, into: "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                     #endif
                     const SIMPLIFIED_PLAYER_ID_TYPE &thisSimplifiedId=public_and_private_informations.public_informations.simplifiedId;
-                    index=0;
+                    uint16_t index=0;
                     while(index<loop_size)
                     {
                         temp_border_map->clients.at(index)->insertAnotherClient(thisSimplifiedId,this);
@@ -185,7 +177,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::insertClient()
 void MapVisibilityAlgorithm_WithBorder_StoreOnSender::moveClient(const uint8_t &movedUnit,const Direction &direction)
 {
     Map_server_MapVisibility_WithBorder_StoreOnSender *temp_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map);
-    loop_size=temp_map->clients.size();
+    const uint16_t &loop_size=temp_map->clients.size();
     if(Q_UNLIKELY(mapHaveChanged))
     {
         #ifdef DEBUG_MESSAGE_CLIENT_MOVE
@@ -220,7 +212,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::moveClient(const uint8_t &
         //normal operation
         if(Q_LIKELY(temp_map->show))
         {
-            index=0;
+            uint16_t index=0;
             while(index<loop_size)
             {
                 current_client=temp_map->clients.at(index);
@@ -235,15 +227,15 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::moveClient(const uint8_t &
     }
     const SIMPLIFIED_PLAYER_ID_TYPE &thisSimplifiedId=public_and_private_informations.public_informations.simplifiedId;
     //border map
-    int border_map_index=0;
-    int border_map_loop_size=map->border_map.size();
+    uint8_t border_map_index=0;
+    const uint8_t &border_map_loop_size=map->border_map.size();
     while(border_map_index<border_map_loop_size)
     {
         Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map->border_map.at(border_map_index));
-        loop_size=temp_border_map->clients.size();
+        const uint16_t &loop_size=temp_border_map->clients.size();
         if(temp_border_map->showWithBorder)
         {
-            index=0;
+            uint16_t index=0;
             while(index<loop_size)
             {
                 temp_border_map->clients.at(index)->moveAnotherClientWithMap(thisSimplifiedId,this,movedUnit,direction);
@@ -286,14 +278,13 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::reinsertClientForOthersOnS
         #endif
         return;
     }
-    int index;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("reinsertClientForOthers() normal work, just remove from client on: "+map->map_file);
     #endif
     /* useless because the insert will overwrite the position */
     const SIMPLIFIED_PLAYER_ID_TYPE &thisSimplifiedId=public_and_private_informations.public_informations.simplifiedId;
-    index=0;
-    while(index<loop_size)
+    uint16_t index=0;
+    while(index<map_temp->clients.size())
     {
         current_client=map_temp->clients.at(index);
         if(Q_UNLIKELY(current_client!=this))
@@ -305,7 +296,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::reinsertClientForOthersOnS
 void MapVisibilityAlgorithm_WithBorder_StoreOnSender::removeClient()
 {
     Map_server_MapVisibility_WithBorder_StoreOnSender *temp_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map);
-    loop_size=temp_map->clients.size();
+    const uint16_t &loop_size=temp_map->clients.size();
     if(Q_UNLIKELY(temp_map->show==false))
     {
         if(Q_UNLIKELY(loop_size<=(GlobalServerData::serverSettings.mapVisibility.withBorder.reshow)))
@@ -318,7 +309,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::removeClient()
             if(Q_UNLIKELY((loop_size+temp_map->clientsOnBorder)<=(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder)))
             {
                 temp_map->showWithBorder=true;
-                index=0;
+                uint16_t index=0;
                 while(index<loop_size)
                 {
                     temp_map->clients.at(index)->reinsertAllClientIncludingBorderClients();
@@ -327,7 +318,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::removeClient()
             }
             else
             {
-                index=0;
+                uint16_t index=0;
                 while(index<loop_size)
                 {
                     temp_map->clients.at(index)->reinsertAllClient();
@@ -354,7 +345,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::removeClient()
                 #endif
                 temp_map->showWithBorder=true;
                 //insert only the border client because it start to be visible
-                index=0;
+                uint16_t index=0;
                 while(index<loop_size)
                 {
                     temp_map->clients.at(index)->reinsertCurrentPlayerOnlyTheBorderClients();
@@ -372,7 +363,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::removeClient()
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         normalOutput("removeClient() normal work, just remove from client on: "+map->map_file);
         #endif
-        index=0;
+        uint16_t index=0;
         while(index<loop_size)
         {
             current_client=temp_map->clients.at(index);
@@ -384,16 +375,16 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::removeClient()
 
     //border map
     {
-        int border_map_index=0;
-        const int &border_map_loop_size=map->border_map.size();
+        uint8_t border_map_index=0;
+        const uint8_t &border_map_loop_size=map->border_map.size();
         while(border_map_index<border_map_loop_size)
         {
             Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map->border_map.at(border_map_index));
-            loop_size=temp_border_map->clients.size();
+            const uint16_t &loop_size=temp_border_map->clients.size();
             //remove border client on this
             if(Q_LIKELY(temp_map->showWithBorder==true))
             {
-                index=0;
+                uint16_t index=0;
                 while(index<loop_size)
                 {
                     this->removeAnotherClient(temp_border_map->clients.at(index)->public_and_private_informations.public_informations.simplifiedId);
@@ -403,7 +394,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::removeClient()
             //remove this ont border client
             if(Q_LIKELY(temp_border_map->showWithBorder==true))
             {
-                index=0;
+                uint16_t index=0;
                 while(index<loop_size)
                 {
                     temp_border_map->clients.at(index)->removeAnotherClient(public_and_private_informations.public_informations.simplifiedId);
@@ -416,7 +407,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::removeClient()
                 {
                     temp_border_map->showWithBorder=true;
                     //insert only the border client because it start to be visible
-                    index=0;
+                    uint16_t index=0;
                     while(index<loop_size)
                     {
                         temp_border_map->clients.at(index)->reinsertCurrentPlayerOnlyTheBorderClients();
@@ -441,8 +432,8 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::reinsertAllClient()
     normalOutput("reinsertAllClient() "+std::to_string(public_and_private_informations.public_informations.simplifiedId));
     #endif
     const SIMPLIFIED_PLAYER_ID_TYPE &thisSimplifiedId=public_and_private_informations.public_informations.simplifiedId;
-    index=0;
-    while(index<loop_size)
+    uint16_t index=0;
+    while(index<static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map)->clients.size())
     {
         current_client=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map)->clients.at(index);
         if(Q_LIKELY(current_client!=this))
@@ -465,13 +456,13 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::reinsertCurrentPlayerOnlyT
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("reinsertOnlyTheBorderClients() "+std::to_string(public_and_private_informations.public_informations.simplifiedId));
     #endif
-    int border_map_index=0;
-    int border_map_loop_size=map->border_map.size();
+    uint8_t border_map_index=0;
+    const uint8_t &border_map_loop_size=map->border_map.size();
     while(border_map_index<border_map_loop_size)
     {
         Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map->border_map.at(border_map_index));
-        loop_size=temp_border_map->clients.size();
-        index=0;
+        const uint16_t &loop_size=temp_border_map->clients.size();
+        uint16_t index=0;
         while(index<loop_size)
         {
             this->insertAnotherClient(current_client->public_and_private_informations.public_informations.simplifiedId,temp_border_map->clients.at(index));
@@ -582,7 +573,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::moveAnotherClientWithMap(c
                 ((uint32_t)to_send_move.at(player_id).size()*(sizeof(uint8_t)+sizeof(uint8_t))+sizeof(uint8_t))//the size of one move
                 >=
                     //size of on insert
-                    (uint32_t)GlobalServerData::serverPrivateVariables.sizeofInsertRequest+rawPseudo.size()
+                    (uint32_t)GlobalServerData::serverPrivateVariables.sizeofInsertRequest+public_and_private_informations.public_informations.pseudo.size()+1
                 ))
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
@@ -689,15 +680,16 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::purgeBuffer()
 //for the purge buffer
 void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_insert()
 {
-    if(to_send_insert.size()==0)
+    if(to_send_insert.empty())
         return;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("send_insert() of player: "+std::to_string(public_and_private_informations.public_informations.simplifiedId));
     #endif
 
-    purgeBuffer_outputData.clear();
-    QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x68;
+    posOutput=+1+4;
 
     ///////////////////////// group by map ///////////////////////
     std::unordered_map<CommonMap*, std::vector<MapVisibilityAlgorithm_WithBorder_StoreOnSender *> >	send_insert_by_map;
@@ -710,24 +702,40 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_insert()
     to_send_insert.clear();
     //////////////////////////// insert //////////////////////////
     {
-        out << (uint8_t)send_insert_by_map.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=send_insert_by_map.size();
+        posOutput+=1;
         auto i_insert = send_insert_by_map.begin();
         while (i_insert != send_insert_by_map.cend())
         {
             Map_server_MapVisibility_WithBorder_StoreOnSender* map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(i_insert->first);
             const std::vector<MapVisibilityAlgorithm_WithBorder_StoreOnSender *> &clients_list=i_insert->second;
-            const int &list_size=clients_list.size();
+            const uint16_t &list_size=clients_list.size();
 
             if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
-                out << (uint8_t)map->id;
+            {
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=map->id;
+                posOutput+=1;
+            }
             else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
-                out << (uint16_t)map->id;
+            {
+                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(map->id);
+                posOutput+=2;
+            }
             else
-                out << (uint32_t)map->id;
+            {
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(map->id);
+                posOutput+=4;
+            }
             if(GlobalServerData::serverSettings.max_players<=255)
-                out << (uint8_t)list_size;
+            {
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=list_size;
+                posOutput+=1;
+            }
             else
-                out << (uint16_t)list_size;
+            {
+                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(list_size);
+                posOutput+=2;
+            }
 
             uint16_t index=0;
             while(index<list_size)
@@ -741,30 +749,46 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_insert()
                              ",direction: "+MoveOnTheMap::directionToString(client->getLastDirection())+
                              ", for player: "+std::to_string(public_and_private_informations.public_informations.simplifiedId)+
                              ", direction | type: "+std::to_string(((uint8_t)client->getLastDirection() | (uint8_t)client->public_and_private_informations.public_informations.type))+
-                             ", rawPseudo: "+QString(client->rawPseudo.toHex()).toStdString()+
+                             ", rawPseudo: "+public_and_private_informations.public_informations.pseudo+
                              ", skinId: "+std::to_string(client->public_and_private_informations.public_informations.skinId)
                              );
                 #endif
                 if(GlobalServerData::serverSettings.max_players<=255)
-                    out << (uint8_t)client->public_and_private_informations.public_informations.simplifiedId;
+                {
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.simplifiedId;
+                    posOutput+=1;
+                }
                 else
-                    out << (uint16_t)client->public_and_private_informations.public_informations.simplifiedId;
-                out << (COORD_TYPE)client->x;
-                out << (COORD_TYPE)client->y;
+                {
+                    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(client->public_and_private_informations.public_informations.simplifiedId);
+                    posOutput+=2;
+                }
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->x;
+                posOutput+=1;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->y;
+                posOutput+=1;
                 if(GlobalServerData::serverSettings.dontSendPlayerType)
-                    out << (uint8_t)((uint8_t)client->getLastDirection() | (uint8_t)Player_type_normal);
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)client->getLastDirection() | (uint8_t)Player_type_normal);
                 else
-                    out << (uint8_t)((uint8_t)client->getLastDirection() | (uint8_t)client->public_and_private_informations.public_informations.type);
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)client->getLastDirection() | (uint8_t)client->public_and_private_informations.public_informations.type);
+                posOutput+=1;
                 if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
-                    out << client->public_and_private_informations.public_informations.speed;
+                {
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.speed;
+                    posOutput+=1;
+                }
                 //pseudo
                 if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
                 {
-                    purgeBuffer_outputData+=client->rawPseudo;
-                    out.device()->seek(out.device()->pos()+client->rawPseudo.size());
+                    const std::string &text=client->public_and_private_informations.public_informations.pseudo;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                    posOutput+=1;
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+                    posOutput+=text.size();
                 }
                 //skin
-                out << client->public_and_private_informations.public_informations.skinId;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.skinId;
+                posOutput+=1;
 
                 index++;
             }
@@ -772,106 +796,145 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_insert()
         }
     }
 
-    sendMessage(0x68,purgeBuffer_outputData.constData(),purgeBuffer_outputData.size());
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_move()
 {
-    if(to_send_move.size()==0)
+    if(to_send_move.empty())
         return;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("send_move() of player: "+std::to_string(public_and_private_informations.public_informations.simplifiedId));
     #endif
 
-    purgeBuffer_outputData.clear();
-    QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x65;
+    posOutput=+1+4;
 
     //////////////////////////// move //////////////////////////
-    purgeBuffer_list_size_internal=0;
-    purgeBuffer_indexMovement=0;
+    uint32_t purgeBuffer_list_size_internal=0;
+    uint32_t purgeBuffer_indexMovement=0;
     auto i_move = to_send_move.begin();
     if(GlobalServerData::serverSettings.max_players<=255)
-        out << (uint8_t)to_send_move.size();
+    {
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=to_send_move.size();
+        posOutput+=1;
+    }
     else
-        out << (uint16_t)to_send_move.size();
+    {
+        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(to_send_move.size());
+        posOutput+=2;
+    }
     while (i_move != to_send_move.cend())
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
         normalOutput("move player_id: "+std::to_string(i_move->first)+", for player: "+std::to_string(public_and_private_informations.public_informations.simplifiedId));
         #endif
         if(GlobalServerData::serverSettings.max_players<=255)
-            out << (uint8_t)i_move->first;
+        {
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i_move->first;
+            posOutput+=1;
+        }
         else
-            out << (uint16_t)i_move->first;
+        {
+            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(i_move->first);
+            posOutput+=2;
+        }
 
         purgeBuffer_list_size_internal=i_move->second.size();
-        out << (uint8_t)purgeBuffer_list_size_internal;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=purgeBuffer_list_size_internal;
+        posOutput+=1;
         purgeBuffer_indexMovement=0;
         while(purgeBuffer_indexMovement<purgeBuffer_list_size_internal)
         {
-            out << i_move->second.at(purgeBuffer_indexMovement).movedUnit;
-            out << (uint8_t)i_move->second.at(purgeBuffer_indexMovement).direction;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i_move->second.at(purgeBuffer_indexMovement).movedUnit;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)i_move->second.at(purgeBuffer_indexMovement).direction;
+            posOutput+=1;
             purgeBuffer_indexMovement++;
         }
         ++i_move;
     }
     to_send_move.clear();
 
-    sendMessage(0x65,purgeBuffer_outputData.constData(),purgeBuffer_outputData.size());
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_remove()
 {
-    if(to_send_remove.size()==0)
+    if(to_send_remove.empty())
         return;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("send_remove() of player: "+std::to_string(public_and_private_informations.public_informations.simplifiedId));
     #endif
 
-    purgeBuffer_outputData.clear();
-    QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x66;
+    posOutput=+1+4;
 
     //////////////////////////// remove //////////////////////////
     auto i_remove = to_send_remove.begin();
     if(GlobalServerData::serverSettings.max_players<=255)
-        out << (uint8_t)to_send_remove.size();
+    {
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=to_send_remove.size();
+        posOutput+=1;
+    }
     else
-        out << (uint16_t)to_send_remove.size();
+    {
+        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(to_send_remove.size());
+        posOutput+=2;
+    }
     while (i_remove != to_send_remove.cend())
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
         normalOutput("player_id to remove: "+std::to_string((uint32_t)(*i_remove))+", for player: "+std::to_string(public_and_private_informations.public_informations.simplifiedId));
         #endif
         if(GlobalServerData::serverSettings.max_players<=255)
-            out << (uint8_t)*i_remove;
+        {
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=*i_remove;
+            posOutput+=1;
+        }
         else
-            out << (uint16_t)*i_remove;
+        {
+            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(*i_remove);
+            posOutput+=2;
+        }
         ++i_remove;
     }
     to_send_remove.clear();
 
-    sendMessage(0x66,purgeBuffer_outputData.constData(),purgeBuffer_outputData.size());
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_reinsert()
 {
-    if(to_send_reinsert.size()==0)
+    if(to_send_reinsert.empty())
         return;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("send_reinsert() of player: "+std::to_string(public_and_private_informations.public_informations.simplifiedId));
     #endif
 
-    purgeBuffer_outputData.clear();
-    QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x63;
+    posOutput=+1+4;
 
     //////////////////////////// re-insert //////////////////////////
     if(GlobalServerData::serverSettings.max_players<=255)
-        out << (uint8_t)to_send_reinsert.size();
+    {
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=to_send_reinsert.size();
+        posOutput+=1;
+    }
     else
-        out << (uint16_t)to_send_reinsert.size();
+    {
+        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(to_send_reinsert.size());
+        posOutput+=2;
+    }
 
     auto i_insert = to_send_reinsert.begin();
     while (i_insert != to_send_reinsert.cend())
@@ -885,18 +948,28 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_reinsert()
                      );
         #endif
         if(GlobalServerData::serverSettings.max_players<=255)
-            out << (uint8_t)i_insert->first;
+        {
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i_insert->first;
+            posOutput+=1;
+        }
         else
-            out << (uint16_t)i_insert->first;
-        out << i_insert->second->x;
-        out << i_insert->second->y;
-        out << (uint8_t)i_insert->second->getLastDirection();
+        {
+            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(i_insert->first);
+            posOutput+=2;
+        }
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i_insert->second->x;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i_insert->second->y;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)i_insert->second->getLastDirection();
+        posOutput+=1;
 
         ++i_insert;
     }
     to_send_reinsert.clear();
 
-    sendMessage(0x63,purgeBuffer_outputData.constData(),purgeBuffer_outputData.size());
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 bool MapVisibilityAlgorithm_WithBorder_StoreOnSender::singleMove(const Direction &direction)

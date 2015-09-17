@@ -422,7 +422,7 @@ private:
     void fake_receive_data(const QByteArray &data);
     void purgeReadBuffer();
 
-    void sendNewEvent(const QByteArray &data);
+    void sendNewEvent(char * const data, const uint32_t &size);
     void teleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
     void sendTradeRequest(char * const data,const uint32_t &size);
     void sendBattleRequest(char * const data,const uint32_t &size);

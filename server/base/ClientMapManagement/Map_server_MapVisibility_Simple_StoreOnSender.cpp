@@ -5,7 +5,6 @@ using namespace CatchChallenger;
 
 MapVisibilityAlgorithm_Simple_StoreOnSender * Map_server_MapVisibility_Simple_StoreOnSender::clientsToSendDataNewClients[65535];
 MapVisibilityAlgorithm_Simple_StoreOnSender * Map_server_MapVisibility_Simple_StoreOnSender::clientsToSendDataOldClients[65535];
-char Map_server_MapVisibility_Simple_StoreOnSender::buffer[CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER];
 
 Map_server_MapVisibility_Simple_StoreOnSender::Map_server_MapVisibility_Simple_StoreOnSender() :
     show(true),
@@ -36,57 +35,92 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
     /// \todo use simplified id with max visible player and updater http://catchchallenger.first-world.info/wiki/Base_protocol_messages#C0
     if(send_reinsert_all)
     {
-        QByteArray purgeBuffer_outputData;
+        //send the network message
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x68;
+        posOutput=+1+4;
+
         //prepare the data
         {
-            QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-
             //////////////////////////// insert //////////////////////////
             /* can be only this map with this algo, then 1 map */
-            out << (uint8_t)0x01;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+            posOutput+=1;
             if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
-                out << (uint8_t)id;
+            {
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=id;
+                posOutput+=1;
+            }
             else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
-                out << (uint16_t)id;
+            {
+                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(id);
+                posOutput+=2;
+            }
             else
-                out << (uint32_t)id;
+            {
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(id);
+                posOutput+=4;
+            }
             if(GlobalServerData::serverSettings.max_players<=255)
-                out << (uint8_t)clients.size();
+            {
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=clients.size();
+                posOutput+=1;
+            }
             else
-                out << (uint16_t)clients.size();
+            {
+                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(clients.size());
+                posOutput+=2;
+            }
             unsigned int index=0;
             while(index<clients.size())
             {
                 if(GlobalServerData::serverSettings.max_players<=255)
-                    out << (uint8_t)clients.at(index)->public_and_private_informations.public_informations.simplifiedId;
+                {
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=clients.at(index)->public_and_private_informations.public_informations.simplifiedId;
+                    posOutput+=1;
+                }
                 else
-                    out << (uint16_t)clients.at(index)->public_and_private_informations.public_informations.simplifiedId;
-                out << (COORD_TYPE)clients.at(index)->getX();
-                out << (COORD_TYPE)clients.at(index)->getY();
+                {
+                    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(clients.at(index)->public_and_private_informations.public_informations.simplifiedId);
+                    posOutput+=2;
+                }
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=clients.at(index)->getX();
+                posOutput+=1;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=clients.at(index)->getY();
+                posOutput+=1;
                 if(GlobalServerData::serverSettings.dontSendPlayerType)
-                    out << (uint8_t)((uint8_t)clients.at(index)->getLastDirection() | (uint8_t)Player_type_normal);
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)clients.at(index)->getLastDirection() | (uint8_t)Player_type_normal);
                 else
-                    out << (uint8_t)((uint8_t)clients.at(index)->getLastDirection() | (uint8_t)clients.at(index)->public_and_private_informations.public_informations.type);
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)clients.at(index)->getLastDirection() | (uint8_t)clients.at(index)->public_and_private_informations.public_informations.type);
+                posOutput+=1;
                 if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
-                    out << clients.at(index)->public_and_private_informations.public_informations.speed;
+                {
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=clients.at(index)->public_and_private_informations.public_informations.speed;
+                    posOutput+=1;
+                }
                 //pseudo
                 if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
                 {
-                    const QByteArray &rawPseudo=clients.at(index)->getRawPseudo();
-                    purgeBuffer_outputData+=rawPseudo;
-                    out.device()->seek(out.device()->pos()+rawPseudo.size());
+                    const std::string &text=clients.at(index)->public_and_private_informations.public_informations.pseudo;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                    posOutput+=1;
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+                    posOutput+=text.size();
                 }
                 //skin
-                out << clients.at(index)->public_and_private_informations.public_informations.skinId;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=clients.at(index)->public_and_private_informations.public_informations.skinId;
+                posOutput+=1;
+
                 ++index;
             }
         }
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+
         unsigned int index=0;
         while(index<clients.size())
         {
             Client * const client=clients.at(index);
-            client->sendMessage(0x68,purgeBuffer_outputData.constData(),purgeBuffer_outputData.size());
+            client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             index++;
         }
         send_reinsert_all=true;
@@ -113,27 +147,43 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     index++;
                 }
             }
-            //compose the query
-            QByteArray purgeBuffer_outputData;
+            //send the network message
+            uint32_t posOutput=0;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x68;
+            posOutput=+1+4;
+
             if(insert_player>0)
             {
                 {
-                    QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-                    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-
                     //////////////////////////// insert //////////////////////////
                     /* can be only this map with this algo, then 1 map */
-                    out << (uint8_t)0x01;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+                    posOutput+=1;
                     if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
-                        out << (uint8_t)id;
+                    {
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=id;
+                        posOutput+=1;
+                    }
                     else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
-                        out << (uint16_t)id;
+                    {
+                        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(id);
+                        posOutput+=2;
+                    }
                     else
-                        out << (uint32_t)id;
+                    {
+                        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(id);
+                        posOutput+=4;
+                    }
                     if(GlobalServerData::serverSettings.max_players<=255)
-                        out << (uint8_t)(insert_player);
+                    {
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=insert_player;
+                        posOutput+=1;
+                    }
                     else
-                        out << (uint16_t)(insert_player);
+                    {
+                        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(insert_player);
+                        posOutput+=2;
+                    }
                     unsigned int index=0;
                     while(index<clients.size())
                     {
@@ -141,26 +191,41 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         if(client->to_send_insert)
                         {
                             if(GlobalServerData::serverSettings.max_players<=255)
-                                out << (uint8_t)client->public_and_private_informations.public_informations.simplifiedId;
+                            {
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.simplifiedId;
+                                posOutput+=1;
+                            }
                             else
-                                out << (uint16_t)client->public_and_private_informations.public_informations.simplifiedId;
-                            out << (COORD_TYPE)client->getX();
-                            out << (COORD_TYPE)client->getY();
+                            {
+                                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(client->public_and_private_informations.public_informations.simplifiedId);
+                                posOutput+=2;
+                            }
+                            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->getX();
+                            posOutput+=1;
+                            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->getY();
+                            posOutput+=1;
                             if(GlobalServerData::serverSettings.dontSendPlayerType)
-                                out << (uint8_t)((uint8_t)client->getLastDirection() | (uint8_t)Player_type_normal);
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)client->getLastDirection() | (uint8_t)Player_type_normal);
                             else
-                                out << (uint8_t)((uint8_t)client->getLastDirection() | (uint8_t)client->public_and_private_informations.public_informations.type);
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)client->getLastDirection() | (uint8_t)client->public_and_private_informations.public_informations.type);
+                            posOutput+=1;
                             if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
-                                out << client->public_and_private_informations.public_informations.speed;
+                            {
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.speed;
+                                posOutput+=1;
+                            }
                             //pseudo
                             if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
                             {
-                                const QByteArray &rawPseudo=client->getRawPseudo();
-                                purgeBuffer_outputData+=rawPseudo;
-                                out.device()->seek(out.device()->pos()+rawPseudo.size());
+                                const std::string &text=client->public_and_private_informations.public_informations.pseudo;
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                                posOutput+=1;
+                                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+                                posOutput+=text.size();
                             }
                             //skin
-                            out << client->public_and_private_informations.public_informations.skinId;
+                            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.skinId;
+                            posOutput+=1;
                         }
                         ++index;
                     }
@@ -168,6 +233,9 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             }
             else
                 qDebug() << "insert_player count is null!";
+
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+
             //send the packet
             {
                 unsigned int index=0;
@@ -181,7 +249,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     }
                     else
                     {
-                        client->sendMessage(0x68,purgeBuffer_outputData.constData(),purgeBuffer_outputData.size());
+                        client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                         clientsToSendDataOldClients[clientsToSendDataSizeOldClients]=client;
                         clientsToSendDataSizeOldClients++;
                     }
@@ -197,54 +265,83 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             {
                 if(clients.at(index)->to_send_insert)
                 {
-                    QByteArray purgeBuffer_outputData;
-                    QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-                    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+                    //send the network message
+                    uint32_t posOutput=0;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x68;
+                    posOutput=+1+4;
 
                     //////////////////////////// insert //////////////////////////
                     /* can be only this map with this algo, then 1 map */
-                    out << (uint8_t)0x01;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+                    posOutput+=1;
                     if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
-                        out << (uint8_t)id;
+                    {
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=id;
+                        posOutput+=1;
+                    }
                     else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
-                        out << (uint16_t)id;
+                    {
+                        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(id);
+                        posOutput+=2;
+                    }
                     else
-                        out << (uint32_t)id;
+                    {
+                        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(id);
+                        posOutput+=4;
+                    }
                     if(GlobalServerData::serverSettings.max_players<=255)
-                        out << (uint8_t)(clients.size()-1);
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=clients.size()-1;
                     else
-                        out << (uint16_t)(clients.size()-1);
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=clients.size()-1;
+                    posOutput+=1;
                     unsigned int index_subindex=0;
                     while(index_subindex<clients.size())
                     {
-                        MapVisibilityAlgorithm_Simple_StoreOnSender * client=clients.at(index_subindex);
+                        const MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index_subindex);
                         if(index!=index_subindex)
                         {
                             if(GlobalServerData::serverSettings.max_players<=255)
-                                out << (uint8_t)client->public_and_private_informations.public_informations.simplifiedId;
+                            {
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.simplifiedId;
+                                posOutput+=1;
+                            }
                             else
-                                out << (uint16_t)client->public_and_private_informations.public_informations.simplifiedId;
-                            out << (COORD_TYPE)client->getX();
-                            out << (COORD_TYPE)client->getY();
+                            {
+                                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(client->public_and_private_informations.public_informations.simplifiedId);
+                                posOutput+=2;
+                            }
+                            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->getX();
+                            posOutput+=1;
+                            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->getY();
+                            posOutput+=1;
                             if(GlobalServerData::serverSettings.dontSendPlayerType)
-                                out << (uint8_t)((uint8_t)client->getLastDirection() | (uint8_t)Player_type_normal);
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)client->getLastDirection() | (uint8_t)Player_type_normal);
                             else
-                                out << (uint8_t)((uint8_t)client->getLastDirection() | (uint8_t)client->public_and_private_informations.public_informations.type);
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)client->getLastDirection() | (uint8_t)client->public_and_private_informations.public_informations.type);
+                            posOutput+=1;
                             if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
-                                out << client->public_and_private_informations.public_informations.speed;
+                            {
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.speed;
+                                posOutput+=1;
+                            }
                             //pseudo
                             if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
                             {
-                                const QByteArray &rawPseudo=client->getRawPseudo();
-                                purgeBuffer_outputData+=rawPseudo;
-                                out.device()->seek(out.device()->pos()+rawPseudo.size());
+                                const std::string &text=client->public_and_private_informations.public_informations.pseudo;
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                                posOutput+=1;
+                                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+                                posOutput+=text.size();
                             }
                             //skin
-                            out << client->public_and_private_informations.public_informations.skinId;
+                            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.skinId;
+                            posOutput+=1;
                         }
                         ++index_subindex;
                     }
-                    clients.at(index)->sendMessage(0x68,purgeBuffer_outputData.constData(),purgeBuffer_outputData.size());
+                    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+
+                    clients.at(index)->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                 }
                 index++;
             }
@@ -264,22 +361,30 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
     //send drop
     if(!to_send_remove.empty())
     {
+        //send the network message
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x69;
+        posOutput=+1+4;
+
         if(GlobalServerData::serverSettings.max_players<=255)
         {
             if((sizeof(uint8_t)+to_send_remove.size()*sizeof(uint8_t))<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
             {
-                char buffer[sizeof(uint8_t)+to_send_remove.size()*sizeof(uint8_t)];
-                buffer[0]=(uint8_t)to_send_remove.size();
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(sizeof(uint8_t)+to_send_remove.size()*sizeof(uint8_t));//set the dynamic size
+
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=to_send_remove.size();
+                posOutput+=1;
                 unsigned int index_subindex=0;
                 while(index_subindex<to_send_remove.size())
                 {
-                    buffer[sizeof(uint8_t)+index_subindex*sizeof(uint8_t)]=(uint8_t)to_send_remove.at(index_subindex);
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)to_send_remove.at(index_subindex);
+                    posOutput+=1;
                     index_subindex++;
                 }
                 index_subindex=0;
                 while(index_subindex<clientsToSendDataSizeOldClients)
                 {
-                    clientsToSendDataOldClients[index_subindex]->packOutcommingData(0xC8,buffer,sizeof(uint8_t)+sizeof(uint8_t)*to_send_remove.size());
+                    clientsToSendDataOldClients[index_subindex]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                     index_subindex++;
                 }
             }
@@ -292,17 +397,21 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         {
             if((sizeof(uint16_t)+to_send_remove.size()*sizeof(uint16_t))<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
             {
-                *reinterpret_cast<uint16_t *>(buffer+0)=(uint16_t)htole16((uint16_t)to_send_remove.size());
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(sizeof(uint16_t)+to_send_remove.size()*sizeof(uint16_t));//set the dynamic size
+
+                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(to_send_remove.size());
+                posOutput+=2;
                 unsigned int index_subindex=0;
                 while(index_subindex<to_send_remove.size())
                 {
-                    *reinterpret_cast<uint16_t *>(buffer+sizeof(uint16_t)+index_subindex*sizeof(uint16_t))=(uint16_t)htole16((uint16_t)to_send_remove.at(index_subindex));
+                    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(to_send_remove.at(index_subindex));
+                    posOutput+=2;
                     index_subindex++;
                 }
                 index_subindex=0;
                 while(index_subindex<clientsToSendDataSizeOldClients)
                 {
-                    clientsToSendDataOldClients[index_subindex]->packOutcommingData(0xC8,buffer,sizeof(uint16_t)+sizeof(uint16_t)*to_send_remove.size());
+                    clientsToSendDataOldClients[index_subindex]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                     index_subindex++;
                 }
             }
@@ -319,11 +428,8 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
     {
         if(GlobalServerData::serverSettings.mapVisibility.simple.reemit)
         {
-            unsigned int real_reinsert_count;
-            unsigned int index_subindex;
-
-            real_reinsert_count=0;
-            index_subindex=0;
+            uint16_t index_subindex=0;
+            uint16_t real_reinsert_count=0;
             unsigned int bufferSizeToHave;
             while(index_subindex<clientsToSendDataSizeOldClients)
             {
@@ -339,17 +445,21 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             {
                 if(real_reinsert_count>0)
                 {
-                    int bufferCursor;
+                    //send the network message
+                    uint32_t posOutput=0;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x66;
+                    posOutput=+1+4;
+
                     //////////////////////////// insert //////////////////////////
                     if(GlobalServerData::serverSettings.max_players<=255)
                     {
-                        buffer[0]=(uint8_t)real_reinsert_count;
-                        bufferCursor=sizeof(uint8_t);
+                        ProtocolParsingBase::tempBigBufferForOutput[0]=(uint8_t)real_reinsert_count;
+                        posOutput+=sizeof(uint8_t);
                     }
                     else
                     {
-                        *reinterpret_cast<uint16_t *>(buffer+0)=(uint16_t)htole16((uint16_t)real_reinsert_count);
-                        bufferCursor=sizeof(uint16_t);
+                        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+0)=(uint16_t)htole16((uint16_t)real_reinsert_count);
+                        posOutput+=sizeof(uint16_t);
                     }
                     index_subindex=0;
                     if(GlobalServerData::serverSettings.max_players<=255)
@@ -357,11 +467,11 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         {
                             if(clientsToSendDataOldClients[index_subindex]->haveNewMove)
                             {
-                                buffer[bufferCursor+0]=(uint8_t)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
-                                buffer[bufferCursor+1]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getX();
-                                buffer[bufferCursor+2]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getY();
-                                buffer[bufferCursor+3]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getLastDirection();
-                                bufferCursor+=sizeof(uint8_t)+sizeof(uint8_t)*3;
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+0]=(uint8_t)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+1]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getX();
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+2]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getY();
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+3]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                posOutput+=sizeof(uint8_t)+sizeof(uint8_t)*3;
                             }
                             index_subindex++;
                         }
@@ -370,18 +480,19 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         {
                             if(clientsToSendDataOldClients[index_subindex]->haveNewMove)
                             {
-                                *reinterpret_cast<uint16_t *>(buffer+bufferCursor)=(uint16_t)htole16((uint16_t)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
-                                buffer[bufferCursor+sizeof(uint16_t)+0]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getX();
-                                buffer[bufferCursor+sizeof(uint16_t)+1]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getY();
-                                buffer[bufferCursor+sizeof(uint16_t)+2]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getLastDirection();
-                                bufferCursor+=sizeof(uint16_t)+sizeof(uint8_t)*3;
+                                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=(uint16_t)htole16((uint16_t)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+0]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getX();
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+1]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getY();
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+2]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                posOutput+=sizeof(uint16_t)+sizeof(uint8_t)*3;
                             }
                             index_subindex++;
                         }
+                    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
                     unsigned int index=0;
                     while(index<clientsToSendDataSizeOldClients)
                     {
-                        clientsToSendDataOldClients[index]->packOutcommingData(0xC5,buffer,bufferCursor);
+                        clientsToSendDataOldClients[index]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                         index++;
                     }
                 }
@@ -411,10 +522,16 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             }
             if(real_reinsert_count>0)
             {
+                //send the network message
+                uint32_t posOutput=0;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x66;
+                posOutput=+1+4;
+
                 if(GlobalServerData::serverSettings.max_players<=255)
                     bufferSizeToHave=sizeof(uint8_t)+real_reinsert_count*(sizeof(uint8_t)+sizeof(uint8_t)*3);
                 else
                     bufferSizeToHave=sizeof(uint16_t)+real_reinsert_count*(sizeof(uint16_t)+sizeof(uint8_t)*3);
+                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(bufferSizeToHave);//set the dynamic size
                 if(bufferSizeToHave<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
                 {
                     unsigned int index=0;
@@ -429,20 +546,20 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                             if(temp_reinsert>0)
                             {
                                 index_subindex=0;
-                                buffer[0]=(uint8_t)temp_reinsert;
+                                ProtocolParsingBase::tempBigBufferForOutput[0]=(uint8_t)temp_reinsert;
                                 while(index_subindex<clientsToSendDataSizeOldClients)
                                 {
                                     if(index!=index_subindex && clientsToSendDataOldClients[index_subindex]->haveNewMove)
                                     {
-                                        buffer[bufferCursor+0]=(uint8_t)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
-                                        buffer[bufferCursor+1]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getX();
-                                        buffer[bufferCursor+2]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getY();
-                                        buffer[bufferCursor+3]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                        ProtocolParsingBase::tempBigBufferForOutput[bufferCursor+0]=(uint8_t)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
+                                        ProtocolParsingBase::tempBigBufferForOutput[bufferCursor+1]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getX();
+                                        ProtocolParsingBase::tempBigBufferForOutput[bufferCursor+2]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getY();
+                                        ProtocolParsingBase::tempBigBufferForOutput[bufferCursor+3]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getLastDirection();
                                         bufferCursor+=sizeof(uint8_t)+sizeof(uint8_t)*3;
                                     }
                                     index_subindex++;
                                 }
-                                clientsToSendDataOldClients[index]->packOutcommingData(0xC5,buffer,bufferCursor);
+                                clientsToSendDataOldClients[index]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,bufferCursor);
                             }
                             index++;
                         }
@@ -458,20 +575,20 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                             if(temp_reinsert>0)
                             {
                                 index_subindex=0;
-                                *reinterpret_cast<uint16_t *>(buffer+0)=(uint16_t)htole16((uint16_t)temp_reinsert);
+                                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+0)=(uint16_t)htole16((uint16_t)temp_reinsert);
                                 while(index_subindex<clientsToSendDataSizeOldClients)
                                 {
                                     if(index!=index_subindex && clientsToSendDataOldClients[index_subindex]->haveNewMove)
                                     {
-                                        *reinterpret_cast<uint16_t *>(buffer+bufferCursor)=(uint16_t)htole16((uint16_t)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
-                                        buffer[bufferCursor+sizeof(uint16_t)+0]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getX();
-                                        buffer[bufferCursor+sizeof(uint16_t)+1]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getY();
-                                        buffer[bufferCursor+sizeof(uint16_t)+2]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+bufferCursor)=(uint16_t)htole16((uint16_t)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
+                                        ProtocolParsingBase::tempBigBufferForOutput[bufferCursor+sizeof(uint16_t)+0]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getX();
+                                        ProtocolParsingBase::tempBigBufferForOutput[bufferCursor+sizeof(uint16_t)+1]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getY();
+                                        ProtocolParsingBase::tempBigBufferForOutput[bufferCursor+sizeof(uint16_t)+2]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getLastDirection();
                                         bufferCursor+=sizeof(uint16_t)+sizeof(uint8_t)*3;
                                     }
                                     index_subindex++;
                                 }
-                                clientsToSendDataOldClients[index]->packOutcommingData(0xC5,buffer,bufferCursor);
+                                clientsToSendDataOldClients[index]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,bufferCursor);
                             }
                             index++;
                         }
