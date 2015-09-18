@@ -994,87 +994,99 @@ bool BaseServer::preload_the_map()
     while(index<size)
     {
         unsigned int sub_index=0;
-        while(sub_index<semi_loaded_map.at(index).old_map.teleport.size())
+        Map_semi &map_semi=semi_loaded_map.at(index);
+        map_semi.map->teleporter_list_size=0;
+        /*The datapack dev should fix it and then drop duplicate teleporter, if well done then the final size is map_semi.old_map.teleport.size()*/
+        map_semi.map->teleporter=(CommonMap::Teleporter *)malloc(sizeof(CommonMap::Teleporter)*map_semi.old_map.teleport.size());
+        while(sub_index<map_semi.old_map.teleport.size() && sub_index<127)//code not ready for more than 127
         {
-            std::string teleportString=semi_loaded_map.at(index).old_map.teleport.at(sub_index).map;
+            const auto &teleport=map_semi.old_map.teleport.at(sub_index);
+            std::string teleportString=teleport.map;
             stringreplaceOne(teleportString,BaseServer::text_dottmx,"");
             if(GlobalServerData::serverPrivateVariables.map_list.find(teleportString)!=GlobalServerData::serverPrivateVariables.map_list.end())
             {
-                if(semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_x<GlobalServerData::serverPrivateVariables.map_list.at(teleportString)->width
-                        && semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_y<GlobalServerData::serverPrivateVariables.map_list.at(teleportString)->height)
+                if(teleport.destination_x<GlobalServerData::serverPrivateVariables.map_list.at(teleportString)->width
+                        && teleport.destination_y<GlobalServerData::serverPrivateVariables.map_list.at(teleportString)->height)
                 {
-                    int virtual_position=semi_loaded_map.at(index).old_map.teleport.at(sub_index).source_x+semi_loaded_map.at(index).old_map.teleport.at(sub_index).source_y*semi_loaded_map.at(index).map->width;
-                    if(semi_loaded_map.at(index).map->teleporter.find(virtual_position)!=semi_loaded_map.at(index).map->teleporter.end())
+                    uint16_t index_search=0;
+                    while(index_search<map_semi.map->teleporter_list_size)
                     {
-                        std::cerr << "already found teleporter on the map: "
-                             << semi_loaded_map.at(index).map->map_file
-                             << "("
-                             << semi_loaded_map.at(index).old_map.teleport.at(sub_index).source_x
-                             << ","
-                             << semi_loaded_map.at(index).old_map.teleport.at(sub_index).source_y
-                             << "), to "
-                             << teleportString
-                             << "("
-                             << semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_x
-                             << ","
-                             << semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_y
-                             << ")"
-                             << std::endl;
+                        if(map_semi.map->teleporter[index_search].source_x==teleport.source_x && map_semi.map->teleporter[index_search].source_y==teleport.source_y)
+                        {
+                            std::cerr << "already found teleporter on the map: "
+                                 << map_semi.map->map_file
+                                 << "("
+                                 << teleport.source_x
+                                 << ","
+                                 << teleport.source_y
+                                 << "), to "
+                                 << teleportString
+                                 << "("
+                                 << teleport.destination_x
+                                 << ","
+                                 << teleport.destination_y
+                                 << ")"
+                                 << std::endl;
+                            break;
+                        }
+                        index_search++;
                     }
-                    else
+                    if(index==map_semi.old_map.teleport.size())
                     {
                         #ifdef DEBUG_MESSAGE_MAP_LOAD
                         std::cout << "teleporter on the map: "
-                             << semi_loaded_map.at(index).map->map_file
+                             << map_semi.map->map_file
                              << "("
-                             << semi_loaded_map.at(index).old_map.teleport.at(sub_index).source_x
+                             << teleport.source_x
                              << ","
-                             << semi_loaded_map.at(index).old_map.teleport.at(sub_index).source_y
+                             << teleport.source_y
                              << "), to "
                              << teleportString
                              << "("
                              << semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_x
                              << ","
-                             << semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_y
+                             << teleport.destination_y
                              << ")"
                              << std::endl;
                         #endif
-                        CommonMap::Teleporter *teleporter=&semi_loaded_map[index].map->teleporter[virtual_position];
-                        teleporter->map=GlobalServerData::serverPrivateVariables.map_list.at(teleportString);
-                        teleporter->x=semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_x;
-                        teleporter->y=semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_y;
-                        teleporter->condition=semi_loaded_map.at(index).old_map.teleport.at(sub_index).condition;
+                        CommonMap::Teleporter teleporter;
+                        teleporter.map=GlobalServerData::serverPrivateVariables.map_list.at(teleportString);
+                        teleporter.destination_x=teleport.destination_x;
+                        teleporter.destination_y=teleport.destination_y;
+                        teleporter.condition=teleport.condition;
+                        semi_loaded_map[index].map->teleporter[map_semi.map->teleporter_list_size]=teleporter;
+                        map_semi.map->teleporter_list_size++;
                     }
                 }
                 else
                     std::cerr << "wrong teleporter on the map: "
-                         << semi_loaded_map.at(index).map->map_file
+                         << map_semi.map->map_file
                          << "("
-                         << semi_loaded_map.at(index).old_map.teleport.at(sub_index).source_x
+                         << teleport.source_x
                          << ","
-                         << semi_loaded_map.at(index).old_map.teleport.at(sub_index).source_y
+                         << teleport.source_y
                          << "), to "
                          << teleportString
                          << "("
-                         << semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_x
+                         << teleport.destination_x
                          << ","
-                         << semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_y
+                         << teleport.destination_y
                          << ") because the tp is out of range"
                          << std::endl;
             }
             else
                 std::cerr << "wrong teleporter on the map: "
-                     << semi_loaded_map.at(index).map->map_file
+                     << map_semi.map->map_file
                      << "("
-                     << semi_loaded_map.at(index).old_map.teleport.at(sub_index).source_x
+                     << teleport.source_x
                      << ","
-                     << semi_loaded_map.at(index).old_map.teleport.at(sub_index).source_y
+                     << teleport.source_y
                      << "), to "
                      << teleportString
                      << "("
-                     << semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_x
+                     << teleport.destination_x
                      << ","
-                     << semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_y
+                     << teleport.destination_y
                      << ") because the map is not found"
                      << std::endl;
 

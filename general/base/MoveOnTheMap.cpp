@@ -1,6 +1,5 @@
 #include "MoveOnTheMap.h"
 #include "CommonMap.h"
-#include "DebugClass.h"
 
 using namespace CatchChallenger;
 
@@ -275,22 +274,49 @@ CatchChallenger::ParsedLayerLedges MoveOnTheMap::getLedge(const CommonMap &map, 
     return static_cast<ParsedLayerLedges>((uint32_t)i);
 }
 
-bool MoveOnTheMap::teleport(CommonMap ** map,COORD_TYPE *x,COORD_TYPE *y)
+bool MoveOnTheMap::teleport(CommonMap **map, COORD_TYPE *x, COORD_TYPE *y)
 {
-    if((*map)->teleporter.contains(*x+*y*(*map)->width))
+    const CommonMap::Teleporter * const teleporter=(*map)->teleporter;
+    const uint8_t &teleporter_list_size=(*map)->teleporter_list_size;
+    int8_t index=0;
+    while(index<teleporter_list_size)
     {
-        const CommonMap::Teleporter &teleporter=(*map)->teleporter.value(*x+*y*(*map)->width);
-        *x=teleporter.x;
-        *y=teleporter.y;
-        *map=teleporter.map;
-        return true;
+        if(teleporter[index].source_x==x && teleporter[index].source_y==y)
+        {
+            x=teleporter[index].destination_x;
+            y=teleporter[index].destination_y;
+            *map=teleporter[index].map;
+            return true;
+        }
+        index++;
     }
     return false;
 }
 
+int8_t MoveOnTheMap::indexOfTeleporter(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y)
+{
+    const CommonMap::Teleporter * const teleporter=map.teleporter;
+    int8_t index=0;
+    while(index<map.teleporter_list_size)
+    {
+        if(teleporter[index].source_x==x && teleporter[index].source_y==y)
+            return index;
+        index++;
+    }
+    return -1;
+}
+
 bool MoveOnTheMap::needBeTeleported(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y)
 {
-    return map.teleporter.contains(x+y*map.width);
+    const CommonMap::Teleporter * const teleporter=map.teleporter;
+    int8_t index=0;
+    while(index<map.teleporter_list_size)
+    {
+        if(teleporter[index].source_x==x && teleporter[index].source_y==y)
+            return true;
+        index++;
+    }
+    return false;
 }
 
 bool MoveOnTheMap::isWalkable(const CommonMap &map, const uint8_t &x, const uint8_t &y)
