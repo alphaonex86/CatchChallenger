@@ -367,46 +367,53 @@ bool Client::singleMove(const Direction &direction)
         return false;
     }
 
-    if(map->teleporter.find(x+y*map->width)!=map->teleporter.end())
+    uint16_t index_search=0;
+    while(index_search<map->teleporter_list_size)
     {
-        const CommonMap::Teleporter &teleporter=map->teleporter.at(x+y*map->width);
-        switch(teleporter.condition.type)
+        if(map->teleporter[index_search].source_x==x && map->teleporter[index_search].source_y==y)
         {
-            case CatchChallenger::MapConditionType_None:
-            case CatchChallenger::MapConditionType_Clan://not do for now
-            break;
-            case CatchChallenger::MapConditionType_FightBot:
-                if(public_and_private_informations.bot_already_beaten.find(teleporter.condition.value)==public_and_private_informations.bot_already_beaten.end())
-                {
-                    errorOutput("Need have FightBot win to use this teleporter: "+std::to_string(teleporter.condition.value)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
-                    return false;
-                }
-            break;
-            case CatchChallenger::MapConditionType_Item:
-                if(public_and_private_informations.items.find(teleporter.condition.value)==public_and_private_informations.items.cend())
-                {
-                    errorOutput("Need have item to use this teleporter: "+std::to_string(teleporter.condition.value)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
-                    return false;
-                }
-            break;
-            case CatchChallenger::MapConditionType_Quest:
-                if(public_and_private_informations.quests.find(teleporter.condition.value)==public_and_private_informations.quests.cend())
-                {
-                    errorOutput("Need have quest to use this teleporter: "+std::to_string(teleporter.condition.value)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
-                    return false;
-                }
-                if(!public_and_private_informations.quests.at(teleporter.condition.value).finish_one_time)
-                {
-                    errorOutput("Need have finish the quest to use this teleporter: "+std::to_string(teleporter.condition.value)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
-                    return false;
-                }
-            break;
-            default:
+            const CommonMap::Teleporter &teleporter=map->teleporter[index_search];
+            switch(teleporter.condition.type)
+            {
+                case CatchChallenger::MapConditionType_None:
+                case CatchChallenger::MapConditionType_Clan://not do for now
+                break;
+                case CatchChallenger::MapConditionType_FightBot:
+                    if(public_and_private_informations.bot_already_beaten.find(teleporter.condition.value)==public_and_private_informations.bot_already_beaten.end())
+                    {
+                        errorOutput("Need have FightBot win to use this teleporter: "+std::to_string(teleporter.condition.value)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
+                        return false;
+                    }
+                break;
+                case CatchChallenger::MapConditionType_Item:
+                    if(public_and_private_informations.items.find(teleporter.condition.value)==public_and_private_informations.items.cend())
+                    {
+                        errorOutput("Need have item to use this teleporter: "+std::to_string(teleporter.condition.value)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
+                        return false;
+                    }
+                break;
+                case CatchChallenger::MapConditionType_Quest:
+                    if(public_and_private_informations.quests.find(teleporter.condition.value)==public_and_private_informations.quests.cend())
+                    {
+                        errorOutput("Need have quest to use this teleporter: "+std::to_string(teleporter.condition.value)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
+                        return false;
+                    }
+                    if(!public_and_private_informations.quests.at(teleporter.condition.value).finish_one_time)
+                    {
+                        errorOutput("Need have finish the quest to use this teleporter: "+std::to_string(teleporter.condition.value)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
+                        return false;
+                    }
+                break;
+                default:
+                break;
+            }
+            x=teleporter.destination_x;
+            y=teleporter.destination_y;
+            map=teleporter.map;
+
             break;
         }
-        x=teleporter.x;
-        y=teleporter.y;
-        map=teleporter.map;
+        index_search++;
     }
 
     if(this->map!=map)

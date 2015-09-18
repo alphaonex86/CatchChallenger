@@ -1,7 +1,7 @@
 #include "ProtocolParsingCheck.h"
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
 
-#include <QDebug>
+#include <iostream>
 
 using namespace CatchChallenger;
 
@@ -11,125 +11,86 @@ ProtocolParsingCheck::ProtocolParsingCheck(const PacketModeTransmission &packetM
 {
 }
 
-void ProtocolParsingCheck::parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size)
+bool ProtocolParsingCheck::parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size)
 {
-    Q_UNUSED(mainCodeType);
-    Q_UNUSED(data);
-    Q_UNUSED(size);
+    (void)(mainCodeType);
+    (void)(data);
+    (void)(size);
     if(valid)
     {
-        qDebug() << "Double valid call!";
+        std::cerr << "Double valid call!" << std::endl;
         abort();
     }
     valid=true;
-}
-
-void ProtocolParsingCheck::parseFullMessage(const uint8_t &mainCodeType,const uint8_t &subCodeType,const char * const data,const unsigned int &size)
-{
-    Q_UNUSED(mainCodeType);
-    Q_UNUSED(subCodeType);
-    Q_UNUSED(data);
-    Q_UNUSED(size);
-    if(valid)
-    {
-        qDebug() << "Double valid call!";
-        abort();
-    }
-    valid=true;
+    return true;
 }
 
 void ProtocolParsingCheck::moveClientFastPath(const uint8_t &previousMovedUnit,const uint8_t &direction)
 {
+    (void)previousMovedUnit;
+    (void)direction;
 }
 
-void ProtocolParsingCheck::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
+bool ProtocolParsingCheck::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
-    Q_UNUSED(mainCodeType);
-    Q_UNUSED(queryNumber);
-    Q_UNUSED(data);
-    Q_UNUSED(size);
+    (void)(mainCodeType);
+    (void)(queryNumber);
+    (void)(data);
+    (void)(size);
     if(valid)
     {
-        qDebug() << "Double valid call!";
+        std::cerr << "Double valid call!" << std::endl;
         abort();
     }
     valid=true;
+    return true;
 }
 
-void ProtocolParsingCheck::parseFullQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
+bool ProtocolParsingCheck::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
-    Q_UNUSED(mainCodeType);
-    Q_UNUSED(subCodeType);
-    Q_UNUSED(queryNumber);
-    Q_UNUSED(data);
-    Q_UNUSED(size);
+    (void)(mainCodeType);
+    (void)(queryNumber);
+    (void)(data);
+    (void)(size);
     if(valid)
     {
-        qDebug() << "Double valid call!";
+        std::cerr << "Double valid call!" << std::endl;
         abort();
     }
     valid=true;
-}
-
-void ProtocolParsingCheck::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
-{
-    Q_UNUSED(mainCodeType);
-    Q_UNUSED(queryNumber);
-    Q_UNUSED(data);
-    Q_UNUSED(size);
-    if(valid)
-    {
-        qDebug() << "Double valid call!";
-        abort();
-    }
-    valid=true;
-}
-
-void ProtocolParsingCheck::parseFullReplyData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
-{
-    Q_UNUSED(mainCodeType);
-    Q_UNUSED(subCodeType);
-    Q_UNUSED(queryNumber);
-    Q_UNUSED(data);
-    Q_UNUSED(size);
-    if(valid)
-    {
-        qDebug() << "Double valid call!";
-        abort();
-    }
-    valid=true;
+    return true;
 }
 
 void ProtocolParsingCheck::errorParsingLayer(const std::string &error)
 {
-    qDebug() << error;
+    std::cerr << error << std::endl;
     abort();
 }
 
 void ProtocolParsingCheck::messageParsingLayer(const std::string &message) const
 {
-    qDebug() << message;
+    std::cerr << message << std::endl;
 }
 
 void ProtocolParsingCheck::disconnectClient()
 {
-    qDebug() << "Disconnect at control";
+    std::cerr << "Disconnect at control" << std::endl;
     abort();
 }
 
 ssize_t ProtocolParsingCheck::read(char * data, const size_t &size)
 {
-    Q_UNUSED(data);
-    Q_UNUSED(size);
-    qDebug() << "Read at check";
+    (void)data;
+    (void)size;
+    std::cerr << "Read at check" << std::endl;
     abort();
 }
 
 ssize_t ProtocolParsingCheck::write(const char * const data, const size_t &size)
 {
-    Q_UNUSED(data);
-    Q_UNUSED(size);
-    qDebug() << "Write at check";
+    (void)data;
+    (void)size;
+    std::cerr << "Write at check" << std::endl;
     abort();
 }
 
@@ -138,7 +99,7 @@ bool ProtocolParsingCheck::parseIncommingDataRaw(const char * const commonBuffer
     const bool &returnVar=ProtocolParsingBase::parseIncommingDataRaw(commonBuffer,size,cursor);
     if(!header_cut.isEmpty())
     {
-        qDebug() << "Header cut is not empty";
+        std::cerr << "Header cut is not empty" << std::endl;
         abort();
     }
     return returnVar;
@@ -148,7 +109,7 @@ bool ProtocolParsingCheck::parseIncommingDataRaw(const char * const commonBuffer
 ProtocolParsing::CompressionType ProtocolParsingCheck::getCompressType() const
 {
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-    if(isClient)
+    if(flags & 0x10)
         return compressionTypeServer;
     else
         return compressionTypeClient;
