@@ -495,11 +495,24 @@ void Client::registerBattleRequest(Client *otherPlayerBattle)
     #endif
     this->otherPlayerBattle=otherPlayerBattle;
     otherPlayerBattle->otherPlayerBattle=this;
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << otherPlayerBattle->public_and_private_informations.public_informations.skinId;
-    sendBattleRequest(otherPlayerBattle->rawPseudo+outputData);
+
+    //send the network reply
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xDF;
+    posOutput=+1+1+4;
+
+    {
+        const std::string &text=otherPlayerBattle->public_and_private_informations.public_informations.pseudo;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+        posOutput+=1;
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+        posOutput+=text.size();
+    }
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=otherPlayerBattle->public_and_private_informations.public_informations.skinId;
+    posOutput+=1;
+
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+    sendBattleRequest(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::battleCanceled()
@@ -581,7 +594,9 @@ void Client::internalBattleCanceled(const bool &send)
     otherPlayerBattle=NULL;
     if(send)
     {
-        sendMessage(0x51);
+        //send the network message
+        ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x51;
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1);
         receiveSystemText("Battle declined");
     }
     battleIsValidated=false;
@@ -623,24 +638,39 @@ void Client::internalBattleAccepted(const bool &send)
     if(send)
     {
         std::vector<PlayerMonster> playerMonstersPreview=otherPlayerBattle->public_and_private_informations.playerMonster;
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << otherPlayerBattle->public_and_private_informations.public_informations.skinId;
-        out << (uint8_t)playerMonstersPreview.size();
+
+        //send the network message
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x52;
+        posOutput=+1+4;
+
+        {
+            const std::string &text=otherPlayerBattle->public_and_private_informations.public_informations.pseudo;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+            posOutput+=1;
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+            posOutput+=text.size();
+        }
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=otherPlayerBattle->public_and_private_informations.public_informations.skinId;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=playerMonstersPreview.size();
+        posOutput+=1;
         unsigned int index=0;
         while(index<playerMonstersPreview.size() && index<255)
         {
             if(!monsterIsKO(playerMonstersPreview.at(index)))
-                out << (uint8_t)0x01;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             else
-                out << (uint8_t)0x02;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+            posOutput+=1;
             index++;
         }
-        out << (uint8_t)selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());
-        QByteArray firstValidOtherPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(FacilityLib::playerMonsterToPublicPlayerMonster(*otherPlayerBattle->getCurrentMonster()));
-        const QByteArray newData(otherPlayerBattle->rawPseudo+outputData+firstValidOtherPlayerMonster);
-        sendMessage(0x52,newData.constData(),newData.size());
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());
+        posOutput+=1;
+        posOutput+=FacilityLib::publicPlayerMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,FacilityLib::playerMonsterToPublicPlayerMonster(*otherPlayerBattle->getCurrentMonster()));
+
+        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     }
 }
 
@@ -693,83 +723,108 @@ uint8_t Client::selectedMonsterNumberToMonsterPlace(const uint8_t &selectedMonst
 
 void Client::sendBattleReturn()
 {
-    QByteArray binarypublicPlayerMonster;
     unsigned int index,master_index;
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
-    out << (uint8_t)attackReturn.size();
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x50;
+    posOutput=+1+4;
+
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturn.size();
+    posOutput+=1;
     master_index=0;
     while(master_index<attackReturn.size())
     {
         const Skill::AttackReturn &attackReturnTemp=attackReturn.at(master_index);
-        out << (uint8_t)attackReturnTemp.doByTheCurrentMonster;
-        out << (uint8_t)attackReturnTemp.attackReturnCase;
-        out << (uint8_t)attackReturnTemp.success;
-        out << attackReturnTemp.attack;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.doByTheCurrentMonster;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.attackReturnCase;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.success;
+        posOutput+=1;
+        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(attackReturnTemp.attack);
+        posOutput+=2;
         //ad buff
         index=0;
-        out << (uint8_t)attackReturnTemp.addBuffEffectMonster.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.addBuffEffectMonster.size();
+        posOutput+=1;
         while(index<attackReturnTemp.addBuffEffectMonster.size())
         {
-            out << attackReturnTemp.addBuffEffectMonster.at(index).buff;
-            out << (uint8_t)attackReturnTemp.addBuffEffectMonster.at(index).on;
-            out << attackReturnTemp.addBuffEffectMonster.at(index).level;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.addBuffEffectMonster.at(index).buff;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.addBuffEffectMonster.at(index).on;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.addBuffEffectMonster.at(index).level;
+            posOutput+=1;
             index++;
         }
         //remove buff
         index=0;
-        out << (uint8_t)attackReturnTemp.removeBuffEffectMonster.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.removeBuffEffectMonster.size();
+        posOutput+=1;
         while(index<attackReturnTemp.removeBuffEffectMonster.size())
         {
-            out << attackReturnTemp.removeBuffEffectMonster.at(index).buff;
-            out << (uint8_t)attackReturnTemp.removeBuffEffectMonster.at(index).on;
-            out << attackReturnTemp.removeBuffEffectMonster.at(index).level;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.removeBuffEffectMonster.at(index).buff;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.removeBuffEffectMonster.at(index).on;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.removeBuffEffectMonster.at(index).level;
+            posOutput+=1;
             index++;
         }
         //life effect
         index=0;
-        out << (uint8_t)attackReturnTemp.lifeEffectMonster.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.lifeEffectMonster.size();
+        posOutput+=1;
         while(index<attackReturnTemp.lifeEffectMonster.size())
         {
-            out << attackReturnTemp.lifeEffectMonster.at(index).quantity;
-            out << (uint8_t)attackReturnTemp.lifeEffectMonster.at(index).on;
+            *reinterpret_cast<qint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(attackReturnTemp.lifeEffectMonster.at(index).quantity);
+            posOutput+=4;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.lifeEffectMonster.at(index).on;
+            posOutput+=1;
             index++;
         }
         //buff effect
         index=0;
-        out << (uint8_t)attackReturnTemp.buffLifeEffectMonster.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.buffLifeEffectMonster.size();
+        posOutput+=1;
         while(index<attackReturnTemp.buffLifeEffectMonster.size())
         {
-            out << attackReturnTemp.buffLifeEffectMonster.at(index).quantity;
-            out << (uint8_t)attackReturnTemp.buffLifeEffectMonster.at(index).on;
+            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(attackReturnTemp.buffLifeEffectMonster.at(index).quantity);
+            posOutput+=4;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.buffLifeEffectMonster.at(index).on;
+            posOutput+=1;
             index++;
         }
         master_index++;
     }
     if(otherPlayerBattle!=NULL && otherPlayerBattle->haveMonsterChange())
     {
-        out << (uint8_t)selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());;
-        binarypublicPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(*getOtherMonster());
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());
+        posOutput+=1;
+        posOutput+=FacilityLib::publicPlayerMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,*getOtherMonster());
     }
     attackReturn.clear();
 
-    const QByteArray newData(outputData+binarypublicPlayerMonster);
-    sendMessage(0x50,newData.constData(),newData.size());
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::sendBattleMonsterChange()
 {
-    QByteArray binarypublicPlayerMonster;
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0;
-    out << (uint8_t)selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());;
-    binarypublicPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(*getOtherMonster());
-    const QByteArray newData(outputData+binarypublicPlayerMonster);
-    sendMessage(0x50,newData.constData(),newData.size());
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x50;
+    posOutput=+1+4;
+
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0;
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());
+    posOutput+=1;
+    posOutput+=FacilityLib::publicPlayerMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,*getOtherMonster());
+
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 //return true if change level, multiplicator do at datapack loading

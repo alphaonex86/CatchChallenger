@@ -184,7 +184,7 @@ void Client::sendTradeRequest(char * const data,const uint32_t &size)
         errorOutput("Sorry, no free query number to send this query of trade");
         return;
     }
-    data[1+4]=queryNumberList.back();
+    data[1]=queryNumberList.back();
     registerOutputQuery(0xE0,queryNumberList.back());
     sendRawBlock(data,size);
     queryNumberList.pop_back();
@@ -197,7 +197,7 @@ void Client::sendBattleRequest(char * const data, const uint32_t &size)
         errorOutput("Sorry, no free query number to send this query of trade");
         return;
     }
-    data[1+4]=queryNumberList.back();
+    data[1]=queryNumberList.back();
     registerOutputQuery(0xDF,queryNumberList.back());
     sendRawBlock(data,size);
     queryNumberList.pop_back();

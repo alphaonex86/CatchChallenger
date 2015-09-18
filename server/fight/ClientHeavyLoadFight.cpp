@@ -648,53 +648,27 @@ void Client::loadPlayerMonsterSkills_return(const uint32_t &index)
 
 void Client::generateRandomNumber()
 {
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x53;
+    posOutput=+1+4;
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE);//set the dynamic size
+
     if((randomIndex+randomSize)<CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
     {
         //can send the next block
-        const QByteArray newData(GlobalServerData::serverPrivateVariables.randomData.mid(randomIndex+randomSize,CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE));
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(GlobalServerData::serverPrivateVariables.randomData.isEmpty())
-        {
-            std::cerr << "Client::generateRandomNumber() GlobalServerData::serverPrivateVariables.randomData.isEmpty()" << std::endl;
-            return;
-        }
-        if(newData.isEmpty())
-        {
-            std::cerr << "Client::generateRandomNumber() newData.isEmpty(), GlobalServerData::serverPrivateVariables.randomData.size(): "
-                      << GlobalServerData::serverPrivateVariables.randomData.size()
-                      << " mid("
-                      << randomIndex
-                      << "+"
-                      << randomSize
-                      << ","
-                      << CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE
-                      << ")";
-            return;
-        }
-        #endif
-        sendMessage(0x53,newData.constData(),newData.size());
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,GlobalServerData::serverPrivateVariables.randomData.mid(randomIndex+randomSize,CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE),CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE);
+        posOutput+=CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE;
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     }
     else
     {
         //need return to the first block
-        const QByteArray newData(GlobalServerData::serverPrivateVariables.randomData.mid(0,CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE));
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(GlobalServerData::serverPrivateVariables.randomData.isEmpty())
-        {
-            std::cerr << "Client::generateRandomNumber() GlobalServerData::serverPrivateVariables.randomData.isEmpty()" << std::endl;
-            return;
-        }
-        if(newData.isEmpty())
-        {
-            qDebug() << "Client::generateRandomNumber() newData.isEmpty(), GlobalServerData::serverPrivateVariables.randomData.size(): "
-                     << GlobalServerData::serverPrivateVariables.randomData.size()
-                     << " mid(0,"
-                     << CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE
-                     << ")";
-            return;
-        }
-        #endif
-        sendMessage(0x53,newData.constData(),newData.size());
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,GlobalServerData::serverPrivateVariables.randomData.mid(0,CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE),CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE);
+        posOutput+=CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE;
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     }
     randomSize+=CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE;
 }

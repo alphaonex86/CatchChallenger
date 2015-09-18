@@ -66,15 +66,23 @@ void Client::useRecipe(const uint8_t &query_id,const uint32_t &recipe_id)
         appendReputationRewards(recipe.rewards.reputation);
         addObject(recipe.doItemId,recipe.quantity);
     }
-    //send the reply
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+
+    //send the network reply
+    removeFromQueryReceived(query_id);
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput=+1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput=+1+4;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+
     if(success)
-        out << (uint8_t)RecipeUsage_ok;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)RecipeUsage_ok;
     else
-        out << (uint8_t)RecipeUsage_failed;
-    postReply(query_id,outputData.constData(),outputData.size());
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)RecipeUsage_failed;
+    posOutput+=1;
+
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::takeAnObjectOnMap()
