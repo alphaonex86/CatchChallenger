@@ -39,11 +39,13 @@ public:
     std::vector<CommonMap *> near_map,border_map;//not only the border
     struct Teleporter
     {
-        uint32_t x,y;
+        uint8_t source_x,source_y;/*source*/
+        uint8_t destination_x,destination_y;/*destination*/
         CommonMap *map;
         MapCondition condition;
     };
-    std::unordered_map<uint32_t,Teleporter> teleporter;//the int (x+y*width) is position
+    Teleporter* teleporter;//for very small list < 20 teleporter, it's this structure the more fast, code not ready for more than 127
+    uint8_t teleporter_list_size;
 
     std::string map_file;
     uint16_t width;

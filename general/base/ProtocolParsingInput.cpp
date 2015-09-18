@@ -357,7 +357,6 @@ bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const u
             return false;
         }
 
-        dataSize=temp_size_32Bits;
         flags |= 0x40;
     }
     return true;
@@ -428,33 +427,45 @@ bool ProtocolParsingBase::parseData(const char * const commonBuffer, const uint3
     }
 }
 
-QByteArray ProtocolParsingBase::computeDecompression(const QByteArray &data, const CompressionType &compressionType)
+uint32_t ProtocolParsing::computeDecompression(const char* const source, char* const dest, int compressedSize, int maxDecompressedSize, const CompressionType &compressionType)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(maxDecompressedSize<compressedSize)
+    {
+        std::cerr << "maxDecompressedSize<compressedSize in ProtocolParsingBase::computeDecompression" << std::endl;
+        abort();
+    }
+    #endif
     switch(compressionType)
     {
         case CompressionType::None:
-            return data;
+            std::cerr << "CompressionType::None in ProtocolParsingBase::computeDecompression, do direct mapping" << std::endl;
+            abort();
+            return -1;
+            /* memcpy(dest,source,compressedSize);
+            return compressedSize;*/
         break;
         case CompressionType::Zlib:
         default:
         {
-            const QByteArray &newData=qUncompress(data);
-            return newData;
+            const QByteArray &newData=qUncompress(QByteArray(source,compressedSize));
+            if(newData.size()>maxDecompressedSize)
+                return -1;
+            memcpy(dest,newData.constData(),newData.size());
+            return newData.size();
         }
         break;
         case CompressionType::Xz:
         {
-            const QByteArray &newData=lzmaUncompress(data);
-            return newData;
+            const QByteArray &newData=ProtocolParsingBase::lzmaUncompress(QByteArray(source,compressedSize));
+            if(newData.size()>maxDecompressedSize)
+                return -1;
+            memcpy(dest,newData.constData(),newData.size());
+            return newData.size();
         }
         break;
         case CompressionType::Lz4:
-        {
-            const int &newSize=LZ4_decompress_safe(data.constData(),ProtocolParsingBase::tempBigBufferForUncompressedInput,data.size(),sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput));
-            if(newSize<0)
-                return QByteArray();//Compressed data corrupted
-            return QByteArray(ProtocolParsingBase::tempBigBufferForUncompressedInput,newSize);
-        }
+            return LZ4_decompress_safe(source,dest,compressedSize,maxDecompressedSize);
         break;
     }
 }
@@ -558,7 +569,7 @@ void ProtocolParsingBase::storeInputQuery(const uint8_t &packetCode,const uint8_
 void ProtocolParsingInputOutput::storeInputQuery(const uint8_t &packetCode,const uint8_t &queryNumber)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(queryReceived.find(queryNumber)!=queryReceived.cend())
+    if(inputQueryNumberToPacketCode[queryNumber]!=0x00)
     {
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -567,7 +578,6 @@ void ProtocolParsingInputOutput::storeInputQuery(const uint8_t &packetCode,const
         " storeInputQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+") query with same id previously say");
         return;
     }
-    queryReceived.insert(queryNumber);
     #endif
     //register the size of the reply to send
     inputQueryNumberToPacketCode[queryNumber]=packetCode;
