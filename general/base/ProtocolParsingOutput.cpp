@@ -120,8 +120,9 @@ bool ProtocolParsingBase::removeFromQueryReceived(const uint8_t &queryNumber)
     if(inputQueryNumberToPacketCode[queryNumber]==0x00)
     {
         errorParsingLayer("ProtocolParsingBase::removeFromQueryReceived already replied");
-        return;
+        return false;
     }
     #endif
-    return inputQueryNumberToPacketCode[queryNumber]=0x00;
+    inputQueryNumberToPacketCode[queryNumber]=0x00;
+    return true;
 }
