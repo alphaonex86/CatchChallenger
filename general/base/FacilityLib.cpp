@@ -28,46 +28,58 @@ PublicPlayerMonster FacilityLib::playerMonsterToPublicPlayerMonster(const Player
     return returnVar;
 }
 
-QByteArray FacilityLib::publicPlayerMonsterToBinary(const PublicPlayerMonster &publicPlayerMonster)
+uint16_t FacilityLib::publicPlayerMonsterToBinary(char *data,const PublicPlayerMonster &publicPlayerMonster)
 {
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << publicPlayerMonster.monster;
-    out << publicPlayerMonster.level;
-    out << publicPlayerMonster.hp;
-    out << publicPlayerMonster.catched_with;
-    out << (uint8_t)publicPlayerMonster.gender;
-    out << (uint32_t)publicPlayerMonster.buffs.size();
-    int index=0;
-    while(index<publicPlayerMonster.buffs.size())
-    {
-        out << publicPlayerMonster.buffs.at(index).buff;
-        out << publicPlayerMonster.buffs.at(index).level;
-        index++;
-    }
-    return outputData;
-}
-
-QByteArray playerMonsterToBinary(const PlayerMonster &playerMonster)
-{
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << playerMonster.monster;
-    out << playerMonster.level;
-    out << playerMonster.hp;
-    out << playerMonster.catched_with;
-    out << (uint8_t)playerMonster.gender;
-    out << (uint32_t)playerMonster.buffs.size();
+    uint16_t posOutput=0;
+    *reinterpret_cast<quint16 *>(data+posOutput)=htole16(playerMonster.monster);
+    posOutput+=2;
+    data[posOutput]=playerMonster.level;
+    posOutput+=1;
+    *reinterpret_cast<quint32 *>(data+posOutput)=htole32(playerMonster.hp);
+    posOutput+=4;
+    *reinterpret_cast<quint16 *>(data+posOutput)=htole16(playerMonster.catched_with);
+    posOutput+=2;
+    data[posOutput]=(uint8_t)playerMonster.gender;
+    posOutput+=1;
+    data[posOutput]=playerMonster.buffs.size();
+    posOutput+=1;
     int index=0;
     while(index<playerMonster.buffs.size())
     {
-        out << playerMonster.buffs.at(index).buff;
-        out << playerMonster.buffs.at(index).level;
+        data[posOutput]=playerMonster.buffs.at(index).buff;
+        posOutput+=1;
+        data[posOutput]=playerMonster.buffs.at(index).level;
+        posOutput+=1;
         index++;
     }
-    return outputData;
+    return posOutput;
+}
+
+uint16_t FacilityLib::playerMonsterToBinary(char *data,const PlayerMonster &playerMonster)
+{
+    uint16_t posOutput=0;
+    *reinterpret_cast<quint16 *>(data+posOutput)=htole16(playerMonster.monster);
+    posOutput+=2;
+    data[posOutput]=playerMonster.level;
+    posOutput+=1;
+    *reinterpret_cast<quint32 *>(data+posOutput)=htole32(playerMonster.hp);
+    posOutput+=4;
+    *reinterpret_cast<quint16 *>(data+posOutput)=htole16(playerMonster.catched_with);
+    posOutput+=2;
+    data[posOutput]=(uint8_t)playerMonster.gender;
+    posOutput+=1;
+    data[posOutput]=playerMonster.buffs.size();
+    posOutput+=1;
+    int index=0;
+    while(index<playerMonster.buffs.size())
+    {
+        data[posOutput]=playerMonster.buffs.at(index).buff;
+        posOutput+=1;
+        data[posOutput]=playerMonster.buffs.at(index).level;
+        posOutput+=1;
+        index++;
+    }
+    return posOutput;
 }
 
 PlayerMonster FacilityLib::botFightMonsterToPlayerMonster(const BotFight::BotFightMonster &botFightMonster,const Monster::Stat &stat)

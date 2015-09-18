@@ -186,31 +186,38 @@ void Client::loadItemsWarehouse_return()
 
 void Client::sendInventory()
 {
-    //network send
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x54;
+    posOutput=+1+4;
 
-    out << (uint16_t)public_and_private_informations.items.size();
+    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.items.size());
+    posOutput+=2;
     {
         auto i=public_and_private_informations.items.begin();
         while(i!=public_and_private_informations.items.cend())
         {
-            out << (uint16_t)i->first;
-            out << (uint32_t)i->second;
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(i->first);
+            posOutput+=2;
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(i->second);
+            posOutput+=4;
             ++i;
         }
     }
-    out << (uint16_t)public_and_private_informations.warehouse_items.size();
+    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.warehouse_items.size());
+    posOutput+=2;
     {
         auto  j=public_and_private_informations.warehouse_items.begin();
         while(j!=public_and_private_informations.warehouse_items.cend())
         {
-            out << (uint16_t)j->first;
-            out << (uint32_t)j->second;
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(j->first);
+            posOutput+=2;
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(j->second);
+            posOutput+=4;
             ++j;
         }
     }
-    //send the items
-    sendMessage(0x54,outputData.constData(),outputData.size());
+
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
