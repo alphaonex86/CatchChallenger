@@ -13,8 +13,8 @@ class FacilityLib
 {
 public:
     static PublicPlayerMonster playerMonsterToPublicPlayerMonster(const PlayerMonster &playerMonster);
-    static QByteArray playerMonsterToBinary(const PlayerMonster &playerMonster);
-    static QByteArray publicPlayerMonsterToBinary(const PublicPlayerMonster &publicPlayerMonster);
+    static uint16_t playerMonsterToBinary(char *data,const PlayerMonster &playerMonster);
+    static uint16_t publicPlayerMonsterToBinary(char *data,const PublicPlayerMonster &publicPlayerMonster);
     static PlayerMonster botFightMonsterToPlayerMonster(const BotFight::BotFightMonster &botFightMonster, const Monster::Stat &stat);
     static std::string genderToString(const Gender &gender);
     static QDateTime nextCaptureTime(const City &city);
