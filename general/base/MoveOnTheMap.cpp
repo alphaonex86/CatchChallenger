@@ -281,10 +281,10 @@ bool MoveOnTheMap::teleport(CommonMap **map, COORD_TYPE *x, COORD_TYPE *y)
     int8_t index=0;
     while(index<teleporter_list_size)
     {
-        if(teleporter[index].source_x==x && teleporter[index].source_y==y)
+        if(teleporter[index].source_x==*x && teleporter[index].source_y==*y)
         {
-            x=teleporter[index].destination_x;
-            y=teleporter[index].destination_y;
+            *x=teleporter[index].destination_x;
+            *y=teleporter[index].destination_y;
             *map=teleporter[index].map;
             return true;
         }

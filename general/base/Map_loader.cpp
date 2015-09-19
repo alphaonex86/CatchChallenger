@@ -12,85 +12,85 @@
 #include <QMutex>
 #include <QTime>
 #include <QMutexLocker>
-#include <QMultiHash>
 
+#include <iostream>
 #include <zlib.h>
 
 using namespace CatchChallenger;
 
 std::unordered_map<std::string/*file*/, std::unordered_map<uint32_t/*id*/,QDomElement> > Map_loader::teleportConditionsUnparsed;
 
-const std::string Map_loader::text_map=QLatin1Literal("map");
-const std::string Map_loader::text_width=QLatin1Literal("width");
-const std::string Map_loader::text_height=QLatin1Literal("height");
-const std::string Map_loader::text_properties=QLatin1Literal("properties");
-const std::string Map_loader::text_property=QLatin1Literal("property");
-const std::string Map_loader::text_name=QLatin1Literal("name");
-const std::string Map_loader::text_value=QLatin1Literal("value");
-const std::string Map_loader::text_objectgroup=QLatin1Literal("objectgroup");
-const std::string Map_loader::text_Moving=QLatin1Literal("Moving");
-const std::string Map_loader::text_object=QLatin1Literal("object");
-const std::string Map_loader::text_x=QLatin1Literal("x");
-const std::string Map_loader::text_y=QLatin1Literal("y");
-const std::string Map_loader::text_type=QLatin1Literal("type");
-const std::string Map_loader::text_borderleft=QLatin1Literal("border-left");
-const std::string Map_loader::text_borderright=QLatin1Literal("border-right");
-const std::string Map_loader::text_bordertop=QLatin1Literal("border-top");
-const std::string Map_loader::text_borderbottom=QLatin1Literal("border-bottom");
-const std::string Map_loader::text_teleport_on_push=QLatin1Literal("teleport on push");
-const std::string Map_loader::text_teleport_on_it=QLatin1Literal("teleport on it");
-const std::string Map_loader::text_door=QLatin1Literal("door");
-const std::string Map_loader::text_condition_file=QLatin1Literal("condition-file");
-const std::string Map_loader::text_condition_id=QLatin1Literal("condition-id");
-const std::string Map_loader::text_rescue=QLatin1Literal("rescue");
-const std::string Map_loader::text_bot_spawn=QLatin1Literal("bot spawn");
-const std::string Map_loader::text_Object=QLatin1Literal("Object");
-const std::string Map_loader::text_bot=QLatin1Literal("bot");
-const std::string Map_loader::text_skin=QLatin1Literal("skin");
-const std::string Map_loader::text_lookAt=QLatin1Literal("lookAt");
-const std::string Map_loader::text_bottom=QLatin1Literal("bottom");
-const std::string Map_loader::text_file=QLatin1Literal("file");
-const std::string Map_loader::text_id=QLatin1Literal("id");
-const std::string Map_loader::text_layer=QLatin1Literal("layer");
-const std::string Map_loader::text_encoding=QLatin1Literal("encoding");
-const std::string Map_loader::text_compression=QLatin1Literal("compression");
-const std::string Map_loader::text_base64=QLatin1Literal("base64");
-const std::string Map_loader::text_Walkable=QLatin1Literal("Walkable");
-const std::string Map_loader::text_Collisions=QLatin1Literal("Collisions");
-const std::string Map_loader::text_Water=QLatin1Literal("Water");
-const std::string Map_loader::text_Grass=QLatin1Literal("Grass");
-const std::string Map_loader::text_Dirt=QLatin1Literal("Dirt");
-const std::string Map_loader::text_LedgesRight=QLatin1Literal("LedgesRight");
-const std::string Map_loader::text_LedgesLeft=QLatin1Literal("LedgesLeft");
-const std::string Map_loader::text_LedgesBottom=QLatin1Literal("LedgesBottom");
-const std::string Map_loader::text_LedgesDown=QLatin1Literal("LedgesDown");
-const std::string Map_loader::text_LedgesTop=QLatin1Literal("LedgesTop");
-const std::string Map_loader::text_LedgesUp=QLatin1Literal("LedgesUp");
-const std::string Map_loader::text_grass=QLatin1Literal("grass");
-const std::string Map_loader::text_monster=QLatin1Literal("monster");
-const std::string Map_loader::text_minLevel=QLatin1Literal("minLevel");
-const std::string Map_loader::text_maxLevel=QLatin1Literal("maxLevel");
-const std::string Map_loader::text_level=QLatin1Literal("level");
-const std::string Map_loader::text_luck=QLatin1Literal("luck");
-const std::string Map_loader::text_water=QLatin1Literal("water");
-const std::string Map_loader::text_cave=QLatin1Literal("cave");
-const std::string Map_loader::text_condition=QLatin1Literal("condition");
-const std::string Map_loader::text_quest=QLatin1Literal("quest");
-const std::string Map_loader::text_item=QLatin1Literal("item");
-const std::string Map_loader::text_fightBot=QLatin1Literal("fightBot");
-const std::string Map_loader::text_clan=QLatin1Literal("clan");
-const std::string Map_loader::text_dottmx=QLatin1Literal(".tmx");
-const std::string Map_loader::text_dotxml=QLatin1Literal(".xml");
-const std::string Map_loader::text_slash=QLatin1Literal("/");
-const std::string Map_loader::text_percent=QLatin1Literal("%");
-const std::string Map_loader::text_data=QLatin1Literal("data");
-const std::string Map_loader::text_dotcomma=QLatin1Literal(";");
-const std::string Map_loader::text_false=QLatin1Literal("false");
-const std::string Map_loader::text_true=QLatin1Literal("true");
-const std::string Map_loader::text_visible=QLatin1Literal("visible");
-const std::string Map_loader::text_infinite=QLatin1Literal("infinite");
-const std::string Map_loader::text_tilewidth=QLatin1Literal("tilewidth");
-const std::string Map_loader::text_tileheight=QLatin1Literal("tileheight");
+const std::string Map_loader::text_map="map";
+const std::string Map_loader::text_width="width";
+const std::string Map_loader::text_height="height";
+const std::string Map_loader::text_properties="properties";
+const std::string Map_loader::text_property="property";
+const std::string Map_loader::text_name="name";
+const std::string Map_loader::text_value="value";
+const std::string Map_loader::text_objectgroup="objectgroup";
+const std::string Map_loader::text_Moving="Moving";
+const std::string Map_loader::text_object="object";
+const std::string Map_loader::text_x="x";
+const std::string Map_loader::text_y="y";
+const std::string Map_loader::text_type="type";
+const std::string Map_loader::text_borderleft="border-left";
+const std::string Map_loader::text_borderright="border-right";
+const std::string Map_loader::text_bordertop="border-top";
+const std::string Map_loader::text_borderbottom="border-bottom";
+const std::string Map_loader::text_teleport_on_push="teleport on push";
+const std::string Map_loader::text_teleport_on_it="teleport on it";
+const std::string Map_loader::text_door="door";
+const std::string Map_loader::text_condition_file="condition-file";
+const std::string Map_loader::text_condition_id="condition-id";
+const std::string Map_loader::text_rescue="rescue";
+const std::string Map_loader::text_bot_spawn="bot spawn";
+const std::string Map_loader::text_Object="Object";
+const std::string Map_loader::text_bot="bot";
+const std::string Map_loader::text_skin="skin";
+const std::string Map_loader::text_lookAt="lookAt";
+const std::string Map_loader::text_bottom="bottom";
+const std::string Map_loader::text_file="file";
+const std::string Map_loader::text_id="id";
+const std::string Map_loader::text_layer="layer";
+const std::string Map_loader::text_encoding="encoding";
+const std::string Map_loader::text_compression="compression";
+const std::string Map_loader::text_base64="base64";
+const std::string Map_loader::text_Walkable="Walkable";
+const std::string Map_loader::text_Collisions="Collisions";
+const std::string Map_loader::text_Water="Water";
+const std::string Map_loader::text_Grass="Grass";
+const std::string Map_loader::text_Dirt="Dirt";
+const std::string Map_loader::text_LedgesRight="LedgesRight";
+const std::string Map_loader::text_LedgesLeft="LedgesLeft";
+const std::string Map_loader::text_LedgesBottom="LedgesBottom";
+const std::string Map_loader::text_LedgesDown="LedgesDown";
+const std::string Map_loader::text_LedgesTop="LedgesTop";
+const std::string Map_loader::text_LedgesUp="LedgesUp";
+const std::string Map_loader::text_grass="grass";
+const std::string Map_loader::text_monster="monster";
+const std::string Map_loader::text_minLevel="minLevel";
+const std::string Map_loader::text_maxLevel="maxLevel";
+const std::string Map_loader::text_level="level";
+const std::string Map_loader::text_luck="luck";
+const std::string Map_loader::text_water="water";
+const std::string Map_loader::text_cave="cave";
+const std::string Map_loader::text_condition="condition";
+const std::string Map_loader::text_quest="quest";
+const std::string Map_loader::text_item="item";
+const std::string Map_loader::text_fightBot="fightBot";
+const std::string Map_loader::text_clan="clan";
+const std::string Map_loader::text_dottmx=".tmx";
+const std::string Map_loader::text_dotxml=".xml";
+const std::string Map_loader::text_slash="/";
+const std::string Map_loader::text_percent="%";
+const std::string Map_loader::text_data="data";
+const std::string Map_loader::text_dotcomma=";";
+const std::string Map_loader::text_false="false";
+const std::string Map_loader::text_true="true";
+const std::string Map_loader::text_visible="visible";
+const std::string Map_loader::text_infinite="infinite";
+const std::string Map_loader::text_tilewidth="tilewidth";
+const std::string Map_loader::text_tileheight="tileheight";
 
 /// \todo put at walkable the tp on push
 
@@ -99,17 +99,17 @@ static void logZlibError(int error)
     switch (error)
     {
     case Z_MEM_ERROR:
-        qDebug() << "Out of memory while (de)compressing data!";
+        std::cerr << "Out of memory while (de)compressing data!" << std::endl;
         break;
     case Z_VERSION_ERROR:
-        qDebug() << "Incompatible zlib version!";
+        std::cerr << "Incompatible zlib version!" << std::endl;
         break;
     case Z_NEED_DICT:
     case Z_DATA_ERROR:
-        qDebug() << "Incorrect zlib compressed data!";
+        std::cerr << "Incorrect zlib compressed data!" << std::endl;
         break;
     default:
-        qDebug() << "Unknown error while (de)compressing data!";
+        std::cerr << "Unknown error while (de)compressing data!" << std::endl;
     }
 }
 
@@ -218,19 +218,19 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
     else
     {
         #endif
-        QFile mapFile(fileName);
+        QFile mapFile(QString::fromStdString(fileName));
         if(!mapFile.open(QIODevice::ReadOnly))
         {
-            error=mapFile.fileName()+QLatin1String(": ")+mapFile.errorString();
+            error=mapFile.fileName().toStdString()+": "+mapFile.errorString().toStdString();
             return false;
         }
         const QByteArray &xmlContent=mapFile.readAll();
         mapFile.close();
-        std::string errorStr;
+        QString errorStr;
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
-            error=std::stringLiteral("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+            error=mapFile.fileName().toStdString()+", Parse error at line "+std::to_string(errorLine)+" column "+std::to_string(errorColumn)+": "+errorStr.toStdString();
             return false;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -238,156 +238,161 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
     }
     #endif
     const QDomElement &root = domDocument.documentElement();
-    if(root.tagName()!=Map_loader::text_map)
+    if(root.tagName().toStdString()!=Map_loader::text_map)
     {
-        error=std::stringLiteral("\"map\" root balise not found for the xml file");
+        error="\"map\" root balise not found for the xml file";
         return false;
     }
 
     //get the width
-    if(!root.hasAttribute(Map_loader::text_width))
+    if(!root.hasAttribute(QString::fromStdString(Map_loader::text_width)))
     {
-        error=std::stringLiteral("the root node has not the attribute \"width\"");
+        error="the root node has not the attribute \"width\"";
         return false;
     }
-    map_to_send_temp.width=root.attribute(Map_loader::text_width).toUInt(&ok);
+    map_to_send_temp.width=root.attribute(QString::fromStdString(Map_loader::text_width)).toUInt(&ok);
     if(!ok)
     {
-        error=std::stringLiteral("the root node has wrong attribute \"width\"");
+        error="the root node has wrong attribute \"width\"";
         return false;
     }
 
     //get the height
-    if(!root.hasAttribute(Map_loader::text_height))
+    if(!root.hasAttribute(QString::fromStdString(Map_loader::text_height)))
     {
-        error=std::stringLiteral("the root node has not the attribute \"height\"");
+        error="the root node has not the attribute \"height\"";
         return false;
     }
-    map_to_send_temp.height=root.attribute(Map_loader::text_height).toUInt(&ok);
+    map_to_send_temp.height=root.attribute(QString::fromStdString(Map_loader::text_height)).toUInt(&ok);
     if(!ok)
     {
-        error=std::stringLiteral("the root node has wrong attribute \"height\"");
+        error="the root node has wrong attribute \"height\"";
         return false;
     }
 
     //check the size
     if(map_to_send_temp.width<1 || map_to_send_temp.width>255)
     {
-        error=std::stringLiteral("the width should be greater or equal than 1, and lower or equal than 32000");
+        error="the width should be greater or equal than 1, and lower or equal than 32000";
         return false;
     }
     if(map_to_send_temp.height<1 || map_to_send_temp.height>255)
     {
-        error=std::stringLiteral("the height should be greater or equal than 1, and lower or equal than 32000");
+        error="the height should be greater or equal than 1, and lower or equal than 32000";
         return false;
     }
 
     //properties
-    QDomElement child = root.firstChildElement(Map_loader::text_properties);
+    QDomElement child = root.firstChildElement(QString::fromStdString(Map_loader::text_properties));
     if(!child.isNull())
     {
         if(child.isElement())
         {
-            QDomElement SubChild=child.firstChildElement(Map_loader::text_property);
+            QDomElement SubChild=child.firstChildElement(QString::fromStdString(Map_loader::text_property));
             while(!SubChild.isNull())
             {
                 if(SubChild.isElement())
                 {
-                    if(SubChild.hasAttribute(Map_loader::text_name) && SubChild.hasAttribute(Map_loader::text_value))
-                        map_to_send_temp.property[SubChild.attribute(Map_loader::text_name)]=SubChild.attribute(Map_loader::text_value);
+                    if(SubChild.hasAttribute(QString::fromStdString(Map_loader::text_name)) && SubChild.hasAttribute(QString::fromStdString(Map_loader::text_value)))
+                        map_to_send_temp.property[SubChild.attribute(QString::fromStdString(Map_loader::text_name)).toStdString()]=SubChild.attribute(QString::fromStdString(Map_loader::text_value));
                     else
                     {
-                        error=std::stringLiteral("Missing attribute name or value: child.tagName(): %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber());
+                        error="Missing attribute name or value: child.tagName(): "+SubChild.tagName().toStdString()+" (at line: "+std::to_string(SubChild.lineNumber())+")";
                         return false;
                     }
                 }
                 else
                 {
-                    error=std::stringLiteral("Is not an element: child.tagName(): %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber());
+                    error="Is not an element: child.tagName(): "+SubChild.tagName().toStdString()+" (at line: "+std::to_string(SubChild.lineNumber())+")";
                     return false;
                 }
-                SubChild = SubChild.nextSiblingElement(Map_loader::text_property);
+                SubChild = SubChild.nextSiblingElement(QString::fromStdString(Map_loader::text_property));
             }
         }
         else
         {
-            error=std::stringLiteral("Is not an element: child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
+            error="Is not an element: child.tagName(): "+child.tagName().toStdString()+" (at line: "+std::to_string(child.lineNumber())+")";
             return false;
         }
     }
 
     int tilewidth=16;
     int tileheight=16;
-    if(root.hasAttribute(Map_loader::text_tilewidth))
+    if(root.hasAttribute(QString::fromStdString(Map_loader::text_tilewidth)))
     {
-        tilewidth=root.attribute(Map_loader::text_tilewidth).toUShort(&ok);
+        tilewidth=root.attribute(QString::fromStdString(Map_loader::text_tilewidth)).toUShort(&ok);
         if(!ok)
         {
-            qDebug() << std::stringLiteral("Unable to open the file: %1, tilewidth is not a number").arg(fileName);
+            std::cerr << "Unable to open the file: " << fileName << ", tilewidth is not a number" << std::endl;
             tilewidth=16;
         }
     }
-    if(root.hasAttribute(Map_loader::text_tileheight))
+    if(root.hasAttribute(QString::fromStdString(Map_loader::text_tileheight)))
     {
-        tileheight=root.attribute(Map_loader::text_tileheight).toUShort(&ok);
+        tileheight=root.attribute(QString::fromStdString(Map_loader::text_tileheight)).toUShort(&ok);
         if(!ok)
         {
-            qDebug() << std::stringLiteral("Unable to open the file: %1, tilewidth is not a number").arg(fileName);
+            std::cerr << "Unable to open the file: " << fileName << ", tilewidth is not a number" << std::endl;
             tileheight=16;
         }
     }
 
     // objectgroup
-    child = root.firstChildElement(Map_loader::text_objectgroup);
+    child = root.firstChildElement(QString::fromStdString(Map_loader::text_objectgroup));
     while(!child.isNull())
     {
-        if(!child.hasAttribute(Map_loader::text_name))
-            DebugClass::debugConsole(std::stringLiteral("Has not attribute \"name\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
+        if(!child.hasAttribute(QString::fromStdString(Map_loader::text_name)))
+            std::cerr << "Has not attribute \"name\": child.tagName(): " << child.tagName().toStdString() << " (at line: " << child.lineNumber() << ")";
         else if(!child.isElement())
-            DebugClass::debugConsole(std::stringLiteral("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute(Map_loader::text_name)).arg(child.lineNumber())));
+            std::cerr << "Is not an element: name: " << child.attribute(QString::fromStdString(Map_loader::text_name)).toStdString()
+                      << " child.tagName(): " << child.tagName().toStdString() << " (at line: " << child.lineNumber() << ")";
         else
         {
-            if(child.attribute(Map_loader::text_name)==Map_loader::text_Moving)
+            if(child.attribute(QString::fromStdString(Map_loader::text_name))==QString::fromStdString(Map_loader::text_Moving))
             {
-                QDomElement SubChild=child.firstChildElement(Map_loader::text_object);
+                QDomElement SubChild=child.firstChildElement(QString::fromStdString(Map_loader::text_object));
                 while(!SubChild.isNull())
                 {
-                    if(SubChild.isElement() && SubChild.hasAttribute(Map_loader::text_x) && SubChild.hasAttribute(Map_loader::text_y))
+                    if(SubChild.isElement() && SubChild.hasAttribute(QString::fromStdString(Map_loader::text_x)) && SubChild.hasAttribute(QString::fromStdString(Map_loader::text_y)))
                     {
-                        const uint32_t &object_x=SubChild.attribute(Map_loader::text_x).toUInt(&ok)/tilewidth;
+                        const uint32_t &object_x=SubChild.attribute(QString::fromStdString(Map_loader::text_x)).toUInt(&ok)/tilewidth;
                         if(!ok)
-                            DebugClass::debugConsole(std::stringLiteral("Wrong conversion with x: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
+                            std::cerr << "Wrong conversion with x: child.tagName(): " << SubChild.tagName().toStdString()
+                                        << " (at line: " << std::to_string(SubChild.lineNumber())
+                                        << "), file: " << fileName << std::endl;
                         else
                         {
                             /** the -1 is important to fix object layer bug into tiled!!!
                              * Don't remove! */
-                            const uint32_t &object_y=(SubChild.attribute(Map_loader::text_y).toUInt(&ok)/tileheight)-1;
+                            const uint32_t &object_y=(SubChild.attribute(QString::fromStdString(Map_loader::text_y)).toUInt(&ok)/tileheight)-1;
 
                             if(!ok)
-                                DebugClass::debugConsole(std::stringLiteral("Wrong conversion with y: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
+                                std::cerr << "Wrong conversion with y: child.tagName(): " << SubChild.tagName().toStdString()
+                                            << " (at line: " << std::to_string(SubChild.lineNumber())
+                                            << "), file: " << fileName << std::endl;
                             else if(object_x>map_to_send_temp.width || object_y>map_to_send_temp.height)
-                                DebugClass::debugConsole(std::stringLiteral("Object out of the map: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
-                            else if(SubChild.hasAttribute(Map_loader::text_type))
+                                std::cerr << "Object out of the map: child.tagName(): " << SubChild.tagName().toStdString()
+                                            << " (at line: " << std::to_string(SubChild.lineNumber())
+                                            << "), file: " << fileName << std::endl;
+                            else if(SubChild.hasAttribute(QString::fromStdString(Map_loader::text_type)))
                             {
-                                const std::string &type=SubChild.attribute(Map_loader::text_type);
+                                const std::string &type=SubChild.attribute(QString::fromStdString(Map_loader::text_type)).toStdString();
 
-                                std::unordered_map<std::string,QVariant> property_text;
-                                const QDomElement &prop=SubChild.firstChildElement(Map_loader::text_properties);
+                                std::unordered_map<std::string,std::string> property_text;
+                                const QDomElement &prop=SubChild.firstChildElement(QString::fromStdString(Map_loader::text_properties));
                                 if(!prop.isNull())
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP
-                                    DebugClass::debugConsole(std::stringLiteral("type: %1, object_x: %2, object_y: %3, !prop.isNull()")
-                                                 .arg(type)
-                                                 .arg(object_x)
-                                                 .arg(object_y)
-                                                 );
+                                    std::cerr << "Wrong conversion with y: child.tagName(): " << prop.tagName().toStdString()
+                                                << " (at line: " << std::to_string(prop.lineNumber())
+                                                << "), file: " << fileName << std::endl;
                                     #endif
-                                    QDomElement property=prop.firstChildElement(Map_loader::text_property);
+                                    QDomElement property=prop.firstChildElement(QString::fromStdString(Map_loader::text_property));
                                     while(!property.isNull())
                                     {
-                                        if(property.hasAttribute(Map_loader::text_name) && property.hasAttribute(Map_loader::text_value))
-                                            property_text[property.attribute(Map_loader::text_name)]=property.attribute(Map_loader::text_value);
-                                        property = property.nextSiblingElement(Map_loader::text_property);
+                                        if(property.hasAttribute(QString::fromStdString(Map_loader::text_name)) && property.hasAttribute(QString::fromStdString(Map_loader::text_value)))
+                                            property_text[property.attribute(QString::fromStdString(Map_loader::text_name)).toStdString()]=property.attribute(QString::fromStdString(Map_loader::text_value)).toStdString();
+                                        property = property.nextSiblingElement(QString::fromStdString(Map_loader::text_property));
                                     }
                                 }
                                 if(type==Map_loader::text_borderleft || type==Map_loader::text_borderright || type==Map_loader::text_bordertop || type==Map_loader::text_borderbottom)
@@ -399,132 +404,112 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                                          .arg(object_y)
                                          );
                                     #endif
-                                    if(property_text.contains(Map_loader::text_map))
+                                    if(property_text.find(Map_loader::text_map)!=property_text.cend())
                                     {
                                         if(type==Map_loader::text_borderleft)//border left
                                         {
-                                            const std::string &borderMap=property_text.value(Map_loader::text_map).toString();
-                                            if(!borderMap.isEmpty())
+                                            const std::string &borderMap=property_text.at(Map_loader::text_map);
+                                            if(!borderMap.empty())
                                             {
-                                                if(map_to_send_temp.border.left.fileName.isEmpty())
+                                                if(map_to_send_temp.border.left.fileName.empty())
                                                 {
                                                     map_to_send_temp.border.left.fileName=borderMap;
-                                                    if(!map_to_send_temp.border.left.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send_temp.border.left.fileName.isEmpty())
+                                                    if(!stringEndsWith(map_to_send_temp.border.left.fileName,Map_loader::text_dottmx) && !map_to_send_temp.border.left.fileName.empty())
                                                         map_to_send_temp.border.left.fileName+=Map_loader::text_dottmx;
                                                     map_to_send_temp.border.left.y_offset=object_y;
-                                                    #ifdef DEBUG_MESSAGE_MAP_BORDER
-                                                    DebugClass::debugConsole(std::stringLiteral("map_to_send.border.left.fileName: %1, offset: %2").arg(map_to_send.border.left.fileName).arg(map_to_send.border.left.y_offset));
-                                                    #endif
                                                 }
                                                 else
-                                                    DebugClass::debugConsole(std::stringLiteral("The border %1 %2 is already set (at line: %3), file: %4").arg(SubChild.tagName()).arg(type).arg(SubChild.lineNumber()).arg(fileName));
+                                                    std::cerr << "The border " << SubChild.tagName().toStdString() << " " << type << " is already set (at line: " << SubChild.lineNumber() << "), file: " << fileName << std::endl;
                                             }
                                             else
-                                                DebugClass::debugConsole(std::stringLiteral("The border %1 %2 can't be empty (at line: %3), file: %4").arg(SubChild.tagName()).arg(type).arg(SubChild.lineNumber()).arg(fileName));
+                                                std::cerr << "The border " << SubChild.tagName().toStdString() << " " << type << " can't be empty (at line: " << SubChild.lineNumber() << "), file: " << fileName << std::endl;
                                         }
                                         else if(type==Map_loader::text_borderright)//border right
                                         {
-                                            const std::string &borderMap=property_text.value(Map_loader::text_map).toString();
-                                            if(!borderMap.isEmpty())
+                                            const std::string &borderMap=property_text.at(Map_loader::text_map);
+                                            if(!borderMap.empty())
                                             {
-                                                if(map_to_send_temp.border.right.fileName.isEmpty())
+                                                if(map_to_send_temp.border.right.fileName.empty())
                                                 {
                                                     map_to_send_temp.border.right.fileName=borderMap;
-                                                    if(!map_to_send_temp.border.right.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send_temp.border.right.fileName.isEmpty())
-                                                        map_to_send_temp.border.right.fileName+=QLatin1String(".tmx");
+                                                    if(!stringEndsWith(map_to_send_temp.border.right.fileName,Map_loader::text_dottmx) && !map_to_send_temp.border.right.fileName.empty())
+                                                        map_to_send_temp.border.right.fileName+=Map_loader::text_dottmx;
                                                     map_to_send_temp.border.right.y_offset=object_y;
-                                                    #ifdef DEBUG_MESSAGE_MAP_BORDER
-                                                    DebugClass::debugConsole(std::stringLiteral("map_to_send.border.right.fileName: %1, offset: %2").arg(map_to_send.border.right.fileName).arg(map_to_send.border.right.y_offset));
-                                                    #endif
                                                 }
                                                 else
-                                                    DebugClass::debugConsole(std::stringLiteral("The border %1 %2 is already set (at line: %3), file: %4").arg(SubChild.tagName()).arg(type).arg(SubChild.lineNumber()).arg(fileName));
+                                                    std::cerr << "The border " << SubChild.tagName().toStdString() << " " << type << " is already set (at line: " << SubChild.lineNumber() << "), file: " << fileName << std::endl;
                                             }
                                             else
-                                                DebugClass::debugConsole(std::stringLiteral("The border %1 %2 can't be empty (at line: %3), file: %4").arg(SubChild.tagName()).arg(type).arg(SubChild.lineNumber()).arg(fileName));
+                                                std::cerr << "The border " << SubChild.tagName().toStdString() << " " << type << " can't be empty (at line: " << SubChild.lineNumber() << "), file: " << fileName << std::endl;
                                         }
                                         else if(type==Map_loader::text_bordertop)//border top
                                         {
-                                            const std::string &borderMap=property_text.value(Map_loader::text_map).toString();
-                                            if(!borderMap.isEmpty())
+                                            const std::string &borderMap=property_text.at(Map_loader::text_map);
+                                            if(!borderMap.empty())
                                             {
-                                                if(map_to_send_temp.border.top.fileName.isEmpty())
+                                                if(map_to_send_temp.border.top.fileName.empty())
                                                 {
                                                     map_to_send_temp.border.top.fileName=borderMap;
-                                                    if(!map_to_send_temp.border.top.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send_temp.border.top.fileName.isEmpty())
+                                                    if(!stringEndsWith(map_to_send_temp.border.top.fileName,Map_loader::text_dottmx) && !map_to_send_temp.border.top.fileName.empty())
                                                         map_to_send_temp.border.top.fileName+=Map_loader::text_dottmx;
                                                     map_to_send_temp.border.top.x_offset=object_x;
-                                                    #ifdef DEBUG_MESSAGE_MAP_BORDER
-                                                    DebugClass::debugConsole(std::stringLiteral("map_to_send.border.top.fileName: %1, offset: %2").arg(map_to_send.border.top.fileName).arg(map_to_send.border.top.x_offset));
-                                                    #endif
                                                 }
                                                 else
-                                                    DebugClass::debugConsole(std::stringLiteral("The border %1 %2 is already set (at line: %3), file: %4").arg(SubChild.tagName()).arg(type).arg(SubChild.lineNumber()).arg(fileName));
+                                                    std::cerr << "The border " << SubChild.tagName().toStdString() << " " << type << " is already set (at line: " << SubChild.lineNumber() << "), file: " << fileName << std::endl;
                                             }
                                             else
-                                                DebugClass::debugConsole(std::stringLiteral("The border %1 %2 can't be empty (at line: %3), file: %4").arg(SubChild.tagName()).arg(type).arg(SubChild.lineNumber()).arg(fileName));
+                                                std::cerr << "The border " << SubChild.tagName().toStdString() << " " << type << " can't be empty (at line: " << SubChild.lineNumber() << "), file: " << fileName << std::endl;
                                         }
                                         else if(type==Map_loader::text_borderbottom)//border bottom
                                         {
-                                            const std::string &borderMap=property_text.value(Map_loader::text_map).toString();
-                                            if(!borderMap.isEmpty())
+                                            const std::string &borderMap=property_text.at(Map_loader::text_map);
+                                            if(!borderMap.empty())
                                             {
-                                                if(map_to_send_temp.border.bottom.fileName.isEmpty())
+                                                if(map_to_send_temp.border.bottom.fileName.empty())
                                                 {
                                                     map_to_send_temp.border.bottom.fileName=borderMap;
-                                                    if(!map_to_send_temp.border.bottom.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send_temp.border.bottom.fileName.isEmpty())
+                                                    if(!stringEndsWith(map_to_send_temp.border.bottom.fileName,Map_loader::text_dottmx) && !map_to_send_temp.border.bottom.fileName.empty())
                                                         map_to_send_temp.border.bottom.fileName+=Map_loader::text_dottmx;
                                                     map_to_send_temp.border.bottom.x_offset=object_x;
-                                                    #ifdef DEBUG_MESSAGE_MAP_BORDER
-                                                    DebugClass::debugConsole(std::stringLiteral("map_to_send.border.bottom.fileName: %1, offset: %2").arg(map_to_send.border.bottom.fileName).arg(map_to_send.border.bottom.x_offset));
-                                                    #endif
                                                 }
                                                 else
-                                                    DebugClass::debugConsole(std::stringLiteral("The border %1 %2 is already set (at line: %3), file: %4").arg(SubChild.tagName()).arg(type).arg(SubChild.lineNumber()).arg(fileName));
+                                                    std::cerr << "The border " << SubChild.tagName().toStdString() << " " << type << " is already set (at line: " << SubChild.lineNumber() << "), file: " << fileName << std::endl;
                                             }
                                             else
-                                                DebugClass::debugConsole(std::stringLiteral("The border %1 %2 can't be empty (at line: %3), file: %4").arg(SubChild.tagName()).arg(type).arg(SubChild.lineNumber()).arg(fileName));
+                                                std::cerr << "The border " << SubChild.tagName().toStdString() << " " << type << " can't be empty (at line: " << SubChild.lineNumber() << "), file: " << fileName << std::endl;
                                         }
                                         else
-                                            DebugClass::debugConsole(std::stringLiteral("Not at middle of border: child.tagName(): %1, object_x: %2, object_y: %3, file: %4")
-                                                 .arg(SubChild.tagName())
-                                                 .arg(object_x)
-                                                 .arg(object_y)
-                                                 .arg(fileName)
-                                                 );
+                                            std::cerr << "Not at middle of border: child.tagName(): " << SubChild.tagName().toStdString() << ", object_x: " << object_x << ", object_y: " << object_y << ", file: " << fileName << std::endl;
                                     }
                                     else
-                                        DebugClass::debugConsole(std::stringLiteral("Missing \"map\" properties for the border: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
+                                        std::cerr << "Missing \"map\" properties for the border: " << SubChild.tagName().toStdString() << " (at line: " << SubChild.lineNumber() << ")" << std::endl;
                                 }
                                 else if(type==Map_loader::text_teleport_on_push || type==Map_loader::text_teleport_on_it || type==Map_loader::text_door)
                                 {
-                                    #ifdef DEBUG_MESSAGE_MAP
-                                    DebugClass::debugConsole(std::stringLiteral("type: %1, object_x: %2, object_y: %3, tp")
-                                         .arg(type)
-                                         .arg(object_x)
-                                         .arg(object_y)
-                                         );
-                                    #endif
-                                    if(property_text.contains(Map_loader::text_map) && property_text.contains(Map_loader::text_x) && property_text.contains(Map_loader::text_y))
+                                    if(property_text.find(Map_loader::text_map)!=property_text.cend() && property_text.find(Map_loader::text_x)!=property_text.cend() && property_text.find(Map_loader::text_y)!=property_text.cend())
                                     {
                                         Map_semi_teleport new_tp;
                                         new_tp.condition.type=MapConditionType_None;
                                         new_tp.condition.value=0;
-                                        new_tp.destination_x = property_text.value(Map_loader::text_x).toUInt(&ok);
+                                        new_tp.destination_x = stringtouint8(property_text.at(Map_loader::text_x),&ok);
                                         if(ok)
                                         {
-                                            new_tp.destination_y = property_text.value(Map_loader::text_y).toUInt(&ok);
+                                            new_tp.destination_y = stringtouint8(property_text.at(Map_loader::text_y),&ok);
                                             if(ok)
                                             {
-                                                if(property_text.contains(Map_loader::text_condition_file) && property_text.contains(Map_loader::text_condition_id))
+                                                if(property_text.find(Map_loader::text_condition_file)!=property_text.cend() && property_text.find(Map_loader::text_condition_id)!=property_text.cend())
                                                 {
-                                                    uint32_t conditionId=property_text.value(Map_loader::text_condition_id).toUInt(&ok);
+                                                    uint32_t conditionId=stringtouint32(property_text.at(Map_loader::text_condition_id),&ok);
                                                     if(!ok)
-                                                        DebugClass::debugConsole(std::stringLiteral("condition id is not a number, id: %1 (%2 at line: %3)").arg(property_text.value(QLatin1String("condition-id")).toString()).arg(fileName).arg(SubChild.lineNumber()));
+                                                        std::cerr << "condition id is not a number, id: " << property_text.at("condition-id") << " (" << fileName << " at line: " << SubChild.lineNumber() << ")" << std::endl;
                                                     else
                                                     {
-                                                        std::string conditionFile=QFileInfo(QFileInfo(fileName).absolutePath()+Map_loader::text_slash+property_text.value(Map_loader::text_condition_file).toString()).absoluteFilePath();
-                                                        if(!conditionFile.endsWith(Map_loader::text_dotxml))
+                                                        std::string conditionFile=QFileInfo(
+                                                                    QFileInfo(QString::fromStdString(fileName)).absolutePath()+
+                                                                    QString::fromStdString(Map_loader::text_slash)+
+                                                                    QString::fromStdString(property_text.at(Map_loader::text_condition_file))
+                                                                    ).absoluteFilePath().toStdString();
+                                                        if(!stringEndsWith(conditionFile,Map_loader::text_dotxml))
                                                             conditionFile+=Map_loader::text_dotxml;
                                                         new_tp.conditionUnparsed=getXmlCondition(fileName,conditionFile,conditionId);
                                                         new_tp.condition=xmlConditionToMapCondition(conditionFile,new_tp.conditionUnparsed);
@@ -532,32 +517,22 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                                                 }
                                                 new_tp.source_x=object_x;
                                                 new_tp.source_y=object_y;
-                                                new_tp.map=property_text.value(Map_loader::text_map).toString();
-                                                if(!new_tp.map.endsWith(Map_loader::text_dottmx) && !new_tp.map.isEmpty())
+                                                new_tp.map=property_text.at(Map_loader::text_map);
+                                                if(!stringEndsWith(new_tp.map,Map_loader::text_dottmx) && !new_tp.map.empty())
                                                     new_tp.map+=Map_loader::text_dottmx;
-                                                map_to_send_temp.teleport << new_tp;
-                                                #ifdef DEBUG_MESSAGE_MAP_OBJECT
-                                                DebugClass::debugConsole(std::stringLiteral("Teleporter type: %1, to: %2 (%3,%4)").arg(type).arg(new_tp.map).arg(new_tp.source_x).arg(new_tp.source_y));
-                                                #endif
+                                                map_to_send_temp.teleport.push_back(new_tp);
                                             }
                                             else
-                                                DebugClass::debugConsole(std::stringLiteral("Bad convertion to int for y, type: %1, value: %2 (%3 at line: %4)").arg(type).arg(property_text.value(QLatin1String("y")).toString()).arg(fileName).arg(SubChild.lineNumber()));
+                                                std::cerr << "Bad convertion to int for y, type: " << type << ", value: " << property_text.at("y") << " (" << fileName << " at line: " << SubChild.lineNumber() << ")" << std::endl;
                                         }
                                         else
-                                            DebugClass::debugConsole(std::stringLiteral("Bad convertion to int for x, type: %1, value: %2 (%3 at line: %4)").arg(type).arg(property_text.value(QLatin1String("x")).toString()).arg(fileName).arg(SubChild.lineNumber()));
+                                            std::cerr << "Bad convertion to int for x, type: " << type << ", value: " << property_text.at("x") << " (" << fileName << " at line: " << SubChild.lineNumber() << ")" << std::endl;
                                     }
                                     else
-                                        DebugClass::debugConsole(std::stringLiteral("Missing map,x or y, type: %1 (at line: %2), file: %3").arg(type).arg(SubChild.lineNumber()).arg(fileName));
+                                        std::cerr << "Missing map,x or y, type: " << type << " (at line: " << SubChild.lineNumber() << "), file: " << fileName << std::endl;
                                 }
                                 else if(type==Map_loader::text_rescue)
                                 {
-                                    #ifdef DEBUG_MESSAGE_MAP
-                                    DebugClass::debugConsole(std::stringLiteral("type: %1, object_x: %2, object_y: %3, rescue")
-                                         .arg(type)
-                                         .arg(object_x)
-                                         .arg(object_y)
-                                         );
-                                    #endif
                                     Map_to_send::Map_Point tempPoint;
                                     tempPoint.x=object_x;
                                     tempPoint.y=object_y;
@@ -652,7 +627,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                                          .arg(object_y)
                                          );
                                     #endif
-                                    if(property_text.contains(Map_loader::text_skin) && !property_text.value(Map_loader::text_skin).toString().isEmpty() && !property_text.contains(Map_loader::text_lookAt))
+                                    if(property_text.contains(Map_loader::text_skin) && !property_text.at(Map_loader::text_skin).toString().empty() && !property_text.contains(Map_loader::text_lookAt))
                                     {
                                         property_text[Map_loader::text_lookAt]=Map_loader::text_bottom;
                                         DebugClass::debugConsole(std::stringLiteral("skin but not lookAt, fixed by bottom: %1 (%2 at line: %3)").arg(SubChild.tagName()).arg(fileName).arg(SubChild.lineNumber()));
@@ -660,8 +635,8 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                                     if(property_text.contains(Map_loader::text_file) && property_text.contains(Map_loader::text_id))
                                     {
                                         Map_to_send::Bot_Semi bot_semi;
-                                        bot_semi.file=QFileInfo(QFileInfo(fileName).absolutePath()+Map_loader::text_slash+property_text.value(Map_loader::text_file).toString()).absoluteFilePath();
-                                        bot_semi.id=property_text.value(Map_loader::text_id).toUInt(&ok);
+                                        bot_semi.file=QFileInfo(QFileInfo(fileName).absolutePath()+Map_loader::text_slash+property_text.at(Map_loader::text_file).toString()).absoluteFilePath();
+                                        bot_semi.id=property_text.at(Map_loader::text_id).toUInt(&ok);
                                         bot_semi.property_text=property_text;
                                         if(ok)
                                         {
@@ -686,12 +661,12 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                                     {
                                         Map_to_send::ItemOnMap_Semi item_semi;
                                         item_semi.infinite=false;
-                                        if(property_text.contains(Map_loader::text_infinite) && property_text.value(Map_loader::text_infinite)==Map_loader::text_true)
+                                        if(property_text.contains(Map_loader::text_infinite) && property_text.at(Map_loader::text_infinite)==Map_loader::text_true)
                                             item_semi.infinite=true;
                                         item_semi.visible=true;
-                                        if(property_text.contains(Map_loader::text_visible) && property_text.value(Map_loader::text_visible)==Map_loader::text_false)
+                                        if(property_text.contains(Map_loader::text_visible) && property_text.at(Map_loader::text_visible)==Map_loader::text_false)
                                             item_semi.visible=false;
-                                        item_semi.item=property_text.value(Map_loader::text_item).toUInt(&ok);
+                                        item_semi.item=property_text.at(Map_loader::text_item).toUInt(&ok);
                                         if(ok)
                                         {
                                             item_semi.point.x=object_x;
@@ -795,7 +770,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 }
                 if(name==Map_loader::text_Walkable)
                 {
-                    if(Walkable.isEmpty())
+                    if(Walkable.empty())
                         Walkable=data;
                     else
                     {
@@ -810,7 +785,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 }
                 else if(name==Map_loader::text_Collisions)
                 {
-                    if(Collisions.isEmpty())
+                    if(Collisions.empty())
                         Collisions=data;
                     else
                     {
@@ -825,7 +800,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 }
                 else if(name==Map_loader::text_Dirt)
                 {
-                    if(Dirt.isEmpty())
+                    if(Dirt.empty())
                         Dirt=data;
                     else
                     {
@@ -840,7 +815,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 }
                 else if(name==Map_loader::text_LedgesRight)
                 {
-                    if(LedgesRight.isEmpty())
+                    if(LedgesRight.empty())
                         LedgesRight=data;
                     else
                     {
@@ -855,7 +830,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 }
                 else if(name==Map_loader::text_LedgesLeft)
                 {
-                    if(LedgesLeft.isEmpty())
+                    if(LedgesLeft.empty())
                         LedgesLeft=data;
                     else
                     {
@@ -870,7 +845,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 }
                 else if(name==Map_loader::text_LedgesBottom || name==Map_loader::text_LedgesDown)
                 {
-                    if(LedgesBottom.isEmpty())
+                    if(LedgesBottom.empty())
                         LedgesBottom=data;
                     else
                     {
@@ -885,7 +860,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 }
                 else if(name==Map_loader::text_LedgesTop || name==Map_loader::text_LedgesUp)
                 {
-                    if(LedgesTop.isEmpty())
+                    if(LedgesTop.empty())
                         LedgesTop=data;
                     else
                     {
@@ -900,7 +875,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 }
                 else
                 {
-                    if(!name.isEmpty() && rawSize==(uint32_t)data.size())
+                    if(!name.empty() && rawSize==(uint32_t)data.size())
                     {
                         int index=0;
                         while(index<CommonDatapack::commonDatapack.monstersCollision.size())
@@ -1180,12 +1155,12 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
         }
 
         {
-            if(this->map_to_send.parsed_layer.monstersCollisionList.isEmpty())
+            if(this->map_to_send.parsed_layer.monstersCollisionList.empty())
             {
                 delete this->map_to_send.parsed_layer.monstersCollisionMap;
                 this->map_to_send.parsed_layer.monstersCollisionMap=NULL;
             }
-            if(this->map_to_send.parsed_layer.monstersCollisionList.size()==1 && this->map_to_send.parsed_layer.monstersCollisionList.first().actionOn.isEmpty() && this->map_to_send.parsed_layer.monstersCollisionList.first().walkOn.isEmpty())
+            if(this->map_to_send.parsed_layer.monstersCollisionList.size()==1 && this->map_to_send.parsed_layer.monstersCollisionList.first().actionOn.empty() && this->map_to_send.parsed_layer.monstersCollisionList.first().walkOn.empty())
             {
                 this->map_to_send.parsed_layer.monstersCollisionList.clear();
                 delete this->map_to_send.parsed_layer.monstersCollisionMap;
@@ -1331,14 +1306,14 @@ bool Map_loader::loadMonsterMap(const std::string &fileName, std::vector<std::st
         int index=0;
         while(index<CommonDatapack::commonDatapack.monstersCollision.size())
         {
-            if(CommonDatapack::commonDatapack.monstersCollision.at(index).layer.isEmpty())
+            if(CommonDatapack::commonDatapack.monstersCollision.at(index).layer.empty())
             {
                 caveName=CommonDatapack::commonDatapack.monstersCollision.at(index).monsterTypeList;
                 break;
             }
             index++;
         }
-        if(caveName.isEmpty())
+        if(caveName.empty())
             detectedMonsterCollisionMonsterType << Map_loader::text_cave;
     }
 
@@ -1348,7 +1323,7 @@ bool Map_loader::loadMonsterMap(const std::string &fileName, std::vector<std::st
         int index=0;
         while(index<detectedMonsterCollisionMonsterType.size())
         {
-            if(!detectedMonsterCollisionMonsterType.at(index).isEmpty())
+            if(!detectedMonsterCollisionMonsterType.at(index).empty())
                 if(!monsterTypeList.contains(detectedMonsterCollisionMonsterType.at(index)))
                     monsterTypeList[detectedMonsterCollisionMonsterType.at(index)]=loadSpecificMonster(fileName,detectedMonsterCollisionMonsterType.at(index));
             index++;
@@ -1377,7 +1352,7 @@ bool Map_loader::loadMonsterMap(const std::string &fileName, std::vector<std::st
             {
                 uint8_t tempZoneNumberIndex=0;
                 //cave
-                if(CommonDatapack::commonDatapack.monstersCollision.at(index).layer.isEmpty())
+                if(CommonDatapack::commonDatapack.monstersCollision.at(index).layer.empty())
                 {}
                 //not cave
                 else if(detectedMonsterCollisionLayer.contains(CommonDatapack::commonDatapack.monstersCollision.at(index).layer))
@@ -1555,7 +1530,7 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
                     qDebug() << std::stringLiteral("Is not an element: child.tagName(): %1 (at line: %2), file: %3").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(fileName);
                 monsters = monsters.nextSiblingElement(Map_loader::text_monster);
             }
-            if(monsterTypeList.isEmpty())
+            if(monsterTypeList.empty())
                 qDebug() << "map have empty monster layer:" << fileName << "type:" << monsterType;
         }
         else
@@ -1580,12 +1555,12 @@ std::string Map_loader::errorString()
 
 std::string Map_loader::resolvRelativeMap(const std::string &fileName,const std::string &link,const std::string &datapackPath)
 {
-    if(link.isEmpty())
+    if(link.empty())
         return link;
     const std::string &currentPath=QFileInfo(fileName).absolutePath();
     QFileInfo newmap(currentPath+QDir::separator()+link);
     std::string newPath=newmap.absoluteFilePath();
-    if(datapackPath.isEmpty() || newPath.startsWith(datapackPath))
+    if(datapackPath.empty() || newPath.startsWith(datapackPath))
     {
         newPath.remove(0,datapackPath.size());
         #if defined (DEBUG_MESSAGE_MAP_BORDER) || defined (DEBUG_MESSAGE_MAP_TP)
