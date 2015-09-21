@@ -113,25 +113,23 @@ static void logZlibError(int error)
     }
 }
 
-QByteArray Map_loader::decompress(const QByteArray &data, int expectedSize)
+uint32_t Map_loader::decompressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &outputSize)
 {
-    QByteArray out;
-    out.resize(expectedSize);
     z_stream strm;
 
     strm.zalloc = Z_NULL;
     strm.zfree = Z_NULL;
     strm.opaque = Z_NULL;
-    strm.next_in = (Bytef *) data.data();
-    strm.avail_in = data.length();
-    strm.next_out = (Bytef *) out.data();
-    strm.avail_out = out.size();
+    strm.next_in = (Bytef *) input;
+    strm.avail_in = intputSize;
+    strm.next_out = (Bytef *) output;
+    strm.avail_out = outputSize;
 
     int ret = inflateInit2(&strm, 15 + 32);
 
     if (ret != Z_OK) {
     logZlibError(ret);
-    return QByteArray();
+    return 0;
     }
 
     do {
@@ -145,34 +143,29 @@ QByteArray Map_loader::decompress(const QByteArray &data, int expectedSize)
         case Z_MEM_ERROR:
         inflateEnd(&strm);
         logZlibError(ret);
-        return QByteArray();
+        return 0;
     }
 
-    if (ret != Z_STREAM_END) {
-        if(out.size()>16*1024*1024)
+    if (ret != Z_OK && ret != Z_STREAM_END) {
+        if((strm.next_out-reinterpret_cast<unsigned char * const>(output))>outputSize)
         {
             logZlibError(Z_STREAM_ERROR);
-            return QByteArray();
+            return 0;
         }
-        int oldSize = out.size();
-        out.resize(out.size() * 2);
-
-        strm.next_out = (Bytef *)(out.data() + oldSize);
-        strm.avail_out = oldSize;
+        logZlibError(Z_STREAM_ERROR);
+        return 0;
     }
     }
     while (ret != Z_STREAM_END);
 
     if (strm.avail_in != 0) {
     logZlibError(Z_DATA_ERROR);
-    return QByteArray();
+    return 0;
     }
 
-    const int outLength = out.size() - strm.avail_out;
     inflateEnd(&strm);
 
-    out.resize(outLength);
-    return out;
+    return strm.avail_out;
 }
 
 Map_loader::Map_loader()
@@ -207,7 +200,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
     std::vector<std::string> detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer;
     QByteArray Walkable,Collisions,Dirt,LedgesRight,LedgesLeft,LedgesBottom,LedgesTop;
     std::vector<QByteArray> monsterList;
-    QMap<std::string/*layer*/,const char *> mapLayerContentForMonsterCollision;
+    std::map<std::string/*layer*/,const char *> mapLayerContentForMonsterCollision;
     bool ok;
     QDomDocument domDocument;
 
@@ -294,7 +287,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 if(SubChild.isElement())
                 {
                     if(SubChild.hasAttribute(QString::fromStdString(Map_loader::text_name)) && SubChild.hasAttribute(QString::fromStdString(Map_loader::text_value)))
-                        map_to_send_temp.property[SubChild.attribute(QString::fromStdString(Map_loader::text_name)).toStdString()]=SubChild.attribute(QString::fromStdString(Map_loader::text_value));
+                        map_to_send_temp.property[SubChild.attribute(QString::fromStdString(Map_loader::text_name)).toStdString()]=SubChild.attribute(QString::fromStdString(Map_loader::text_value)).toStdString();
                     else
                     {
                         error="Missing attribute name or value: child.tagName(): "+SubChild.tagName().toStdString()+" (at line: "+std::to_string(SubChild.lineNumber())+")";
@@ -536,374 +529,347 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                                     Map_to_send::Map_Point tempPoint;
                                     tempPoint.x=object_x;
                                     tempPoint.y=object_y;
-                                    map_to_send_temp.rescue_points << tempPoint;
+                                    map_to_send_temp.rescue_points.push_back(tempPoint);
                                     //map_to_send_temp.bot_spawn_points << tempPoint;
-                                }
-                                else if(type==Map_loader::text_bot_spawn)
-                                {
-                                    /*#ifdef DEBUG_MESSAGE_MAP
-                                    DebugClass::debugConsole(std::stringLiteral("type: %1, object_x: %2, object_y: %3, bot spawn")
-                                         .arg(type)
-                                         .arg(object_x)
-                                         .arg(object_y)
-                                         );
-                                    #endif
-                                    Map_to_send::Map_Point tempPoint;
-                                    tempPoint.x=object_x;
-                                    tempPoint.y=object_y;
-                                    map_to_send_temp.bot_spawn_points << tempPoint;*/
                                 }
                                 else
                                 {
-                                    DebugClass::debugConsole(std::stringLiteral("Unknown type: %1, object_x: %2, object_y: %3 (moving), %4 (line: %5), file: %6")
-                                         .arg(type)
-                                         .arg(object_x)
-                                         .arg(object_y)
-                                         .arg(SubChild.tagName())
-                                         .arg(SubChild.lineNumber())
-                                         .arg(fileName)
-                                         );
+                                    std::cerr << "Unknown type: " << type
+                                              << ", object_x: " << object_x
+                                              << ", object_y: " << object_y
+                                              << " (moving), " << SubChild.tagName().toStdString()
+                                              << " (line: " << SubChild.lineNumber()
+                                              << "), file: " << fileName << std::endl;
                                 }
-
                             }
                             else
-                                DebugClass::debugConsole(std::stringLiteral("Missing attribute type missing: SubChild.tagName(): %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
+                                std::cerr << "Missing attribute type missing: SubChild.tagName(): " << SubChild.tagName().toStdString() << " (at line: " << SubChild.lineNumber() << "), file: " << fileName << std::endl;
                         }
                     }
                     else
-                        DebugClass::debugConsole(std::stringLiteral("Is not Element: SubChild.tagName(): %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
-                    SubChild = SubChild.nextSiblingElement(Map_loader::text_object);
+                        std::cerr << "Is not Element: SubChild.tagName(): " << SubChild.tagName().toStdString() << " (at line: " << SubChild.lineNumber() << "), file: " << fileName << std::endl;
+                    SubChild = SubChild.nextSiblingElement(QString::fromStdString(Map_loader::text_object));
                 }
             }
-            if(child.attribute(Map_loader::text_name)==Map_loader::text_Object)
+            if(child.attribute(QString::fromStdString(Map_loader::text_name)).toStdString()==Map_loader::text_Object)
             {
-                QDomElement SubChild=child.firstChildElement(Map_loader::text_object);
+                QDomElement SubChild=child.firstChildElement(QString::fromStdString(Map_loader::text_object));
                 while(!SubChild.isNull())
                 {
-                    if(SubChild.isElement() && SubChild.hasAttribute(Map_loader::text_x) && SubChild.hasAttribute(Map_loader::text_y))
+                    if(SubChild.isElement() && SubChild.hasAttribute(QString::fromStdString(Map_loader::text_x)) && SubChild.hasAttribute(QString::fromStdString(Map_loader::text_y)))
                     {
-                        const uint32_t &object_x=SubChild.attribute(Map_loader::text_x).toUInt(&ok)/tilewidth;
+                        const uint32_t &object_x=SubChild.attribute(QString::fromStdString(Map_loader::text_x)).toUInt(&ok)/tilewidth;
                         if(!ok)
-                            DebugClass::debugConsole(std::stringLiteral("Wrong conversion with x: %1 (at line: %2): %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
+                            std::cerr << "Wrong conversion with x: child.tagName(): " << SubChild.tagName().toStdString()
+                                        << " (at line: " << std::to_string(SubChild.lineNumber())
+                                        << "), file: " << fileName << std::endl;
                         else
                         {
                             /** the -1 is important to fix object layer bug into tiled!!!
                              * Don't remove! */
-                            const uint32_t &object_y=(SubChild.attribute(Map_loader::text_y).toUInt(&ok)/tileheight)-1;
+                            const uint32_t &object_y=(SubChild.attribute(QString::fromStdString(Map_loader::text_y)).toUInt(&ok)/tileheight)-1;
 
                             if(!ok)
-                                DebugClass::debugConsole(std::stringLiteral("Wrong conversion with y: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
+                                std::cerr << "Wrong conversion with y: child.tagName(): " << SubChild.tagName().toStdString()
+                                            << " (at line: " << std::to_string(SubChild.lineNumber())
+                                            << "), file: " << fileName << std::endl;
                             else if(object_x>map_to_send_temp.width || object_y>map_to_send_temp.height)
-                                DebugClass::debugConsole(std::stringLiteral("Object out of the map: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
-                            else if(SubChild.hasAttribute(Map_loader::text_type))
+                                std::cerr << "Object out of the map: child.tagName(): " << SubChild.tagName().toStdString()
+                                            << " (at line: " << std::to_string(SubChild.lineNumber())
+                                            << "), file: " << fileName << std::endl;
+                            else if(SubChild.hasAttribute(QString::fromStdString(Map_loader::text_type)))
                             {
-                                const std::string &type=SubChild.attribute(Map_loader::text_type);
+                                const std::string &type=SubChild.attribute(QString::fromStdString(Map_loader::text_type)).toStdString();
 
-                                std::unordered_map<std::string,QVariant> property_text;
-                                const QDomElement &prop=SubChild.firstChildElement(Map_loader::text_properties);
+                                std::unordered_map<std::string,std::string> property_text;
+                                const QDomElement &prop=SubChild.firstChildElement(QString::fromStdString(Map_loader::text_properties));
                                 if(!prop.isNull())
                                 {
-                                    #ifdef DEBUG_MESSAGE_MAP
-                                    DebugClass::debugConsole(std::stringLiteral("type: %1, object_x: %2, object_y: %3, !prop.isNull()")
-                                                 .arg(type)
-                                                 .arg(object_x)
-                                                 .arg(object_y)
-                                                 );
-                                    #endif
-                                    QDomElement property=prop.firstChildElement(Map_loader::text_property);
+                                    QDomElement property=prop.firstChildElement(QString::fromStdString(Map_loader::text_property));
                                     while(!property.isNull())
                                     {
-                                        if(property.hasAttribute(Map_loader::text_name) && property.hasAttribute(Map_loader::text_value))
-                                            property_text[property.attribute(Map_loader::text_name)]=property.attribute(Map_loader::text_value);
-                                        property = property.nextSiblingElement(Map_loader::text_property);
+                                        if(property.hasAttribute(QString::fromStdString(Map_loader::text_name)) && property.hasAttribute(QString::fromStdString(Map_loader::text_value)))
+                                            property_text[property.attribute(QString::fromStdString(Map_loader::text_name)).toStdString()]=property.attribute(QString::fromStdString(Map_loader::text_value)).toStdString();
+                                        property = property.nextSiblingElement(QString::fromStdString(Map_loader::text_property));
                                     }
                                 }
                                 if(type==Map_loader::text_bot)
                                 {
-                                    #ifdef DEBUG_MESSAGE_MAP
-                                    DebugClass::debugConsole(std::stringLiteral("type: %1, object_x: %2, object_y: %3")
-                                         .arg(type)
-                                         .arg(object_x)
-                                         .arg(object_y)
-                                         );
-                                    #endif
-                                    if(property_text.contains(Map_loader::text_skin) && !property_text.at(Map_loader::text_skin).toString().empty() && !property_text.contains(Map_loader::text_lookAt))
+                                    if(property_text.find(Map_loader::text_skin)!=property_text.cend() && !property_text.at(Map_loader::text_skin).empty() && property_text.find(Map_loader::text_lookAt)==property_text.cend())
                                     {
                                         property_text[Map_loader::text_lookAt]=Map_loader::text_bottom;
-                                        DebugClass::debugConsole(std::stringLiteral("skin but not lookAt, fixed by bottom: %1 (%2 at line: %3)").arg(SubChild.tagName()).arg(fileName).arg(SubChild.lineNumber()));
+                                        std::cerr << "skin but not lookAt, fixed by bottom: " << SubChild.tagName().toStdString() << " (" << fileName << " at line: " << SubChild.lineNumber() << ")" << std::endl;
                                     }
-                                    if(property_text.contains(Map_loader::text_file) && property_text.contains(Map_loader::text_id))
+                                    if(property_text.find(Map_loader::text_file)!=property_text.cend() && property_text.find(Map_loader::text_id)!=property_text.cend())
                                     {
                                         Map_to_send::Bot_Semi bot_semi;
-                                        bot_semi.file=QFileInfo(QFileInfo(fileName).absolutePath()+Map_loader::text_slash+property_text.at(Map_loader::text_file).toString()).absoluteFilePath();
-                                        bot_semi.id=property_text.at(Map_loader::text_id).toUInt(&ok);
+                                        bot_semi.file=QFileInfo(
+                                                        QString::fromStdString(
+                                                            QFileInfo(QString::fromStdString(fileName)).absolutePath().toStdString()+
+                                                            Map_loader::text_slash+
+                                                            property_text.at(Map_loader::text_file)
+                                                        )
+                                                    ).absoluteFilePath().toStdString();
+                                        bot_semi.id=stringtouint16(property_text.at(Map_loader::text_id),&ok);
                                         bot_semi.property_text=property_text;
                                         if(ok)
                                         {
                                             bot_semi.point.x=object_x;
                                             bot_semi.point.y=object_y;
-                                            map_to_send_temp.bots << bot_semi;
+                                            map_to_send_temp.bots.push_back(bot_semi);
                                         }
                                     }
                                     else
-                                        DebugClass::debugConsole(std::stringLiteral("Missing \"bot\" properties for the bot: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
+                                        std::cerr << "Missing \"bot\" properties for the bot: " << SubChild.tagName().toStdString()
+                                                  << " (at line: " << SubChild.lineNumber()
+                                                  << "), file: " << fileName << std::endl;
                                 }
                                 else if(type==Map_loader::text_object)
                                 {
-                                    #ifdef DEBUG_MESSAGE_MAP
-                                    DebugClass::debugConsole(std::stringLiteral("type: %1, object_x: %2, object_y: %3")
-                                         .arg(type)
-                                         .arg(object_x)
-                                         .arg(object_y)
-                                         );
-                                    #endif
-                                    if(property_text.contains(Map_loader::text_item))
+                                    if(property_text.find(Map_loader::text_item)!=property_text.cend())
                                     {
                                         Map_to_send::ItemOnMap_Semi item_semi;
                                         item_semi.infinite=false;
-                                        if(property_text.contains(Map_loader::text_infinite) && property_text.at(Map_loader::text_infinite)==Map_loader::text_true)
+                                        if(property_text.find(Map_loader::text_infinite)!=property_text.cend() && property_text.at(Map_loader::text_infinite)==Map_loader::text_true)
                                             item_semi.infinite=true;
                                         item_semi.visible=true;
-                                        if(property_text.contains(Map_loader::text_visible) && property_text.at(Map_loader::text_visible)==Map_loader::text_false)
+                                        if(property_text.find(Map_loader::text_visible)!=property_text.cend() && property_text.at(Map_loader::text_visible)==Map_loader::text_false)
                                             item_semi.visible=false;
-                                        item_semi.item=property_text.at(Map_loader::text_item).toUInt(&ok);
+                                        item_semi.item=stringtouint16(property_text.at(Map_loader::text_item),&ok);
                                         if(ok)
                                         {
                                             item_semi.point.x=object_x;
                                             item_semi.point.y=object_y;
-                                            map_to_send_temp.items << item_semi;
+                                            map_to_send_temp.items.push_back(item_semi);
                                         }
                                     }
                                     else
-                                        DebugClass::debugConsole(std::stringLiteral("Missing \"bot\" properties for the bot: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
+                                        std::cerr << "Missing \"bot\" properties for the bot: " << SubChild.tagName().toStdString()
+                                                  << " (at line: " << SubChild.lineNumber()
+                                                  << "), file: " << fileName
+                                                  << std::endl;
                                 }
                                 else
                                 {
-                                    DebugClass::debugConsole(std::stringLiteral("unknow type: %1, object_x: %2, object_y: %3 (object), %4 (at line: %5), file: %6")
-                                         .arg(type)
-                                         .arg(object_x)
-                                         .arg(object_y)
-                                         .arg(SubChild.tagName())
-                                         .arg(SubChild.lineNumber())
-                                         .arg(fileName)
-                                         );
+                                    std::cerr << "Unknown type: " << type
+                                              << ", object_x: " << object_x
+                                              << ", object_y: " << object_y
+                                              << " (moving), " << SubChild.tagName().toStdString()
+                                              << " (line: " << SubChild.lineNumber()
+                                              << "), file: " << fileName
+                                              << std::endl;
                                 }
-
                             }
                             else
-                                DebugClass::debugConsole(std::stringLiteral("Missing attribute type missing: SubChild.tagName(): %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
+                                std::cerr << "Missing attribute type missing: SubChild.tagName(): " << SubChild.tagName().toStdString() << " (at line: " << SubChild.lineNumber() << "), file: " << fileName << std::endl;
                         }
                     }
                     else
-                        DebugClass::debugConsole(std::stringLiteral("Is not Element: SubChild.tagName(): %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
-                    SubChild = SubChild.nextSiblingElement(Map_loader::text_object);
+                        std::cerr << "Is not Element: SubChild.tagName(): " << SubChild.tagName().toStdString() << " (at line: " << SubChild.lineNumber() << "), file: " << fileName << std::endl;
+                    SubChild = SubChild.nextSiblingElement(QString::fromStdString(Map_loader::text_object));
                 }
             }
         }
-        child = child.nextSiblingElement(Map_loader::text_objectgroup);
+        child = child.nextSiblingElement(QString::fromStdString(Map_loader::text_objectgroup));
     }
 
     const uint32_t &rawSize=map_to_send_temp.width*map_to_send_temp.height*4;
 
     // layer
-    child = root.firstChildElement(Map_loader::text_layer);
+    child = root.firstChildElement(QString::fromStdString(Map_loader::text_layer));
     while(!child.isNull())
     {
         if(!child.isElement())
         {
-            error=std::stringLiteral("Is Element: child.tagName(): %1, file: %2").arg(child.tagName()).arg(fileName);
+            error="Is Element: child.tagName(): "+child.tagName().toStdString()+", file: "+fileName;
             return false;
         }
-        else if(!child.hasAttribute(Map_loader::text_name))
+        else if(!child.hasAttribute(QString::fromStdString(Map_loader::text_name)))
         {
-            error=std::stringLiteral("Has not attribute \"name\": child.tagName(): %1, file: %2").arg(child.tagName()).arg(fileName);
+            error="Has not attribute \"name\": child.tagName(): "+child.tagName().toStdString()+", file: "+fileName;
             return false;
         }
         else
         {
-            const QDomElement &data = child.firstChildElement(Map_loader::text_data);
-            const std::string &name=child.attribute(Map_loader::text_name);
+            const QDomElement &data=child.firstChildElement(QString::fromStdString(Map_loader::text_data));
+            const std::string name=child.attribute(QString::fromStdString(Map_loader::text_name)).toStdString();
             if(data.isNull())
             {
-                error=std::stringLiteral("Is Element for layer is null: %1 and name: %2, file: %3").arg(data.tagName()).arg(name).arg(fileName);
+                error="Is Element for layer is null: "+data.tagName().toStdString()+" and name: "+name+", file: "+fileName;
                 return false;
             }
             else if(!data.isElement())
             {
-                error=std::stringLiteral("Is Element for layer child.tagName(): %1, file: %2").arg(data.tagName()).arg(fileName);
+                error="Is Element for layer child.tagName(): "+data.tagName().toStdString()+", file: "+fileName;
                 return false;
             }
-            else if(!data.hasAttribute(Map_loader::text_encoding))
+            else if(!data.hasAttribute(QString::fromStdString(Map_loader::text_encoding)))
             {
-                error=std::stringLiteral("Has not attribute \"base64\": child.tagName(): %1, file: %2").arg(data.tagName()).arg(fileName);
+                error="Has not attribute \"base64\": child.tagName(): "+data.tagName().toStdString()+", file: "+fileName;
                 return false;
             }
-            else if(!data.hasAttribute(Map_loader::text_compression))
+            else if(!data.hasAttribute(QString::fromStdString(Map_loader::text_compression)))
             {
-                error=std::stringLiteral("Has not attribute \"zlib\": child.tagName(): %1, file: %2").arg(data.tagName()).arg(fileName);
+                error="Has not attribute \"zlib\": child.tagName(): "+data.tagName().toStdString()+", file: "+fileName;
                 return false;
             }
-            else if(data.attribute(Map_loader::text_encoding)!=Map_loader::text_base64)
+            else if(data.attribute(QString::fromStdString(Map_loader::text_encoding)).toStdString()!=Map_loader::text_base64)
             {
-                error=std::stringLiteral("only encoding base64 is supported, file: %1").arg(fileName);
+                error="only encoding base64 is supported, file: file: "+fileName;
                 return false;
             }
-            else if(!data.hasAttribute(Map_loader::text_compression))
+            else if(!data.hasAttribute(QString::fromStdString(Map_loader::text_compression)))
             {
-                error=std::stringLiteral("Only compression zlib is supported, file: %1").arg(fileName);
+                error="Only compression zlib is supported, file: file: "+fileName;
                 return false;
             }
             else
             {
-                std::string text=data.text();
-                #if QT_VERSION < 0x040800
-                    const std::string textData = std::string::fromRawData(text.unicode(), text.size());
-                    const QByteArray latin1Text = textData.toLatin1();
-                #else
-                    const QByteArray latin1Text = text.toLatin1();
-                #endif
-                const QByteArray &data=decompress(QByteArray::fromBase64(latin1Text),map_to_send_temp.height*map_to_send_temp.width*4);
-                if((uint32_t)data.size()!=map_to_send_temp.height*map_to_send_temp.width*4)
+                const QByteArray compressedData=QByteArray::fromBase64(data.text().toLatin1());
+                QByteArray dataRaw;
+                dataRaw.resize(map_to_send_temp.height*map_to_send_temp.width*4);
+                dataRaw.resize(decompressZlib(compressedData.constData(),compressedData.size(),dataRaw.data(),dataRaw.size()));
+                if((uint32_t)dataRaw.size()!=map_to_send_temp.height*map_to_send_temp.width*4)
                 {
-                    error=std::stringLiteral("map binary size (%1) != %2x%3x4").arg(data.size()).arg(map_to_send_temp.height).arg(map_to_send_temp.width);
+                    error="map binary size ("+std::to_string(dataRaw.size())+") != "+std::to_string(map_to_send_temp.height)+"x"+std::to_string(map_to_send_temp.width)+"x4";
                     return false;
                 }
                 if(name==Map_loader::text_Walkable)
                 {
-                    if(Walkable.empty())
-                        Walkable=data;
+                    if(Walkable.isEmpty())
+                        Walkable=dataRaw;
                     else
                     {
                         const int &layersize=Walkable.size();
                         int index=0;
                         while(index<layersize)
                         {
-                            Walkable[index]=Walkable.at(index) || data.at(index);
+                            Walkable[index]=Walkable.at(index) || dataRaw.at(index);
                             index++;
                         }
                     }
                 }
                 else if(name==Map_loader::text_Collisions)
                 {
-                    if(Collisions.empty())
-                        Collisions=data;
+                    if(Collisions.isEmpty())
+                        Collisions=dataRaw;
                     else
                     {
                         int index=0;
                         const int &layersize=Collisions.size();
                         while(index<layersize)
                         {
-                            Collisions[index]=Collisions.at(index) || data.at(index);
+                            Collisions[index]=Collisions.at(index) || dataRaw.at(index);
                             index++;
                         }
                     }
                 }
                 else if(name==Map_loader::text_Dirt)
                 {
-                    if(Dirt.empty())
-                        Dirt=data;
+                    if(Dirt.isEmpty())
+                        Dirt=dataRaw;
                     else
                     {
                         int index=0;
                         const int &layersize=Dirt.size();
                         while(index<layersize)
                         {
-                            Dirt[index]=Dirt.at(index) || data.at(index);
+                            Dirt[index]=Dirt.at(index) || dataRaw.at(index);
                             index++;
                         }
                     }
                 }
                 else if(name==Map_loader::text_LedgesRight)
                 {
-                    if(LedgesRight.empty())
-                        LedgesRight=data;
+                    if(LedgesRight.isEmpty())
+                        LedgesRight=dataRaw;
                     else
                     {
                         int index=0;
                         const int &layersize=LedgesRight.size();
                         while(index<layersize)
                         {
-                            LedgesRight[index]=LedgesRight.at(index) || data.at(index);
+                            LedgesRight[index]=LedgesRight.at(index) || dataRaw.at(index);
                             index++;
                         }
                     }
                 }
                 else if(name==Map_loader::text_LedgesLeft)
                 {
-                    if(LedgesLeft.empty())
-                        LedgesLeft=data;
+                    if(LedgesLeft.isEmpty())
+                        LedgesLeft=dataRaw;
                     else
                     {
                         int index=0;
                         const int &layersize=LedgesLeft.size();
                         while(index<layersize)
                         {
-                            LedgesLeft[index]=LedgesLeft.at(index) || data.at(index);
+                            LedgesLeft[index]=LedgesLeft.at(index) || dataRaw.at(index);
                             index++;
                         }
                     }
                 }
                 else if(name==Map_loader::text_LedgesBottom || name==Map_loader::text_LedgesDown)
                 {
-                    if(LedgesBottom.empty())
-                        LedgesBottom=data;
+                    if(LedgesBottom.isEmpty())
+                        LedgesBottom=dataRaw;
                     else
                     {
                         int index=0;
                         const int &layersize=LedgesBottom.size();
                         while(index<layersize)
                         {
-                            LedgesBottom[index]=LedgesBottom.at(index) || data.at(index);
+                            LedgesBottom[index]=LedgesBottom.at(index) || dataRaw.at(index);
                             index++;
                         }
                     }
                 }
                 else if(name==Map_loader::text_LedgesTop || name==Map_loader::text_LedgesUp)
                 {
-                    if(LedgesTop.empty())
-                        LedgesTop=data;
+                    if(LedgesTop.isEmpty())
+                        LedgesTop=dataRaw;
                     else
                     {
                         int index=0;
                         const int &layersize=LedgesTop.size();
                         while(index<layersize)
                         {
-                            LedgesTop[index]=LedgesTop.at(index) || data.at(index);
+                            LedgesTop[index]=LedgesTop.at(index) || dataRaw.at(index);
                             index++;
                         }
                     }
                 }
                 else
                 {
-                    if(!name.empty() && rawSize==(uint32_t)data.size())
+                    if(!name.empty() && rawSize==(uint32_t)dataRaw.size())
                     {
-                        int index=0;
+                        unsigned int index=0;
                         while(index<CommonDatapack::commonDatapack.monstersCollision.size())
                         {
                             if(CommonDatapack::commonDatapack.monstersCollision.at(index).layer==name)
                             {
-                                mapLayerContentForMonsterCollision[name]=data.constData();
+                                mapLayerContentForMonsterCollision[name]=dataRaw.constData();
                                 {
                                     const std::vector<std::string> &monsterTypeListText=CommonDatapack::commonDatapack.monstersCollision.at(index).monsterTypeList;
-                                    int monsterTypeListIndex=0;
+                                    unsigned int monsterTypeListIndex=0;
                                     while(monsterTypeListIndex<monsterTypeListText.size())
                                     {
-                                        if(!detectedMonsterCollisionMonsterType.contains(monsterTypeListText.at(monsterTypeListIndex)))
-                                            detectedMonsterCollisionMonsterType << monsterTypeListText.at(monsterTypeListIndex);
+                                        if(!vectorcontainsAtLeastOne(detectedMonsterCollisionMonsterType,monsterTypeListText.at(monsterTypeListIndex)))
+                                            detectedMonsterCollisionMonsterType.push_back(monsterTypeListText.at(monsterTypeListIndex));
                                         monsterTypeListIndex++;
                                     }
                                 }
-                                if(!detectedMonsterCollisionLayer.contains(name))
-                                    detectedMonsterCollisionLayer << name;
+                                if(!vectorcontainsAtLeastOne(detectedMonsterCollisionLayer,name))
+                                    detectedMonsterCollisionLayer.push_back(name);
                             }
                             index++;
                         }
-                        monsterList << data;
+                        monsterList.push_back(dataRaw);
                     }
                 }
             }
         }
-        child = child.nextSiblingElement(Map_loader::text_layer);
+        child = child.nextSiblingElement(QString ::fromStdString(Map_loader::text_layer));
     }
 
     /*QByteArray null_data;
@@ -954,10 +920,11 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
         if(rawSize==(uint32_t)LedgesTop.size())
             LedgesTopBin=LedgesTop.data();
 
-        QMapIterator<std::string/*layer*/,const char *> i(mapLayerContentForMonsterCollision);
-        while (i.hasNext()) {
-            i.next();
-            MonsterCollisionBin << i.value();
+        auto i=mapLayerContentForMonsterCollision.begin();
+        while(i!=mapLayerContentForMonsterCollision.cend())
+        {
+            MonsterCollisionBin.push_back(i->second);
+            ++i;
         }
     }
 
@@ -996,7 +963,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
             else
                 ledgesTop=false;
             monsterCollision=false;
-            int index=0;
+            unsigned int index=0;
             while(index<MonsterCollisionBin.size())
             {
                 if(MonsterCollisionBin.at(index)[x*4+y*map_to_send_temp.width*4+0]!=0x00 || MonsterCollisionBin.at(index)[x*4+y*map_to_send_temp.width*4+1]!=0x00 || MonsterCollisionBin.at(index)[x*4+y*map_to_send_temp.width*4+2]!=0x00 || MonsterCollisionBin.at(index)[x*4+y*map_to_send_temp.width*4+3]!=0x00)
@@ -1016,7 +983,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                     Map_to_send::DirtOnMap_Semi dirtOnMap_Semi;
                     dirtOnMap_Semi.point.x=x;
                     dirtOnMap_Semi.point.y=y;
-                    map_to_send_temp.dirts << dirtOnMap_Semi;
+                    map_to_send_temp.dirts.push_back(dirtOnMap_Semi);
                 }
                 map_to_send_temp.parsed_layer.dirt[x+y*map_to_send_temp.width]=dirt;
             }
@@ -1027,7 +994,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 {
                     if(ledgesRight || ledgesBottom || ledgesTop)
                     {
-                        DebugClass::debugConsole(std::stringLiteral("Multiple ledges at the same place, do colision for left"));
+                        std::cerr << "Multiple ledges at the same place, do colision for left" << std::endl;
                         map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width]=false;
                     }
                     else
@@ -1037,7 +1004,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 {
                     if(ledgesLeft || ledgesBottom || ledgesTop)
                     {
-                        DebugClass::debugConsole(std::stringLiteral("Multiple ledges at the same place, do colision for right"));
+                        std::cerr << "Multiple ledges at the same place, do colision for right" << std::endl;
                         map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width]=false;
                     }
                     else
@@ -1047,7 +1014,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 {
                     if(ledgesRight || ledgesBottom || ledgesLeft)
                     {
-                        DebugClass::debugConsole(std::stringLiteral("Multiple ledges at the same place, do colision for top"));
+                        std::cerr << "Multiple ledges at the same place, do colision for top" << std::endl;
                         map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width]=false;
                     }
                     else
@@ -1057,7 +1024,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 {
                     if(ledgesRight || ledgesLeft || ledgesTop)
                     {
-                        DebugClass::debugConsole(std::stringLiteral("Multiple ledges at the same place, do colision for bottom"));
+                        std::cerr << "Multiple ledges at the same place, do colision for bottom" << std::endl;
                         map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width]=false;
                     }
                     else
@@ -1095,8 +1062,8 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
     this->map_to_send=map_to_send_temp;
 
     std::string xmlExtra=fileName;
-    xmlExtra.replace(Map_loader::text_dottmx,Map_loader::text_dotxml);
-    if(QFile::exists(xmlExtra))
+    stringreplaceAll(xmlExtra,Map_loader::text_dottmx,Map_loader::text_dotxml);
+    if(QFile::exists(QString::fromStdString(xmlExtra)))
         loadMonsterMap(xmlExtra,detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer);
 
     {
@@ -1116,19 +1083,19 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
         }
 
         {
-            QMapIterator<std::string/*layer*/,const char *> i(mapLayerContentForMonsterCollision);
-            while (i.hasNext()) {
-                i.next();
-                if(zoneNumber.contains(i.key()))
+            auto i=mapLayerContentForMonsterCollision.begin();
+            while(i!=mapLayerContentForMonsterCollision.cend())
+            {
+                if(zoneNumber.find(i->first)!=zoneNumber.cend())
                 {
-                    const uint8_t &zoneId=zoneNumber.value(i.key());
+                    const uint8_t &zoneId=zoneNumber.at(i->first);
                     uint8_t x=0;
                     while(x<this->map_to_send.width)
                     {
                         uint8_t y=0;
                         while(y<this->map_to_send.height)
                         {
-                            if(i.value()[x*4+y*map_to_send_temp.width*4+0]!=0x00 || i.value()[x*4+y*map_to_send_temp.width*4+1]!=0x00 || i.value()[x*4+y*map_to_send_temp.width*4+2]!=0x00 || i.value()[x*4+y*map_to_send_temp.width*4+3]!=0x00)
+                            if(i->second[x*4+y*map_to_send_temp.width*4+0]!=0x00 || i->second[x*4+y*map_to_send_temp.width*4+1]!=0x00 || i->second[x*4+y*map_to_send_temp.width*4+2]!=0x00 || i->second[x*4+y*map_to_send_temp.width*4+3]!=0x00)
                             {
                                 if(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]==0)
                                     this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]=zoneId;
@@ -1136,13 +1103,10 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                                 {}//ignore, same zone
                                 else
                                 {
-                                    DebugClass::debugConsole(std::stringLiteral("Have already monster at %1,%2 for %3, actual zone: %4 (%5), new zone: %6 (%7)")
-                                             .arg(x).arg(y).arg(fileName)
-                                             .arg(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width])
-                                             .arg(CommonDatapack::commonDatapack.monstersCollision.at(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]).layer)
-                                             .arg(zoneId)
-                                             .arg(CommonDatapack::commonDatapack.monstersCollision.at(zoneId).layer)
-                                            );
+                                    std::cerr << "Have already monster at " << std::to_string(x) << "," << std::to_string(y) << " for " << fileName
+                                              << ", actual zone: " << std::to_string(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width])
+                                              << " (" << CommonDatapack::commonDatapack.monstersCollision.at(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]).layer
+                                              << "), new zone: " << zoneId << " (" << CommonDatapack::commonDatapack.monstersCollision.at(zoneId).layer << ")";
                                     this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]=zoneId;//overwrited by above layer
                                 }
                             }
@@ -1151,6 +1115,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                         x++;
                     }
                 }
+                ++i;
             }
         }
 
@@ -1160,7 +1125,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 delete this->map_to_send.parsed_layer.monstersCollisionMap;
                 this->map_to_send.parsed_layer.monstersCollisionMap=NULL;
             }
-            if(this->map_to_send.parsed_layer.monstersCollisionList.size()==1 && this->map_to_send.parsed_layer.monstersCollisionList.first().actionOn.empty() && this->map_to_send.parsed_layer.monstersCollisionList.first().walkOn.empty())
+            if(this->map_to_send.parsed_layer.monstersCollisionList.size()==1 && this->map_to_send.parsed_layer.monstersCollisionList.front().actionOn.empty() && this->map_to_send.parsed_layer.monstersCollisionList.front().walkOn.empty())
             {
                 this->map_to_send.parsed_layer.monstersCollisionList.clear();
                 delete this->map_to_send.parsed_layer.monstersCollisionMap;
@@ -1274,19 +1239,19 @@ bool Map_loader::loadMonsterMap(const std::string &fileName, std::vector<std::st
     else
     {
         #endif
-        QFile mapFile(fileName);
+        QFile mapFile(QString::fromStdString(fileName));
         if(!mapFile.open(QIODevice::ReadOnly))
         {
-            qDebug() << mapFile.fileName()+QLatin1String(": ")+mapFile.errorString();
+            std::cerr << mapFile.fileName().toStdString() << ": " << mapFile.errorString().toStdString() << std::endl;
             return false;
         }
         const QByteArray &xmlContent=mapFile.readAll();
         mapFile.close();
-        std::string errorStr;
+        QString errorStr;
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
-            qDebug() << std::stringLiteral("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+            std::cerr << mapFile.fileName().toStdString() << ", Parse error at line " << std::to_string(errorLine) << ", column " << std::to_string(errorColumn) << ": " << errorStr.toStdString() << std::endl;
             return false;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -1294,16 +1259,16 @@ bool Map_loader::loadMonsterMap(const std::string &fileName, std::vector<std::st
     }
     #endif
     this->map_to_send.xmlRoot = domDocument.documentElement();
-    if(this->map_to_send.xmlRoot.tagName()!=Map_loader::text_map)
+    if(this->map_to_send.xmlRoot.tagName().toStdString()!=Map_loader::text_map)
     {
-        qDebug() << std::stringLiteral("\"map\" root balise not found for the xml file");
+        std::cerr << "\"map\" root balise not found for the xml file" << std::endl;
         return false;
     }
 
     //found the cave name
     std::vector<std::string> caveName;
     {
-        int index=0;
+        unsigned int index=0;
         while(index<CommonDatapack::commonDatapack.monstersCollision.size())
         {
             if(CommonDatapack::commonDatapack.monstersCollision.at(index).layer.empty())
@@ -1314,37 +1279,37 @@ bool Map_loader::loadMonsterMap(const std::string &fileName, std::vector<std::st
             index++;
         }
         if(caveName.empty())
-            detectedMonsterCollisionMonsterType << Map_loader::text_cave;
+            detectedMonsterCollisionMonsterType.push_back(Map_loader::text_cave);
     }
 
     //load the found monster type
     std::unordered_map<std::string/*monsterType*/,std::vector<MapMonster> > monsterTypeList;
     {
-        int index=0;
+        unsigned int index=0;
         while(index<detectedMonsterCollisionMonsterType.size())
         {
             if(!detectedMonsterCollisionMonsterType.at(index).empty())
-                if(!monsterTypeList.contains(detectedMonsterCollisionMonsterType.at(index)))
+                if(monsterTypeList.find(detectedMonsterCollisionMonsterType.at(index))==monsterTypeList.cend())
                     monsterTypeList[detectedMonsterCollisionMonsterType.at(index)]=loadSpecificMonster(fileName,detectedMonsterCollisionMonsterType.at(index));
             index++;
         }
     }
 
     this->map_to_send.parsed_layer.monstersCollisionList.clear();
-    this->map_to_send.parsed_layer.monstersCollisionList << MonstersCollisionValue();//cave
+    this->map_to_send.parsed_layer.monstersCollisionList.push_back(MonstersCollisionValue());//cave
     //found the zone number
     zoneNumber.clear();
     uint8_t zoneNumberIndex=1;
     {
-        int index=0;
+        unsigned int index=0;
         while(index<CommonDatapack::commonDatapack.monstersCollision.size())
         {
             const MonstersCollision &monstersCollision=CommonDatapack::commonDatapack.monstersCollision.at(index);
             const std::vector<std::string> &searchList=monstersCollision.defautMonsterTypeList;
-            int index_search=0;
+            unsigned int index_search=0;
             while(index_search<searchList.size())
             {
-                if(monsterTypeList.contains(searchList.at(index_search)))
+                if(monsterTypeList.find(searchList.at(index_search))!=monsterTypeList.cend())
                     break;
                 index_search++;
             }
@@ -1355,39 +1320,39 @@ bool Map_loader::loadMonsterMap(const std::string &fileName, std::vector<std::st
                 if(CommonDatapack::commonDatapack.monstersCollision.at(index).layer.empty())
                 {}
                 //not cave
-                else if(detectedMonsterCollisionLayer.contains(CommonDatapack::commonDatapack.monstersCollision.at(index).layer))
+                else if(vectorcontainsAtLeastOne(detectedMonsterCollisionLayer,CommonDatapack::commonDatapack.monstersCollision.at(index).layer))
                 {
-                    if(!zoneNumber.contains(CommonDatapack::commonDatapack.monstersCollision.at(index).layer))
+                    if(zoneNumber.find(CommonDatapack::commonDatapack.monstersCollision.at(index).layer)==zoneNumber.cend())
                     {
                         zoneNumber[CommonDatapack::commonDatapack.monstersCollision.at(index).layer]=zoneNumberIndex;
-                        this->map_to_send.parsed_layer.monstersCollisionList << MonstersCollisionValue();//create
+                        this->map_to_send.parsed_layer.monstersCollisionList.push_back(MonstersCollisionValue());//create
                         tempZoneNumberIndex=zoneNumberIndex;
                         zoneNumberIndex++;
                     }
                     else
-                        tempZoneNumberIndex=zoneNumber.value(CommonDatapack::commonDatapack.monstersCollision.at(index).layer);
+                        tempZoneNumberIndex=zoneNumber.at(CommonDatapack::commonDatapack.monstersCollision.at(index).layer);
                 }
                 {
                     MonstersCollisionValue *monstersCollisionValue=&this->map_to_send.parsed_layer.monstersCollisionList[tempZoneNumberIndex];
                     if(CommonDatapack::commonDatapack.monstersCollision.at(index).type==MonstersCollisionType_ActionOn)
                     {
-                        monstersCollisionValue->actionOn << index;
-                        monstersCollisionValue->actionOnMonsters << monsterTypeList.value(searchList.at(index_search));
+                        monstersCollisionValue->actionOn.push_back(index);
+                        monstersCollisionValue->actionOnMonsters.push_back(monsterTypeList.at(searchList.at(index_search)));
                     }
                     else
                     {
-                        monstersCollisionValue->walkOn << index;
+                        monstersCollisionValue->walkOn.push_back(index);
                         MonstersCollisionValue::MonstersCollisionContent monstersCollisionContent;
-                        monstersCollisionContent.defaultMonsters=monsterTypeList.value(searchList.at(index_search));
-                        int event_index=0;
+                        monstersCollisionContent.defaultMonsters=monsterTypeList.at(searchList.at(index_search));
+                        unsigned int event_index=0;
                         while(event_index<monstersCollision.events.size())
                         {
                             const MonstersCollision::MonstersCollisionEvent &monstersCollisionEvent=monstersCollision.events.at(event_index);
                             const std::vector<std::string> &searchList=monstersCollisionEvent.monsterTypeList;
-                            int index_search=0;
+                            unsigned int index_search=0;
                             while(index_search<searchList.size())
                             {
-                                if(monsterTypeList.contains(searchList.at(index_search)))
+                                if(monsterTypeList.find(searchList.at(index_search))!=monsterTypeList.cend())
                                     break;
                                 index_search++;
                             }
@@ -1396,12 +1361,12 @@ bool Map_loader::loadMonsterMap(const std::string &fileName, std::vector<std::st
                                 MonstersCollisionValue::MonstersCollisionValueOnCondition monstersCollisionValueOnCondition;
                                 monstersCollisionValueOnCondition.event=monstersCollisionEvent.event;
                                 monstersCollisionValueOnCondition.event_value=monstersCollisionEvent.event_value;
-                                monstersCollisionValueOnCondition.monsters=monsterTypeList.value(searchList.at(index_search));
-                                monstersCollisionContent.conditions << monstersCollisionValueOnCondition;
+                                monstersCollisionValueOnCondition.monsters=monsterTypeList.at(searchList.at(index_search));
+                                monstersCollisionContent.conditions.push_back(monstersCollisionValueOnCondition);
                             }
                             event_index++;
                         }
-                        monstersCollisionValue->walkOnMonsters << monstersCollisionContent;
+                        monstersCollisionValue->walkOnMonsters.push_back(monstersCollisionContent);
                     }
                 }
             }
@@ -1420,124 +1385,124 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
     std::vector<MapMonster> monsterTypeList;
     bool ok;
     uint32_t tempLuckTotal=0;
-    const QDomElement &layer = map_to_send.xmlRoot.firstChildElement(monsterType);
+    const QDomElement &layer = map_to_send.xmlRoot.firstChildElement(QString::fromStdString(monsterType));
     if(!layer.isNull())
     {
         if(layer.isElement())
         {
-            QDomElement monsters=layer.firstChildElement(Map_loader::text_monster);
+            QDomElement monsters=layer.firstChildElement(QString::fromStdString(Map_loader::text_monster));
             while(!monsters.isNull())
             {
                 if(monsters.isElement())
                 {
-                    if(monsters.hasAttribute(Map_loader::text_id) && ((monsters.hasAttribute(Map_loader::text_minLevel) && monsters.hasAttribute(Map_loader::text_maxLevel)) || monsters.hasAttribute(Map_loader::text_level)) && monsters.hasAttribute(Map_loader::text_luck))
+                    if(monsters.hasAttribute(QString::fromStdString(Map_loader::text_id)) && ((monsters.hasAttribute(QString::fromStdString(Map_loader::text_minLevel)) && monsters.hasAttribute(QString::fromStdString(Map_loader::text_maxLevel))) || monsters.hasAttribute(QString::fromStdString(Map_loader::text_level))) && monsters.hasAttribute(QString::fromStdString(Map_loader::text_luck)))
                     {
                         MapMonster mapMonster;
-                        mapMonster.id=monsters.attribute(Map_loader::text_id).toUInt(&ok);
+                        mapMonster.id=monsters.attribute(QString::fromStdString(Map_loader::text_id)).toUInt(&ok);
                         if(!ok)
-                            qDebug() << std::stringLiteral("id is not a number: child.tagName(): %1 (at line: %2), file: %3").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(fileName);
+                            std::cerr << "id is not a number: child.tagName(): " << monsters.tagName().toStdString() << " (at line: " << monsters.lineNumber() << "), file: " << fileName << std::endl;
                         if(ok)
-                            if(!CommonDatapack::commonDatapack.monsters.contains(mapMonster.id))
+                            if(CommonDatapack::commonDatapack.monsters.find(mapMonster.id)==CommonDatapack::commonDatapack.monsters.cend())
                             {
-                                qDebug() << std::stringLiteral("monster %4 not found into the monster list: %1 (at line: %2), file: %3").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(fileName).arg(mapMonster.id);
+                                std::cerr << "monster " << mapMonster.id << " not found into the monster list: " << monsters.tagName().toStdString() << " (at line: " << monsters.lineNumber() << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
-                        if(monsters.hasAttribute(Map_loader::text_minLevel) && monsters.hasAttribute(Map_loader::text_maxLevel))
+                        if(monsters.hasAttribute(QString::fromStdString(Map_loader::text_minLevel)) && monsters.hasAttribute(QString::fromStdString(Map_loader::text_maxLevel)))
                         {
                             if(ok)
                             {
-                                mapMonster.minLevel=monsters.attribute(Map_loader::text_minLevel).toUShort(&ok);
+                                mapMonster.minLevel=monsters.attribute(QString::fromStdString(Map_loader::text_minLevel)).toUShort(&ok);
                                 if(!ok)
-                                    qDebug() << std::stringLiteral("minLevel is not a number: child.tagName(): %1 (at line: %2), file: %3").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(fileName);
+                                    std::cerr << "minLevel is not a number: child.tagName(): " << monsters.tagName().toStdString() << " (at line: " << monsters.lineNumber() << "), file: " << fileName << std::endl;
                             }
                             if(ok)
                             {
-                                mapMonster.maxLevel=monsters.attribute(Map_loader::text_maxLevel).toUShort(&ok);
+                                mapMonster.maxLevel=monsters.attribute(QString::fromStdString(Map_loader::text_maxLevel)).toUShort(&ok);
                                 if(!ok)
-                                    qDebug() << std::stringLiteral("maxLevel is not a number: child.tagName(): %1 (at line: %2), file: %3").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(fileName);
+                                    std::cerr << "maxLevel is not a number: child.tagName(): " << monsters.tagName().toStdString() << " (at line: " << monsters.lineNumber() << "), file: " << fileName << std::endl;
                             }
                         }
                         else
                         {
                             if(ok)
                             {
-                                mapMonster.maxLevel=monsters.attribute(Map_loader::text_level).toUShort(&ok);
+                                mapMonster.maxLevel=monsters.attribute(QString::fromStdString(Map_loader::text_level)).toUShort(&ok);
                                 mapMonster.minLevel=mapMonster.maxLevel;
                                 if(!ok)
-                                    qDebug() << std::stringLiteral("level is not a number: child.tagName(): %1 (at line: %2), file: %3").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(fileName);
+                                    std::cerr << "level is not a number: child.tagName(): " << monsters.tagName().toStdString() << " (at line: " << monsters.lineNumber() << "), file: " << fileName << std::endl;
                             }
                         }
                         if(ok)
                         {
-                            std::string textLuck=monsters.attribute(Map_loader::text_luck);
-                            textLuck.remove(Map_loader::text_percent);
-                            mapMonster.luck=textLuck.toUShort(&ok);
+                            std::string textLuck=monsters.attribute(QString::fromStdString(Map_loader::text_luck)).toStdString();
+                            stringreplaceAll(textLuck,Map_loader::text_percent,"");
+                            mapMonster.luck=stringtouint8(textLuck,&ok);
                             if(!ok)
-                                qDebug() << std::stringLiteral("luck is not a number: child.tagName(): %1 (at line: %2), file: %3").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(fileName);
+                                std::cerr << "luck is not a number: child.tagName(): " << monsters.tagName().toStdString() << " (at line: " << monsters.lineNumber() << "), file: " << fileName << std::endl;
                         }
                         if(ok)
                             if(mapMonster.minLevel>mapMonster.maxLevel)
                             {
-                                qDebug() << std::stringLiteral("min > max for the level: child.tagName(): %1 (at line: %2), file: %3").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(fileName);
+                                std::cerr << "min > max for the level: child.tagName(): " << monsters.tagName().toStdString() << " (at line: " << monsters.lineNumber() << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(ok)
                             if(mapMonster.luck<=0)
                             {
-                                qDebug() << std::stringLiteral("luck is too low: child.tagName(): %1 (at line: %2), file: %3").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(fileName);
+                                std::cerr << "luck is too low: child.tagName(): " << monsters.tagName().toStdString() << " (at line: " << monsters.lineNumber() << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(ok)
                             if(mapMonster.minLevel<=0)
                             {
-                                qDebug() << std::stringLiteral("min level is too low: child.tagName(): %1 (at line: %2), file: %3").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(fileName);
+                                std::cerr << "min level is too low: child.tagName(): " << monsters.tagName().toStdString() << " (at line: " << monsters.lineNumber() << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(ok)
                             if(mapMonster.maxLevel<=0)
                             {
-                                qDebug() << std::stringLiteral("max level is too low: child.tagName(): %1 (at line: %2), file: %3").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(fileName);
+                                std::cerr << "max level is too low: child.tagName(): " << monsters.tagName().toStdString() << " (at line: " << monsters.lineNumber() << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(ok)
                             if(mapMonster.luck>100)
                             {
-                                qDebug() << std::stringLiteral("luck is greater than 100: child.tagName(): %1 (at line: %2), file: %3").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(fileName);
+                                std::cerr << "luck is greater than 100: child.tagName(): " << monsters.tagName().toStdString() << " (at line: " << monsters.lineNumber() << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(ok)
                             if(mapMonster.minLevel>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
                             {
-                                qDebug() << std::stringLiteral("min level is greater than %3: child.tagName(): %1 (at line: %2), file: %3").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(CATCHCHALLENGER_MONSTER_LEVEL_MAX).arg(fileName);
+                                std::cerr << "min level is greater than " << CATCHCHALLENGER_MONSTER_LEVEL_MAX << ": child.tagName(): " << monsters.tagName().toStdString() << " (at line: " << monsters.lineNumber() << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(ok)
                             if(mapMonster.maxLevel>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
                             {
-                                qDebug() << std::stringLiteral("max level is greater than %3: child.tagName(): %1 (at line: %2), file: %3").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(CATCHCHALLENGER_MONSTER_LEVEL_MAX).arg(fileName);
+                                std::cerr << "max level is greater than " << CATCHCHALLENGER_MONSTER_LEVEL_MAX << ": child.tagName(): " << monsters.tagName().toStdString() << " (at line: " << monsters.lineNumber() << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(ok)
                         {
                             tempLuckTotal+=mapMonster.luck;
-                            monsterTypeList << mapMonster;
+                            monsterTypeList.push_back(mapMonster);
                         }
                     }
                     else
-                        qDebug() << std::stringLiteral("Missing attribute: child.tagName(): %1 (at line: %2), file: %3").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(fileName);
+                        std::cerr << "Missing attribute: child.tagName(): " << monsters.tagName().toStdString() << " (at line: " << monsters.lineNumber() << "), file: " << fileName << std::endl;
                 }
                 else
-                    qDebug() << std::stringLiteral("Is not an element: child.tagName(): %1 (at line: %2), file: %3").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(fileName);
-                monsters = monsters.nextSiblingElement(Map_loader::text_monster);
+                    std::cerr << "Is not an element: child.tagName(): " << monsters.tagName().toStdString() << " (at line: " << monsters.lineNumber() << "), file: " << fileName << std::endl;
+                monsters = monsters.nextSiblingElement(QString::fromStdString(Map_loader::text_monster));
             }
             if(monsterTypeList.empty())
-                qDebug() << "map have empty monster layer:" << fileName << "type:" << monsterType;
+                std::cerr << "map have empty monster layer:" << fileName << "type:" << monsterType;
         }
         else
-            qDebug() << std::stringLiteral("Is not an element: child.tagName(): %1 (at line: %2), file: %3").arg(layer.tagName()).arg(layer.lineNumber()).arg(fileName);
+            std::cerr << "Is not an element: child.tagName(): " << layer.tagName().toStdString() << " (at line: " << layer.lineNumber() << "), file: " << fileName << std::endl;
         if(tempLuckTotal!=100)
         {
-            qDebug() << std::stringLiteral("total luck is not egal to 100 (%3) for grass into %4, monsters dropped: child.tagName(): %1 (at line: %2), file: %3").arg(layer.tagName()).arg(layer.lineNumber()).arg(tempLuckTotal).arg(fileName).arg(fileName);
+            std::cerr << "total luck is not egal to 100 (" << tempLuckTotal << ") for grass, monsters dropped: child.tagName(): " << layer.tagName().toStdString() << " (at line: " << std::to_string(layer.lineNumber()) << "), file: " << fileName << std::endl;
             monsterTypeList.clear();
         }
         else
@@ -1557,18 +1522,18 @@ std::string Map_loader::resolvRelativeMap(const std::string &fileName,const std:
 {
     if(link.empty())
         return link;
-    const std::string &currentPath=QFileInfo(fileName).absolutePath();
-    QFileInfo newmap(currentPath+QDir::separator()+link);
-    std::string newPath=newmap.absoluteFilePath();
-    if(datapackPath.empty() || newPath.startsWith(datapackPath))
+    const std::string &currentPath=QFileInfo(QString::fromStdString(fileName)).absolutePath().toStdString();
+    QFileInfo newmap(QString::fromStdString(currentPath)+QDir::separator()+QString::fromStdString(link));
+    std::string newPath=newmap.absoluteFilePath().toStdString();
+    if(datapackPath.empty() || stringStartWith(newPath,datapackPath))
     {
-        newPath.remove(0,datapackPath.size());
-        #if defined (DEBUG_MESSAGE_MAP_BORDER) || defined (DEBUG_MESSAGE_MAP_TP)
-        DebugClass::debugConsole(std::stringLiteral("map link resolved: %1 (%2)").arg(newPath).arg(link));
-        #endif
+        newPath.erase(0,datapackPath.size());
         return newPath;
     }
-    DebugClass::debugConsole(std::stringLiteral("map link not resolved: %1, full path: %2, newPath: %3, datapackPath: %4").arg(link).arg(currentPath+QDir::separator()+link).arg(newPath).arg(datapackPath));
+    std::cerr << "map link not resolved: " << link
+              << ", full path: " << currentPath << QDir::separator().toLatin1() << link
+              << ", newPath: " << newPath
+              << ", datapackPath: " << datapackPath << std::endl;
     return link;
 }
 
@@ -1577,10 +1542,10 @@ QDomElement Map_loader::getXmlCondition(const std::string &fileName,const std::s
     #ifdef ONLYMAPRENDER
     return QDomElement();
     #endif
-    if(teleportConditionsUnparsed.contains(conditionFile))
+    if(teleportConditionsUnparsed.find(conditionFile)!=teleportConditionsUnparsed.cend())
     {
-        if(teleportConditionsUnparsed.value(conditionFile).contains(conditionId))
-            return teleportConditionsUnparsed.value(conditionFile).value(conditionId);
+        if(teleportConditionsUnparsed.at(conditionFile).find(conditionId)!=teleportConditionsUnparsed.at(conditionFile).cend())
+            return teleportConditionsUnparsed.at(conditionFile).at(conditionId);
         else
             return QDomElement();
     }
@@ -1595,19 +1560,19 @@ QDomElement Map_loader::getXmlCondition(const std::string &fileName,const std::s
     else
     {
         #endif
-        QFile mapFile(conditionFile);
+        QFile mapFile(QString::fromStdString(conditionFile));
         if(!mapFile.open(QIODevice::ReadOnly))
         {
-            qDebug() << std::stringLiteral("Into the file %1, unable to open the condition file: ").arg(fileName)+mapFile.fileName()+QLatin1String(": ")+mapFile.errorString();
+            std::cerr << "Into the file " << fileName << ", unable to open the condition file: " << mapFile.fileName().toStdString() << ": " << mapFile.errorString().toStdString() << std::endl;
             return QDomElement();
         }
         const QByteArray &xmlContent=mapFile.readAll();
         mapFile.close();
-        std::string errorStr;
+        QString errorStr;
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
-            qDebug() << std::stringLiteral("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+            std::cerr << mapFile.fileName().toStdString() << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
             return QDomElement();
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -1617,33 +1582,33 @@ QDomElement Map_loader::getXmlCondition(const std::string &fileName,const std::s
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=QLatin1String("conditions"))
     {
-        qDebug() << std::stringLiteral("\"conditions\" root balise not found for the xml file %1").arg(conditionFile);
+        std::cerr << "\"conditions\" root balise not found for the xml file " << conditionFile << std::endl;
         return QDomElement();
     }
 
-    QDomElement item = root.firstChildElement(Map_loader::text_condition);
+    QDomElement item = root.firstChildElement(QString::fromStdString(Map_loader::text_condition));
     while(!item.isNull())
     {
         if(item.isElement())
         {
-            if(!item.hasAttribute(Map_loader::text_id))
-                qDebug() << std::stringLiteral("\"condition\" balise have not id attribute (%1 at %2)").arg(conditionFile).arg(item.lineNumber());
-            else if(!item.hasAttribute(Map_loader::text_type))
-                qDebug() << std::stringLiteral("\"condition\" balise have not type attribute (%1 at %2)").arg(conditionFile).arg(item.lineNumber());
+            if(!item.hasAttribute(QString::fromStdString(Map_loader::text_id)))
+                std::cerr << "\"condition\" balise have not id attribute (" << conditionFile << " at " << item.lineNumber() << ")" << std::endl;
+            else if(!item.hasAttribute(QString::fromStdString(Map_loader::text_type)))
+                std::cerr << "\"condition\" balise have not type attribute (" << conditionFile << " at " << item.lineNumber() << ")" << std::endl;
             else
             {
-                const uint32_t &id=item.attribute(Map_loader::text_id).toUInt(&ok);
+                const uint32_t &id=item.attribute(QString::fromStdString(Map_loader::text_id)).toUInt(&ok);
                 if(!ok)
-                    qDebug() << std::stringLiteral("\"condition\" balise have id is not a number (%1 at %2)").arg(conditionFile).arg(item.lineNumber());
+                    std::cerr << "\"condition\" balise have id is not a number (" << conditionFile << " at " << item.lineNumber() << ")" << std::endl;
                 else
                     teleportConditionsUnparsed[conditionFile][id]=item;
             }
         }
-        item = item.nextSiblingElement(Map_loader::text_condition);
+        item = item.nextSiblingElement(QString::fromStdString(Map_loader::text_condition));
     }
-    if(teleportConditionsUnparsed.contains(conditionFile))
-        if(teleportConditionsUnparsed.value(conditionFile).contains(conditionId))
-            return teleportConditionsUnparsed.value(conditionFile).value(conditionId);
+    if(teleportConditionsUnparsed.find(conditionFile)!=teleportConditionsUnparsed.cend())
+        if(teleportConditionsUnparsed.at(conditionFile).find(conditionId)!=teleportConditionsUnparsed.at(conditionFile).cend())
+            return teleportConditionsUnparsed.at(conditionFile).at(conditionId);
     return QDomElement();
 }
 
@@ -1656,17 +1621,17 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
     MapCondition condition;
     condition.type=MapConditionType_None;
     condition.value=0;
-    if(conditionContent.attribute(Map_loader::text_type)==Map_loader::text_quest)
+    if(conditionContent.attribute(QString::fromStdString(Map_loader::text_type)).toStdString()==Map_loader::text_quest)
     {
-        if(!conditionContent.hasAttribute(Map_loader::text_quest))
-            qDebug() << std::stringLiteral("\"condition\" balise have type=quest but quest attribute not found, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
+        if(!conditionContent.hasAttribute(QString::fromStdString(Map_loader::text_quest)))
+            std::cerr << "\"condition\" balise have type=quest but quest attribute not found, item, clan or fightBot (" << conditionFile << " at " << conditionContent.lineNumber() << ")" << std::endl;
         else
         {
-            const uint32_t &quest=conditionContent.attribute(Map_loader::text_quest).toUInt(&ok);
+            const uint32_t &quest=stringtouint32(conditionContent.attribute(QString::fromStdString(Map_loader::text_quest)).toStdString(),&ok);
             if(!ok)
-                qDebug() << std::stringLiteral("\"condition\" balise have type=quest but quest attribute is not a number, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
-            else if(!CommonDatapackServerSpec::commonDatapackServerSpec.quests.contains(quest))
-                qDebug() << std::stringLiteral("\"condition\" balise have type=quest but quest id is not found, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
+                std::cerr << "\"condition\" balise have type=quest but quest attribute is not a number, item, clan or fightBot (" << conditionFile << " at " << conditionContent.lineNumber() << ")" << std::endl;
+            else if(CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(quest)==CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
+                std::cerr << "\"condition\" balise have type=quest but quest id is not found, item, clan or fightBot (" << conditionFile << " at " << conditionContent.lineNumber() << ")" << std::endl;
             else
             {
                 condition.type=MapConditionType_Quest;
@@ -1674,17 +1639,17 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
             }
         }
     }
-    else if(conditionContent.attribute(Map_loader::text_type)==Map_loader::text_item)
+    else if(conditionContent.attribute(QString::fromStdString(Map_loader::text_type)).toStdString()==Map_loader::text_item)
     {
-        if(!conditionContent.hasAttribute(Map_loader::text_item))
-            qDebug() << std::stringLiteral("\"condition\" balise have type=item but item attribute not found, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
+        if(!conditionContent.hasAttribute(QString::fromStdString(Map_loader::text_item)))
+            std::cerr << "\"condition\" balise have type=item but item attribute not found, item, clan or fightBot (" << conditionFile << " at " << conditionContent.lineNumber() << ")" << std::endl;
         else
         {
-            const uint32_t &item=conditionContent.attribute(Map_loader::text_item).toUInt(&ok);
+            const uint32_t &item=conditionContent.attribute(QString::fromStdString(Map_loader::text_item)).toUInt(&ok);
             if(!ok)
-                qDebug() << std::stringLiteral("\"condition\" balise have type=item but item attribute is not a number, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
-            else if(!CommonDatapack::commonDatapack.items.item.contains(item))
-                qDebug() << std::stringLiteral("\"condition\" balise have type=item but item id is not found, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
+                std::cerr << "\"condition\" balise have type=item but item attribute is not a number, item, clan or fightBot (" << conditionFile << " at " << conditionContent.lineNumber() << ")" << std::endl;
+            else if(CommonDatapack::commonDatapack.items.item.find(item)==CommonDatapack::commonDatapack.items.item.cend())
+                std::cerr << "\"condition\" balise have type=item but item id is not found, item, clan or fightBot (" << conditionFile << " at " << conditionContent.lineNumber() << ")" << std::endl;
             else
             {
                 condition.type=MapConditionType_Item;
@@ -1692,17 +1657,17 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
             }
         }
     }
-    else if(conditionContent.attribute(Map_loader::text_type)==Map_loader::text_fightBot)
+    else if(conditionContent.attribute(QString::fromStdString(Map_loader::text_type)).toStdString()==Map_loader::text_fightBot)
     {
-        if(!conditionContent.hasAttribute(Map_loader::text_fightBot))
-            qDebug() << std::stringLiteral("\"condition\" balise have type=fightBot but fightBot attribute not found, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
+        if(!conditionContent.hasAttribute(QString::fromStdString(Map_loader::text_fightBot)))
+            std::cerr << "\"condition\" balise have type=fightBot but fightBot attribute not found, item, clan or fightBot (" << conditionFile << " at " << conditionContent.lineNumber() << ")" << std::endl;
         else
         {
-            const uint32_t &fightBot=conditionContent.attribute(Map_loader::text_fightBot).toUInt(&ok);
+            const uint32_t &fightBot=conditionContent.attribute(QString::fromStdString(Map_loader::text_fightBot)).toUInt(&ok);
             if(!ok)
-                qDebug() << std::stringLiteral("\"condition\" balise have type=fightBot but fightBot attribute is not a number, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
-            else if(!CommonDatapackServerSpec::commonDatapackServerSpec.botFights.contains(fightBot))
-                qDebug() << std::stringLiteral("\"condition\" balise have type=fightBot but fightBot id is not found, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
+                std::cerr << "\"condition\" balise have type=fightBot but fightBot attribute is not a number, item, clan or fightBot (" << conditionFile << " at " << conditionContent.lineNumber() << ")" << std::endl;
+            else if(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightBot)==CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
+                std::cerr << "\"condition\" balise have type=fightBot but fightBot id is not found, item, clan or fightBot (" << conditionFile << " at " << conditionContent.lineNumber() << ")" << std::endl;
             else
             {
                 condition.type=MapConditionType_FightBot;
@@ -1710,9 +1675,9 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
             }
         }
     }
-    else if(conditionContent.attribute(Map_loader::text_type)==Map_loader::text_clan)
+    else if(conditionContent.attribute(QString::fromStdString(Map_loader::text_type)).toStdString()==Map_loader::text_clan)
         condition.type=MapConditionType_Clan;
     else
-        qDebug() << std::stringLiteral("\"condition\" balise have type but value is not quest, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
+        std::cerr << "\"condition\" balise have type but value is not quest, item, clan or fightBot (" << conditionFile << " at " << conditionContent.lineNumber() << ")" << std::endl;
     return condition;
 }

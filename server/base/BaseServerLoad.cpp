@@ -1971,7 +1971,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                         if(bot_Semi.property_text.find(BaseServer::text_lookAt)!=bot_Semi.property_text.end())
                                         {
                                             Direction direction;
-                                            const std::string &lookAt=bot_Semi.property_text.at(BaseServer::text_lookAt).toString().toStdString();
+                                            const std::string &lookAt=bot_Semi.property_text.at(BaseServer::text_lookAt);
                                             if(lookAt==BaseServer::text_left)
                                                 direction=CatchChallenger::Direction_move_at_left;
                                             else if(lookAt==BaseServer::text_right)
@@ -2012,10 +2012,10 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                             mapServer->botsFight[pairpoint].push_back(fightid);
                                             botfights_number++;
 
-                                            uint32_t fightRange=5;
+                                            uint8_t fightRange=5;
                                             if(bot_Semi.property_text.find(BaseServer::text_fightRange)!=bot_Semi.property_text.end())
                                             {
-                                                fightRange=bot_Semi.property_text.at(BaseServer::text_fightRange).toUInt(&ok);
+                                                fightRange=stringtouint8(bot_Semi.property_text.at(BaseServer::text_fightRange),&ok);
                                                 if(!ok)
                                                 {
                                                     std::cerr << "fightRange is not a number: for bot id: "
@@ -2070,7 +2070,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                                       << direction;
                                             #endif
                                             uint8_t temp_x=bot_Semi.point.x,temp_y=bot_Semi.point.y;
-                                            uint32_t index_botfight_range=0;
+                                            uint8_t index_botfight_range=0;
                                             CatchChallenger::CommonMap *map=semi_loaded_map.at(index).map;
                                             CatchChallenger::CommonMap *old_map=map;
                                             while(index_botfight_range<fightRange)
