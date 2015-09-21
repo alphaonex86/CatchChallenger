@@ -32,7 +32,7 @@ struct Map_to_send
     uint32_t width;
     uint32_t height;
 
-    std::unordered_map<std::string,QVariant> property;
+    std::unordered_map<std::string,std::string> property;
 
     ParsedLayer parsed_layer;
 
@@ -49,7 +49,7 @@ struct Map_to_send
         Map_Point point;
         std::string file;
         quint16 id;
-        std::unordered_map<std::string,QVariant> property_text;
+        std::unordered_map<std::string,std::string> property_text;
     };
     std::vector<Bot_Semi> bots;
 
