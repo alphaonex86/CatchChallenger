@@ -6,7 +6,6 @@
 
 using namespace CatchChallenger;
 
-QByteArray FacilityLibGeneral::UTF8EmptyData=QByteArray().fill(0x00,1);
 std::string FacilityLibGeneral::text_slash="/";
 std::string FacilityLibGeneral::text_male="male";
 std::string FacilityLibGeneral::text_female="female";
@@ -14,41 +13,22 @@ std::string FacilityLibGeneral::text_unknown="unknown";
 std::string FacilityLibGeneral::text_clan="clan";
 std::string FacilityLibGeneral::text_dotcomma=";";
 
-QByteArray FacilityLibGeneral::toUTF8WithHeader(const std::string &text)
-{
-    if(text.isEmpty() || text.size()>255)
-        return UTF8EmptyData;
-    QByteArray returnedData,data;
-    data=text.toUtf8();
-    if(data.size()==0 || data.size()>255)
-        return UTF8EmptyData;
-    returnedData[0]=data.size();
-    returnedData+=data;
-    return returnedData;
-}
-
 unsigned int FacilityLibGeneral::toUTF8WithHeader(const std::string &text,char * const data)
 {
-    if(text.isEmpty() || text.size()>255)
+    if(text.empty() || text.size()>255)
         return 0;
-    const QByteArray &utf8data=text.toUtf8();
-    if(utf8data.size()==0 || utf8data.size()>255)
-        return 0;
-    data[0]=utf8data.size();
-    memcpy(data+1,utf8data.constData(),utf8data.size());
-    return 1+utf8data.size();
+    data[0]=text.size();
+    memcpy(data+1,text.data(),text.size());
+    return 1+text.size();
 }
 
 unsigned int FacilityLibGeneral::toUTF8With16BitsHeader(const std::string &text,char * const data)
 {
-    if(text.isEmpty() || text.size()>65535)
+    if(text.empty() || text.size()>65535)
         return 0;
-    const QByteArray &utf8data=text.toUtf8();
-    if(utf8data.size()==0 || utf8data.size()>65535)
-        return 0;
-    *reinterpret_cast<uint16_t *>(data+0)=(uint16_t)htole16((uint16_t)utf8data.size());
-    memcpy(data+2,utf8data.constData(),utf8data.size());
-    return 2+utf8data.size();
+    *reinterpret_cast<uint16_t *>(data+0)=(uint16_t)htole16((uint16_t)text.size());
+    memcpy(data+2,text.data(),text.size());
+    return 2+text.size();
 }
 
 std::vector<std::string> FacilityLibGeneral::listFolder(const std::string& folder,const std::string& suffix)

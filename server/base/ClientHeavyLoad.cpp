@@ -425,19 +425,18 @@ void Client::character_list_object()
     if(askLoginParam==NULL)
         abort();
     #endif
-    askLoginParam->tempOutputData=character_list_return(askLoginParam->query_id);
-    if(askLoginParam->tempOutputData.isEmpty())
-    {
-        delete askLoginParam;
+    askLoginParam->characterOutputDataSize=character_list_return(ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->query_id);
+    if(askLoginParam->characterOutputDataSize==0)
         return;
-    }
+    askLoginParam->characterOutputData=(char *)malloc(askLoginParam->characterOutputDataSize);
+    memcpy(askLoginParam->characterOutputData,ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->characterOutputDataSize);
     //re use
     //delete askLoginParam;
     if(server_list())
         paramToPassToCallBack.push(askLoginParam);
 }
 
-QByteArray Client::character_list_return(const uint8_t &query_id)
+uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBackType.front()!="AskLoginParam")
@@ -453,73 +452,7 @@ QByteArray Client::character_list_return(const uint8_t &query_id)
     normalOutput("Logged the account "+std::to_string(account_id));
     #endif
     //send the network reply
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-
-    out << (uint8_t)01;//all is good
-
-    //login/common part
-    out << (uint32_t)CommonSettingsCommon::commonSettingsCommon.character_delete_time;
-    out << (uint8_t)CommonSettingsCommon::commonSettingsCommon.max_character;
-    out << (uint8_t)CommonSettingsCommon::commonSettingsCommon.min_character;
-    out << (uint8_t)CommonSettingsCommon::commonSettingsCommon.max_pseudo_size;
-    out << (uint8_t)CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
-    out << (uint16_t)CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters;
-    out << (uint8_t)CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
-    out << (uint16_t)CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems;
-
-    outputData+=CommonSettingsCommon::commonSettingsCommon.datapackHashBase;
-    out.device()->seek(out.device()->pos()+CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size());
-
-    {
-        const QByteArray &httpDatapackMirrorRaw=FacilityLibGeneral::toUTF8WithHeader(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase);
-        outputData+=httpDatapackMirrorRaw;
-        out.device()->seek(out.device()->pos()+httpDatapackMirrorRaw.size());
-    }
-
-    /*if(GlobalServerData::serverSettings.sendPlayerNumber)
-        out << (uint16_t)GlobalServerData::serverSettings.max_players;
-    else
-    {
-        if(GlobalServerData::serverSettings.max_players<=255)
-            out << (uint16_t)255;
-        else
-            out << (uint16_t)65535;
-    }
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(GlobalServerData::serverPrivateVariables.timer_city_capture==NULL)
-        out << (uint32_t)0x00000000;
-    else if(GlobalServerData::serverPrivateVariables.timer_city_capture->isActive())
-    {
-        const qint64 &time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
-        out << (uint32_t)time/1000;
-    }
-    else
-        out << (uint32_t)0x00000000;
-    #else
-    out << (uint32_t)0x00000000;
-    #endif
-    out << (uint8_t)GlobalServerData::serverSettings.city.capture.frenquency;
-
-    //common settings
-    out << (uint32_t)CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.forcedSpeed;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.useSP;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.tcpCork;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.autoLearn;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.dontSendPseudo;
-    out << (float)CommonSettingsServer::commonSettingsServer.rates_xp;
-    out << (float)CommonSettingsServer::commonSettingsServer.rates_gold;
-    out << (float)CommonSettingsServer::commonSettingsServer.rates_xp_pow;
-    out << (float)CommonSettingsServer::commonSettingsServer.rates_drop;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.chat_allow_all;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.chat_allow_local;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.chat_allow_private;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.chat_allow_clan;
-    out << (uint8_t)CommonSettingsServer::commonSettingsServer.factoryPriceChange;
-    out << (uint32_t)GlobalServerData::serverPrivateVariables.map_list.size();*/
+    uint32_t posOutput=0;
 
     {
         const quint64 &current_time=QDateTime::currentDateTime().toTime_t();
@@ -590,38 +523,44 @@ QByteArray Client::character_list_return(const uint8_t &query_id)
         if(CommonSettingsCommon::commonSettingsCommon.max_character==0 && characterEntryList.empty())
         {
             loginIsWrong(query_id,0x05,"Can't create character and don't have character");
-            return QByteArray();
+            return 0;
         }
 
-        out << (uint8_t)0x01;//Number of characters group, characters group 0, all in one server
+        data[posOutput]=0x01;//Number of characters group, characters group 0, all in one server
+        posOutput+=1;
 
         number_of_character=characterEntryList.size();
-        out << (uint8_t)characterEntryList.size();
+        data[posOutput]=characterEntryList.size();
+        posOutput+=1;
         unsigned int index=0;
         while(index<characterEntryList.size())
         {
             const CharacterEntry &characterEntry=characterEntryList.at(index);
-            out << (uint32_t)characterEntry.character_id;
+            *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.character_id);
+            posOutput+=4;
             {
-                const QByteArray &rawPseudo=FacilityLibGeneral::toUTF8WithHeader(characterEntry.pseudo);
-                if(rawPseudo.isEmpty())
                 {
-                    loginIsWrong(query_id,0x05,"Can't create character and don't have character");
-                    return QByteArray();
+                    const std::string &text=characterEntry.pseudo;
+                    data[posOutput]=text.size();
+                    posOutput+=1;
+                    memcpy(data+posOutput,text.data(),text.size());
+                    posOutput+=text.size();
                 }
-                outputData+=rawPseudo;
-                out.device()->seek(out.device()->pos()+rawPseudo.size());
             }
-            out << (uint8_t)characterEntry.skinId;
-            out << (uint32_t)characterEntry.delete_time_left;
+            data[posOutput]=characterEntry.skinId;
+            posOutput+=1;
+            *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.delete_time_left);
+            posOutput+=4;
             /// \todo optimise by simple suming here, not SQL query
-            out << (uint32_t)characterEntry.played_time;
-            out << (uint32_t)characterEntry.last_connect;
+            *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.played_time);
+            posOutput+=4;
+            *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.last_connect);
+            posOutput+=4;
             index++;
         }
     }
 
-    return outputData;
+    return posOutput;
 }
 
 bool Client::server_list()
@@ -668,11 +607,12 @@ void Client::server_list_object()
     if(askLoginParam==NULL)
         abort();
     #endif
-    server_list_return(askLoginParam->query_id,askLoginParam->tempOutputData);
+    server_list_return(askLoginParam->query_id,askLoginParam->characterOutputData,askLoginParam->characterOutputDataSize);
+    delete askLoginParam->characterOutputData;
     delete askLoginParam;
 }
 
-void Client::server_list_return(const uint8_t &query_id, const QByteArray &previousData)
+void Client::server_list_return(const uint8_t &query_id, const char * const characterOutputData, const uint32_t &characterOutputDataSize)
 {
     callbackRegistred.pop();
     //send signals into the server
@@ -681,9 +621,14 @@ void Client::server_list_return(const uint8_t &query_id, const QByteArray &previ
     sendRawBlock((char *)Client::protocolMessageLogicalGroupAndServerList,Client::protocolMessageLogicalGroupAndServerListSize);
 
     //send the network reply
-    char * const tempRawData=new char[4*1024];
-    //memset(tempRawData,0x00,sizeof(4*1024));
-    int tempRawDataSize=0x01;
+    uint32_t posOutput=0;
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,Client::protocolReplyCharacterList,Client::protocolReplyCharacterListSize);
+    posOutput+=Client::protocolReplyCharacterListSize;
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,characterOutputData,characterOutputDataSize);
+    posOutput+=Client::protocolReplyCharacterListSize;
+
+    int tempRawDataSizeToSetServerCount=posOutput;
+    posOutput+=1;
 
     const quint64 &current_time=QDateTime::currentDateTime().toTime_t();
     bool ok;
@@ -691,8 +636,8 @@ void Client::server_list_return(const uint8_t &query_id, const QByteArray &previ
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         //server index
-        tempRawData[tempRawDataSize]=0;
-        tempRawDataSize+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0;
+        posOutput+=1;
 
         //played_time
         unsigned int played_time=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
@@ -701,8 +646,8 @@ void Client::server_list_return(const uint8_t &query_id, const QByteArray &previ
             std::cerr << "played_time is not number: " << GlobalServerData::serverPrivateVariables.db_common->value(4) << " fixed by 0" << std::endl;
             played_time=0;
         }
-        *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(played_time);
-        tempRawDataSize+=sizeof(uint32_t);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(played_time);
+        posOutput+=sizeof(uint32_t);
 
         //last_connect
         unsigned int last_connect=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
@@ -711,8 +656,8 @@ void Client::server_list_return(const uint8_t &query_id, const QByteArray &previ
             std::cerr << "last_connect is not number: " << GlobalServerData::serverPrivateVariables.db_common->value(5) << " fixed by 0" << std::endl;
             last_connect=current_time;
         }
-        *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(last_connect);
-        tempRawDataSize+=sizeof(uint32_t);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(last_connect);
+        posOutput+=sizeof(uint32_t);
 
         validServerCount++;
     }
@@ -734,29 +679,12 @@ void Client::server_list_return(const uint8_t &query_id, const QByteArray &previ
         dbQueryWriteCommon(queryText);
     }
     #endif
-    tempRawData[0]=validServerCount;
-
-    const QByteArray newData(previousData+QByteArray(tempRawData,tempRawDataSize));
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(newData.size()>1024*256)
-    {
-        std::cerr << "Too big data " << __FILE__ << __LINE__ << std::endl;
-        abort();
-    }
-    #endif
+    ProtocolParsingBase::tempBigBufferForOutput[tempRawDataSizeToSetServerCount]=validServerCount;
 
     //send the network reply
     removeFromQueryReceived(query_id);
-    uint32_t posOutput=0;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-    posOutput=+1;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
-    posOutput=+1+4;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(newData.size());//set the dynamic size
-
-    memcpy(ProtocolParsingBase::tempBigBufferForOutput,newData.constData(),newData.size());
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)SoldStat_PriceHaveChanged;
-    posOutput+=newData.size();
+    ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
+    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
@@ -1912,21 +1840,13 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
         errorOutput("Unable to open into CatchChallenger::sendFile(): fileName.size()>255 || fileName.empty()");
         return false;
     }
-    const QByteArray &fileNameRaw=FacilityLibGeneral::toUTF8WithHeader(fileName);
-    if(fileNameRaw.size()>255 || fileNameRaw.isEmpty())
-    {
-        errorOutput("Unable to open into CatchChallenger::sendFile(): fileNameRaw.size()>255 || fileNameRaw.empty()");
-        return false;
-    }
+
     QFile file(QString::fromStdString(datapackPath+fileName));
     if(file.open(QIODevice::ReadOnly))
     {
         const QByteArray &content=file.readAll();
         const int &contentsize=content.size();
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (uint32_t)contentsize;
+
         const std::string &suffix=QFileInfo(file).suffix().toStdString();
         if(BaseServerMasterSendDatapack::compressedExtension.find(suffix)!=BaseServerMasterSendDatapack::compressedExtension.cend() &&
                 ProtocolParsing::compressionTypeServer!=ProtocolParsing::CompressionType::None &&
@@ -1937,7 +1857,18 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
                 )
             )
         {
-            BaseServerMasterSendDatapack::compressedFilesBuffer+=fileNameRaw+outputData+content;
+            uint32_t posOutput=0;
+            {
+                const std::string &text=fileName;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                posOutput+=1;
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+                posOutput+=text.size();
+            }
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(contentsize);
+            posOutput+=4;
+
+            BaseServerMasterSendDatapack::compressedFilesBuffer+=QByteArray(ProtocolParsingBase::tempBigBufferForOutput,posOutput)+content;
             BaseServerMasterSendDatapack::compressedFilesBufferCount++;
             switch(ProtocolParsing::compressionTypeServer)
             {
@@ -1956,12 +1887,10 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
         {
             if(contentsize>CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB*1024)
             {
-                if((1+fileNameRaw.size()+outputData.size()+contentsize)>=CATCHCHALLENGER_MAX_PACKET_SIZE)
+                if((1+fileName.size()+4+contentsize)>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                 {
                     normalOutput("Error: outputData2(1)+fileNameRaw("+
-                                 std::to_string(fileNameRaw.size())+
-                                 ")+outputData("+
-                                 std::to_string(outputData.size())+
+                                 std::to_string(fileName.size()+4)+
                                  ")+content("+
                                  std::to_string(contentsize)+
                                  ")>CATCHCHALLENGER_MAX_PACKET_SIZE for file "+
@@ -1976,20 +1905,40 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
                 posOutput=+1+4;
                 *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+BaseServerMasterSendDatapack::rawFilesBuffer.size());//set the dynamic size
 
+                //number of file
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=1;
                 posOutput+=1;
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput,fileNameRaw.constData(),fileNameRaw.size());
-                posOutput+=fileNameRaw.size();
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput,outputData.constData(),outputData.size());
-                posOutput+=outputData.size();
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput,content.constData(),content.size());
-                posOutput+=content.size();
+                //filename
+                {
+                    const std::string &text=fileName;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                    posOutput+=1;
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+                    posOutput+=text.size();
+                }
+                //file size
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(contentsize);
+                posOutput+=4;
+
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput,content.constData(),contentsize);
+                posOutput+=contentsize;
 
                 sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             }
             else
             {
-                BaseServerMasterSendDatapack::rawFilesBuffer+=fileNameRaw+outputData+content;
+                uint32_t posOutput=0;
+                {
+                    const std::string &text=fileName;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                    posOutput+=1;
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+                    posOutput+=text.size();
+                }
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(contentsize);
+                posOutput+=4;
+
+                BaseServerMasterSendDatapack::rawFilesBuffer+=QByteArray(ProtocolParsingBase::tempBigBufferForOutput,posOutput)+content;
                 BaseServerMasterSendDatapack::rawFilesBufferCount++;
                 if(BaseServerMasterSendDatapack::rawFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_MAX_FILEPURGE_KB*1024 || BaseServerMasterSendDatapack::rawFilesBufferCount>=255)
                     sendFileContent();
