@@ -1798,7 +1798,9 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             uint32_t number_of_file;
             in >> number_of_file;
             std::vector<std::string> files;
+            files.reserve(number_of_file);
             std::vector<uint32_t> partialHashList;
+            partialHashList.reserve(number_of_file);
             std::string tempFileName;
             uint32_t partialHash;
             uint32_t index=0;
@@ -1832,12 +1834,12 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                         in.device()->seek(in.device()->pos()+rawText.size());
                     }
                 }
-                if((size-in.device()->pos())<1)
-                {
-                    errorOutput("missing header utf8 datapack file list query");
-                    return false;
-                }
                 files.push_back(tempFileName);
+                index++;
+            }
+            index=0;
+            while(index<number_of_file)
+            {
                 if((size-in.device()->pos())<(int)sizeof(uint32_t))
                 {
                     errorOutput("wrong size for id with main ident: "+

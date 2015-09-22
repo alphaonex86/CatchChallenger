@@ -7,12 +7,12 @@
 using namespace CatchChallenger;
 
 QByteArray FacilityLibGeneral::UTF8EmptyData=QByteArray().fill(0x00,1);
-std::string FacilityLibGeneral::text_slash=QLatin1Literal("/");
-std::string FacilityLibGeneral::text_male=QLatin1Literal("male");
-std::string FacilityLibGeneral::text_female=QLatin1Literal("female");
-std::string FacilityLibGeneral::text_unknown=QLatin1Literal("unknown");
-std::string FacilityLibGeneral::text_clan=QLatin1Literal("clan");
-std::string FacilityLibGeneral::text_dotcomma=QLatin1Literal(";");
+std::string FacilityLibGeneral::text_slash="/";
+std::string FacilityLibGeneral::text_male="male";
+std::string FacilityLibGeneral::text_female="female";
+std::string FacilityLibGeneral::text_unknown="unknown";
+std::string FacilityLibGeneral::text_clan="clan";
+std::string FacilityLibGeneral::text_dotcomma=";";
 
 QByteArray FacilityLibGeneral::toUTF8WithHeader(const std::string &text)
 {
