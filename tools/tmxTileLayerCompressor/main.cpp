@@ -205,8 +205,14 @@ int main(int argc, char *argv[])
                 const QByteArray compressedData=QByteArray::fromBase64(data.text().toLatin1());
                 oldCompressedSize+=compressedData.size();
                 memset(uncompressedData,0,65536);
-                char * recompressedData=new char[65536*2];
-                memset(recompressedData,0,65536*2);
+
+                char * recompressedDataGzip=new char[65536*2];
+                memset(recompressedDataGzip,0,65536*2);
+                char * recompressedDataZlib=new char[65536*2];
+                memset(recompressedDataZlib,0,65536*2);
+                char * recompressedDataDeflate=new char[65536*2];
+                memset(recompressedDataDeflate,0,65536*2);
+
                 const size_t uncompressedSize=decompressZlib(compressedData.constData(),compressedData.size(),uncompressedData,sizeof(uncompressedData));
                 if(uncompressedSize!=width*height*4)
                 {
@@ -217,42 +223,149 @@ int main(int argc, char *argv[])
                 ZopfliOptions options;
                 ZopfliInitOptions(&options);
                 options.numiterations=1000;
-                size_t recompressedSize=0;
+
+                size_t recompressedSizeGzip=0;
+                ZopfliCompress(&options,
+                               ZOPFLI_FORMAT_GZIP,
+                               reinterpret_cast<const unsigned char *>(uncompressedData),
+                               uncompressedSize,
+                               reinterpret_cast<unsigned char **>(&recompressedDataGzip),
+                               &recompressedSizeGzip
+                               );
+                size_t recompressedSizeZlib=0;
                 ZopfliCompress(&options,
                                ZOPFLI_FORMAT_ZLIB,
                                reinterpret_cast<const unsigned char *>(uncompressedData),
                                uncompressedSize,
-                               reinterpret_cast<unsigned char **>(&recompressedData),
-                               &recompressedSize
+                               reinterpret_cast<unsigned char **>(&recompressedDataZlib),
+                               &recompressedSizeZlib
                                );
-                newCompressedSize+=recompressedSize;
+                size_t recompressedSizeDeflate=0;
+                ZopfliCompress(&options,
+                               ZOPFLI_FORMAT_DEFLATE,
+                               reinterpret_cast<const unsigned char *>(uncompressedData),
+                               uncompressedSize,
+                               reinterpret_cast<unsigned char **>(&recompressedDataDeflate),
+                               &recompressedSizeDeflate
+                               );
 
-                const QString encoding=data.attribute("encoding");
-                const QString compression=data.attribute("compression");
-                QDomElement newXmlElement=domDocument.createElement("data");
-                newXmlElement.setAttribute("encoding",encoding);
-                newXmlElement.setAttribute("compression",compression);
-                QDomText newTextElement=domDocument.createTextNode(QString(QByteArray(recompressedData,recompressedSize).toBase64()));
-                delete recompressedData;
-                newXmlElement.appendChild(newTextElement);
 
-                data.parentNode().removeChild(data);
-                child.appendChild(newXmlElement);
+                char * recompressedDataFinal=NULL;
+                size_t recompressedSizeFinal=0;
+                if(recompressedSizeGzip<recompressedSizeZlib && recompressedSizeGzip<recompressedSizeDeflate)
+                {
+                    recompressedDataFinal=recompressedDataGzip;
+                    recompressedSizeFinal=recompressedSizeGzip;
+                }
+                else if(recompressedSizeDeflate<recompressedSizeZlib)
+                {
+                    recompressedDataFinal=recompressedDataDeflate;
+                    recompressedSizeFinal=recompressedSizeDeflate;
+                }
+                else
+                {
+                    recompressedDataFinal=recompressedDataZlib;
+                    recompressedSizeFinal=recompressedSizeZlib;
+                }
+
+                if((unsigned int)compressedData.size()>recompressedSizeFinal)
+                {
+                    if(recompressedSizeGzip<recompressedSizeZlib && recompressedSizeGzip<recompressedSizeDeflate)
+                        std::cout << "Best compression for the layer: " << child.attribute("name").toStdString() << " at line " << child.lineNumber() << " is GZIP: ";
+                    else if(recompressedSizeDeflate<recompressedSizeZlib)
+                        std::cout << "Best compression for the layer: " << child.attribute("name").toStdString() << " at line " << child.lineNumber() << " is ZLIB: ";
+                    else
+                        std::cout << "Best compression for the layer: " << child.attribute("name").toStdString() << " at line " << child.lineNumber() << " is DEFLATE: ";
+                    if(compressedData.size()<5000)
+                        std::cout << compressedData.size() << "B";
+                    else
+                        std::cout << compressedData.size()/1024 << "KB";
+                    std::cout << " -> ";
+                    if(recompressedSizeFinal<5000)
+                        std::cout << recompressedSizeFinal << "B";
+                    else
+                        std::cout << recompressedSizeFinal/1024 << "KB";
+                    std::cout << std::endl;
+
+                    newCompressedSize+=recompressedSizeGzip;
+
+                    const QString encoding=data.attribute("encoding");
+                    const QString compression=data.attribute("compression");
+                    QDomElement newXmlElement=domDocument.createElement("data");
+                    newXmlElement.setAttribute("encoding",encoding);
+                    newXmlElement.setAttribute("compression",compression);
+                    QDomText newTextElement=domDocument.createTextNode(QString(QByteArray(recompressedDataFinal,recompressedSizeFinal).toBase64()));
+                    delete recompressedDataGzip;
+                    delete recompressedDataZlib;
+                    delete recompressedDataDeflate;
+                    newXmlElement.appendChild(newTextElement);
+
+                    data.parentNode().removeChild(data);
+                    child.appendChild(newXmlElement);
+                }
+                else
+                {
+                    newCompressedSize+=compressedData.size();
+
+                    std::cout << "No better compression: " << child.attribute("name").toStdString() << " at line " << child.lineNumber() << ": ";
+                    if(compressedData.size()<5000)
+                        std::cout << compressedData.size() << "B";
+                    else
+                        std::cout << compressedData.size()/1024 << "KB";
+                    std::cout << " -> ";
+                    if(recompressedSizeFinal<5000)
+                        std::cout << recompressedSizeFinal << "B";
+                    else
+                        std::cout << recompressedSizeFinal/1024 << "KB";
+                    std::cout << std::endl;
+                }
             }
         }
         child = child.nextSiblingElement("layer");
     }
 
-    QFile xmlFile(argv[1]);
-    if(!xmlFile.open(QIODevice::WriteOnly))
+    if(oldCompressedSize>newCompressedSize)
     {
-        std::cerr << "Unable to open the file in write: " << argv[1] << std::endl;
-        return -1;
+        QFile xmlFile(argv[1]);
+        if(!xmlFile.open(QIODevice::WriteOnly))
+        {
+            std::cerr << "Unable to open the file in write: " << argv[1] << std::endl;
+            return -1;
+        }
+        xmlFile.write(domDocument.toByteArray(1));
+        xmlFile.close();
     }
-    xmlFile.write(domDocument.toByteArray(1));
-    xmlFile.close();
-    if(oldCompressedSize>0)
-        std::cout << "Size decreased by: " << (100-newCompressedSize*100/oldCompressedSize) << "%: " << oldCompressedSize/1024 << "KB -> " << newCompressedSize/1024 << "KB" << std::endl;
+
+    if(oldCompressedSize>newCompressedSize)
+    {
+        if(oldCompressedSize>0)
+            std::cout << "Size decreased by: " << (100-newCompressedSize*100/oldCompressedSize) << "%: ";
+        if(oldCompressedSize<5000)
+            std::cout << oldCompressedSize << "B";
+        else
+            std::cout << oldCompressedSize/1024 << "KB";
+        std::cout << " -> ";
+        if(newCompressedSize<5000)
+            std::cout << newCompressedSize << "B" << std::endl;
+        else
+            std::cout << newCompressedSize/1024 << "KB" << std::endl;
+        std::cout << std::endl;
+    }
+    else
+    {
+        if(oldCompressedSize>0)
+            std::cout << "Size increased by: " << (100-oldCompressedSize*100/newCompressedSize) << "% (not saved): ";
+        if(oldCompressedSize<5000)
+            std::cout << oldCompressedSize << "B";
+        else
+            std::cout << oldCompressedSize/1024 << "KB";
+        std::cout << " -> ";
+        if(newCompressedSize<5000)
+            std::cout << newCompressedSize << "B" << std::endl;
+        else
+            std::cout << newCompressedSize/1024 << "KB" << std::endl;
+        std::cout << std::endl;
+    }
 
     return 0;
 }
