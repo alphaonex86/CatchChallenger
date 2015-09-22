@@ -287,7 +287,7 @@ int main(int argc, char *argv[])
                         std::cout << recompressedSizeFinal/1024 << "KB";
                     std::cout << std::endl;
 
-                    newCompressedSize+=recompressedSizeGzip;
+                    newCompressedSize+=recompressedSizeFinal;
 
                     const QString encoding=data.attribute("encoding");
                     const QString compression=data.attribute("compression");
