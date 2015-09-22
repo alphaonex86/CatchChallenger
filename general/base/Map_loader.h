@@ -73,6 +73,7 @@ private:
     static const std::string text_encoding;
     static const std::string text_compression;
     static const std::string text_base64;
+    static const std::string text_zlib;
     static const std::string text_Walkable;
     static const std::string text_Collisions;
     static const std::string text_Water;

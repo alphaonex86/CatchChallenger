@@ -106,6 +106,8 @@ public:
     static unsigned char protocolReplyCompresssionZlib[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     static unsigned char protocolReplyCompressionXz[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
 
+    static unsigned char *protocolReplyCharacterList;
+    static uint16_t protocolReplyCharacterListSize;
     static unsigned char *protocolMessageLogicalGroupAndServerList;
     static uint16_t protocolMessageLogicalGroupAndServerListSize;
     static uint16_t protocolMessageLogicalGroupAndServerListPosPlayerNumber;
@@ -151,7 +153,9 @@ protected:
         uint8_t query_id;
         QByteArray login;
         QByteArray pass;
-        QByteArray tempOutputData;
+        //to store the reply to the char, and do another query
+        char * characterOutputData;
+        uint32_t characterOutputDataSize;
     };
     struct SelectCharacterParam
     {
@@ -367,11 +371,11 @@ private:
     void askLogin_return(AskLoginParam *askLoginParam);
     static void character_list_static(void *object);
     void character_list_object();
-    QByteArray character_list_return(const uint8_t &query_id);
+    uint32_t character_list_return(char *data, const uint8_t &query_id);
     bool server_list();
     static void server_list_static(void *object);
     void server_list_object();
-    void server_list_return(const uint8_t &query_id,const QByteArray &previousData);
+    void server_list_return(const uint8_t &query_id, const char * const characterOutputData, const uint32_t &characterOutputDataSize);
     void deleteCharacterNow(const uint32_t &characterId);
     static void deleteCharacterNow_static(void *object);
     void deleteCharacterNow_object();

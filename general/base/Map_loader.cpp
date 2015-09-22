@@ -55,6 +55,7 @@ const std::string Map_loader::text_layer="layer";
 const std::string Map_loader::text_encoding="encoding";
 const std::string Map_loader::text_compression="compression";
 const std::string Map_loader::text_base64="base64";
+const std::string Map_loader::text_zlib="zlib";
 const std::string Map_loader::text_Walkable="Walkable";
 const std::string Map_loader::text_Collisions="Collisions";
 const std::string Map_loader::text_Water="Water";
