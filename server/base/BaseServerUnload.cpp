@@ -201,6 +201,11 @@ void BaseServer::unload_other()
         delete Client::protocolMessageLogicalGroupAndServerList;
         Client::protocolMessageLogicalGroupAndServerList=NULL;
     }
+    if(Client::protocolReplyCharacterList!=NULL)
+    {
+        delete Client::protocolReplyCharacterList;
+        Client::protocolReplyCharacterList=NULL;
+    }
     #endif
     if(Client::characterIsRightFinalStepHeader!=NULL)
     {
