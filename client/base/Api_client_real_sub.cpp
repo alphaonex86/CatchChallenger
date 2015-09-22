@@ -203,9 +203,15 @@ void Api_client_real::datapackChecksumDoneSub(const QStringList &datapackFilesLi
             outputData+=rawFileName;
             out.device()->seek(out.device()->size());
 
+            index++;
+        }
+        index=0;
+        while(index<datapackFilesListSub.size())
+        {
             /*struct stat info;
             stat(QString(mDatapackBase+datapackFilesListSub.at(index)).toLatin1().data(),&info);*/
             out << (quint32)partialHashList.at(index);
+
             index++;
         }
         packFullOutcommingQuery(0x02,0x0C,datapack_content_query_number,outputData.constData(),outputData.size());

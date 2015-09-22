@@ -9,12 +9,12 @@
 using namespace CatchChallenger;
 
 QByteArray FacilityLib::UTF8EmptyData=QByteArray().fill(0x00,1);
-std::string FacilityLib::text_slash=QLatin1Literal("/");
-std::string FacilityLib::text_male=QLatin1Literal("male");
-std::string FacilityLib::text_female=QLatin1Literal("female");
-std::string FacilityLib::text_unknown=QLatin1Literal("unknown");
-std::string FacilityLib::text_clan=QLatin1Literal("clan");
-std::string FacilityLib::text_dotcomma=QLatin1Literal(";");
+std::string FacilityLib::text_slash="/";
+std::string FacilityLib::text_male="male";
+std::string FacilityLib::text_female="female";
+std::string FacilityLib::text_unknown="unknown";
+std::string FacilityLib::text_clan="clan";
+std::string FacilityLib::text_dotcomma=";";
 
 PublicPlayerMonster FacilityLib::playerMonsterToPublicPlayerMonster(const PlayerMonster &playerMonster)
 {
@@ -31,24 +31,24 @@ PublicPlayerMonster FacilityLib::playerMonsterToPublicPlayerMonster(const Player
 uint16_t FacilityLib::publicPlayerMonsterToBinary(char *data,const PublicPlayerMonster &publicPlayerMonster)
 {
     uint16_t posOutput=0;
-    *reinterpret_cast<quint16 *>(data+posOutput)=htole16(playerMonster.monster);
+    *reinterpret_cast<uint16_t *>(data+posOutput)=htole16(publicPlayerMonster.monster);
     posOutput+=2;
-    data[posOutput]=playerMonster.level;
+    data[posOutput]=publicPlayerMonster.level;
     posOutput+=1;
-    *reinterpret_cast<quint32 *>(data+posOutput)=htole32(playerMonster.hp);
+    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(publicPlayerMonster.hp);
     posOutput+=4;
-    *reinterpret_cast<quint16 *>(data+posOutput)=htole16(playerMonster.catched_with);
+    *reinterpret_cast<uint16_t *>(data+posOutput)=htole16(publicPlayerMonster.catched_with);
     posOutput+=2;
-    data[posOutput]=(uint8_t)playerMonster.gender;
+    data[posOutput]=(uint8_t)publicPlayerMonster.gender;
     posOutput+=1;
-    data[posOutput]=playerMonster.buffs.size();
+    data[posOutput]=publicPlayerMonster.buffs.size();
     posOutput+=1;
-    int index=0;
-    while(index<playerMonster.buffs.size())
+    uint8_t index=0;
+    while(index<publicPlayerMonster.buffs.size())
     {
-        data[posOutput]=playerMonster.buffs.at(index).buff;
+        data[posOutput]=publicPlayerMonster.buffs.at(index).buff;
         posOutput+=1;
-        data[posOutput]=playerMonster.buffs.at(index).level;
+        data[posOutput]=publicPlayerMonster.buffs.at(index).level;
         posOutput+=1;
         index++;
     }
@@ -58,19 +58,19 @@ uint16_t FacilityLib::publicPlayerMonsterToBinary(char *data,const PublicPlayerM
 uint16_t FacilityLib::playerMonsterToBinary(char *data,const PlayerMonster &playerMonster)
 {
     uint16_t posOutput=0;
-    *reinterpret_cast<quint16 *>(data+posOutput)=htole16(playerMonster.monster);
+    *reinterpret_cast<uint16_t *>(data+posOutput)=htole16(playerMonster.monster);
     posOutput+=2;
     data[posOutput]=playerMonster.level;
     posOutput+=1;
-    *reinterpret_cast<quint32 *>(data+posOutput)=htole32(playerMonster.hp);
+    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(playerMonster.hp);
     posOutput+=4;
-    *reinterpret_cast<quint16 *>(data+posOutput)=htole16(playerMonster.catched_with);
+    *reinterpret_cast<uint16_t *>(data+posOutput)=htole16(playerMonster.catched_with);
     posOutput+=2;
     data[posOutput]=(uint8_t)playerMonster.gender;
     posOutput+=1;
     data[posOutput]=playerMonster.buffs.size();
     posOutput+=1;
-    int index=0;
+    uint8_t index=0;
     while(index<playerMonster.buffs.size())
     {
         data[posOutput]=playerMonster.buffs.at(index).buff;
@@ -141,51 +141,49 @@ uint32_t FacilityLib::privateMonsterToBinary(char *data,const PlayerMonster &mon
     //send the network reply
     uint32_t posOutput=0;
 
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.id);
+    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(monster.id);
     posOutput+=4;
-    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(monster.monster);
+    *reinterpret_cast<uint16_t *>(data+posOutput)=htole16(monster.monster);
     posOutput+=2;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=monster.level;
+    data[posOutput]=monster.level;
     posOutput+=1;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.remaining_xp);
+    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(monster.remaining_xp);
     posOutput+=4;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.hp);
+    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(monster.hp);
     posOutput+=4;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.sp);
+    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(monster.sp);
     posOutput+=4;
-    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(monster.catched_with);
+    *reinterpret_cast<uint16_t *>(data+posOutput)=htole16(monster.catched_with);
     posOutput+=2;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)monster.gender;
+    data[posOutput]=(uint8_t)monster.gender;
     posOutput+=1;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.egg_step);
+    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(monster.egg_step);
     posOutput+=4;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.character_origin);
+    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(monster.character_origin);
     posOutput+=4;
 
-    int sub_index=0;
-    int sub_size=monster.buffs.size();
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=sub_size;
+    uint16_t sub_index=0;
+    data[posOutput]=monster.buffs.size();
     posOutput+=1;
-    while(sub_index<sub_size)
+    while(sub_index<monster.buffs.size())
     {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)SoldStat_PriceHaveChanged;
+        data[posOutput]=(uint8_t)SoldStat_PriceHaveChanged;
         posOutput+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)SoldStat_PriceHaveChanged;
+        data[posOutput]=(uint8_t)SoldStat_PriceHaveChanged;
         posOutput+=1;
 
         sub_index++;
     }
     sub_index=0;
-    sub_size=monster.skills.size();
-    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(sub_size);
+    *reinterpret_cast<uint16_t *>(data+posOutput)=htole16(monster.skills.size());
     posOutput+=2;
-    while(sub_index<sub_size)
+    while(sub_index<monster.skills.size())
     {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=monster.skills.at(sub_index).skill;
+        data[posOutput]=monster.skills.at(sub_index).skill;
         posOutput+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=monster.skills.at(sub_index).level;
+        data[posOutput]=monster.skills.at(sub_index).level;
         posOutput+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=monster.skills.at(sub_index).endurance;
+        data[posOutput]=monster.skills.at(sub_index).endurance;
         posOutput+=1;
 
         sub_index++;
@@ -206,14 +204,14 @@ IndustryStatus FacilityLib::factoryCheckProductionStart(const IndustryStatus &in
 /// \warning the resource can be not found due to the client
 bool FacilityLib::factoryProductionStarted(const IndustryStatus &industryStatus,const Industry &industry)
 {
-    int index;
+    unsigned int index;
     index=0;
     while(index<industry.resources.size())
     {
         const Industry::Resource &resource=industry.resources.at(index);
         uint32_t quantityInStock=0;
-        if(industryStatus.resources.contains(resource.item))
-            quantityInStock=industryStatus.resources.value(resource.item);
+        if(industryStatus.resources.find(resource.item)!=industryStatus.resources.cend())
+            quantityInStock=industryStatus.resources.at(resource.item);
         const uint32_t tempCycleCount=quantityInStock/resource.quantity;
         if(tempCycleCount<=0)
             return false;
@@ -224,8 +222,8 @@ bool FacilityLib::factoryProductionStarted(const IndustryStatus &industryStatus,
     {
         const Industry::Product &product=industry.products.at(index);
         uint32_t quantityInStock=0;
-        if(industryStatus.products.contains(product.item))
-            quantityInStock=industryStatus.products.value(product.item);
+        if(industryStatus.products.find(product.item)!=industryStatus.products.cend())
+            quantityInStock=industryStatus.products.at(product.item);
         const uint32_t tempCycleCount=(product.quantity*industry.cycletobefull-quantityInStock)/product.quantity;
         if(tempCycleCount<=0)
             return false;
@@ -247,12 +245,12 @@ IndustryStatus FacilityLib::industryStatusWithCurrentTime(const IndustryStatus &
     }
     if(ableToProduceCycleCount<=0)
         return industryStatusCopy;
-    int index;
+    unsigned int index;
     index=0;
     while(index<industry.resources.size())
     {
         const Industry::Resource &resource=industry.resources.at(index);
-        const uint32_t &quantityInStock=industryStatusCopy.resources.value(resource.item);
+        const uint32_t &quantityInStock=industryStatusCopy.resources.at(resource.item);
         const uint32_t tempCycleCount=quantityInStock/resource.quantity;
         if(tempCycleCount<=0)
             return industryStatusCopy;
@@ -264,7 +262,7 @@ IndustryStatus FacilityLib::industryStatusWithCurrentTime(const IndustryStatus &
     while(index<industry.products.size())
     {
         const Industry::Product &product=industry.products.at(index);
-        const uint32_t &quantityInStock=industryStatusCopy.products.value(product.item);
+        const uint32_t &quantityInStock=industryStatusCopy.products.at(product.item);
         const uint32_t tempCycleCount=(product.quantity*industry.cycletobefull-quantityInStock)/product.quantity;
         if(tempCycleCount<=0)
             return industryStatusCopy;
@@ -296,7 +294,7 @@ uint32_t FacilityLib::getFactoryResourcePrice(const uint32_t &quantityInStock,co
         price_temp_change=0;
     else
         price_temp_change=((max_items-quantityInStock)*CommonSettingsServer::commonSettingsServer.factoryPriceChange*2)/max_items;
-    return CommonDatapack::commonDatapack.items.item.value(resource.item).price*(100-CommonSettingsServer::commonSettingsServer.factoryPriceChange+price_temp_change)/100;
+    return CommonDatapack::commonDatapack.items.item.at(resource.item).price*(100-CommonSettingsServer::commonSettingsServer.factoryPriceChange+price_temp_change)/100;
 }
 
 uint32_t FacilityLib::getFactoryProductPrice(const uint32_t &quantityInStock, const Industry::Product &product, const Industry &industry)
@@ -307,7 +305,7 @@ uint32_t FacilityLib::getFactoryProductPrice(const uint32_t &quantityInStock, co
         price_temp_change=0;
     else
         price_temp_change=((max_items-quantityInStock)*CommonSettingsServer::commonSettingsServer.factoryPriceChange*2)/max_items;
-    return CommonDatapack::commonDatapack.items.item.value(product.item).price*(100-CommonSettingsServer::commonSettingsServer.factoryPriceChange+price_temp_change)/100;
+    return CommonDatapack::commonDatapack.items.item.at(product.item).price*(100-CommonSettingsServer::commonSettingsServer.factoryPriceChange+price_temp_change)/100;
 }
 
 //reputation
@@ -326,7 +324,7 @@ void FacilityLib::appendReputationPoint(PlayerReputation *playerReputation,const
     {
         needContinue=false;
         //at the limit
-        if(reputation.reputation_negative.isEmpty())
+        if(reputation.reputation_negative.empty())
         {
             if(playerReputation->point<0)
             {
@@ -337,14 +335,14 @@ void FacilityLib::appendReputationPoint(PlayerReputation *playerReputation,const
         }
         else
         {
-            if(playerReputation->level<=(-(reputation.reputation_negative.size()-1)) && playerReputation->point<=0)
+            if(playerReputation->level<=(-((int32_t)reputation.reputation_negative.size()-1)) && playerReputation->point<=0)
             {
                 playerReputation->point=0;
-                playerReputation->level=(-(reputation.reputation_negative.size()-1));
+                playerReputation->level=(-((int32_t)reputation.reputation_negative.size()-1));
                 break;
             }
         }
-        if(reputation.reputation_positive.isEmpty())
+        if(reputation.reputation_positive.empty())
         {
             if(playerReputation->point>0)
             {
@@ -355,10 +353,10 @@ void FacilityLib::appendReputationPoint(PlayerReputation *playerReputation,const
         }
         else
         {
-            if(playerReputation->level>=(reputation.reputation_positive.size()-1) && playerReputation->point>=0)
+            if(playerReputation->level>=((int32_t)reputation.reputation_positive.size()-1) && playerReputation->point>=0)
             {
                 playerReputation->point=0;
-                playerReputation->level=(reputation.reputation_positive.size()-1);
+                playerReputation->level=((int32_t)reputation.reputation_positive.size()-1);
                 break;
             }
         }
@@ -376,7 +374,7 @@ void FacilityLib::appendReputationPoint(PlayerReputation *playerReputation,const
             needContinue=true;
         }
         //gain point in level
-        if(playerReputation->level<=0 && playerReputation->point<0 && !reputation.reputation_negative.isEmpty())
+        if(playerReputation->level<=0 && playerReputation->point<0 && !reputation.reputation_negative.empty())
         {
             if(playerReputation->point<=reputation.reputation_negative.at(-playerReputation->level+1))
             {
@@ -385,7 +383,7 @@ void FacilityLib::appendReputationPoint(PlayerReputation *playerReputation,const
                 needContinue=true;
             }
         }
-        if(playerReputation->level>=0 && playerReputation->point>0 && !reputation.reputation_positive.isEmpty())
+        if(playerReputation->level>=0 && playerReputation->point>0 && !reputation.reputation_positive.empty())
         {
             if(playerReputation->point>=reputation.reputation_positive.at(playerReputation->level+1))
             {

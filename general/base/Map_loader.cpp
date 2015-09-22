@@ -165,7 +165,7 @@ uint32_t Map_loader::decompressZlib(const char * const input, const uint32_t &in
 
     inflateEnd(&strm);
 
-    return strm.avail_out;
+    return outputSize-strm.avail_out;
 }
 
 Map_loader::Map_loader()
@@ -718,7 +718,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 error="only encoding base64 is supported, file: file: "+fileName;
                 return false;
             }
-            else if(!data.hasAttribute(QString::fromStdString(Map_loader::text_compression)))
+            else if(data.attribute(QString::fromStdString(Map_loader::text_compression)).toStdString()!=Map_loader::text_zlib)
             {
                 error="Only compression zlib is supported, file: file: "+fileName;
                 return false;
