@@ -42,7 +42,6 @@ uint32_t decompressZlib(const char * const input, const uint32_t &intputSize, ch
     strm.next_out = (Bytef *) output;
     strm.avail_out = outputSize;
 
-    //crach when input is in base 64: eJztzsEJwCAUA9B/sQcncbDSuojOraUnJ5DS9yAEckoEAPBHLUX0tG7l2PMFAB5nfvuafc/UvPcPAAAAfNEAv5YDBQ==
     int ret = inflateInit2(&strm, 15 + 32);
 
     if (ret != Z_OK) {
@@ -97,6 +96,7 @@ int main(int argc, char *argv[])
     }
 
     char uncompressedData[65536];
+    char uncompressedDataTest[65536];
 
     QDomDocument domDocument;
     size_t oldCompressedSize=0,newCompressedSize=0;
@@ -210,8 +210,7 @@ int main(int argc, char *argv[])
                 memset(recompressedDataGzip,0,65536*2);
                 char * recompressedDataZlib=new char[65536*2];
                 memset(recompressedDataZlib,0,65536*2);
-                char * recompressedDataDeflate=new char[65536*2];
-                memset(recompressedDataDeflate,0,65536*2);
+                /// \warning deflate not supported by tmx format
 
                 const size_t uncompressedSize=decompressZlib(compressedData.constData(),compressedData.size(),uncompressedData,sizeof(uncompressedData));
                 if(uncompressedSize!=width*height*4)
@@ -232,6 +231,14 @@ int main(int argc, char *argv[])
                                reinterpret_cast<unsigned char **>(&recompressedDataGzip),
                                &recompressedSizeGzip
                                );
+                {
+                    const size_t uncompressedSizeTest=decompressZlib(recompressedDataGzip,recompressedSizeGzip,uncompressedDataTest,sizeof(uncompressedDataTest));
+                    if(uncompressedSizeTest!=width*height*4)
+                    {
+                        std::cerr << "uncompressedSizeTest!=width*height*4: " << uncompressedSizeTest << "!=" << width << "*" << height << "*4 for GZIP" << std::endl;
+                        abort();
+                    }
+                }
                 size_t recompressedSizeZlib=0;
                 ZopfliCompress(&options,
                                ZOPFLI_FORMAT_ZLIB,
@@ -240,27 +247,21 @@ int main(int argc, char *argv[])
                                reinterpret_cast<unsigned char **>(&recompressedDataZlib),
                                &recompressedSizeZlib
                                );
-                size_t recompressedSizeDeflate=0;
-                ZopfliCompress(&options,
-                               ZOPFLI_FORMAT_DEFLATE,
-                               reinterpret_cast<const unsigned char *>(uncompressedData),
-                               uncompressedSize,
-                               reinterpret_cast<unsigned char **>(&recompressedDataDeflate),
-                               &recompressedSizeDeflate
-                               );
-
+                {
+                    const size_t uncompressedSizeTest=decompressZlib(recompressedDataZlib,recompressedSizeZlib,uncompressedDataTest,sizeof(uncompressedDataTest));
+                    if(uncompressedSizeTest!=width*height*4)
+                    {
+                        std::cerr << "uncompressedSizeTest!=width*height*4: " << uncompressedSizeTest << "!=" << width << "*" << height << "*4 for ZILB" << std::endl;
+                        abort();
+                    }
+                }
 
                 char * recompressedDataFinal=NULL;
                 size_t recompressedSizeFinal=0;
-                if(recompressedSizeGzip<recompressedSizeZlib && recompressedSizeGzip<recompressedSizeDeflate)
+                if(recompressedSizeGzip<recompressedSizeZlib)
                 {
                     recompressedDataFinal=recompressedDataGzip;
                     recompressedSizeFinal=recompressedSizeGzip;
-                }
-                else if(recompressedSizeDeflate<recompressedSizeZlib)
-                {
-                    recompressedDataFinal=recompressedDataDeflate;
-                    recompressedSizeFinal=recompressedSizeDeflate;
                 }
                 else
                 {
@@ -270,12 +271,10 @@ int main(int argc, char *argv[])
 
                 if((unsigned int)compressedData.size()>recompressedSizeFinal)
                 {
-                    if(recompressedSizeGzip<recompressedSizeZlib && recompressedSizeGzip<recompressedSizeDeflate)
+                    if(recompressedSizeGzip<recompressedSizeZlib)
                         std::cout << "Best compression for the layer: " << child.attribute("name").toStdString() << " at line " << child.lineNumber() << " is GZIP: ";
-                    else if(recompressedSizeDeflate<recompressedSizeZlib)
-                        std::cout << "Best compression for the layer: " << child.attribute("name").toStdString() << " at line " << child.lineNumber() << " is ZLIB: ";
                     else
-                        std::cout << "Best compression for the layer: " << child.attribute("name").toStdString() << " at line " << child.lineNumber() << " is DEFLATE: ";
+                        std::cout << "Best compression for the layer: " << child.attribute("name").toStdString() << " at line " << child.lineNumber() << " is ZLIB: ";
                     if(compressedData.size()<5000)
                         std::cout << compressedData.size() << "B";
                     else
@@ -289,15 +288,16 @@ int main(int argc, char *argv[])
 
                     newCompressedSize+=recompressedSizeFinal;
 
-                    const QString encoding=data.attribute("encoding");
-                    const QString compression=data.attribute("compression");
                     QDomElement newXmlElement=domDocument.createElement("data");
-                    newXmlElement.setAttribute("encoding",encoding);
-                    newXmlElement.setAttribute("compression",compression);
+                    newXmlElement.setAttribute("encoding","base64");
+                    if(recompressedSizeGzip<recompressedSizeZlib)
+                        newXmlElement.setAttribute("compression","gzip");
+                    else
+                        newXmlElement.setAttribute("compression","zlib");
                     QDomText newTextElement=domDocument.createTextNode(QString(QByteArray(recompressedDataFinal,recompressedSizeFinal).toBase64()));
+                    //QDomText newTextElement=domDocument.createTextNode(QString(compressedData.toBase64()));
                     delete recompressedDataGzip;
                     delete recompressedDataZlib;
-                    delete recompressedDataDeflate;
                     newXmlElement.appendChild(newTextElement);
 
                     data.parentNode().removeChild(data);
