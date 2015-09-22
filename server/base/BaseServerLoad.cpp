@@ -128,6 +128,53 @@ void BaseServer::preload_other()
         Client::protocolMessageLogicalGroupAndServerList=(unsigned char *)malloc(Client::protocolMessageLogicalGroupAndServerListSize);
         memcpy(Client::protocolMessageLogicalGroupAndServerList,ProtocolParsingBase::tempBigBufferForOutput,Client::protocolMessageLogicalGroupAndServerListSize);
     }
+
+    //charater list reply header
+    {
+        //send the network reply
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        posOutput=+1+1+4;
+
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=01;//all is good
+        posOutput+=1;
+
+        //login/common part
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time);
+        posOutput+=4;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsCommon::commonSettingsCommon.max_character;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsCommon::commonSettingsCommon.min_character;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsCommon::commonSettingsCommon.max_pseudo_size;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
+        posOutput+=1;
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
+        posOutput+=2;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
+        posOutput+=1;
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
+        posOutput+=2;
+
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput,CommonSettingsCommon::commonSettingsCommon.datapackHashBase.constData(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size());
+        posOutput+=CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size();
+
+        {
+            const std::string &text=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+            posOutput+=1;
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+            posOutput+=text.size();
+        }
+
+        Client::protocolReplyCharacterListSize=posOutput;
+
+        if(Client::protocolReplyCharacterList!=NULL)
+            delete Client::protocolReplyCharacterList;
+        Client::protocolReplyCharacterList=(unsigned char *)malloc(Client::protocolReplyCharacterListSize);
+        memcpy(Client::protocolReplyCharacterList,ProtocolParsingBase::tempBigBufferForOutput,Client::protocolReplyCharacterListSize);
+    }
     #endif
 
 

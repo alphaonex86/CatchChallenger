@@ -12,7 +12,6 @@ namespace CatchChallenger {
 class FacilityLibGeneral
 {
 public:
-    static QByteArray toUTF8WithHeader(const std::string &text);
     static unsigned int toUTF8WithHeader(const std::string &text,char * const data);
     static unsigned int toUTF8With16BitsHeader(const std::string &text,char * const data);
     static std::vector<std::string > listFolder(const std::string& folder,const std::string& suffix=std::string());
@@ -23,7 +22,6 @@ public:
     static bool rmpath(const QDir &dir);
     static std::string timeToString(const uint32_t &time);
 private:
-    static QByteArray UTF8EmptyData;
     static std::string text_slash;
     static std::string text_male;
     static std::string text_female;
