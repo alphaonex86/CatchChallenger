@@ -81,11 +81,6 @@ public:
     static std::string text_endurance;
     static std::string text_life;
     static std::string text_applyOn;
-    static std::string text_aloneEnemy;
-    static std::string text_themself;
-    static std::string text_allEnemy;
-    static std::string text_allAlly;
-    static std::string text_nobody;
     static std::string text_quantity;
     static std::string text_more;
     static std::string text_success;
