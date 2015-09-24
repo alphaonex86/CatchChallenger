@@ -1,5 +1,4 @@
 #include "DatapackGeneralLoader.h"
-#include "DebugClass.h"
 #include "GeneralVariable.h"
 #include "CommonDatapack.h"
 #include "FacilityLib.h"
@@ -13,94 +12,6 @@
 #include <QDir>
 
 using namespace CatchChallenger;
-
-const std::string DatapackGeneralLoader::text_list=QLatin1String("list");
-const std::string DatapackGeneralLoader::text_dotxml=QLatin1String(".xml");
-const std::string DatapackGeneralLoader::text_dottmx=QLatin1String(".tmx");
-const std::string DatapackGeneralLoader::text_reputation=QLatin1String("reputation");
-const std::string DatapackGeneralLoader::text_type=QLatin1String("type");
-const std::string DatapackGeneralLoader::text_level=QLatin1String("level");
-const std::string DatapackGeneralLoader::text_point=QLatin1String("point");
-const std::string DatapackGeneralLoader::text_slashdefinitionxml=QLatin1String("/definition.xml");
-const std::string DatapackGeneralLoader::text_quest=QLatin1String("quest");
-const std::string DatapackGeneralLoader::text_repeatable=QLatin1String("repeatable");
-const std::string DatapackGeneralLoader::text_yes=QLatin1String("yes");
-const std::string DatapackGeneralLoader::text_true=QLatin1String("true");
-const std::string DatapackGeneralLoader::text_bot=QLatin1String("bot");
-const std::string DatapackGeneralLoader::text_dotcomma=QLatin1String(";");
-const std::string DatapackGeneralLoader::text_requirements=QLatin1String("requirements");
-const std::string DatapackGeneralLoader::text_less=QLatin1String("-");
-const std::string DatapackGeneralLoader::text_id=QLatin1String("id");
-const std::string DatapackGeneralLoader::text_rewards=QLatin1String("rewards");
-const std::string DatapackGeneralLoader::text_allow=QLatin1String("allow");
-const std::string DatapackGeneralLoader::text_clan=QLatin1String("clan");
-const std::string DatapackGeneralLoader::text_step=QLatin1String("step");
-const std::string DatapackGeneralLoader::text_item=QLatin1String("item");
-const std::string DatapackGeneralLoader::text_quantity=QLatin1String("quantity");
-const std::string DatapackGeneralLoader::text_monster=QLatin1String("monster");
-const std::string DatapackGeneralLoader::text_rate=QLatin1String("rate");
-const std::string DatapackGeneralLoader::text_percent=QLatin1String("%");
-const std::string DatapackGeneralLoader::text_fight=QLatin1String("fight");
-const std::string DatapackGeneralLoader::text_plants=QLatin1String("plants");
-const std::string DatapackGeneralLoader::text_plant=QLatin1String("plant");
-const std::string DatapackGeneralLoader::text_itemUsed=QLatin1String("itemUsed");
-const std::string DatapackGeneralLoader::text_grow=QLatin1String("grow");
-const std::string DatapackGeneralLoader::text_fruits=QLatin1String("fruits");
-const std::string DatapackGeneralLoader::text_sprouted=QLatin1String("sprouted");
-const std::string DatapackGeneralLoader::text_taller=QLatin1String("taller");
-const std::string DatapackGeneralLoader::text_flowering=QLatin1String("flowering");
-const std::string DatapackGeneralLoader::text_recipes=QLatin1String("recipes");
-const std::string DatapackGeneralLoader::text_recipe=QLatin1String("recipe");
-const std::string DatapackGeneralLoader::text_itemToLearn=QLatin1String("itemToLearn");
-const std::string DatapackGeneralLoader::text_doItemId=QLatin1String("doItemId");
-const std::string DatapackGeneralLoader::text_success=QLatin1String("success");
-const std::string DatapackGeneralLoader::text_material=QLatin1String("material");
-const std::string DatapackGeneralLoader::text_industries=QLatin1String("industries");
-const std::string DatapackGeneralLoader::text_industrialrecipe=QLatin1String("industrialrecipe");
-const std::string DatapackGeneralLoader::text_time=QLatin1String("time");
-const std::string DatapackGeneralLoader::text_cycletobefull=QLatin1String("cycletobefull");
-const std::string DatapackGeneralLoader::text_resource=QLatin1String("resource");
-const std::string DatapackGeneralLoader::text_product=QLatin1String("product");
-const std::string DatapackGeneralLoader::text_link=QLatin1String("link");
-const std::string DatapackGeneralLoader::text_price=QLatin1String("price");
-const std::string DatapackGeneralLoader::text_consumeAtUse=QLatin1String("consumeAtUse");
-const std::string DatapackGeneralLoader::text_false=QLatin1String("false");
-const std::string DatapackGeneralLoader::text_trap=QLatin1String("trap");
-const std::string DatapackGeneralLoader::text_bonus_rate=QLatin1String("bonus_rate");
-const std::string DatapackGeneralLoader::text_repel=QLatin1String("repel");
-const std::string DatapackGeneralLoader::text_hp=QLatin1String("hp");
-const std::string DatapackGeneralLoader::text_add=QLatin1String("add");
-const std::string DatapackGeneralLoader::text_all=QLatin1String("all");
-const std::string DatapackGeneralLoader::text_buff=QLatin1String("buff");
-const std::string DatapackGeneralLoader::text_remove=QLatin1String("remove");
-const std::string DatapackGeneralLoader::text_up=QLatin1String("up");
-const std::string DatapackGeneralLoader::text_start=QLatin1String("start");
-const std::string DatapackGeneralLoader::text_map=QLatin1String("map");
-const std::string DatapackGeneralLoader::text_file=QLatin1String("file");
-const std::string DatapackGeneralLoader::text_x=QLatin1String("x");
-const std::string DatapackGeneralLoader::text_y=QLatin1String("y");
-const std::string DatapackGeneralLoader::text_forcedskin=QLatin1String("forcedskin");
-const std::string DatapackGeneralLoader::text_cash=QLatin1String("cash");
-const std::string DatapackGeneralLoader::text_itemId=QLatin1String("itemId");
-const std::string DatapackGeneralLoader::text_industry=QLatin1String("industry");
-const std::string DatapackGeneralLoader::text_items=QLatin1String("items");
-const std::string DatapackGeneralLoader::text_value=QLatin1String("value");
-const std::string DatapackGeneralLoader::text_captured_with=QLatin1String("captured_with");
-const std::string DatapackGeneralLoader::text_monstersCollision=QLatin1String("monstersCollision");
-const std::string DatapackGeneralLoader::text_monsterType=QLatin1String("monsterType");
-const std::string DatapackGeneralLoader::text_walkOn=QLatin1String("walkOn");
-const std::string DatapackGeneralLoader::text_actionOn=QLatin1String("actionOn");
-const std::string DatapackGeneralLoader::text_layer=QLatin1String("layer");
-const std::string DatapackGeneralLoader::text_tile=QLatin1String("tile");
-const std::string DatapackGeneralLoader::text_background=QLatin1String("background");
-const std::string DatapackGeneralLoader::text_slash=QLatin1String("/");
-const std::string DatapackGeneralLoader::text_layers=QLatin1String("layers");
-const std::string DatapackGeneralLoader::text_events=QLatin1String("events");
-const std::string DatapackGeneralLoader::text_event=QLatin1String("event");
-const std::string DatapackGeneralLoader::text_shop=QLatin1String("shop");
-const std::string DatapackGeneralLoader::text_shops=QLatin1String("shops");
-const std::string DatapackGeneralLoader::text_overridePrice=QLatin1String("overridePrice");
-const std::string DatapackGeneralLoader::text_inverse=QLatin1String("inverse");
 
 std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string &file)
 {
@@ -135,7 +46,7 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
     }
     #endif
     const QDomElement &root = domDocument.documentElement();
-    if(root.tagName()!=DatapackGeneralLoader::text_list)
+    if(root.tagName()!="list")
     {
         qDebug() << (std::stringLiteral("Unable to open the file: %1, \"list\" root balise not found for reputation of the xml file").arg(file));
         return reputation;
@@ -143,24 +54,24 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
 
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement(DatapackGeneralLoader::text_reputation);
+    QDomElement item = root.firstChildElement("reputation");
     while(!item.isNull())
     {
         if(item.isElement())
         {
-            if(item.hasAttribute(DatapackGeneralLoader::text_type))
+            if(item.hasAttribute("type"))
             {
                 std::vector<int32_t> point_list_positive,point_list_negative;
                 std::vector<std::string> text_positive,text_negative;
-                QDomElement level = item.firstChildElement(DatapackGeneralLoader::text_level);
+                QDomElement level = item.firstChildElement("level");
                 ok=true;
                 while(!level.isNull() && ok)
                 {
                     if(level.isElement())
                     {
-                        if(level.hasAttribute(DatapackGeneralLoader::text_point))
+                        if(level.hasAttribute("point"))
                         {
-                            const int32_t &point=level.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
+                            const int32_t &point=level.attribute("point").toInt(&ok);
                             std::string text_val;
                             if(ok)
                             {
@@ -226,7 +137,7 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
                     }
                     else
                         qDebug() << (std::stringLiteral("Unable to open the file: %1, point attribute not found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                    level = level.nextSiblingElement(DatapackGeneralLoader::text_level);
+                    level = level.nextSiblingElement("level");
                 }
                 qSort(point_list_positive);
                 qSort(point_list_negative.end(),point_list_negative.begin());
@@ -258,14 +169,14 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
                         point_list_negative=point_list_negative_new;
                     }
                 if(ok)
-                    if(!item.attribute(DatapackGeneralLoader::text_type).contains(typeRegex))
+                    if(!item.attribute("type").contains(typeRegex))
                     {
-                        qDebug() << (std::stringLiteral("Unable to open the file: %1, the type %4 don't match wiuth the regex: ^[a-z]{1,32}$: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute(DatapackGeneralLoader::text_type)));
+                        qDebug() << (std::stringLiteral("Unable to open the file: %1, the type %4 don't match wiuth the regex: ^[a-z]{1,32}$: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute("type")));
                         ok=false;
                     }
                 if(ok)
                 {
-                    const std::string &type=item.attribute(DatapackGeneralLoader::text_type);
+                    const std::string &type=item.attribute("type");
                     if(!type.contains(excludeFilterRegex))
                     {
                         Reputation reputationTemp;
@@ -281,7 +192,7 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
         }
         else
             qDebug() << (std::stringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-        item = item.nextSiblingElement(DatapackGeneralLoader::text_reputation);
+        item = item.nextSiblingElement("reputation");
     }
 
     return reputation;
@@ -302,7 +213,7 @@ std::unordered_map<uint16_t, Quest> DatapackGeneralLoader::loadQuests(const std:
             index++;
             continue;
         }
-        if(!QFile(entryList.at(index).absoluteFilePath()+DatapackGeneralLoader::text_slashdefinitionxml).exists())
+        if(!QFile(entryList.at(index).absoluteFilePath()+"/definition.xml").exists())
         {
             index++;
             continue;
@@ -311,7 +222,7 @@ std::unordered_map<uint16_t, Quest> DatapackGeneralLoader::loadQuests(const std:
         if(ok)
         {
             //add it, all seam ok
-            std::pair<bool,Quest> returnedQuest=loadSingleQuest(entryList.at(index).absoluteFilePath()+DatapackGeneralLoader::text_slashdefinitionxml);
+            std::pair<bool,Quest> returnedQuest=loadSingleQuest(entryList.at(index).absoluteFilePath()+"/definition.xml");
             if(returnedQuest.first==true)
             {
                 returnedQuest.second.id=questId;
@@ -369,7 +280,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     }
     #endif
     const QDomElement &root = domDocument.documentElement();
-    if(root.tagName()!=DatapackGeneralLoader::text_quest)
+    if(root.tagName()!="quest")
     {
         qDebug() << std::stringLiteral("Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(file);
         return std::pair<bool,Quest>(false,quest);
@@ -380,12 +291,12 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     std::vector<uint16_t> defaultBots;
     quest.id=0;
     quest.repeatable=false;
-    if(root.hasAttribute(DatapackGeneralLoader::text_repeatable))
-        if(root.attribute(DatapackGeneralLoader::text_repeatable)==DatapackGeneralLoader::text_yes || root.attribute(DatapackGeneralLoader::text_repeatable)==DatapackGeneralLoader::text_true)
+    if(root.hasAttribute("repeatable"))
+        if(root.attribute("repeatable")=="yes" || root.attribute("repeatable")=="true")
             quest.repeatable=true;
-    if(root.hasAttribute(DatapackGeneralLoader::text_bot))
+    if(root.hasAttribute("bot"))
     {
-        const std::vector<std::string> &tempStringList=root.attribute(DatapackGeneralLoader::text_bot).split(DatapackGeneralLoader::text_dotcomma);
+        const std::vector<std::string> &tempStringList=root.attribute("bot").split(";");
         int index=0;
         while(index<tempStringList.size())
         {
@@ -397,24 +308,24 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     }
 
     //load requirements
-    QDomElement requirements = root.firstChildElement(DatapackGeneralLoader::text_requirements);
+    QDomElement requirements = root.firstChildElement("requirements");
     while(!requirements.isNull())
     {
         if(requirements.isElement())
         {
             //load requirements reputation
             {
-                QDomElement requirementsItem = requirements.firstChildElement(DatapackGeneralLoader::text_reputation);
+                QDomElement requirementsItem = requirements.firstChildElement("reputation");
                 while(!requirementsItem.isNull())
                 {
                     if(requirementsItem.isElement())
                     {
-                        if(requirementsItem.hasAttribute(DatapackGeneralLoader::text_type) && requirementsItem.hasAttribute(DatapackGeneralLoader::text_level))
+                        if(requirementsItem.hasAttribute("type") && requirementsItem.hasAttribute("level"))
                         {
-                            if(reputationNameToId.contains(requirementsItem.attribute(DatapackGeneralLoader::text_type)))
+                            if(reputationNameToId.contains(requirementsItem.attribute("type")))
                             {
-                                std::string stringLevel=requirementsItem.attribute(DatapackGeneralLoader::text_level);
-                                bool positif=!stringLevel.startsWith(DatapackGeneralLoader::text_less);
+                                std::string stringLevel=requirementsItem.attribute("level");
+                                bool positif=!stringLevel.startsWith("-");
                                 if(!positif)
                                     stringLevel.remove(0,1);
                                 uint8_t level=stringLevel.toUShort(&ok);
@@ -423,7 +334,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                                     CatchChallenger::ReputationRequirements reputation;
                                     reputation.level=level;
                                     reputation.positif=positif;
-                                    reputation.reputationId=reputationNameToId.value(requirementsItem.attribute(DatapackGeneralLoader::text_type));
+                                    reputation.reputationId=reputationNameToId.value(requirementsItem.attribute("type"));
                                     quest.requirements.reputation << reputation;
                                 }
                                 else
@@ -437,68 +348,68 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     }
                     else
                         qDebug() << std::stringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber());
-                    requirementsItem = requirementsItem.nextSiblingElement(DatapackGeneralLoader::text_reputation);
+                    requirementsItem = requirementsItem.nextSiblingElement("reputation");
                 }
             }
             //load requirements quest
             {
-                QDomElement requirementsItem = requirements.firstChildElement(DatapackGeneralLoader::text_quest);
+                QDomElement requirementsItem = requirements.firstChildElement("quest");
                 while(!requirementsItem.isNull())
                 {
                     if(requirementsItem.isElement())
                     {
-                        if(requirementsItem.hasAttribute(DatapackGeneralLoader::text_id))
+                        if(requirementsItem.hasAttribute("id"))
                         {
-                            const uint32_t &questId=requirementsItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                            const uint32_t &questId=requirementsItem.attribute("id").toUInt(&ok);
                             if(ok)
                             {
                                 QuestRequirements questNewEntry;
                                 questNewEntry.quest=questId;
                                 questNewEntry.inverse=false;
-                                if(requirementsItem.hasAttribute(DatapackGeneralLoader::text_inverse))
-                                    if(requirementsItem.attribute(DatapackGeneralLoader::text_inverse)==DatapackGeneralLoader::text_true)
+                                if(requirementsItem.hasAttribute("inverse"))
+                                    if(requirementsItem.attribute("inverse")=="true")
                                         questNewEntry.inverse=true;
                                 quest.requirements.quests << questNewEntry;
                             }
                             else
-                                qDebug() << std::stringLiteral("Unable to open the file: %1, requirement quest item id is not a number %4: child.tagName(): %2 (at line: %3)").arg(file).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber()).arg(requirementsItem.attribute(DatapackGeneralLoader::text_id));
+                                qDebug() << std::stringLiteral("Unable to open the file: %1, requirement quest item id is not a number %4: child.tagName(): %2 (at line: %3)").arg(file).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber()).arg(requirementsItem.attribute("id"));
                         }
                         else
                             qDebug() << std::stringLiteral("Has attribute: %1, requirement quest item have not id attribute: child.tagName(): %2 (at line: %3)").arg(file).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber());
                     }
                     else
                         qDebug() << std::stringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber());
-                    requirementsItem = requirementsItem.nextSiblingElement(DatapackGeneralLoader::text_quest);
+                    requirementsItem = requirementsItem.nextSiblingElement("quest");
                 }
             }
         }
         else
             qDebug() << std::stringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(requirements.tagName()).arg(requirements.lineNumber());
-        requirements = requirements.nextSiblingElement(DatapackGeneralLoader::text_requirements);
+        requirements = requirements.nextSiblingElement("requirements");
     }
 
     //load rewards
-    QDomElement rewards = root.firstChildElement(DatapackGeneralLoader::text_rewards);
+    QDomElement rewards = root.firstChildElement("rewards");
     while(!rewards.isNull())
     {
         if(rewards.isElement())
         {
             //load rewards reputation
             {
-                QDomElement reputationItem = rewards.firstChildElement(DatapackGeneralLoader::text_reputation);
+                QDomElement reputationItem = rewards.firstChildElement("reputation");
                 while(!reputationItem.isNull())
                 {
                     if(reputationItem.isElement())
                     {
-                        if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_point))
+                        if(reputationItem.hasAttribute("type") && reputationItem.hasAttribute("point"))
                         {
-                            if(reputationNameToId.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
+                            if(reputationNameToId.contains(reputationItem.attribute("type")))
                             {
-                                const int32_t &point=reputationItem.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
+                                const int32_t &point=reputationItem.attribute("point").toInt(&ok);
                                 if(ok)
                                 {
                                     CatchChallenger::ReputationRewards reputation;
-                                    reputation.reputationId=reputationNameToId.value(reputationItem.attribute(DatapackGeneralLoader::text_type));
+                                    reputation.reputationId=reputationNameToId.value(reputationItem.attribute("type"));
                                     reputation.point=point;
                                     quest.rewards.reputation << reputation;
                                 }
@@ -513,92 +424,92 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     }
                     else
                         qDebug() << std::stringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
-                    reputationItem = reputationItem.nextSiblingElement(DatapackGeneralLoader::text_reputation);
+                    reputationItem = reputationItem.nextSiblingElement("reputation");
                 }
             }
             //load rewards item
             {
-                QDomElement rewardsItem = rewards.firstChildElement(DatapackGeneralLoader::text_item);
+                QDomElement rewardsItem = rewards.firstChildElement("item");
                 while(!rewardsItem.isNull())
                 {
                     if(rewardsItem.isElement())
                     {
-                        if(rewardsItem.hasAttribute(DatapackGeneralLoader::text_id))
+                        if(rewardsItem.hasAttribute("id"))
                         {
                             CatchChallenger::Quest::Item item;
-                            item.item=rewardsItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                            item.item=rewardsItem.attribute("id").toUInt(&ok);
                             item.quantity=1;
                             if(ok)
                             {
                                 if(!CommonDatapack::commonDatapack.items.item.contains(item.item))
                                 {
-                                    qDebug() << std::stringLiteral("Unable to open the file: %1, rewards item id is not into the item list: %4: child.tagName(): %2 (at line: %3)").arg(file).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber()).arg(rewardsItem.attribute(DatapackGeneralLoader::text_id));
+                                    qDebug() << std::stringLiteral("Unable to open the file: %1, rewards item id is not into the item list: %4: child.tagName(): %2 (at line: %3)").arg(file).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber()).arg(rewardsItem.attribute("id"));
                                     return std::pair<bool,Quest>(false,quest);
                                 }
-                                if(rewardsItem.hasAttribute(DatapackGeneralLoader::text_quantity))
+                                if(rewardsItem.hasAttribute("quantity"))
                                 {
-                                    item.quantity=rewardsItem.attribute(DatapackGeneralLoader::text_quantity).toUInt(&ok);
+                                    item.quantity=rewardsItem.attribute("quantity").toUInt(&ok);
                                     if(!ok)
                                         item.quantity=1;
                                 }
                                 quest.rewards.items << item;
                             }
                             else
-                                qDebug() << std::stringLiteral("Unable to open the file: %1, rewards item id is not a number: %4: child.tagName(): %2 (at line: %3)").arg(file).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber()).arg(rewardsItem.attribute(DatapackGeneralLoader::text_id));
+                                qDebug() << std::stringLiteral("Unable to open the file: %1, rewards item id is not a number: %4: child.tagName(): %2 (at line: %3)").arg(file).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber()).arg(rewardsItem.attribute("id"));
                         }
                         else
                             qDebug() << std::stringLiteral("Has attribute: %1, rewards item have not attribute id: child.tagName(): %2 (at line: %3)").arg(file).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber());
                     }
                     else
                         qDebug() << std::stringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber());
-                    rewardsItem = rewardsItem.nextSiblingElement(DatapackGeneralLoader::text_item);
+                    rewardsItem = rewardsItem.nextSiblingElement("item");
                 }
             }
             //load rewards allow
             {
-                QDomElement allowItem = rewards.firstChildElement(DatapackGeneralLoader::text_allow);
+                QDomElement allowItem = rewards.firstChildElement("allow");
                 while(!allowItem.isNull())
                 {
                     if(allowItem.isElement())
                     {
-                        if(allowItem.hasAttribute(DatapackGeneralLoader::text_type))
+                        if(allowItem.hasAttribute("type"))
                         {
-                            if(allowItem.attribute(DatapackGeneralLoader::text_type)==DatapackGeneralLoader::text_clan)
+                            if(allowItem.attribute("type")=="clan")
                                 quest.rewards.allow << CatchChallenger::ActionAllow_Clan;
                             else
-                                qDebug() << std::stringLiteral("Unable to open the file: %1, allow type not understand: child.tagName(): %2 (at line: %3)").arg(file).arg(allowItem.tagName()).arg(allowItem.lineNumber()).arg(allowItem.attribute(DatapackGeneralLoader::text_id));
+                                qDebug() << std::stringLiteral("Unable to open the file: %1, allow type not understand: child.tagName(): %2 (at line: %3)").arg(file).arg(allowItem.tagName()).arg(allowItem.lineNumber()).arg(allowItem.attribute("id"));
                         }
                         else
                             qDebug() << std::stringLiteral("Has attribute: %1, rewards item have not attribute id: child.tagName(): %2 (at line: %3)").arg(file).arg(allowItem.tagName()).arg(allowItem.lineNumber());
                     }
                     else
                         qDebug() << std::stringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(allowItem.tagName()).arg(allowItem.lineNumber());
-                    allowItem = allowItem.nextSiblingElement(DatapackGeneralLoader::text_allow);
+                    allowItem = allowItem.nextSiblingElement("allow");
                 }
             }
             quest.rewards.allow.fromSet(quest.rewards.allow.toSet());
         }
         else
             qDebug() << std::stringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(rewards.tagName()).arg(rewards.lineNumber());
-        rewards = rewards.nextSiblingElement(DatapackGeneralLoader::text_rewards);
+        rewards = rewards.nextSiblingElement("rewards");
     }
 
     std::unordered_map<uint8_t,CatchChallenger::Quest::Step> steps;
     //load step
-    QDomElement step = root.firstChildElement(DatapackGeneralLoader::text_step);
+    QDomElement step = root.firstChildElement("step");
     while(!step.isNull())
     {
         if(step.isElement())
         {
-            if(step.hasAttribute(DatapackGeneralLoader::text_id))
+            if(step.hasAttribute("id"))
             {
-                const uint32_t &id=step.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                const uint32_t &id=step.attribute("id").toUInt(&ok);
                 if(ok)
                 {
                     CatchChallenger::Quest::Step stepObject;
-                    if(step.hasAttribute(DatapackGeneralLoader::text_bot))
+                    if(step.hasAttribute("bot"))
                     {
-                        const std::vector<std::string> &tempStringList=step.attribute(DatapackGeneralLoader::text_bot).split(DatapackGeneralLoader::text_dotcomma);
+                        const std::vector<std::string> &tempStringList=step.attribute("bot").split(";");
                         int index=0;
                         while(index<tempStringList.size())
                         {
@@ -612,36 +523,36 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                         stepObject.bots=defaultBots;
                     //do the item
                     {
-                        QDomElement stepItem = step.firstChildElement(DatapackGeneralLoader::text_item);
+                        QDomElement stepItem = step.firstChildElement("item");
                         while(!stepItem.isNull())
                         {
                             if(stepItem.isElement())
                             {
-                                if(stepItem.hasAttribute(DatapackGeneralLoader::text_id))
+                                if(stepItem.hasAttribute("id"))
                                 {
                                     CatchChallenger::Quest::Item item;
-                                    item.item=stepItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                                    item.item=stepItem.attribute("id").toUInt(&ok);
                                     item.quantity=1;
                                     if(ok)
                                     {
                                         if(!CommonDatapack::commonDatapack.items.item.contains(item.item))
                                         {
-                                            qDebug() << std::stringLiteral("Unable to open the file: %1, rewards item id is not into the item list: %4: child.tagName(): %2 (at line: %3)").arg(file).arg(stepItem.tagName()).arg(stepItem.lineNumber()).arg(stepItem.attribute(DatapackGeneralLoader::text_id));
+                                            qDebug() << std::stringLiteral("Unable to open the file: %1, rewards item id is not into the item list: %4: child.tagName(): %2 (at line: %3)").arg(file).arg(stepItem.tagName()).arg(stepItem.lineNumber()).arg(stepItem.attribute("id"));
                                             return std::pair<bool,Quest>(false,quest);
                                         }
-                                        if(stepItem.hasAttribute(DatapackGeneralLoader::text_quantity))
+                                        if(stepItem.hasAttribute("quantity"))
                                         {
-                                            item.quantity=stepItem.attribute(DatapackGeneralLoader::text_quantity).toUInt(&ok);
+                                            item.quantity=stepItem.attribute("quantity").toUInt(&ok);
                                             if(!ok)
                                                 item.quantity=1;
                                         }
                                         stepObject.requirements.items << item;
-                                        if(stepItem.hasAttribute(DatapackGeneralLoader::text_monster) && stepItem.hasAttribute(DatapackGeneralLoader::text_rate))
+                                        if(stepItem.hasAttribute("monster") && stepItem.hasAttribute("rate"))
                                         {
                                             CatchChallenger::Quest::ItemMonster itemMonster;
                                             itemMonster.item=item.item;
 
-                                            const std::vector<std::string> &tempStringList=stepItem.attribute(DatapackGeneralLoader::text_monster).split(DatapackGeneralLoader::text_dotcomma);
+                                            const std::vector<std::string> &tempStringList=stepItem.attribute("monster").split(";");
                                             int index=0;
                                             while(index<tempStringList.size())
                                             {
@@ -651,45 +562,45 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                                                 index++;
                                             }
 
-                                            std::string rateString=stepItem.attribute(DatapackGeneralLoader::text_rate);
-                                            rateString.remove(DatapackGeneralLoader::text_percent);
+                                            std::string rateString=stepItem.attribute("rate");
+                                            rateString.remove("%");
                                             itemMonster.rate=rateString.toUShort(&ok);
                                             if(ok)
                                                 stepObject.itemsMonster << itemMonster;
                                         }
                                     }
                                     else
-                                        qDebug() << std::stringLiteral("Unable to open the file: %1, step id is not a number %4: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber()).arg(stepItem.attribute(DatapackGeneralLoader::text_id));
+                                        qDebug() << std::stringLiteral("Unable to open the file: %1, step id is not a number %4: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber()).arg(stepItem.attribute("id"));
                                 }
                                 else
                                     qDebug() << std::stringLiteral("Has attribute: %1, step have not id attribute: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
                             }
                             else
                                 qDebug() << std::stringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
-                            stepItem = stepItem.nextSiblingElement(DatapackGeneralLoader::text_item);
+                            stepItem = stepItem.nextSiblingElement("item");
                         }
                     }
                     //do the fight
                     {
-                        QDomElement fightItem = step.firstChildElement(DatapackGeneralLoader::text_fight);
+                        QDomElement fightItem = step.firstChildElement("fight");
                         while(!fightItem.isNull())
                         {
                             if(fightItem.isElement())
                             {
-                                if(fightItem.hasAttribute(DatapackGeneralLoader::text_id))
+                                if(fightItem.hasAttribute("id"))
                                 {
-                                    const uint32_t &fightId=fightItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                                    const uint32_t &fightId=fightItem.attribute("id").toUInt(&ok);
                                     if(ok)
                                         stepObject.requirements.fightId << fightId;
                                     else
-                                        qDebug() << std::stringLiteral("Unable to open the file: %1, step id is not a number %4: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber()).arg(fightItem.attribute(DatapackGeneralLoader::text_id));
+                                        qDebug() << std::stringLiteral("Unable to open the file: %1, step id is not a number %4: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber()).arg(fightItem.attribute("id"));
                                 }
                                 else
                                     qDebug() << std::stringLiteral("Has attribute: %1, step have not id attribute: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
                             }
                             else
                                 qDebug() << std::stringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
-                            fightItem = fightItem.nextSiblingElement(DatapackGeneralLoader::text_fight);
+                            fightItem = fightItem.nextSiblingElement("fight");
                         }
                     }
                     steps[id]=stepObject;
@@ -702,7 +613,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
         }
         else
             qDebug() << std::stringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
-        step = step.nextSiblingElement(DatapackGeneralLoader::text_step);
+        step = step.nextSiblingElement("step");
     }
 
     //sort the step
@@ -760,7 +671,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
     }
     #endif
     const QDomElement &root = domDocument.documentElement();
-    if(root.tagName()!=DatapackGeneralLoader::text_plants)
+    if(root.tagName()!="plants")
     {
         qDebug() << std::stringLiteral("Unable to open the plants file: %1, \"plants\" root balise not found for the xml file").arg(file);
         return plants;
@@ -768,15 +679,15 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
 
     //load the content
     bool ok,ok2;
-    QDomElement plantItem = root.firstChildElement(DatapackGeneralLoader::text_plant);
+    QDomElement plantItem = root.firstChildElement("plant");
     while(!plantItem.isNull())
     {
         if(plantItem.isElement())
         {
-            if(plantItem.hasAttribute(DatapackGeneralLoader::text_id) && plantItem.hasAttribute(DatapackGeneralLoader::text_itemUsed))
+            if(plantItem.hasAttribute("id") && plantItem.hasAttribute("itemUsed"))
             {
-                const uint8_t &id=plantItem.attribute(DatapackGeneralLoader::text_id).toUShort(&ok);
-                const uint32_t &itemUsed=plantItem.attribute(DatapackGeneralLoader::text_itemUsed).toUInt(&ok2);
+                const uint8_t &id=plantItem.attribute("id").toUShort(&ok);
+                const uint32_t &itemUsed=plantItem.attribute("itemUsed").toUInt(&ok2);
                 if(ok && ok2)
                 {
                     if(!plants.contains(id))
@@ -788,27 +699,27 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                         plant.flowering_seconds=0;
                         plant.itemUsed=itemUsed;
                         {
-                            QDomElement requirementsItem = plantItem.firstChildElement(DatapackGeneralLoader::text_requirements);
+                            QDomElement requirementsItem = plantItem.firstChildElement("requirements");
                             if(!requirementsItem.isNull() && requirementsItem.isElement())
                             {
-                                QDomElement reputationItem = requirementsItem.firstChildElement(DatapackGeneralLoader::text_reputation);
+                                QDomElement reputationItem = requirementsItem.firstChildElement("reputation");
                                 while(!reputationItem.isNull())
                                 {
                                     if(reputationItem.isElement())
                                     {
-                                        if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_level))
+                                        if(reputationItem.hasAttribute("type") && reputationItem.hasAttribute("level"))
                                         {
-                                            if(reputationNameToId.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
+                                            if(reputationNameToId.contains(reputationItem.attribute("type")))
                                             {
                                                 ReputationRequirements reputationRequirements;
-                                                std::string stringLevel=reputationItem.attribute(DatapackGeneralLoader::text_level);
-                                                reputationRequirements.positif=!stringLevel.startsWith(DatapackGeneralLoader::text_less);
+                                                std::string stringLevel=reputationItem.attribute("level");
+                                                reputationRequirements.positif=!stringLevel.startsWith("-");
                                                 if(!reputationRequirements.positif)
                                                     stringLevel.remove(0,1);
                                                 reputationRequirements.level=stringLevel.toUShort(&ok);
                                                 if(ok)
                                                 {
-                                                    reputationRequirements.reputationId=reputationNameToId.value(reputationItem.attribute(DatapackGeneralLoader::text_type));
+                                                    reputationRequirements.reputationId=reputationNameToId.value(reputationItem.attribute("type"));
                                                     plant.requirements.reputation << reputationRequirements;
                                                 }
                                             }
@@ -820,28 +731,28 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                     }
                                     else
                                         qDebug() << std::stringLiteral("Unable to open the industries link file: %1, is not a element, child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
-                                    reputationItem = reputationItem.nextSiblingElement(DatapackGeneralLoader::text_reputation);
+                                    reputationItem = reputationItem.nextSiblingElement("reputation");
                                 }
                             }
                         }
                         {
-                            QDomElement rewardsItem = plantItem.firstChildElement(DatapackGeneralLoader::text_rewards);
+                            QDomElement rewardsItem = plantItem.firstChildElement("rewards");
                             if(!rewardsItem.isNull() && rewardsItem.isElement())
                             {
-                                QDomElement reputationItem = rewardsItem.firstChildElement(DatapackGeneralLoader::text_reputation);
+                                QDomElement reputationItem = rewardsItem.firstChildElement("reputation");
                                 while(!reputationItem.isNull())
                                 {
                                     if(reputationItem.isElement())
                                     {
-                                        if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_point))
+                                        if(reputationItem.hasAttribute("type") && reputationItem.hasAttribute("point"))
                                         {
-                                            if(reputationNameToId.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
+                                            if(reputationNameToId.contains(reputationItem.attribute("type")))
                                             {
                                                 ReputationRewards reputationRewards;
-                                                reputationRewards.point=reputationItem.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
+                                                reputationRewards.point=reputationItem.attribute("point").toInt(&ok);
                                                 if(ok)
                                                 {
-                                                    reputationRewards.reputationId=reputationNameToId.value(reputationItem.attribute(DatapackGeneralLoader::text_type));
+                                                    reputationRewards.reputationId=reputationNameToId.value(reputationItem.attribute("type"));
                                                     plant.rewards.reputation << reputationRewards;
                                                 }
                                             }
@@ -851,12 +762,12 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                     }
                                     else
                                         qDebug() << std::stringLiteral("Unable to open the industries link file: %1, is not a element, child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
-                                    reputationItem = reputationItem.nextSiblingElement(DatapackGeneralLoader::text_reputation);
+                                    reputationItem = reputationItem.nextSiblingElement("reputation");
                                 }
                             }
                         }
                         ok=false;
-                        QDomElement quantity = plantItem.firstChildElement(DatapackGeneralLoader::text_quantity);
+                        QDomElement quantity = plantItem.firstChildElement("quantity");
                         if(!quantity.isNull())
                         {
                             if(quantity.isElement())
@@ -871,12 +782,12 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                             }
                         }
                         int intermediateTimeCount=0;
-                        QDomElement grow = plantItem.firstChildElement(DatapackGeneralLoader::text_grow);
+                        QDomElement grow = plantItem.firstChildElement("grow");
                         if(!grow.isNull())
                         {
                             if(grow.isElement())
                             {
-                                const QDomElement &fruits = grow.firstChildElement(DatapackGeneralLoader::text_fruits);
+                                const QDomElement &fruits = grow.firstChildElement("fruits");
                                 if(!fruits.isNull())
                                 {
                                     if(fruits.isElement())
@@ -902,7 +813,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                     ok=false;
                                     qDebug() << std::stringLiteral("Unable to parse the plants file: %1, fruits is null: child.tagName(): %2 (at line: %3)").arg(file).arg(grow.tagName()).arg(grow.lineNumber());
                                 }
-                                const QDomElement &sprouted = grow.firstChildElement(DatapackGeneralLoader::text_sprouted);
+                                const QDomElement &sprouted = grow.firstChildElement("sprouted");
                                 if(!sprouted.isNull())
                                 {
                                     if(sprouted.isElement())
@@ -919,7 +830,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                     else
                                         qDebug() << std::stringLiteral("Unable to parse the plants file: %1, sprouted is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(sprouted.tagName()).arg(sprouted.lineNumber());
                                 }
-                                const QDomElement &taller = grow.firstChildElement(DatapackGeneralLoader::text_taller);
+                                const QDomElement &taller = grow.firstChildElement("taller");
                                 if(!taller.isNull())
                                 {
                                     if(taller.isElement())
@@ -936,7 +847,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                     else
                                         qDebug() << std::stringLiteral("Unable to parse the plants file: %1, taller is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(taller.tagName()).arg(taller.lineNumber());
                                 }
-                                const QDomElement &flowering = grow.firstChildElement(DatapackGeneralLoader::text_flowering);
+                                const QDomElement &flowering = grow.firstChildElement("flowering");
                                 if(!flowering.isNull())
                                 {
                                     if(flowering.isElement())
@@ -1006,7 +917,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
         }
         else
             qDebug() << std::stringLiteral("Unable to open the plants file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(plantItem.tagName()).arg(plantItem.lineNumber());
-        plantItem = plantItem.nextSiblingElement(DatapackGeneralLoader::text_plant);
+        plantItem = plantItem.nextSiblingElement("plant");
     }
     return plants;
 }
@@ -1053,7 +964,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
     }
     #endif
     const QDomElement &root = domDocument.documentElement();
-    if(root.tagName()!=DatapackGeneralLoader::text_recipes)
+    if(root.tagName()!="recipes")
     {
         qDebug() << std::stringLiteral("Unable to open the crafting recipe file: %1, \"recipes\" root balise not found for the xml file").arg(file);
         return std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
@@ -1061,17 +972,17 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
 
     //load the content
     bool ok,ok2,ok3;
-    QDomElement recipeItem = root.firstChildElement(DatapackGeneralLoader::text_recipe);
+    QDomElement recipeItem = root.firstChildElement("recipe");
     while(!recipeItem.isNull())
     {
         if(recipeItem.isElement())
         {
-            if(recipeItem.hasAttribute(DatapackGeneralLoader::text_id) && recipeItem.hasAttribute(DatapackGeneralLoader::text_itemToLearn) && recipeItem.hasAttribute(DatapackGeneralLoader::text_doItemId))
+            if(recipeItem.hasAttribute("id") && recipeItem.hasAttribute("itemToLearn") && recipeItem.hasAttribute("doItemId"))
             {
                 uint8_t success=100;
-                if(recipeItem.hasAttribute(DatapackGeneralLoader::text_success))
+                if(recipeItem.hasAttribute("success"))
                 {
-                    const uint8_t &tempShort=recipeItem.attribute(DatapackGeneralLoader::text_success).toUShort(&ok);
+                    const uint8_t &tempShort=recipeItem.attribute("success").toUShort(&ok);
                     if(ok)
                     {
                         if(tempShort>100)
@@ -1083,9 +994,9 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                         qDebug() << std::stringLiteral("preload_crafting_recipes() success in not an number for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
                 }
                 uint16_t quantity=1;
-                if(recipeItem.hasAttribute(DatapackGeneralLoader::text_quantity))
+                if(recipeItem.hasAttribute("quantity"))
                 {
-                    const uint32_t &tempShort=recipeItem.attribute(DatapackGeneralLoader::text_quantity).toUInt(&ok);
+                    const uint32_t &tempShort=recipeItem.attribute("quantity").toUInt(&ok);
                     if(ok)
                     {
                         if(tempShort>65535)
@@ -1097,9 +1008,9 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                         qDebug() << std::stringLiteral("preload_crafting_recipes() quantity in not an number for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
                 }
 
-                const uint32_t &id=recipeItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
-                const uint32_t &itemToLearn=recipeItem.attribute(DatapackGeneralLoader::text_itemToLearn).toUInt(&ok2);
-                const uint32_t &doItemId=recipeItem.attribute(DatapackGeneralLoader::text_doItemId).toUInt(&ok3);
+                const uint32_t &id=recipeItem.attribute("id").toUInt(&ok);
+                const uint32_t &itemToLearn=recipeItem.attribute("itemToLearn").toUInt(&ok2);
+                const uint32_t &doItemId=recipeItem.attribute("doItemId").toUInt(&ok3);
                 if(ok && ok2 && ok3)
                 {
                     if(!crafingRecipes.contains(id))
@@ -1111,27 +1022,27 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                         recipe.quantity=quantity;
                         recipe.success=success;
                         {
-                            QDomElement requirementsItem = recipeItem.firstChildElement(DatapackGeneralLoader::text_requirements);
+                            QDomElement requirementsItem = recipeItem.firstChildElement("requirements");
                             if(!requirementsItem.isNull() && requirementsItem.isElement())
                             {
-                                QDomElement reputationItem = requirementsItem.firstChildElement(DatapackGeneralLoader::text_reputation);
+                                QDomElement reputationItem = requirementsItem.firstChildElement("reputation");
                                 while(!reputationItem.isNull())
                                 {
                                     if(reputationItem.isElement())
                                     {
-                                        if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_level))
+                                        if(reputationItem.hasAttribute("type") && reputationItem.hasAttribute("level"))
                                         {
-                                            if(reputationNameToId.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
+                                            if(reputationNameToId.contains(reputationItem.attribute("type")))
                                             {
                                                 ReputationRequirements reputationRequirements;
-                                                std::string stringLevel=reputationItem.attribute(DatapackGeneralLoader::text_level);
-                                                reputationRequirements.positif=!stringLevel.startsWith(DatapackGeneralLoader::text_less);
+                                                std::string stringLevel=reputationItem.attribute("level");
+                                                reputationRequirements.positif=!stringLevel.startsWith("-");
                                                 if(!reputationRequirements.positif)
                                                     stringLevel.remove(0,1);
                                                 reputationRequirements.level=stringLevel.toUShort(&ok);
                                                 if(ok)
                                                 {
-                                                    reputationRequirements.reputationId=reputationNameToId.value(reputationItem.attribute(DatapackGeneralLoader::text_type));
+                                                    reputationRequirements.reputationId=reputationNameToId.value(reputationItem.attribute("type"));
                                                     recipe.requirements.reputation << reputationRequirements;
                                                 }
                                             }
@@ -1143,28 +1054,28 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                                     }
                                     else
                                         qDebug() << std::stringLiteral("Unable to open the industries link file: %1, is not a element, child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
-                                    reputationItem = reputationItem.nextSiblingElement(DatapackGeneralLoader::text_reputation);
+                                    reputationItem = reputationItem.nextSiblingElement("reputation");
                                 }
                             }
                         }
                         {
-                            QDomElement rewardsItem = recipeItem.firstChildElement(DatapackGeneralLoader::text_rewards);
+                            QDomElement rewardsItem = recipeItem.firstChildElement("rewards");
                             if(!rewardsItem.isNull() && rewardsItem.isElement())
                             {
-                                QDomElement reputationItem = rewardsItem.firstChildElement(DatapackGeneralLoader::text_reputation);
+                                QDomElement reputationItem = rewardsItem.firstChildElement("reputation");
                                 while(!reputationItem.isNull())
                                 {
                                     if(reputationItem.isElement())
                                     {
-                                        if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_point))
+                                        if(reputationItem.hasAttribute("type") && reputationItem.hasAttribute("point"))
                                         {
-                                            if(reputationNameToId.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
+                                            if(reputationNameToId.contains(reputationItem.attribute("type")))
                                             {
                                                 ReputationRewards reputationRewards;
-                                                reputationRewards.point=reputationItem.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
+                                                reputationRewards.point=reputationItem.attribute("point").toInt(&ok);
                                                 if(ok)
                                                 {
-                                                    reputationRewards.reputationId=reputationNameToId.value(reputationItem.attribute(DatapackGeneralLoader::text_type));
+                                                    reputationRewards.reputationId=reputationNameToId.value(reputationItem.attribute("type"));
                                                     recipe.rewards.reputation << reputationRewards;
                                                 }
                                             }
@@ -1174,18 +1085,18 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                                     }
                                     else
                                         qDebug() << std::stringLiteral("Unable to open the industries link file: %1, is not a element, child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
-                                    reputationItem = reputationItem.nextSiblingElement(DatapackGeneralLoader::text_reputation);
+                                    reputationItem = reputationItem.nextSiblingElement("reputation");
                                 }
                             }
                         }
-                        QDomElement material = recipeItem.firstChildElement(DatapackGeneralLoader::text_material);
+                        QDomElement material = recipeItem.firstChildElement("material");
                         while(!material.isNull() && ok)
                         {
                             if(material.isElement())
                             {
-                                if(material.hasAttribute(DatapackGeneralLoader::text_itemId))
+                                if(material.hasAttribute("itemId"))
                                 {
-                                    const uint32_t &itemId=material.attribute(DatapackGeneralLoader::text_itemId).toUInt(&ok2);
+                                    const uint32_t &itemId=material.attribute("itemId").toUInt(&ok2);
                                     if(!ok2)
                                     {
                                         ok=false;
@@ -1193,9 +1104,9 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                                         break;
                                     }
                                     uint16_t quantity=1;
-                                    if(material.hasAttribute(DatapackGeneralLoader::text_quantity))
+                                    if(material.hasAttribute("quantity"))
                                     {
-                                        const uint32_t &tempShort=material.attribute(DatapackGeneralLoader::text_quantity).toUInt(&ok2);
+                                        const uint32_t &tempShort=material.attribute("quantity").toUInt(&ok2);
                                         if(ok2)
                                         {
                                             if(tempShort>65535)
@@ -1251,7 +1162,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                             }
                             else
                                 qDebug() << std::stringLiteral("preload_crafting_recipes() material is not an element for crafting recipe file: %1: child.tagName(): %2 (at line: %3)").arg(file).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
-                            material = material.nextSiblingElement(DatapackGeneralLoader::text_material);
+                            material = material.nextSiblingElement("material");
                         }
                         if(ok)
                         {
@@ -1310,7 +1221,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
         }
         else
             qDebug() << std::stringLiteral("Unable to open the crafting recipe file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
-        recipeItem = recipeItem.nextSiblingElement(DatapackGeneralLoader::text_recipe);
+        recipeItem = recipeItem.nextSiblingElement("recipe");
     }
     return std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
 }
@@ -1359,7 +1270,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
         }
         #endif
         const QDomElement &root = domDocument.documentElement();
-        if(root.tagName()!=DatapackGeneralLoader::text_industries)
+        if(root.tagName()!="industries")
         {
             qDebug() << std::stringLiteral("Unable to open the crafting recipe file: %1, \"industries\" root balise not found for the xml file").arg(file);
             file_index++;
@@ -1368,17 +1279,17 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
 
         //load the content
         bool ok,ok2,ok3;
-        QDomElement industryItem = root.firstChildElement(DatapackGeneralLoader::text_industrialrecipe);
+        QDomElement industryItem = root.firstChildElement("industrialrecipe");
         while(!industryItem.isNull())
         {
             if(industryItem.isElement())
             {
-                if(industryItem.hasAttribute(DatapackGeneralLoader::text_id) && industryItem.hasAttribute(DatapackGeneralLoader::text_time) && industryItem.hasAttribute(DatapackGeneralLoader::text_cycletobefull))
+                if(industryItem.hasAttribute("id") && industryItem.hasAttribute("time") && industryItem.hasAttribute("cycletobefull"))
                 {
                     Industry industry;
-                    const uint32_t &id=industryItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
-                    industry.time=industryItem.attribute(DatapackGeneralLoader::text_time).toUInt(&ok2);
-                    industry.cycletobefull=industryItem.attribute(DatapackGeneralLoader::text_cycletobefull).toUInt(&ok3);
+                    const uint32_t &id=industryItem.attribute("id").toUInt(&ok);
+                    industry.time=industryItem.attribute("time").toUInt(&ok2);
+                    industry.cycletobefull=industryItem.attribute("cycletobefull").toUInt(&ok3);
                     if(ok && ok2 && ok3)
                     {
                         if(!industries.contains(id))
@@ -1400,7 +1311,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                             }
                             //resource
                             {
-                                QDomElement resourceItem = industryItem.firstChildElement(DatapackGeneralLoader::text_resource);
+                                QDomElement resourceItem = industryItem.firstChildElement("resource");
                                 ok=true;
                                 while(!resourceItem.isNull() && ok)
                                 {
@@ -1408,17 +1319,17 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                                     {
                                         Industry::Resource resource;
                                         resource.quantity=1;
-                                        if(resourceItem.hasAttribute(DatapackGeneralLoader::text_quantity))
+                                        if(resourceItem.hasAttribute("quantity"))
                                         {
-                                            resource.quantity=resourceItem.attribute(DatapackGeneralLoader::text_quantity).toUInt(&ok);
+                                            resource.quantity=resourceItem.attribute("quantity").toUInt(&ok);
                                             if(!ok)
                                                 qDebug() << std::stringLiteral("quantity is not a number: %1: child.tagName(): %2 (at line: %3)").arg(file).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                         }
                                         if(ok)
                                         {
-                                            if(resourceItem.hasAttribute(DatapackGeneralLoader::text_id))
+                                            if(resourceItem.hasAttribute("id"))
                                             {
-                                                resource.item=resourceItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                                                resource.item=resourceItem.attribute("id").toUInt(&ok);
                                                 if(!ok)
                                                     qDebug() << std::stringLiteral("id is not a number: %1: child.tagName(): %2 (at line: %3)").arg(file).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                                 else if(!items.contains(resource.item))
@@ -1471,14 +1382,14 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                                         ok=false;
                                         qDebug() << std::stringLiteral("is not a elements: %1: child.tagName(): %2 (at line: %3)").arg(file).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                     }
-                                    resourceItem = resourceItem.nextSiblingElement(DatapackGeneralLoader::text_resource);
+                                    resourceItem = resourceItem.nextSiblingElement("resource");
                                 }
                             }
 
                             //product
                             if(ok)
                             {
-                                QDomElement productItem = industryItem.firstChildElement(DatapackGeneralLoader::text_product);
+                                QDomElement productItem = industryItem.firstChildElement("product");
                                 ok=true;
                                 while(!productItem.isNull() && ok)
                                 {
@@ -1486,17 +1397,17 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                                     {
                                         Industry::Product product;
                                         product.quantity=1;
-                                        if(productItem.hasAttribute(DatapackGeneralLoader::text_quantity))
+                                        if(productItem.hasAttribute("quantity"))
                                         {
-                                            product.quantity=productItem.attribute(DatapackGeneralLoader::text_quantity).toUInt(&ok);
+                                            product.quantity=productItem.attribute("quantity").toUInt(&ok);
                                             if(!ok)
                                                 qDebug() << std::stringLiteral("quantity is not a number: %1: child.tagName(): %2 (at line: %3)").arg(file).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                         }
                                         if(ok)
                                         {
-                                            if(productItem.hasAttribute(DatapackGeneralLoader::text_id))
+                                            if(productItem.hasAttribute("id"))
                                             {
-                                                product.item=productItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                                                product.item=productItem.attribute("id").toUInt(&ok);
                                                 if(!ok)
                                                     qDebug() << std::stringLiteral("id is not a number: %1: child.tagName(): %2 (at line: %3)").arg(file).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                                 else if(!items.contains(product.item))
@@ -1549,7 +1460,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                                         ok=false;
                                         qDebug() << std::stringLiteral("is not a elements: %1: child.tagName(): %2 (at line: %3)").arg(file).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                     }
-                                    productItem = productItem.nextSiblingElement(DatapackGeneralLoader::text_product);
+                                    productItem = productItem.nextSiblingElement("product");
                                 }
                             }
 
@@ -1573,7 +1484,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
             }
             else
                 qDebug() << std::stringLiteral("Unable to open the industries file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(industryItem.tagName()).arg(industryItem.lineNumber());
-            industryItem = industryItem.nextSiblingElement(DatapackGeneralLoader::text_industrialrecipe);
+            industryItem = industryItem.nextSiblingElement("industrialrecipe");
         }
         file_index++;
     }
@@ -1620,7 +1531,7 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
     }
     #endif
     const QDomElement &root = domDocument.documentElement();
-    if(root.tagName()!=DatapackGeneralLoader::text_industries)
+    if(root.tagName()!="industries")
     {
         qDebug() << std::stringLiteral("Unable to open the crafting recipe file: %1, \"industries\" root balise not found for the xml file").arg(file);
         return industriesLink;
@@ -1628,15 +1539,15 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
 
     //load the content
     bool ok,ok2;
-    QDomElement linkItem = root.firstChildElement(DatapackGeneralLoader::text_link);
+    QDomElement linkItem = root.firstChildElement("link");
     while(!linkItem.isNull())
     {
         if(linkItem.isElement())
         {
-            if(linkItem.hasAttribute(DatapackGeneralLoader::text_industrialrecipe) && linkItem.hasAttribute(DatapackGeneralLoader::text_industry))
+            if(linkItem.hasAttribute("industrialrecipe") && linkItem.hasAttribute("industry"))
             {
-                const uint32_t &industry_id=linkItem.attribute(DatapackGeneralLoader::text_industrialrecipe).toUInt(&ok);
-                const uint32_t &factory_id=linkItem.attribute(DatapackGeneralLoader::text_industry).toUInt(&ok2);
+                const uint32_t &industry_id=linkItem.attribute("industrialrecipe").toUInt(&ok);
+                const uint32_t &factory_id=linkItem.attribute("industry").toUInt(&ok2);
                 if(ok && ok2)
                 {
                     if(!industriesLink.contains(factory_id))
@@ -1647,27 +1558,27 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
                             IndustryLink *industryLink=&industriesLink[factory_id];
                             {
                                 {
-                                    QDomElement requirementsItem = linkItem.firstChildElement(DatapackGeneralLoader::text_requirements);
+                                    QDomElement requirementsItem = linkItem.firstChildElement("requirements");
                                     if(!requirementsItem.isNull() && requirementsItem.isElement())
                                     {
-                                        QDomElement reputationItem = requirementsItem.firstChildElement(DatapackGeneralLoader::text_reputation);
+                                        QDomElement reputationItem = requirementsItem.firstChildElement("reputation");
                                         while(!reputationItem.isNull())
                                         {
                                             if(reputationItem.isElement())
                                             {
-                                                if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_level))
+                                                if(reputationItem.hasAttribute("type") && reputationItem.hasAttribute("level"))
                                                 {
-                                                    if(reputationNameToId.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
+                                                    if(reputationNameToId.contains(reputationItem.attribute("type")))
                                                     {
                                                         ReputationRequirements reputationRequirements;
-                                                        std::string stringLevel=reputationItem.attribute(DatapackGeneralLoader::text_level);
-                                                        reputationRequirements.positif=!stringLevel.startsWith(DatapackGeneralLoader::text_less);
+                                                        std::string stringLevel=reputationItem.attribute("level");
+                                                        reputationRequirements.positif=!stringLevel.startsWith("-");
                                                         if(!reputationRequirements.positif)
                                                             stringLevel.remove(0,1);
                                                         reputationRequirements.level=stringLevel.toUShort(&ok);
                                                         if(ok)
                                                         {
-                                                            reputationRequirements.reputationId=reputationNameToId.value(reputationItem.attribute(DatapackGeneralLoader::text_type));
+                                                            reputationRequirements.reputationId=reputationNameToId.value(reputationItem.attribute("type"));
                                                             industryLink->requirements.reputation << reputationRequirements;
                                                         }
                                                     }
@@ -1679,28 +1590,28 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
                                             }
                                             else
                                                 qDebug() << std::stringLiteral("Unable to open the industries link file: %1, is not a element, child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
-                                            reputationItem = reputationItem.nextSiblingElement(DatapackGeneralLoader::text_reputation);
+                                            reputationItem = reputationItem.nextSiblingElement("reputation");
                                         }
                                     }
                                 }
                                 {
-                                    QDomElement rewardsItem = linkItem.firstChildElement(DatapackGeneralLoader::text_rewards);
+                                    QDomElement rewardsItem = linkItem.firstChildElement("rewards");
                                     if(!rewardsItem.isNull() && rewardsItem.isElement())
                                     {
-                                        QDomElement reputationItem = rewardsItem.firstChildElement(DatapackGeneralLoader::text_reputation);
+                                        QDomElement reputationItem = rewardsItem.firstChildElement("reputation");
                                         while(!reputationItem.isNull())
                                         {
                                             if(reputationItem.isElement())
                                             {
-                                                if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_point))
+                                                if(reputationItem.hasAttribute("type") && reputationItem.hasAttribute("point"))
                                                 {
-                                                    if(reputationNameToId.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
+                                                    if(reputationNameToId.contains(reputationItem.attribute("type")))
                                                     {
                                                         ReputationRewards reputationRewards;
-                                                        reputationRewards.point=reputationItem.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
+                                                        reputationRewards.point=reputationItem.attribute("point").toInt(&ok);
                                                         if(ok)
                                                         {
-                                                            reputationRewards.reputationId=reputationNameToId.value(reputationItem.attribute(DatapackGeneralLoader::text_type));
+                                                            reputationRewards.reputationId=reputationNameToId.value(reputationItem.attribute("type"));
                                                             industryLink->rewards.reputation << reputationRewards;
                                                         }
                                                     }
@@ -1710,7 +1621,7 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
                                             }
                                             else
                                                 qDebug() << std::stringLiteral("Unable to open the industries link file: %1, is not a element, child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
-                                            reputationItem = reputationItem.nextSiblingElement(DatapackGeneralLoader::text_reputation);
+                                            reputationItem = reputationItem.nextSiblingElement("reputation");
                                         }
                                     }
                                 }
@@ -1730,7 +1641,7 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
         }
         else
             qDebug() << std::stringLiteral("Unable to open the industries link file: %1, is not a element, child.tagName(): %2 (at line: %3)").arg(file).arg(linkItem.tagName()).arg(linkItem.lineNumber());
-        linkItem = linkItem.nextSiblingElement(DatapackGeneralLoader::text_link);
+        linkItem = linkItem.nextSiblingElement("link");
     }
     return industriesLink;
 }
@@ -1742,11 +1653,11 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
     #endif
     ItemFull items;
     QDir dir(folder);
-    const std::vector<std::string> &fileList=FacilityLibGeneral::listFolder(dir.absolutePath()+DatapackGeneralLoader::text_slash);
+    const std::vector<std::string> &fileList=FacilityLibGeneral::listFolder(dir.absolutePath()+"/");
     int file_index=0;
     while(file_index<fileList.size())
     {
-        if(!fileList.at(file_index).endsWith(DatapackGeneralLoader::text_dotxml))
+        if(!fileList.at(file_index).endsWith(".xml"))
         {
             file_index++;
             continue;
@@ -1759,7 +1670,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
         }
         QDomDocument domDocument;
         //open and quick check the file
-        if(!file.endsWith(DatapackGeneralLoader::text_dotxml))
+        if(!file.endsWith(".xml"))
         {
             file_index++;
             continue;
@@ -1792,7 +1703,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
         }
         #endif
         const QDomElement &root = domDocument.documentElement();
-        if(root.tagName()!=DatapackGeneralLoader::text_items)
+        if(root.tagName()!="items")
         {
             //qDebug() << std::stringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file);
             file_index++;
@@ -1801,24 +1712,24 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
 
         //load the content
         bool ok;
-        QDomElement item = root.firstChildElement(DatapackGeneralLoader::text_item);
+        QDomElement item = root.firstChildElement("item");
         while(!item.isNull())
         {
             if(item.isElement())
             {
-                if(item.hasAttribute(DatapackGeneralLoader::text_id))
+                if(item.hasAttribute("id"))
                 {
-                    const uint32_t &id=item.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                    const uint32_t &id=item.attribute("id").toUInt(&ok);
                     if(ok)
                     {
                         if(!items.item.contains(id))
                         {
                             //load the price
                             {
-                                if(item.hasAttribute(DatapackGeneralLoader::text_price))
+                                if(item.hasAttribute("price"))
                                 {
                                     bool ok;
-                                    items.item[id].price=item.attribute(DatapackGeneralLoader::text_price).toUInt(&ok);
+                                    items.item[id].price=item.attribute("price").toUInt(&ok);
                                     if(!ok)
                                     {
                                         qDebug() << std::stringLiteral("price is not a number: child.tagName(): %1 (at line: %2)").arg(item.tagName()).arg(item.lineNumber());
@@ -1827,16 +1738,16 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                 }
                                 else
                                 {
-                                    /*if(!item.hasAttribute(DatapackGeneralLoader::text_quest) || item.attribute(DatapackGeneralLoader::text_quest)!=DatapackGeneralLoader::text_yes)
+                                    /*if(!item.hasAttribute("quest") || item.attribute("quest")!="yes")
                                         qDebug() << std::stringLiteral("For parse item: Price not found, default to 0 (not sellable): child.tagName(): %1 (%2 at line: %3)").arg(item.tagName()).arg(file).arg(item.lineNumber());*/
                                     items.item[id].price=0;
                                 }
                             }
                             //load the consumeAtUse
                             {
-                                if(item.hasAttribute(DatapackGeneralLoader::text_consumeAtUse))
+                                if(item.hasAttribute("consumeAtUse"))
                                 {
-                                    if(item.attribute(DatapackGeneralLoader::text_consumeAtUse)==DatapackGeneralLoader::text_false)
+                                    if(item.attribute("consumeAtUse")=="false")
                                         items.item[id].consumeAtUse=false;
                                     else
                                         items.item[id].consumeAtUse=true;
@@ -1848,16 +1759,16 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                             //load the trap
                             if(!haveAnEffect)
                             {
-                                QDomElement trapItem = item.firstChildElement(DatapackGeneralLoader::text_trap);
+                                QDomElement trapItem = item.firstChildElement("trap");
                                 if(!trapItem.isNull())
                                 {
                                     if(trapItem.isElement())
                                     {
                                         Trap trap;
                                         trap.bonus_rate=1.0;
-                                        if(trapItem.hasAttribute(DatapackGeneralLoader::text_bonus_rate))
+                                        if(trapItem.hasAttribute("bonus_rate"))
                                         {
-                                            float bonus_rate=trapItem.attribute(DatapackGeneralLoader::text_bonus_rate).toFloat(&ok);
+                                            float bonus_rate=trapItem.attribute("bonus_rate").toFloat(&ok);
                                             if(ok)
                                                 trap.bonus_rate=bonus_rate;
                                             else
@@ -1873,14 +1784,14 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                             //load the repel
                             if(!haveAnEffect)
                             {
-                                QDomElement repelItem = item.firstChildElement(DatapackGeneralLoader::text_repel);
+                                QDomElement repelItem = item.firstChildElement("repel");
                                 if(!repelItem.isNull())
                                 {
                                     if(repelItem.isElement())
                                     {
-                                        if(repelItem.hasAttribute(DatapackGeneralLoader::text_step))
+                                        if(repelItem.hasAttribute("step"))
                                         {
-                                            const uint32_t &step=repelItem.attribute(DatapackGeneralLoader::text_step).toUInt(&ok);
+                                            const uint32_t &step=repelItem.attribute("step").toUInt(&ok);
                                             if(ok)
                                             {
                                                 if(step>0)
@@ -1903,14 +1814,14 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                             if(!haveAnEffect)
                             {
                                 {
-                                    QDomElement hpItem = item.firstChildElement(DatapackGeneralLoader::text_hp);
+                                    QDomElement hpItem = item.firstChildElement("hp");
                                     while(!hpItem.isNull())
                                     {
                                         if(hpItem.isElement())
                                         {
-                                            if(hpItem.hasAttribute(DatapackGeneralLoader::text_add))
+                                            if(hpItem.hasAttribute("add"))
                                             {
-                                                if(hpItem.attribute(DatapackGeneralLoader::text_add)==DatapackGeneralLoader::text_all)
+                                                if(hpItem.attribute("add")=="all")
                                                 {
                                                     MonsterItemEffect monsterItemEffect;
                                                     monsterItemEffect.type=MonsterItemEffectType_AddHp;
@@ -1919,9 +1830,9 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                                 }
                                                 else
                                                 {
-                                                    if(!hpItem.attribute(DatapackGeneralLoader::text_add).contains(DatapackGeneralLoader::text_percent))//todo this part
+                                                    if(!hpItem.attribute("add").contains("%"))//todo this part
                                                     {
-                                                        const int32_t &add=hpItem.attribute(DatapackGeneralLoader::text_add).toUInt(&ok);
+                                                        const int32_t &add=hpItem.attribute("add").toUInt(&ok);
                                                         if(ok)
                                                         {
                                                             if(add>0)
@@ -1942,19 +1853,19 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                             else
                                                 qDebug() << std::stringLiteral("Unable to open the file: %1, hp have not the attribute add: child.tagName(): %2 (at line: %3)").arg(file).arg(hpItem.tagName()).arg(hpItem.lineNumber());
                                         }
-                                        hpItem = hpItem.nextSiblingElement(DatapackGeneralLoader::text_hp);
+                                        hpItem = hpItem.nextSiblingElement("hp");
                                     }
                                 }
                                 #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
                                 {
-                                    QDomElement buffItem = item.firstChildElement(DatapackGeneralLoader::text_buff);
+                                    QDomElement buffItem = item.firstChildElement("buff");
                                     while(!buffItem.isNull())
                                     {
                                         if(buffItem.isElement())
                                         {
-                                            if(buffItem.hasAttribute(DatapackGeneralLoader::text_remove))
+                                            if(buffItem.hasAttribute("remove"))
                                             {
-                                                if(buffItem.attribute(DatapackGeneralLoader::text_remove)==DatapackGeneralLoader::text_all)
+                                                if(buffItem.attribute("remove")=="all")
                                                 {
                                                     MonsterItemEffect monsterItemEffect;
                                                     monsterItemEffect.type=MonsterItemEffectType_RemoveBuff;
@@ -1963,7 +1874,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                                 }
                                                 else
                                                 {
-                                                    const int32_t &remove=buffItem.attribute(DatapackGeneralLoader::text_remove).toUInt(&ok);
+                                                    const int32_t &remove=buffItem.attribute("remove").toUInt(&ok);
                                                     if(ok)
                                                     {
                                                         if(remove>0)
@@ -1989,7 +1900,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                              /* else
                                                 qDebug() << std::stringLiteral("Unable to open the file: %1, buff have not the attribute know attribute like remove: child.tagName(): %2 (at line: %3)").arg(file).arg(buffItem.tagName()).arg(buffItem.lineNumber());*/
                                         }
-                                        buffItem = buffItem.nextSiblingElement(DatapackGeneralLoader::text_buff);
+                                        buffItem = buffItem.nextSiblingElement("buff");
                                     }
                                 }
                                 #endif
@@ -1999,14 +1910,14 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                             //load the monster offline effect
                             if(!haveAnEffect)
                             {
-                                QDomElement levelItem = item.firstChildElement(DatapackGeneralLoader::text_level);
+                                QDomElement levelItem = item.firstChildElement("level");
                                 while(!levelItem.isNull())
                                 {
                                     if(levelItem.isElement())
                                     {
-                                        if(levelItem.hasAttribute(DatapackGeneralLoader::text_up))
+                                        if(levelItem.hasAttribute("up"))
                                         {
-                                            const uint32_t &levelUp=levelItem.attribute(DatapackGeneralLoader::text_up).toUInt(&ok);
+                                            const uint32_t &levelUp=levelItem.attribute("up").toUInt(&ok);
                                             if(!ok)
                                                 qDebug() << std::stringLiteral("Unable to open the file: %1, level up is not possitive number: child.tagName(): %2 (at line: %3)").arg(file).arg(levelItem.tagName()).arg(levelItem.lineNumber());
                                             else if(levelUp<=0)
@@ -2022,7 +1933,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                         else
                                             qDebug() << std::stringLiteral("Unable to open the file: %1, level have not the attribute up: child.tagName(): %2 (at line: %3)").arg(file).arg(levelItem.tagName()).arg(levelItem.lineNumber());
                                     }
-                                    levelItem = levelItem.nextSiblingElement(DatapackGeneralLoader::text_level);
+                                    levelItem = levelItem.nextSiblingElement("level");
                                 }
                             }
                         }
@@ -2037,7 +1948,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
             }
             else
                 qDebug() << std::stringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
-            item = item.nextSiblingElement(DatapackGeneralLoader::text_item);
+            item = item.nextSiblingElement("item");
         }
         file_index++;
     }
@@ -2106,7 +2017,7 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
     }
     #endif
     const QDomElement &root = domDocument.documentElement();
-    if(root.tagName()!=DatapackGeneralLoader::text_list)
+    if(root.tagName()!="list")
     {
         qDebug() << (std::stringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return returnVar;
@@ -2114,66 +2025,30 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
 
     //load the content
     bool ok;
-    QDomElement startItem = root.firstChildElement(DatapackGeneralLoader::text_start);
+    QDomElement startItem = root.firstChildElement("start");
     while(!startItem.isNull())
     {
         if(startItem.isElement())
         {
             Profile profile;
 
-            /* on server part
-            const QDomElement &map = startItem.firstChildElement(DatapackGeneralLoader::text_map);
-            if(!map.isNull() && map.isElement() && map.hasAttribute(DatapackGeneralLoader::text_file) && map.hasAttribute(DatapackGeneralLoader::text_x) && map.hasAttribute(DatapackGeneralLoader::text_y))
-            {
-                profile.map=map.attribute(DatapackGeneralLoader::text_file);
-                if(!profile.map.endsWith(DatapackGeneralLoader::text_dottmx))
-                    profile.map+=DatapackGeneralLoader::text_dottmx;
-                if(!QFile::exists(datapackPath+QLatin1String(DATAPACK_BASE_PATH_MAP)+profile.map))
-                {
-                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, map don't exists %2: child.tagName(): %3 (at line: %4)").arg(file).arg(profile.map).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                    startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
-                    continue;
-                }
-                profile.x=map.attribute(DatapackGeneralLoader::text_x).toUShort(&ok);
-                if(!ok)
-                {
-                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, map x is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                    startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
-                    continue;
-                }
-                profile.y=map.attribute(DatapackGeneralLoader::text_y).toUShort(&ok);
-                if(!ok)
-                {
-                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, map y is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                    startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
-                    continue;
-                }
-            }
-            else
-            {
-                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, no correct map configuration: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
-                continue;
-            }
-            */
-
-            if(startItem.hasAttribute(DatapackGeneralLoader::text_id))
-                profile.id=startItem.attribute(DatapackGeneralLoader::text_id);
+            if(startItem.hasAttribute("id"))
+                profile.id=startItem.attribute("id");
 
             if(idDuplicate.contains(profile.id))
             {
                 qDebug() << (std::stringLiteral("Unable to open the xml file: %1, id duplicate: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
+                startItem = startItem.nextSiblingElement("start");
                 continue;
             }
 
             if(!profile.id.isEmpty() && !idDuplicate.contains(profile.id))
             {
-                const QDomElement &forcedskin = startItem.firstChildElement(DatapackGeneralLoader::text_forcedskin);
+                const QDomElement &forcedskin = startItem.firstChildElement("forcedskin");
 
                 std::vector<std::string> forcedskinList;
-                if(!forcedskin.isNull() && forcedskin.isElement() && forcedskin.hasAttribute(DatapackGeneralLoader::text_value))
-                    forcedskinList=forcedskin.attribute(DatapackGeneralLoader::text_value).split(DatapackGeneralLoader::text_dotcomma);
+                if(!forcedskin.isNull() && forcedskin.isElement() && forcedskin.hasAttribute("value"))
+                    forcedskinList=forcedskin.attribute("value").split(";");
                 else
                     forcedskinList=defaultforcedskinList;
                 {
@@ -2200,28 +2075,28 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
                 }
 
                 profile.cash=0;
-                const QDomElement &cash = startItem.firstChildElement(DatapackGeneralLoader::text_cash);
-                if(!cash.isNull() && cash.isElement() && cash.hasAttribute(DatapackGeneralLoader::text_value))
+                const QDomElement &cash = startItem.firstChildElement("cash");
+                if(!cash.isNull() && cash.isElement() && cash.hasAttribute("value"))
                 {
-                    profile.cash=cash.attribute(DatapackGeneralLoader::text_value).toULongLong(&ok);
+                    profile.cash=cash.attribute("value").toULongLong(&ok);
                     if(!ok)
                     {
                         qDebug() << (std::stringLiteral("Unable to open the xml file: %1, cash is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                         profile.cash=0;
                     }
                 }
-                QDomElement monstersElement = startItem.firstChildElement(DatapackGeneralLoader::text_monster);
+                QDomElement monstersElement = startItem.firstChildElement("monster");
                 while(!monstersElement.isNull())
                 {
                     Profile::Monster monster;
-                    if(monstersElement.isElement() && monstersElement.hasAttribute(DatapackGeneralLoader::text_id) && monstersElement.hasAttribute(DatapackGeneralLoader::text_level) && monstersElement.hasAttribute(DatapackGeneralLoader::text_captured_with))
+                    if(monstersElement.isElement() && monstersElement.hasAttribute("id") && monstersElement.hasAttribute("level") && monstersElement.hasAttribute("captured_with"))
                     {
-                        monster.id=monstersElement.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                        monster.id=monstersElement.attribute("id").toUInt(&ok);
                         if(!ok)
                             qDebug() << (std::stringLiteral("Unable to open the xml file: %1, monster id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                         if(ok)
                         {
-                            monster.level=monstersElement.attribute(DatapackGeneralLoader::text_level).toUShort(&ok);
+                            monster.level=monstersElement.attribute("level").toUShort(&ok);
                             if(!ok)
                                 qDebug() << (std::stringLiteral("Unable to open the xml file: %1, monster level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                         }
@@ -2232,7 +2107,7 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
                         }
                         if(ok)
                         {
-                            monster.captured_with=monstersElement.attribute(DatapackGeneralLoader::text_captured_with).toUInt(&ok);
+                            monster.captured_with=monstersElement.attribute("captured_with").toUInt(&ok);
                             if(!ok)
                                 qDebug() << (std::stringLiteral("Unable to open the xml file: %1, captured_with is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                         }
@@ -2254,33 +2129,33 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
                         if(ok)
                             profile.monsters << monster;
                     }
-                    monstersElement = monstersElement.nextSiblingElement(DatapackGeneralLoader::text_monster);
+                    monstersElement = monstersElement.nextSiblingElement("monster");
                 }
                 if(profile.monsters.empty())
                 {
                     qDebug() << (std::stringLiteral("Unable to open the xml file: %1, not monster to load: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                    startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
+                    startItem = startItem.nextSiblingElement("start");
                     continue;
                 }
-                QDomElement reputationElement = startItem.firstChildElement(DatapackGeneralLoader::text_reputation);
+                QDomElement reputationElement = startItem.firstChildElement("reputation");
                 while(!reputationElement.isNull())
                 {
                     Profile::Reputation reputationTemp;
-                    if(reputationElement.isElement() && reputationElement.hasAttribute(DatapackGeneralLoader::text_type) && reputationElement.hasAttribute(DatapackGeneralLoader::text_level))
+                    if(reputationElement.isElement() && reputationElement.hasAttribute("type") && reputationElement.hasAttribute("level"))
                     {
-                        reputationTemp.level=reputationElement.attribute(DatapackGeneralLoader::text_level).toShort(&ok);
+                        reputationTemp.level=reputationElement.attribute("level").toShort(&ok);
                         if(!ok)
                             qDebug() << (std::stringLiteral("Unable to open the xml file: %1, reputation level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                         if(ok)
                         {
-                            if(!reputationNameToId.contains(reputationElement.attribute(DatapackGeneralLoader::text_type)))
+                            if(!reputationNameToId.contains(reputationElement.attribute("type")))
                             {
-                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, reputation type not found %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationElement.attribute(DatapackGeneralLoader::text_type)));
+                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, reputation type not found %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationElement.attribute("type")));
                                 ok=false;
                             }
                             if(ok)
                             {
-                                reputationTemp.reputationId=reputationNameToId.value(reputationElement.attribute(DatapackGeneralLoader::text_type));
+                                reputationTemp.reputationId=reputationNameToId.value(reputationElement.attribute("type"));
                                 if(reputationTemp.level==0)
                                 {
                                     qDebug() << (std::stringLiteral("Unable to open the xml file: %1, reputation level is useless if level 0: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
@@ -2290,7 +2165,7 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
                                 {
                                     if((-reputationTemp.level)>reputations.value(reputationTemp.reputationId).reputation_negative.size())
                                     {
-                                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, reputation level is lower than minimal level for %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationElement.attribute(DatapackGeneralLoader::text_type)));
+                                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, reputation level is lower than minimal level for %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationElement.attribute("type")));
                                         ok=false;
                                     }
                                 }
@@ -2298,7 +2173,7 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
                                 {
                                     if((reputationTemp.level)>=reputations.value(reputationTemp.reputationId).reputation_positive.size())
                                     {
-                                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, reputation level is higther than maximal level for %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationElement.attribute(DatapackGeneralLoader::text_type)));
+                                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, reputation level is higther than maximal level for %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationElement.attribute("type")));
                                         ok=false;
                                     }
                                 }
@@ -2306,9 +2181,9 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
                             if(ok)
                             {
                                 reputationTemp.point=0;
-                                if(reputationElement.hasAttribute(DatapackGeneralLoader::text_point))
+                                if(reputationElement.hasAttribute("point"))
                                 {
-                                    reputationTemp.point=reputationElement.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
+                                    reputationTemp.point=reputationElement.attribute("point").toInt(&ok);
                                     qDebug() << (std::stringLiteral("Unable to open the xml file: %1, reputation point is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                                     if(ok)
                                     {
@@ -2321,23 +2196,23 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
                         if(ok)
                             profile.reputation << reputationTemp;
                     }
-                    reputationElement = reputationElement.nextSiblingElement(DatapackGeneralLoader::text_reputation);
+                    reputationElement = reputationElement.nextSiblingElement("reputation");
                 }
-                QDomElement itemElement = startItem.firstChildElement(DatapackGeneralLoader::text_item);
+                QDomElement itemElement = startItem.firstChildElement("item");
                 while(!itemElement.isNull())
                 {
                     Profile::Item itemTemp;
-                    if(itemElement.isElement() && itemElement.hasAttribute(DatapackGeneralLoader::text_id))
+                    if(itemElement.isElement() && itemElement.hasAttribute("id"))
                     {
-                        itemTemp.id=itemElement.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                        itemTemp.id=itemElement.attribute("id").toUInt(&ok);
                         if(!ok)
                             qDebug() << (std::stringLiteral("Unable to open the xml file: %1, item id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                         if(ok)
                         {
                             itemTemp.quantity=0;
-                            if(itemElement.hasAttribute(DatapackGeneralLoader::text_quantity))
+                            if(itemElement.hasAttribute("quantity"))
                             {
-                                itemTemp.quantity=itemElement.attribute(DatapackGeneralLoader::text_quantity).toUInt(&ok);
+                                itemTemp.quantity=itemElement.attribute("quantity").toUInt(&ok);
                                 if(!ok)
                                     qDebug() << (std::stringLiteral("Unable to open the xml file: %1, item quantity is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                                 if(ok)
@@ -2363,7 +2238,7 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
                         if(ok)
                             profile.items << itemTemp;
                     }
-                    itemElement = itemElement.nextSiblingElement(DatapackGeneralLoader::text_item);
+                    itemElement = itemElement.nextSiblingElement("item");
                 }
                 idDuplicate << profile.id;
                 returnVar.second << profile;
@@ -2372,7 +2247,7 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
         }
         else
             qDebug() << (std::stringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-        startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
+        startItem = startItem.nextSiblingElement("start");
     }
     return returnVar;
 }
@@ -2427,7 +2302,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
     }
     #endif
     const QDomElement &root = domDocument.documentElement();
-    if(root.tagName()!=DatapackGeneralLoader::text_layers)
+    if(root.tagName()!="layer"s)
     {
         qDebug() << (std::stringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return returnVar;
@@ -2435,22 +2310,22 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
 
     //load the content
     bool ok;
-    QDomElement monstersCollisionItem = root.firstChildElement(DatapackGeneralLoader::text_monstersCollision);
+    QDomElement monstersCollisionItem = root.firstChildElement("monstersCollision");
     while(!monstersCollisionItem.isNull())
     {
         if(monstersCollisionItem.isElement())
         {
-            if(!monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_type))
+            if(!monstersCollisionItem.hasAttribute("type"))
                 qDebug() << (std::stringLiteral("Have not the attribute type, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
-            else if(!monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_monsterType))
+            else if(!monstersCollisionItem.hasAttribute("monsterType"))
                 qDebug() << (std::stringLiteral("Have not the attribute monsterType, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
             else
             {
                 ok=true;
                 MonstersCollision monstersCollision;
-                if(monstersCollisionItem.attribute(DatapackGeneralLoader::text_type)==DatapackGeneralLoader::text_walkOn)
+                if(monstersCollisionItem.attribute("type")=="walkOn")
                     monstersCollision.type=MonstersCollisionType_WalkOn;
-                else if(monstersCollisionItem.attribute(DatapackGeneralLoader::text_type)==DatapackGeneralLoader::text_actionOn)
+                else if(monstersCollisionItem.attribute("type")=="actionOn")
                     monstersCollision.type=MonstersCollisionType_ActionOn;
                 else
                 {
@@ -2459,8 +2334,8 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
                 }
                 if(ok)
                 {
-                    if(monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_layer))
-                        monstersCollision.layer=monstersCollisionItem.attribute(DatapackGeneralLoader::text_layer);
+                    if(monstersCollisionItem.hasAttribute("layer"))
+                        monstersCollision.layer=monstersCollisionItem.attribute("layer");
                 }
                 if(ok)
                 {
@@ -2472,9 +2347,9 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
                     else
                     {
                         monstersCollision.item=0;
-                        if(monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_item))
+                        if(monstersCollisionItem.hasAttribute("item"))
                         {
-                            monstersCollision.item=monstersCollisionItem.attribute(DatapackGeneralLoader::text_item).toUInt(&ok);
+                            monstersCollision.item=monstersCollisionItem.attribute("item").toUInt(&ok);
                             if(!ok)
                                 qDebug() << (std::stringLiteral("item attribute is not a number, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
                             else if(!items.contains(monstersCollision.item))
@@ -2487,37 +2362,37 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
                 }
                 if(ok)
                 {
-                    if(monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_tile))
-                        monstersCollision.tile=monstersCollisionItem.attribute(DatapackGeneralLoader::text_tile);
+                    if(monstersCollisionItem.hasAttribute("tile"))
+                        monstersCollision.tile=monstersCollisionItem.attribute("tile");
                 }
                 if(ok)
                 {
-                    if(monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_background))
-                        monstersCollision.background=monstersCollisionItem.attribute(DatapackGeneralLoader::text_background);
+                    if(monstersCollisionItem.hasAttribute("background"))
+                        monstersCollision.background=monstersCollisionItem.attribute("background");
                 }
                 if(ok)
                 {
-                    if(monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_monsterType))
+                    if(monstersCollisionItem.hasAttribute("monsterType"))
                     {
-                        monstersCollision.defautMonsterTypeList=monstersCollisionItem.attribute(DatapackGeneralLoader::text_monsterType).split(DatapackGeneralLoader::text_dotcomma,std::string::SkipEmptyParts);
+                        monstersCollision.defautMonsterTypeList=monstersCollisionItem.attribute("monsterType").split(";",std::string::SkipEmptyParts);
                         monstersCollision.defautMonsterTypeList.removeDuplicates();
                         monstersCollision.monsterTypeList=monstersCollision.defautMonsterTypeList;
                         //load the condition
-                        QDomElement eventItem = monstersCollisionItem.firstChildElement(DatapackGeneralLoader::text_event);
+                        QDomElement eventItem = monstersCollisionItem.firstChildElement("event");
                         while(!eventItem.isNull())
                         {
                             if(eventItem.isElement())
                             {
-                                if(eventItem.hasAttribute(DatapackGeneralLoader::text_id) && eventItem.hasAttribute(DatapackGeneralLoader::text_value) && eventItem.hasAttribute(DatapackGeneralLoader::text_monsterType))
+                                if(eventItem.hasAttribute("id") && eventItem.hasAttribute("value") && eventItem.hasAttribute("monsterType"))
                                 {
-                                    if(eventStringToId.contains(eventItem.attribute(DatapackGeneralLoader::text_id)))
+                                    if(eventStringToId.contains(eventItem.attribute("id")))
                                     {
-                                        if(eventValueStringToId.value(eventItem.attribute(DatapackGeneralLoader::text_id)).contains(eventItem.attribute(DatapackGeneralLoader::text_value)))
+                                        if(eventValueStringToId.value(eventItem.attribute("id")).contains(eventItem.attribute("value")))
                                         {
                                             MonstersCollision::MonstersCollisionEvent event;
-                                            event.event=eventStringToId.value(eventItem.attribute(DatapackGeneralLoader::text_id));
-                                            event.event_value=eventValueStringToId.value(eventItem.attribute(DatapackGeneralLoader::text_id)).value(eventItem.attribute(DatapackGeneralLoader::text_value));
-                                            event.monsterTypeList=eventItem.attribute(DatapackGeneralLoader::text_monsterType).split(DatapackGeneralLoader::text_dotcomma,std::string::SkipEmptyParts);
+                                            event.event=eventStringToId.value(eventItem.attribute("id"));
+                                            event.event_value=eventValueStringToId.value(eventItem.attribute("id")).value(eventItem.attribute("value"));
+                                            event.monsterTypeList=eventItem.attribute("monsterType").split(";",std::string::SkipEmptyParts);
                                             if(!event.monsterTypeList.isEmpty())
                                             {
                                                 monstersCollision.events << event;
@@ -2541,7 +2416,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
                                 else
                                     qDebug() << (std::stringLiteral("event have missing attribute, into: %1 at line %2").arg(file).arg(eventItem.lineNumber()));
                             }
-                            eventItem = eventItem.nextSiblingElement(DatapackGeneralLoader::text_event);
+                            eventItem = eventItem.nextSiblingElement("event");
                         }
                     }
                 }
@@ -2582,7 +2457,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
                 }
             }
         }
-        monstersCollisionItem = monstersCollisionItem.nextSiblingElement(DatapackGeneralLoader::text_monstersCollision);
+        monstersCollisionItem = monstersCollisionItem.nextSiblingElement("monstersCollision");
     }
     return returnVar;
 }
@@ -2619,7 +2494,7 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const std::string &file)
     }
     #endif
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=DatapackGeneralLoader::text_layers)
+    if(root.tagName()!="layer"s)
     {
         qDebug() << (std::stringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return returnVar;
@@ -2678,38 +2553,38 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
     }
     #endif
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=DatapackGeneralLoader::text_events)
+    if(root.tagName()!="events")
     {
         qDebug() << (std::stringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return returnVar;
     }
 
     //load the content
-    QDomElement eventItem = root.firstChildElement(DatapackGeneralLoader::text_event);
+    QDomElement eventItem = root.firstChildElement("event");
     while(!eventItem.isNull())
     {
         if(eventItem.isElement())
         {
-            if(!eventItem.hasAttribute(DatapackGeneralLoader::text_id))
+            if(!eventItem.hasAttribute("id"))
                 qDebug() << (std::stringLiteral("Have not the attribute id, into: %1 at line %2").arg(file).arg(eventItem.lineNumber()));
-            else if(eventItem.attribute(DatapackGeneralLoader::text_id).isEmpty())
+            else if(eventItem.attribute("id").isEmpty())
                 qDebug() << (std::stringLiteral("Have id empty, into: %1 at line %2").arg(file).arg(eventItem.lineNumber()));
             else
             {
                 Event event;
-                event.name=eventItem.attribute(DatapackGeneralLoader::text_id);
-                QDomElement valueItem = eventItem.firstChildElement(DatapackGeneralLoader::text_value);
+                event.name=eventItem.attribute("id");
+                QDomElement valueItem = eventItem.firstChildElement("value");
                 while(!valueItem.isNull())
                 {
                     if(valueItem.isElement())
                         event.values << valueItem.text();
-                    valueItem = valueItem.nextSiblingElement(DatapackGeneralLoader::text_value);
+                    valueItem = valueItem.nextSiblingElement("value");
                 }
                 if(!event.values.isEmpty())
                     returnVar << event;
             }
         }
-        eventItem = eventItem.nextSiblingElement(DatapackGeneralLoader::text_event);
+        eventItem = eventItem.nextSiblingElement("event");
     }
     return returnVar;
 }
@@ -2746,7 +2621,7 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
     }
     #endif
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=DatapackGeneralLoader::text_shops)
+    if(root.tagName()!="shops")
     {
         qDebug() << (std::stringLiteral("Unable to open the shops file: %1, \"shops\" root balise not found for the xml file").arg(file));
         return shops;
@@ -2754,27 +2629,27 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
 
     //load the content
     bool ok;
-    QDomElement shopItem = root.firstChildElement(DatapackGeneralLoader::text_shop);
+    QDomElement shopItem = root.firstChildElement("shop");
     while(!shopItem.isNull())
     {
         if(shopItem.isElement())
         {
-            if(shopItem.hasAttribute(DatapackGeneralLoader::text_id))
+            if(shopItem.hasAttribute("id"))
             {
-                uint32_t id=shopItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                uint32_t id=shopItem.attribute("id").toUInt(&ok);
                 if(ok)
                 {
                     if(!shops.contains(id))
                     {
                         Shop shop;
-                        QDomElement product = shopItem.firstChildElement(DatapackGeneralLoader::text_product);
+                        QDomElement product = shopItem.firstChildElement("product");
                         while(!product.isNull())
                         {
                             if(product.isElement())
                             {
-                                if(product.hasAttribute(DatapackGeneralLoader::text_itemId))
+                                if(product.hasAttribute("itemId"))
                                 {
-                                    uint32_t itemId=product.attribute(DatapackGeneralLoader::text_itemId).toUInt(&ok);
+                                    uint32_t itemId=product.attribute("itemId").toUInt(&ok);
                                     if(!ok)
                                         qDebug() << (std::stringLiteral("preload_shop() product attribute itemId is not a number for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
                                     else
@@ -2784,9 +2659,9 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
                                         else
                                         {
                                             uint32_t price=items.value(itemId).price;
-                                            if(product.hasAttribute(DatapackGeneralLoader::text_overridePrice))
+                                            if(product.hasAttribute("overridePrice"))
                                             {
-                                                price=product.attribute(DatapackGeneralLoader::text_overridePrice).toUInt(&ok);
+                                                price=product.attribute("overridePrice").toUInt(&ok);
                                                 if(!ok)
                                                     price=items.value(itemId).price;
                                             }
@@ -2805,7 +2680,7 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
                             }
                             else
                                 qDebug() << (std::stringLiteral("preload_shop() material is not an element for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
-                            product = product.nextSiblingElement(DatapackGeneralLoader::text_product);
+                            product = product.nextSiblingElement("product");
                         }
                         shops[id]=shop;
                     }
@@ -2820,7 +2695,7 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
         }
         else
             qDebug() << (std::stringLiteral("Unable to open the shops file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
-        shopItem = shopItem.nextSiblingElement(DatapackGeneralLoader::text_shop);
+        shopItem = shopItem.nextSiblingElement("shop");
     }
     return shops;
 }
@@ -2912,7 +2787,7 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(
     }
     #endif
     const QDomElement &root = domDocument.documentElement();
-    if(root.tagName()!=DatapackGeneralLoader::text_list)
+    if(root.tagName()!="list")
     {
         qDebug() << (std::stringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return serverProfileList;
@@ -2920,7 +2795,7 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(
 
     //load the content
     bool ok;
-    QDomElement startItem = root.firstChildElement(DatapackGeneralLoader::text_start);
+    QDomElement startItem = root.firstChildElement("start");
     while(!startItem.isNull())
     {
         if(startItem.isElement())
@@ -2928,47 +2803,47 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(
             ServerProfile serverProfile;
             serverProfile.orientation=Orientation_bottom;
 
-            const QDomElement &map = startItem.firstChildElement(DatapackGeneralLoader::text_map);
-            if(!map.isNull() && map.isElement() && map.hasAttribute(DatapackGeneralLoader::text_file) && map.hasAttribute(DatapackGeneralLoader::text_x) && map.hasAttribute(DatapackGeneralLoader::text_y))
+            const QDomElement &map = startItem.firstChildElement("map");
+            if(!map.isNull() && map.isElement() && map.hasAttribute("file") && map.hasAttribute("x") && map.hasAttribute("y"))
             {
-                serverProfile.mapString=map.attribute(DatapackGeneralLoader::text_file);
-                if(!serverProfile.mapString.endsWith(DatapackGeneralLoader::text_dottmx))
-                    serverProfile.mapString+=DatapackGeneralLoader::text_dottmx;
+                serverProfile.mapString=map.attribute("file");
+                if(!serverProfile.mapString.endsWith(".tmx"))
+                    serverProfile.mapString+=".tmx";
                 if(!QFile::exists(datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_MAPMAIN).arg(mainDatapackCode)+serverProfile.mapString))
                 {
                     qDebug() << (std::stringLiteral("Unable to open the xml file: %1, map don't exists %2: child.tagName(): %3 (at line: %4)").arg(file).arg(serverProfile.mapString).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                    startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
+                    startItem = startItem.nextSiblingElement("start");
                     continue;
                 }
-                serverProfile.x=map.attribute(DatapackGeneralLoader::text_x).toUShort(&ok);
+                serverProfile.x=map.attribute("x").toUShort(&ok);
                 if(!ok)
                 {
                     qDebug() << (std::stringLiteral("Unable to open the xml file: %1, map x is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                    startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
+                    startItem = startItem.nextSiblingElement("start");
                     continue;
                 }
-                serverProfile.y=map.attribute(DatapackGeneralLoader::text_y).toUShort(&ok);
+                serverProfile.y=map.attribute("y").toUShort(&ok);
                 if(!ok)
                 {
                     qDebug() << (std::stringLiteral("Unable to open the xml file: %1, map y is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                    startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
+                    startItem = startItem.nextSiblingElement("start");
                     continue;
                 }
             }
             else
             {
                 qDebug() << (std::stringLiteral("Unable to open the xml file: %1, no correct map configuration: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
+                startItem = startItem.nextSiblingElement("start");
                 continue;
             }
 
-            if(startItem.hasAttribute(DatapackGeneralLoader::text_id))
-                serverProfile.id=startItem.attribute(DatapackGeneralLoader::text_id);
+            if(startItem.hasAttribute("id"))
+                serverProfile.id=startItem.attribute("id");
 
             if(idDuplicate.contains(serverProfile.id))
             {
                 qDebug() << (std::stringLiteral("Unable to open the xml file: %1, id duplicate: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
+                startItem = startItem.nextSiblingElement("start");
                 continue;
             }
 
@@ -2980,7 +2855,7 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(
         }
         else
             qDebug() << (std::stringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-        startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
+        startItem = startItem.nextSiblingElement("start");
     }
 
     return serverProfileList;
