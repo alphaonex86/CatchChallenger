@@ -140,8 +140,10 @@ public:
     char inputQueryNumberToPacketCode[256];//invalidation packet code: 0x00, store the packetCode, store size is useless because the resolution or is do at send or at receive, then no performance gain
 
     static char tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     static char tempBigBufferForCompressedOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
     static char tempBigBufferForUncompressedInput[CATCHCHALLENGER_BIGBUFFERSIZE];
+    #endif
 private:
     bool internalPackOutcommingData(const char * const data,const int &size);
 
