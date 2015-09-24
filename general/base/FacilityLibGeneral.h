@@ -17,10 +17,10 @@ public:
     static std::vector<std::string > listFolder(const std::string& folder,const std::string& suffix=std::string());
     static std::string randomPassword(const std::string& string,const uint8_t& length);
     static std::vector<std::string > skinIdList(const std::string& skinPath);
-    static std::string secondsToString(const quint64 &seconds);
+    //static std::string secondsToString(const quint64 &seconds);
     static bool rectTouch(QRect r1,QRect r2);
-    static bool rmpath(const QDir &dir);
-    static std::string timeToString(const uint32_t &time);
+    static bool rmpath(const std::string &dirPath);
+    //static std::string timeToString(const uint32_t &time);
 private:
     static std::string text_slash;
     static std::string text_male;

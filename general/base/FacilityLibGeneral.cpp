@@ -34,15 +34,18 @@ unsigned int FacilityLibGeneral::toUTF8With16BitsHeader(const std::string &text,
 std::vector<std::string> FacilityLibGeneral::listFolder(const std::string& folder,const std::string& suffix)
 {
     std::vector<std::string> returnList;
-    QFileInfoList entryList=QDir(folder+suffix).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot);//possible wait time here
+    QFileInfoList entryList=QDir(QString::fromStdString(folder+suffix)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot);//possible wait time here
     int sizeEntryList=entryList.size();
     for (int index=0;index<sizeEntryList;++index)
     {
         QFileInfo fileInfo=entryList.at(index);
         if(fileInfo.isDir())
-            returnList+=listFolder(folder,suffix+fileInfo.fileName()+text_slash);//put unix separator because it's transformed into that's under windows too
+        {
+            const std::vector<std::string> &newList=listFolder(folder,suffix+fileInfo.fileName().toStdString()+text_slash);//put unix separator because it's transformed into that's under windows too
+            returnList.insert(returnList.end(),newList.begin(),newList.end());
+        }
         else if(fileInfo.isFile())
-            returnList+=suffix+fileInfo.fileName();
+            returnList.push_back(suffix+fileInfo.fileName().toStdString());
     }
     return returnList;
 }
@@ -63,26 +66,25 @@ std::string FacilityLibGeneral::randomPassword(const std::string& string,const u
 
 std::vector<std::string> FacilityLibGeneral::skinIdList(const std::string& skinPath)
 {
-    const std::string &slashbackpng=std::stringLiteral("/back.png");
-    const std::string &slashfrontpng=std::stringLiteral("/front.png");
-    const std::string &slashtrainerpng=std::stringLiteral("/trainer.png");
     std::vector<std::string> skinFolderList;
-    QFileInfoList entryList=QDir(skinPath).entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::DirsFirst);//possible wait time here
+    QFileInfoList entryList=QDir(QString::fromStdString(skinPath)).entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::DirsFirst);//possible wait time here
     int sizeEntryList=entryList.size();
     for (int index=0;index<sizeEntryList;++index)
     {
         QFileInfo fileInfo=entryList.at(index);
         if(fileInfo.isDir())
-            if(QFile(fileInfo.absoluteFilePath()+slashbackpng).exists() && QFile(fileInfo.absoluteFilePath()+slashfrontpng).exists() && QFile(fileInfo.absoluteFilePath()+slashtrainerpng).exists())
-                skinFolderList << fileInfo.fileName();
+            if(QFile(fileInfo.absoluteFilePath()+"/back.png").exists() &&
+                    QFile(fileInfo.absoluteFilePath()+"/front.png").exists() &&
+                    QFile(fileInfo.absoluteFilePath()+"/trainer.png").exists())
+                skinFolderList.push_back(fileInfo.fileName().toStdString());
     }
-    skinFolderList.sort();
+    std::sort(skinFolderList.begin(), skinFolderList.end());
     while(skinFolderList.size()>255)
-        skinFolderList.removeLast();
+        skinFolderList.pop_back();
     return skinFolderList;
 }
 
-std::string FacilityLibGeneral::secondsToString(const quint64 &seconds)
+/*std::string FacilityLibGeneral::secondsToString(const quint64 &seconds)
 {
     if(seconds<60)
         return QObject::tr("%n second(s)","",seconds);
@@ -92,7 +94,7 @@ std::string FacilityLibGeneral::secondsToString(const quint64 &seconds)
         return QObject::tr("%n hour(s)","",seconds/(60*60));
     else
         return QObject::tr("%n day(s)","",seconds/(60*60*24));
-}
+}*/
 
 bool FacilityLibGeneral::rectTouch(QRect r1,QRect r2)
 {
@@ -112,8 +114,9 @@ bool FacilityLibGeneral::rectTouch(QRect r1,QRect r2)
     return true;
 }
 
-bool FacilityLibGeneral::rmpath(const QDir &dir)
+bool FacilityLibGeneral::rmpath(const std::string &dirPath)
 {
+    const QDir dir(QString::fromStdString(dirPath));
     if(!dir.exists())
         return true;
     bool allHaveWork=true;
@@ -129,7 +132,7 @@ bool FacilityLibGeneral::rmpath(const QDir &dir)
         else
         {
             //return the fonction for scan the new folder
-            if(!FacilityLibGeneral::rmpath(dir.absolutePath()+FacilityLibGeneral::text_slash+fileInfo.fileName()+FacilityLibGeneral::text_slash))
+            if(!FacilityLibGeneral::rmpath(dir.absolutePath().toStdString()+FacilityLibGeneral::text_slash+fileInfo.fileName().toStdString()+FacilityLibGeneral::text_slash))
                 allHaveWork=false;
         }
     }
@@ -139,7 +142,7 @@ bool FacilityLibGeneral::rmpath(const QDir &dir)
     return allHaveWork;
 }
 
-std::string FacilityLibGeneral::timeToString(const uint32_t &time)
+/*std::string FacilityLibGeneral::timeToString(const uint32_t &time)
 {
     if(time>=3600*24*10)
         return QObject::tr("%n day(s)","",time/(3600*24));
@@ -149,4 +152,4 @@ std::string FacilityLibGeneral::timeToString(const uint32_t &time)
         return QObject::tr("%n hour(s) and %1","",time/3600).arg(QObject::tr("%n minute(s)","",(time%3600)/60));
     else
         return QObject::tr("%n minute(s) and %1","",time/60).arg(QObject::tr("%n second(s)","",time%60));
-}
+}*/

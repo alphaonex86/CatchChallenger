@@ -1,5 +1,4 @@
 #include "FightLoader.h"
-#include "../base/DebugClass.h"
 #include "../base/GeneralVariable.h"
 #include "../base/CommonSettingsCommon.h"
 #include "../base/CommonSettingsServer.h"
@@ -11,77 +10,72 @@
 #include <QDomElement>
 #include <QtCore/qmath.h>
 #include <QDir>
-#include <QDebug>
+#include <iostream>
 
 using namespace CatchChallenger;
 
-std::string FightLoader::text_type=QLatin1String("type");
-std::string FightLoader::text_name=QLatin1String("name");
-std::string FightLoader::text_id=QLatin1String("id");
-std::string FightLoader::text_multiplicator=QLatin1String("multiplicator");
-std::string FightLoader::text_number=QLatin1String("number");
-std::string FightLoader::text_to=QLatin1String("to");
-std::string FightLoader::text_dotcoma=QLatin1String(";");
-std::string FightLoader::text_list=QLatin1String("list");
-std::string FightLoader::text_monster=QLatin1String("monster");
-std::string FightLoader::text_monsters=QLatin1String("monsters");
-std::string FightLoader::text_dotxml=QLatin1String(".xml");
-std::string FightLoader::text_skills=QLatin1String("skills");
-std::string FightLoader::text_buffs=QLatin1String("buffs");
-std::string FightLoader::text_egg_step=QLatin1String("egg_step");
-std::string FightLoader::text_xp_for_max_level=QLatin1String("xp_for_max_level");
-std::string FightLoader::text_xp_max=QLatin1String("xp_max");
-std::string FightLoader::text_hp=QLatin1String("hp");
-std::string FightLoader::text_attack=QLatin1String("attack");
-std::string FightLoader::text_defense=QLatin1String("defense");
-std::string FightLoader::text_special_attack=QLatin1String("special_attack");
-std::string FightLoader::text_special_defense=QLatin1String("special_defense");
-std::string FightLoader::text_speed=QLatin1String("speed");
-std::string FightLoader::text_give_sp=QLatin1String("give_sp");
-std::string FightLoader::text_give_xp=QLatin1String("give_xp");
-std::string FightLoader::text_catch_rate=QLatin1String("catch_rate");
-std::string FightLoader::text_type2=QLatin1String("type2");
-std::string FightLoader::text_pow=QLatin1String("pow");
-std::string FightLoader::text_ratio_gender=QLatin1String("ratio_gender");
-std::string FightLoader::text_percent=QLatin1String("%");
-std::string FightLoader::text_attack_list=QLatin1String("attack_list");
-std::string FightLoader::text_skill=QLatin1String("skill");
-std::string FightLoader::text_skill_level=QLatin1String("skill_level");
-std::string FightLoader::text_attack_level=QLatin1String("attack_level");
-std::string FightLoader::text_level=QLatin1String("level");
-std::string FightLoader::text_byitem=QLatin1String("byitem");
-std::string FightLoader::text_evolution=QLatin1String("evolution");
-std::string FightLoader::text_evolutions=QLatin1String("evolutions");
-std::string FightLoader::text_trade=QLatin1String("trade");
-std::string FightLoader::text_evolveTo=QLatin1String("evolveTo");
-std::string FightLoader::text_item=QLatin1String("item");
-std::string FightLoader::text_fights=QLatin1String("fights");
-std::string FightLoader::text_fight=QLatin1String("fight");
-std::string FightLoader::text_gain=QLatin1String("gain");
-std::string FightLoader::text_cash=QLatin1String("cash");
-std::string FightLoader::text_sp=QLatin1String("sp");
-std::string FightLoader::text_effect=QLatin1String("effect");
-std::string FightLoader::text_endurance=QLatin1String("endurance");
-std::string FightLoader::text_life=QLatin1String("life");
-std::string FightLoader::text_applyOn=QLatin1String("applyOn");
-std::string FightLoader::text_aloneEnemy=QLatin1String("aloneEnemy");
-std::string FightLoader::text_themself=QLatin1String("themself");
-std::string FightLoader::text_allEnemy=QLatin1String("allEnemy");
-std::string FightLoader::text_allAlly=QLatin1String("allAlly");
-std::string FightLoader::text_nobody=QLatin1String("nobody");
-std::string FightLoader::text_quantity=QLatin1String("quantity");
-std::string FightLoader::text_more=QLatin1String("+");
-std::string FightLoader::text_success=QLatin1String("success");
-std::string FightLoader::text_buff=QLatin1String("buff");
-std::string FightLoader::text_capture_bonus=QLatin1String("capture_bonus");
-std::string FightLoader::text_duration=QLatin1String("duration");
-std::string FightLoader::text_Always=QLatin1String("Always");
-std::string FightLoader::text_NumberOfTurn=QLatin1String("NumberOfTurn");
-std::string FightLoader::text_durationNumberOfTurn=QLatin1String("durationNumberOfTurn");
-std::string FightLoader::text_ThisFight=QLatin1String("ThisFight");
-std::string FightLoader::text_inFight=QLatin1String("inFight");
-std::string FightLoader::text_inWalk=QLatin1String("inWalk");
-std::string FightLoader::text_steps=QLatin1String("steps");
+std::string FightLoader::text_type="type";
+std::string FightLoader::text_name="name";
+std::string FightLoader::text_id="id";
+std::string FightLoader::text_multiplicator="multiplicator";
+std::string FightLoader::text_number="number";
+std::string FightLoader::text_to="to";
+std::string FightLoader::text_dotcoma=";";
+std::string FightLoader::text_list="list";
+std::string FightLoader::text_monster="monster";
+std::string FightLoader::text_monsters="monsters";
+std::string FightLoader::text_dotxml=".xml";
+std::string FightLoader::text_skills="skills";
+std::string FightLoader::text_buffs="buffs";
+std::string FightLoader::text_egg_step="egg_step";
+std::string FightLoader::text_xp_for_max_level="xp_for_max_level";
+std::string FightLoader::text_xp_max="xp_max";
+std::string FightLoader::text_hp="hp";
+std::string FightLoader::text_attack="attack";
+std::string FightLoader::text_defense="defense";
+std::string FightLoader::text_special_attack="special_attack";
+std::string FightLoader::text_special_defense="special_defense";
+std::string FightLoader::text_speed="speed";
+std::string FightLoader::text_give_sp="give_sp";
+std::string FightLoader::text_give_xp="give_xp";
+std::string FightLoader::text_catch_rate="catch_rate";
+std::string FightLoader::text_type2="type2";
+std::string FightLoader::text_pow="pow";
+std::string FightLoader::text_ratio_gender="ratio_gender";
+std::string FightLoader::text_percent="%";
+std::string FightLoader::text_attack_list="attack_list";
+std::string FightLoader::text_skill="skill";
+std::string FightLoader::text_skill_level="skill_level";
+std::string FightLoader::text_attack_level="attack_level";
+std::string FightLoader::text_level="level";
+std::string FightLoader::text_byitem="byitem";
+std::string FightLoader::text_evolution="evolution";
+std::string FightLoader::text_evolutions="evolutions";
+std::string FightLoader::text_trade="trade";
+std::string FightLoader::text_evolveTo="evolveTo";
+std::string FightLoader::text_item="item";
+std::string FightLoader::text_fights="fights";
+std::string FightLoader::text_fight="fight";
+std::string FightLoader::text_gain="gain";
+std::string FightLoader::text_cash="cash";
+std::string FightLoader::text_sp="sp";
+std::string FightLoader::text_effect="effect";
+std::string FightLoader::text_endurance="endurance";
+std::string FightLoader::text_life="life";
+std::string FightLoader::text_applyOn="applyOn";
+std::string FightLoader::text_quantity="quantity";
+std::string FightLoader::text_more="+";
+std::string FightLoader::text_success="success";
+std::string FightLoader::text_buff="buff";
+std::string FightLoader::text_capture_bonus="capture_bonus";
+std::string FightLoader::text_duration="duration";
+std::string FightLoader::text_Always="Always";
+std::string FightLoader::text_NumberOfTurn="NumberOfTurn";
+std::string FightLoader::text_durationNumberOfTurn="durationNumberOfTurn";
+std::string FightLoader::text_ThisFight="ThisFight";
+std::string FightLoader::text_inFight="inFight";
+std::string FightLoader::text_inWalk="inWalk";
+std::string FightLoader::text_steps="steps";
 
 bool CatchChallenger::operator<(const Monster::AttackToLearn &entry1, const Monster::AttackToLearn &entry2)
 {
@@ -104,20 +98,20 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
     else
     {
         #endif
-        QFile itemsFile(file);
+        QFile itemsFile(QString::fromStdString(file));
         QByteArray xmlContent;
         if(!itemsFile.open(QIODevice::ReadOnly))
         {
-            qDebug() << std::stringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString());
+            std::cerr << "Unable to open the file: " << file << ", error: " << itemsFile.errorString().toStdString() << std::endl;
             return types;
         }
         xmlContent=itemsFile.readAll();
         itemsFile.close();
-        std::string errorStr;
+        QString errorStr;
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
-            qDebug() << std::stringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
+            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
             return types;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -127,103 +121,103 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=QLatin1String("types"))
     {
-        qDebug() << std::stringLiteral("Unable to open the file: %1, \"types\" root balise not found for the xml file").arg(file);
+        std::cerr << "Unable to open the file: " << file << ", \"types\" root balise not found for the xml file" << std::endl;
         return types;
     }
 
     //load the content
     bool ok;
     {
-        Std::unordered_Set<std::string> duplicate;
-        QDomElement typeItem = root.firstChildElement(FightLoader::text_type);
+        std::unordered_set<std::string> duplicate;
+        QDomElement typeItem = root.firstChildElement(QString::fromStdString("type"));
         while(!typeItem.isNull())
         {
             if(typeItem.isElement())
             {
-                if(typeItem.hasAttribute(FightLoader::text_name))
+                if(typeItem.hasAttribute(QString::fromStdString(FightLoader::text_name)))
                 {
-                    std::string name=typeItem.attribute(FightLoader::text_name);
-                    if(!duplicate.contains(name))
+                    std::string name=typeItem.attribute(QString::fromStdString(FightLoader::text_name)).toStdString();
+                    if(duplicate.find(name)==duplicate.cend())
                     {
-                        duplicate << name;
+                        duplicate.insert(name);
                         Type type;
                         type.name=name;
                         nameToId[type.name]=types.size();
-                        types << type;
+                        types.push_back(type);
                     }
                     else
-                        qDebug() << std::stringLiteral("Unable to open the file: %1, name is already set for type: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+                        std::cerr << "Unable to open the file: " << file << ", name is already set for type: child.tagName(): " << typeItem.tagName().toStdString() << " (at line: " << typeItem.lineNumber() << ")" << std::endl;
                 }
                 else
-                    qDebug() << std::stringLiteral("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+                    std::cerr << "Unable to open the file: " << file << ", have not the item id: child.tagName(): " << typeItem.tagName().toStdString() << " (at line: " << typeItem.lineNumber() << ")" << std::endl;
             }
             else
-                qDebug() << std::stringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
-            typeItem = typeItem.nextSiblingElement(FightLoader::text_type);
+                std::cerr << "Unable to open the file: " << file << ", is not an element: child.tagName(): " << typeItem.tagName().toStdString() << " (at line: " << typeItem.lineNumber() << ")" << std::endl;
+            typeItem = typeItem.nextSiblingElement(QString::fromStdString("type"));
         }
     }
     {
-        Std::unordered_Set<std::string> duplicate;
-        QDomElement typeItem = root.firstChildElement(FightLoader::text_type);
+        std::unordered_set<std::string> duplicate;
+        QDomElement typeItem = root.firstChildElement(QString::fromStdString("type"));
         while(!typeItem.isNull())
         {
             if(typeItem.isElement())
             {
-                if(typeItem.hasAttribute(FightLoader::text_name))
+                if(typeItem.hasAttribute(QString::fromStdString(FightLoader::text_name)))
                 {
-                    std::string name=typeItem.attribute(FightLoader::text_name);
-                    if(!duplicate.contains(name))
+                    std::string name=typeItem.attribute(QString::fromStdString(FightLoader::text_name)).toStdString();
+                    if(duplicate.find(name)==duplicate.cend())
                     {
-                        duplicate << name;
-                        QDomElement multiplicator = typeItem.firstChildElement(FightLoader::text_multiplicator);
+                        duplicate.insert(name);
+                        QDomElement multiplicator = typeItem.firstChildElement(QString::fromStdString(FightLoader::text_multiplicator));
                         while(!multiplicator.isNull())
                         {
                             if(multiplicator.isElement())
                             {
-                                if(multiplicator.hasAttribute(FightLoader::text_number) && multiplicator.hasAttribute(FightLoader::text_to))
+                                if(multiplicator.hasAttribute(QString::fromStdString("number")) && multiplicator.hasAttribute(QString::fromStdString(FightLoader::text_to)))
                                 {
-                                    float number=multiplicator.attribute(FightLoader::text_number).toFloat(&ok);
-                                    std::vector<std::string> to=multiplicator.attribute(FightLoader::text_to).split(FightLoader::text_dotcoma);
+                                    float number=multiplicator.attribute(QString::fromStdString("number")).toFloat(&ok);
+                                    std::vector<std::string> to=stringsplit(multiplicator.attribute(QString::fromStdString(FightLoader::text_to)).toStdString(),';');
                                     if(ok && (number==2.0 || number==0.5 || number==0.0))
                                     {
-                                        int index=0;
+                                        unsigned int index=0;
                                         while(index<to.size())
                                         {
-                                            if(nameToId.contains(to.at(index)))
+                                            if(nameToId.find(to.at(index))!=nameToId.cend())
                                             {
                                                 const std::string &typeName=to.at(index);
                                                 if(number==0)
-                                                    types[nameToId.value(name)].multiplicator[nameToId.value(typeName)]=0;
+                                                    types[nameToId.at(name)].multiplicator[nameToId.at(typeName)]=0;
                                                 else if(number>1)
-                                                    types[nameToId.value(name)].multiplicator[nameToId.value(typeName)]=number;
+                                                    types[nameToId.at(name)].multiplicator[nameToId.at(typeName)]=number;
                                                 else
-                                                    types[nameToId.value(name)].multiplicator[nameToId.value(typeName)]=-(1.0/number);
+                                                    types[nameToId.at(name)].multiplicator[nameToId.at(typeName)]=-(1.0/number);
                                             }
                                             else
-                                                qDebug() << std::stringLiteral("Unable to open the file: %1, name is not into list: %4 is not found: child.tagName(): %2 (at line: %3)").arg(file).arg(multiplicator.tagName()).arg(multiplicator.lineNumber()).arg(to.at(index));
+                                                std::cerr << "Unable to open the file: " << file << ", name is not into list: " << to.at(index) << " is not found: child.tagName(): " << multiplicator.tagName().toStdString() << " (at line: " << multiplicator.lineNumber() << ")" << std::endl;
                                             index++;
                                         }
                                     }
                                     else
-                                        qDebug() << std::stringLiteral("Unable to open the file: %1, name is already set for type: child.tagName(): %2 (at line: %3)").arg(file).arg(multiplicator.tagName()).arg(multiplicator.lineNumber());
+                                        std::cerr << "Unable to open the file: " << file << ", name is already set for type: child.tagName(): " << multiplicator.tagName().toStdString() << " (at line: " << multiplicator.lineNumber() << ")" << std::endl;
                                 }
                                 else
-                                    qDebug() << std::stringLiteral("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(file).arg(multiplicator.tagName()).arg(multiplicator.lineNumber());
+                                    std::cerr << "Unable to open the file: " << file << ", have not the item id: child.tagName(): " << multiplicator.tagName().toStdString() << " (at line: " << multiplicator.lineNumber() << ")" << std::endl;
                             }
                             else
-                                qDebug() << std::stringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(multiplicator.tagName()).arg(multiplicator.lineNumber());
-                            multiplicator = multiplicator.nextSiblingElement(FightLoader::text_multiplicator);
+                                std::cerr << "Unable to open the file: " << file << ", is not an element: child.tagName(): " << multiplicator.tagName().toStdString() << " (at line: " << multiplicator.lineNumber() << ")" << std::endl;
+                            multiplicator = multiplicator.nextSiblingElement(QString::fromStdString(FightLoader::text_multiplicator));
                         }
                     }
                     else
-                        qDebug() << std::stringLiteral("Unable to open the file: %1, name is already set for type: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+                        std::cerr << "Unable to open the file: " << file << ", name is already set for type: child.tagName(): " << typeItem.tagName().toStdString() << " (at line: " << typeItem.lineNumber() << ")" << std::endl;
                 }
                 else
-                    qDebug() << std::stringLiteral("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+                    std::cerr << "Unable to open the file: " << file << ", have not the item id: child.tagName(): " << typeItem.tagName().toStdString() << " (at line: " << typeItem.lineNumber() << ")" << std::endl;
             }
             else
-                qDebug() << std::stringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
-            typeItem = typeItem.nextSiblingElement(FightLoader::text_type);
+                std::cerr << "Unable to open the file: " << file << ", is not an element: child.tagName(): " << typeItem.tagName().toStdString() << " (at line: " << typeItem.lineNumber() << ")" << std::endl;
+            typeItem = typeItem.nextSiblingElement(QString::fromStdString("type"));
         }
     }
     return types;
@@ -237,18 +231,18 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                 )
 {
     std::unordered_map<uint16_t,Monster> monsters;
-    QDir dir(folder);
+    QDir dir(QString::fromStdString(folder));
     QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
-    int file_index=0;
-    while(file_index<fileList.size())
+    unsigned int file_index=0;
+    while(file_index<(uint32_t)fileList.size())
     {
         if(!fileList.at(file_index).isFile())
         {
             file_index++;
             continue;
         }
-        const std::string &file=fileList.at(file_index).absoluteFilePath();
-        if(!file.endsWith(FightLoader::text_dotxml))
+        const std::string &file=fileList.at(file_index).absoluteFilePath().toStdString();
+        if(!stringEndsWith(file,FightLoader::text_dotxml))
         {
             file_index++;
             continue;
@@ -256,7 +250,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
         #ifndef CATCHCHALLENGER_CLASS_MASTER
         std::unordered_map<std::string,uint8_t> typeNameToId;
         {
-            int index=0;
+            unsigned int index=0;
             while(index<types.size())
             {
                 typeNameToId[types.at(index).name]=index;
@@ -272,21 +266,21 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
         else
         {
             #endif
-            QFile xmlFile(file);
+            QFile xmlFile(QString::fromStdString(file));
             QByteArray xmlContent;
             if(!xmlFile.open(QIODevice::ReadOnly))
             {
-                qDebug() << (std::stringLiteral("Unable to open the xml monster file: %1, error: %2").arg(file).arg(xmlFile.errorString()));
+                std::cerr << "Unable to open the xml monster file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
                 file_index++;
                 continue;
             }
             xmlContent=xmlFile.readAll();
             xmlFile.close();
-            std::string errorStr;
+            QString errorStr;
             int errorLine,errorColumn;
             if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
             {
-                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+                std::cerr << "Unable to open the xml file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
                 file_index++;
                 continue;
             }
@@ -295,80 +289,79 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
         }
         #endif
         QDomElement root = domDocument.documentElement();
-        if(root.tagName()!=FightLoader::text_monsters)
+        if(root.tagName().toStdString()!=FightLoader::text_monsters)
         {
-            //qDebug() << (std::stringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
             file_index++;
             continue;
         }
 
         //load the content
         bool ok,ok2;
-        QDomElement item = root.firstChildElement(FightLoader::text_monster);
+        QDomElement item = root.firstChildElement(QString::fromStdString("monster"));
         while(!item.isNull())
         {
             if(item.isElement())
             {
                 bool attributeIsOk=true;
-                if(!item.hasAttribute(FightLoader::text_id))
+                if(!item.hasAttribute(QString::fromStdString("id")))
                 {
-                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, have not the monster attribute \"id\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"id\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
                 }
                 #ifndef CATCHCHALLENGER_CLASS_MASTER
-                if(!item.hasAttribute(FightLoader::text_egg_step))
+                if(!item.hasAttribute(QString::fromStdString(FightLoader::text_egg_step)))
                 {
-                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, have not the monster attribute \"egg_step\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"egg_step\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(FightLoader::text_xp_for_max_level) && !item.hasAttribute(FightLoader::text_xp_max))
+                if(!item.hasAttribute(QString::fromStdString(FightLoader::text_xp_for_max_level)) && !item.hasAttribute(QString::fromStdString(FightLoader::text_xp_max)))
                 {
-                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, have not the monster attribute \"xp_for_max_level\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"xp_for_max_level\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
                 }
                 else
                 {
-                    if(!item.hasAttribute(FightLoader::text_xp_for_max_level))
-                        item.setAttribute(FightLoader::text_xp_for_max_level,item.attribute(FightLoader::text_xp_max));
+                    if(!item.hasAttribute(QString::fromStdString(FightLoader::text_xp_for_max_level)))
+                        item.setAttribute(QString::fromStdString(FightLoader::text_xp_for_max_level),item.attribute(QString::fromStdString(FightLoader::text_xp_max)));
                 }
-                if(!item.hasAttribute(FightLoader::text_hp))
+                if(!item.hasAttribute(QString::fromStdString("hp")))
                 {
-                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, have not the monster attribute \"hp\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"hp\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(FightLoader::text_attack))
+                if(!item.hasAttribute(QString::fromStdString("attack")))
                 {
-                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, have not the monster attribute \"attack\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"attack\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(FightLoader::text_defense))
+                if(!item.hasAttribute(QString::fromStdString("defense")))
                 {
-                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, have not the monster attribute \"defense\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"defense\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(FightLoader::text_special_attack))
+                if(!item.hasAttribute(QString::fromStdString(FightLoader::text_special_attack)))
                 {
-                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, have not the monster attribute \"special_attack\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"special_attack\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(FightLoader::text_special_defense))
+                if(!item.hasAttribute(QString::fromStdString(FightLoader::text_special_defense)))
                 {
-                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, have not the monster attribute \"special_defense\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"special_defense\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(FightLoader::text_speed))
+                if(!item.hasAttribute(QString::fromStdString(FightLoader::text_speed)))
                 {
-                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, have not the monster attribute \"speed\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"speed\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(FightLoader::text_give_sp))
+                if(!item.hasAttribute(QString::fromStdString(FightLoader::text_give_sp)))
                 {
-                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, have not the monster attribute \"give_sp\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"give_sp\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(FightLoader::text_give_xp))
+                if(!item.hasAttribute(QString::fromStdString(FightLoader::text_give_xp)))
                 {
-                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, have not the monster attribute \"give_xp\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"give_xp\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
                 }
                 #endif // CATCHCHALLENGER_CLASS_MASTER
@@ -376,78 +369,75 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                 {
                     Monster monster;
                     monster.catch_rate=100;
-                    uint32_t id=item.attribute(FightLoader::text_id).toUInt(&ok);
+                    uint32_t id=item.attribute(QString::fromStdString("id")).toUInt(&ok);
                     if(!ok)
-                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                    else if(monsters.contains(id))
-                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, id already found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                        std::cerr << "Unable to open the xml file: " << file << ", id not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                    else if(monsters.find(id)!=monsters.cend())
+                        std::cerr << "Unable to open the xml file: " << file << ", id already found: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     else
                     {
-                        #ifdef DEBUG_MESSAGE_MONSTER_LOAD
-                        qDebug() << (std::stringLiteral("monster loading: %1").arg(id));
-                        #endif
                         #ifndef CATCHCHALLENGER_CLASS_MASTER
-                        if(item.hasAttribute(FightLoader::text_catch_rate))
+                        if(item.hasAttribute(QString::fromStdString(FightLoader::text_catch_rate)))
                         {
                             bool ok2;
-                            uint32_t catch_rate=item.attribute(FightLoader::text_catch_rate).toUInt(&ok2);
+                            uint32_t catch_rate=item.attribute(QString::fromStdString(FightLoader::text_catch_rate)).toUInt(&ok2);
                             if(ok2)
                             {
                                 if(catch_rate<=255)
                                     monster.catch_rate=catch_rate;
                                 else
-                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, catch_rate is not a number: %4 child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute("catch_rate")));
+                                    std::cerr << "Unable to open the xml file: " << file << ", catch_rate is not a number: " << item.attribute("catch_rate").toStdString() << " child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                             }
                             else
-                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, catch_rate is not a number: %4 child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute("catch_rate")));
+                                std::cerr << "Unable to open the xml file: " << file << ", catch_rate is not a number: " << item.attribute("catch_rate").toStdString() << " child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
-                        if(item.hasAttribute(FightLoader::text_type))
+                        if(item.hasAttribute(QString::fromStdString("type")))
                         {
-                            const std::vector<std::string> &typeList=item.attribute(FightLoader::text_type).split(FightLoader::text_dotcoma);
-                            int index=0;
+                            const std::vector<std::string> &typeList=stringsplit(item.attribute(QString::fromStdString("type")).toStdString(),';');
+                            unsigned int index=0;
                             while(index<typeList.size())
                             {
-                                if(typeNameToId.contains(typeList.at(index)))
-                                    monster.type << typeNameToId.value(typeList.at(index));
+                                if(typeNameToId.find(typeList.at(index))!=typeNameToId.cend())
+                                    monster.type.push_back(typeNameToId.at(typeList.at(index)));
                                 else
-                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, type not found into the list: %4 child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute(FightLoader::text_type)));
+                                    std::cerr << "Unable to open the xml file: " << file << ", type not found into the list: " << item.attribute(QString::fromStdString("type")).toStdString() << " child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                 index++;
                             }
                         }
-                        if(item.hasAttribute(FightLoader::text_type2))
+                        if(item.hasAttribute(QString::fromStdString(FightLoader::text_type2)))
                         {
-                            const std::vector<std::string> &typeList=item.attribute(FightLoader::text_type2).split(FightLoader::text_dotcoma);
-                            int index=0;
+                            const std::vector<std::string> &typeList=stringsplit(item.attribute(QString::fromStdString(FightLoader::text_type2)).toStdString(),';');
+                            unsigned int index=0;
                             while(index<typeList.size())
                             {
-                                if(typeNameToId.contains(typeList.at(index)))
-                                    monster.type << typeNameToId.value(typeList.at(index));
+                                if(typeNameToId.find(typeList.at(index))!=typeNameToId.cend())
+                                    monster.type.push_back(typeNameToId.at(typeList.at(index)));
                                 else
-                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, type not found into the list: %4 child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute(FightLoader::text_type2)));
+                                    std::cerr << "Unable to open the xml file: " << file << ", type not found into the list: " << item.attribute(QString::fromStdString(FightLoader::text_type2)).toStdString() << " child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                 index++;
                             }
                         }
                         qreal pow=1.0;
                         if(ok)
                         {
-                            if(item.hasAttribute(FightLoader::text_pow))
+                            if(item.hasAttribute(QString::fromStdString(FightLoader::text_pow)))
                             {
-                                pow=item.attribute(FightLoader::text_pow).toDouble(&ok);
+                                pow=item.attribute(QString::fromStdString(FightLoader::text_pow)).toDouble(&ok);
                                 if(!ok)
                                 {
                                     pow=1.0;
-                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, pow is not a double: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                    std::cerr << "Unable to open the xml file: " << file << ", pow is not a double: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                     ok=true;
                                 }
                                 if(pow<=1.0)
                                 {
                                     pow=1.0;
-                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, pow is too low: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                    std::cerr << "Unable to open the xml file: " << file << ", pow is too low: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                 }
                                 if(pow>=10.0)
                                 {
                                     pow=1.0;
-                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, pow is too hight: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                    std::cerr << "Unable to open the xml file: " << file << ", pow is too hight: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                 }
                             }
                         }
@@ -456,66 +446,66 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                         #endif
                         if(ok)
                         {
-                            monster.egg_step=item.attribute(FightLoader::text_egg_step).toUInt(&ok);
+                            monster.egg_step=item.attribute(QString::fromStdString(FightLoader::text_egg_step)).toUInt(&ok);
                             if(!ok)
-                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, egg_step is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                std::cerr << "Unable to open the xml file: " << file << ", egg_step is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.xp_for_max_level=item.attribute(FightLoader::text_xp_for_max_level).toUInt(&ok);
+                            monster.xp_for_max_level=item.attribute(QString::fromStdString(FightLoader::text_xp_for_max_level)).toUInt(&ok);
                             if(!ok)
-                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, xp_for_max_level is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                std::cerr << "Unable to open the xml file: " << file << ", xp_for_max_level is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
                         #endif
                         if(ok)
                         {
-                            monster.stat.hp=item.attribute(FightLoader::text_hp).toUInt(&ok);
+                            monster.stat.hp=item.attribute(QString::fromStdString("hp")).toUInt(&ok);
                             if(!ok)
-                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, hp is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                std::cerr << "Unable to open the xml file: " << file << ", hp is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
                         #ifndef CATCHCHALLENGER_CLASS_MASTER
                         if(ok)
                         {
-                            monster.stat.attack=item.attribute(FightLoader::text_attack).toUInt(&ok);
+                            monster.stat.attack=item.attribute(QString::fromStdString("attack")).toUInt(&ok);
                             if(!ok)
-                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, attack is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                std::cerr << "Unable to open the xml file: " << file << ", attack is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.stat.defense=item.attribute(FightLoader::text_defense).toUInt(&ok);
+                            monster.stat.defense=item.attribute(QString::fromStdString("defense")).toUInt(&ok);
                             if(!ok)
-                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, defense is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                std::cerr << "Unable to open the xml file: " << file << ", defense is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.stat.special_attack=item.attribute(FightLoader::text_special_attack).toUInt(&ok);
+                            monster.stat.special_attack=item.attribute(QString::fromStdString(FightLoader::text_special_attack)).toUInt(&ok);
                             if(!ok)
-                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, special_attack is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                std::cerr << "Unable to open the xml file: " << file << ", special_attack is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.stat.special_defense=item.attribute(FightLoader::text_special_defense).toUInt(&ok);
+                            monster.stat.special_defense=item.attribute(QString::fromStdString(FightLoader::text_special_defense)).toUInt(&ok);
                             if(!ok)
-                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, special_defense is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                std::cerr << "Unable to open the xml file: " << file << ", special_defense is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.stat.speed=item.attribute(FightLoader::text_speed).toUInt(&ok);
+                            monster.stat.speed=item.attribute(QString::fromStdString(FightLoader::text_speed)).toUInt(&ok);
                             if(!ok)
-                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, speed is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                std::cerr << "Unable to open the xml file: " << file << ", speed is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
                         #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
                         if(ok)
                         {
-                            monster.give_xp=item.attribute(FightLoader::text_give_xp).toUInt(&ok)*CommonSettingsServer::commonSettingsServer.rates_xp;
+                            monster.give_xp=item.attribute(QString::fromStdString(FightLoader::text_give_xp)).toUInt(&ok)*CommonSettingsServer::commonSettingsServer.rates_xp;
                             if(!ok)
-                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, give_xp is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                std::cerr << "Unable to open the xml file: " << file << ", give_xp is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.give_sp=item.attribute(FightLoader::text_give_sp).toUInt(&ok)*CommonSettingsServer::commonSettingsServer.rates_xp;
+                            monster.give_sp=item.attribute(QString::fromStdString(FightLoader::text_give_sp)).toUInt(&ok)*CommonSettingsServer::commonSettingsServer.rates_xp;
                             if(!ok)
-                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, give_sp is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                std::cerr << "Unable to open the xml file: " << file << ", give_sp is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
                         #else
                         monster.give_xp=0;
@@ -524,19 +514,19 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                         #endif
                         if(ok)
                         {
-                            if(item.hasAttribute(FightLoader::text_ratio_gender))
+                            if(item.hasAttribute(QString::fromStdString(FightLoader::text_ratio_gender)))
                             {
-                                std::string ratio_gender=item.attribute(FightLoader::text_ratio_gender);
-                                ratio_gender.remove(FightLoader::text_percent);
-                                monster.ratio_gender=ratio_gender.toInt(&ok2);
+                                std::string ratio_gender=item.attribute(QString::fromStdString(FightLoader::text_ratio_gender)).toStdString();
+                                stringreplaceOne(ratio_gender,FightLoader::text_percent,"");
+                                monster.ratio_gender=stringtouint8(ratio_gender,&ok2);
                                 if(!ok2)
                                 {
-                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, ratio_gender is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                    std::cerr << "Unable to open the xml file: " << file << ", ratio_gender is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                     monster.ratio_gender=50;
                                 }
                                 if(monster.ratio_gender<-1 || monster.ratio_gender>100)
                                 {
-                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, ratio_gender is not in range of -1, 100: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                    std::cerr << "Unable to open the xml file: " << file << ", ratio_gender is not in range of -1, 100: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                     monster.ratio_gender=50;
                                 }
                             }
@@ -545,62 +535,62 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                         if(ok)
                         {
                             {
-                                QDomElement attack_list = item.firstChildElement(FightLoader::text_attack_list);
+                                QDomElement attack_list = item.firstChildElement(QString::fromStdString(FightLoader::text_attack_list));
                                 if(!attack_list.isNull())
                                 {
                                     if(attack_list.isElement())
                                     {
-                                        QDomElement attack = attack_list.firstChildElement(FightLoader::text_attack);
+                                        QDomElement attack = attack_list.firstChildElement(QString::fromStdString("attack"));
                                         while(!attack.isNull())
                                         {
                                             if(attack.isElement())
                                             {
-                                                if(attack.hasAttribute(FightLoader::text_skill) || attack.hasAttribute(FightLoader::text_id))
+                                                if(attack.hasAttribute(QString::fromStdString("skill")) || attack.hasAttribute(QString::fromStdString("id")))
                                                 {
                                                     ok=true;
-                                                    if(!attack.hasAttribute(FightLoader::text_skill))
-                                                        attack.setAttribute(FightLoader::text_skill,attack.attribute(FightLoader::text_id));
+                                                    if(!attack.hasAttribute(QString::fromStdString("skill")))
+                                                        attack.setAttribute(QString::fromStdString("skill"),attack.attribute(QString::fromStdString("id")));
                                                     Monster::AttackToLearn attackVar;
-                                                    if(attack.hasAttribute(FightLoader::text_skill_level) || attack.hasAttribute(FightLoader::text_attack_level))
+                                                    if(attack.hasAttribute(QString::fromStdString(FightLoader::text_skill_level)) || attack.hasAttribute(QString::fromStdString(FightLoader::text_attack_level)))
                                                     {
-                                                        if(!attack.hasAttribute(FightLoader::text_skill_level))
-                                                            attack.setAttribute(FightLoader::text_skill_level,attack.attribute(FightLoader::text_attack_level));
-                                                        attackVar.learnSkillLevel=attack.attribute(FightLoader::text_skill_level).toUShort(&ok);
+                                                        if(!attack.hasAttribute(QString::fromStdString(FightLoader::text_skill_level)))
+                                                            attack.setAttribute(QString::fromStdString(FightLoader::text_skill_level),attack.attribute(QString::fromStdString(FightLoader::text_attack_level)));
+                                                        attackVar.learnSkillLevel=attack.attribute(QString::fromStdString(FightLoader::text_skill_level)).toUShort(&ok);
                                                         if(!ok)
-                                                            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, skill_level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()));
+                                                            std::cerr << "Unable to open the xml file: " << file << ", skill_level is not a number: child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                     }
                                                     else
                                                         attackVar.learnSkillLevel=1;
                                                     if(ok)
                                                     {
-                                                        attackVar.learnSkill=attack.attribute(FightLoader::text_skill).toUShort(&ok);
+                                                        attackVar.learnSkill=attack.attribute(QString::fromStdString("skill")).toUShort(&ok);
                                                         if(!ok)
-                                                            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, skill is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()));
+                                                            std::cerr << "Unable to open the xml file: " << file << ", skill is not a number: child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                     }
                                                     if(ok)
                                                     {
-                                                        if(!monsterSkills.contains(attackVar.learnSkill))
+                                                        if(monsterSkills.find(attackVar.learnSkill)==monsterSkills.cend())
                                                         {
-                                                            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, attack is not into attack loaded: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()));
+                                                            std::cerr << "Unable to open the xml file: " << file << ", attack is not into attack loaded: child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                             ok=false;
                                                         }
                                                     }
                                                     if(ok)
                                                     {
-                                                        if(attackVar.learnSkillLevel<=0 || attackVar.learnSkillLevel>(uint32_t)monsterSkills.value(attackVar.learnSkill).level.size())
+                                                        if(attackVar.learnSkillLevel<=0 || attackVar.learnSkillLevel>(uint32_t)monsterSkills.at(attackVar.learnSkill).level.size())
                                                         {
-                                                            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, attack level is not in range 1-%5: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()).arg(monsterSkills.value(attackVar.learnSkill).level.size()));
+                                                            std::cerr << "Unable to open the xml file: " << file << ", attack level is not in range 1-" << monsterSkills.at(attackVar.learnSkill).level.size() << ": child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                             ok=false;
                                                         }
                                                     }
-                                                    if(attack.hasAttribute(FightLoader::text_level))
+                                                    if(attack.hasAttribute(QString::fromStdString("level")))
                                                     {
                                                         if(ok)
                                                         {
-                                                            attackVar.learnAtLevel=attack.attribute(FightLoader::text_level).toUShort(&ok);
+                                                            attackVar.learnAtLevel=attack.attribute(QString::fromStdString("level")).toUShort(&ok);
                                                             if(ok)
                                                             {
-                                                                int index;
+                                                                unsigned int index;
                                                                 //if it's the first lean don't need previous learn
                                                                 if(attackVar.learnSkillLevel>1)
                                                                 {
@@ -613,7 +603,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                                     }
                                                                     if(index==monster.learn.size())
                                                                     {
-                                                                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, attack %4 with level %5 can't be added because not same attack with previous level: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()).arg(attackVar.learnSkill).arg(attackVar.learnSkillLevel));
+                                                                        std::cerr << "Unable to open the xml file: " << file << ", attack " << attackVar.learnSkill << " with level " << attackVar.learnSkillLevel << " can't be added because not same attack with previous level: child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                                         ok=false;
                                                                     }
                                                                 }
@@ -628,61 +618,53 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                                             ok=true;
                                                                         if(monster.learn.at(index).learnSkillLevel==attackVar.learnSkillLevel && monster.learn.at(index).learnSkill==attackVar.learnSkill)
                                                                         {
-                                                                            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, attack already do for this level for skill %4 at level %5 for monster %6: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()).arg(attackVar.learnSkill).arg(attackVar.learnSkillLevel).arg(id));
+                                                                            std::cerr << "Unable to open the xml file: " << file << ", attack already do for this level for skill " << attackVar.learnSkill << " at level " << attackVar.learnSkillLevel << " for monster " << id << ": child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                                             ok=false;
                                                                             break;
                                                                         }
                                                                         if(monster.learn.at(index).learnSkill==attackVar.learnSkill && monster.learn.at(index).learnSkillLevel==attackVar.learnSkillLevel)
                                                                         {
-                                                                            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, this attack level is already found %4, level: %5 for attack: %6: child.tagName(): %2 (at line: %3)")
-                                                                                                     .arg(file).arg(attack.tagName()).arg(attack.lineNumber())
-                                                                                                     .arg(attackVar.learnSkill).arg(attackVar.learnSkillLevel)
-                                                                                                     .arg(index)
-                                                                                                     );
+                                                                            std::cerr << "Unable to open the xml file: " << file << ", this attack level is already found " << attackVar.learnSkill << ", level: " << attackVar.learnSkillLevel << " for attack: " << index << ": child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                                             ok=false;
                                                                             break;
                                                                         }
                                                                         index++;
                                                                     }
                                                                     if(ok)
-                                                                        monster.learn<<attackVar;
+                                                                        monster.learn.push_back(attackVar);
                                                                 }
                                                                 else
-                                                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, no way to learn %4, level: %5 for attack: %6: child.tagName(): %2 (at line: %3)")
-                                                                                             .arg(file).arg(attack.tagName()).arg(attack.lineNumber())
-                                                                                             .arg(attackVar.learnSkill).arg(attackVar.learnSkillLevel)
-                                                                                             .arg(index)
-                                                                                             );
+                                                                    std::cerr << "Unable to open the xml file: " << file << ", no way to learn " << attackVar.learnSkill << ", level: " << attackVar.learnSkillLevel << " for attack: " << index << ": child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                             }
                                                             else
-                                                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()));
+                                                                std::cerr << "Unable to open the xml file: " << file << ", level is not a number: child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                         }
                                                     }
                                                     else
                                                     {
                                                         #ifndef CATCHCHALLENGER_CLASS_MASTER
-                                                        if(attack.hasAttribute(FightLoader::text_byitem))
+                                                        if(attack.hasAttribute(QString::fromStdString(FightLoader::text_byitem)))
                                                         {
                                                             uint32_t itemId;
                                                             if(ok)
                                                             {
-                                                                itemId=attack.attribute(FightLoader::text_byitem).toUShort(&ok);
+                                                                itemId=attack.attribute(QString::fromStdString(FightLoader::text_byitem)).toUShort(&ok);
                                                                 if(!ok)
-                                                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, item to learn is not a number %4: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()).arg(attack.attribute(FightLoader::text_byitem)));
+                                                                    std::cerr << "Unable to open the xml file: " << file << ", item to learn is not a number " << attack.attribute("byitem").toStdString() << ": child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                             }
                                                             if(ok)
                                                             {
-                                                                if(!items.contains(itemId))
+                                                                if(items.find(itemId)==items.cend())
                                                                 {
-                                                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, item to learn not found %4: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()).arg(itemId));
+                                                                    std::cerr << "Unable to open the xml file: " << file << ", item to learn not found " << itemId << ": child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                                     ok=false;
                                                                 }
                                                             }
                                                             if(ok)
                                                             {
-                                                                if(monster.learnByItem.contains(itemId))
+                                                                if(monster.learnByItem.find(itemId)!=monster.learnByItem.cend())
                                                                 {
-                                                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, item to learn is already used %4: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()).arg(itemId));
+                                                                    std::cerr << "Unable to open the xml file: " << file << ", item to learn is already used " << itemId << ": child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                                     ok=false;
                                                                 }
                                                             }
@@ -696,65 +678,65 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                         }
                                                         else
                                                         {
-                                                            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, level and byitem is not found: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()));
+                                                            std::cerr << "Unable to open the xml file: " << file << ", level and byitem is not found: child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                             ok=false;
                                                         }
                                                         #endif // CATCHCHALLENGER_CLASS_MASTER
                                                     }
                                                 }
                                                 else
-                                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, missing arguements (level or skill): child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()));
+                                                    std::cerr << "Unable to open the xml file: " << file << ", missing arguements (level or skill): child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                             }
                                             else
-                                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, attack_list balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()));
-                                            attack = attack.nextSiblingElement(FightLoader::text_attack);
+                                                std::cerr << "Unable to open the xml file: " << file << ", attack_list balise is not an element: child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
+                                            attack = attack.nextSiblingElement(QString::fromStdString("attack"));
                                         }
                                         qSort(monster.learn);
                                     }
                                     else
-                                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, attack_list balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                        std::cerr << "Unable to open the xml file: " << file << ", attack_list balise is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                 }
                                 else
-                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, have not attack_list: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                    std::cerr << "Unable to open the xml file: " << file << ", have not attack_list: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                             }
                             #ifndef CATCHCHALLENGER_CLASS_MASTER
                             {
-                                QDomElement evolutionsItem = item.firstChildElement(FightLoader::text_evolutions);
+                                QDomElement evolutionsItem = item.firstChildElement(QString::fromStdString(FightLoader::text_evolutions));
                                 if(!evolutionsItem.isNull())
                                 {
                                     if(evolutionsItem.isElement())
                                     {
-                                        QDomElement evolutionItem = evolutionsItem.firstChildElement(FightLoader::text_evolution);
+                                        QDomElement evolutionItem = evolutionsItem.firstChildElement(QString::fromStdString(FightLoader::text_evolution));
                                         while(!evolutionItem.isNull())
                                         {
                                             if(evolutionItem.isElement())
                                             {
-                                                if(evolutionItem.hasAttribute(FightLoader::text_type) && (
-                                                       evolutionItem.hasAttribute(FightLoader::text_level) ||
-                                                       (evolutionItem.attribute(FightLoader::text_type)==FightLoader::text_trade && evolutionItem.hasAttribute(FightLoader::text_evolveTo)) ||
-                                                       (evolutionItem.attribute(FightLoader::text_type)==FightLoader::text_item && evolutionItem.hasAttribute(FightLoader::text_item))
+                                                if(evolutionItem.hasAttribute(QString::fromStdString("type")) && (
+                                                       evolutionItem.hasAttribute(QString::fromStdString("level")) ||
+                                                       (evolutionItem.attribute(QString::fromStdString("type"))=="trade" && evolutionItem.hasAttribute(QString::fromStdString(FightLoader::text_evolveTo))) ||
+                                                       (evolutionItem.attribute(QString::fromStdString("type"))=="item" && evolutionItem.hasAttribute(QString::fromStdString("item")))
                                                        )
                                                    )
                                                 {
                                                     ok=true;
                                                     Monster::Evolution evolutionVar;
-                                                    const std::string &typeText=evolutionItem.attribute(FightLoader::text_type);
+                                                    const std::string &typeText=evolutionItem.attribute(QString::fromStdString("type")).toStdString();
                                                     if(typeText!=FightLoader::text_trade)
                                                     {
                                                         if(typeText==FightLoader::text_item)
-                                                            evolutionVar.level=evolutionItem.attribute(FightLoader::text_item).toUInt(&ok);
+                                                            evolutionVar.level=evolutionItem.attribute(QString::fromStdString("item")).toUInt(&ok);
                                                         else
-                                                            evolutionVar.level=evolutionItem.attribute(FightLoader::text_level).toInt(&ok);
+                                                            evolutionVar.level=evolutionItem.attribute(QString::fromStdString("level")).toInt(&ok);
                                                         if(!ok)
-                                                            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(evolutionItem.tagName()).arg(evolutionItem.lineNumber()));
+                                                            std::cerr << "Unable to open the xml file: " << file << ", level is not a number: child.tagName(): " << evolutionItem.tagName().toStdString() << " (at line: " << evolutionItem.lineNumber() << ")" << std::endl;
                                                     }
                                                     else
                                                         evolutionVar.level=0;
                                                     if(ok)
                                                     {
-                                                        evolutionVar.evolveTo=evolutionItem.attribute(FightLoader::text_evolveTo).toUInt(&ok);
+                                                        evolutionVar.evolveTo=evolutionItem.attribute(QString::fromStdString(FightLoader::text_evolveTo)).toUInt(&ok);
                                                         if(!ok)
-                                                            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, evolveTo is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(evolutionItem.tagName()).arg(evolutionItem.lineNumber()));
+                                                            std::cerr << "Unable to open the xml file: " << file << ", evolveTo is not a number: child.tagName(): " << evolutionItem.tagName().toStdString() << " (at line: " << evolutionItem.lineNumber() << ")" << std::endl;
                                                     }
                                                     if(ok)
                                                     {
@@ -767,7 +749,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                         else
                                                         {
                                                             ok=false;
-                                                            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, unknown evolution type: %4 child.tagName(): %2 (at line: %3)").arg(file).arg(evolutionItem.tagName()).arg(evolutionItem.lineNumber()).arg(typeText));
+                                                            std::cerr << "Unable to open the xml file: " << file << ", unknown evolution type: " << typeText << " child.tagName(): " << evolutionItem.tagName().toStdString() << " (at line: " << evolutionItem.lineNumber() << ")" << std::endl;
                                                         }
                                                     }
                                                     if(ok)
@@ -775,33 +757,33 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                         if(typeText==FightLoader::text_level && (evolutionVar.level<0 || evolutionVar.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX))
                                                         {
                                                             ok=false;
-                                                            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, level out of range: %4 child.tagName(): %2 (at line: %3)").arg(file).arg(evolutionItem.tagName()).arg(evolutionItem.lineNumber()).arg(evolutionVar.level));
+                                                            std::cerr << "Unable to open the xml file: " << file << ", level out of range: " << evolutionVar.level << " child.tagName(): " << evolutionItem.tagName().toStdString() << " (at line: " << evolutionItem.lineNumber() << ")" << std::endl;
                                                         }
                                                     }
                                                     if(ok)
                                                     {
                                                         if(typeText==FightLoader::text_item)
                                                         {
-                                                            if(!items.contains(evolutionVar.level))
+                                                            if(items.find(evolutionVar.level)==items.cend())
                                                             {
                                                                 ok=false;
-                                                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, unknown evolution item: %4 child.tagName(): %2 (at line: %3)").arg(file).arg(evolutionItem.tagName()).arg(evolutionItem.lineNumber()).arg(evolutionVar.level));
+                                                                std::cerr << "Unable to open the xml file: " << file << ", unknown evolution item: " << evolutionVar.level << " child.tagName(): " << evolutionItem.tagName().toStdString() << " (at line: " << evolutionItem.lineNumber() << ")" << std::endl;
                                                             }
                                                         }
                                                     }
                                                     if(ok)
-                                                        monster.evolutions << evolutionVar;
+                                                        monster.evolutions.push_back(evolutionVar);
                                                 }
                                                 else
-                                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, missing arguements (level or skill): child.tagName(): %2 (at line: %3)").arg(file).arg(evolutionItem.tagName()).arg(evolutionItem.lineNumber()));
+                                                    std::cerr << "Unable to open the xml file: " << file << ", missing arguements (level or skill): child.tagName(): " << evolutionItem.tagName().toStdString() << " (at line: " << evolutionItem.lineNumber() << ")" << std::endl;
                                             }
                                             else
-                                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, attack_list balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(evolutionItem.tagName()).arg(evolutionItem.lineNumber()));
-                                            evolutionItem = evolutionItem.nextSiblingElement(FightLoader::text_evolution);
+                                                std::cerr << "Unable to open the xml file: " << file << ", attack_list balise is not an element: child.tagName(): " << evolutionItem.tagName().toStdString() << " (at line: " << evolutionItem.lineNumber() << ")" << std::endl;
+                                            evolutionItem = evolutionItem.nextSiblingElement(QString::fromStdString(FightLoader::text_evolution));
                                         }
                                     }
                                     else
-                                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, attack_list balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                        std::cerr << "Unable to open the xml file: " << file << ", attack_list balise is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                 }
                             }
                             int index=0;
@@ -813,7 +795,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                 quint64 tempXp=xp_for_this_level*xp_for_max_level/max_xp;
                                 if(tempXp<1)
                                     tempXp=1;
-                                monster.level_to_xp << tempXp;
+                                monster.level_to_xp.push_back(tempXp);
                                 index++;
                             }
                             #ifdef DEBUG_MESSAGE_MONSTER_XP_LOAD
@@ -821,17 +803,17 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                             while(index<CATCHCHALLENGER_MONSTER_LEVEL_MAX)
                             {
                                 int give_xp=(monster.give_xp*(index+1))/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-                                qDebug() << (std::stringLiteral("monster: %1, xp %2 for the level: %3, monster for this level: %4").arg(id).arg(index+1).arg(monster.level_to_xp.at(index)).arg(monster.level_to_xp.at(index)/give_xp));
+                                std::cerr << "monster: " << id << ", xp " << index+1 << " for the level: " << monster.level_to_xp.at(index) << ", monster for this level: " << monster.level_to_xp.at(index)/give_xp << std::endl;
                                 index++;
                             }
-                            qDebug() << (std::stringLiteral("monster.level_to_xp.size(): %1").arg(monster.level_to_xp.size()));
+                            std::cerr << "monster.level_to_xp.size(): " << monster.level_to_xp.size() << std::endl;
                             #endif
 
                             #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(monster.give_xp!=0)
                                 if((monster.xp_for_max_level*CommonSettingsServer::commonSettingsServer.rates_xp/monster.give_xp)>150)
-                                    qDebug() << (std::stringLiteral("Warning: you need more than %1 monster(s) to pass the last level, prefer do that's with the rate for the monster id: %2").arg(monster.xp_for_max_level/monster.give_xp).arg(id));
+                                    std::cerr << "Warning: you need more than " << monster.xp_for_max_level/monster.give_xp << " monster(s) to pass the last level, prefer do that's with the rate for the monster id: " << id << std::endl;
                             #endif
                             #endif
 
@@ -839,64 +821,65 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                             monsters[id]=monster;
                         }
                         else
-                            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, one of the attribute is wrong or is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                            std::cerr << "Unable to open the xml file: " << file << ", one of the attribute is wrong or is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     }
                 }
                 else
-                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, have not the monster id: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster id: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
             }
             else
-                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-            item = item.nextSiblingElement(FightLoader::text_monster);
+                std::cerr << "Unable to open the xml file: " << file << ", is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+            item = item.nextSiblingElement(QString::fromStdString("monster"));
         }
         //check the evolveTo
-        std::unordered_map<uint16_t,Monster>::iterator i = monsters.begin();
-        while (i != monsters.end()) {
-            int index=0;
+        auto i = monsters.begin();
+        while(i!=monsters.cend())
+        {
+            unsigned int index=0;
             bool evolutionByLevel=false,evolutionByTrade=false;
-            while(index<i.value().evolutions.size())
+            while(index<i->second.evolutions.size())
             {
-                Std::unordered_Set<uint32_t> itemUse;
-                if(i.value().evolutions.at(index).type==Monster::EvolutionType_Level)
+                std::unordered_set<uint32_t> itemUse;
+                if(i->second.evolutions.at(index).type==Monster::EvolutionType_Level)
                 {
                     if(evolutionByLevel)
                     {
-                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, the monster %4 have already evolution by level: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(i.key()));
-                        i.value().evolutions.removeAt(index);
+                        std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " have already evolution by level: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                        i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
                         continue;
                     }
                     evolutionByLevel=true;
                 }
-                if(i.value().evolutions.at(index).type==Monster::EvolutionType_Trade)
+                if(i->second.evolutions.at(index).type==Monster::EvolutionType_Trade)
                 {
                     if(evolutionByTrade)
                     {
-                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, the monster %4 have already evolution by trade: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(i.key()));
-                        i.value().evolutions.removeAt(index);
+                        std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " have already evolution by trade: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                        i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
                         continue;
                     }
                     evolutionByTrade=true;
                 }
-                if(i.value().evolutions.at(index).type==Monster::EvolutionType_Item)
+                if(i->second.evolutions.at(index).type==Monster::EvolutionType_Item)
                 {
-                    if(itemUse.contains(i.value().evolutions.at(index).level))
+                    if(itemUse.find(i->second.evolutions.at(index).level)!=itemUse.cend())
                     {
-                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, the monster %4 have already evolution with this item: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(i.key()));
-                        i.value().evolutions.removeAt(index);
+                        std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " have already evolution with this item: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                        i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
                         continue;
                     }
-                    itemUse << i.value().evolutions.at(index).level;
+                    itemUse.insert(i->second.evolutions.at(index).level);
                 }
-                if(i.value().evolutions.at(index).evolveTo==i.key())
+                if(i->second.evolutions.at(index).evolveTo==i->first)
                 {
-                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, the monster %4 can't evolve into them self: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(i.key()));
-                    i.value().evolutions.removeAt(index);
+                    std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " can't evolve into them self: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                    i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
                     continue;
                 }
-                else if(!monsters.contains(i.value().evolutions.at(index).evolveTo))
+                else if(monsters.find(i->second.evolutions.at(index).evolveTo)==monsters.cend())
                 {
-                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, the monster %4 for the evolution of %5 can't be found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(i.value().evolutions.at(index).evolveTo).arg(i.key()));
-                    i.value().evolutions.removeAt(index);
+                    std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->second.evolutions.at(index).evolveTo << " for the evolution of " << i->first << " can't be found: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                    i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
                     continue;
                 }
                 index++;
@@ -912,14 +895,14 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
 std::unordered_map<uint16_t/*item*/, std::unordered_map<uint16_t/*monster*/,uint16_t/*evolveTo*/> > FightLoader::loadMonsterEvolutionItems(const std::unordered_map<uint16_t,Monster> &monsters)
 {
     std::unordered_map<uint16_t, std::unordered_map<uint16_t,uint16_t> > evolutionItem;
-    std::unordered_map<uint16_t,Monster>::const_iterator i = monsters.constBegin();
-    std::unordered_map<uint16_t,Monster>::const_iterator iEnd = monsters.constEnd();
-    while (i != iEnd) {
-        int index=0;
-        while(index<i.value().evolutions.size())
+    auto i=monsters.begin();
+    while(i!=monsters.cend())
+    {
+        unsigned int index=0;
+        while(index<i->second.evolutions.size())
         {
-            if(i.value().evolutions.at(index).type==Monster::EvolutionType_Item)
-                evolutionItem[i.value().evolutions.at(index).level][i.key()]=i.value().evolutions.at(index).evolveTo;
+            if(i->second.evolutions.at(index).type==Monster::EvolutionType_Item)
+                evolutionItem[i->second.evolutions.at(index).level][i->first]=i->second.evolutions.at(index).evolveTo;
             index++;
         }
         ++i;
@@ -929,19 +912,19 @@ std::unordered_map<uint16_t/*item*/, std::unordered_map<uint16_t/*monster*/,uint
 #endif
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
-std::unordered_map<uint16_t/*item*/, Std::unordered_Set<uint16_t/*monster*/> > FightLoader::loadMonsterItemToLearn(const std::unordered_map<uint16_t,Monster> &monsters,const std::unordered_map<uint16_t/*item*/, std::unordered_map<uint16_t/*monster*/,uint16_t/*evolveTo*/> > &evolutionItem)
+std::unordered_map<uint16_t/*item*/, std::unordered_set<uint16_t/*monster*/> > FightLoader::loadMonsterItemToLearn(const std::unordered_map<uint16_t,Monster> &monsters,const std::unordered_map<uint16_t/*item*/, std::unordered_map<uint16_t/*monster*/,uint16_t/*evolveTo*/> > &evolutionItem)
 {
-    std::unordered_map<uint16_t/*item*/, Std::unordered_Set<uint16_t/*monster*/> > learnItem;
-    std::unordered_map<uint16_t,Monster>::const_iterator i = monsters.constBegin();
-    std::unordered_map<uint16_t,Monster>::const_iterator iEnd = monsters.constEnd();
-    while (i != iEnd) {
-        std::unordered_map<uint16_t/*item*/,Monster::AttackToLearnByItem/*skill*/>::const_iterator j = i.value().learnByItem.constBegin();
-        std::unordered_map<uint16_t/*item*/,Monster::AttackToLearnByItem/*skill*/>::const_iterator jEnd = i.value().learnByItem.constEnd();
-        while (j != jEnd) {
-            if(!evolutionItem.contains(j.key()))
-                learnItem[j.key()] << i.key();
+    std::unordered_map<uint16_t/*item*/, std::unordered_set<uint16_t/*monster*/> > learnItem;
+    auto i=monsters.cbegin();
+    while(i!=monsters.cend())
+    {
+        auto j=i->second.learnByItem.cbegin();
+        while(j!=i->second.learnByItem.cend())
+        {
+            if(evolutionItem.find(j->first)==evolutionItem.cend())
+                learnItem[j->first].insert(i->first);
             else
-                qDebug() << (std::stringLiteral("The item %1 can't be used to learn because already used to evolv").arg(j.key()));
+                std::cerr << "The item " << j->first << " can't be used to learn because already used to evolv" << std::endl;
             ++j;
         }
         ++i;
@@ -953,8 +936,8 @@ std::unordered_map<uint16_t/*item*/, Std::unordered_Set<uint16_t/*monster*/> > F
 std::vector<PlayerMonster::PlayerSkill> FightLoader::loadDefaultAttack(const uint16_t &monsterId,const uint8_t &level, const std::unordered_map<uint16_t,Monster> &monsters, const std::unordered_map<uint16_t, Skill> &monsterSkills)
 {
     std::vector<CatchChallenger::PlayerMonster::PlayerSkill> skills;
-    std::vector<CatchChallenger::Monster::AttackToLearn> attack=monsters.value(monsterId).learn;
-    int index=0;
+    std::vector<CatchChallenger::Monster::AttackToLearn> attack=monsters.at(monsterId).learn;
+    unsigned int index=0;
     while(index<attack.size())
     {
         if(attack.at(index).learnAtLevel<=level)
@@ -963,15 +946,15 @@ std::vector<PlayerMonster::PlayerSkill> FightLoader::loadDefaultAttack(const uin
             temp.level=attack.at(index).learnSkillLevel;
             temp.skill=attack.at(index).learnSkill;
             temp.endurance=0;
-            if(monsterSkills.contains(temp.skill))
-                if(temp.level<=monsterSkills.value(temp.skill).level.size() && temp.level>0)
-                    temp.endurance=monsterSkills.value(temp.skill).level.at(temp.level-1).endurance;
-            skills << temp;
+            if(monsterSkills.find(temp.skill)!=monsterSkills.cend())
+                if(temp.level<=monsterSkills.at(temp.skill).level.size() && temp.level>0)
+                    temp.endurance=monsterSkills.at(temp.skill).level.at(temp.level-1).endurance;
+            skills.push_back(temp);
         }
         index++;
     }
     while(skills.size()>4)
-        skills.removeFirst();
+        skills.erase(skills.begin());
     return skills;
 }
 
@@ -979,14 +962,14 @@ std::vector<PlayerMonster::PlayerSkill> FightLoader::loadDefaultAttack(const uin
 std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &folder, const std::unordered_map<uint16_t,Monster> &monsters, const std::unordered_map<uint16_t, Skill> &monsterSkills, const std::unordered_map<uint16_t, Item> &items)
 {
     std::unordered_map<uint16_t,BotFight> botFightList;
-    QDir dir(folder);
-    QFileInfoList list=dir.entryInfoList(std::vector<std::string>(),QDir::NoDotAndDotDot|QDir::Files);
+    QDir dir(QString::fromStdString(folder));
+    QFileInfoList list=dir.entryInfoList(QStringList(),QDir::NoDotAndDotDot|QDir::Files);
     int index_file=0;
     while(index_file<list.size())
     {
         if(list.at(index_file).isFile())
         {
-            const std::string &file=list.at(index_file).absoluteFilePath();
+            const std::string &file=list.at(index_file).absoluteFilePath().toStdString();
             QDomDocument domDocument;
             //open and quick check the file
             #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -995,21 +978,21 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
             else
             {
                 #endif
-                QFile xmlFile(file);
+                QFile xmlFile(QString::fromStdString(file));
                 QByteArray xmlContent;
                 if(!xmlFile.open(QIODevice::ReadOnly))
                 {
-                    qDebug() << (std::stringLiteral("Unable to open the xml fight file: %1, error: %2").arg(file).arg(xmlFile.errorString()));
+                    std::cerr << "Unable to open the xml fight file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
                     index_file++;
                     continue;
                 }
                 xmlContent=xmlFile.readAll();
                 xmlFile.close();
-                std::string errorStr;
+                QString errorStr;
                 int errorLine,errorColumn;
                 if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
                 {
-                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+                    std::cerr << "Unable to open the xml file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
                     index_file++;
                     continue;
                 }
@@ -1018,194 +1001,194 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
             }
             #endif
             QDomElement root = domDocument.documentElement();
-            if(root.tagName()!=FightLoader::text_fights)
+            if(root.tagName()!="fights")
             {
-                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, \"fights\" root balise not found for the xml file").arg(file));
+                std::cerr << "Unable to open the xml file: " << file << ", \"fights\" root balise not found for the xml file" << std::endl;
                 index_file++;
                 continue;
             }
 
             //load the content
             bool ok;
-            QDomElement item = root.firstChildElement(FightLoader::text_fight);
+            QDomElement item = root.firstChildElement("fight");
             while(!item.isNull())
             {
                 if(item.isElement())
                 {
-                    if(item.hasAttribute(FightLoader::text_id))
+                    if(item.hasAttribute("id"))
                     {
-                        uint32_t id=item.attribute(FightLoader::text_id).toUInt(&ok);
+                        uint32_t id=item.attribute("id").toUInt(&ok);
                         if(ok)
                         {
                             bool entryValid=true;
                             CatchChallenger::BotFight botFight;
                             botFight.cash=0;
                             {
-                                QDomElement monster = item.firstChildElement(FightLoader::text_monster);
+                                QDomElement monster = item.firstChildElement("monster");
                                 while(entryValid && !monster.isNull())
                                 {
-                                    if(!monster.hasAttribute(FightLoader::text_id))
-                                        qDebug() << (std::stringLiteral("Has not attribute \"id\": bot.tagName(): %1 (at line: %2)").arg(monster.tagName()).arg(monster.lineNumber()));
+                                    if(!monster.hasAttribute("id"))
+                                        std::cerr << "Has not attribute \"id\": tagName(): " << monster.tagName().toStdString() << " (at line: " << monster.lineNumber() << ")" << std::endl;
                                     else if(!monster.isElement())
-                                        qDebug() << (std::stringLiteral("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(monster.tagName().arg(monster.attribute(FightLoader::text_type)).arg(monster.lineNumber())));
+                                        std::cerr << "Is not an element: type: " << monster.attribute("type").toStdString() << " tagName(): " << monster.tagName().toStdString() << " (at line: " << monster.lineNumber() << ")" << std::endl;
                                     else
                                     {
                                         CatchChallenger::BotFight::BotFightMonster botFightMonster;
                                         botFightMonster.level=1;
-                                        botFightMonster.id=monster.attribute(FightLoader::text_id).toUInt(&ok);
+                                        botFightMonster.id=monster.attribute("id").toUInt(&ok);
                                         if(ok)
                                         {
-                                            if(!monsters.contains(botFightMonster.id))
+                                            if(monsters.find(botFightMonster.id)==monsters.cend())
                                             {
                                                 entryValid=false;
-                                                qDebug() << (std::stringLiteral("Monster not found into the monster list: %1 into the file %2 (line %3)").arg(botFightMonster.id).arg(file).arg(monster.lineNumber()));
+                                                std::cerr << "Monster not found into the monster list: " << botFightMonster.id << " into the tagName(): " << monster.tagName().toStdString() << " (at line: " << monster.lineNumber() << ")" << std::endl;
                                                 break;
                                             }
-                                            if(monster.hasAttribute(FightLoader::text_level))
+                                            if(monster.hasAttribute("level"))
                                             {
-                                                botFightMonster.level=monster.attribute(FightLoader::text_level).toUShort(&ok);
+                                                botFightMonster.level=monster.attribute("level").toUShort(&ok);
                                                 if(!ok)
                                                 {
-                                                    qDebug() << (std::stringLiteral("The level is not a number: bot.tagName(): %1, type: %2 (at line: %3)").arg(monster.tagName().arg(monster.attribute(FightLoader::text_type)).arg(monster.lineNumber())));
+                                                    std::cerr << "The level is not a number: type: " << monster.attribute("type").toStdString() << " tagName(): " << monster.tagName().toStdString() << " (at line: " << monster.lineNumber() << ")" << std::endl;
                                                     botFightMonster.level=1;
                                                 }
                                                 if(botFightMonster.level<1)
                                                 {
-                                                    qDebug() << (std::stringLiteral("Can't be 0 or negative: bot.tagName(): %1, type: %2 (at line: %3)").arg(monster.tagName().arg(monster.attribute(FightLoader::text_type)).arg(monster.lineNumber())));
+                                                    std::cerr << "Can't be 0 or negative: type: " << monster.attribute("type").toStdString() << " tagName(): " << monster.tagName().toStdString() << " (at line: " << monster.lineNumber() << ")" << std::endl;
                                                     botFightMonster.level=1;
                                                 }
                                             }
-                                            QDomElement attack = monster.firstChildElement(FightLoader::text_attack);
+                                            QDomElement attack = monster.firstChildElement("attack");
                                             while(entryValid && !attack.isNull())
                                             {
                                                 uint8_t attackLevel=1;
-                                                if(!attack.hasAttribute(FightLoader::text_id))
-                                                    qDebug() << (std::stringLiteral("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(attack.tagName()).arg(attack.lineNumber()));
+                                                if(!attack.hasAttribute("id"))
+                                                    std::cerr << "Has not attribute \"type\": tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                 else if(!attack.isElement())
-                                                    qDebug() << (std::stringLiteral("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName().arg(attack.attribute(FightLoader::text_type)).arg(attack.lineNumber())));
+                                                    std::cerr << "Is not an element: tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                 else
                                                 {
-                                                    uint32_t attackId=attack.attribute(FightLoader::text_id).toUInt(&ok);
+                                                    uint32_t attackId=attack.attribute("id").toUInt(&ok);
                                                     if(ok)
                                                     {
-                                                        if(!monsterSkills.contains(attackId))
+                                                        if(monsterSkills.find(attackId)==monsterSkills.cend())
                                                         {
                                                             entryValid=false;
-                                                            qDebug() << (std::stringLiteral("Monster attack not found: %1 into the file %2 (line %3)").arg(attackId).arg(file).arg(monster.lineNumber()));
+                                                            std::cerr << "Monster attack not found: %1 into the tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                             break;
                                                         }
-                                                        if(attack.hasAttribute(FightLoader::text_level))
+                                                        if(attack.hasAttribute("level"))
                                                         {
-                                                            attackLevel=attack.attribute(FightLoader::text_level).toUShort(&ok);
+                                                            attackLevel=attack.attribute("level").toUShort(&ok);
                                                             if(!ok)
                                                             {
-                                                                qDebug() << (std::stringLiteral("The level is not a number: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName()).arg(attack.attribute(FightLoader::text_type)).arg(attack.lineNumber()));
+                                                                std::cerr << "The level is not a number: tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                                 entryValid=false;
                                                                 break;
                                                             }
                                                             if(attackLevel<1)
                                                             {
-                                                                qDebug() << (std::stringLiteral("Can't be 0 or negative: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName()).arg(attack.attribute(FightLoader::text_type)).arg(attack.lineNumber()));
+                                                                std::cerr << "Can't be 0 or negative: tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                                 entryValid=false;
                                                                 break;
                                                             }
                                                         }
-                                                        if(attackLevel>monsterSkills.value(attackId).level.size())
+                                                        if(attackLevel>monsterSkills.at(attackId).level.size())
                                                         {
-                                                            qDebug() << (std::stringLiteral("Level out of range: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName()).arg(attack.attribute(FightLoader::text_type)).arg(attack.lineNumber()));
+                                                            std::cerr << "Level out of range: tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                             entryValid=false;
                                                             break;
                                                         }
                                                         CatchChallenger::PlayerMonster::PlayerSkill botFightAttack;
                                                         botFightAttack.skill=attackId;
                                                         botFightAttack.level=attackLevel;
-                                                        botFightMonster.attacks << botFightAttack;
+                                                        botFightMonster.attacks.push_back(botFightAttack);
                                                     }
                                                 }
-                                                attack = attack.nextSiblingElement(FightLoader::text_attack);
+                                                attack = attack.nextSiblingElement("attack");
                                             }
-                                            if(botFightMonster.attacks.isEmpty())
+                                            if(botFightMonster.attacks.empty())
                                                 botFightMonster.attacks=loadDefaultAttack(botFightMonster.id,botFightMonster.level,monsters,monsterSkills);
-                                            if(botFightMonster.attacks.isEmpty())
+                                            if(botFightMonster.attacks.empty())
                                             {
-                                                qDebug() << (std::stringLiteral("Empty attack list: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName()).arg(attack.attribute(FightLoader::text_type)).arg(attack.lineNumber()));
+                                                std::cerr << "Empty attack list: tagName(): " << monster.tagName().toStdString() << " (at line: " << monster.lineNumber() << ")" << std::endl;
                                                 entryValid=false;
                                                 break;
                                             }
-                                            botFight.monsters << botFightMonster;
+                                            botFight.monsters.push_back(botFightMonster);
                                         }
                                     }
-                                    monster = monster.nextSiblingElement(FightLoader::text_monster);
+                                    monster = monster.nextSiblingElement("monster");
                                 }
                             }
                             {
-                                QDomElement gain = item.firstChildElement(FightLoader::text_gain);
+                                QDomElement gain = item.firstChildElement("gain");
                                 while(entryValid && !gain.isNull())
                                 {
                                     if(gain.isElement())
                                     {
-                                        if(gain.hasAttribute(FightLoader::text_cash))
+                                        if(gain.hasAttribute("cash"))
                                         {
-                                            const uint32_t &cash=gain.attribute(FightLoader::text_cash).toUInt(&ok)*CommonSettingsServer::commonSettingsServer.rates_gold;
+                                            const uint32_t &cash=gain.attribute("cash").toUInt(&ok)*CommonSettingsServer::commonSettingsServer.rates_gold;
                                             if(ok)
                                                 botFight.cash+=cash;
                                             else
-                                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, unknow cash text: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                std::cerr << "Unable to open the xml file: " << file << ", unknow cash text: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                         }
-                                        else if(gain.hasAttribute(FightLoader::text_item))
+                                        else if(gain.hasAttribute("item"))
                                         {
                                             BotFight::Item itemVar;
                                             itemVar.quantity=1;
-                                            itemVar.id=gain.attribute(FightLoader::text_item).toUInt(&ok);
+                                            itemVar.id=gain.attribute("item").toUInt(&ok);
                                             if(ok)
                                             {
-                                                if(items.contains(itemVar.id))
+                                                if(items.find(itemVar.id)!=items.cend())
                                                 {
-                                                    if(gain.hasAttribute(FightLoader::text_quantity))
+                                                    if(gain.hasAttribute("quantity"))
                                                     {
-                                                        itemVar.quantity=gain.attribute(FightLoader::text_quantity).toUInt(&ok);
+                                                        itemVar.quantity=gain.attribute("quantity").toUInt(&ok);
                                                         if(!ok || itemVar.quantity<1)
                                                         {
                                                             itemVar.quantity=1;
-                                                            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, quantity value is wrong: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                            std::cerr << "Unable to open the xml file: " << file << ", quantity value is wrong: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                                         }
                                                     }
-                                                    botFight.items << itemVar;
+                                                    botFight.items.push_back(itemVar);
                                                 }
                                                 else
-                                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, item not found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                    std::cerr << "Unable to open the xml file: " << file << ", item not found: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                             }
                                             else
-                                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, unknow item id text: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                std::cerr << "Unable to open the xml file: " << file << ", unknow item id text: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                         }
                                         else
-                                            qDebug() << (std::stringLiteral("unknown fight gain: bot.tagName(): %1 tag %2 (at line: %3)").arg(file).arg(gain.tagName()).arg(gain.lineNumber()));
+                                            std::cerr << "unknown fight gain: file: " << file << " child.tagName(): " << gain.tagName().toStdString() << " (at line: " << gain.lineNumber() << ")" << std::endl;
                                     }
                                     else
-                                        qDebug() << (std::stringLiteral("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(gain.tagName().arg(gain.attribute(FightLoader::text_type)).arg(gain.lineNumber())));
-                                    gain = gain.nextSiblingElement(FightLoader::text_gain);
+                                        std::cerr << "Is not an element: file: " << file << ", type: " << gain.attribute("type").toStdString() << " child.tagName(): " << gain.tagName().toStdString() << " (at line: " << gain.lineNumber() << ")" << std::endl;
+                                    gain = gain.nextSiblingElement("gain");
                                 }
                             }
                             if(entryValid)
                             {
-                                if(!botFightList.contains(id))
+                                if(botFightList.find(id)==botFightList.cend())
                                 {
-                                    if(!botFight.monsters.isEmpty())
+                                    if(!botFight.monsters.empty())
                                         botFightList[id]=botFight;
                                     else
-                                        qDebug() << (std::stringLiteral("Monster list is empty to open the xml file: %1, id already found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                        std::cerr << "Monster list is empty to open the xml file: " << file << ", id already found: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                 }
                                 else
-                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, id already found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                    std::cerr << "Unable to open the xml file: " << file << ", id already found: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                             }
                         }
                         else
-                            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                            std::cerr << "Unable to open the xml file: " << file << ", id is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     }
                 }
                 else
-                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                item = item.nextSiblingElement(FightLoader::text_fight);
+                    std::cerr << "Unable to open the xml file: " << file << ", is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                item = item.nextSiblingElement("fight");
             }
             index_file++;
         }
@@ -1222,7 +1205,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                    )
 {
     std::unordered_map<uint16_t,Skill> monsterSkills;
-    QDir dir(folder);
+    QDir dir(QString::fromStdString(folder));
     QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     int file_index=0;
     while(file_index<fileList.size())
@@ -1232,8 +1215,8 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
             file_index++;
             continue;
         }
-        const std::string &file=fileList.at(file_index).absoluteFilePath();
-        if(!file.endsWith(FightLoader::text_dotxml))
+        const std::string &file=fileList.at(file_index).absoluteFilePath().toStdString();
+        if(!stringEndsWith(file,FightLoader::text_dotxml))
         {
             file_index++;
             continue;
@@ -1241,7 +1224,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
         #ifndef CATCHCHALLENGER_CLASS_MASTER
         std::unordered_map<std::string,uint8_t> typeNameToId;
         {
-            int index=0;
+            unsigned int index=0;
             while(index<types.size())
             {
                 typeNameToId[types.at(index).name]=index;
@@ -1257,21 +1240,21 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
         else
         {
             #endif
-            QFile xmlFile(file);
+            QFile xmlFile(QString::fromStdString(file));
             QByteArray xmlContent;
             if(!xmlFile.open(QIODevice::ReadOnly))
             {
-                qDebug() << (std::stringLiteral("Unable to open the xml skill monster file: %1, error: %2").arg(file).arg(xmlFile.errorString()));
+                std::cerr << "Unable to open the xml skill monster " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
                 file_index++;
                 continue;
             }
             xmlContent=xmlFile.readAll();
             xmlFile.close();
-            std::string errorStr;
+            QString errorStr;
             int errorLine,errorColumn;
             if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
             {
-                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+                std::cerr << "Unable to open the xml file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
                 file_index++;
                 continue;
             }
@@ -1280,9 +1263,9 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
         }
         #endif
         QDomElement root = domDocument.documentElement();
-        if(root.tagName()!=FightLoader::text_skills)
+        if(root.tagName()!="skills")
         {
-            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
+            std::cerr << "Unable to open the xml file: " << file << ", \"list\" root balise not found for the xml file" << std::endl;
             file_index++;
             continue;
         }
@@ -1292,59 +1275,59 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
         #ifndef CATCHCHALLENGER_CLASS_MASTER
         bool ok2;
         #endif
-        QDomElement item = root.firstChildElement(FightLoader::text_skill);
+        QDomElement item = root.firstChildElement("skill");
         while(!item.isNull())
         {
             if(item.isElement())
             {
-                if(item.hasAttribute(FightLoader::text_id))
+                if(item.hasAttribute("id"))
                 {
-                    uint32_t id=item.attribute(FightLoader::text_id).toUInt(&ok);
-                    if(ok && monsterSkills.contains(id))
-                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, id already found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    uint32_t id=item.attribute("id").toUInt(&ok);
+                    if(ok && monsterSkills.find(id)!=monsterSkills.cend())
+                        std::cerr << "Unable to open the xml file: " << file << ", id already found: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     else if(ok)
                     {
                         std::unordered_map<uint8_t,Skill::SkillList> levelDef;
-                        QDomElement effect = item.firstChildElement(FightLoader::text_effect);
+                        QDomElement effect = item.firstChildElement("effect");
                         if(!effect.isNull())
                         {
                             if(effect.isElement())
                             {
-                                QDomElement level = effect.firstChildElement(FightLoader::text_level);
+                                QDomElement level = effect.firstChildElement("level");
                                 while(!level.isNull())
                                 {
                                     if(level.isElement())
                                     {
-                                        if(level.hasAttribute(FightLoader::text_number))
+                                        if(level.hasAttribute("number"))
                                         {
                                             uint32_t sp=0;
-                                            if(level.hasAttribute(FightLoader::text_sp))
+                                            if(level.hasAttribute("sp"))
                                             {
-                                                sp=level.attribute(FightLoader::text_sp).toUShort(&ok);
+                                                sp=level.attribute("sp").toUShort(&ok);
                                                 if(!ok)
                                                 {
-                                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, sp is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(level.tagName()).arg(level.lineNumber()));
+                                                    std::cerr << "Unable to open the xml file: " << file << ", sp is not number: child.tagName(): " << level.tagName().toStdString() << " (at line: " << level.lineNumber() << ")" << std::endl;
                                                     sp=0;
                                                 }
                                             }
                                             uint8_t endurance=40;
-                                            if(level.hasAttribute(FightLoader::text_endurance))
+                                            if(level.hasAttribute("endurance"))
                                             {
-                                                endurance=level.attribute(FightLoader::text_endurance).toUShort(&ok);
+                                                endurance=level.attribute("endurance").toUShort(&ok);
                                                 if(!ok)
                                                 {
-                                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, endurance is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(level.tagName()).arg(level.lineNumber()));
+                                                    std::cerr << "Unable to open the xml file: " << file << ", endurance is not number: child.tagName(): " << level.tagName().toStdString() << " (at line: " << level.lineNumber() << ")" << std::endl;
                                                     endurance=40;
                                                 }
                                                 if(endurance<1)
                                                 {
-                                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, endurance lower than 1: child.tagName(): %2 (at line: %3)").arg(file).arg(level.tagName()).arg(level.lineNumber()));
+                                                    std::cerr << "Unable to open the xml file: " << file << ", endurance lower than 1: child.tagName(): " << level.tagName().toStdString() << " (at line: " << level.lineNumber() << ")" << std::endl;
                                                     endurance=40;
                                                 }
                                             }
                                             uint8_t number;
                                             if(ok)
-                                                number=level.attribute(FightLoader::text_number).toUShort(&ok);
+                                                number=level.attribute("number").toUShort(&ok);
                                             if(ok)
                                             {
                                                 levelDef[number].sp_to_learn=sp;
@@ -1353,246 +1336,239 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                 {
                                                     #ifndef CATCHCHALLENGER_CLASS_MASTER
                                                     {
-                                                        QDomElement life = level.firstChildElement(FightLoader::text_life);
+                                                        QDomElement life = level.firstChildElement("life");
                                                         while(!life.isNull())
                                                         {
                                                             if(life.isElement())
                                                             {
                                                                 Skill::Life effect;
-                                                                if(life.hasAttribute(FightLoader::text_applyOn))
+                                                                if(life.hasAttribute("applyOn"))
                                                                 {
-                                                                    if(life.attribute(FightLoader::text_applyOn)==FightLoader::text_aloneEnemy)
+                                                                    if(life.attribute("applyOn")=="aloneEnemy")
                                                                         effect.effect.on=ApplyOn_AloneEnemy;
-                                                                    else if(life.attribute(FightLoader::text_applyOn)==FightLoader::text_themself)
+                                                                    else if(life.attribute("applyOn")=="themself")
                                                                         effect.effect.on=ApplyOn_Themself;
-                                                                    else if(life.attribute(FightLoader::text_applyOn)==FightLoader::text_allEnemy)
+                                                                    else if(life.attribute("applyOn")=="allEnemy")
                                                                         effect.effect.on=ApplyOn_AllEnemy;
-                                                                    else if(life.attribute(FightLoader::text_applyOn)==FightLoader::text_allAlly)
+                                                                    else if(life.attribute("applyOn")=="allAlly")
                                                                         effect.effect.on=ApplyOn_AllAlly;
-                                                                    else if(life.attribute(FightLoader::text_applyOn)==FightLoader::text_nobody)
+                                                                    else if(life.attribute("applyOn")=="nobody")
                                                                         effect.effect.on=ApplyOn_Nobody;
                                                                     else
                                                                     {
-                                                                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, applyOn tag wrong %4: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(life.attribute("applyOn")));
+                                                                        std::cerr << "Unable to open the xml file: " << file << ", applyOn tag wrong " << life.attribute("applyOn").toStdString() << ": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                                                         effect.effect.on=ApplyOn_AloneEnemy;
                                                                     }
                                                                 }
                                                                 else
                                                                     effect.effect.on=ApplyOn_AloneEnemy;
                                                                 std::string text;
-                                                                if(life.hasAttribute(FightLoader::text_quantity))
-                                                                    text=life.attribute(FightLoader::text_quantity);
-                                                                if(text.endsWith(FightLoader::text_percent))
+                                                                if(life.hasAttribute("quantity"))
+                                                                    text=life.attribute("quantity").toStdString();
+                                                                if(stringEndsWith(text,"%"))
                                                                     effect.effect.type=QuantityType_Percent;
                                                                 else
                                                                     effect.effect.type=QuantityType_Quantity;
-                                                                text.remove(FightLoader::text_percent);
-                                                                text.remove(FightLoader::text_more);
-                                                                effect.effect.quantity=text.toInt(&ok);
+                                                                stringreplaceOne(text,"%","");
+                                                                stringreplaceOne(text,"+","");
+                                                                effect.effect.quantity=stringtoint32(text,&ok);
                                                                 effect.success=100;
-                                                                if(life.hasAttribute(FightLoader::text_success))
+                                                                if(life.hasAttribute("success"))
                                                                 {
-                                                                    std::string success=life.attribute(FightLoader::text_success);
-                                                                    success.remove(FightLoader::text_percent);
-                                                                    effect.success=success.toUShort(&ok2);
+                                                                    std::string success=life.attribute("success").toStdString();
+                                                                    stringreplaceOne(success,"%","");
+                                                                    effect.success=stringtouint8(success,&ok2);
                                                                     if(!ok2)
                                                                     {
-                                                                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, success wrong corrected to 100%: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                                        std::cerr << "Unable to open the xml file: " << file << ", success wrong corrected to 100%: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                                                         effect.success=100;
                                                                     }
                                                                 }
                                                                 if(ok)
                                                                 {
                                                                     if(effect.effect.quantity!=0)
-                                                                        levelDef[number].life << effect;
+                                                                        levelDef[number].life.push_back(effect);
                                                                 }
                                                                 else
-                                                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, %4 is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(text));
+                                                                    std::cerr << "Unable to open the xml file: " << file << ", " << text << " is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                                             }
-                                                            life = life.nextSiblingElement(FightLoader::text_life);
+                                                            life = life.nextSiblingElement("life");
                                                         }
                                                     }
                                                     #endif // CATCHCHALLENGER_CLASS_MASTER
                                                     #ifndef CATCHCHALLENGER_CLASS_MASTER
                                                     {
-                                                        QDomElement buff = level.firstChildElement(FightLoader::text_buff);
+                                                        QDomElement buff = level.firstChildElement("buff");
                                                         while(!buff.isNull())
                                                         {
                                                             if(buff.isElement())
                                                             {
-                                                                if(buff.hasAttribute(FightLoader::text_id))
+                                                                if(buff.hasAttribute("id"))
                                                                 {
-                                                                    uint32_t idBuff=buff.attribute(FightLoader::text_id).toUInt(&ok);
+                                                                    uint32_t idBuff=buff.attribute("id").toUInt(&ok);
                                                                     if(ok)
                                                                     {
                                                                         Skill::Buff effect;
-                                                                        if(buff.hasAttribute(FightLoader::text_applyOn))
+                                                                        if(buff.hasAttribute("applyOn"))
                                                                         {
-                                                                            if(buff.attribute(FightLoader::text_applyOn)==FightLoader::text_aloneEnemy)
+                                                                            if(buff.attribute("applyOn")=="aloneEnemy")
                                                                                 effect.effect.on=ApplyOn_AloneEnemy;
-                                                                            else if(buff.attribute(FightLoader::text_applyOn)==FightLoader::text_themself)
+                                                                            else if(buff.attribute("applyOn")=="themself")
                                                                                 effect.effect.on=ApplyOn_Themself;
-                                                                            else if(buff.attribute(FightLoader::text_applyOn)==FightLoader::text_allEnemy)
+                                                                            else if(buff.attribute("applyOn")=="allEnemy")
                                                                                 effect.effect.on=ApplyOn_AllEnemy;
-                                                                            else if(buff.attribute(FightLoader::text_applyOn)==FightLoader::text_allAlly)
+                                                                            else if(buff.attribute("applyOn")=="allAlly")
                                                                                 effect.effect.on=ApplyOn_AllAlly;
-                                                                            else if(buff.attribute(FightLoader::text_applyOn)==FightLoader::text_nobody)
+                                                                            else if(buff.attribute("applyOn")=="nobody")
                                                                                 effect.effect.on=ApplyOn_Nobody;
                                                                             else
                                                                             {
-                                                                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, applyOn tag wrong %4: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(buff.attribute("applyOn")));
+                                                                                std::cerr << "Unable to open the xml file: " << file << ", applyOn tag wrong " << buff.attribute("applyOn").toStdString() << ": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                                                                 effect.effect.on=ApplyOn_AloneEnemy;
                                                                             }
                                                                         }
                                                                         else
                                                                             effect.effect.on=ApplyOn_AloneEnemy;
-                                                                        if(!monsterBuffs.contains(idBuff))
-                                                                            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, this buff id is not found: %4: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).at(idBuff));
+                                                                        if(monsterBuffs.find(idBuff)==monsterBuffs.cend())
+                                                                            std::cerr << "Unable to open the xml file: " << file << ", this buff id is not found: " << idBuff << ": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                                                         else
                                                                         {
                                                                             effect.effect.level=1;
                                                                             ok2=true;
-                                                                            if(buff.hasAttribute(FightLoader::text_level))
+                                                                            if(buff.hasAttribute("level"))
                                                                             {
-                                                                                std::string level=buff.attribute(FightLoader::text_level);
-                                                                                effect.effect.level=level.toUShort(&ok2);
+                                                                                std::string level=buff.attribute("level").toStdString();
+                                                                                effect.effect.level=stringtouint8(level,&ok2);
                                                                                 if(!ok2)
-                                                                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, level wrong: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(buff.attribute("level")));
-                                                                                if(level<=0)
+                                                                                    std::cerr << "Unable to open the xml file: " << file << ", level wrong: " << buff.attribute("level").toStdString() << " child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                                                if(effect.effect.level<=0)
                                                                                 {
                                                                                     ok2=false;
-                                                                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, level need be egal or greater than 1: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                                                    std::cerr << "Unable to open the xml file: " << file << ", level need be egal or greater than 1: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                                                                 }
                                                                             }
                                                                             if(ok2)
                                                                             {
-                                                                                if(monsterBuffs.value(idBuff).level.size()<effect.effect.level)
-                                                                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, level needed: %4, level max found: %5: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(effect.effect.level).arg(monsterBuffs.value(idBuff).level.size()));
+                                                                                if(monsterBuffs.at(idBuff).level.size()<effect.effect.level)
+                                                                                    std::cerr << "Unable to open the xml file: " << file << ", level needed: " << effect.effect.level << ", level max found: " << monsterBuffs.at(idBuff).level.size() << ": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                                                                 else
                                                                                 {
                                                                                     effect.effect.buff=idBuff;
                                                                                     effect.success=100;
-                                                                                    if(buff.hasAttribute(FightLoader::text_success))
+                                                                                    if(buff.hasAttribute("success"))
                                                                                     {
-                                                                                        std::string success=buff.attribute(FightLoader::text_success);
-                                                                                        success.remove(FightLoader::text_percent);
-                                                                                        effect.success=success.toUShort(&ok2);
+                                                                                        std::string success=buff.attribute("success").toStdString();
+                                                                                        stringreplaceOne(success,"%","");
+                                                                                        effect.success=stringtouint8(success,&ok2);
                                                                                         if(!ok2)
                                                                                         {
-                                                                                            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, success wrong corrected to 100%: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                                                            std::cerr << "Unable to open the xml file: " << file << ", success wrong corrected to 100%: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                                                                             effect.success=100;
                                                                                         }
                                                                                     }
-                                                                                    levelDef[number].buff << effect;
+                                                                                    levelDef[number].buff.push_back(effect);
                                                                                 }
                                                                             }
                                                                         }
                                                                     }
                                                                     else
-                                                                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, have not tag id: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                                        std::cerr << "Unable to open the xml file: " << file << ", have not tag id: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                                                 }
                                                                 else
-                                                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, have not tag id: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                                    std::cerr << "Unable to open the xml file: " << file << ", have not tag id: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                                             }
-                                                            buff = buff.nextSiblingElement(FightLoader::text_buff);
+                                                            buff = buff.nextSiblingElement("buff");
                                                         }
                                                     }
                                                     #endif // CATCHCHALLENGER_CLASS_MASTER
                                                 }
                                                 else
-                                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, level need be egal or greater than 1: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                    std::cerr << "Unable to open the xml file: " << file << ", level need be egal or greater than 1: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                             }
                                             else
-                                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, number tag is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                std::cerr << "Unable to open the xml file: " << file << ", number tag is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                         }
                                     }
                                     else
-                                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, level balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                    level = level.nextSiblingElement(FightLoader::text_level);
+                                        std::cerr << "Unable to open the xml file: " << file << ", level balise is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                    level = level.nextSiblingElement("level");
                                 }
                                 if(levelDef.size()==0)
-                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, 0 level found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                    std::cerr << "Unable to open the xml file: " << file << ", 0 level found: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                 else
                                 {
                                     monsterSkills[id].type=255;
                                     #ifndef CATCHCHALLENGER_CLASS_MASTER
-                                    if(item.hasAttribute(FightLoader::text_type))
+                                    if(item.hasAttribute("type"))
                                     {
-                                        if(typeNameToId.contains(item.attribute(FightLoader::text_type)))
-                                            monsterSkills[id].type=typeNameToId.value(item.attribute(FightLoader::text_type));
+                                        if(typeNameToId.find(item.attribute("type").toStdString())!=typeNameToId.cend())
+                                            monsterSkills[id].type=typeNameToId.at(item.attribute("type").toStdString());
                                         else
-                                            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, type not found: %4: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute(FightLoader::text_type)));
+                                            std::cerr << "Unable to open the xml file: " << file << ", type not found: " << item.attribute("type").toStdString() << ": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                     }
                                     #endif // CATCHCHALLENGER_CLASS_MASTER
                                 }
                                 //order by level to learn
                                 uint8_t index=1;
-                                while(levelDef.contains(index))
+                                while(levelDef.find(index)!=levelDef.cend())
                                 {
                                     /*if(levelDef.value(index).buff.empty() && levelDef.value(index).life.empty())
-                                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, no effect loaded for skill %4 at level %5, missing level to continue: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(id).arg(index));*/
-                                    monsterSkills[id].level << levelDef.value(index);
-                                    levelDef.remove(index);
-                                    #ifdef DEBUG_MESSAGE_SKILL_LOAD
-                                    qDebug() << (std::stringLiteral("for the level %1 of skill %2 have %3 effect(s) in buff and %4 effect(s) in life").arg(index).arg(id).arg(GlobalData::serverPrivateVariables.monsterSkills.value(id).level.at(index-1).buff.size()).arg(GlobalData::serverPrivateVariables.monsterSkills.value(id).level.at(index-1).life.size()));
-                                    #endif
+                                        std::cerr << "Unable to open the xml file: " << file << ", no effect loaded for skill %4 at level %5, missing level to continue: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(id).arg(index));*/
+                                    monsterSkills[id].level.push_back(levelDef.at(index));
+                                    levelDef.erase(index);
                                     index++;
                                 }
                                 if(levelDef.size()>0)
-                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, level up to %4 loaded, missing level to continue: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(index));
-                                #ifdef DEBUG_MESSAGE_SKILL_LOAD
-                                else
-                                    qDebug() << (std::stringLiteral("%1 level(s) loaded for skill %2").arg(index-1).arg(id));
-                                #endif
+                                    std::cerr << "Unable to open the xml file: " << file << ", level up to " << index << " loaded, missing level to continue: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                             }
                             else
-                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                std::cerr << "Unable to open the xml file: " << file << ", effect balise is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
                         /*else
-                            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, have not effect balise: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));*/
+                            std::cerr << "Unable to open the xml file: " << file << ", have not effect balise: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;*/
                     }
                     else
-                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                        std::cerr << "Unable to open the xml file: " << file << ", id is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                 }
                 else
-                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, have not the skill id: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the skill id: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
             }
             else
-                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-            item = item.nextSiblingElement(FightLoader::text_skill);
+                std::cerr << "Unable to open the xml file: " << file << ", is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+            item = item.nextSiblingElement("skill");
         }
         //check the default attack
-        if(!monsterSkills.contains(0))
-            qDebug() << (std::stringLiteral("Warning: no default monster attack if no more attack"));
-        else if(monsterSkills.value(0).level.isEmpty())
+        if(monsterSkills.find(0)==monsterSkills.cend())
+            std::cerr << "Warning: no default monster attack if no more attack" << std::endl;
+        else if(monsterSkills.at(0).level.empty())
         {
-            monsterSkills.remove(0);
-            qDebug() << (std::stringLiteral("Warning: no level for default monster attack if no more attack"));
+            monsterSkills.erase(0);
+            std::cerr << "Warning: no level for default monster attack if no more attack" << std::endl;
         }
         else
         {
             #ifndef CATCHCHALLENGER_CLASS_MASTER
-            if(monsterSkills.value(0).level.first().life.isEmpty())
+            if(monsterSkills.at(0).level.front().life.empty())
             {
-                monsterSkills.remove(0);
-                qDebug() << (std::stringLiteral("Warning: no life effect for the default attack"));
+                monsterSkills.erase(0);
+                std::cerr << "Warning: no life effect for the default attack" << std::endl;
             }
             else
             {
-                const int &list_size=monsterSkills.value(0).level.first().life.size();
-                int index=0;
+                const unsigned int &list_size=monsterSkills.at(0).level.front().life.size();
+                unsigned int index=0;
                 while(index<list_size)
                 {
-                    const Skill::Life &life=monsterSkills.value(0).level.first().life.at(index);
+                    const Skill::Life &life=monsterSkills.at(0).level.front().life.at(index);
                     if(life.success==100 && life.effect.on==ApplyOn_AloneEnemy && life.effect.quantity<0)
                         break;
                     index++;
                 }
                 if(index==list_size)
                 {
-                    const Skill::Life &life=monsterSkills.value(0).level.first().life.first();
-                    monsterSkills.remove(0);
-                    qDebug() << (std::stringLiteral("Warning: no valid life effect for the default attack (id: 0): success=100%: %1, on=ApplyOn_AloneEnemy: %2, quantity<0: %3 for skill").arg(life.success).arg(life.effect.on).arg(life.effect.quantity));
+                    const Skill::Life &life=monsterSkills.at(0).level.front().life.front();
+                    monsterSkills.erase(0);
+                    std::cerr << "Warning: no valid life effect for the default attack (id: 0): success=100%: " << life.success << ", on=ApplyOn_AloneEnemy: " << life.effect.on << ", quantity<0: " << life.effect.quantity << " for skill" << std::endl;
                 }
             }
             #endif
@@ -1606,7 +1582,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
 std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string &folder)
 {
     std::unordered_map<uint8_t,Buff> monsterBuffs;
-    QDir dir(folder);
+    QDir dir(QString::fromStdString(folder));
     QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     int file_index=0;
     while(file_index<fileList.size())
@@ -1616,8 +1592,8 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
             file_index++;
             continue;
         }
-        const std::string &file=fileList.at(file_index).absoluteFilePath();
-        if(!file.endsWith(FightLoader::text_dotxml))
+        const std::string &file=fileList.at(file_index).absoluteFilePath().toStdString();
+        if(!stringEndsWith(file,FightLoader::text_dotxml))
         {
             file_index++;
             continue;
@@ -1630,21 +1606,21 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
         else
         {
             #endif
-            QFile xmlFile(file);
+            QFile xmlFile(QString::fromStdString(file));
             QByteArray xmlContent;
             if(!xmlFile.open(QIODevice::ReadOnly))
             {
-                qDebug() << (std::stringLiteral("Unable to open the xml buff monster file: %1, error: %2").arg(file).arg(xmlFile.errorString()));
+                std::cerr << "Unable to open the xml buff monster file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
                 file_index++;
                 continue;
             }
             xmlContent=xmlFile.readAll();
             xmlFile.close();
-            std::string errorStr;
+            QString errorStr;
             int errorLine,errorColumn;
             if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
             {
-                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+                std::cerr << "Unable to open the xml file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
                 file_index++;
                 continue;
             }
@@ -1653,56 +1629,56 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
         }
         #endif
         QDomElement root = domDocument.documentElement();
-        if(root.tagName()!=FightLoader::text_buffs)
+        if(root.tagName()!="buffs")
         {
-            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
+            std::cerr << "Unable to open the xml file: " << file << ", \"list\" root balise not found for the xml file" << std::endl;
             file_index++;
             continue;
         }
 
         //load the content
         bool ok;
-        QDomElement item = root.firstChildElement(FightLoader::text_buff);
+        QDomElement item = root.firstChildElement("buff");
         while(!item.isNull())
         {
             if(item.isElement())
             {
-                if(item.hasAttribute(FightLoader::text_id))
+                if(item.hasAttribute("id"))
                 {
-                    uint32_t id=item.attribute(FightLoader::text_id).toUInt(&ok);
-                    if(ok && monsterBuffs.contains(id))
-                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, id already found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    uint32_t id=item.attribute("id").toUInt(&ok);
+                    if(ok && monsterBuffs.find(id)!=monsterBuffs.cend())
+                        std::cerr << "Unable to open the xml file: " << file << ", id already found: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     else if(ok)
                     {
                         Buff::Duration general_duration=Buff::Duration_ThisFight;
                         uint8_t general_durationNumberOfTurn=0;
                         float general_capture_bonus=1.0;
-                        if(item.hasAttribute(FightLoader::text_capture_bonus))
+                        if(item.hasAttribute("capture_bonus"))
                         {
-                           general_capture_bonus=item.attribute(FightLoader::text_capture_bonus).toFloat(&ok);
+                           general_capture_bonus=item.attribute("capture_bonus").toFloat(&ok);
                             if(!ok)
                             {
-                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, capture_bonus is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                std::cerr << "Unable to open the xml file: " << file << ", capture_bonus is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                 general_capture_bonus=1.0;
                             }
                         }
-                        if(item.hasAttribute(FightLoader::text_duration))
+                        if(item.hasAttribute("duration"))
                         {
-                            if(item.attribute(FightLoader::text_duration)==FightLoader::text_Always)
+                            if(item.attribute("duration")=="Always")
                                 general_duration=Buff::Duration_Always;
-                            else if(item.attribute(FightLoader::text_duration)==FightLoader::text_NumberOfTurn)
+                            else if(item.attribute("duration")=="NumberOfTurn")
                             {
-                                if(item.hasAttribute(FightLoader::text_durationNumberOfTurn))
+                                if(item.hasAttribute("durationNumberOfTurn"))
                                 {
-                                    general_durationNumberOfTurn=item.attribute(FightLoader::text_durationNumberOfTurn).toUShort(&ok);
+                                    general_durationNumberOfTurn=item.attribute("durationNumberOfTurn").toUShort(&ok);
                                     if(!ok)
                                     {
-                                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, durationNumberOfTurn is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                        std::cerr << "Unable to open the xml file: " << file << ", durationNumberOfTurn is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                         general_durationNumberOfTurn=3;
                                     }
                                     if(general_durationNumberOfTurn<=0)
                                     {
-                                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, durationNumberOfTurn is egal to 0: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                        std::cerr << "Unable to open the xml file: " << file << ", durationNumberOfTurn is egal to 0: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                         general_durationNumberOfTurn=3;
                                     }
                                 }
@@ -1710,28 +1686,28 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                     general_durationNumberOfTurn=3;
                                 general_duration=Buff::Duration_NumberOfTurn;
                             }
-                            else if(item.attribute(FightLoader::text_duration)==FightLoader::text_ThisFight)
+                            else if(item.attribute("duration")=="ThisFight")
                                 general_duration=Buff::Duration_ThisFight;
                             else
                             {
-                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, attribute duration have wrong value \"%4\" is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute("duration")));
+                                std::cerr << "Unable to open the xml file: " << file << ", attribute duration have wrong value \"" << item.attribute("duration").toStdString() << "\" is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                 general_duration=Buff::Duration_ThisFight;
                             }
                         }
                         std::unordered_map<uint8_t,Buff::GeneralEffect> levelDef;
-                        QDomElement effect = item.firstChildElement(FightLoader::text_effect);
+                        QDomElement effect = item.firstChildElement("effect");
                         if(!effect.isNull())
                         {
                             if(effect.isElement())
                             {
-                                QDomElement level = effect.firstChildElement(FightLoader::text_level);
+                                QDomElement level = effect.firstChildElement("level");
                                 while(!level.isNull())
                                 {
                                     if(level.isElement())
                                     {
-                                        if(level.hasAttribute(FightLoader::text_number))
+                                        if(level.hasAttribute("number"))
                                         {
-                                            uint8_t number=level.attribute(FightLoader::text_number).toUShort(&ok);
+                                            uint8_t number=level.attribute("number").toUShort(&ok);
                                             if(ok)
                                             {
                                                 if(number>0)
@@ -1739,27 +1715,27 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                                     Buff::Duration duration=general_duration;
                                                     uint8_t durationNumberOfTurn=general_durationNumberOfTurn;
                                                     float capture_bonus=general_capture_bonus;
-                                                    if(item.hasAttribute(FightLoader::text_capture_bonus))
+                                                    if(item.hasAttribute("capture_bonus"))
                                                     {
-                                                       capture_bonus=item.attribute(FightLoader::text_capture_bonus).toFloat(&ok);
+                                                       capture_bonus=item.attribute("capture_bonus").toFloat(&ok);
                                                         if(!ok)
                                                         {
-                                                            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, capture_bonus is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                            std::cerr << "Unable to open the xml file: " << file << ", capture_bonus is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                                             capture_bonus=general_capture_bonus;
                                                         }
                                                     }
-                                                    if(item.hasAttribute(FightLoader::text_duration))
+                                                    if(item.hasAttribute("duration"))
                                                     {
-                                                        if(item.attribute(FightLoader::text_duration)==FightLoader::text_Always)
+                                                        if(item.attribute("duration")=="Always")
                                                             duration=Buff::Duration_Always;
-                                                        else if(item.attribute(FightLoader::text_duration)==FightLoader::text_NumberOfTurn)
+                                                        else if(item.attribute("duration")=="NumberOfTurn")
                                                         {
-                                                            if(item.hasAttribute(FightLoader::text_durationNumberOfTurn))
+                                                            if(item.hasAttribute("durationNumberOfTurn"))
                                                             {
-                                                                durationNumberOfTurn=item.attribute(FightLoader::text_durationNumberOfTurn).toUShort(&ok);
+                                                                durationNumberOfTurn=item.attribute("durationNumberOfTurn").toUShort(&ok);
                                                                 if(!ok)
                                                                 {
-                                                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, durationNumberOfTurn is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                                    std::cerr << "Unable to open the xml file: " << file << ", durationNumberOfTurn is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                                                     durationNumberOfTurn=general_durationNumberOfTurn;
                                                                 }
                                                             }
@@ -1767,11 +1743,11 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                                                 durationNumberOfTurn=general_durationNumberOfTurn;
                                                             duration=Buff::Duration_NumberOfTurn;
                                                         }
-                                                        else if(item.attribute(FightLoader::text_duration)==FightLoader::text_ThisFight)
+                                                        else if(item.attribute("duration")=="ThisFight")
                                                             duration=Buff::Duration_ThisFight;
                                                         else
                                                         {
-                                                            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, attribute duration have wrong value \"%4\" is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute("duration")));
+                                                            std::cerr << "Unable to open the xml file: " << file << ", attribute duration have wrong value \"" << item.attribute("duration").toStdString() << "\" is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                                             duration=general_duration;
                                                         }
                                                     }
@@ -1781,7 +1757,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
 
 
 
-                                                    QDomElement inFight = level.firstChildElement(FightLoader::text_inFight);
+                                                    QDomElement inFight = level.firstChildElement("inFight");
                                                     while(!inFight.isNull())
                                                     {
                                                         if(inFight.isElement())
@@ -1789,134 +1765,127 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                                             ok=true;
                                                             Buff::Effect effect;
                                                             std::string text;
-                                                            if(inFight.hasAttribute(FightLoader::text_hp))
+                                                            if(inFight.hasAttribute("hp"))
                                                             {
-                                                                text=inFight.attribute(FightLoader::text_hp);
+                                                                text=inFight.attribute("hp").toStdString();
                                                                 effect.on=Buff::Effect::EffectOn_HP;
                                                             }
-                                                            else if(inFight.hasAttribute(FightLoader::text_defense))
+                                                            else if(inFight.hasAttribute("defense"))
                                                             {
-                                                                text=inFight.attribute(FightLoader::text_defense);
+                                                                text=inFight.attribute("defense").toStdString();
                                                                 effect.on=Buff::Effect::EffectOn_Defense;
                                                             }
-                                                            else if(inFight.hasAttribute(FightLoader::text_attack))
+                                                            else if(inFight.hasAttribute("attack"))
                                                             {
-                                                                text=inFight.attribute(FightLoader::text_attack);
+                                                                text=inFight.attribute("attack").toStdString();
                                                                 effect.on=Buff::Effect::EffectOn_Attack;
                                                             }
                                                             else
                                                             {
                                                                 ok=false;
-                                                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, not know attribute balise: child.tagName(): %2 (at line: %3)").arg(file).arg(inFight.tagName()).arg(inFight.lineNumber()));
+                                                                std::cerr << "Unable to open the xml file: " << file << ", not know attribute balise: child.tagName(): " << inFight.tagName().toStdString() << " (at line: " << inFight.lineNumber() << ")" << std::endl;
                                                             }
                                                             if(ok)
                                                             {
-                                                                if(text.endsWith(FightLoader::text_percent))
+                                                                if(stringEndsWith(text,"%"))
                                                                     effect.type=QuantityType_Percent;
                                                                 else
                                                                     effect.type=QuantityType_Quantity;
-                                                                text.remove(FightLoader::text_percent);
-                                                                text.remove(FightLoader::text_more);
-                                                                effect.quantity=text.toInt(&ok);
+                                                                stringreplaceOne(text,"%","");
+                                                                stringreplaceOne(text,"+","");
+                                                                effect.quantity=stringtoint32(text,&ok);
                                                                 if(ok)
-                                                                    levelDef[number].fight << effect;
+                                                                    levelDef[number].fight.push_back(effect);
                                                                 else
-                                                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, \"%4\" something is wrong, or is not a number, or not into hp or defense balise: child.tagName(): %2 (at line: %3)").arg(file).arg(inFight.tagName()).arg(inFight.lineNumber()).arg(text));
+                                                                    std::cerr << "Unable to open the xml file: " << file << ", \"" << text << "\" something is wrong, or is not a number, or not into hp or defense balise: child.tagName(): " << inFight.tagName().toStdString() << " (at line: " << inFight.lineNumber() << ")" << std::endl;
                                                             }
                                                         }
-                                                        inFight = inFight.nextSiblingElement(FightLoader::text_inFight);
+                                                        inFight = inFight.nextSiblingElement("inFight");
                                                     }
-                                                    QDomElement inWalk = level.firstChildElement(FightLoader::text_inWalk);
+                                                    QDomElement inWalk = level.firstChildElement("inWalk");
                                                     while(!inWalk.isNull())
                                                     {
                                                         if(inWalk.isElement())
                                                         {
-                                                            if(inWalk.hasAttribute(FightLoader::text_steps))
+                                                            if(inWalk.hasAttribute("steps"))
                                                             {
-                                                                uint32_t steps=inWalk.attribute(FightLoader::text_steps).toUInt(&ok);
+                                                                uint32_t steps=inWalk.attribute("steps").toUInt(&ok);
                                                                 if(ok)
                                                                 {
                                                                     Buff::EffectInWalk effect;
                                                                     effect.steps=steps;
                                                                     std::string text;
-                                                                    if(inWalk.hasAttribute(FightLoader::text_hp))
+                                                                    if(inWalk.hasAttribute("hp"))
                                                                     {
-                                                                        text=inWalk.attribute(FightLoader::text_hp);
+                                                                        text=inWalk.attribute("hp").toStdString();
                                                                         effect.effect.on=Buff::Effect::EffectOn_HP;
                                                                     }
-                                                                    else if(inWalk.hasAttribute(FightLoader::text_defense))
+                                                                    else if(inWalk.hasAttribute("defense"))
                                                                     {
-                                                                        text=inWalk.attribute(FightLoader::text_defense);
+                                                                        text=inWalk.attribute("defense").toStdString();
                                                                         effect.effect.on=Buff::Effect::EffectOn_Defense;
                                                                     }
                                                                     else
-                                                                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, not action found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                                                    if(text.endsWith(FightLoader::text_percent))
+                                                                        std::cerr << "Unable to open the xml file: " << file << ", not action found: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                                    if(stringEndsWith(text,"%"))
                                                                         effect.effect.type=QuantityType_Percent;
                                                                     else
                                                                         effect.effect.type=QuantityType_Quantity;
-                                                                    text.remove(FightLoader::text_percent);
-                                                                    text.remove(FightLoader::text_more);
-                                                                    effect.effect.quantity=text.toInt(&ok);
+                                                                    stringreplaceOne(text,"%","");
+                                                                    stringreplaceOne(text,"+","");
+                                                                    effect.effect.quantity=stringtoint32(text,&ok);
                                                                     if(ok)
-                                                                        levelDef[number].walk << effect;
+                                                                        levelDef[number].walk.push_back(effect);
                                                                     else
-                                                                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, %4 is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(text));
+                                                                        std::cerr << "Unable to open the xml file: " << file << ", " << text << " is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                                                 }
                                                                 else
-                                                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, have not tag steps: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                                    std::cerr << "Unable to open the xml file: " << file << ", have not tag steps: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                                             }
                                                             else
-                                                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, have not tag steps: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                                std::cerr << "Unable to open the xml file: " << file << ", have not tag steps: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                                         }
-                                                        inWalk = inWalk.nextSiblingElement(FightLoader::text_inWalk);
+                                                        inWalk = inWalk.nextSiblingElement("inWalk");
                                                     }
                                                 }
                                                 else
-                                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, level need be egal or greater than 1: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                    std::cerr << "Unable to open the xml file: " << file << ", level need be egal or greater than 1: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                             }
                                             else
-                                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, number tag is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                std::cerr << "Unable to open the xml file: " << file << ", number tag is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                         }
                                     }
                                     else
-                                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, level balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                    level = level.nextSiblingElement(FightLoader::text_level);
+                                        std::cerr << "Unable to open the xml file: " << file << ", level balise is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                    level = level.nextSiblingElement("level");
                                 }
                                 uint8_t index=1;
-                                while(levelDef.contains(index))
+                                while(levelDef.find(index)!=levelDef.cend())
                                 {
                                     /*if(levelDef.value(index).fight.empty() && levelDef.value(index).walk.empty())
-                                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, no effect loaded for buff %4 at level %5, missing level to continue: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(id).arg(index));*/
-                                    monsterBuffs[id].level << levelDef.value(index);
-                                    levelDef.remove(index);
-                                    #ifdef DEBUG_MESSAGE_BUFF_LOAD
-                                    qDebug() << (std::stringLiteral("for the level %1 of buff %2 have %3 effect(s) in fight and %4 effect(s) in walk").arg(index).arg(id).arg(GlobalData::serverPrivateVariables.monsterBuffs.value(id).level.at(index-1).fight.size()).arg(GlobalData::serverPrivateVariables.monsterBuffs.value(id).level.at(index-1).walk.size()));
-                                    #endif
+                                        std::cerr << "Unable to open the xml file: " << file << ", no effect loaded for buff %4 at level %5, missing level to continue: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(id).arg(index));*/
+                                    monsterBuffs[id].level.push_back(levelDef.at(index));
+                                    levelDef.erase(index);
                                     index++;
                                 }
                                 if(levelDef.size()>0)
-                                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, level up to %4 loaded, missing level to continue: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(index));
-                                #ifdef DEBUG_MESSAGE_BUFF_LOAD
-                                else
-                                    qDebug() << (std::stringLiteral("%1 level(s) loaded for buff %2").arg(index-1).arg(id));
-                                #endif
+                                    std::cerr << "Unable to open the xml file: " << file << ", level up to " << index << " loaded, missing level to continue: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                             }
                             else
-                                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                std::cerr << "Unable to open the xml file: " << file << ", effect balise is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
                         else
-                            qDebug() << (std::stringLiteral("Unable to open the xml file: %1, have not effet balise: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                            std::cerr << "Unable to open the xml file: " << file << ", have not effet balise: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     }
                     else
-                        qDebug() << (std::stringLiteral("Unable to open the xml file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                        std::cerr << "Unable to open the xml file: " << file << ", id is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                 }
                 else
-                    qDebug() << (std::stringLiteral("Unable to open the xml file: %1, have not the buff id: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the buff id: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
             }
             else
-                qDebug() << (std::stringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-            item = item.nextSiblingElement(FightLoader::text_buff);
+                std::cerr << "Unable to open the xml file: " << file << ", is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+            item = item.nextSiblingElement("buff");
         }
         file_index++;
     }

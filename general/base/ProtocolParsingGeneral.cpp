@@ -10,9 +10,11 @@
 
 using namespace CatchChallenger;
 
-char ProtocolParsingBase::tempBigBufferForUncompressedInput[];
 char ProtocolParsingBase::tempBigBufferForOutput[];
+#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+char ProtocolParsingBase::tempBigBufferForUncompressedInput[];
 char ProtocolParsingBase::tempBigBufferForCompressedOutput[];
+#endif
 const uint8_t ProtocolParsing::packetFixedSize[]={0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
