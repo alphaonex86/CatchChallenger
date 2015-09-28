@@ -6,7 +6,7 @@
 #include "../fight/FightLoader.h"
 #include "DatapackGeneralLoader.h"
 
-#include <QDebug>
+#include <iostream>
 #include <QFile>
 #include <QDomElement>
 #include <QDomDocument>
@@ -49,50 +49,52 @@ void CommonDatapackServerSpec::parseDatapack(const std::string &datapackPath,con
 
 void CommonDatapackServerSpec::parseQuests()
 {
-    quests=DatapackGeneralLoader::loadQuests(datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_QUESTS).arg(mainDatapackCode));
-    qDebug() << std::stringLiteral("%1 quest(s) loaded").arg(quests.size());
+    quests=DatapackGeneralLoader::loadQuests(datapackPath+DATAPACK_BASE_PATH_QUESTS1+mainDatapackCode+DATAPACK_BASE_PATH_QUESTS2);
+    std::cout << quests.size() << " quest(s) loaded" << std::endl;
 }
 
 void CommonDatapackServerSpec::parseShop()
 {
-    shops=DatapackGeneralLoader::preload_shop(datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_SHOP).arg(mainDatapackCode)+std::stringLiteral("shop.xml"),CommonDatapack::commonDatapack.items.item);
-    qDebug() << std::stringLiteral("%1 monster items(s) to learn loaded").arg(shops.size());
+    shops=DatapackGeneralLoader::preload_shop(datapackPath+DATAPACK_BASE_PATH_SHOP1+mainDatapackCode+DATAPACK_BASE_PATH_SHOP2+"shop.xml",CommonDatapack::commonDatapack.items.item);
+    std::cout << shops.size() << " monster items(s) to learn loaded" << std::endl;
 }
 
 void CommonDatapackServerSpec::parseBotFights()
 {
-    botFights=FightLoader::loadFight(datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_FIGHT).arg(mainDatapackCode),CommonDatapack::commonDatapack.monsters,CommonDatapack::commonDatapack.monsterSkills,CommonDatapack::commonDatapack.items.item);
-    qDebug() << std::stringLiteral("%1 bot fight(s) loaded").arg(botFights.size());
+    botFights=FightLoader::loadFight(datapackPath+DATAPACK_BASE_PATH_FIGHT1+mainDatapackCode+DATAPACK_BASE_PATH_FIGHT2,CommonDatapack::commonDatapack.monsters,CommonDatapack::commonDatapack.monsterSkills,CommonDatapack::commonDatapack.items.item);
+    std::cout << botFights.size() << " bot fight(s) loaded" << std::endl;
 }
 
 void CommonDatapackServerSpec::parseServerProfileList()
 {
-    serverProfileList=DatapackGeneralLoader::loadServerProfileList(datapackPath,mainDatapackCode,datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_PLAYERSPEC).arg(mainDatapackCode)+std::stringLiteral("start.xml"),CommonDatapack::commonDatapack.profileList);
-    qDebug() << std::stringLiteral("%1 server profile(s) loaded").arg(serverProfileList.size());
+    serverProfileList=DatapackGeneralLoader::loadServerProfileList(datapackPath,mainDatapackCode,datapackPath+DATAPACK_BASE_PATH_PLAYERSPEC+"/"+mainDatapackCode+"/start.xml",CommonDatapack::commonDatapack.profileList);
+    std::cout << serverProfileList.size() << " server profile(s) loaded" << std::endl;
 }
 
 void CommonDatapackServerSpec::parseIndustries()
 {
     std::unordered_map<uint16_t,Industry> industriesBase=CommonDatapack::commonDatapack.industries;
     std::unordered_map<uint16_t,IndustryLink> industriesLinkBase=CommonDatapack::commonDatapack.industriesLink;
-    CommonDatapack::commonDatapack.industries=DatapackGeneralLoader::loadIndustries(datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_INDUSTRIESSPEC).arg(mainDatapackCode),CommonDatapack::commonDatapack.items.item);
-    qDebug() << std::stringLiteral("%1 industries loaded (spec industries %2)").arg(industriesBase.size()).arg(CommonDatapack::commonDatapack.industries.size());
+    CommonDatapack::commonDatapack.industries=DatapackGeneralLoader::loadIndustries(datapackPath+DATAPACK_BASE_PATH_INDUSTRIESSPEC1+mainDatapackCode+DATAPACK_BASE_PATH_INDUSTRIESSPEC2,CommonDatapack::commonDatapack.items.item);
+    std::cout << industriesBase.size() << " industries loaded (spec industries " << CommonDatapack::commonDatapack.industries.size() << ")" << std::endl;
     {
-        std::unordered_mapIterator<uint16_t,Industry> i(industriesBase);
-        while (i.hasNext()) {
-            i.next();
-            if(!CommonDatapack::commonDatapack.industries.contains(i.key()))
-                CommonDatapack::commonDatapack.industries[i.key()]=i.value();
+        auto i=industriesBase.begin();
+        while(i!=industriesBase.cend())
+        {
+            if(CommonDatapack::commonDatapack.industries.find(i->first)==CommonDatapack::commonDatapack.industries.cend())
+                CommonDatapack::commonDatapack.industries[i->first]=i->second;
+            ++i;
         }
     }
-    CommonDatapack::commonDatapack.industriesLink=DatapackGeneralLoader::loadIndustriesLink(datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_INDUSTRIESSPEC).arg(mainDatapackCode)+std::stringLiteral("list.xml"),CommonDatapack::commonDatapack.industries);
-    qDebug() << std::stringLiteral("%1 industries link loaded (spec industries link %2)").arg(industriesLinkBase.size()).arg(CommonDatapack::commonDatapack.industriesLink.size());
+    CommonDatapack::commonDatapack.industriesLink=DatapackGeneralLoader::loadIndustriesLink(datapackPath+DATAPACK_BASE_PATH_INDUSTRIESSPEC1+mainDatapackCode+DATAPACK_BASE_PATH_INDUSTRIESSPEC2+"list.xml",CommonDatapack::commonDatapack.industries);
+    std::cout << industriesLinkBase.size() << " industries link loaded (spec industries link " << CommonDatapack::commonDatapack.industriesLink.size() << ")" << std::endl;
     {
-        std::unordered_mapIterator<uint16_t,IndustryLink> i(industriesLinkBase);
-        while (i.hasNext()) {
-            i.next();
-            if(!CommonDatapack::commonDatapack.industriesLink.contains(i.key()))
-                CommonDatapack::commonDatapack.industriesLink[i.key()]=i.value();
+        auto i=industriesLinkBase.begin();
+        while(i!=industriesLinkBase.cend())
+        {
+            if(CommonDatapack::commonDatapack.industriesLink.find(i->first)==CommonDatapack::commonDatapack.industriesLink.cend())
+                CommonDatapack::commonDatapack.industriesLink[i->first]=i->second;
+            ++i;
         }
     }
 }
