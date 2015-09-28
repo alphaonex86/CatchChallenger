@@ -177,8 +177,8 @@ struct MonsterItemEffectOutOfFight
 
 struct ItemFull
 {
-    std::unordered_multimap<uint16_t, MonsterItemEffect> monsterItemEffect;
-    std::unordered_multimap<uint16_t, MonsterItemEffectOutOfFight> monsterItemEffectOutOfFight;
+    std::unordered_map<uint16_t, std::vector<MonsterItemEffect> > monsterItemEffect;
+    std::unordered_map<uint16_t, std::vector<MonsterItemEffectOutOfFight> > monsterItemEffectOutOfFight;
     std::unordered_map<CATCHCHALLENGER_TYPE_ITEM/*item*/, std::unordered_map<uint16_t/*monster*/,uint16_t/*evolveTo*/> > evolutionItem;
     std::unordered_map<CATCHCHALLENGER_TYPE_ITEM/*item*/, std::unordered_set<uint16_t/*monster*/> > itemToLearn;
     std::unordered_map<uint16_t, uint32_t> repel;
@@ -334,7 +334,7 @@ struct PlayerQuest
 
 struct PlayerReputation
 {
-    qint8 level;
+    int8_t level;
     int32_t point;
 };
 
@@ -638,7 +638,7 @@ struct Monster
     };
 
     std::vector<uint8_t> type;
-    qint8 ratio_gender;///< -1 for no gender, 0 only male, 100 only female
+    int8_t ratio_gender;///< -1 for no gender, 0 only male, 100 only female
     uint8_t catch_rate;///< 0 to 255 (255 = very easy)
     uint32_t egg_step;///< step to hatch, 0 to no egg and never hatch
     uint32_t xp_for_max_level;///< xp to be level 100
@@ -793,7 +793,7 @@ struct Profile
     struct Reputation
     {
         uint8_t reputationId;//datapack order, can can need the dicionary to db resolv
-        qint8 level;
+        int8_t level;
         int32_t point;
     };
     struct Monster
@@ -837,8 +837,8 @@ struct MonstersCollision
     CATCHCHALLENGER_TYPE_ITEM item;
     std::string tile;
     std::string layer;
-    std::vector<std::string > monsterTypeList;
-    std::vector<std::string > defautMonsterTypeList;
+    std::vector<std::string> monsterTypeList;
+    std::vector<std::string> defautMonsterTypeList;
     std::string background;
     struct MonstersCollisionEvent
     {
@@ -852,7 +852,7 @@ struct MonstersCollision
 struct Type
 {
     std::string name;
-    std::unordered_map<uint8_t,qint8> multiplicator;//negative = divide, not multiply
+    std::unordered_map<uint8_t,int8_t> multiplicator;//negative = divide, not multiply
 };
 
 }
