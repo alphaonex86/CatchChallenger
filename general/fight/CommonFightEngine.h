@@ -95,8 +95,8 @@ protected:
     virtual uint32_t catchAWild(const bool &toStorage, const PlayerMonster &newMonster) = 0;
     void startTheFight();
     virtual bool addSkill(PlayerMonster * currentMonster,const PlayerMonster::PlayerSkill &skill);
-    virtual bool setSkillLevel(PlayerMonster * currentMonster,const int &index,const uint8_t &level);
-    virtual bool removeSkill(PlayerMonster * currentMonster,const int &index);
+    virtual bool setSkillLevel(PlayerMonster * currentMonster,const unsigned int &index,const uint8_t &level);
+    virtual bool removeSkill(PlayerMonster * currentMonster,const unsigned int &index);
 protected:
     virtual void errorFightEngine(const std::string &error) = 0;
     virtual void messageFightEngine(const std::string &message) const = 0;
