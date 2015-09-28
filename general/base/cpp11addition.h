@@ -6,6 +6,7 @@
 #include <string>
 #include <regex>
 #include <unordered_map>
+#include <unordered_set>
 
 #if ! defined(Q_LIKELY)
     #if defined(__GNUC__)
@@ -391,12 +392,46 @@ template <class T>
 unsigned int vectorRemoveEmpty(std::vector<T> &list)
 {
     unsigned int removedEntryNumber=0;
-    for(auto it = list.begin();it != list.cend();++it)
-        if((*it).size()==0)
+    for(auto it = list.begin();it != list.cend();)
+        if((*it).empty())
         {
             list.erase(it);
             ++removedEntryNumber;
         }
+        else
+            ++it;
+    return removedEntryNumber;
+}
+
+template <class T>
+unsigned int vectorDuplicatesForSmallList(std::vector<T> &list)
+{
+    /*unsigned int removedEntryNumber=0;
+    for(auto it = list.begin();it < list.cend()-1;)
+    {
+        const auto indexOf=std::find(it+1,list.cend(),*it);
+        if(indexOf!=list.end())
+        {
+            list.erase(indexOf);
+            ++removedEntryNumber;
+        }
+        else
+            ++it;
+    }
+    return removedEntryNumber;*/
+
+    std::unordered_set<T> s(list.begin(),list.end());
+    const unsigned int removedEntryNumber=list.size()-s.size();
+    list=std::vector<T>(s.begin(),s.end());
+    return removedEntryNumber;
+}
+
+template <class T>
+unsigned int vectorDuplicatesForBigList(std::vector<T> &list)
+{
+    std::unordered_set<T> s(list.begin(),list.end());
+    const unsigned int removedEntryNumber=list.size()-s.size();
+    list=std::vector<T>(s.begin(),s.end());
     return removedEntryNumber;
 }
 
