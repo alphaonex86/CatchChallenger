@@ -4,7 +4,7 @@
 #include "../fight/FightLoader.h"
 #include "DatapackGeneralLoader.h"
 
-#include <QDebug>
+#include <iostream>
 #include <QFile>
 #include <QDomElement>
 #include <QDomDocument>
@@ -53,101 +53,101 @@ void CommonDatapack::parseDatapack(const std::string &datapackPath)
 void CommonDatapack::parseTypes()
 {
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    types=FightLoader::loadTypes(datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_MONSTERS)+std::stringLiteral("type.xml"));
-    qDebug() << std::stringLiteral("%1 type(s) loaded").arg(types.size());
+    types=FightLoader::loadTypes(datapackPath+DATAPACK_BASE_PATH_MONSTERS+"type.xml");
+    std::cout << types.size() << " type(s) loaded" << std::endl;
     #endif
 }
 
 void CommonDatapack::parseSkins()
 {
-    skins=DatapackGeneralLoader::loadSkins(datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_SKIN));
-    qDebug() << std::stringLiteral("%1 skin(s) loaded").arg(skins.size());
+    skins=DatapackGeneralLoader::loadSkins(datapackPath+DATAPACK_BASE_PATH_SKIN);
+    std::cout << skins.size() << " skin(s) loaded" << std::endl;
 }
 
 void CommonDatapack::parseItems()
 {
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    items=DatapackGeneralLoader::loadItems(datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_ITEM),monsterBuffs);
-    qDebug() << std::stringLiteral("%1 items(s) loaded").arg(items.item.size());
-    qDebug() << std::stringLiteral("%1 trap(s) loaded").arg(items.trap.size());
+    items=DatapackGeneralLoader::loadItems(datapackPath+DATAPACK_BASE_PATH_ITEM,monsterBuffs);
+    std::cout << items.item.size() << " items(s) loaded" << std::endl;
+    std::cout << items.trap.size() << " trap(s) loaded" << std::endl;
     #endif
 }
 
 void CommonDatapack::parseIndustries()
 {
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    industries=DatapackGeneralLoader::loadIndustries(datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_INDUSTRIESBASE),items.item);
-    industriesLink=DatapackGeneralLoader::loadIndustriesLink(datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_INDUSTRIESBASE)+std::stringLiteral("list.xml"),industries);
-    qDebug() << std::stringLiteral("%1 industries loaded").arg(industries.size());
-    qDebug() << std::stringLiteral("%1 industries link loaded").arg(industriesLink.size());
+    industries=DatapackGeneralLoader::loadIndustries(datapackPath+DATAPACK_BASE_PATH_INDUSTRIESBASE,items.item);
+    industriesLink=DatapackGeneralLoader::loadIndustriesLink(datapackPath+DATAPACK_BASE_PATH_INDUSTRIESBASE+"list.xml",industries);
+    std::cout << industries.size() << " industries loaded" << std::endl;
+    std::cout << industriesLink.size() << " industries link loaded" << std::endl;
     #endif
 }
 
 void CommonDatapack::parseCraftingRecipes()
 {
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> > multipleVariables=DatapackGeneralLoader::loadCraftingRecipes(datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_CRAFTING)+std::stringLiteral("recipes.xml"),items.item);
+    std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> > multipleVariables=DatapackGeneralLoader::loadCraftingRecipes(datapackPath+DATAPACK_BASE_PATH_CRAFTING+"recipes.xml",items.item);
     crafingRecipes=multipleVariables.first;
     itemToCrafingRecipes=multipleVariables.second;
-    qDebug() << std::stringLiteral("%1 crafting recipe(s) loaded").arg(crafingRecipes.size());
+    std::cout << crafingRecipes.size() << " crafting recipe(s) loaded" << std::endl;
     #endif
 }
 
 void CommonDatapack::parsePlants()
 {
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    plants=DatapackGeneralLoader::loadPlants(datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_PLANTS)+std::stringLiteral("plants.xml"));
-    qDebug() << std::stringLiteral("%1 plant(s) loaded").arg(plants.size());
+    plants=DatapackGeneralLoader::loadPlants(datapackPath+DATAPACK_BASE_PATH_PLANTS+"plants.xml");
+    std::cout << plants.size() << " plant(s) loaded" << std::endl;
     #endif
 }
 
 void CommonDatapack::parseReputation()
 {
-    reputation=DatapackGeneralLoader::loadReputation(datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_PLAYERBASE)+std::stringLiteral("reputation.xml"));
-    qDebug() << std::stringLiteral("%1 reputation(s) loaded").arg(reputation.size());
+    reputation=DatapackGeneralLoader::loadReputation(datapackPath+DATAPACK_BASE_PATH_PLAYERBASE+"reputation.xml");
+    std::cout << reputation.size() << " reputation(s) loaded" << std::endl;
 }
 
 void CommonDatapack::parseBuff()
 {
     #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
-    monsterBuffs=FightLoader::loadMonsterBuff(datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_BUFF));
-    qDebug() << std::stringLiteral("%1 monster buff(s) loaded").arg(monsterBuffs.size());
+    monsterBuffs=FightLoader::loadMonsterBuff(datapackPath+DATAPACK_BASE_PATH_BUFF);
+    std::cout << monsterBuffs.size() << " monster buff(s) loaded" << std::endl;
     #endif
 }
 
 void CommonDatapack::parseSkills()
 {
-    monsterSkills=FightLoader::loadMonsterSkill(datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_SKILL)
+    monsterSkills=FightLoader::loadMonsterSkill(datapackPath+DATAPACK_BASE_PATH_SKILL
                                                 #ifndef CATCHCHALLENGER_CLASS_MASTER
                                                 ,monsterBuffs,types
                                                 #endif // CATCHCHALLENGER_CLASS_MASTER
                                                 );
-    qDebug() << std::stringLiteral("%1 monster skill(s) loaded").arg(monsterSkills.size());
+    std::cout << monsterSkills.size() << " monster skill(s) loaded" << std::endl;
 }
 
 void CommonDatapack::parseEvents()
 {
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    events=DatapackGeneralLoader::loadEvents(datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_PLAYERBASE)+std::stringLiteral("event.xml"));
-    qDebug() << std::stringLiteral("%1 event(s) loaded").arg(events.size());
+    events=DatapackGeneralLoader::loadEvents(datapackPath+DATAPACK_BASE_PATH_PLAYERBASE+"event.xml");
+    std::cout << events.size() << " event(s) loaded" << std::endl;
     #endif
 }
 
 void CommonDatapack::parseMonsters()
 {
-    monsters=FightLoader::loadMonster(datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_MONSTERS),monsterSkills
+    monsters=FightLoader::loadMonster(datapackPath+DATAPACK_BASE_PATH_MONSTERS,monsterSkills
                                       #ifndef CATCHCHALLENGER_CLASS_MASTER
                                       ,types,items.item
                                       #endif
                                       );
-    qDebug() << std::stringLiteral("%1 monster(s) loaded").arg(monsters.size());
+    std::cout << monsters.size() << " monster(s) loaded" << std::endl;
 }
 
 void CommonDatapack::parseMonstersCollision()
 {
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    monstersCollision=DatapackGeneralLoader::loadMonstersCollision(datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_MAPBASE)+std::stringLiteral("layers.xml"),CommonDatapack::commonDatapack.items.item,CommonDatapack::commonDatapack.events);
-    qDebug() << std::stringLiteral("%1 monster(s) collisions loaded").arg(monstersCollision.size());
+    monstersCollision=DatapackGeneralLoader::loadMonstersCollision(datapackPath+DATAPACK_BASE_PATH_MAPBASE+"layers.xml",CommonDatapack::commonDatapack.items.item,CommonDatapack::commonDatapack.events);
+    std::cout << monstersCollision.size() << " monster(s) collisions loaded" << std::endl;
     #endif
 }
 
@@ -155,7 +155,7 @@ void CommonDatapack::parseMonstersEvolutionItems()
 {
     #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
     items.evolutionItem=FightLoader::loadMonsterEvolutionItems(monsters);
-    qDebug() << std::stringLiteral("%1 monster evolution items(s) loaded").arg(items.evolutionItem.size());
+    std::cout << items.evolutionItem.size() << " monster evolution items(s) loaded" << std::endl;
     #endif
 }
 
@@ -163,25 +163,25 @@ void CommonDatapack::parseMonstersItemToLearn()
 {
     #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
     items.itemToLearn=FightLoader::loadMonsterItemToLearn(monsters,items.evolutionItem);
-    qDebug() << std::stringLiteral("%1 monster items(s) to learn loaded").arg(items.itemToLearn.size());
+    std::cout << items.itemToLearn.size() << " monster items(s) to learn loaded" << std::endl;
     #endif
 }
 
 void CommonDatapack::parseProfileList()
 {
-    profileList=DatapackGeneralLoader::loadProfileList(datapackPath,datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_PLAYERBASE)+std::stringLiteral("start.xml")
+    profileList=DatapackGeneralLoader::loadProfileList(datapackPath,datapackPath+DATAPACK_BASE_PATH_PLAYERBASE+"start.xml"
                                                        #ifndef CATCHCHALLENGER_CLASS_MASTER
                                                        ,items.item
                                                        #endif // CATCHCHALLENGER_CLASS_MASTER
                                                        ,monsters,reputation).second;
-    qDebug() << std::stringLiteral("%1 profile(s) loaded").arg(profileList.size());
+    std::cout << profileList.size() << " profile(s) loaded" << std::endl;
 }
 
 void CommonDatapack::parseLayersOptions()
 {
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    layersOptions=DatapackGeneralLoader::loadLayersOptions(datapackPath+std::stringLiteral(DATAPACK_BASE_PATH_MAPBASE)+std::stringLiteral("layers.xml"));
-    qDebug() << std::stringLiteral("layers options parsed");
+    layersOptions=DatapackGeneralLoader::loadLayersOptions(datapackPath+DATAPACK_BASE_PATH_MAPBASE+"layers.xml");
+    std::cout << "layers options parsed" << std::endl;
     #endif
 }
 
