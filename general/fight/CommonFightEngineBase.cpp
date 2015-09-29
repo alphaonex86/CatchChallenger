@@ -21,14 +21,14 @@ std::vector<PlayerMonster::PlayerSkill> CommonFightEngineBase::generateWildSkill
         if(attackToLearn.learnAtLevel<=level)
         {
             //have already learned the best level because start to learn the highther skill, else if it's new skill
-            if(!learnedSkill.contains(attackToLearn.learnSkill))
+            if(!vectorcontainsAtLeastOne(learnedSkill,attackToLearn.learnSkill))
             {
                 PlayerMonster::PlayerSkill temp;
                 temp.level=attackToLearn.learnSkillLevel;
                 temp.skill=attackToLearn.learnSkill;
-                temp.endurance=CommonDatapack::commonDatapack.monsterSkills.value(temp.skill).level.at(temp.level-1).endurance;
-                learnedSkill << attackToLearn.learnSkill;
-                skills << temp;
+                temp.endurance=CommonDatapack::commonDatapack.monsterSkills.at(temp.skill).level.at(temp.level-1).endurance;
+                learnedSkill.push_back(attackToLearn.learnSkill);
+                skills.push_back(temp);
             }
         }
         /*else
@@ -79,13 +79,13 @@ Monster::Stat CommonFightEngineBase::getStat(const Monster &monster, const uint8
 #ifndef CATCHCHALLENGER_CLASS_MASTER
 bool CommonFightEngineBase::buffIsValid(const Skill::BuffEffect &buffEffect)
 {
-    if(!CommonDatapack::commonDatapack.monsterBuffs.contains(buffEffect.buff))
+    if(CommonDatapack::commonDatapack.monsterBuffs.find(buffEffect.buff)==CommonDatapack::commonDatapack.monsterBuffs.cend())
         return false;
     if(buffEffect.level<=0)
         return false;
     if(buffEffect.level<=0)
         return false;
-    if(buffEffect.level>CommonDatapack::commonDatapack.monsterBuffs.value(buffEffect.buff).level.size())
+    if(buffEffect.level>CommonDatapack::commonDatapack.monsterBuffs.at(buffEffect.buff).level.size())
         return false;
     switch(buffEffect.on)
     {

@@ -343,15 +343,6 @@ void BaseServer::preload_dictionary_map_return()
     preload_pointOnMap_sql();
 }
 
-
-bool BaseServer::preload_zone()
-{
-    //open and quick check the file
-    entryListZone=QFileInfoList(QDir(QString::fromStdString(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_ZONE1+CommonSettingsServer::commonSettingsServer.mainDatapackCode+DATAPACK_BASE_PATH_ZONE2)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot));
-    entryListIndex=0;
-    return preload_zone_init();
-}
-
 void BaseServer::preload_industries()
 {
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

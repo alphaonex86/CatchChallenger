@@ -708,6 +708,8 @@ private:
     //send reply
     bool parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
 
+    void moveClientFastPath(const uint8_t &previousMovedUnit,const uint8_t &direction);
+
     // ------------------------------
     bool sendFile(const std::string &datapackPath,const std::string &fileName);
 

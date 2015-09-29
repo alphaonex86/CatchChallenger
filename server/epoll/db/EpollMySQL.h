@@ -3,9 +3,9 @@
 #define CATCHCHALLENGER_EPOLLMYSQL_H
 
 #include <mysql/mysql.h>
-#include <QList>
-#include <QString>
-#include <QStringList>
+#include <queue>
+#include <vector>
+#include <string>
 
 #include "../../base/DatabaseBase.h"
 #include "../BaseClassSwitch.h"
@@ -36,8 +36,8 @@ private:
     int ntuples;
     int nfields;
     MYSQL_RES *result;
-    QList<CallBack> queue;
-    QStringList queriesList;
+    std::vector<CallBack> queue;
+    std::vector<std::string> queriesList;
     bool started;
     static char emptyString[1];
     static CallBack emptyCallback;

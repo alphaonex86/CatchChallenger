@@ -3,9 +3,9 @@
 #define CATCHCHALLENGER_EPOLLPOSTGRESQL_H
 
 #include <postgresql/libpq-fe.h>
-#include <QList>
-#include <QString>
-#include <QStringList>
+#include <queue>
+#include <vector>
+#include <string>
 
 #include "../../base/DatabaseBase.h"
 
@@ -35,8 +35,9 @@ private:
     int tuleIndex;
     int ntuples;
     PGresult *result;
-    QList<CallBack> queue;
-    QStringList queriesList;
+    //vector more fast on small data with less than 1024<entry
+    std::vector<CallBack> queue;
+    std::vector<std::string> queriesList;
     bool started;
     static char emptyString[1];
     static CallBack emptyCallback;

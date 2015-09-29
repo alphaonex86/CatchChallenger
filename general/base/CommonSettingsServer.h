@@ -1,7 +1,7 @@
 #ifndef COMMMONSETTINGSSERVER_H
 #define COMMMONSETTINGSSERVER_H
 
-#include <QtGlobal>
+#include <vector>
 #include <string>
 
 class CommonSettingsServer
@@ -15,9 +15,9 @@ public:
     bool autoLearn;
     bool dontSendPseudo;
     bool forceClientToSendAtMapChange;
-    int waitBeforeConnectAfterKick;
-    QByteArray datapackHashServerMain;
-    QByteArray datapackHashServerSub;
+    uint32_t waitBeforeConnectAfterKick;
+    std::vector<char> datapackHashServerMain;
+    std::vector<char> datapackHashServerSub;
     #ifndef CATCHCHALLENGER_CLASS_GATEWAY
     std::string mainDatapackCode;
     std::string subDatapackCode;

@@ -429,6 +429,11 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
     return true;
 }
 
+void Client::moveClientFastPath(const uint8_t &previousMovedUnit,const uint8_t &direction)
+{
+    moveThePlayer(previousMovedUnit,static_cast<Direction>(direction));
+}
+
 bool Client::parseMessage(const uint8_t &packetCode,const char * const data,const int unsigned &size)
 {
     if(stopIt)

@@ -1,15 +1,15 @@
 #ifndef COMMMONSETTINGSCOMMON_H
 #define COMMMONSETTINGSCOMMON_H
 
-#include <QtGlobal>
 #include <string>
+#include <vector>
 
 class CommonSettingsCommon
 {
 public:
     bool automatic_account_creation;
     std::string httpDatapackMirrorBase;
-    QByteArray datapackHashBase;
+    std::vector<char> datapackHashBase;
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     uint8_t max_character;//if 0, not allowed, else the character max allowed
