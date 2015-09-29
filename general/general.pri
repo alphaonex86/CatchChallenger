@@ -27,7 +27,8 @@ SOURCES += $$PWD/base/ChatParsing.cpp \
     $$PWD/fight/CommonFightEngineBase.cpp \
     $$PWD/base/lz4/lz4.c \
     $$PWD/base/CommonSettingsCommon.cpp \
-    $$PWD/base/CommonSettingsServer.cpp
+    $$PWD/base/CommonSettingsServer.cpp \
+    $$PWD/base/cpp11addition.cpp
 
 HEADERS  += $$PWD/base/GeneralStructures.h \
     $$PWD/base/ClientBase.h \

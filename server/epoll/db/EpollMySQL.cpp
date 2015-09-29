@@ -29,6 +29,9 @@ EpollMySQL::EpollMySQL() :
     emptyCallback.object=NULL;
     emptyCallback.method=NULL;
     databaseTypeVar=DatabaseBase::Type::Mysql;
+
+    queue.reserve(CATCHCHALLENGER_MAXBDQUERIES);
+    queriesList.reserve(CATCHCHALLENGER_MAXBDQUERIES);
 }
 
 EpollMySQL::~EpollMySQL()
