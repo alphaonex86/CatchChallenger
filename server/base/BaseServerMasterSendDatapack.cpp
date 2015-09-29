@@ -64,7 +64,7 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
     std::string text_datapack(datapack_basePathLogin);
     std::string text_exclude("map/main/");
 
-    QCryptographicHash baseHash(QCryptographicHash::Sha224);
+    QCryptographicHash hashBase(QCryptographicHash::Sha224);
     std::vector<std::string> datapack_file_temp=FacilityLibGeneral::listFolder(text_datapack);
     std::sort(datapack_file_temp.begin(),datapack_file_temp.end());
 
@@ -88,7 +88,7 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
                             cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
                             datapack_file_hash_cache[datapack_file_temp.at(index)]=cacheFile;
                         }
-                        baseHash.addData(data);
+                        hashBase.addData(data);
                         file.close();
                     }
                     else
@@ -106,7 +106,9 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
         index++;
     }
 
-    CommonSettingsCommon::commonSettingsCommon.datapackHashBase=baseHash.result();
+    CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(hashBase.result().size());
+    memcpy(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),hashBase.result().constData(),hashBase.result().size());
+
     std::cout << datapack_file_temp.size() << " files for datapack loaded" << std::endl;
 }
 

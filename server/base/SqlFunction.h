@@ -7,7 +7,6 @@ namespace CatchChallenger {
 class SqlFunction
 {
 public:
-    //do a fake login
     static std::string quoteSqlVariable(const std::string &variable);
 protected:
     static std::string text_antislash;

@@ -157,7 +157,12 @@ void BaseServer::preload_other()
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
         posOutput+=2;
 
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput,CommonSettingsCommon::commonSettingsCommon.datapackHashBase.constData(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size());
+        if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=28)
+        {
+            std::cerr << "CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=28 into BaseServer::preload_other()" << std::endl;
+            abort();
+        }
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput,CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size());
         posOutput+=CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size();
 
         {
@@ -273,8 +278,13 @@ void BaseServer::preload_other()
             qDebug() << "CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()!=28";
             abort();
         }
+        if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=28)
+        {
+            std::cerr << "CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=28 into BaseServer::preload_other()" << std::endl;
+            abort();
+        }
         //main hash
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,CommonSettingsServer::commonSettingsServer.datapackHashServerMain.constData(),28);
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),28);
         posOutput+=28;
         //sub hash
         if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
@@ -284,7 +294,7 @@ void BaseServer::preload_other()
                 qDebug() << "CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()!=28";
                 abort();
             }
-            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,CommonSettingsServer::commonSettingsServer.datapackHashServerSub.constData(),28);
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),28);
             posOutput+=28;
         }
         //mirror
@@ -1388,12 +1398,6 @@ bool BaseServer::preload_the_map()
     return true;
 }
 
-void BaseServer::criticalDatabaseQueryFailed()
-{
-    unload_the_data();
-    quitForCriticalDatabaseQueryFailed();
-}
-
 void BaseServer::preload_the_skin()
 {
     std::vector<std::string> skinFolderList=FacilityLibGeneral::skinIdList(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_SKIN);
@@ -1523,7 +1527,8 @@ void BaseServer::preload_the_datapack()
                 std::cerr << "File excluded because don't match the regex: " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << std::endl;
             index++;
         }
-        CommonSettingsCommon::commonSettingsCommon.datapackHashBase=hashBase.result();
+        CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(hashBase.result().size());
+        memcpy(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),hashBase.result().constData(),hashBase.result().size());
     }
     #endif
     /// \todo check if big file is compressible under 1MB
@@ -1589,7 +1594,8 @@ void BaseServer::preload_the_datapack()
                 std::cerr << "File excluded because don't match the regex: " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << std::endl;
             index++;
         }
-        CommonSettingsServer::commonSettingsServer.datapackHashServerMain=hashMain.result();
+        CommonSettingsServer::commonSettingsServer.datapackHashServerMain.resize(hashMain.result().size());
+        memcpy(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),hashMain.result().constData(),hashMain.result().size());
     }
     //do the sub
     if(GlobalServerData::serverPrivateVariables.subDatapackFolder.size()>0)
@@ -1646,7 +1652,8 @@ void BaseServer::preload_the_datapack()
                 std::cerr << "File excluded because don't match the regex: " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << std::endl;
             index++;
         }
-        CommonSettingsServer::commonSettingsServer.datapackHashServerSub=hashSub.result();
+        CommonSettingsServer::commonSettingsServer.datapackHashServerSub.resize(hashSub.result().size());
+        memcpy(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),hashSub.result().constData(),hashSub.result().size());
     }
 
     std::cout << Client::datapack_file_hash_cache_base.size()
@@ -1655,11 +1662,11 @@ void BaseServer::preload_the_datapack()
               << " file for datapack loaded main, "
               << Client::datapack_file_hash_cache_sub.size()
               << " file for datapack loaded sub" << std::endl;
-    std::cout << QString(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.toHex()).toStdString()
+    std::cout << QString(QByteArray(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()).toHex()).toStdString()
               << " hash for datapack loaded base, "
-              << QString(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.toHex()).toStdString()
+              << QString(QByteArray(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()).toHex()).toStdString()
               << " hash for datapack loaded main, "
-              << QString(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.toHex()).toStdString()
+              << QString(QByteArray(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()).toHex()).toStdString()
               << " hash for datapack loaded sub" << std::endl;
 }
 
@@ -2194,4 +2201,86 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
     std::cout << botfightstigger_number << " bot fights tigger(s) on map loaded" << std::endl;
     std::cout << shops_number << " shop(s) on map loaded" << std::endl;
     std::cout << bots_number << " bots(s) on map loaded" << std::endl;
+}
+
+void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
+{
+    if(botFiles.find(file)!=botFiles.cend())
+        return;
+    botFiles[file];//create the entry
+    QDomDocument domDocument;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+    else
+    {
+        #endif
+        QFile botFile(QString::fromStdString(file));
+        if(!botFile.open(QIODevice::ReadOnly))
+        {
+            std::cerr << mapfile << botFile.fileName().toStdString() << ": " << botFile.errorString().toStdString() << std::endl;
+            return;
+        }
+        QByteArray xmlContent=botFile.readAll();
+        botFile.close();
+        QString errorStr;
+        int errorLine,errorColumn;
+        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        {
+            std::cerr << botFile.fileName().toStdString() << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+            return;
+        }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
+    }
+    #endif
+    bool ok;
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!="bots")
+    {
+        qDebug() << QStringLiteral("\"bots\" root balise not found for the xml file");
+        return;
+    }
+    //load the bots
+    QDomElement child = root.firstChildElement("bot");
+    while(!child.isNull())
+    {
+        if(!child.hasAttribute("id"))
+            std::cerr << "Has not attribute \"id\": child.tagName(): " << child.tagName().toStdString() << " (at line: " << child.lineNumber() << ")" << std::endl;
+        else if(!child.isElement())
+            std::cerr << "Is not an element: child.tagName(): " << child.tagName().toStdString() << ", name: " << child.attribute("name").toStdString() << " (at line: " << child.lineNumber() << ")" << std::endl;
+        else
+        {
+            uint32_t id=child.attribute("id").toUInt(&ok);
+            if(ok)
+            {
+                if(botIdLoaded.find(id)!=botIdLoaded.cend())
+                    std::cerr << "Bot " << id << " into file " << file << " have same id as another bot: bot.tagName(): " << child.tagName().toStdString() << " (at line: " << child.lineNumber() << ")" << std::endl;
+                botIdLoaded.insert(id);
+                botFiles[file][id];
+                QDomElement step = child.firstChildElement("step");
+                while(!step.isNull())
+                {
+                    if(!step.hasAttribute("id"))
+                        std::cerr << "Has not attribute \"type\": bot.tagName(): " << step.tagName().toStdString() << " (at line: " << step.lineNumber() << ")" << std::endl;
+                    else if(!step.hasAttribute("type"))
+                        std::cerr << "Has not attribute \"type\": bot.tagName(): " << step.tagName().toStdString() << " (at line: " << step.lineNumber() << ")" << std::endl;
+                    else if(!step.isElement())
+                        std::cerr << "Is not an element: bot.tagName(): " << step.tagName().toStdString() << ", type: " << step.attribute("type").toStdString() << " (at line: " << step.lineNumber() << ")" << std::endl;
+                    else
+                    {
+                        uint32_t stepId=step.attribute("id").toUInt(&ok);
+                        if(ok)
+                            botFiles[file][id].step[stepId]=step;
+                    }
+                    step = step.nextSiblingElement("step");
+                }
+                if(botFiles.at(file).at(id).step.find(1)==botFiles.at(file).at(id).step.cend())
+                    botFiles[file].erase(id);
+            }
+            else
+                std::cerr << "Attribute \"id\" is not a number: bot.tagName(): " << child.tagName().toStdString() << " (at line: " << child.lineNumber() << ")" << std::endl;
+        }
+        child = child.nextSiblingElement("bot");
+    }
 }

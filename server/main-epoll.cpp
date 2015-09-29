@@ -30,6 +30,8 @@
 #include "base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.h"
 #include "../general/base/FacilityLib.h"
 #include "../general/base/GeneralVariable.h"
+#include "../general/base/CommonSettingsCommon.h"
+#include "../general/base/CommonSettingsServer.h"
 
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "game-server-alone/LinkToMaster.h"
@@ -47,7 +49,7 @@ EpollServer *server=NULL;
 #endif
 QSettings *settings=NULL;
 
-QString master_host;
+std::string master_host;
 quint16 master_port;
 quint8 master_tryInterval;
 quint8 master_considerDownAfterNumberOfTry;
@@ -70,7 +72,7 @@ void send_settings()
     CommonSettingsServer::commonSettingsServer.dontSendPseudo					= settings->value(QLatin1Literal("dontSendPseudo")).toBool();
     CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer  		= settings->value(QLatin1Literal("plantOnlyVisibleByPlayer")).toBool();
     CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange		= settings->value(QLatin1Literal("forceClientToSendAtMapChange")).toBool();
-    CommonSettingsServer::commonSettingsServer.exportedXml                      = settings->value(QLatin1Literal("exportedXml")).toString();
+    CommonSettingsServer::commonSettingsServer.exportedXml                      = settings->value(QLatin1Literal("exportedXml")).toString().toStdString();
     formatedServerSettings.dontSendPlayerType                                   = settings->value(QLatin1Literal("dontSendPlayerType")).toBool();
     CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters                = settings->value(QLatin1Literal("maxPlayerMonsters")).toUInt();
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters       = settings->value(QLatin1Literal("maxWarehousePlayerMonsters")).toUInt();
@@ -88,21 +90,21 @@ void send_settings()
 
     //the listen
     formatedServerNormalSettings.server_port			= settings->value(QLatin1Literal("server-port")).toUInt();
-    formatedServerNormalSettings.server_ip				= settings->value(QLatin1Literal("server-ip")).toString();
-    formatedServerNormalSettings.proxy					= settings->value(QLatin1Literal("proxy")).toString();
+    formatedServerNormalSettings.server_ip				= settings->value(QLatin1Literal("server-ip")).toString().toStdString();
+    formatedServerNormalSettings.proxy					= settings->value(QLatin1Literal("proxy")).toString().toStdString();
     formatedServerNormalSettings.proxy_port				= settings->value(QLatin1Literal("proxy_port")).toUInt();
     formatedServerNormalSettings.useSsl					= settings->value(QLatin1Literal("useSsl")).toBool();
 
-    CommonSettingsServer::commonSettingsServer.mainDatapackCode             = settings->value(QLatin1Literal("mainDatapackCode")).toString();
-    if(CommonSettingsServer::commonSettingsServer.mainDatapackCode.isEmpty())
+    CommonSettingsServer::commonSettingsServer.mainDatapackCode             = settings->value(QLatin1Literal("mainDatapackCode")).toString().toStdString();
+    if(CommonSettingsServer::commonSettingsServer.mainDatapackCode.empty())
     {
-        DebugClass::debugConsole(QStringLiteral("mainDatapackCode is empty, please put it into the settings"));
+        std::cerr << "mainDatapackCode is empty, please put it into the settings" << std::endl;
         abort();
     }
-    CommonSettingsServer::commonSettingsServer.subDatapackCode              = settings->value(QLatin1Literal("subDatapackCode")).toString();
+    CommonSettingsServer::commonSettingsServer.subDatapackCode              = settings->value(QLatin1Literal("subDatapackCode")).toString().toStdString();
     formatedServerSettings.anonymous					= settings->value(QLatin1Literal("anonymous")).toBool();
-    formatedServerSettings.server_message				= settings->value(QLatin1Literal("server_message")).toString();
-    CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase	= settings->value(QLatin1Literal("httpDatapackMirror")).toString();
+    formatedServerSettings.server_message				= settings->value(QLatin1Literal("server_message")).toString().toStdString();
+    CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase	= settings->value(QLatin1Literal("httpDatapackMirror")).toString().toStdString();
     CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase;
     formatedServerSettings.datapackCache				= settings->value(QLatin1Literal("datapackCache")).toInt();
     #ifdef Q_OS_LINUX
@@ -166,13 +168,13 @@ void send_settings()
         default:
         case DatabaseBase::DatabaseType::PostgreSQL:
         case DatabaseBase::DatabaseType::Mysql:
-            formatedServerSettings.database_login.host				= settings->value(QLatin1Literal("host")).toString();
-            formatedServerSettings.database_login.db				= settings->value(QLatin1Literal("db")).toString();
-            formatedServerSettings.database_login.login				= settings->value(QLatin1Literal("login")).toString();
-            formatedServerSettings.database_login.pass				= settings->value(QLatin1Literal("pass")).toString();
+            formatedServerSettings.database_login.host				= settings->value(QLatin1Literal("host")).toString().toStdString();
+            formatedServerSettings.database_login.db				= settings->value(QLatin1Literal("db")).toString().toStdString();
+            formatedServerSettings.database_login.login				= settings->value(QLatin1Literal("login")).toString().toStdString();
+            formatedServerSettings.database_login.pass				= settings->value(QLatin1Literal("pass")).toString().toStdString();
         break;
         case DatabaseBase::DatabaseType::SQLite:
-            formatedServerSettings.database_login.file				= settings->value(QLatin1Literal("file")).toString();
+            formatedServerSettings.database_login.file				= settings->value(QLatin1Literal("file")).toString().toStdString();
         break;
     }
     formatedServerSettings.database_login.tryInterval       = settings->value(QLatin1Literal("tryInterval")).toUInt();
@@ -194,13 +196,13 @@ void send_settings()
         default:
         case DatabaseBase::DatabaseType::PostgreSQL:
         case DatabaseBase::DatabaseType::Mysql:
-            formatedServerSettings.database_base.host              = settings->value(QLatin1Literal("host")).toString();
-            formatedServerSettings.database_base.db                = settings->value(QLatin1Literal("db")).toString();
-            formatedServerSettings.database_base.login             = settings->value(QLatin1Literal("login")).toString();
-            formatedServerSettings.database_base.pass              = settings->value(QLatin1Literal("pass")).toString();
+            formatedServerSettings.database_base.host              = settings->value(QLatin1Literal("host")).toString().toStdString();
+            formatedServerSettings.database_base.db                = settings->value(QLatin1Literal("db")).toString().toStdString();
+            formatedServerSettings.database_base.login             = settings->value(QLatin1Literal("login")).toString().toStdString();
+            formatedServerSettings.database_base.pass              = settings->value(QLatin1Literal("pass")).toString().toStdString();
         break;
         case DatabaseBase::DatabaseType::SQLite:
-            formatedServerSettings.database_base.file              = settings->value(QLatin1Literal("file")).toString();
+            formatedServerSettings.database_base.file              = settings->value(QLatin1Literal("file")).toString().toStdString();
         break;
     }
     formatedServerSettings.database_base.tryInterval       = settings->value(QLatin1Literal("tryInterval")).toUInt();
@@ -221,13 +223,13 @@ void send_settings()
         default:
         case DatabaseBase::DatabaseType::PostgreSQL:
         case DatabaseBase::DatabaseType::Mysql:
-            formatedServerSettings.database_common.host				= settings->value(QLatin1Literal("host")).toString();
-            formatedServerSettings.database_common.db				= settings->value(QLatin1Literal("db")).toString();
-            formatedServerSettings.database_common.login				= settings->value(QLatin1Literal("login")).toString();
-            formatedServerSettings.database_common.pass				= settings->value(QLatin1Literal("pass")).toString();
+            formatedServerSettings.database_common.host				= settings->value(QLatin1Literal("host")).toString().toStdString();
+            formatedServerSettings.database_common.db				= settings->value(QLatin1Literal("db")).toString().toStdString();
+            formatedServerSettings.database_common.login				= settings->value(QLatin1Literal("login")).toString().toStdString();
+            formatedServerSettings.database_common.pass				= settings->value(QLatin1Literal("pass")).toString().toStdString();
         break;
         case DatabaseBase::DatabaseType::SQLite:
-            formatedServerSettings.database_common.file				= settings->value(QLatin1Literal("file")).toString();
+            formatedServerSettings.database_common.file				= settings->value(QLatin1Literal("file")).toString().toStdString();
         break;
     }
     formatedServerSettings.database_common.tryInterval       = settings->value(QLatin1Literal("tryInterval")).toUInt();
@@ -248,13 +250,13 @@ void send_settings()
         default:
         case DatabaseBase::DatabaseType::PostgreSQL:
         case DatabaseBase::DatabaseType::Mysql:
-            formatedServerSettings.database_server.host				= settings->value(QLatin1Literal("host")).toString();
-            formatedServerSettings.database_server.db				= settings->value(QLatin1Literal("db")).toString();
-            formatedServerSettings.database_server.login				= settings->value(QLatin1Literal("login")).toString();
-            formatedServerSettings.database_server.pass				= settings->value(QLatin1Literal("pass")).toString();
+            formatedServerSettings.database_server.host				= settings->value(QLatin1Literal("host")).toString().toStdString();
+            formatedServerSettings.database_server.db				= settings->value(QLatin1Literal("db")).toString().toStdString();
+            formatedServerSettings.database_server.login				= settings->value(QLatin1Literal("login")).toString().toStdString();
+            formatedServerSettings.database_server.pass				= settings->value(QLatin1Literal("pass")).toString().toStdString();
         break;
         case DatabaseBase::DatabaseType::SQLite:
-            formatedServerSettings.database_server.file				= settings->value(QLatin1Literal("file")).toString();
+            formatedServerSettings.database_server.file				= settings->value(QLatin1Literal("file")).toString().toStdString();
         break;
     }
     formatedServerSettings.database_server.tryInterval       = settings->value(QLatin1Literal("tryInterval")).toUInt();
@@ -275,7 +277,6 @@ void send_settings()
     //connection
     formatedServerSettings.automatic_account_creation   = settings->value(QLatin1Literal("automatic_account_creation")).toBool();
     formatedServerSettings.max_players					= settings->value(QLatin1Literal("max-players")).toUInt();
-    formatedServerSettings.tolerantMode                 = settings->value(QLatin1Literal("tolerantMode")).toBool();
 
     //visibility algorithm
     settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm"));
@@ -319,18 +320,18 @@ void send_settings()
             int indexType=0;
             while(indexType<tempListType.size())
             {
-                const QString &type=tempListType.at(indexType);
-                settings->beginGroup(type);
+                const std::string &type=tempListType.at(indexType).toStdString();
+                settings->beginGroup(QString::fromStdString(type));
                     const QStringList &tempList=settings->childGroups();
                     int index=0;
                     while(index<tempList.size())
                     {
-                        const QString &groupName=tempList.at(index);
-                        settings->beginGroup(groupName);
+                        const std::string &groupName=tempList.at(index).toStdString();
+                        settings->beginGroup(QString::fromStdString(groupName));
                         if(settings->contains(QLatin1Literal("value")) && settings->contains(QLatin1Literal("cycle")) && settings->contains(QLatin1Literal("offset")))
                         {
                             GameServerSettings::ProgrammedEvent event;
-                            event.value=settings->value(QLatin1Literal("value")).toString();
+                            event.value=settings->value(QLatin1Literal("value")).toString().toStdString();
                             bool ok;
                             event.cycle=settings->value(QLatin1Literal("cycle")).toUInt(&ok);
                             if(!ok)
@@ -353,8 +354,8 @@ void send_settings()
     {
         bool ok;
         settings->beginGroup(QStringLiteral("master"));
-        master_host=settings->value(QStringLiteral("host")).toString();
-        master_port=settings->value(QStringLiteral("port")).toUInt(&ok);
+        master_host=settings->value("host").toString().toStdString();
+        master_port=settings->value("port").toUInt(&ok);
         if(master_port==0 || !ok)
         {
             std::cerr << "Master port not a number or 0:" << settings->value(QStringLiteral("port")).toString().toStdString() << std::endl;
@@ -496,12 +497,12 @@ int main(int argc, char *argv[])
         tcpCork=CommonSettingsServer::commonSettingsServer.tcpCork;
         tcpNodelay=formatedServerNormalSettings.tcpNodelay;
 
-        if(!formatedServerNormalSettings.proxy.isEmpty())
+        if(!formatedServerNormalSettings.proxy.empty())
         {
             qDebug() << "Proxy not supported: " << settings->status();
             return EXIT_FAILURE;
         }
-        if(!formatedServerNormalSettings.proxy.isEmpty())
+        if(!formatedServerNormalSettings.proxy.empty())
         {
             qDebug() << "Proxy not supported";
             return EXIT_FAILURE;
@@ -533,7 +534,7 @@ int main(int argc, char *argv[])
                     )
             {
                 settings->beginGroup(QLatin1Literal("db-login"));
-                qDebug() << "Database type not supported for now: " << settings->value(QLatin1Literal("type")).toString();
+                std::cerr << "Database type not supported for now: " << settings->value(QLatin1Literal("type")).toString().toStdString() << std::endl;
                 settings->endGroup();
                 return EXIT_FAILURE;
             }
@@ -549,7 +550,7 @@ int main(int argc, char *argv[])
                     )
             {
                 settings->beginGroup(QLatin1Literal("db-base"));
-                qDebug() << "Database type not supported for now: " << settings->value(QLatin1Literal("type")).toString();
+                std::cerr << "Database type not supported for now: " << settings->value(QLatin1Literal("type")).toString().toStdString() << std::endl;
                 settings->endGroup();
                 return EXIT_FAILURE;
             }
@@ -564,7 +565,7 @@ int main(int argc, char *argv[])
                     )
             {
                 settings->beginGroup(QLatin1Literal("db-common"));
-                qDebug() << "Database type not supported for now: " << settings->value(QLatin1Literal("type")).toString();
+                std::cerr << "Database type not supported for now: " << settings->value(QLatin1Literal("type")).toString().toStdString() << std::endl;
                 settings->endGroup();
                 return EXIT_FAILURE;
             }
@@ -579,7 +580,7 @@ int main(int argc, char *argv[])
                     )
             {
                 settings->beginGroup(QLatin1Literal("db-server"));
-                qDebug() << "Database type not supported for now: " << settings->value(QLatin1Literal("type")).toString();
+                std::cerr << "Database type not supported for now: " << settings->value(QLatin1Literal("type")).toString().toStdString() << std::endl;
                 settings->endGroup();
                 return EXIT_FAILURE;
             }
@@ -599,7 +600,7 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
         #endif
-        if(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.isEmpty())
+        if(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.empty())
         {
             #ifdef CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION
             qDebug() << "Need mirror because CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION is def, need decompression to datapack list input";
@@ -610,7 +611,7 @@ int main(int argc, char *argv[])
         {
             QStringList newMirrorList;
             QRegularExpression httpMatch("^https?://.+$");
-            const QStringList &mirrorList=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(";");
+            const QStringList &mirrorList=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(";");
             int index=0;
             while(index<mirrorList.size())
             {
@@ -626,7 +627,7 @@ int main(int argc, char *argv[])
                     newMirrorList << mirror+"/";
                 index++;
             }
-            CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=newMirrorList.join(";");
+            CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=newMirrorList.join(";").toStdString();
             CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer;
         }
     }
@@ -635,40 +636,40 @@ int main(int argc, char *argv[])
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     if(!GlobalServerData::serverPrivateVariables.db_login->syncConnect(
-                GlobalServerData::serverSettings.database_login.host.toLatin1(),
-                GlobalServerData::serverSettings.database_login.db.toLatin1(),
-                GlobalServerData::serverSettings.database_login.login.toLatin1(),
-                GlobalServerData::serverSettings.database_login.pass.toLatin1()))
+                GlobalServerData::serverSettings.database_login.host,
+                GlobalServerData::serverSettings.database_login.db,
+                GlobalServerData::serverSettings.database_login.login,
+                GlobalServerData::serverSettings.database_login.pass))
     {
-        qDebug() << "Unable to connect to database login:" << GlobalServerData::serverPrivateVariables.db_login->errorMessage();
+        std::cerr << "Unable to connect to database login:" << GlobalServerData::serverPrivateVariables.db_login->errorMessage() << std::endl;
         return EXIT_FAILURE;
     }
     #endif
     if(!GlobalServerData::serverPrivateVariables.db_base->syncConnect(
-                GlobalServerData::serverSettings.database_base.host.toLatin1(),
-                GlobalServerData::serverSettings.database_base.db.toLatin1(),
-                GlobalServerData::serverSettings.database_base.login.toLatin1(),
-                GlobalServerData::serverSettings.database_base.pass.toLatin1()))
+                GlobalServerData::serverSettings.database_base.host,
+                GlobalServerData::serverSettings.database_base.db,
+                GlobalServerData::serverSettings.database_base.login,
+                GlobalServerData::serverSettings.database_base.pass))
     {
-        qDebug() << "Unable to connect to database base:" << GlobalServerData::serverPrivateVariables.db_base->errorMessage();
+        std::cerr << "Unable to connect to database base:" << GlobalServerData::serverPrivateVariables.db_base->errorMessage() << std::endl;
         return EXIT_FAILURE;
     }
     if(!GlobalServerData::serverPrivateVariables.db_common->syncConnect(
-                GlobalServerData::serverSettings.database_common.host.toLatin1(),
-                GlobalServerData::serverSettings.database_common.db.toLatin1(),
-                GlobalServerData::serverSettings.database_common.login.toLatin1(),
-                GlobalServerData::serverSettings.database_common.pass.toLatin1()))
+                GlobalServerData::serverSettings.database_common.host,
+                GlobalServerData::serverSettings.database_common.db,
+                GlobalServerData::serverSettings.database_common.login,
+                GlobalServerData::serverSettings.database_common.pass))
     {
-        qDebug() << "Unable to connect to database common:" << GlobalServerData::serverPrivateVariables.db_common->errorMessage();
+        std::cerr << "Unable to connect to database common:" << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         return EXIT_FAILURE;
     }
     if(!GlobalServerData::serverPrivateVariables.db_server->syncConnect(
-                GlobalServerData::serverSettings.database_server.host.toLatin1(),
-                GlobalServerData::serverSettings.database_server.db.toLatin1(),
-                GlobalServerData::serverSettings.database_server.login.toLatin1(),
-                GlobalServerData::serverSettings.database_server.pass.toLatin1()))
+                GlobalServerData::serverSettings.database_server.host,
+                GlobalServerData::serverSettings.database_server.db,
+                GlobalServerData::serverSettings.database_server.login,
+                GlobalServerData::serverSettings.database_server.pass))
     {
-        qDebug() << "Unable to connect to database server:" << GlobalServerData::serverPrivateVariables.db_server->errorMessage();
+        std::cerr << "Unable to connect to database server:" << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         return EXIT_FAILURE;
     }
     server->initialize_the_database_prepared_query();
