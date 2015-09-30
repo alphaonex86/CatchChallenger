@@ -84,6 +84,7 @@ public:
     bool sendRawSmallPacket(const char * const data,const int &size);
     bool removeFromQueryReceived(const uint8_t &queryNumber);
 
+    bool fastForward;
     LinkToGameServer *linkToGameServer;
     char *socketString;
     int socketStringSize;

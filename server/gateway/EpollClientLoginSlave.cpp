@@ -24,6 +24,7 @@ EpollClientLoginSlave::EpollClientLoginSlave(
             ),
         stat(EpollClientLoginStat::None),
         datapackStatus(DatapackStatus::Base),
+        fastForward(false),
         linkToGameServer(NULL),
         socketString(NULL),
         socketStringSize(0),
@@ -121,7 +122,10 @@ BaseClassSwitch::EpollObjectType EpollClientLoginSlave::getType() const
 
 void EpollClientLoginSlave::parseIncommingData()
 {
-    ProtocolParsingInputOutput::parseIncommingData();
+    if(linkToGameServer!=NULL && fastForward)
+        forwardTo(linkToGameServer);
+    else
+        ProtocolParsingInputOutput::parseIncommingData();
 }
 
 bool EpollClientLoginSlave::sendRawSmallPacket(const char * const data,const int &size)

@@ -844,6 +844,11 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
         }
     }
 
+    if(mainCodeType==0x93)
+    {
+        fastForward=true;
+        client->fastForward=true;
+    }
     //send the network reply
     removeFromQueryReceived(queryNumber);
     uint32_t posOutput=0;
