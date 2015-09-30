@@ -109,6 +109,33 @@ void ProtocolParsingInputOutput::closeSocket()
     #endif
 }
 
+bool ProtocolParsingInputOutput::forwardTo(ProtocolParsingBase * const destination)
+{
+    if(!header_cut.isEmpty())
+    {
+        const unsigned int &size_to_get=CATCHCHALLENGER_COMMONBUFFERSIZE-header_cut.size();
+        memcpy(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,header_cut.constData(),header_cut.size());
+        size=read(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,size_to_get)+header_cut.size();
+        if(size>0)
+        {
+            //QByteArray tempDataToDebug(ProtocolParsingInputOutput::commonBuffer+header_cut.size(),size-header_cut.size());
+            //qDebug() << "with header cut" << header_cut << tempDataToDebug.toHex() << "and size" << size;
+        }
+        header_cut.clear();
+    }
+    else
+    {
+        size=read(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,CATCHCHALLENGER_COMMONBUFFERSIZE);
+        if(size>0)
+        {
+            //QByteArray tempDataToDebug(ProtocolParsingInputOutput::commonBuffer,size);
+            //qDebug() << "without header cut" << tempDataToDebug.toHex() << "and size" << size;
+        }
+    }
+    destination->sendRawSmallPacket(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,size);
+    return true;
+}
+
 void ProtocolParsingInputOutput::parseIncommingData()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -351,9 +378,14 @@ bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const u
         dataSize=le32toh(*reinterpret_cast<const uint32_t *>(commonBuffer+cursor));
         cursor+=sizeof(uint32_t);
 
+        if(dataSize>(CATCHCHALLENGER_BIGBUFFERSIZE-8))
+        {
+            errorParsingLayer("packet size too big (define)");
+            return false;
+        }
         if(dataSize>16*1024*1024)
         {
-            errorParsingLayer("packet size too big");
+            errorParsingLayer("packet size too big (hard)");
             return false;
         }
 
