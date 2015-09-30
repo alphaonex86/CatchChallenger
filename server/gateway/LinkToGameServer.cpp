@@ -17,8 +17,8 @@
 
 using namespace CatchChallenger;
 
-const unsigned char protocolHeaderToMatchLogin[] = PROTOCOL_HEADER_LOGIN;
-const unsigned char protocolHeaderToMatchGameServer[] = PROTOCOL_HEADER_GAMESERVER;
+unsigned char protocolHeaderToMatchLogin[] = {0xA0,0x00,0x9c,0xd6,0x49,0x8d,PROTOCOL_HEADER_VERSION};
+unsigned char protocolHeaderToMatchGameServer[] = {0xA0,0x00,0x60,0x0c,0xd9,0xbb,PROTOCOL_HEADER_VERSION};
 
 LinkToGameServer::LinkToGameServer(
         #ifdef SERVERSSL
@@ -257,21 +257,21 @@ void LinkToGameServer::disconnectClient()
 quint8 LinkToGameServer::freeQueryNumberToServer()
 {
     quint8 index=0;
-    while(waitedReply_mainCodeType.contains(index))
+    while(outputQueryNumberToPacketCode[index]!=0x00)
         index++;
     return index;
 }
 
 //input/ouput layer
-void LinkToGameServer::errorParsingLayer(const QString &error)
+void LinkToGameServer::errorParsingLayer(const std::string &error)
 {
-    std::cerr << error.toLocal8Bit().constData() << std::endl;
+    std::cerr << error << std::endl;
     disconnectClient();
 }
 
-void LinkToGameServer::messageParsingLayer(const QString &message) const
+void LinkToGameServer::messageParsingLayer(const std::string &message) const
 {
-    std::cout << message.toLocal8Bit().constData() << std::endl;
+    std::cout << message << std::endl;
 }
 
 void LinkToGameServer::errorParsingLayer(const char * const error)
@@ -300,12 +300,16 @@ void LinkToGameServer::parseIncommingData()
 
 void LinkToGameServer::sendProtocolHeader()
 {
-    packOutcommingQuery(0x03,protocolQueryNumber/*queryNumber()*/,reinterpret_cast<const char *>(protocolHeaderToMatchLogin),sizeof(protocolHeaderToMatchLogin));
+    removeFromQueryReceived(protocolQueryNumber);
+    protocolHeaderToMatchLogin[0x01]=protocolQueryNumber;
+    sendRawSmallPacket(reinterpret_cast<const char *>(protocolHeaderToMatchLogin),sizeof(protocolHeaderToMatchLogin));
 }
 
 void LinkToGameServer::sendProtocolHeaderGameServer()
 {
-    packOutcommingQuery(0x03,protocolQueryNumber/*queryNumber()*/,reinterpret_cast<const char *>(protocolHeaderToMatchGameServer),sizeof(protocolHeaderToMatchGameServer));
+    removeFromQueryReceived(protocolQueryNumber);
+    protocolHeaderToMatchLogin[0x01]=protocolQueryNumber;
+    sendRawSmallPacket(reinterpret_cast<const char *>(protocolHeaderToMatchGameServer),sizeof(protocolHeaderToMatchGameServer));
 }
 
 void LinkToGameServer::sendDiffered04Reply()
@@ -320,7 +324,20 @@ void LinkToGameServer::sendDiffered04Reply()
         parseNetworkReadError("LinkToGameServer::sendDiffered04Reply() reply04inWait==NULL");
         return;
     }
-    client->postReply(reply04inWaitQueryNumber,reply04inWait,reply04inWaitSize);
+    //send the network reply
+    client->removeFromQueryReceived(reply04inWaitQueryNumber);
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=reply04inWaitQueryNumber;
+    posOutput+=1+4;
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(reply04inWaitSize);//set the dynamic size
+
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput,reply04inWait,reply04inWaitSize);
+    posOutput+=reply04inWaitSize;
+
+    client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
     delete reply04inWait;
     reply04inWait=NULL;
     reply04inWaitSize=0;
@@ -339,9 +356,28 @@ void LinkToGameServer::sendDiffered0205Reply()
         parseNetworkReadError("LinkToGameServer::sendDiffered0205Reply() reply0205inWait==NULL");
         return;
     }
-    client->postReply(reply0205inWaitQueryNumber,reply0205inWait,reply0205inWaitSize);
+
+    //send the network reply
+    client->removeFromQueryReceived(reply0205inWaitQueryNumber);
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=reply0205inWaitQueryNumber;
+    posOutput+=1+4;
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(reply0205inWaitSize);//set the dynamic size
+
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput,reply0205inWait,reply0205inWaitSize);
+    posOutput+=reply0205inWaitSize;
+
+    client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
     delete reply0205inWait;
     reply0205inWait=NULL;
     reply0205inWaitSize=0;
     reply0205inWaitQueryNumber=0;
+}
+
+bool LinkToGameServer::sendRawSmallPacket(const char * const data,const int &size)
+{
+    return internalSendRawSmallPacket(data,size);
 }

@@ -92,15 +92,15 @@ void EpollClientLoginSlave::disconnectClient()
 }
 
 //input/ouput layer
-void EpollClientLoginSlave::errorParsingLayer(const QString &error)
+void EpollClientLoginSlave::errorParsingLayer(const std::string &error)
 {
-    std::cerr << socketString << ": " << error.toLocal8Bit().constData() << std::endl;
+    std::cerr << socketString << ": " << error << std::endl;
     disconnectClient();
 }
 
-void EpollClientLoginSlave::messageParsingLayer(const QString &message) const
+void EpollClientLoginSlave::messageParsingLayer(const std::string &message) const
 {
-    std::cout << socketString << ": " << message.toLocal8Bit().constData() << std::endl;
+    std::cout << socketString << ": " << message << std::endl;
 }
 
 void EpollClientLoginSlave::errorParsingLayer(const char * const error)
@@ -122,4 +122,14 @@ BaseClassSwitch::EpollObjectType EpollClientLoginSlave::getType() const
 void EpollClientLoginSlave::parseIncommingData()
 {
     ProtocolParsingInputOutput::parseIncommingData();
+}
+
+bool EpollClientLoginSlave::sendRawSmallPacket(const char * const data,const int &size)
+{
+    return internalSendRawSmallPacket(data,size);
+}
+
+bool EpollClientLoginSlave::removeFromQueryReceived(const uint8_t &queryNumber)
+{
+    return ProtocolParsingBase::removeFromQueryReceived(queryNumber);
 }

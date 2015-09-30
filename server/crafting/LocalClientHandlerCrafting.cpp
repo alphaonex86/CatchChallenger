@@ -71,9 +71,9 @@ void Client::useRecipe(const uint8_t &query_id,const uint32_t &recipe_id)
     removeFromQueryReceived(query_id);
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-    posOutput=+1;
+    posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
-    posOutput=+1+4;
+    posOutput+=1+4;
     *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
 
     if(success)
