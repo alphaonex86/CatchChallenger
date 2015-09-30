@@ -87,7 +87,8 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
     if(!settings.contains(QStringLiteral("httpDatapackMirrorRewriteBase")))
         settings.setValue(QStringLiteral("httpDatapackMirrorRewriteBase"),QString());
-    LinkToGameServer::httpDatapackMirrorRewriteBase=FacilityLibGeneral::toUTF8WithHeader(httpMirrorFix(settings.value(QStringLiteral("httpDatapackMirrorRewriteBase")).toString()));
+    LinkToGameServer::httpDatapackMirrorRewriteBase=QByteArray(ProtocolParsingBase::tempBigBufferForOutput,
+                                                               FacilityLibGeneral::toUTF8WithHeader(httpMirrorFix(settings.value("httpDatapackMirrorRewriteBase").toString().toStdString()),ProtocolParsingBase::tempBigBufferForOutput));
     if(LinkToGameServer::httpDatapackMirrorRewriteBase.isEmpty())
     {
         settings.sync();
@@ -96,7 +97,8 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     }
     if(!settings.contains(QStringLiteral("httpDatapackMirrorRewriteMainAndSub")))
         settings.setValue(QStringLiteral("httpDatapackMirrorRewriteMainAndSub"),QString());
-    LinkToGameServer::httpDatapackMirrorRewriteMainAndSub=FacilityLibGeneral::toUTF8WithHeader(httpMirrorFix(settings.value(QStringLiteral("httpDatapackMirrorRewriteMainAndSub")).toString()));
+    LinkToGameServer::httpDatapackMirrorRewriteMainAndSub=QByteArray(ProtocolParsingBase::tempBigBufferForOutput,
+                                                                     FacilityLibGeneral::toUTF8WithHeader(httpMirrorFix(settings.value("httpDatapackMirrorRewriteMainAndSub").toString().toStdString()),ProtocolParsingBase::tempBigBufferForOutput));
     if(LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.isEmpty())
     {
         settings.sync();
@@ -135,16 +137,33 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         settings.setValue(QStringLiteral("main"),QString());
     if(!settings.contains(QStringLiteral("sub")))
         settings.setValue(QStringLiteral("sub"),QString());
-    DatapackDownloaderBase::commandUpdateDatapackBase=settings.value(QStringLiteral("base")).toString();
-    DatapackDownloaderMainSub::commandUpdateDatapackMain=settings.value(QStringLiteral("main")).toString();
-    DatapackDownloaderMainSub::commandUpdateDatapackSub=settings.value(QStringLiteral("sub")).toString();
+    DatapackDownloaderBase::commandUpdateDatapackBase=settings.value(QStringLiteral("base")).toString().toStdString();
+    DatapackDownloaderMainSub::commandUpdateDatapackMain=settings.value(QStringLiteral("main")).toString().toStdString();
+    DatapackDownloaderMainSub::commandUpdateDatapackSub=settings.value(QStringLiteral("sub")).toString().toStdString();
     settings.endGroup();
 
     settings.sync();
 
     tryListen();
 
-    DatapackDownloaderMainSub::extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
+    {
+        const std::vector<std::string> &extensionAllowedTemp=stringsplit(CATCHCHALLENGER_EXTENSION_ALLOWED,';');
+        unsigned int index=0;
+        while(index<extensionAllowedTemp.size())
+        {
+            DatapackDownloaderMainSub::extensionAllowed.insert(extensionAllowedTemp.at(index));
+            index++;
+        }
+    }
+    {
+        const std::vector<std::string> &extensionAllowedTemp=stringsplit(CATCHCHALLENGER_EXTENSION_COMPRESSED,';');
+        unsigned int index=0;
+        while(index<extensionAllowedTemp.size())
+        {
+            EpollClientLoginSlave::compressedExtension.insert(extensionAllowedTemp.at(index));
+            index++;
+        }
+    }
     DatapackDownloaderBase::extensionAllowed=DatapackDownloaderMainSub::extensionAllowed;
 }
 
@@ -181,30 +200,32 @@ size_t EpollServerLoginSlave::WriteMemoryCallback(void *contents, size_t size, s
   return realsize;
 }
 
-QString EpollServerLoginSlave::httpMirrorFix(QString mirrors)
+std::string EpollServerLoginSlave::httpMirrorFix(const std::string & mirrors)
 {
-    if(mirrors.isEmpty())
-        return QString();
-    QStringList newMirrorList;
-    QRegularExpression httpMatch("^https?://.+$");
-    const QStringList &mirrorList=mirrors.split(";");
-    int index=0;
+    if(mirrors.empty())
+        return std::string();
+    std::vector<std::string> newMirrorList;
+    std::regex httpMatch("^https?://.+$");
+    const std::vector<std::string> &mirrorList=stringsplit(mirrors,';');
+    unsigned int index=0;
     while(index<mirrorList.size())
     {
-        const QString &mirror=mirrorList.at(index);
-        if(!mirror.contains(httpMatch))
+        const std::string &mirror=mirrorList.at(index);
+        if(!std::regex_match(mirror,httpMatch))
         {
-            std::cerr << "Mirror wrong: " << mirror.toStdString() << std::endl;
-            abort();
+            std::cerr << "Mirror wrong: " << mirror << std::endl;
+            //abort();//prevent the server crash/close the gateway
         }
-        if(mirror.endsWith("/"))
-            newMirrorList << mirror;
         else
-            newMirrorList << mirror+"/";
+        {
+            if(stringEndsWith(mirror,"/"))
+                newMirrorList.push_back(mirror);
+            else
+                newMirrorList.push_back(mirror+"/");
+        }
         index++;
     }
-    mirrors=newMirrorList.join(";");
-    return mirrors;
+    return stringimplode(newMirrorList,';');
 }
 
 void EpollServerLoginSlave::close()

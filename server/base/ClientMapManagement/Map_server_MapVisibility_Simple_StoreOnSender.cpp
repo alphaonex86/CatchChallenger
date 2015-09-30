@@ -38,7 +38,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         //send the network message
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x68;
-        posOutput=+1+4;
+        posOutput+=1+4;
 
         //prepare the data
         {
@@ -150,7 +150,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             //send the network message
             uint32_t posOutput=0;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x68;
-            posOutput=+1+4;
+            posOutput+=1+4;
 
             if(insert_player>0)
             {
@@ -268,7 +268,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     //send the network message
                     uint32_t posOutput=0;
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x68;
-                    posOutput=+1+4;
+                    posOutput+=1+4;
 
                     //////////////////////////// insert //////////////////////////
                     /* can be only this map with this algo, then 1 map */
@@ -364,7 +364,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         //send the network message
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x69;
-        posOutput=+1+4;
+        posOutput+=1+4;
 
         if(GlobalServerData::serverSettings.max_players<=255)
         {
@@ -448,7 +448,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     //send the network message
                     uint32_t posOutput=0;
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x66;
-                    posOutput=+1+4;
+                    posOutput+=1+4;
 
                     //////////////////////////// insert //////////////////////////
                     if(GlobalServerData::serverSettings.max_players<=255)
@@ -525,7 +525,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                 //send the network message
                 uint32_t posOutput=0;
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x66;
-                posOutput=+1+4;
+                posOutput+=1+4;
 
                 if(GlobalServerData::serverSettings.max_players<=255)
                     bufferSizeToHave=sizeof(uint8_t)+real_reinsert_count*(sizeof(uint8_t)+sizeof(uint8_t)*3);

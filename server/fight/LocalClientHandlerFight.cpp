@@ -499,7 +499,7 @@ void Client::registerBattleRequest(Client *otherPlayerBattle)
     //send the network reply
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xDF;
-    posOutput=+1+1+4;
+    posOutput+=1+1+4;
 
     {
         const std::string &text=otherPlayerBattle->public_and_private_informations.public_informations.pseudo;
@@ -642,7 +642,7 @@ void Client::internalBattleAccepted(const bool &send)
         //send the network message
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x52;
-        posOutput=+1+4;
+        posOutput+=1+4;
 
         {
             const std::string &text=otherPlayerBattle->public_and_private_informations.public_informations.pseudo;
@@ -728,7 +728,7 @@ void Client::sendBattleReturn()
     //send the network message
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x50;
-    posOutput=+1+4;
+    posOutput+=1+4;
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturn.size();
     posOutput+=1;
@@ -815,7 +815,7 @@ void Client::sendBattleMonsterChange()
     //send the network message
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x50;
-    posOutput=+1+4;
+    posOutput+=1+4;
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0;
     posOutput+=1;

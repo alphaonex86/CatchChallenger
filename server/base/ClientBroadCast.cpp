@@ -12,7 +12,7 @@ void Client::sendSystemMessage(const std::string &text,const bool &important)
     //send the network message
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5F;
-    posOutput=+1+4;
+    posOutput+=1+4;
 
     if(important)
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x08;
@@ -97,7 +97,7 @@ void Client::receiveChatText(const Chat_type &chatType,const std::string &text,c
     //send the network message
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5F;
-    posOutput=+1+4;
+    posOutput+=1+4;
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)chatType;
     posOutput+=1;
@@ -129,7 +129,7 @@ void Client::receiveSystemText(const std::string &text,const bool &important)
     //send the network message
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5F;
-    posOutput=+1+4;
+    posOutput+=1+4;
 
     if(important)
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)Chat_type_system_important;
@@ -152,7 +152,7 @@ void Client::sendChatText(const Chat_type &chatType,const std::string &text)
     //send the network message
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5F;
-    posOutput=+1+4;
+    posOutput+=1+4;
 
     if(chatType==Chat_type_clan)
     {

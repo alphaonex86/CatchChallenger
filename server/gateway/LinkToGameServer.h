@@ -38,60 +38,58 @@ public:
     GameServerMode gameServerMode;
     struct ServerReconnect
     {
-        QString host;
-        quint16 port;
+        std::string host;
+        uint16_t port;
     };
-    QHash<quint8/*charactersGroupIndex*/,QHash<quint32/*unique key*/,ServerReconnect> > serverReconnectList;
+    std::unordered_map<uint8_t/*charactersGroupIndex*/,std::unordered_map<uint32_t/*unique key*/,ServerReconnect> > serverReconnectList;
     ServerReconnect selectedServer;
 
     EpollClientLoginSlave *client;
     bool haveTheFirstSslHeader;
-    quint8 protocolQueryNumber;
+    uint8_t protocolQueryNumber;
     static QByteArray httpDatapackMirrorRewriteBase;
     static QByteArray httpDatapackMirrorRewriteMainAndSub;
     static bool compressionSet;
-    static QString mDatapackBase;
-    QString main;
-    QString sub;
+    static std::string mDatapackBase;
+    std::string main;
+    std::string sub;
 
     void setConnexionSettings();
     BaseClassSwitch::EpollObjectType getType() const;
     void parseIncommingData();
-    static int tryConnect(const char * const host,const quint16 &port,const quint8 &tryInterval=1,const quint8 &considerDownAfterNumberOfTry=30);
+    static int tryConnect(const char * const host,const uint16_t &port,const uint8_t &tryInterval=1,const uint8_t &considerDownAfterNumberOfTry=30);
     void sendProtocolHeader();
     void sendProtocolHeaderGameServer();
     void sendDiffered04Reply();
     void sendDiffered0205Reply();
     void readTheFirstSslHeader();
     void disconnectClient();
-    quint8 freeQueryNumberToServer();
+    uint8_t freeQueryNumberToServer();
+    bool sendRawSmallPacket(const char * const data,const int &size);
 protected:
-    void errorParsingLayer(const QString &error);
-    void messageParsingLayer(const QString &message) const;
+    void errorParsingLayer(const std::string &error);
+    void messageParsingLayer(const std::string &message) const;
     void errorParsingLayer(const char * const error);
     void messageParsingLayer(const char * const message) const;
-    void parseNetworkReadError(const QString &errorString);
+    void parseNetworkReadError(const std::string &errorString);
 
     //have message without reply
-    void parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size);
-    void parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const data,const unsigned int &size);
+    bool parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size);
     //have query with reply
-    void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
-    void parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
+    bool parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
     //send reply
-    void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
-    void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
+    bool parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
 
-    void parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size);
+    bool parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size);
 private:
     int socketFd;
     char *reply04inWait;
     unsigned int reply04inWaitSize;
-    quint8 reply04inWaitQueryNumber;
+    uint8_t reply04inWaitQueryNumber;
     char *reply0205inWait;
     unsigned int reply0205inWaitSize;
-    quint8 reply0205inWaitQueryNumber;
-    quint8 queryIdToReconnect;
+    uint8_t reply0205inWaitQueryNumber;
+    uint8_t queryIdToReconnect;
     char tokenForGameServer[CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
 };
 }

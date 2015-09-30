@@ -189,7 +189,7 @@ void Client::sendInventory()
     //send the network message
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x54;
-    posOutput=+1+4;
+    posOutput+=1+4;
 
     *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.items.size());
     posOutput+=2;

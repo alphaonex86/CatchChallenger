@@ -24,13 +24,13 @@ public:
     ~EpollServerLoginSlave();
     bool tryListen();
     void close();
-    static QString httpMirrorFix(QString mirrors);
+    static std::string httpMirrorFix(const std::string &mirrors);
     static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp);
 public:
     static EpollServerLoginSlave *epollServerLoginSlave;
 
     char * destination_server_ip;
-    quint16 destination_server_port;
+    uint16_t destination_server_port;
 public:
     bool tcpNodelay,tcpCork;
     bool serverReady;

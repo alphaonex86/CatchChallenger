@@ -217,7 +217,7 @@ void Client::tradeAddTradeCash(const quint64 &cash)
     //send the network message
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x57;
-    posOutput=+1+4;
+    posOutput+=1+4;
     *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+8);//set the dynamic size
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
@@ -265,7 +265,7 @@ void Client::tradeAddTradeObject(const uint16_t &item,const uint32_t &quantity)
     //send the network message
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x57;
-    posOutput=+1+4;
+    posOutput+=1+4;
     *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+8);//set the dynamic size
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
@@ -321,7 +321,7 @@ void Client::tradeAddTradeMonster(const uint32_t &monsterId)
             //send the network message
             uint32_t posOutput=0;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x57;
-            posOutput=+1+4;
+            posOutput+=1+4;
 
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
             posOutput+=1;

@@ -12,6 +12,7 @@
 
 using namespace CatchChallenger;
 
+#ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
 QHash<QString,EpollClientLoginSlave::DatapackCacheFile> EpollClientLoginSlave::datapack_file_list(const QString &path,const bool withHash)
 {
     QHash<QString,DatapackCacheFile> filesList;
@@ -459,3 +460,4 @@ bool EpollClientLoginSlave::sendFile(const QString &datapackPath,const QString &
         return false;
     }
 }
+#endif

@@ -10,24 +10,25 @@
 
 using namespace CatchChallenger;
 
-void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size)
+bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
 {
     Q_UNUSED(queryNumber);
     Q_UNUSED(size);
     Q_UNUSED(data);
     switch(mainCodeType)
     {
-        case 0x03:
+        case 0xA0:
         {
             if(stat==Stat::Reconnecting)
             {
                 //Protocol initialization
-                if(size!=(sizeof(quint8)))
+                if(size!=(sizeof(uint8_t)))
                 {
-                    parseNetworkReadError(QStringLiteral("compression type wrong size (stage 3) with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
-                    return;
+                    parseNetworkReadError("compression type wrong size (stage 3) with main ident: "+std::to_string(mainCodeType)+
+                                          " and queryNumber: "+std::to_string(queryNumber)+", type: query_type_protocol");
+                    return false;
                 }
-                const quint8 &returnCode=data[0x00];
+                const uint8_t &returnCode=data[0x00];
                 if(returnCode>=0x04 && returnCode<=0x07)
                 {
                     if(!LinkToGameServer::compressionSet)
@@ -46,8 +47,10 @@ void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
                                 ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Lz4;
                             break;
                             default:
-                                parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
-                            return;
+                                parseNetworkReadError("compression type wrong with main ident: "+std::to_string(mainCodeType)+
+                                                      " and queryNumber: "+std::to_string(queryNumber)+
+                                                      ", type: query_type_protocol");
+                            return false;
                         }
                     else
                     {
@@ -67,54 +70,96 @@ void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
                                 tempCompression=ProtocolParsing::CompressionType::Lz4;
                             break;
                             default:
-                                parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
-                            return;
+                                parseNetworkReadError("compression type wrong with main ident: "+std::to_string(mainCodeType)+
+                                                      " and queryNumber: "+std::to_string(queryNumber)+", type: query_type_protocol");
+                            return false;
                         }
                         if(tempCompression!=ProtocolParsing::compressionTypeClient)
                         {
-                            parseNetworkReadError(QStringLiteral("compression change main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
-                            return;
+                            parseNetworkReadError("compression change main ident: "+std::to_string(mainCodeType)+
+                                                  " and queryNumber: "+std::to_string(queryNumber)+", type: query_type_protocol");
+                            return false;
                         }
                     }
 
-                    //send token to game server
-                    packFullOutcommingQuery(0x02,0x06,queryIdToReconnect/*query number*/,tokenForGameServer,sizeof(tokenForGameServer));
-                    return;
+                    //send the network query
+                    registerOutputQuery(queryIdToReconnect);
+                    uint32_t posOutput=0;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x93;
+                    posOutput+=1;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryIdToReconnect;
+                    posOutput+=1+4;
+                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(sizeof(tokenForGameServer));//set the dynamic size
+
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,tokenForGameServer,sizeof(tokenForGameServer));
+                    posOutput+=sizeof(tokenForGameServer);
+
+                    sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                    return true;
                 }
                 else
                 {
                     if(client!=NULL)
-                        client->postReply(queryIdToReconnect,data,size);
+                    {
+                        //send the network reply
+                        removeFromQueryReceived(queryIdToReconnect);
+                        uint32_t posOutput=0;
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+                        posOutput+=1;
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryIdToReconnect;
+                        posOutput+=1+4;
+                        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
+
+                        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
+                        posOutput+=size;
+
+                        client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                    }
                     if(returnCode==0x03)
                         parseNetworkReadError("Server full");
                     else
-                        parseNetworkReadError(QStringLiteral("Unknown error %1").arg(returnCode));
-                    return;
+                        parseNetworkReadError("Unknown error "+std::to_string(returnCode));
+                    return false;
                 }
             }
             else
             {
                 //Protocol initialization
-                if(size==(sizeof(quint8)))
+                if(size==(sizeof(uint8_t)))
                 {
                     if(client!=NULL)
                     {
-                        client->postReply(queryNumber,data,size);
+                        //send the network reply
+                        removeFromQueryReceived(queryNumber);
+                        uint32_t posOutput=0;
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+                        posOutput+=1;
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+                        posOutput+=1+4;
+                        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
+
+                        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
+                        posOutput+=size;
+
+                        client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
                         if(data[0x00]==0x03)
                             parseNetworkReadError("Server full");
                         else
-                            parseNetworkReadError(QStringLiteral("Unknown error %1").arg(data[0x00]));
+                            parseNetworkReadError("Unknown error "+std::to_string(data[0x00]));
                     }
                     else
-                        parseNetworkReadError(QStringLiteral("size==(sizeof(quint8)) and client null with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
-                    return;
+                        parseNetworkReadError("size==(sizeof(uint8_t)) and client null with main ident: "+std::to_string(mainCodeType)+
+                                              " and queryNumber: "+std::to_string(queryNumber)+", type: query_type_protocol");
+                    return false;
                 }
-                if(size!=(sizeof(quint8)+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+                if(size!=(sizeof(uint8_t)+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
                 {
-                    parseNetworkReadError(QStringLiteral("compression type wrong size (stage 3) with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
-                    return;
+                    parseNetworkReadError("compression type wrong size (stage 3) with main ident: "+std::to_string(mainCodeType)+
+                                          " and queryNumber: "+std::to_string(queryNumber)+", type: query_type_protocol");
+                    return false;
                 }
-                const quint8 &returnCode=data[0x00];
+                const uint8_t &returnCode=data[0x00];
                 if(returnCode>=0x04 && returnCode<=0x07)
                 {
                     if(!LinkToGameServer::compressionSet)
@@ -133,8 +178,9 @@ void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
                                 ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Lz4;
                             break;
                             default:
-                                parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
-                            return;
+                                parseNetworkReadError("compression type wrong with main ident: "+std::to_string(mainCodeType)+
+                                                      " and queryNumber: "+std::to_string(queryNumber)+", type: query_type_protocol");
+                            return false;
                         }
                     else
                     {
@@ -154,184 +200,186 @@ void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
                                 tempCompression=ProtocolParsing::CompressionType::Lz4;
                             break;
                             default:
-                                parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
-                            return;
+                                parseNetworkReadError("compression type wrong with main ident: "+std::to_string(mainCodeType)+
+                                                      " and queryNumber: "+std::to_string(queryNumber)+", type: query_type_protocol");
+                            return false;
                         }
                         if(tempCompression!=ProtocolParsing::compressionTypeClient)
                         {
-                            parseNetworkReadError(QStringLiteral("compression change main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
-                            return;
+                            parseNetworkReadError("compression change main ident: "+std::to_string(mainCodeType)+
+                                                  " and queryNumber: "+std::to_string(queryNumber)+", type: query_type_protocol");
+                            return false;
                         }
                     }
-                    char newData[size];
-                    //the gateway can different compression than server connected
-                    switch(ProtocolParsing::compressionTypeServer)
-                    {
-                        case ProtocolParsing::CompressionType::None:
-                            newData[0x00]=0x04;
-                        break;
-                        case ProtocolParsing::CompressionType::Zlib:
-                            newData[0x00]=0x05;
-                        break;
-                        case ProtocolParsing::CompressionType::Xz:
-                            newData[0x00]=0x06;
-                        break;
-                        case ProtocolParsing::CompressionType::Lz4:
-                            newData[0x00]=0x07;
-                        break;
-                        default:
-                            parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
-                        return;
-                    }
-                    qDebug() << "Transmit the token: " << QString(QByteArray(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT).toHex());
-                    memcpy(newData+1,data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+
                     //send token to game server
                     if(client!=NULL)
-                        client->postReply(queryNumber,newData,size);
+                    {
+                        //send the network reply
+                        removeFromQueryReceived(queryNumber);
+                        uint32_t posOutput=0;
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+                        posOutput+=1;
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+                        posOutput+=1+4;
+                        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);//set the dynamic size
+
+                        //the gateway can different compression than server connected
+                        switch(ProtocolParsing::compressionTypeServer)
+                        {
+                            case ProtocolParsing::CompressionType::None:
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x04;
+                            break;
+                            case ProtocolParsing::CompressionType::Zlib:
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x05;
+                            break;
+                            case ProtocolParsing::CompressionType::Xz:
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x06;
+                            break;
+                            case ProtocolParsing::CompressionType::Lz4:
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x07;
+                            break;
+                            default:
+                                parseNetworkReadError("compression type wrong with main ident: "+std::to_string(mainCodeType)+" and queryNumber: "+std::to_string(queryNumber)+", type: query_type_protocol");
+                            return false;
+                        }
+                        posOutput+=1;
+                        std::cout << "Transmit the token: " << QString(QByteArray(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT).toHex()).toStdString() << std::endl;
+                        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        posOutput+=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT;
+
+                        return client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                    }
                     else
                     {
                         parseNetworkReadError("Protocol initialised but client already disconnected");
-                        return;
+                        return false;
                     }
                     stat=ProtocolGood;
-                    return;
+                    return true;
                 }
                 else
                 {
-                    parseNetworkReadError(QStringLiteral("Unknown error %1").arg(returnCode));
-                    return;
+                    parseNetworkReadError("Unknown error "+std::to_string(returnCode));
+                    return false;
                 }
             }
         }
         break;
         default:
-            parseNetworkReadError(QStringLiteral("unknown sort ident reply code: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-            return;
+            parseNetworkReadError("unknown sort ident reply code: "+std::to_string(mainCodeType)+", line: "+__FILE__+":"+std::to_string(__LINE__));
+            return false;
         break;
     }
 }
 
-void LinkToGameServer::parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size)
+bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size)
 {
     if(client==NULL)
     {
         parseNetworkReadError("client not connected");
-        return;
+        return false;
     }
     if(stat!=Stat::ProtocolGood)
     {
-        parseNetworkReadError("parseFullMessage() not logged to send: "+QString::number(mainCodeType));
-        return;
-    }
-    (void)data;
-    (void)size;
-    client->packOutcommingData(mainCodeType,data,size);
-}
-
-void LinkToGameServer::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const rawData,const unsigned int &size)
-{
-    if(client==NULL)
-    {
-        parseNetworkReadError("client not connected");
-        return;
-    }
-    if(stat!=Stat::ProtocolGood)
-    {
-        if(mainCodeType==0xC2 && subCodeType==0x0F)//send Logical group
+        if(mainCodeType==0x44)//send Logical group
         {}
-        else if(mainCodeType==0xC2 && subCodeType==0x0E)//send Send server list to real player
+        else if(mainCodeType==0x40)//send Send server list to real player
         {
             if(size>0)
             {
-                switch(rawData[0x00])
+                switch(data[0x00])
                 {
                     case 0x01:
                     break;
                     case 0x02:
                         gameServerMode=GameServerMode::Proxy;
-                    return;
+                    return true;
                     default:
-                        parseNetworkReadError("parseFullMessage() wrong server list mode: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
-                    return;
+                        parseNetworkReadError("parseFullMessage() wrong server list mode: "+std::to_string(mainCodeType));
+                    return false;
                 }
-                char newOutputBuffer[size];
-                newOutputBuffer[0x00]=0x02;
-                unsigned int posOutputBuffer=1;
+                //send the network message
+                uint32_t posOutput=0;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+                posOutput+=1+4;
+
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
 
                 unsigned int pos=1;
                 if((size-pos)<1)
                 {
-                    parseNetworkReadError("parseFullMessage() missing data for server list size: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
-                    return;
+                    parseNetworkReadError("parseFullMessage() missing data for server list size: "+std::to_string(mainCodeType));
+                    return false;
                 }
-                const quint8 &serverListSize=rawData[pos];
+                const uint8_t &serverListSize=data[pos];
                 pos+=1;
-                quint8 serverListIndex=0;
+                uint8_t serverListIndex=0;
                 while(serverListIndex<serverListSize)
                 {
                     if((size-pos)<(1+4+1))
                     {
-                        parseNetworkReadError("parseFullMessage() missing data for server unique key size: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
-                        return;
+                        parseNetworkReadError("parseFullMessage() missing data for server unique key size: "+std::to_string(mainCodeType));
+                        return false;
                     }
                     //charactersgroup
-                    const quint8 &charactersGroupIndex=rawData[pos];
-                    newOutputBuffer[posOutputBuffer]=rawData[pos];
-                    posOutputBuffer+=1;
+                    const uint8_t &charactersGroupIndex=data[pos];
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=data[pos];
+                    posOutput+=1;
                     pos+=1;
                     //unique key
-                    const quint32 &uniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+pos)));
-                    memcpy(newOutputBuffer+posOutputBuffer,rawData+pos,4);
-                    posOutputBuffer+=4;
+                    const uint32_t &uniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+pos,4);
+                    posOutput+=4;
                     pos+=4;
                     ServerReconnect serverReconnect;
                     //host
                     {
-                        const quint8 &stringSize=rawData[pos];
+                        const uint8_t &stringSize=data[pos];
                         pos+=1;
                         if((size-pos)<stringSize)
                         {
-                            parseNetworkReadError("parseFullMessage() missing data for server host string size: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
-                            return;
+                            parseNetworkReadError("parseFullMessage() missing data for server host string size: "+std::to_string(mainCodeType));
+                            return false;
                         }
-                        serverReconnect.host=QString::fromUtf8(rawData,stringSize);
-                        if(serverReconnect.host.isEmpty())
+                        serverReconnect.host=std::string(data+pos,stringSize);
+                        if(serverReconnect.host.empty())
                         {
-                            parseNetworkReadError("parseFullMessage() server list, host can't be empty: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
-                            return;
+                            parseNetworkReadError("parseFullMessage() server list, host can't be empty: "+std::to_string(mainCodeType));
+                            return false;
                         }
                         pos+=stringSize;
                     }
                     if((size-pos)<(2+2))
                     {
-                        parseNetworkReadError("parseFullMessage() missing data for server port start description size: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
-                        return;
+                        parseNetworkReadError("parseFullMessage() missing data for server port start description size: "+std::to_string(mainCodeType));
+                        return false;
                     }
                     //port
-                    serverReconnect.port=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+pos)));
+                    serverReconnect.port=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
                     pos+=2;
                     //skip description
                     {
-                        const quint16 &stringSize=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+pos)));
+                        const uint16_t &stringSize=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
                         pos+=2;
                         if((size-pos)<stringSize)
                         {
-                            parseNetworkReadError("parseFullMessage() missing data for server host string size: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
-                            return;
+                            parseNetworkReadError("parseFullMessage() missing data for server host string size: "+std::to_string(mainCodeType));
+                            return false;
                         }
-                        memcpy(newOutputBuffer+posOutputBuffer,rawData+pos-2,2+stringSize);
-                        posOutputBuffer+=2+stringSize;
+                        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+pos-2,2+stringSize);
+                        posOutput+=2+stringSize;
 
                         pos+=stringSize;
                     }
                     //skip Logical group and max player
                     if((size-pos)<(1+2))
                     {
-                        parseNetworkReadError("parseFullMessage() missing data for server port start description size: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
-                        return;
+                        parseNetworkReadError("parseFullMessage() missing data for server port start description size: "+std::to_string(mainCodeType));
+                        return false;
                     }
-                    memcpy(newOutputBuffer+posOutputBuffer,rawData+pos,1+2);
-                    posOutputBuffer+=1+2;
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+pos,1+2);
+                    posOutput+=1+2;
 
                     pos+=1+2;
 
@@ -340,303 +388,173 @@ void LinkToGameServer::parseFullMessage(const quint8 &mainCodeType,const quint8 
                 }
 
                 //Second list part with same size
-                memcpy(newOutputBuffer+posOutputBuffer,rawData+pos,2*serverListSize);
-                posOutputBuffer+=2*serverListSize;
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+pos,2*serverListSize);
+                posOutput+=2*serverListSize;
 
                 gameServerMode=GameServerMode::Reconnect;
 
-                client->packFullOutcommingData(mainCodeType,subCodeType,newOutputBuffer,posOutputBuffer);
-                return;
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+
+                client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                return true;
             }
         }
         else
         {
-            parseNetworkReadError("parseFullMessage() not logged to send: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
-            return;
+            parseNetworkReadError("parseFullMessage() not logged to send: "+std::to_string(mainCodeType));
+            return false;
         }
     }
+
     switch(mainCodeType)
     {
-        case 0xC2:
+        //file as input
+        case 0x76://raw
+        case 0x77://compressed
         {
-            switch(subCodeType)
+            unsigned int pos=0;
+            if((size-pos)<(int)(sizeof(uint8_t)))
             {
-                //file as input
-                case 0x03://raw
-                case 0x04://compressed
-                {
-                    unsigned int pos=0;
-                    if((size-pos)<(int)(sizeof(quint8)))
-                    {
-                        parseNetworkReadError(QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-                        return;
-                    }
-                    quint8 fileListSize=rawData[pos];
-                    pos++;
-                    int index=0;
-                    while(index<fileListSize)
-                    {
-                        if((size-pos)<(int)(sizeof(quint8)))
-                        {
-                            parseNetworkReadError(QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-                            return;
-                        }
-                        QString fileName;
-                        quint8 fileNameSize=rawData[pos];
-                        pos++;
-                        if(fileNameSize>0)
-                        {
-                            if((size-pos)<(int)fileNameSize)
-                            {
-                                parseNetworkReadError(QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-                                return;
-                            }
-                            fileName=QString::fromUtf8(rawData+pos,fileNameSize);
-                            pos+=fileNameSize;
-                        }
-                        if(!DatapackDownloaderBase::extensionAllowed.contains(QFileInfo(fileName).suffix()))
-                        {
-                            parseNetworkReadError(QStringLiteral("extension not allowed: %4 with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)).arg(QFileInfo(fileName).suffix()));
-                            return;
-                        }
-                        if((size-pos)<(int)(sizeof(quint32)))
-                        {
-                            parseNetworkReadError(QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-                            return;
-                        }
-                        const quint32 &fileSize=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+pos)));
-                        pos+=4;
-                        if((size-pos)<fileSize)
-                        {
-                            parseNetworkReadError(QStringLiteral("wrong file data size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-                            return;
-                        }
-                        const QByteArray dataFile(rawData+pos,fileSize);
-                        pos+=fileSize;
-                        if(subCodeType==0x03)
-                            DebugClass::debugConsole(QStringLiteral("Raw file to create: %1").arg(fileName));
-                        else
-                            DebugClass::debugConsole(QStringLiteral("Compressed file to create: %1").arg(fileName));
-
-                        if(reply04inWait!=NULL)
-                            DatapackDownloaderBase::datapackDownloaderBase->writeNewFileBase(fileName,dataFile);
-                        else if(reply0205inWait!=NULL)
-                        {
-                            if(DatapackDownloaderMainSub::datapackDownloaderMainSub.contains(main))
-                            {
-                                if(DatapackDownloaderMainSub::datapackDownloaderMainSub.value(main).contains(sub))
-                                    DatapackDownloaderMainSub::datapackDownloaderMainSub.value(main).value(sub)->writeNewFileToRoute(fileName,dataFile);
-                                else
-                                    parseNetworkReadError("unable to route mainCodeType==0xC2 && subCodeType==0x03 return, sub datapack code is not found: "+sub);
-                            }
-                            else
-                                parseNetworkReadError("unable to route mainCodeType==0xC2 && subCodeType==0x03 return, main datapack code is not found: "+main);
-                        }
-                        else
-                            parseNetworkReadError("unable to route mainCodeType==0xC2 && subCodeType==0x03 return");
-
-                        index++;
-                    }
-                    return;//no remaining data, because all remaing is used as file data
-                }
-                break;
-                default:
-                break;
+                parseNetworkReadError("wrong size with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
+                return false;
             }
+            uint8_t fileListSize=data[pos];
+            pos++;
+            int index=0;
+            while(index<fileListSize)
+            {
+                if((size-pos)<(int)(sizeof(uint8_t)))
+                {
+                    parseNetworkReadError("wrong size with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
+                    return false;
+                }
+                std::string fileName;
+                uint8_t fileNameSize=data[pos];
+                pos++;
+                if(fileNameSize>0)
+                {
+                    if((size-pos)<(int)fileNameSize)
+                    {
+                        parseNetworkReadError("wrong size with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
+                        return false;
+                    }
+                    fileName=std::string(data+pos,fileNameSize);
+                    pos+=fileNameSize;
+                }
+                if(DatapackDownloaderBase::extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())==DatapackDownloaderBase::extensionAllowed.cend())
+                {
+                    parseNetworkReadError("extension not allowed: "+QFileInfo(QString::fromStdString(fileName)).suffix().toStdString()+" with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
+                    return false;
+                }
+                if((size-pos)<(int)(sizeof(uint32_t)))
+                {
+                    parseNetworkReadError("wrong size with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
+                    return false;
+                }
+                const uint32_t &fileSize=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                pos+=4;
+                if((size-pos)<fileSize)
+                {
+                    parseNetworkReadError("wrong file data size with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
+                    return false;
+                }
+                const QByteArray dataFile(data+pos,fileSize);
+                pos+=fileSize;
+                if(mainCodeType==0x76)
+                    parseNetworkReadError("Raw file to create: "+fileName);
+                else
+                    parseNetworkReadError("Compressed file to create: "+fileName);
+
+                if(reply04inWait!=NULL)
+                    DatapackDownloaderBase::datapackDownloaderBase->writeNewFileBase(fileName,dataFile);
+                else if(reply0205inWait!=NULL)
+                {
+                    if(DatapackDownloaderMainSub::datapackDownloaderMainSub.find(main)!=DatapackDownloaderMainSub::datapackDownloaderMainSub.cend())
+                    {
+                        if(DatapackDownloaderMainSub::datapackDownloaderMainSub.at(main).find(sub)!=DatapackDownloaderMainSub::datapackDownloaderMainSub.at(main).cend())
+                            DatapackDownloaderMainSub::datapackDownloaderMainSub.at(main).at(sub)->writeNewFileToRoute(fileName,dataFile);
+                        else
+                        {
+                            parseNetworkReadError("unable to route mainCodeType==0xC2 && subCodeType==0x03 return, sub datapack code is not found: "+sub);
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        parseNetworkReadError("unable to route mainCodeType==0xC2 && subCodeType==0x03 return, main datapack code is not found: "+main);
+                        return false;
+                    }
+                }
+                else
+                {
+                    parseNetworkReadError("unable to route mainCodeType==0xC2 && subCodeType==0x03 return");
+                    return false;
+                }
+
+                index++;
+            }
+            return true;//no remaining data, because all remaing is used as file data
         }
         break;
         default:
         break;
     }
-    client->packFullOutcommingData(mainCodeType,subCodeType,rawData,size);
+
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+    posOutput+=1+4;
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
+    posOutput+=size;
+
+    return client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 //have query with reply
-void LinkToGameServer::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+bool LinkToGameServer::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     if(client==NULL)
     {
         parseNetworkReadError("client not connected");
-        return;
+        return false;
     }
     Q_UNUSED(data);
     if(stat!=Stat::ProtocolGood)
-    {
-        parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
-        return;
-    }
-    client->packOutcommingQuery(mainCodeType,queryNumber,data,size);
-}
+        return parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
 
-void LinkToGameServer::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const rawData,const unsigned int &size)
-{
-    if(client==NULL)
-    {
-        parseNetworkReadError("client not connected");
-        return;
-    }
-    (void)subCodeType;
-    (void)queryNumber;
-    (void)rawData;
-    (void)size;
-    //intercept the file sending
-    if(mainCodeType==0x02 && subCodeType==0x0C)
-    {
-        if(reply04inWait!=NULL)
-            DatapackDownloaderBase::datapackDownloaderBase->datapackFileList(rawData,size);
-        else if(reply0205inWait==NULL)
-        {
-            if(size>39 && rawData[0x00]==0x01)//all is good, change the reply
-            {
-                unsigned int pos=39;
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+    posOutput+=1;
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+    posOutput+=4;
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
+    posOutput+=size;
 
-                {
-                    if((size-pos)<1)
-                    {
-                        delete reply0205inWait;
-                        reply0205inWait=NULL;
-                        parseNetworkReadError("need more size");
-                        return;
-                    }
-                    const quint8 &stringSize=rawData[pos];
-                    pos+=1;
-                    if((size-pos)<stringSize)
-                    {
-                        delete reply0205inWait;
-                        reply0205inWait=NULL;
-                        parseNetworkReadError("need more size");
-                        return;
-                    }
-                    main=QString::fromLatin1(rawData+pos,stringSize);
-                    pos+=stringSize;
-                }
-                {
-                    if((size-pos)<1)
-                    {
-                        delete reply0205inWait;
-                        reply0205inWait=NULL;
-                        parseNetworkReadError("need more size");
-                        return;
-                    }
-                    const quint8 &stringSize=rawData[pos];
-                    pos+=1;
-                    if((size-pos)<stringSize)
-                    {
-                        delete reply0205inWait;
-                        reply0205inWait=NULL;
-                        parseNetworkReadError("need more size");
-                        return;
-                    }
-                    sub=QString::fromLatin1(rawData+pos,stringSize);
-                    pos+=stringSize;
-                }
-
-                DatapackDownloaderMainSub *downloader=NULL;
-                {
-                    if(!DatapackDownloaderMainSub::datapackDownloaderMainSub.contains(main))
-                        DatapackDownloaderMainSub::datapackDownloaderMainSub[main][sub]=new DatapackDownloaderMainSub(LinkToGameServer::mDatapackBase,main,sub);
-                    else if(!DatapackDownloaderMainSub::datapackDownloaderMainSub.value(main).contains(sub))
-                        DatapackDownloaderMainSub::datapackDownloaderMainSub[main][sub]=new DatapackDownloaderMainSub(LinkToGameServer::mDatapackBase,main,sub);
-                    downloader=DatapackDownloaderMainSub::datapackDownloaderMainSub.value(main).value(sub);
-                }
-                if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
-                {
-                    delete reply0205inWait;
-                    reply0205inWait=NULL;
-                    parseNetworkReadError("need more size");
-                    return;
-                }
-                downloader->sendedHashMain=QByteArray(rawData+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
-                pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
-                if(!sub.isEmpty())
-                {
-                    if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
-                    {
-                        delete reply0205inWait;
-                        reply0205inWait=NULL;
-                        parseNetworkReadError("need more size");
-                        return;
-                    }
-                    downloader->sendedHashSub=QByteArray(rawData+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
-                    pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
-                }
-                if((size-pos)<1)
-                {
-                    delete reply0205inWait;
-                    reply0205inWait=NULL;
-                    parseNetworkReadError("need more size");
-                    return;
-                }
-                const quint16 startString=pos;
-                const quint8 &stringSize=rawData[pos];
-                pos+=1;
-                if((size-pos)<stringSize)
-                {
-                    delete reply0205inWait;
-                    reply0205inWait=NULL;
-                    parseNetworkReadError("need more size");
-                    return;
-                }
-                CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=QString::fromLatin1(rawData+pos,stringSize);
-                pos+=stringSize;
-                unsigned int remainingSize=size-pos;
-                reply0205inWaitSize=startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
-                reply0205inWait=new char[reply0205inWaitSize];
-                memcpy(reply0205inWait+0,rawData,startString);
-                memcpy(reply0205inWait+startString,LinkToGameServer::httpDatapackMirrorRewriteBase.constData(),LinkToGameServer::httpDatapackMirrorRewriteBase.size());
-                memcpy(reply0205inWait+startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size(),rawData+pos,remainingSize);
-
-                if(downloader->hashMain.isEmpty() || (!sub.isEmpty() && downloader->hashSub.isEmpty()))//checksum never done
-                {
-                    reply0205inWaitQueryNumber=queryNumber;
-                    downloader->clientInSuspend.push_back(this);
-                    if(downloader->clientInSuspend.size()==1)
-                        downloader->sendDatapackContentMainSub();
-                }
-                else if(downloader->hashMain!=downloader->sendedHashMain || (!sub.isEmpty() && downloader->hashSub!=downloader->sendedHashSub))//need download the datapack content
-                {
-                    reply0205inWaitQueryNumber=queryNumber;
-                    downloader->clientInSuspend.push_back(this);
-                    if(downloader->clientInSuspend.size()==1)
-                        downloader->sendDatapackContentMainSub();
-                }
-                else
-                {
-                    client->postReply(queryNumber,reply0205inWait,reply0205inWaitSize);
-                    delete reply0205inWait;
-                    reply0205inWait=NULL;
-                    reply0205inWaitSize=0;
-                }
-                return;
-            }
-        }
-        else
-            parseNetworkReadError("unable to route mainCodeType==0x02 && subCodeType==0x0C return");
-        return;
-    }
-    //do the work here
-    client->packFullOutcommingQuery(mainCodeType,subCodeType,queryNumber,rawData,size);
+    client->registerOutputQuery(queryNumber);
+    return client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 //send reply
-void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     if(client==NULL)
     {
         parseNetworkReadError("client not connected");
-        return;
+        return false;
     }
     if(mainCodeType==0x03 && stat==Stat::Connected)
-    {
-        parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
-        return;
-    }
+        return parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
     Q_UNUSED(data);
     Q_UNUSED(size);
     //do the work here
 
     /* intercept part here */
-    if(mainCodeType==0x04)
+    if(mainCodeType==0xA8)
     {
         if(size>(14+CATCHCHALLENGER_SHA224HASH_SIZE) && data[0x00]==0x01)//all is good, change the reply
         {
@@ -646,7 +564,7 @@ void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &q
                 delete reply04inWait;
                 reply04inWait=NULL;
                 parseNetworkReadError("another reply04inWait in suspend");
-                return;
+                return false;
             }
             {
                 if(DatapackDownloaderBase::datapackDownloaderBase==NULL)
@@ -659,19 +577,19 @@ void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &q
                 delete reply04inWait;
                 reply04inWait=NULL;
                 parseNetworkReadError("need more size");
-                return;
+                return false;
             }
-            const quint16 startString=pos;
-            const quint8 &stringSize=data[pos];
+            const uint16_t startString=pos;
+            const uint8_t &stringSize=data[pos];
             pos+=1;
             if((size-pos)<stringSize)
             {
                 delete reply04inWait;
                 reply04inWait=NULL;
                 parseNetworkReadError("need more size");
-                return;
+                return false;
             }
-            CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase=QString::fromLatin1(data+pos,stringSize);
+            CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase=std::string(data+pos,stringSize);
             pos+=stringSize;
             unsigned int remainingSize=size-pos;
             if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
@@ -679,7 +597,7 @@ void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &q
                 delete reply0205inWait;
                 reply0205inWait=NULL;
                 parseNetworkReadError("need more size");
-                return;
+                return false;
             }
             reply04inWaitSize=startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
             reply04inWait=new char[reply04inWaitSize];
@@ -703,94 +621,247 @@ void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &q
             }
             else
             {
-                client->postReply(queryNumber,reply04inWait,reply04inWaitSize);
+                //send the network reply
+                removeFromQueryReceived(queryNumber);
+                uint32_t posOutput=0;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+                posOutput+=1;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+                posOutput+=1+4;
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(reply04inWaitSize);//set the dynamic size
+
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput,reply04inWait,reply04inWaitSize);
+                posOutput+=reply04inWaitSize;
+
+                client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
                 delete reply04inWait;
                 reply04inWait=NULL;
                 reply04inWaitSize=0;
             }
-            return;
+            return true;
+        }
+    }
+    else if(mainCodeType==0xAC)
+    {
+        if(gameServerMode==GameServerMode::Reconnect)
+        {
+            if(selectedServer.host.empty())
+            {
+                parseNetworkReadError("Reply of 0205 with empty host");
+                return false;
+            }
+            if(size!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
+            {
+                parseNetworkReadError("size!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER");
+                return false;
+            }
+
+            const int &socketFd=LinkToGameServer::tryConnect(selectedServer.host.c_str(),selectedServer.port,5,1);
+            if(Q_LIKELY(socketFd>=0))
+            {
+                epollSocket.reopen(socketFd);
+                this->socketFd=socketFd;
+
+                epoll_event event;
+                event.data.ptr = this;
+                event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
+                {
+                    const int &s = Epoll::epoll.ctl(EPOLL_CTL_ADD, socketFd, &event);
+                    if(s == -1)
+                    {
+                        std::cerr << "epoll_ctl on socket error" << std::endl;
+                        disconnectClient();
+                        return false;
+                    }
+                }
+
+                queryIdToReconnect=queryNumber;
+                stat=Stat::Reconnecting;
+                memcpy(tokenForGameServer,data,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                //send the protocol
+                //wait readTheFirstSslHeader() to sendProtocolHeader();
+                haveTheFirstSslHeader=false;
+                setConnexionSettings();
+                parseIncommingData();
+            }
+            else
+            {
+                static_cast<EpollClientLoginSlave * const>(client)
+                ->parseNetworkReadError("not able to connect on the game server as proxy, parseReplyData("+std::to_string(mainCodeType)+","+std::to_string(queryNumber)+")");
+            }
+            selectedServer.host.clear();
+        }
+    }
+    //intercept the file sending
+    else if(mainCodeType==0xA1)
+    {
+        if(reply04inWait!=NULL)
+            DatapackDownloaderBase::datapackDownloaderBase->datapackFileList(data,size);
+        else if(reply0205inWait==NULL)
+        {
+            if(size>39 && data[0x00]==0x01)//all is good, change the reply
+            {
+                unsigned int pos=39;
+
+                {
+                    if((size-pos)<1)
+                    {
+                        delete reply0205inWait;
+                        reply0205inWait=NULL;
+                        parseNetworkReadError("need more size");
+                        return false;
+                    }
+                    const uint8_t &stringSize=data[pos];
+                    pos+=1;
+                    if((size-pos)<stringSize)
+                    {
+                        delete reply0205inWait;
+                        reply0205inWait=NULL;
+                        parseNetworkReadError("need more size");
+                        return false;
+                    }
+                    main=std::string(data+pos,stringSize);
+                    pos+=stringSize;
+                }
+                {
+                    if((size-pos)<1)
+                    {
+                        delete reply0205inWait;
+                        reply0205inWait=NULL;
+                        parseNetworkReadError("need more size");
+                        return false;
+                    }
+                    const uint8_t &stringSize=data[pos];
+                    pos+=1;
+                    if((size-pos)<stringSize)
+                    {
+                        delete reply0205inWait;
+                        reply0205inWait=NULL;
+                        parseNetworkReadError("need more size");
+                        return false;
+                    }
+                    sub=std::string(data+pos,stringSize);
+                    pos+=stringSize;
+                }
+
+                DatapackDownloaderMainSub *downloader=NULL;
+                {
+                    if(DatapackDownloaderMainSub::datapackDownloaderMainSub.find(main)==DatapackDownloaderMainSub::datapackDownloaderMainSub.cend())
+                        DatapackDownloaderMainSub::datapackDownloaderMainSub[main][sub]=new DatapackDownloaderMainSub(LinkToGameServer::mDatapackBase,main,sub);
+                    else if(DatapackDownloaderMainSub::datapackDownloaderMainSub.at(main).find(sub)==DatapackDownloaderMainSub::datapackDownloaderMainSub.at(main).cend())
+                        DatapackDownloaderMainSub::datapackDownloaderMainSub[main][sub]=new DatapackDownloaderMainSub(LinkToGameServer::mDatapackBase,main,sub);
+                    downloader=DatapackDownloaderMainSub::datapackDownloaderMainSub.at(main).at(sub);
+                }
+                if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
+                {
+                    delete reply0205inWait;
+                    reply0205inWait=NULL;
+                    parseNetworkReadError("need more size");
+                    return false;
+                }
+                downloader->sendedHashMain=QByteArray(data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
+                pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
+                if(!sub.empty())
+                {
+                    if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
+                    {
+                        delete reply0205inWait;
+                        reply0205inWait=NULL;
+                        parseNetworkReadError("need more size");
+                        return false;
+                    }
+                    downloader->sendedHashSub=QByteArray(data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
+                    pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
+                }
+                if((size-pos)<1)
+                {
+                    delete reply0205inWait;
+                    reply0205inWait=NULL;
+                    parseNetworkReadError("need more size");
+                    return false;
+                }
+                const uint16_t startString=pos;
+                const uint8_t &stringSize=data[pos];
+                pos+=1;
+                if((size-pos)<stringSize)
+                {
+                    delete reply0205inWait;
+                    reply0205inWait=NULL;
+                    parseNetworkReadError("need more size");
+                    return false;
+                }
+                CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=std::string(data+pos,stringSize);
+                pos+=stringSize;
+                unsigned int remainingSize=size-pos;
+                reply0205inWaitSize=startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
+                reply0205inWait=new char[reply0205inWaitSize];
+                memcpy(reply0205inWait+0,data,startString);
+                memcpy(reply0205inWait+startString,LinkToGameServer::httpDatapackMirrorRewriteBase.constData(),LinkToGameServer::httpDatapackMirrorRewriteBase.size());
+                memcpy(reply0205inWait+startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size(),data+pos,remainingSize);
+
+                if(downloader->hashMain.isEmpty() || (!sub.empty() && downloader->hashSub.isEmpty()))//checksum never done
+                {
+                    reply0205inWaitQueryNumber=queryNumber;
+                    downloader->clientInSuspend.push_back(this);
+                    if(downloader->clientInSuspend.size()==1)
+                        downloader->sendDatapackContentMainSub();
+                }
+                else if(downloader->hashMain!=downloader->sendedHashMain || (!sub.empty() && downloader->hashSub!=downloader->sendedHashSub))//need download the datapack content
+                {
+                    reply0205inWaitQueryNumber=queryNumber;
+                    downloader->clientInSuspend.push_back(this);
+                    if(downloader->clientInSuspend.size()==1)
+                        downloader->sendDatapackContentMainSub();
+                }
+                else
+                {
+                    //send the network reply
+                    removeFromQueryReceived(queryNumber);
+                    uint32_t posOutput=0;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+                    posOutput+=1;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+                    posOutput+=1+4;
+                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(reply0205inWaitSize);//set the dynamic size
+
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput,reply0205inWait,reply0205inWaitSize);
+                    posOutput+=reply0205inWaitSize;
+
+                    client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
+                    delete reply0205inWait;
+                    reply0205inWait=NULL;
+                    reply0205inWaitSize=0;
+                }
+                return true;
+            }
+        }
+        else
+        {
+            parseNetworkReadError("unable to route mainCodeType==0x02 && subCodeType==0x0C return");
+            return false;
         }
     }
 
-    client->postReply(queryNumber,data,size);
+    //send the network reply
+    removeFromQueryReceived(queryNumber);
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+    posOutput+=1+4;
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
+
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput,data,size);
+    posOutput+=size;
+
+    client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
+    return true;
 }
 
-void LinkToGameServer::parseFullReplyData(const quint8 &mainCodeType, const quint8 &subCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size)
-{
-    if(client==NULL)
-    {
-        parseNetworkReadError("client not connected");
-        return;
-    }
-    (void)mainCodeType;
-    (void)subCodeType;
-    (void)data;
-    (void)size;
-    //do the work here
-    switch(mainCodeType)
-    {
-        case 0x02:
-            switch(subCodeType)
-            {
-                case 0x05:
-                if(gameServerMode==GameServerMode::Reconnect)
-                {
-                    if(selectedServer.host.isEmpty())
-                    {
-                        parseNetworkReadError("Reply of 0205 with empty host");
-                        return;
-                    }
-                    if(size!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
-                        break;
-
-                    const int &socketFd=LinkToGameServer::tryConnect(selectedServer.host.toLatin1(),selectedServer.port,5,1);
-                    if(Q_LIKELY(socketFd>=0))
-                    {
-                        epollSocket.reopen(socketFd);
-                        this->socketFd=socketFd;
-
-                        epoll_event event;
-                        event.data.ptr = this;
-                        event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
-                        {
-                            const int &s = Epoll::epoll.ctl(EPOLL_CTL_ADD, socketFd, &event);
-                            if(s == -1)
-                            {
-                                std::cerr << "epoll_ctl on socket error" << std::endl;
-                                disconnectClient();
-                                return;
-                            }
-                        }
-
-                        queryIdToReconnect=queryNumber;
-                        stat=Stat::Reconnecting;
-                        memcpy(tokenForGameServer,data,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
-                        //send the protocol
-                        //wait readTheFirstSslHeader() to sendProtocolHeader();
-                        haveTheFirstSslHeader=false;
-                        setConnexionSettings();
-                        parseIncommingData();
-                    }
-                    else
-                    {
-                        static_cast<EpollClientLoginSlave * const>(client)
-                        ->parseNetworkReadError(QStringLiteral("not able to connect on the game server as proxy, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
-                    }
-                    selectedServer.host.clear();
-                }
-                break;
-                default:
-                break;
-            }
-        break;
-        default:
-        break;
-    }
-
-    client->postReply(queryNumber,data,size);
-}
-
-void LinkToGameServer::parseNetworkReadError(const QString &errorString)
+void LinkToGameServer::parseNetworkReadError(const std::string &errorString)
 {
     errorParsingLayer(errorString);
 }
