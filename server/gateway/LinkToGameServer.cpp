@@ -295,7 +295,12 @@ void LinkToGameServer::parseIncommingData()
     if(!haveTheFirstSslHeader)
         readTheFirstSslHeader();
     if(haveTheFirstSslHeader)
-        ProtocolParsingInputOutput::parseIncommingData();
+    {
+        if(client!=NULL && client->fastForward)
+            forwardTo(client);
+        else
+            ProtocolParsingInputOutput::parseIncommingData();
+    }
 }
 
 void LinkToGameServer::sendProtocolHeader()

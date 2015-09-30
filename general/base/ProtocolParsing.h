@@ -103,6 +103,7 @@ public:
     #ifndef EPOLLCATCHCHALLENGERSERVER
     std::vector<std::string> getQueryRunningList();
     #endif
+    bool forwardTo(ProtocolParsingBase * const destination);
 protected:
     #ifdef EPOLLCATCHCHALLENGERSERVER
     #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
@@ -121,7 +122,8 @@ protected:
     /* flags & 0x80 = haveData
      * flags & 0x40 = haveData_dataSize
      * flags & 0x20 = have_query_number
-     * flags & 0x10 = isClient */
+     * flags & 0x10 = isClient
+    */
 protected:
     //have message without reply
     virtual bool parseMessage(const uint8_t &packetCode,const char * const data,const unsigned int &size) = 0;
