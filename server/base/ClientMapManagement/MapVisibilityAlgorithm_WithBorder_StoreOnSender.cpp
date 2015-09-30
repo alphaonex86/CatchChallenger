@@ -689,7 +689,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_insert()
     //send the network message
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x68;
-    posOutput=+1+4;
+    posOutput+=1+4;
 
     ///////////////////////// group by map ///////////////////////
     std::unordered_map<CommonMap*, std::vector<MapVisibilityAlgorithm_WithBorder_StoreOnSender *> >	send_insert_by_map;
@@ -811,7 +811,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_move()
     //send the network message
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x65;
-    posOutput=+1+4;
+    posOutput+=1+4;
 
     //////////////////////////// move //////////////////////////
     uint32_t purgeBuffer_list_size_internal=0;
@@ -874,7 +874,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_remove()
     //send the network message
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x66;
-    posOutput=+1+4;
+    posOutput+=1+4;
 
     //////////////////////////// remove //////////////////////////
     auto i_remove = to_send_remove.begin();
@@ -922,7 +922,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_reinsert()
     //send the network message
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x63;
-    posOutput=+1+4;
+    posOutput+=1+4;
 
     //////////////////////////// re-insert //////////////////////////
     if(GlobalServerData::serverSettings.max_players<=255)

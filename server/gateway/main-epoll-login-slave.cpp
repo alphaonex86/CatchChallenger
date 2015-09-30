@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
     Q_UNUSED(a);
 
-    LinkToGameServer::mDatapackBase=QFileInfo(QCoreApplication::applicationDirPath()+"/datapack/").absoluteFilePath();
+    LinkToGameServer::mDatapackBase=QFileInfo(QCoreApplication::applicationDirPath()+"/datapack/").absoluteFilePath().toStdString();
 
     (void)argc;
     (void)argv;

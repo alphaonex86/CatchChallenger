@@ -8,24 +8,19 @@ std::vector<EpollClientLoginSlave *> EpollClientLoginSlave::client_list;
 
 const unsigned char EpollClientLoginSlave::protocolHeaderToMatch[] = PROTOCOL_HEADER_LOGIN;
 
-quint8 EpollClientLoginSlave::tempDatapackListReplySize=0;
+uint8_t EpollClientLoginSlave::tempDatapackListReplySize=0;
 QByteArray EpollClientLoginSlave::tempDatapackListReplyArray;
-quint8 EpollClientLoginSlave::tempDatapackListReply=0;
+uint8_t EpollClientLoginSlave::tempDatapackListReply=0;
 int EpollClientLoginSlave::tempDatapackListReplyTestCount=0;
 QByteArray EpollClientLoginSlave::rawFilesBuffer;
 QByteArray EpollClientLoginSlave::compressedFilesBuffer;
 int EpollClientLoginSlave::rawFilesBufferCount=0;
 int EpollClientLoginSlave::compressedFilesBufferCount=0;
 
-QString EpollClientLoginSlave::text_dotslash=QStringLiteral(";");
-QString EpollClientLoginSlave::text_antislash=QStringLiteral("\\");
-QString EpollClientLoginSlave::text_double_slash=QStringLiteral("//");
-QString EpollClientLoginSlave::text_slash=QStringLiteral("/");
-
-QRegularExpression EpollClientLoginSlave::fileNameStartStringRegex=QRegularExpression(QLatin1String("^[a-zA-Z]:/"));
-QRegularExpression EpollClientLoginSlave::datapack_rightFileName = QRegularExpression(DATAPACK_FILE_REGEX);
-QSet<QString> EpollClientLoginSlave::compressedExtension = QString(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(";").toSet();
+std::regex EpollClientLoginSlave::fileNameStartStringRegex=std::regex("^[a-zA-Z]:/");
+std::regex EpollClientLoginSlave::datapack_rightFileName = std::regex(DATAPACK_FILE_REGEX);
+std::unordered_set<std::string> EpollClientLoginSlave::compressedExtension;
 
 EpollClientLoginSlave::DatapackData EpollClientLoginSlave::datapack_file_base;
-QHash<QString,EpollClientLoginSlave::DatapackData> EpollClientLoginSlave::datapack_file_main;
-QHash<QString,QHash<QString,EpollClientLoginSlave::DatapackData> > EpollClientLoginSlave::datapack_file_sub;
+std::unordered_map<std::string,EpollClientLoginSlave::DatapackData> EpollClientLoginSlave::datapack_file_main;
+std::unordered_map<std::string,std::unordered_map<std::string,EpollClientLoginSlave::DatapackData> > EpollClientLoginSlave::datapack_file_sub;

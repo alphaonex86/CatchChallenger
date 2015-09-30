@@ -8,10 +8,10 @@
 #include "../epoll/db/EpollPostgresql.h"
 #include "LinkToGameServer.h"
 
-#include <QString>
-#include <QSet>
+#include <string>
+#include <unordered_set>
 #include <vector>
-#include <QRegularExpression>
+#include <regex>
 
 #define BASE_PROTOCOL_MAGIC_SIZE 8
 
@@ -44,7 +44,7 @@ namespace CatchChallenger {
 struct FileToSend
 {
     //not QFile * to prevent too many file open
-    QString file;
+    std::string file;
 };
 bool operator<(const FileToSend &fileToSend1,const FileToSend &fileToSend2);
 
@@ -80,7 +80,9 @@ public:
     void doDDOSCompute();
     static void doDDOSComputeAll();
 
-    void parseNetworkReadError(const QString &errorString);
+    void parseNetworkReadError(const std::string &errorString);
+    bool sendRawSmallPacket(const char * const data,const int &size);
+    bool removeFromQueryReceived(const uint8_t &queryNumber);
 
     LinkToGameServer *linkToGameServer;
     char *socketString;
@@ -94,55 +96,45 @@ public:
     struct DatapackData
     {
         //quint32 mtime;
-        QHash<QString,DatapackCacheFile> datapack_file_hash_cache;
+        std::unordered_map<std::string,DatapackCacheFile> datapack_file_hash_cache;
     };
-    //static QHash<QString,quint32> datapack_file_list_cache_base,datapack_file_list_cache_main,datapack_file_list_cache_sub;//same than above
+    //static std::unordered_map<std::string,quint32> datapack_file_list_cache_base,datapack_file_list_cache_main,datapack_file_list_cache_sub;//same than above
     static DatapackData datapack_file_base;
-    static QHash<QString,DatapackData> datapack_file_main;
-    static QHash<QString,QHash<QString,DatapackData> > datapack_file_sub;
-    static QHash<QString,DatapackCacheFile> datapack_file_list(const QString &path,const bool withHash=true);
+    static std::unordered_set<std::string> compressedExtension;
+    static std::unordered_map<std::string,DatapackData> datapack_file_main;
+    static std::unordered_map<std::string,std::unordered_map<std::string,DatapackData> > datapack_file_sub;
+    static std::unordered_map<std::string,DatapackCacheFile> datapack_file_list(const std::string &path,const bool withHash=true);
 private:
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    QStringList paramToPassToCallBackType;
+    std::vector<std::string> paramToPassToCallBackType;
     #endif
 
     static const unsigned char protocolHeaderToMatch[5];
     BaseClassSwitch::EpollObjectType getType() const;
 private:
-    void errorParsingLayer(const QString &error);
-    void messageParsingLayer(const QString &message) const;
+    void errorParsingLayer(const std::string &error);
+    void messageParsingLayer(const std::string &message) const;
     void errorParsingLayer(const char * const error);
     void messageParsingLayer(const char * const message) const;
     //have message without reply
-    void parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size);
-    void parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const data,const unsigned int &size);
+    bool parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size);
     //have query with reply
-    void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
-    void parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
+    bool parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
     //send reply
-    void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
-    void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
+    bool parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
 
-    void parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size);
+    bool parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size);
     void disconnectClient();
 
-    bool sendFile(const QString &datapackPath, const QString &fileName);
-    void datapackList(const quint8 &query_id, const QStringList &files, const QList<quint32> &partialHashList);
+    bool sendFile(const std::string &datapackPath, const std::string &fileName);
+    void datapackList(const quint8 &query_id, const std::vector<std::string> &files, const std::vector<quint32> &partialHashList);
 
     void addDatapackListReply(const bool &fileRemove);
     void purgeDatapackListReply(const quint8 &query_id);
     void sendFileContent();
     void sendCompressedFileContent();
 public:
-    void sendFullPacket(const quint8 &mainIdent,const quint8 &subIdent,const char * const data, const unsigned int &size);
-    void sendFullPacket(const quint8 &mainIdent,const quint8 &subIdent);
-    void sendPacket(const quint8 &mainIdent, const char * const data, const unsigned int &size);
-    void sendPacket(const quint8 &mainIdent);
-    void sendRawSmallPacket(const char * const data, const unsigned int &size);
-    void sendQuery(const quint8 &mainIdent,const quint8 &subIdent,const quint8 &queryNumber,const char * const data, const unsigned int &size);
-    void sendQuery(const quint8 &mainIdent,const quint8 &subIdent,const quint8 &queryNumber);
-    void postReply(const quint8 &queryNumber,const char * const data, const unsigned int &size);
-    void postReply(const quint8 &queryNumber);
+    bool sendRawSmallPacket(const char * const data, const unsigned int &size);
 private:
     static std::vector<EpollClientLoginSlave *> client_list;
 
@@ -166,14 +158,8 @@ private:
     static QByteArray rawFilesBuffer,compressedFilesBuffer;
     static int rawFilesBufferCount,compressedFilesBufferCount;
 
-    static QString text_dotslash;
-    static QString text_antislash;
-    static QString text_double_slash;
-    static QString text_slash;
-
-    static QRegularExpression fileNameStartStringRegex;
-    static QRegularExpression datapack_rightFileName;
-    static QSet<QString> compressedExtension;
+    static std::regex fileNameStartStringRegex;
+    static std::regex datapack_rightFileName;
 };
 }
 

@@ -10,7 +10,7 @@
 
 using namespace CatchChallenger;
 
-void ProtocolParsingBase::registerOutputQuery(const uint8_t &packetCode,const uint8_t &queryNumber)
+void ProtocolParsingBase::registerOutputQuery(const uint8_t &queryNumber)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(outputQueryNumberToPacketCode[queryNumber]!=0x00)
@@ -18,13 +18,7 @@ void ProtocolParsingBase::registerOutputQuery(const uint8_t &packetCode,const ui
         errorParsingLayer("Query with this query number already found");
         return;
     }
-    //if not in query type
-    if(packetCode<0x80)
-    {
-        errorParsingLayer("packetCode < 0x80, then can't be a query");
-        return;
-    }
-    //check if have forced size and if the forced size same as real at data sending
+    //if not in query type done into ProtocolParsingCheck
     #endif
     outputQueryNumberToPacketCode[queryNumber]=packetCode;
 }
