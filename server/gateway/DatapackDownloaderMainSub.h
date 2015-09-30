@@ -5,25 +5,21 @@
 #include "../../client/base/DatapackChecksum.h"
 
 #include <QObject>
-#include <QString>
+#include <string>
 #include <QCoreApplication>
 #include <QAbstractSocket>
-#include <QString>
+#include <string>
 #include <QByteArray>
-#include <QList>
-#include <QPair>
+#include <vector>
 #include <QDir>
-#include <QHash>
+#include <unordered_map>
 #include <QFileInfo>
 #include <QDateTime>
 #include <QCryptographicHash>
-#include <QNetworkAccessManager>
-#include <QNetworkProxy>
-#include <QRegularExpression>
+#include <regex>
 
 #include <curl/curl.h>
 
-#include "../../general/base/DebugClass.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../../client/base/qt-tar-xz/QXzDecodeThread.h"
 
@@ -31,14 +27,14 @@ namespace CatchChallenger {
 class DatapackDownloaderMainSub
 {
 public:
-    explicit DatapackDownloaderMainSub(const QString &mDatapackBase, const QString &mainDatapackCode, const QString &subDatapackCode);
+    explicit DatapackDownloaderMainSub(const std::string &mDatapackBase, const std::string &mainDatapackCode, const std::string &subDatapackCode);
     virtual ~DatapackDownloaderMainSub();
-    static QHash<QString,QHash<QString,DatapackDownloaderMainSub *> > datapackDownloaderMainSub;
+    static std::unordered_map<std::string,std::unordered_map<std::string,DatapackDownloaderMainSub *> > datapackDownloaderMainSub;
     std::vector<void *> clientInSuspend;
     void datapackDownloadError();
     void resetAll();
     void datapackFileList(const char * const data,const unsigned int &size);
-    void writeNewFileToRoute(const QString &fileName, const QByteArray &data);
+    void writeNewFileToRoute(const std::string &fileName, const QByteArray &data);
 
     //datapack related
     void sendDatapackContentMainSub();
@@ -54,23 +50,23 @@ public:
     bool mirrorTryNextSub();
     void httpFinishedForDatapackListMain(const QByteArray data=QByteArray());
     void httpFinishedForDatapackListSub(const QByteArray data=QByteArray());
-    const QStringList listDatapackMain(QString suffix);
-    const QStringList listDatapackSub(QString suffix);
-    void cleanDatapackMain(QString suffix);
-    void cleanDatapackSub(QString suffix);
+    const std::vector<std::string> listDatapackMain(std::string suffix);
+    const std::vector<std::string> listDatapackSub(std::string suffix);
+    void cleanDatapackMain(std::string suffix);
+    void cleanDatapackSub(std::string suffix);
 
-    const QString mDatapackBase;
-    const QString mDatapackMain;
-    QString mDatapackSub;
+    const std::string mDatapackBase;
+    const std::string mDatapackMain;
+    std::string mDatapackSub;
     QByteArray hashMain;
     QByteArray hashSub;
     QByteArray sendedHashMain;
     QByteArray sendedHashSub;
-    static QSet<QString> extensionAllowed;
-    static QString commandUpdateDatapackMain;
-    static QString commandUpdateDatapackSub;
+    static std::unordered_set<std::string> extensionAllowed;
+    static std::string commandUpdateDatapackMain;
+    static std::string commandUpdateDatapackSub;
 private:
-    static QRegularExpression regex_DATAPACK_FILE_REGEX;
+    static std::regex regex_DATAPACK_FILE_REGEX;
     /// \todo group into one thread by change for queue
     QXzDecodeThread xzDecodeThreadMain;
     QXzDecodeThread xzDecodeThreadSub;
@@ -79,7 +75,7 @@ private:
     CatchChallenger::DatapackChecksum datapackChecksum;
     int index_mirror_main;
     int index_mirror_sub;
-    static QRegularExpression excludePathMain;
+    static std::regex excludePathMain;
     enum DatapackStatus
     {
         Main=0x02,
@@ -89,30 +85,30 @@ private:
 
     bool wait_datapack_content_main;
     bool wait_datapack_content_sub;
-    QStringList datapackFilesListMain;
-    QStringList datapackFilesListSub;
-    QList<quint32> partialHashListMain;
-    QList<quint32> partialHashListSub;
-    static QString text_slash;
-    static QString text_dotcoma;
+    std::vector<std::string> datapackFilesListMain;
+    std::vector<std::string> datapackFilesListSub;
+    std::vector<quint32> partialHashListMain;
+    std::vector<quint32> partialHashListSub;
+    static std::string text_slash;
+    static std::string text_dotcoma;
     bool httpError;
     bool httpModeMain;
     bool httpModeSub;
-    const QString mainDatapackCode;
-    const QString subDatapackCode;
+    const std::string mainDatapackCode;
+    const std::string subDatapackCode;
     CURL *curl;
 private:
-    bool getHttpFileMain(const QString &url, const QString &fileName);
-    bool getHttpFileSub(const QString &url, const QString &fileName);
+    bool getHttpFileMain(const std::string &url, const std::string &fileName);
+    bool getHttpFileSub(const std::string &url, const std::string &fileName);
 private slots:
-    void writeNewFileMain(const QString &fileName, const QByteArray &data);
-    void writeNewFileSub(const QString &fileName, const QByteArray &data);
+    void writeNewFileMain(const std::string &fileName, const QByteArray &data);
+    void writeNewFileSub(const std::string &fileName, const QByteArray &data);
     void checkIfContinueOrFinished();
     void haveTheDatapackMainSub();
     void datapackDownloadFinishedMain();
     void datapackDownloadFinishedSub();
-    void datapackChecksumDoneMain(const QStringList &datapackFilesList,const QByteArray &hash, const QList<quint32> &partialHash);
-    void datapackChecksumDoneSub(const QStringList &datapackFilesList,const QByteArray &hash, const QList<quint32> &partialHash);
+    void datapackChecksumDoneMain(const std::vector<std::string> &datapackFilesList,const QByteArray &hash, const std::vector<quint32> &partialHash);
+    void datapackChecksumDoneSub(const std::vector<std::string> &datapackFilesList,const QByteArray &hash, const std::vector<quint32> &partialHash);
 };
 }
 

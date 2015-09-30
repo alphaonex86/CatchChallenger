@@ -383,9 +383,9 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         removeFromQueryReceived(askLoginParam->query_id);
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-        posOutput=+1;
+        posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=askLoginParam->query_id;
-        posOutput=+1+4;
+        posOutput+=1+4;
         *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
@@ -901,9 +901,9 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
         removeFromQueryReceived(query_id);
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-        posOutput=+1;
+        posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
-        posOutput=+1+4;
+        posOutput+=1+4;
         *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
@@ -979,9 +979,9 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
         removeFromQueryReceived(query_id);
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-        posOutput=+1;
+        posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
-        posOutput=+1+4;
+        posOutput+=1+4;
         *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
@@ -1048,9 +1048,9 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
         removeFromQueryReceived(query_id);
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-        posOutput=+1;
+        posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
-        posOutput=+1+4;
+        posOutput+=1+4;
         *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
@@ -1084,9 +1084,9 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
                 removeFromQueryReceived(query_id);
                 uint32_t posOutput=0;
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-                posOutput=+1;
+                posOutput+=1;
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
-                posOutput=+1+4;
+                posOutput+=1+4;
                 *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
 
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
@@ -1198,9 +1198,9 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     removeFromQueryReceived(query_id);
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-    posOutput=+1;
+    posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
-    posOutput=+1+4;
+    posOutput+=1+4;
     *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
@@ -1240,9 +1240,9 @@ void Client::removeCharacterLater(const uint8_t &query_id, const uint32_t &chara
         removeFromQueryReceived(query_id);
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-        posOutput=+1;
+        posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
-        posOutput=+1;
+        posOutput+=1;
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
         posOutput+=1;
@@ -1336,9 +1336,9 @@ void Client::removeCharacterLater_return(const uint8_t &query_id,const uint32_t 
     removeFromQueryReceived(query_id);
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-    posOutput=+1;
+    posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
-    posOutput=+1;
+    posOutput+=1;
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
     posOutput+=1;
@@ -1353,6 +1353,56 @@ void Client::loadLinkedData()
     loadPlayerAllow();
 }
 
+std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_list(const std::string &path,const bool withHash)
+{
+    std::unordered_map<std::string,DatapackCacheFile> filesList;
+
+    const std::vector<std::string> &returnList=FacilityLibGeneral::listFolder(path);
+    int index=0;
+    const int &size=returnList.size();
+    while(index<size)
+    {
+        #ifdef Q_OS_WIN32
+        std::string fileName=returnList.at(index);
+        #else
+        const std::string &fileName=returnList.at(index);
+        #endif
+        if(std::regex_match(fileName,GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+        {
+            QFileInfo fileInfo(QString::fromStdString(fileName));
+            if(!fileInfo.suffix().toStdString().empty() &&
+                    BaseServerMasterSendDatapack::extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())
+                    !=BaseServerMasterSendDatapack::extensionAllowed.cend())
+            {
+                QFile file(QString::fromStdString(path+returnList.at(index)));
+                if(file.size()<=8*1024*1024)
+                {
+                    if(file.open(QIODevice::ReadOnly))
+                    {
+                        DatapackCacheFile datapackCacheFile;
+                        #ifdef Q_OS_WIN32
+                        fileName.replace(Client::text_antislash,Client::text_slash);//remplace if is under windows server
+                        #endif
+                        if(withHash)
+                        {
+                            QCryptographicHash hashFile(QCryptographicHash::Sha224);
+                            hashFile.addData(file.readAll());
+                            datapackCacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
+                        }
+                        else
+                            datapackCacheFile.partialHash=0;
+                        filesList[fileName]=datapackCacheFile;
+                        file.close();
+                    }
+                }
+            }
+        }
+        index++;
+    }
+    return filesList;
+}
+
+#ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
 std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file_list_cached_base()
 {
     if(GlobalServerData::serverSettings.datapackCache==-1)
@@ -1426,55 +1476,6 @@ std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file
         }
         return Client::datapack_file_hash_cache_sub;
     }
-}
-
-std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_list(const std::string &path,const bool withHash)
-{
-    std::unordered_map<std::string,DatapackCacheFile> filesList;
-
-    const std::vector<std::string> &returnList=FacilityLibGeneral::listFolder(path);
-    int index=0;
-    const int &size=returnList.size();
-    while(index<size)
-    {
-        #ifdef Q_OS_WIN32
-        std::string fileName=returnList.at(index);
-        #else
-        const std::string &fileName=returnList.at(index);
-        #endif
-        if(std::regex_match(fileName,GlobalServerData::serverPrivateVariables.datapack_rightFileName))
-        {
-            QFileInfo fileInfo(QString::fromStdString(fileName));
-            if(!fileInfo.suffix().toStdString().empty() &&
-                    BaseServerMasterSendDatapack::extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())
-                    !=BaseServerMasterSendDatapack::extensionAllowed.cend())
-            {
-                QFile file(QString::fromStdString(path+returnList.at(index)));
-                if(file.size()<=8*1024*1024)
-                {
-                    if(file.open(QIODevice::ReadOnly))
-                    {
-                        DatapackCacheFile datapackCacheFile;
-                        #ifdef Q_OS_WIN32
-                        fileName.replace(Client::text_antislash,Client::text_slash);//remplace if is under windows server
-                        #endif
-                        if(withHash)
-                        {
-                            QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                            hashFile.addData(file.readAll());
-                            datapackCacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
-                        }
-                        else
-                            datapackCacheFile.partialHash=0;
-                        filesList[fileName]=datapackCacheFile;
-                        file.close();
-                    }
-                }
-            }
-        }
-        index++;
-    }
-    return filesList;
 }
 
 //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
@@ -1590,7 +1591,7 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
             //send the network message
             uint32_t posOutput=0;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x75;
-            posOutput=+1;
+            posOutput+=1;
 
             *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(datapckFileNumber);
             posOutput+=4;
@@ -1640,44 +1641,6 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
         default:
         return;
     }
-}
-
-bool CatchChallenger::operator<(const CatchChallenger::FileToSend &fileToSend1,const CatchChallenger::FileToSend &fileToSend2)
-{
-    if(fileToSend1.file<fileToSend2.file)
-        return false;
-    return true;
-}
-
-bool CatchChallenger::operator!=(const CatchChallenger::PlayerMonster &monster1,const CatchChallenger::PlayerMonster &monster2)
-{
-    if(monster1.remaining_xp!=monster2.remaining_xp)
-        return true;
-    if(monster1.sp!=monster2.sp)
-        return true;
-    if(monster1.egg_step!=monster2.egg_step)
-        return true;
-    if(monster1.id!=monster2.id)
-        return true;
-/* transfer in 0.6 and check it
-    if(monster1.character_origin!=monster2.character_origin)
-        return true;*/
-    if(monster1.skills.size()!=monster2.skills.size())
-        return true;
-    unsigned int index=0;
-    while(index<monster1.skills.size())
-    {
-        const PlayerMonster::PlayerSkill &skill1=monster1.skills.at(index);
-        const PlayerMonster::PlayerSkill &skill2=monster2.skills.at(index);
-        if(skill1.endurance!=skill2.endurance)
-            return true;
-        if(skill1.level!=skill2.level)
-            return true;
-        if(skill1.skill!=skill2.skill)
-            return true;
-        index++;
-    }
-    return false;
 }
 
 void Client::addDatapackListReply(const bool &fileRemove)
@@ -1761,9 +1724,9 @@ void Client::purgeDatapackListReply(const uint8_t &query_id)
         removeFromQueryReceived(query_id);
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-        posOutput=+1;
+        posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
-        posOutput=+1+4;
+        posOutput+=1+4;
         *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(tempDatapackListReplyArray.size());//set the dynamic size
 
         if(tempDatapackListReplyArray.size()>64*1024)
@@ -1786,7 +1749,7 @@ void Client::sendFileContent()
         //send the network message
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x76;
-        posOutput=+1+4;
+        posOutput+=1+4;
         *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+BaseServerMasterSendDatapack::rawFilesBuffer.size());//set the dynamic size
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=BaseServerMasterSendDatapack::rawFilesBufferCount;
@@ -1813,7 +1776,7 @@ void Client::sendCompressedFileContent()
         //send the network message
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x77;
-        posOutput=+1+4;
+        posOutput+=1+4;
         *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+BaseServerMasterSendDatapack::rawFilesBuffer.size());//set the dynamic size
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=BaseServerMasterSendDatapack::rawFilesBufferCount;
@@ -1902,7 +1865,7 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
                 //send the network message
                 uint32_t posOutput=0;
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x76;
-                posOutput=+1+4;
+                posOutput+=1+4;
                 *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+BaseServerMasterSendDatapack::rawFilesBuffer.size());//set the dynamic size
 
                 //number of file
@@ -1952,6 +1915,45 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
         errorOutput("Unable to open into CatchChallenger::sendFile(): "+file.errorString().toStdString());
         return false;
     }
+}
+#endif
+
+bool CatchChallenger::operator<(const CatchChallenger::FileToSend &fileToSend1,const CatchChallenger::FileToSend &fileToSend2)
+{
+    if(fileToSend1.file<fileToSend2.file)
+        return false;
+    return true;
+}
+
+bool CatchChallenger::operator!=(const CatchChallenger::PlayerMonster &monster1,const CatchChallenger::PlayerMonster &monster2)
+{
+    if(monster1.remaining_xp!=monster2.remaining_xp)
+        return true;
+    if(monster1.sp!=monster2.sp)
+        return true;
+    if(monster1.egg_step!=monster2.egg_step)
+        return true;
+    if(monster1.id!=monster2.id)
+        return true;
+/* transfer in 0.6 and check it
+    if(monster1.character_origin!=monster2.character_origin)
+        return true;*/
+    if(monster1.skills.size()!=monster2.skills.size())
+        return true;
+    unsigned int index=0;
+    while(index<monster1.skills.size())
+    {
+        const PlayerMonster::PlayerSkill &skill1=monster1.skills.at(index);
+        const PlayerMonster::PlayerSkill &skill2=monster2.skills.at(index);
+        if(skill1.endurance!=skill2.endurance)
+            return true;
+        if(skill1.level!=skill2.level)
+            return true;
+        if(skill1.skill!=skill2.skill)
+            return true;
+        index++;
+    }
+    return false;
 }
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

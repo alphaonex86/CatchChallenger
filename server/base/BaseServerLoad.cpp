@@ -83,7 +83,7 @@ void BaseServer::preload_other()
             uint32_t posOutput=Client::protocolMessageLogicalGroupAndServerListSize;
             //send the network message
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x40;
-            posOutput=+1+4;
+            posOutput+=1+4;
 
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;//Server mode, unique then proxy
             posOutput+=1;
@@ -134,7 +134,7 @@ void BaseServer::preload_other()
         //send the network reply
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-        posOutput=+1+1+4;
+        posOutput+=1+1+4;
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=01;//all is good
         posOutput+=1;
@@ -189,7 +189,7 @@ void BaseServer::preload_other()
     {
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-        posOutput=+1+1+4;
+        posOutput+=1+1+4;
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;// all is good
         posOutput+=1;
@@ -1465,6 +1465,14 @@ void BaseServer::preload_the_datapack()
             CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
         }
     }
+
+    #ifdef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+    if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty() || CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.empty())
+    {
+        std::cerr << "CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR, only send datapack by mirror is supported" << std::endl;
+        abort();
+    }
+    #endif
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     //do the base

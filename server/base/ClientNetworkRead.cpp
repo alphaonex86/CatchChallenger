@@ -119,7 +119,7 @@ void Client::sendNewEvent(char * const data, const uint32_t &size)
 
     //send the network reply
     data[0x01]=queryNumberList.back();
-    registerOutputQuery(0xE2,queryNumberList.back());
+    registerOutputQuery(queryNumberList.back());
 
     sendRawBlock(data,size);
 
@@ -173,7 +173,7 @@ void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*CO
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,7);
     }
 
-    registerOutputQuery(0xE1,queryNumberList.back());
+    registerOutputQuery(queryNumberList.back());
     queryNumberList.pop_back();
 }
 
@@ -185,7 +185,7 @@ void Client::sendTradeRequest(char * const data,const uint32_t &size)
         return;
     }
     data[1]=queryNumberList.back();
-    registerOutputQuery(0xE0,queryNumberList.back());
+    registerOutputQuery(queryNumberList.back());
     sendRawBlock(data,size);
     queryNumberList.pop_back();
 }
@@ -198,7 +198,7 @@ void Client::sendBattleRequest(char * const data, const uint32_t &size)
         return;
     }
     data[1]=queryNumberList.back();
-    registerOutputQuery(0xDF,queryNumberList.back());
+    registerOutputQuery(queryNumberList.back());
     sendRawBlock(data,size);
     queryNumberList.pop_back();
 }
@@ -1711,6 +1711,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         //Send datapack file list
         case 0xA1:
         {
+            #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
             switch(datapackStatus)
             {
                 case DatapackStatus::Base:
@@ -1875,6 +1876,11 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 return false;
             }
             return true;
+        }
+        #else
+        errorOutput("CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR");
+        return false;
+        #endif
         }
         break;
         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

@@ -5,25 +5,19 @@
 #include "../../client/base/DatapackChecksum.h"
 
 #include <QObject>
-#include <QString>
+#include <string>
 #include <QCoreApplication>
-#include <QAbstractSocket>
-#include <QString>
 #include <QByteArray>
-#include <QList>
-#include <QPair>
+#include <vector>
 #include <QDir>
-#include <QHash>
+#include <unordered_map>
 #include <QFileInfo>
 #include <QDateTime>
 #include <QCryptographicHash>
-#include <QNetworkAccessManager>
-#include <QNetworkProxy>
-#include <QRegularExpression>
+#include <regex>
 
 #include <curl/curl.h>
 
-#include "../../general/base/DebugClass.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../../client/base/qt-tar-xz/QXzDecodeThread.h"
 
@@ -31,14 +25,14 @@ namespace CatchChallenger {
 class DatapackDownloaderBase
 {
 public:
-    explicit DatapackDownloaderBase(const QString &mDatapackBase);
+    explicit DatapackDownloaderBase(const std::string &mDatapackBase);
     virtual ~DatapackDownloaderBase();
     static DatapackDownloaderBase *datapackDownloaderBase;
     std::vector<void *> clientInSuspend;
     void datapackDownloadError();
     void resetAll();
     void datapackFileList(const char * const data,const unsigned int &size);
-    void writeNewFileBase(const QString &fileName, const QByteArray &data);
+    void writeNewFileBase(const std::string &fileName, const QByteArray &data);
 
     //datapack related
     void sendDatapackContentBase();
@@ -46,47 +40,46 @@ public:
     void decodedIsFinishBase();
     bool mirrorTryNextBase();
     void httpFinishedForDatapackListBase(const QByteArray data=QByteArray());
-    const QStringList listDatapackBase(QString suffix);
-    void cleanDatapackBase(QString suffix);
+    const std::vector<std::string> listDatapackBase(std::string suffix);
+    void cleanDatapackBase(std::string suffix);
 
     QByteArray hashBase;
     QByteArray sendedHashBase;
-    static QSet<QString> extensionAllowed;
-    static QString commandUpdateDatapackBase;
+    static std::unordered_set<std::string> extensionAllowed;
+    static std::string commandUpdateDatapackBase;
 private:
-    static QRegularExpression regex_DATAPACK_FILE_REGEX;
+    static std::regex regex_DATAPACK_FILE_REGEX;
     /// \todo group into one thread by change for queue
     QXzDecodeThread xzDecodeThreadBase;
     bool datapackTarXzBase;
     CatchChallenger::DatapackChecksum datapackChecksum;
     int index_mirror_base;
-    static QRegularExpression excludePathBase;
+    static std::regex excludePathBase;
     //file list
     struct query_files
     {
         quint8 id;
-        QStringList filesName;
+        std::vector<std::string> filesName;
     };
-    QList<query_files> query_files_list_base;
+    std::vector<query_files> query_files_list_base;
     bool wait_datapack_content_base;
-    QStringList datapackFilesListBase;
-    QList<quint32> partialHashListBase;
-    static QString text_slash;
-    static QString text_dotcoma;
+    std::vector<std::string> datapackFilesListBase;
+    std::vector<quint32> partialHashListBase;
+    static std::string text_slash;
+    static std::string text_dotcoma;
     bool httpError;
     bool httpModeBase;
-    const QString mDatapackBase;
+    const std::string mDatapackBase;
     struct UrlInWaiting
     {
-        QString fileName;
+        std::string fileName;
     };
-    QHash<QNetworkReply *,UrlInWaiting> urlInWaitingListBase;
     CURL *curl;
 private:
-    bool getHttpFileBase(const QString &url, const QString &fileName);
+    bool getHttpFileBase(const std::string &url, const std::string &fileName);
 private slots:
     void datapackDownloadFinishedBase();
-    void datapackChecksumDoneBase(const QStringList &datapackFilesList,const QByteArray &hash, const QList<quint32> &partialHash);
+    void datapackChecksumDoneBase(const std::vector<std::string> &datapackFilesList,const QByteArray &hash, const std::vector<quint32> &partialHash);
     void haveTheDatapack();
 };
 }

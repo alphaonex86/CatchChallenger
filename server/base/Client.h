@@ -381,9 +381,10 @@ private:
     void deleteCharacterNow_object();
     void deleteCharacterNow_return(const uint32_t &characterId);
     #endif
+    static std::unordered_map<std::string,DatapackCacheFile> datapack_file_list(const std::string &path,const bool withHash=true);//used into BaseServer to do the hash
+    #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
     void datapackList(const uint8_t &query_id, const std::vector<std::string > &files, const std::vector<uint32_t> &partialHashList);
-    static std::unordered_map<std::string,DatapackCacheFile> datapack_file_list(const std::string &path,const bool withHash=true);
     std::unordered_map<std::string,Client::DatapackCacheFile> datapack_file_list_cached_base();
     std::unordered_map<std::string,Client::DatapackCacheFile> datapack_file_list_cached_main();
     std::unordered_map<std::string,Client::DatapackCacheFile> datapack_file_list_cached_sub();
@@ -391,6 +392,7 @@ private:
     void purgeDatapackListReply(const uint8_t &query_id);
     void sendFileContent();
     void sendCompressedFileContent();
+    #endif
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     void dbQueryWriteLogin(const std::string &queryText);
     #endif
