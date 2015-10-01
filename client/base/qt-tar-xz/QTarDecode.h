@@ -7,29 +7,27 @@
 #define QTARDECODE_H
 
 #include <QObject>
-#include <QList>
-#include <QByteArray>
-#include <QString>
-#include <QStringList>
+#include <vector>
+#include <string>
 
 /// \brief read the raw tar data, and organize it into data structure
 class QTarDecode : public QObject
 {
-	public:
-		QTarDecode();
-		/// \brief to get the file list
-		QStringList getFileList();
-		/// \brief to get the data of the file
-		QList<QByteArray> getDataList();
-		/// \brief to pass the raw tar data
-		bool decodeData(QByteArray data);
-		/// \brief to return error string
-		QString errorString();
-	private:
-		QStringList fileList;
-		QList<QByteArray> dataList;
-		QString error;
-		void setErrorString(QString error);
+    public:
+        QTarDecode();
+        /// \brief to get the file list
+        std::vector<std::string> getFileList();
+        /// \brief to get the data of the file
+        std::vector<std::vector<char> > getDataList();
+        /// \brief to pass the raw tar data
+        bool decodeData(const std::vector<char> &data);
+        /// \brief to return error string
+        std::string errorString();
+    private:
+        std::vector<std::string> fileList;
+        std::vector<std::vector<char> > dataList;
+        std::string error;
+        void setErrorString(QString error);
 };
 
 #endif // QTARDECODE_H

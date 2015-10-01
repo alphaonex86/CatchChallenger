@@ -24,6 +24,7 @@ std::unordered_set<std::string> DatapackDownloaderMainSub::extensionAllowed;
 std::regex DatapackDownloaderMainSub::excludePathMain("^sub[/\\\\]");
 std::string DatapackDownloaderMainSub::commandUpdateDatapackMain;
 std::string DatapackDownloaderMainSub::commandUpdateDatapackSub;
+std::vector<std::string> DatapackDownloaderMainSub::httpDatapackMirrorServerList;
 
 std::unordered_map<std::string,std::unordered_map<std::string,DatapackDownloaderMainSub *> > DatapackDownloaderMainSub::datapackDownloaderMainSub;
 
@@ -41,7 +42,7 @@ DatapackDownloaderMainSub::DatapackDownloaderMainSub(const std::string &mDatapac
     index_mirror_sub=0;
     wait_datapack_content_main=false;
     wait_datapack_content_sub=false;
-    if(!subDatapackCode.isEmpty())
+    if(!subDatapackCode.empty())
         mDatapackSub=mDatapackBase+"map/main/"+mainDatapackCode+"/sub/"+subDatapackCode+"/";
 }
 
@@ -83,25 +84,26 @@ void DatapackDownloaderMainSub::datapackFileList(const char * const data,const u
     {
         case DatapackStatus::Main:
         {
-            if(datapackFilesListMain.isEmpty() && size==1)
+            if(datapackFilesListMain.empty() && size==1)
             {
                 if(!httpModeMain)
                     checkIfContinueOrFinished();
                 return;
             }
             unsigned int pos=0;
-            QList<bool> boolList;
+            std::vector<bool> boolList;
+            boolList.reserve(size*8);
             while((size-pos)>0)
             {
                 const uint8_t &returnCode=data[pos];
-                boolList.append(returnCode&0x01);
-                boolList.append(returnCode&0x02);
-                boolList.append(returnCode&0x04);
-                boolList.append(returnCode&0x08);
-                boolList.append(returnCode&0x10);
-                boolList.append(returnCode&0x20);
-                boolList.append(returnCode&0x40);
-                boolList.append(returnCode&0x80);
+                boolList.push_back(returnCode&0x01);
+                boolList.push_back(returnCode&0x02);
+                boolList.push_back(returnCode&0x04);
+                boolList.push_back(returnCode&0x08);
+                boolList.push_back(returnCode&0x10);
+                boolList.push_back(returnCode&0x20);
+                boolList.push_back(returnCode&0x40);
+                boolList.push_back(returnCode&0x80);
                 pos++;
             }
             if(boolList.size()<datapackFilesListMain.size())
@@ -112,7 +114,7 @@ void DatapackDownloaderMainSub::datapackFileList(const char * const data,const u
             int index=0;
             while(index<datapackFilesListMain.size())
             {
-                if(boolList.first())
+                if(boolList.at(index))
                 {
                     DebugClass::debugConsole(std::stringLiteral("remove the file: %1").arg(mDatapackMain+text_slash+datapackFilesListMain.at(index)));
                     QFile file(mDatapackMain+text_slash+datapackFilesListMain.at(index));
@@ -120,9 +122,9 @@ void DatapackDownloaderMainSub::datapackFileList(const char * const data,const u
                         DebugClass::debugConsole(std::stringLiteral("unable to remove the file: %1: %2").arg(datapackFilesListMain.at(index)).arg(file.errorString()));
                     //removeFile(datapackFilesListMain.at(index));
                 }
-                boolList.removeFirst();
                 index++;
             }
+            boolList.clear();
             datapackFilesListMain.clear();
             cleanDatapackMain(std::string());
             if(boolList.size()>=8)
@@ -137,25 +139,26 @@ void DatapackDownloaderMainSub::datapackFileList(const char * const data,const u
         break;
         case DatapackStatus::Sub:
         {
-            if(datapackFilesListSub.isEmpty() && size==1)
+            if(datapackFilesListSub.empty() && size==1)
             {
                 if(!httpModeSub)
                     datapackDownloadFinishedSub();
                 return;
             }
             unsigned int pos=0;
-            QList<bool> boolList;
+            std::vector<bool> boolList;
+            boolList.reserve(size*8);
             while((size-pos)>0)
             {
                 const uint8_t &returnCode=data[pos];
-                boolList.append(returnCode&0x01);
-                boolList.append(returnCode&0x02);
-                boolList.append(returnCode&0x04);
-                boolList.append(returnCode&0x08);
-                boolList.append(returnCode&0x10);
-                boolList.append(returnCode&0x20);
-                boolList.append(returnCode&0x40);
-                boolList.append(returnCode&0x80);
+                boolList.push_back(returnCode&0x01);
+                boolList.push_back(returnCode&0x02);
+                boolList.push_back(returnCode&0x04);
+                boolList.push_back(returnCode&0x08);
+                boolList.push_back(returnCode&0x10);
+                boolList.push_back(returnCode&0x20);
+                boolList.push_back(returnCode&0x40);
+                boolList.push_back(returnCode&0x80);
                 pos++;
             }
             if(boolList.size()<datapackFilesListSub.size())
@@ -166,7 +169,7 @@ void DatapackDownloaderMainSub::datapackFileList(const char * const data,const u
             int index=0;
             while(index<datapackFilesListSub.size())
             {
-                if(boolList.first())
+                if(boolList.at(index))
                 {
                     DebugClass::debugConsole(std::stringLiteral("remove the file: %1").arg(mDatapackSub+text_slash+datapackFilesListSub.at(index)));
                     QFile file(mDatapackSub+text_slash+datapackFilesListSub.at(index));
@@ -174,9 +177,9 @@ void DatapackDownloaderMainSub::datapackFileList(const char * const data,const u
                         DebugClass::debugConsole(std::stringLiteral("unable to remove the file: %1: %2").arg(datapackFilesListSub.at(index)).arg(file.errorString()));
                     //removeFile(datapackFilesListSub.at(index));
                 }
-                boolList.removeFirst();
                 index++;
             }
+            boolList.clear();
             datapackFilesListSub.clear();
             cleanDatapackSub(std::string());
             if(boolList.size()>=8)
@@ -209,7 +212,7 @@ void DatapackDownloaderMainSub::sendDatapackContentMainSub()
 
 void DatapackDownloaderMainSub::haveTheDatapackMainSub()
 {
-    if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.isEmpty())
+    if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
     {
         if(curl!=NULL)
         {
@@ -237,12 +240,12 @@ void DatapackDownloaderMainSub::haveTheDatapackMainSub()
 
     resetAll();
 
-    if(!DatapackDownloaderMainSub::commandUpdateDatapackMain.isEmpty())
+    if(!DatapackDownloaderMainSub::commandUpdateDatapackMain.empty())
     {
         if(QProcess::execute(DatapackDownloaderMainSub::commandUpdateDatapackMain,std::vector<std::string>() << mDatapackMain)<0)
             qDebug() << "Unable to execute " << DatapackDownloaderMainSub::commandUpdateDatapackMain << " " << mDatapackMain;
     }
-    if(!DatapackDownloaderMainSub::commandUpdateDatapackSub.isEmpty() && !mDatapackSub.isEmpty())
+    if(!DatapackDownloaderMainSub::commandUpdateDatapackSub.empty() && !mDatapackSub.empty())
     {
         if(QProcess::execute(DatapackDownloaderMainSub::commandUpdateDatapackSub,std::vector<std::string>() << mDatapackSub)<0)
             qDebug() << "Unable to execute " << DatapackDownloaderMainSub::commandUpdateDatapackSub << " " << mDatapackSub;

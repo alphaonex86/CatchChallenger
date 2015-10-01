@@ -24,11 +24,11 @@ class QXzDecodeThread
         /// \brief to return if the error have been found
         bool errorFound();
         /// \brief to return the error string
-        QString errorString();
+        std::string errorString();
         /// \brief to get the decoded data
-        QByteArray decodedData();
+        std::vector<char> decodedData();
         /// \brief to send the data
-        void setData(QByteArray data,uint64_t maxSize=0);
+        void setData(std::vector<char>,uint64_t maxSize=0);
     #ifndef QT_NO_EMIT
     protected:
         void run();
