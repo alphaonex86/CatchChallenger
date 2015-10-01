@@ -116,7 +116,7 @@ void EpollClientLoginMaster::parseIncommingData()
     ProtocolParsingInputOutput::parseIncommingData();
 }
 
-void EpollClientLoginMaster::selectCharacter(const quint8 &query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId,const quint32 &accountId)
+void EpollClientLoginMaster::selectCharacter(const uint8_t &query_id,const uint32_t &serverUniqueKey,const uint8_t &charactersGroupIndex,const uint32_t &characterId,const uint32_t &accountId)
 {
     if(charactersGroupIndex>=CharactersGroup::list.size())
     {
@@ -164,7 +164,7 @@ void EpollClientLoginMaster::selectCharacter(const quint8 &query_id,const quint3
     gameServer->charactersGroupForGameServerInformation->lockedAccount << characterId;
 }
 
-bool EpollClientLoginMaster::trySelectCharacterGameServer(EpollClientLoginMaster * const loginServer,const quint8 &client_query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId, const quint32 &accountId)
+bool EpollClientLoginMaster::trySelectCharacterGameServer(EpollClientLoginMaster * const loginServer,const uint8_t &client_query_id,const uint32_t &serverUniqueKey,const uint8_t &charactersGroupIndex,const uint32_t &characterId, const uint32_t &accountId)
 {
     //here you are on game server link
 
@@ -188,22 +188,22 @@ bool EpollClientLoginMaster::trySelectCharacterGameServer(EpollClientLoginMaster
     dataForSelectedCharacterReturn.characterId=characterId;
     loginServerReturnForCharaterSelect << dataForSelectedCharacterReturn;
     //the data
-    const quint8 &queryNumber=queryNumberList.back();
+    const uint8_t &queryNumber=queryNumberList.back();
     waitedReply_mainCodeType[queryNumber]=0x81;
     waitedReply_subCodeType[queryNumber]=0x01;
     EpollClientLoginMaster::getTokenForCharacterSelect[0x02]=queryNumber;
-    *reinterpret_cast<quint32 *>(EpollClientLoginMaster::getTokenForCharacterSelect+0x03)=htole32(characterId);
-    *reinterpret_cast<quint32 *>(EpollClientLoginMaster::getTokenForCharacterSelect+0x07)=htole32(accountId);
+    *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::getTokenForCharacterSelect+0x03)=htole32(characterId);
+    *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::getTokenForCharacterSelect+0x07)=htole32(accountId);
     queryNumberList.pop_back();
     return internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::getTokenForCharacterSelect),sizeof(EpollClientLoginMaster::getTokenForCharacterSelect));
 }
 
-void EpollClientLoginMaster::selectCharacter_ReturnToken(const quint8 &query_id,const char * const token)
+void EpollClientLoginMaster::selectCharacter_ReturnToken(const uint8_t &query_id,const char * const token)
 {
     postReplyData(query_id,token,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
 }
 
-void EpollClientLoginMaster::selectCharacter_ReturnFailed(const quint8 &query_id,const quint8 &errorCode)
+void EpollClientLoginMaster::selectCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode)
 {
     //you are on login server
     postReplyData(query_id,reinterpret_cast<const char * const>(&errorCode),1);
@@ -238,7 +238,7 @@ void EpollClientLoginMaster::sendCurrentPlayer()
         while(index<EpollClientLoginMaster::gameServers.size())
         {
             EpollClientLoginMaster * const gameServer=EpollClientLoginMaster::gameServers.at(index);
-            *reinterpret_cast<quint16 *>(EpollClientLoginMaster::tempBuffer2+index*2)=htole16(gameServer->charactersGroupForGameServerInformation->currentPlayer);
+            *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::tempBuffer2+index*2)=htole16(gameServer->charactersGroupForGameServerInformation->currentPlayer);
             index++;
         }
         size=computeFullOutcommingData(
@@ -261,8 +261,8 @@ void EpollClientLoginMaster::sendCurrentPlayer()
     }
 }
 
-void EpollClientLoginMaster::disconnectForDuplicateConnexionDetected(const quint32 &characterId)
+void EpollClientLoginMaster::disconnectForDuplicateConnexionDetected(const uint32_t &characterId)
 {
-    *reinterpret_cast<quint32 *>(EpollClientLoginMaster::duplicateConnexionDetected+0x02)=htole32(characterId);
+    *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::duplicateConnexionDetected+0x02)=htole32(characterId);
     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::duplicateConnexionDetected),sizeof(EpollClientLoginMaster::duplicateConnexionDetected));
 }

@@ -20,12 +20,12 @@ public:
     void disconnectFromHost();
     void disconnectFromFakeServer();
     void connectToHost();
-    qint64	bytesAvailable() const;
+    int64_t	bytesAvailable() const;
     void	close();
     bool isValid();
     QFakeSocket * getTheOtherSocket();
-    quint64 getRXSize();
-    quint64 getTXSize();
+    uint64_t getRXSize();
+    uint64_t getTXSize();
     QAbstractSocket::SocketError error() const;
     QAbstractSocket::SocketState state() const;
     bool isValid() const;
@@ -39,14 +39,14 @@ protected:
     QFakeSocket *theOtherSocket;
     virtual bool isSequential() const;
     virtual bool canReadLine() const;
-    virtual qint64	readData(char * data, qint64 maxSize);
-    virtual qint64	writeData(const char * data, qint64 maxSize);
+    virtual int64_t	readData(char * data, int64_t maxSize);
+    virtual int64_t	writeData(const char * data, int64_t maxSize);
 private:
     QByteArray data;
     QMutex mutex;
     void internal_writeData(QByteArray rawData);
-    quint64 RX_size;
-    qint64	bytesAvailableWithMutex();
+    uint64_t RX_size;
+    int64_t	bytesAvailableWithMutex();
 };
 }
 

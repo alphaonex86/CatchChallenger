@@ -26,12 +26,12 @@ using namespace CatchChallenger;
 #endif
 
 //have query with reply
-void Api_protocol::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+void Api_protocol::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     parseQuery(mainCodeType,queryNumber,QByteArray(data,size));
 }
 
-void Api_protocol::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
+void Api_protocol::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const QByteArray &data)
 {
     Q_UNUSED(mainCodeType);
     Q_UNUSED(queryNumber);
@@ -39,12 +39,12 @@ void Api_protocol::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumb
     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("have not query of this type, mainCodeType: %1, queryNumber: %2").arg(mainCodeType).arg(queryNumber));
 }
 
-void Api_protocol::parseFullQuery(const quint8 &mainCodeType, const quint8 &subCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size)
+void Api_protocol::parseFullQuery(const uint8_t &mainCodeType, const uint8_t &subCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
 {
     parseFullQuery(mainCodeType,subCodeType,queryNumber,QByteArray(data,size));
 }
 
-void Api_protocol::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
+void Api_protocol::parseFullQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const QByteArray &data)
 {
     if(!is_logged)
     {
@@ -62,48 +62,48 @@ void Api_protocol::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCo
                 //Teleport the player
                 case 0x01:
                 {
-                    quint32 mapId;
+                    uint32_t mapId;
                     if(number_of_map<=255)
                     {
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                         {
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                             return;
                         }
-                        quint8 mapTempId;
+                        uint8_t mapTempId;
                         in >> mapTempId;
                         mapId=mapTempId;
                     }
                     else if(number_of_map<=65535)
                     {
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
                         {
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                             return;
                         }
-                        quint16 mapTempId;
+                        uint16_t mapTempId;
                         in >> mapTempId;
                         mapId=mapTempId;
                     }
                     else
                     {
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
                         {
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                             return;
                         }
                         in >> mapId;
                     }
-                    quint8 x,y;
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8)*2)
+                    uint8_t x,y;
+                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t)*2)
                     {
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                         return;
                     }
                     in >> x;
                     in >> y;
-                    quint8 directionInt;
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                    uint8_t directionInt;
+                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                     {
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                         return;
@@ -123,8 +123,8 @@ void Api_protocol::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCo
                 //Event change
                 case 0x02:
                 {
-                    quint8 event,event_value;
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8)*2)
+                    uint8_t event,event_value;
+                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t)*2)
                     {
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                         return;
@@ -158,7 +158,7 @@ void Api_protocol::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCo
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("Already on battle"));
                         return;
                     }
-                    quint8 pseudoSize;
+                    uint8_t pseudoSize;
                     in >> pseudoSize;
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pseudoSize)
                     {
@@ -185,8 +185,8 @@ void Api_protocol::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCo
                                       );
                         return;
                     }
-                    quint8 skinInt;
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                    uint8_t skinInt;
+                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                     {
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                         return;
@@ -219,7 +219,7 @@ void Api_protocol::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCo
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("Already on battle"));
                         return;
                     }
-                    quint8 pseudoSize;
+                    uint8_t pseudoSize;
                     in >> pseudoSize;
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pseudoSize)
                     {
@@ -246,8 +246,8 @@ void Api_protocol::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCo
                                       );
                         return;
                     }
-                    quint8 skinInt;
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                    uint8_t skinInt;
+                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                     {
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                         return;

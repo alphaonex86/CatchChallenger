@@ -22,7 +22,7 @@ QXzDecodeThread::~QXzDecodeThread()
         delete DataToDecode;
 }
 
-void QXzDecodeThread::setData(QByteArray data,quint64 maxSize)
+void QXzDecodeThread::setData(QByteArray data,uint64_t maxSize)
 {
     if(DataToDecode!=NULL)
         delete DataToDecode;

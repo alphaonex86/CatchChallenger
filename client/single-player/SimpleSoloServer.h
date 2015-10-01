@@ -36,7 +36,7 @@ private:
     Ui::SimpleSoloServer *ui;
     SoloWindow *solowindow;
     CatchChallenger::ConnectedSocket *socket;
-    quint64 timeLaunched;
+    uint64_t timeLaunched;
     QString launchedGamePath;
     bool haveLaunchedGame;
     CatchChallenger::InternalServer * internalServer;

@@ -50,9 +50,9 @@ EpollServer *server=NULL;
 QSettings *settings=NULL;
 
 std::string master_host;
-quint16 master_port;
-quint8 master_tryInterval;
-quint8 master_considerDownAfterNumberOfTry;
+uint16_t master_port;
+uint8_t master_tryInterval;
+uint8_t master_considerDownAfterNumberOfTry;
 
 void send_settings()
 {
@@ -693,7 +693,7 @@ int main(int argc, char *argv[])
     #endif
     {
         GlobalServerData::serverPrivateVariables.time_city_capture=FacilityLib::nextCaptureTime(GlobalServerData::serverSettings.city);
-        const qint64 &time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
+        const int64_t &time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
         timerCityCapture.setSingleShot(true);
         if(!timerCityCapture.start(time))
         {

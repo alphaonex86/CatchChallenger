@@ -386,7 +386,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=askLoginParam->query_id;
         posOutput+=1+4;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
         posOutput+=1;
@@ -455,7 +455,7 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
     uint32_t posOutput=0;
 
     {
-        const quint64 &current_time=QDateTime::currentDateTime().toTime_t();
+        const uint64_t &current_time=QDateTime::currentDateTime().toTime_t();
         std::vector<CharacterEntry> characterEntryList;
         bool ok;
         while(GlobalServerData::serverPrivateVariables.db_common->next() && characterEntryList.size()<CommonSettingsCommon::commonSettingsCommon.max_character)
@@ -630,7 +630,7 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
     int tempRawDataSizeToSetServerCount=posOutput;
     posOutput+=1;
 
-    const quint64 &current_time=QDateTime::currentDateTime().toTime_t();
+    const uint64_t &current_time=QDateTime::currentDateTime().toTime_t();
     bool ok;
     uint8_t validServerCount=0;
     if(GlobalServerData::serverPrivateVariables.db_common->next())
@@ -684,7 +684,7 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
     //send the network reply
     removeFromQueryReceived(query_id);
     ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
@@ -904,11 +904,11 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
         posOutput+=1+4;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
         posOutput+=1;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
         posOutput+=4;
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -982,11 +982,11 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
         posOutput+=1+4;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
         posOutput+=1;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
         posOutput+=4;
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -1051,11 +1051,11 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
         posOutput+=1+4;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
         posOutput+=1;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
         posOutput+=4;
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -1087,11 +1087,11 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
                 posOutput+=1;
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
                 posOutput+=1+4;
-                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
 
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
                 posOutput+=1;
-                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
                 posOutput+=4;
 
                 sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -1201,11 +1201,11 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
     posOutput+=1+4;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
     posOutput+=1;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(characterId);
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(characterId);
     posOutput+=4;
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -1418,7 +1418,7 @@ std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file
     }
     else
     {
-        const quint64 &currentTime=QDateTime::currentDateTime().toTime_t();
+        const uint64_t &currentTime=QDateTime::currentDateTime().toTime_t();
         if(Client::datapack_list_cache_timestamp_base<(currentTime-GlobalServerData::serverSettings.datapackCache))
         {
             Client::datapack_list_cache_timestamp_base=currentTime;
@@ -1443,7 +1443,7 @@ std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file
     }
     else
     {
-        const quint64 &currentTime=QDateTime::currentDateTime().toTime_t();
+        const uint64_t &currentTime=QDateTime::currentDateTime().toTime_t();
         if(Client::datapack_list_cache_timestamp_main<(currentTime-GlobalServerData::serverSettings.datapackCache))
         {
             Client::datapack_list_cache_timestamp_main=currentTime;
@@ -1468,7 +1468,7 @@ std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file
     }
     else
     {
-        const quint64 &currentTime=QDateTime::currentDateTime().toTime_t();
+        const uint64_t &currentTime=QDateTime::currentDateTime().toTime_t();
         if(Client::datapack_list_cache_timestamp_sub<(currentTime-GlobalServerData::serverSettings.datapackCache))
         {
             Client::datapack_list_cache_timestamp_sub=currentTime;
@@ -1593,9 +1593,9 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x75;
             posOutput+=1;
 
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(datapckFileNumber);
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(datapckFileNumber);
             posOutput+=4;
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(datapckFileSize);
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(datapckFileSize);
             posOutput+=4;
 
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -1727,7 +1727,7 @@ void Client::purgeDatapackListReply(const uint8_t &query_id)
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
         posOutput+=1+4;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(tempDatapackListReplyArray.size());//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(tempDatapackListReplyArray.size());//set the dynamic size
 
         if(tempDatapackListReplyArray.size()>64*1024)
         {
@@ -1750,7 +1750,7 @@ void Client::sendFileContent()
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x76;
         posOutput+=1+4;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+BaseServerMasterSendDatapack::rawFilesBuffer.size());//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+BaseServerMasterSendDatapack::rawFilesBuffer.size());//set the dynamic size
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=BaseServerMasterSendDatapack::rawFilesBufferCount;
         posOutput+=1;
@@ -1777,7 +1777,7 @@ void Client::sendCompressedFileContent()
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x77;
         posOutput+=1+4;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+BaseServerMasterSendDatapack::rawFilesBuffer.size());//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+BaseServerMasterSendDatapack::rawFilesBuffer.size());//set the dynamic size
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=BaseServerMasterSendDatapack::rawFilesBufferCount;
         posOutput+=1;
@@ -1866,7 +1866,7 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
                 uint32_t posOutput=0;
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x76;
                 posOutput+=1+4;
-                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+BaseServerMasterSendDatapack::rawFilesBuffer.size());//set the dynamic size
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+BaseServerMasterSendDatapack::rawFilesBuffer.size());//set the dynamic size
 
                 //number of file
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=1;

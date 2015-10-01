@@ -307,7 +307,7 @@ bool BaseServer::load_next_city_capture()
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     GlobalServerData::serverPrivateVariables.time_city_capture=FacilityLib::nextCaptureTime(GlobalServerData::serverSettings.city);
-    const qint64 &time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
+    const int64_t &time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
     GlobalServerData::serverPrivateVariables.timer_city_capture->start(time);
     #endif
     return true;
@@ -827,23 +827,23 @@ void BaseServer::loadAndFixSettings()
     }
     ProtocolParsing::setMaxPlayers(GlobalServerData::serverSettings.max_players);
 
-/*    quint8 player_list_size;
+/*    uint8_t player_list_size;
     if(GlobalServerData::serverSettings.max_players<=255)
-        player_list_size=sizeof(quint8);
+        player_list_size=sizeof(uint8_t);
     else
-        player_list_size=sizeof(quint16);*/
-    quint8 map_list_size;
+        player_list_size=sizeof(uint16_t);*/
+    uint8_t map_list_size;
     if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
-        map_list_size=sizeof(quint8);
+        map_list_size=sizeof(uint8_t);
     else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
-        map_list_size=sizeof(quint16);
+        map_list_size=sizeof(uint16_t);
     else
-        map_list_size=sizeof(quint32);
+        map_list_size=sizeof(uint32_t);
     GlobalServerData::serverPrivateVariables.sizeofInsertRequest=
             //mutualised
-            sizeof(quint8)+map_list_size+/*player_list_size same with move, delete, ...*/
+            sizeof(uint8_t)+map_list_size+/*player_list_size same with move, delete, ...*/
             //of the player
-            /*player_list_size same with move, delete, ...*/+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+0/*pseudo size put directy*/+sizeof(quint8);
+            /*player_list_size same with move, delete, ...*/+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+0/*pseudo size put directy*/+sizeof(uint8_t);
     if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm==CatchChallenger::MapVisibilityAlgorithmSelection_Simple)
     {
         if(GlobalServerData::serverSettings.mapVisibility.simple.max<5)

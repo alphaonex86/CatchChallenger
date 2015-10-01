@@ -46,7 +46,7 @@ bool LocalListener::tryListen()
     return false;
 }
 
-void LocalListener::listenServer(const quint8 &count)
+void LocalListener::listenServer(const uint8_t &count)
 {
     QLocalServer::removeServer(ExtraSocket::pathSocket(QStringLiteral("CatchChallenger-Client-%1").arg(count)));
     #ifndef Q_OS_MAC

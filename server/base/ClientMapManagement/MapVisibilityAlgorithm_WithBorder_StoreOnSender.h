@@ -34,7 +34,7 @@ public:
 protected:
     //add clients linked
     void insertClient();
-    void moveClient(const quint8 &previousMovedUnit,const Direction &direction);
+    void moveClient(const uint8_t &previousMovedUnit,const Direction &direction);
     void removeClient();
     void mapVisiblity_unloadFromTheMap();
     void reinsertClientForOthersOnSameMap();
@@ -42,8 +42,8 @@ private:
     static MapVisibilityAlgorithm_WithBorder_StoreOnSender *current_client;//static to drop down the memory
     //overwrite
     //remove the move/remove
-    void moveAnotherClientWithMap(MapVisibilityAlgorithm_WithBorder_StoreOnSender *the_another_player,const quint8 &movedUnit,const Direction &direction);
-    void moveAnotherClientWithMap(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_WithBorder_StoreOnSender *the_another_player,const quint8 &movedUnit,const Direction &direction);
+    void moveAnotherClientWithMap(MapVisibilityAlgorithm_WithBorder_StoreOnSender *the_another_player,const uint8_t &movedUnit,const Direction &direction);
+    void moveAnotherClientWithMap(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_WithBorder_StoreOnSender *the_another_player,const uint8_t &movedUnit,const Direction &direction);
     //for the purge buffer
     void send_insert();
     void send_move();
@@ -69,7 +69,7 @@ private:
     bool haveBufferToPurge;
 
     #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_BLOCKED_MOVE
-    quint8 previousMovedUnitBlocked;
+    uint8_t previousMovedUnitBlocked;
     #endif
 
     //temp variable to move on the map
@@ -83,8 +83,8 @@ private:
 public:
     void purgeBuffer();
     //map, transmited by the current ClientNetworkRead
-    void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
-    bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
+    void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
+    bool moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction);
     void teleportValidatedTo(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
 private:
     void extraStop();

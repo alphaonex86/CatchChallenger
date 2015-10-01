@@ -25,8 +25,8 @@ public:
     ~FakeBot();
     void start_step();
     void show_details();
-    quint64 get_TX_size();
-    quint64 get_RX_size();
+    uint64_t get_TX_size();
+    uint64_t get_RX_size();
     QFakeSocket fakeSocket;
     ConnectedSocket socket;
 private:
@@ -34,7 +34,7 @@ private:
     //debug
     bool details;
     //virtual action
-    void send_player_move(const quint8 &moved_unit,const Direction &the_direction);
+    void send_player_move(const uint8_t &moved_unit,const Direction &the_direction);
 
     static int index_loop,loop_size;
     static QSemaphore wait_to_stop;
@@ -48,7 +48,7 @@ public slots:
     void doStep();
 private slots:
     void random_new_step();
-    void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
+    void insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
     void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
     void newError(QString error,QString detailedError);
     void newSocketError(QAbstractSocket::SocketError error);

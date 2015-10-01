@@ -17,7 +17,7 @@ FILE * BaseServerLogin::fpRandomFile=NULL;
 #endif
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 BaseServerLogin::TokenLink BaseServerLogin::tokenForAuth[];
-quint32 BaseServerLogin::tokenForAuthSize=0;
+uint32_t BaseServerLogin::tokenForAuthSize=0;
 #endif
 
 BaseServerLogin::BaseServerLogin()
@@ -61,7 +61,7 @@ void BaseServerLogin::preload_the_randomData()
         int index=0;
         while(index<CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
         {
-            randomDataStream << quint8(rand()%256);
+            randomDataStream << uint8_t(rand()%256);
             index++;
         }
     }

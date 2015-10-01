@@ -146,7 +146,7 @@ void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*CO
 
     if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
     {
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+1+1+1);//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+1+1+1);//set the dynamic size
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+0]=map->id;
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+1]=x;
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+2]=y;
@@ -155,8 +155,8 @@ void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*CO
     }
     else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
     {
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+1+1+2);//set the dynamic size
-        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1+4)=htole16(map->id);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+1+1+2);//set the dynamic size
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1+4)=htole16(map->id);
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+2]=x;
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+3]=y;
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+4]=(uint8_t)orientation;
@@ -165,8 +165,8 @@ void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*CO
     }
     else
     {
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+1+1+4);//set the dynamic size
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1+4)=htole32(map->id);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+1+1+4);//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1+4)=htole32(map->id);
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+4]=x;
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+5]=y;
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+6]=(uint8_t)orientation;
@@ -507,16 +507,14 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         //Chat
         case 0x03:
         {
-            QByteArray newData(data,size);
-            QDataStream in(newData);
-            in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
+            uint32_t pos=0;
             if(size<((int)sizeof(uint8_t)))
             {
                 errorOutput("wrong remaining size for chat");
                 return false;
             }
-            uint8_t chatType;
-            in >> chatType;
+            const uint8_t &chatType=data[pos];
+            pos+=1;
             if(chatType!=Chat_type_local && chatType!=Chat_type_all && chatType!=Chat_type_clan && chatType!=Chat_type_pm)
             {
                 errorOutput("chat type error: "+std::to_string(chatType));
@@ -528,44 +526,42 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 {
                     std::string text;
                     {
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (size-in.device()->pos())<(int)sizeof(uint8_t))
+                        if((size-pos)<(int)sizeof(uint8_t))
                         {
                             errorOutput("wrong utf8 to std::string size in PM for text size");
                             return false;
                         }
-                        uint8_t textSize;
-                        in >> textSize;
+                        const uint8_t &textSize=data[pos];
+                        pos+=1;
                         if(textSize>0)
                         {
-                            if(in.device()->pos()<0 || !in.device()->isOpen() || (size-in.device()->pos())<(int)textSize)
+                            if((size-pos)<(int)textSize)
                             {
                                 errorOutput("wrong utf8 to std::string size in PM for text");
                                 return false;
                             }
-                            const QByteArray &rawText=newData.mid(in.device()->pos(),textSize);
-                            text=std::string(rawText.data(),rawText.size());
-                            in.device()->seek(in.device()->pos()+rawText.size());
+                            text=std::string(data+pos,textSize);
+                            pos+=textSize;
                         }
                     }
                     std::string pseudo;
                     {
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (size-in.device()->pos())<(int)sizeof(uint8_t))
+                        if((size-pos)<(int)sizeof(uint8_t))
                         {
                             errorOutput("wrong utf8 to std::string size in PM for pseudo");
                             return false;
                         }
-                        uint8_t pseudoSize;
-                        in >> pseudoSize;
+                        const uint8_t &pseudoSize=data[pos];
+                        pos+=1;
                         if(pseudoSize>0)
                         {
-                            if(in.device()->pos()<0 || !in.device()->isOpen() || (size-in.device()->pos())<(int)pseudoSize)
+                            if((size-pos)<(int)pseudoSize)
                             {
                                 errorOutput("wrong utf8 to std::string size in PM for pseudo");
                                 return false;
                             }
-                            const QByteArray &rawText=newData.mid(in.device()->pos(),pseudoSize);
-                            pseudo=std::string(rawText.data(),rawText.size());
-                            in.device()->seek(in.device()->pos()+rawText.size());
+                            pseudo=std::string(data+pos,pseudoSize);
+                            pos+=pseudoSize;
                         }
                     }
 
@@ -580,27 +576,26 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
             }
             else
             {
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (size-in.device()->pos())<(int)sizeof(uint8_t))
+                if((size-pos)<(int)sizeof(uint8_t))
                 {
                     errorOutput("wrong utf8 to std::string header size");
                     return false;
                 }
                 std::string text;
-                uint8_t textSize;
-                in >> textSize;
+                const uint8_t &textSize=data[pos];
+                pos+=1;
                 if(textSize>0)
                 {
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (size-in.device()->pos())<(int)textSize)
+                    if((size-pos)<(int)textSize)
                     {
                         errorOutput("wrong utf8 to std::string size");
                         return false;
                     }
-                    const QByteArray &rawText=newData.mid(in.device()->pos(),textSize);
-                    text=std::string(rawText.data(),rawText.size());
-                    in.device()->seek(in.device()->pos()+rawText.size());
+                    text=std::string(data+pos,textSize);
+                    pos+=textSize;
                 }
 
-                if(!stringStartWith(text,Client::text_slash))
+                if(!stringStartWith(text,'/'))
                 {
                     if(chatType==Chat_type_local)
                     {
@@ -913,61 +908,61 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         //Put object into a trade
         case 0x14:
         {
-            QByteArray qdata(data,size);
-            QDataStream in(qdata);
-            in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
-            if((size-in.device()->pos())<((int)sizeof(uint8_t)))
+            uint32_t pos=0;
+            if(size<((int)sizeof(uint8_t)))
             {
                 errorOutput("wrong remaining size for trade add type");
                 return false;
             }
-            uint8_t type;
-            in >> type;
+            const uint8_t &type=data[pos];
+            pos+=1;
             switch(type)
             {
                 //cash
                 case 0x01:
                 {
-                    if((size-in.device()->pos())<((int)sizeof(quint64)))
+                    if((size-pos)<((int)sizeof(uint64_t)))
                     {
                         errorOutput("wrong remaining size for trade add cash");
                         return false;
                     }
-                    quint64 cash;
-                    in >> cash;
+                    uint64_t tempVar;
+                    memcpy(&tempVar,data+pos,sizeof(uint64_t));
+                    const uint64_t &cash=le64toh(tempVar);
+                    pos+=sizeof(uint64_t);
                     tradeAddTradeCash(cash);
                 }
                 break;
                 //item
                 case 0x02:
                 {
-                    if((size-in.device()->pos())<((int)sizeof(uint16_t)))
+                    if((size-pos)<((int)sizeof(uint16_t)))
                     {
                         errorOutput("wrong remaining size for trade add item id");
                         return false;
                     }
-                    uint16_t item;
-                    in >> item;
-                    if((size-in.device()->pos())<((int)sizeof(uint32_t)))
+                    const uint16_t &item=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+                    pos+=sizeof(uint16_t);
+                    if((size-pos)<((int)sizeof(uint32_t)))
                     {
                         errorOutput("wrong remaining size for trade add item quantity");
                         return false;
                     }
-                    uint32_t quantity;
-                    in >> quantity;
+                    const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                    pos+=sizeof(uint32_t);
                     tradeAddTradeObject(item,quantity);
                 }
                 break;
                 //monster
                 case 0x03:
                 {
-                    if((size-in.device()->pos())<((int)sizeof(uint32_t)))
+                    if((size-pos)<((int)sizeof(uint32_t)))
                     {
                         errorOutput("wrong remaining size for trade add monster");
                         return false;
                     }
-                    uint32_t monsterId;
-                    in >> monsterId;
+                    const uint32_t &monsterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                    pos+=sizeof(uint32_t);
                     tradeAddTradeMonster(monsterId);
                 }
                 break;
@@ -976,14 +971,14 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                     return false;
                 break;
             }
-            if((size-in.device()->pos())!=0)
+            if((size-pos)!=0)
             {
                 errorOutput("remaining data: parsenormalOutput("+
                                       std::to_string(packetCode)+
                                       "): "+
-                                      QString(qdata.mid(0,in.device()->pos()).toHex()).toStdString()+
+                                      QString(QByteArray(data,pos).toHex()).toStdString()+
                                       " "+
-                                      QString(qdata.mid(in.device()->pos(),(size-in.device()->pos())).toHex()).toStdString()
+                                      QString(QByteArray(data+pos,size-pos).toHex()).toStdString()
                                       );
                 return false;
             }
@@ -1001,95 +996,103 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         //deposite/withdraw to the warehouse
         case 0x17:
         {
-            QByteArray qdata(data,size);
-            QDataStream in(qdata);
-            in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
-            qint64 cash;
+            uint32_t pos=0;
             std::vector<std::pair<uint16_t, int32_t> > items;
             std::vector<uint32_t> withdrawMonsters;
             std::vector<uint32_t> depositeMonsters;
-            if((size-in.device()->pos())<((int)sizeof(qint64)))
+            if((size-pos)<((int)sizeof(int64_t)))
             {
                 errorOutput("wrong remaining size for trade add monster");
                 return false;
             }
-            in >> cash;
+            uint64_t tempVar;
+            memcpy(&tempVar,data+pos,sizeof(uint64_t));
+            const uint64_t &cash=le64toh(tempVar);
+            pos+=sizeof(uint64_t);
+
             uint16_t size16;
-            if((size-in.device()->pos())<((int)sizeof(uint16_t)))
+            if((size-pos)<((int)sizeof(uint16_t)))
             {
                 errorOutput("wrong remaining size for trade add monster");
                 return false;
             }
-            in >> size16;
-            uint32_t index=0;
-            while(index<size16)
+            size16=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+            pos+=sizeof(uint16_t);
+
             {
                 uint16_t id;
-                if((size-in.device()->pos())<((int)sizeof(uint16_t)))
+                uint32_t index=0;
+                while(index<size16)
                 {
-                    errorOutput("wrong remaining size for trade add monster");
-                    return false;
+                    if((size-pos)<((int)sizeof(uint16_t)))
+                    {
+                        errorOutput("wrong remaining size for trade add monster");
+                        return false;
+                    }
+                    id=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+                    pos+=sizeof(uint16_t);
+                    if((size-pos)<((int)sizeof(uint32_t)))
+                    {
+                        errorOutput("wrong remaining size for trade add monster");
+                        return false;
+                    }
+                    const int32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                    pos+=sizeof(int32_t);
+                    items.push_back(std::pair<uint16_t, int32_t>(id,quantity));
+                    index++;
                 }
-                in >> id;
-                int32_t quantity;
-                if((size-in.device()->pos())<((int)sizeof(uint32_t)))
-                {
-                    errorOutput("wrong remaining size for trade add monster");
-                    return false;
-                }
-                in >> quantity;
-                items.push_back(std::pair<uint16_t, int32_t>(id,quantity));
-                index++;
             }
-            if((size-in.device()->pos())<((int)sizeof(uint32_t)))
+            if((size-pos)<((int)sizeof(uint32_t)))
             {
                 errorOutput("wrong remaining size for trade add monster");
                 return false;
             }
             uint32_t size;
-            in >> size;
-            index=0;
+            size=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+            pos+=sizeof(uint32_t);
+            uint32_t index=0;
             while(index<size)
             {
-                uint32_t id;
-                if((size-in.device()->pos())<((int)sizeof(uint32_t)))
+                if((size-pos)<((int)sizeof(uint32_t)))
                 {
                     errorOutput("wrong remaining size for trade add monster");
                     return false;
                 }
-                in >> id;
+                const uint32_t &id=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(uint32_t);
                 withdrawMonsters.push_back(id);
                 index++;
             }
-            if((size-in.device()->pos())<((int)sizeof(uint32_t)))
+            if((size-pos)<((int)sizeof(uint32_t)))
             {
                 errorOutput("wrong remaining size for trade add monster");
                 return false;
             }
-            in >> size;
+            size=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+            pos+=sizeof(uint32_t);
             index=0;
             while(index<size)
             {
-                uint32_t id;
-                if((size-in.device()->pos())<((int)sizeof(uint32_t)))
+                if((size-pos)<((int)sizeof(uint32_t)))
                 {
                     errorOutput("wrong remaining size for trade add monster");
                     return false;
                 }
-                in >> id;
+                const uint32_t &id=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(uint32_t);
                 depositeMonsters.push_back(id);
                 index++;
             }
             wareHouseStore(cash,items,withdrawMonsters,depositeMonsters);
-            if((size-in.device()->pos())!=0)
+            if((size-pos)!=0)
             {
                 errorOutput("remaining data: parsenormalOutput("+
-                                      std::to_string(packetCode)+
-                                      "): "+
-                                      QString(qdata.mid(0,in.device()->pos()).toHex()).toStdString()+
-                                      " "+
-                                      QString(qdata.mid(in.device()->pos(),(size-in.device()->pos())).toHex()).toStdString()
-                                      );
+                            std::to_string(packetCode)+
+                            "): "+
+                            QString(QByteArray(data,pos).toHex()).toStdString()+
+                            " "+
+                            QString(QByteArray(data+pos,size-pos).toHex()).toStdString()
+                            );
                 return false;
             }
             return true;
@@ -1401,16 +1404,14 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         //Buy into the market
         case 0x8E:
         {
-            QByteArray qdata(data,size);
-            QDataStream in(qdata);
-            in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
-            if((size-in.device()->pos())<(int)sizeof(uint8_t))
+            uint32_t pos=0;
+            if((size-pos)<(int)sizeof(uint8_t))
             {
                 errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString());
                 return false;
             }
-            uint8_t queryType;
-            in >> queryType;
+            const uint8_t &queryType=data[pos];
+            pos+=1;
             switch(queryType)
             {
                 case 0x01:
@@ -1422,43 +1423,43 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             }
             if(queryType==0x01)
             {
-                if((size-in.device()->pos())<(int)sizeof(uint32_t))
+                if((size-pos)<(int)sizeof(uint32_t))
                 {
                     errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString());
                     return false;
                 }
-                uint32_t marketObjectId;
-                in >> marketObjectId;
-                if((size-in.device()->pos())<(int)sizeof(uint32_t))
+                const uint32_t &marketObjectId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(uint32_t);
+                if((size-pos)<(int)sizeof(uint32_t))
                 {
                     errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString());
                     return false;
                 }
-                uint32_t quantity;
-                in >> quantity;
+                const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(uint32_t);
                 buyMarketObject(queryNumber,marketObjectId,quantity);
             }
             else
             {
-                if((size-in.device()->pos())<(int)sizeof(uint32_t))
+                if((size-pos)<(int)sizeof(uint32_t))
                 {
                     errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString());
                     return false;
                 }
-                uint32_t monsterId;
-                in >> monsterId;
+                const uint32_t &monsterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(uint32_t);
                 buyMarketMonster(queryNumber,monsterId);
             }
-            if((size-in.device()->pos())!=0)
+            if((size-pos)!=0)
             {
                 errorOutput("remaining data: parseQuery("+
                                       std::to_string(packetCode)+
                                       ","+
                                       std::to_string(queryNumber)+
                                       "): "+
-                                      QString(QByteArray(data,size).mid(0,in.device()->pos()).toHex()).toStdString()+
+                                      QString(QByteArray(data,size).mid(0,pos).toHex()).toStdString()+
                                       " "+
-                                      QString(QByteArray(data,size).mid(in.device()->pos(),(size-in.device()->pos())).toHex()).toStdString()
+                                      QString(QByteArray(data,size).mid(pos,(size-pos)).toHex()).toStdString()
                                       );
                 return false;
             }
@@ -1468,16 +1469,14 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         //Put object into the market
         case 0x8F:
         {
-            QByteArray qdata(data,size);
-            QDataStream in(qdata);
-            in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
-            if((size-in.device()->pos())<(int)sizeof(uint8_t))
+            uint32_t pos=0;
+            if((size-pos)<(int)sizeof(uint8_t))
             {
                 errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString());
                 return false;
             }
-            uint8_t queryType;
-            in >> queryType;
+            const uint8_t &queryType=data[pos];
+            pos+=1;
             switch(queryType)
             {
                 case 0x01:
@@ -1489,28 +1488,28 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             }
             if(queryType==0x01)
             {
-                if((size-in.device()->pos())<(int)sizeof(uint16_t))
+                if((size-pos)<(int)sizeof(uint16_t))
                 {
                     errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString());
                     return false;
                 }
-                uint16_t objectId;
-                in >> objectId;
-                if((size-in.device()->pos())<(int)sizeof(uint32_t))
+                const uint16_t &objectId=le32toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(uint16_t);
+                if((size-pos)<(int)sizeof(uint32_t))
                 {
                     errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString());
                     return false;
                 }
-                uint32_t quantity;
-                in >> quantity;
-                if((size-in.device()->pos())<(int)sizeof(uint32_t))
+                const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(uint32_t);
+                if((size-pos)<(int)sizeof(uint32_t))
                 {
                     errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString());
                     return false;
                 }
-                uint32_t price;
-                in >> price;
-                if((size-in.device()->pos())<(int)sizeof(double))
+                const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(uint32_t);
+                if((size-pos)<(int)sizeof(double))
                 {
                     errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString());
                     return false;
@@ -1519,38 +1518,38 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             }
             else
             {
-                if((size-in.device()->pos())<(int)sizeof(uint32_t))
+                if((size-pos)<(int)sizeof(uint32_t))
                 {
                     errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString());
                     return false;
                 }
-                uint32_t monsterId;
-                in >> monsterId;
-                if((size-in.device()->pos())<(int)sizeof(uint32_t))
+                const uint32_t &monsterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(uint32_t);
+                if((size-pos)<(int)sizeof(uint32_t))
                 {
                     errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString());
                     return false;
                 }
-                uint32_t price;
-                in >> price;
-                if((size-in.device()->pos())<(int)sizeof(double))
+                const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(uint32_t);
+                if((size-pos)<(int)sizeof(double))
                 {
                     errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString());
                     return false;
                 }
                 putMarketMonster(queryNumber,monsterId,price);
             }
-            if((size-in.device()->pos())!=0)
+            if((size-pos)!=0)
             {
                 errorOutput("remaining data: parseQuery("+
-                                      std::to_string(packetCode)+
-                                      ","+
-                                      std::to_string(queryNumber)+
-                                      "): "+
-                                      QString(qdata.mid(0,in.device()->pos()).toHex()).toStdString()+
-                                      " "+
-                                      QString(qdata.mid(in.device()->pos(),(size-in.device()->pos())).toHex()).toStdString()
-                                      );
+                                    std::to_string(packetCode)+
+                                    ","+
+                                    std::to_string(queryNumber)+
+                                    "): "+
+                                    QString(QByteArray(data,pos).toHex()).toStdString()+
+                                    " "+
+                                    QString(QByteArray(data+pos,size-pos).toHex()).toStdString()
+                                    );
                 return false;
             }
             return true;
@@ -1564,16 +1563,14 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         //Withdraw object
         case 0x91:
         {
-            QByteArray qdata(data,size);
-            QDataStream in(qdata);
-            in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
-            if((size-in.device()->pos())<(int)sizeof(uint8_t))
+            uint32_t pos=0;
+            if((size-pos)<(int)sizeof(uint8_t))
             {
                 errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString());
                 return false;
             }
-            uint8_t queryType;
-            in >> queryType;
+            const uint8_t &queryType=data[pos];
+            pos+=1;
             switch(queryType)
             {
                 case 0x01:
@@ -1585,44 +1582,44 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             }
             if(queryType==0x01)
             {
-                if((size-in.device()->pos())<(int)sizeof(uint32_t))
+                if((size-pos)<(int)sizeof(uint32_t))
                 {
                     errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString());
                     return false;
                 }
-                uint32_t objectId;
-                in >> objectId;
-                if((size-in.device()->pos())<(int)sizeof(uint32_t))
+                const uint32_t &objectId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(uint32_t);
+                if((size-pos)<(int)sizeof(uint32_t))
                 {
                     errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString());
                     return false;
                 }
-                uint32_t quantity;
-                in >> quantity;
+                const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(uint32_t);
                 withdrawMarketObject(queryNumber,objectId,quantity);
             }
             else
             {
-                if((size-in.device()->pos())<(int)sizeof(uint32_t))
+                if((size-pos)<(int)sizeof(uint32_t))
                 {
                     errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString());
                     return false;
                 }
-                uint32_t monsterId;
-                in >> monsterId;
+                const uint32_t &monsterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(uint32_t);
                 withdrawMarketMonster(queryNumber,monsterId);
             }
-            if((size-in.device()->pos())!=0)
+            if((size-pos)!=0)
             {
                 errorOutput("remaining data: parseQuery("+
-                                      std::to_string(packetCode)+
-                                      ","+
-                                      std::to_string(queryNumber)+
-                                      "): "+
-                                      QString(qdata.mid(0,in.device()->pos()).toHex()).toStdString()+
-                                      " "+
-                                      QString(qdata.mid(in.device()->pos(),(size-in.device()->pos())).toHex()).toStdString()
-                                      );
+                    std::to_string(packetCode)+
+                    ","+
+                    std::to_string(queryNumber)+
+                    "): "+
+                    QString(QByteArray(data,pos).toHex()).toStdString()+
+                    " "+
+                    QString(QByteArray(data+pos,size-pos).toHex()).toStdString()
+                    );
                 return false;
             }
             return true;
@@ -1631,16 +1628,14 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         //Clan action
         case 0x92:
         {
-            QByteArray qdata(data,size);
-            QDataStream in(qdata);
-            in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
-            if((size-in.device()->pos())<(int)sizeof(uint8_t))
+            uint32_t pos=0;
+            if((size-pos)<(int)sizeof(uint8_t))
             {
                 errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString());
                 return false;
             }
-            uint8_t clanActionId;
-            in >> clanActionId;
+            const uint8_t &clanActionId=data[pos];
+            pos+=1;
             switch(clanActionId)
             {
                 case 0x01:
@@ -1648,18 +1643,17 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 case 0x05:
                 {
                     std::string tempString;
-                    uint8_t textSize;
-                    in >> textSize;
+                    const uint8_t &textSize=data[pos];
+                    pos+=1;
                     if(textSize>0)
                     {
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (size-in.device()->pos())<(int)textSize)
+                        if((size-pos)<(int)textSize)
                         {
                             errorOutput("wrong utf8 to std::string size in clan action for text");
                             return false;
                         }
-                        const QByteArray &rawText=qdata.mid(in.device()->pos(),textSize);
-                        tempString=std::string(rawText.data(),rawText.size());
-                        in.device()->seek(in.device()->pos()+rawText.size());
+                        tempString=std::string(data+pos,textSize);
+                        pos+=textSize;
                     }
                     clanAction(queryNumber,clanActionId,tempString);
                 }
@@ -1669,20 +1663,20 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                     clanAction(queryNumber,clanActionId,std::string());
                 break;
                 default:
-                errorOutput("unknown clan action code");
+                    errorOutput("unknown clan action code");
                 return false;
             }
-            if((size-in.device()->pos())!=0)
+            if((size-pos)!=0)
             {
                 errorOutput("remaining data: parseQuery("+
-                                      std::to_string(packetCode)+
-                                      ","+
-                                      std::to_string(queryNumber)+
-                                      "): "+
-                                      QString(qdata.mid(0,in.device()->pos()).toHex()).toStdString()+
-                                      " "+
-                                      QString(qdata.mid(in.device()->pos(),(size-in.device()->pos())).toHex()).toStdString()
-                                      );
+                    std::to_string(packetCode)+
+                    ","+
+                    std::to_string(queryNumber)+
+                    "): "+
+                    QString(QByteArray(data,pos).toHex()).toStdString()+
+                    " "+
+                    QString(QByteArray(data+pos,size-pos).toHex()).toStdString()
+                    );
                 return false;
             }
             return true;
@@ -1710,8 +1704,8 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         #endif
         //Send datapack file list
         case 0xA1:
+        #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
         {
-            #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
             switch(datapackStatus)
             {
                 case DatapackStatus::Base:
@@ -1744,17 +1738,14 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 return false;
             }
 
-            QByteArray qdata(data,size);
-            QDataStream in(qdata);
-            in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
-
-            if((size-in.device()->pos())<(int)sizeof(uint8_t))
+            uint32_t pos=0;
+            if((size-pos)<(int)sizeof(uint8_t))
             {
                 errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString());
                 return false;
             }
-            uint8_t stepToSkip;
-            in >> stepToSkip;
+            const uint8_t &stepToSkip=data[pos];
+            pos+=1;
             switch(stepToSkip)
             {
                 case 0x01:
@@ -1795,49 +1786,47 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 return false;
             }
 
-            if((size-in.device()->pos())<(int)sizeof(uint32_t))
+            if((size-pos)<(int)sizeof(uint32_t))
             {
                 errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString());
                 return false;
             }
-            uint8_t textSize;
-            uint32_t number_of_file;
-            in >> number_of_file;
+            const uint32_t &number_of_file=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+            pos+=sizeof(uint32_t);
             std::vector<std::string> files;
             files.reserve(number_of_file);
             std::vector<uint32_t> partialHashList;
             partialHashList.reserve(number_of_file);
             std::string tempFileName;
-            uint32_t partialHash;
             uint32_t index=0;
             while(index<number_of_file)
             {
                 {
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (size-in.device()->pos())<(int)sizeof(uint8_t))
+                    if((size-pos)<(int)sizeof(uint8_t))
                     {
                         errorOutput("wrong utf8 to std::string size in PM for text size");
                         return false;
                     }
-                    in >> textSize;
+                    const uint8_t &textSize=data[pos];
+                    pos+=1;
                     //control the regex file into Client::datapackList()
                     if(textSize>0)
                     {
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (size-in.device()->pos())<(int)textSize)
+                        if((size-pos)<(int)textSize)
                         {
                             errorOutput("wrong utf8 to std::string size for file name: parseQuery("+
-                                                  std::to_string(packetCode)+
-                                                  ","+
-                                                  std::to_string(queryNumber)+
-                                                  "): "+
-                                                  QString(qdata.mid(0,in.device()->pos()).toHex()).toStdString()+
-                                                  " "+
-                                                  QString(qdata.mid(in.device()->pos(),(size-in.device()->pos())).toHex()).toStdString()
-                                                  );
+                                std::to_string(packetCode)+
+                                ","+
+                                std::to_string(queryNumber)+
+                                "): "+
+                                QString(QByteArray(data,pos).toHex()).toStdString()+
+                                " "+
+                                QString(QByteArray(data+pos,size-pos).toHex()).toStdString()
+                                );
                             return false;
                         }
-                        const QByteArray &rawText=qdata.mid(in.device()->pos(),textSize);
-                        tempFileName=std::string(rawText.data(),rawText.size());
-                        in.device()->seek(in.device()->pos()+rawText.size());
+                        tempFileName=std::string(data+pos,textSize);
+                        pos+=textSize;
                     }
                 }
                 files.push_back(tempFileName);
@@ -1846,33 +1835,34 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             index=0;
             while(index<number_of_file)
             {
-                if((size-in.device()->pos())<(int)sizeof(uint32_t))
+                if((size-pos)<(int)sizeof(uint32_t))
                 {
                     errorOutput("wrong size for id with main ident: "+
                                           std::to_string(packetCode)+
                                           ", remaining: "+
-                                          std::to_string(size-in.device()->pos())+
+                                          std::to_string(size-pos)+
                                           ", lower than: "+
                                           std::to_string((int)sizeof(uint32_t))
                                           );
                     return false;
                 }
-                in >> partialHash;
+                const uint32_t &partialHash=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(uint32_t);
                 partialHashList.push_back(partialHash);
                 index++;
             }
             datapackList(queryNumber,files,partialHashList);
-            if((size-in.device()->pos())!=0)
+            if((size-pos)!=0)
             {
                 errorOutput("remaining data: parseQuery("+
-                                      std::to_string(packetCode)+
-                                      ","+
-                                      std::to_string(queryNumber)+
-                                      "): "+
-                                      QString(qdata.mid(0,in.device()->pos()).toHex()).toStdString()+
-                                      " "+
-                                      QString(qdata.mid(in.device()->pos(),(size-in.device()->pos())).toHex()).toStdString()
-                                      );
+                    std::to_string(packetCode)+
+                    ","+
+                    std::to_string(queryNumber)+
+                    "): "+
+                    QString(QByteArray(data,pos).toHex()).toStdString()+
+                    " "+
+                    QString(QByteArray(data+pos,size-pos).toHex()).toStdString()
+                    );
                 return false;
             }
             return true;
@@ -1881,45 +1871,42 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         errorOutput("CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR");
         return false;
         #endif
-        }
         break;
         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         //Add character
         case 0xAA:
         {
+            uint32_t pos=0;
             if(character_loaded)
             {
                 errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+")");
                 return false;
             }
-            QByteArray qdata(data,size);
-            QDataStream in(qdata);
-            in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
-            uint8_t profileIndex;
+
             std::string pseudo;
-            uint8_t skinId;
-            uint8_t charactersGroupIndex;
-            if((size-in.device()->pos())<(int)sizeof(uint8_t))
+            if((size-pos)<(int)sizeof(uint8_t))
             {
                 errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString()+"");
                 return false;
             }
-            in >> charactersGroupIndex;
-            if((size-in.device()->pos())<(int)sizeof(uint8_t))
+            //const uint8_t &charactersGroupIndex=data[pos];
+            pos+=1;
+            if((size-pos)<(int)sizeof(uint8_t))
             {
                 errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString()+"");
                 return false;
             }
-            in >> profileIndex;
+            const uint8_t &profileIndex=data[pos];
+            pos+=1;
             //pseudo
             {
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (size-in.device()->pos())<(int)sizeof(uint8_t))
+                if((size-pos)<(int)sizeof(uint8_t))
                 {
                     errorOutput("wrong utf8 to std::string size in PM for text size");
                     return false;
                 }
-                uint8_t textSize;
-                in >> textSize;
+                const uint8_t &textSize=data[pos];
+                pos+=1;
                 if(textSize>0)
                 {
                     if(textSize>CommonSettingsCommon::commonSettingsCommon.max_pseudo_size)
@@ -1927,34 +1914,34 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                         errorOutput("pseudo size is too big: "+std::to_string(pseudo.size())+" because is greater than "+std::to_string(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size));
                         return false;
                     }
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (size-in.device()->pos())<(int)textSize)
+                    if((size-pos)<(int)textSize)
                     {
                         errorOutput("wrong utf8 to std::string size in PM for text");
                         return false;
                     }
-                    const QByteArray &rawText=qdata.mid(in.device()->pos(),textSize);
-                    pseudo=std::string(rawText.data(),rawText.size());
-                    in.device()->seek(in.device()->pos()+rawText.size());
+                    pseudo=std::string(data+pos,textSize);
+                    pos+=textSize;
                 }
             }
-            if((size-in.device()->pos())<(int)sizeof(uint8_t))
+            if((size-pos)<(int)sizeof(uint8_t))
             {
                 errorOutput("error to get skin with the main ident: "+std::to_string(packetCode)+", data: "+QString(QByteArray(data,size).toHex()).toStdString());
                 return false;
             }
-            in >> skinId;
+            const uint8_t &skinId=data[pos];
+            pos+=1;
             addCharacter(queryNumber,profileIndex,pseudo,skinId);
-            if((size-in.device()->pos())!=0)
+            if((size-pos)!=0)
             {
                 errorOutput("remaining data: parseQuery("+
-                                      std::to_string(packetCode)+
-                                      ","+
-                                      std::to_string(queryNumber)+
-                                      "): "+
-                                      QString(qdata.mid(0,in.device()->pos()).toHex()).toStdString()+
-                                      " "+
-                                      QString(qdata.mid(in.device()->pos(),(size-in.device()->pos())).toHex()).toStdString()
-                                      );
+                    std::to_string(packetCode)+
+                    ","+
+                    std::to_string(queryNumber)+
+                    "): "+
+                    QString(QByteArray(data,pos).toHex()).toStdString()+
+                    " "+
+                    QString(QByteArray(data+pos,size-pos).toHex()).toStdString()
+                    );
                 return false;
             }
             return true;

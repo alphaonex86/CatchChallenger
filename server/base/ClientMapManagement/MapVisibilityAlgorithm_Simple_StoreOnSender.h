@@ -30,7 +30,7 @@ public:
 protected:
     //add clients linked
     void insertClient();
-    void moveClient(const quint8 &previousMovedUnit,const Direction &direction);
+    void moveClient(const uint8_t &previousMovedUnit,const Direction &direction);
     void removeClient();
     void mapVisiblity_unloadFromTheMap();
     void reinsertClientForOthersOnSameMap();
@@ -48,7 +48,7 @@ private:
     static bool mapHaveChanged;
 
     #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_BLOCKED_MOVE
-    quint8 previousMovedUnitBlocked;
+    uint8_t previousMovedUnitBlocked;
     #endif
 public:
     // stuff to send
@@ -56,8 +56,8 @@ public:
     bool                    			haveNewMove;
 public:
     //map slots, transmited by the current ClientNetworkRead
-    void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
-    bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
+    void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
+    bool moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction);
     void teleportValidatedTo(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
 private:
     void extraStop();

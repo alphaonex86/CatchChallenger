@@ -75,8 +75,8 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(MapVisualiserOrder::Map_f
                 int index2=0;
                 while(index2<objects.size())
                 {
-                    const quint32 &x=objects.at(index2)->x();
-                    const quint32 &y=objects.at(index2)->y()-1;
+                    const uint32_t &x=objects.at(index2)->x();
+                    const uint32_t &y=objects.at(index2)->y()-1;
                     //remove the unknow object
                     if(objects.at(index2)->type()==MapVisualiserOrder::text_door)
                     {
@@ -102,14 +102,14 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(MapVisualiserOrder::Map_f
                                             QString framesString=animationList.at(1);
                                             msString.remove(MapVisualiserOrder::text_ms);
                                             framesString.remove(MapVisualiserOrder::text_frames);
-                                            quint16 ms=msString.toUShort();
-                                            quint8 frames=framesString.toUShort();
+                                            uint16_t ms=msString.toUShort();
+                                            uint8_t frames=framesString.toUShort();
                                             if(ms>0 && frames>1)
                                             {
-                                                if(!tempMapObject->doors.contains(QPair<quint8,quint8>(x,y)))
+                                                if(!tempMapObject->doors.contains(QPair<uint8_t,uint8_t>(x,y)))
                                                 {
                                                     MapDoor *door=new MapDoor(objects.at(index2),frames,ms);
-                                                    tempMapObject->doors[QPair<quint8,quint8>(x,y)]=door;
+                                                    tempMapObject->doors[QPair<uint8_t,uint8_t>(x,y)]=door;
                                                 }
                                             }
                                             else

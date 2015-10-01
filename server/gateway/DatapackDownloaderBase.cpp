@@ -4,10 +4,9 @@ using namespace CatchChallenger;
 
 #include <iostream>
 #include <cmath>
-#include <QRegularExpression>
+#include <regex>
 #include <QNetworkReply>
 #include <QProcess>
-#include <QDebug>
 
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
@@ -19,16 +18,14 @@ using namespace CatchChallenger;
 
 //need host + port here to have datapack base
 
-QString DatapackDownloaderBase::text_slash=QLatin1Literal("/");
-QString DatapackDownloaderBase::text_dotcoma=QLatin1Literal(";");
-QRegularExpression DatapackDownloaderBase::regex_DATAPACK_FILE_REGEX=QRegularExpression(DATAPACK_FILE_REGEX);
-QSet<QString> DatapackDownloaderBase::extensionAllowed;
-QRegularExpression DatapackDownloaderBase::excludePathBase("^(map[/\\\\]main[/\\\\]|pack[/\\\\]|datapack-list[/\\\\])");
-QString DatapackDownloaderBase::commandUpdateDatapackBase;
+std::regex DatapackDownloaderBase::regex_DATAPACK_FILE_REGEX(DATAPACK_FILE_REGEX);
+std::unordered_set<std::string> DatapackDownloaderBase::extensionAllowed;
+std::regex DatapackDownloaderBase::excludePathBase("^(map[/\\\\]main[/\\\\]|pack[/\\\\]|datapack-list[/\\\\])");
+std::string DatapackDownloaderBase::commandUpdateDatapackBase;
 
 DatapackDownloaderBase * DatapackDownloaderBase::datapackDownloaderBase=NULL;
 
-DatapackDownloaderBase::DatapackDownloaderBase(const QString &mDatapackBase) :
+DatapackDownloaderBase::DatapackDownloaderBase(const std::string &mDatapackBase) :
     mDatapackBase(mDatapackBase),
     curl(NULL)
 {
@@ -43,7 +40,7 @@ DatapackDownloaderBase::~DatapackDownloaderBase()
 
 void DatapackDownloaderBase::haveTheDatapack()
 {
-    if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.isEmpty())
+    if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
     {
         if(curl!=NULL)
         {
@@ -68,8 +65,8 @@ void DatapackDownloaderBase::haveTheDatapack()
 
     resetAll();
 
-    if(!DatapackDownloaderBase::commandUpdateDatapackBase.isEmpty())
-        if(QProcess::execute(DatapackDownloaderBase::commandUpdateDatapackBase,QStringList() << mDatapackBase)<0)
+    if(!DatapackDownloaderBase::commandUpdateDatapackBase.empty())
+        if(QProcess::execute(DatapackDownloaderBase::commandUpdateDatapackBase,std::vector<std::string>() << mDatapackBase)<0)
             qDebug() << "Unable to execute " << DatapackDownloaderBase::commandUpdateDatapackBase << " " << mDatapackBase;
 }
 
@@ -108,7 +105,7 @@ void DatapackDownloaderBase::datapackFileList(const char * const data,const unsi
     QList<bool> boolList;
     while((size-pos)>0)
     {
-        const quint8 &returnCode=data[pos];
+        const uint8_t &returnCode=data[pos];
         boolList.append(returnCode&0x01);
         boolList.append(returnCode&0x02);
         boolList.append(returnCode&0x04);
@@ -121,7 +118,7 @@ void DatapackDownloaderBase::datapackFileList(const char * const data,const unsi
     }
     if(boolList.size()<datapackFilesListBase.size())
     {
-        qDebug() << (QStringLiteral("bool list too small with DatapackDownloaderBase::datapackFileList"));
+        qDebug() << (std::stringLiteral("bool list too small with DatapackDownloaderBase::datapackFileList"));
         return;
     }
     int index=0;
@@ -129,29 +126,29 @@ void DatapackDownloaderBase::datapackFileList(const char * const data,const unsi
     {
         if(boolList.first())
         {
-            DebugClass::debugConsole(QStringLiteral("remove the file: %1").arg(mDatapackBase+text_slash+datapackFilesListBase.at(index)));
+            DebugClass::debugConsole(std::stringLiteral("remove the file: %1").arg(mDatapackBase+text_slash+datapackFilesListBase.at(index)));
             QFile file(mDatapackBase+text_slash+datapackFilesListBase.at(index));
             if(!file.remove())
-                DebugClass::debugConsole(QStringLiteral("unable to remove the file: %1: %2").arg(datapackFilesListBase.at(index)).arg(file.errorString()));
+                DebugClass::debugConsole(std::stringLiteral("unable to remove the file: %1: %2").arg(datapackFilesListBase.at(index)).arg(file.errorString()));
             //removeFile(datapackFilesListBase.at(index));
         }
         boolList.removeFirst();
         index++;
     }
     datapackFilesListBase.clear();
-    cleanDatapackBase(QString());
+    cleanDatapackBase(std::string());
     if(boolList.size()>=8)
     {
-        qDebug() << (QStringLiteral("bool list too big with DatapackDownloaderBase::datapackFileList"));
+        qDebug() << (std::stringLiteral("bool list too big with DatapackDownloaderBase::datapackFileList"));
         return;
     }
     if(!httpModeBase)
         haveTheDatapack();
 }
 
-void DatapackDownloaderBase::writeNewFileBase(const QString &fileName,const QByteArray &data)
+void DatapackDownloaderBase::writeNewFileBase(const std::string &fileName,const QByteArray &data)
 {
-    const QString &fullPath=mDatapackBase+text_slash+fileName;
+    const std::string &fullPath=mDatapackBase+text_slash+fileName;
     //to be sure the QFile is destroyed
     {
         QFile file(fullPath);
@@ -166,18 +163,18 @@ void DatapackDownloaderBase::writeNewFileBase(const QString &fileName,const QByt
         if(file.exists())
             if(!file.remove())
             {
-                DebugClass::debugConsole(QStringLiteral("Can't remove: %1: %2").arg(fileName).arg(file.errorString()));
+                DebugClass::debugConsole(std::stringLiteral("Can't remove: %1: %2").arg(fileName).arg(file.errorString()));
                 return;
             }
         if(!file.open(QIODevice::WriteOnly))
         {
-            DebugClass::debugConsole(QStringLiteral("Can't open: %1: %2").arg(fileName).arg(file.errorString()));
+            DebugClass::debugConsole(std::stringLiteral("Can't open: %1: %2").arg(fileName).arg(file.errorString()));
             return;
         }
         if(file.write(data)!=data.size())
         {
             file.close();
-            DebugClass::debugConsole(QStringLiteral("Can't write: %1: %2").arg(fileName).arg(file.errorString()));
+            DebugClass::debugConsole(std::stringLiteral("Can't write: %1: %2").arg(fileName).arg(file.errorString()));
             return;
         }
         file.flush();
@@ -185,14 +182,14 @@ void DatapackDownloaderBase::writeNewFileBase(const QString &fileName,const QByt
     }
 }
 
-bool DatapackDownloaderBase::getHttpFileBase(const QString &url, const QString &fileName)
+bool DatapackDownloaderBase::getHttpFileBase(const std::string &url, const std::string &fileName)
 {
     if(httpError)
         return false;
     if(!httpModeBase)
         httpModeBase=true;
 
-    const QString &fullPath=mDatapackBase+text_slash+fileName;
+    const std::string &fullPath=mDatapackBase+text_slash+fileName;
     {
         QFile file(fullPath);
         QFileInfo fileInfo(file);
@@ -217,7 +214,7 @@ bool DatapackDownloaderBase::getHttpFileBase(const QString &url, const QString &
         if(res!=CURLE_OK || http_code!=200)
         {
             httpError=true;
-            qDebug() << (QStringLiteral("get url %1: %2 failed with code %3").arg(url).arg(res).arg(http_code));
+            qDebug() << (std::stringLiteral("get url %1: %2 failed with code %3").arg(url).arg(res).arg(http_code));
             datapackDownloadError();
             return false;
         }
@@ -236,7 +233,7 @@ void DatapackDownloaderBase::datapackDownloadFinishedBase()
     haveTheDatapack();
 }
 
-void DatapackDownloaderBase::datapackChecksumDoneBase(const QStringList &datapackFilesList,const QByteArray &hash,const QList<quint32> &partialHashList)
+void DatapackDownloaderBase::datapackChecksumDoneBase(const std::vector<std::string> &datapackFilesList,const QByteArray &hash,const QList<uint32_t> &partialHashList)
 {
     if(datapackFilesListBase.size()!=partialHashList.size())
     {
@@ -281,7 +278,7 @@ void DatapackDownloaderBase::datapackChecksumDoneBase(const QStringList &datapac
             qDebug() << "Datapack checksum done but not send by the server";
             abort();//need CommonSettings::commonSettings.datapackHash send by the server
         }
-        quint8 datapack_content_query_number=0;
+        uint8_t datapack_content_query_number=0;
         LinkToGameServer * client=NULL;
         {
             unsigned int indexForClient=0;
@@ -302,27 +299,24 @@ void DatapackDownloaderBase::datapackChecksumDoneBase(const QStringList &datapac
                 return;//need CommonSettings::commonSettings.datapackHash send by the server
             }
         }
-        qDebug() << "Datapack is empty or hash don't match, get from server, hash local: " << QString(hash.toHex()) << ", hash on server: " << QString(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.toHex());
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (quint8)0x01;//DatapackStatus::Base
-        out << (quint32)datapackFilesListBase.size();
+        qDebug() << "Datapack is empty or hash don't match, get from server, hash local: " << std::string(hash.toHex()) << ", hash on server: " << std::string(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.toHex());
+        out << (uint8_t)0x01;//DatapackStatus::Base
+        out << (uint32_t)datapackFilesListBase.size();
         int index=0;
         while(index<datapackFilesListBase.size())
         {
             const QByteArray &rawFileName=FacilityLibGeneral::toUTF8WithHeader(datapackFilesListBase.at(index));
             if(rawFileName.size()>255 || rawFileName.isEmpty())
             {
-                DebugClass::debugConsole(QStringLiteral("rawFileName too big or not compatible with utf8"));
+                DebugClass::debugConsole(std::stringLiteral("rawFileName too big or not compatible with utf8"));
                 return;
             }
             outputData+=rawFileName;
             out.device()->seek(out.device()->size());
 
             /*struct stat info;
-            stat(QString(mDatapackBase+datapackFilesListBase.at(index)).toLatin1().data(),&info);*/
-            out << (quint32)partialHashList.at(index);
+            stat(std::string(mDatapackBase+datapackFilesListBase.at(index)).toLatin1().data(),&info);*/
+            out << (uint32_t)partialHashList.at(index);
             index++;
         }
         client->packFullOutcommingQuery(0x02,0x0C,datapack_content_query_number,outputData.constData(),outputData.size());
@@ -345,7 +339,7 @@ void DatapackDownloaderBase::datapackChecksumDoneBase(const QStringList &datapac
         {
             qDebug() << "Datapack don't match with server hash, get from mirror";
 
-            const QString url=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(DatapackDownloaderBase::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_base)+QStringLiteral("pack/diff/datapack-base-%1.tar.xz").arg(QString(hash.toHex()));
+            const std::string url=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(DatapackDownloaderBase::text_dotcoma,std::string::SkipEmptyParts).at(index_mirror_base)+std::stringLiteral("pack/diff/datapack-base-%1.tar.xz").arg(std::string(hash.toHex()));
 
             struct MemoryStruct chunk;
             chunk.memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
@@ -358,7 +352,7 @@ void DatapackDownloaderBase::datapackChecksumDoneBase(const QStringList &datapac
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
             if(res!=CURLE_OK || http_code!=200)
             {
-                qDebug() << (QStringLiteral("get url %1: %2 failed with code %3").arg(url).arg(res).arg(http_code));
+                qDebug() << (std::stringLiteral("get url %1: %2 failed with code %3").arg(url).arg(res).arg(http_code));
                 httpFinishedForDatapackListBase();
                 return;
             }
@@ -370,10 +364,10 @@ void DatapackDownloaderBase::datapackChecksumDoneBase(const QStringList &datapac
 
 void DatapackDownloaderBase::test_mirror_base()
 {
-    const QStringList &httpDatapackMirrorList=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(DatapackDownloaderBase::text_dotcoma,QString::SkipEmptyParts);
+    const std::vector<std::string> &httpDatapackMirrorList=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(DatapackDownloaderBase::text_dotcoma,std::string::SkipEmptyParts);
     if(!datapackTarXzBase)
     {
-        const QString url=httpDatapackMirrorList.at(index_mirror_base)+QStringLiteral("pack/datapack.tar.xz");
+        const std::string url=httpDatapackMirrorList.at(index_mirror_base)+std::stringLiteral("pack/datapack.tar.xz");
 
         struct MemoryStruct chunk;
         chunk.memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
@@ -386,7 +380,7 @@ void DatapackDownloaderBase::test_mirror_base()
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
         if(res!=CURLE_OK || http_code!=200)
         {
-            qDebug() << (QStringLiteral("get url %1: %2 failed with code %3").arg(url).arg(res).arg(http_code));
+            qDebug() << (std::stringLiteral("get url %1: %2 failed with code %3").arg(url).arg(res).arg(http_code));
             httpFinishedForDatapackListBase();
             return;
         }
@@ -399,7 +393,7 @@ void DatapackDownloaderBase::test_mirror_base()
             /* here and not above because at last mirror you need try the tar.xz and after the datapack-list/base.txt, and only after that's quit */
             return;
 
-        const QString url=httpDatapackMirrorList.at(index_mirror_base)+QStringLiteral("datapack-list/base.txt");
+        const std::string url=httpDatapackMirrorList.at(index_mirror_base)+std::stringLiteral("datapack-list/base.txt");
 
         struct MemoryStruct chunk;
         chunk.memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
@@ -412,7 +406,7 @@ void DatapackDownloaderBase::test_mirror_base()
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
         if(res!=CURLE_OK || http_code!=200)
         {
-            qDebug() << (QStringLiteral("get url %1: %2 failed with code %3").arg(url).arg(res).arg(http_code));
+            qDebug() << (std::stringLiteral("get url %1: %2 failed with code %3").arg(url).arg(res).arg(http_code));
             httpFinishedForDatapackListBase();
             return;
         }
@@ -432,7 +426,7 @@ void DatapackDownloaderBase::decodedIsFinishBase()
         if(tarDecode.decodeData(decodedData))
         {
             QDir dir;
-            const QStringList &fileList=tarDecode.getFileList();
+            const std::vector<std::string> &fileList=tarDecode.getFileList();
             const QList<QByteArray> &dataList=tarDecode.getDataList();
             int index=0;
             while(index<fileList.size())
@@ -449,13 +443,13 @@ void DatapackDownloaderBase::decodedIsFinishBase()
                     }
                     else
                     {
-                        qDebug() << (QStringLiteral("unable to write file of datapack %1: %2").arg(file.fileName()).arg(file.errorString()));
+                        qDebug() << (std::stringLiteral("unable to write file of datapack %1: %2").arg(file.fileName()).arg(file.errorString()));
                         return;
                     }
                 }
                 else
                 {
-                    qDebug() << (QStringLiteral("file not allowed: %1").arg(file.fileName()));
+                    qDebug() << (std::stringLiteral("file not allowed: %1").arg(file.fileName()));
                     return;
                 }
                 index++;
@@ -479,9 +473,9 @@ bool DatapackDownloaderBase::mirrorTryNextBase()
     {
         datapackTarXzBase=false;
         index_mirror_base++;
-        if(index_mirror_base>=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(DatapackDownloaderBase::text_dotcoma,QString::SkipEmptyParts).size())
+        if(index_mirror_base>=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(DatapackDownloaderBase::text_dotcoma,std::string::SkipEmptyParts).size())
         {
-            qDebug() << (QStringLiteral("Get the list failed"));
+            qDebug() << (std::stringLiteral("Get the list failed"));
             return false;
         }
         else
@@ -501,7 +495,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const QByteArray da
     {
         if(!datapackTarXzBase)
         {
-            qDebug() << "datapack.tar.xz size:" << QString("%1KB").arg(data.size()/1000);
+            qDebug() << "datapack.tar.xz size:" << std::string("%1KB").arg(data.size()/1000);
             datapackTarXzBase=true;
             xzDecodeThreadBase.setData(data,16*1024*1024);
             xzDecodeThreadBase.run();
@@ -511,26 +505,26 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const QByteArray da
         else
         {
             httpError=false;
-            const QStringList &content=QString::fromUtf8(data).split(QRegularExpression("[\n\r]+"));
+            const std::vector<std::string> &content=std::string::fromUtf8(data).split(std::regex("[\n\r]+"));
             int index=0;
-            QRegularExpression splitReg("^(.*) (([0-9a-f][0-9a-f])+) ([0-9]+)$");
-            QRegularExpression fileMatchReg(DATAPACK_FILE_REGEX);
+            std::regex splitReg("^(.*) (([0-9a-f][0-9a-f])+) ([0-9]+)$");
+            std::regex fileMatchReg(DATAPACK_FILE_REGEX);
             if(datapackFilesListBase.size()!=partialHashListBase.size())
             {
                 qDebug() << "datapackFilesListBase.size()!=partialHashList.size(), CRITICAL";
                 abort();
                 return;
             }
-            /*ref crash here*/const QString selectedMirror=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(DatapackDownloaderBase::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_base);
+            /*ref crash here*/const std::string selectedMirror=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(DatapackDownloaderBase::text_dotcoma,std::string::SkipEmptyParts).at(index_mirror_base);
             int correctContent=0;
             while(index<content.size())
             {
                 if(content.at(index).contains(splitReg))
                 {
                     correctContent++;
-                    QString fileString=content.at(index);
-                    QString partialHashString=content.at(index);
-                    QString sizeString=content.at(index);
+                    std::string fileString=content.at(index);
+                    std::string partialHashString=content.at(index);
+                    std::string sizeString=content.at(index);
                     fileString.replace(splitReg,"\\1");
                     partialHashString.replace(splitReg,"\\2");
                     sizeString.replace(splitReg,"\\4");
@@ -539,7 +533,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const QByteArray da
                         int indexInDatapackList=datapackFilesListBase.indexOf(fileString);
                         if(indexInDatapackList!=-1)
                         {
-                            const quint32 &hashFileOnDisk=partialHashListBase.at(indexInDatapackList);
+                            const uint32_t &hashFileOnDisk=partialHashListBase.at(indexInDatapackList);
                             QFileInfo file(mDatapackBase+fileString);
                             if(!file.exists())
                             {
@@ -549,7 +543,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const QByteArray da
                                     return;
                                 }
                             }
-                            else if(hashFileOnDisk!=*reinterpret_cast<const quint32 *>(QByteArray::fromHex(partialHashString.toLatin1()).constData()))
+                            else if(hashFileOnDisk!=*reinterpret_cast<const uint32_t *>(QByteArray::fromHex(partialHashString.toLatin1()).constData()))
                             {
                                 if(!getHttpFileBase(selectedMirror+fileString,fileString))
                                 {
@@ -594,12 +588,12 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const QByteArray da
     }
 }
 
-const QStringList DatapackDownloaderBase::listDatapackBase(QString suffix)
+const std::vector<std::string> DatapackDownloaderBase::listDatapackBase(std::string suffix)
 {
     if(suffix.contains(excludePathBase))
-        return QStringList();
+        return std::vector<std::string>();
 
-    QStringList returnFile;
+    std::vector<std::string> returnFile;
     QDir finalDatapackFolder(mDatapackBase+suffix);
     QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
     int sizeEntryList=entryList.size();
@@ -616,10 +610,10 @@ const QStringList DatapackDownloaderBase::listDatapackBase(QString suffix)
             //is invalid
             else
             {
-                DebugClass::debugConsole(QStringLiteral("listDatapack(): remove invalid file: %1").arg(suffix+fileInfo.fileName()));
+                DebugClass::debugConsole(std::stringLiteral("listDatapack(): remove invalid file: %1").arg(suffix+fileInfo.fileName()));
                 QFile file(mDatapackBase+suffix+fileInfo.fileName());
                 if(!file.remove())
-                    DebugClass::debugConsole(QStringLiteral("listDatapack(): unable remove invalid file: %1: %2").arg(suffix+fileInfo.fileName()).arg(file.errorString()));
+                    DebugClass::debugConsole(std::stringLiteral("listDatapack(): unable remove invalid file: %1: %2").arg(suffix+fileInfo.fileName()).arg(file.errorString()));
             }
         }
     }
@@ -627,7 +621,7 @@ const QStringList DatapackDownloaderBase::listDatapackBase(QString suffix)
     return returnFile;
 }
 
-void DatapackDownloaderBase::cleanDatapackBase(QString suffix)
+void DatapackDownloaderBase::cleanDatapackBase(std::string suffix)
 {
     QDir finalDatapackFolder(mDatapackBase+suffix);
     QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
@@ -649,15 +643,15 @@ void DatapackDownloaderBase::sendDatapackContentBase()
 {
     if(wait_datapack_content_base)
     {
-        DebugClass::debugConsole(QStringLiteral("already in wait of datapack content"));
+        DebugClass::debugConsole(std::stringLiteral("already in wait of datapack content"));
         return;
     }
 
     //compute the mirror
     {
-        QStringList values=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(DatapackDownloaderBase::text_dotcoma,QString::SkipEmptyParts);
+        std::vector<std::string> values=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(DatapackDownloaderBase::text_dotcoma,std::string::SkipEmptyParts);
         {
-            QString slash(QStringLiteral("/"));
+            std::string slash(std::stringLiteral("/"));
             int index=0;
             while(index<values.size())
             {
@@ -671,7 +665,7 @@ void DatapackDownloaderBase::sendDatapackContentBase()
 
     datapackTarXzBase=false;
     wait_datapack_content_base=true;
-    datapackFilesListBase=listDatapackBase(QString());
+    datapackFilesListBase=listDatapackBase(std::string());
     datapackFilesListBase.sort();
     const DatapackChecksum::FullDatapackChecksumReturn &fullDatapackChecksumReturn=DatapackChecksum::doFullSyncChecksumBase(mDatapackBase);
     datapackChecksumDoneBase(fullDatapackChecksumReturn.datapackFilesList,fullDatapackChecksumReturn.hash,fullDatapackChecksumReturn.partialHashList);

@@ -41,7 +41,7 @@ void Client::characterSelectionIsWrong(const uint8_t &query_id,const uint8_t &re
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void Client::selectCharacter(const uint8_t &query_id, const char * const token)
 {
-    const quint64 &time=QDateTime::currentDateTime().toMSecsSinceEpoch()/1000;
+    const uint64_t &time=QDateTime::currentDateTime().toMSecsSinceEpoch()/1000;
     unsigned int index=0;
     while(index<tokenAuthList.size())
     {
@@ -70,7 +70,7 @@ void Client::selectCharacter(const uint8_t &query_id, const char * const token)
 
 void Client::purgeTokenAuthList()
 {
-    const quint64 &time=QDateTime::currentDateTime().toMSecsSinceEpoch()/1000;
+    const uint64_t &time=QDateTime::currentDateTime().toMSecsSinceEpoch()/1000;
     unsigned int index=0;
     while(index<tokenAuthList.size())
     {
@@ -1045,7 +1045,7 @@ void Client::characterIsRightFinalStep()
     }
     else
     {
-        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.public_informations.simplifiedId);
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.public_informations.simplifiedId);
         posOutput+=2;
     }
     //pseudo
@@ -1069,7 +1069,7 @@ void Client::characterIsRightFinalStep()
     }
 
     //clan related
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(public_and_private_informations.clan);
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(public_and_private_informations.clan);
     posOutput+=4;
     if(public_and_private_informations.clan_leader)
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
@@ -1104,12 +1104,12 @@ void Client::characterIsRightFinalStep()
     }
 
     {
-        const quint64 cash=htole64(public_and_private_informations.cash);
+        const uint64_t cash=htole64(public_and_private_informations.cash);
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&cash,8);
         posOutput+=8;
     }
     {
-        const quint64 cash=htole64(public_and_private_informations.warehouse_cash);
+        const uint64_t cash=htole64(public_and_private_informations.warehouse_cash);
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&cash,8);
         posOutput+=8;
     }
@@ -1128,7 +1128,7 @@ void Client::characterIsRightFinalStep()
 
     //send plant on map
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-    const quint64 &time=QDateTime::currentDateTime().toMSecsSinceEpoch()/1000;
+    const uint64_t &time=QDateTime::currentDateTime().toMSecsSinceEpoch()/1000;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.plantOnMap.size();
     posOutput+=1;
     auto i=public_and_private_informations.plantOnMap.begin();
@@ -1140,9 +1140,9 @@ void Client::characterIsRightFinalStep()
         posOutput+=1;
         /// \todo Can essaylly int 16 ovbertflow
         if(time<i->second.mature_at)
-            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(i->second.mature_at-time);
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(i->second.mature_at-time);
         else
-            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
         posOutput+=2;
         ++i;
     }
@@ -1155,12 +1155,12 @@ void Client::characterIsRightFinalStep()
     //send recipes
     {
         index=0;
-        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.recipes.size());
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.recipes.size());
         posOutput+=2;
         auto k=public_and_private_informations.recipes.begin();
         while(k!=public_and_private_informations.recipes.cend())
         {
-            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(*k);
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(*k);
             posOutput+=2;
             ++k;
         }
@@ -1198,7 +1198,7 @@ void Client::characterIsRightFinalStep()
             posOutput+=1;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i->second.level;
             posOutput+=1;
-            *reinterpret_cast<qint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(i->second.point);
+            *reinterpret_cast<int32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(i->second.point);
             posOutput+=4;
             ++i;
         }
@@ -1207,12 +1207,12 @@ void Client::characterIsRightFinalStep()
     /// \todo force to 255 max
     //send quest
     {
-        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.quests.size());
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.quests.size());
         posOutput+=2;
         auto j=public_and_private_informations.quests.begin();
         while(j!=public_and_private_informations.quests.cend())
         {
-            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(j->first);
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(j->first);
             posOutput+=2;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=j->second.step;
             posOutput+=1;
@@ -1224,12 +1224,12 @@ void Client::characterIsRightFinalStep()
 
     //send bot_already_beaten
     {
-        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.bot_already_beaten.size());
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.bot_already_beaten.size());
         posOutput+=2;
         auto k=public_and_private_informations.bot_already_beaten.begin();
         while(k!=public_and_private_informations.bot_already_beaten.cend())
         {
-            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(*k);
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(*k);
             posOutput+=2;
             ++k;
         }
@@ -1242,7 +1242,7 @@ void Client::characterIsRightFinalStep()
     }
     #endif
 
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
     sendInventory();
@@ -1310,7 +1310,7 @@ void Client::selectClan_return()
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         bool ok;
-        quint64 cash=stringtouint64(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
+        uint64_t cash=stringtouint64(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
         if(!ok)
         {
             cash=0;

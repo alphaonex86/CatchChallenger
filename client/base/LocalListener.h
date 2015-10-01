@@ -21,9 +21,9 @@ public:
     void quitAllRunningInstance();
 private:
     QLocalServer localServer;
-    quint8 count;
+    uint8_t count;
 private slots:
-    void listenServer(const quint8 &count);
+    void listenServer(const uint8_t &count);
     void dataIncomming();
     void deconnectClient();
     void newConnexion();

@@ -511,7 +511,7 @@ void Client::registerBattleRequest(Client *otherPlayerBattle)
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=otherPlayerBattle->public_and_private_informations.public_informations.skinId;
     posOutput+=1;
 
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
     sendBattleRequest(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
@@ -669,7 +669,7 @@ void Client::internalBattleAccepted(const bool &send)
         posOutput+=1;
         posOutput+=FacilityLib::publicPlayerMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,FacilityLib::playerMonsterToPublicPlayerMonster(*otherPlayerBattle->getCurrentMonster()));
 
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     }
 }
@@ -742,7 +742,7 @@ void Client::sendBattleReturn()
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.success;
         posOutput+=1;
-        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(attackReturnTemp.attack);
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(attackReturnTemp.attack);
         posOutput+=2;
         //ad buff
         index=0;
@@ -778,7 +778,7 @@ void Client::sendBattleReturn()
         posOutput+=1;
         while(index<attackReturnTemp.lifeEffectMonster.size())
         {
-            *reinterpret_cast<qint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(attackReturnTemp.lifeEffectMonster.at(index).quantity);
+            *reinterpret_cast<int32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(attackReturnTemp.lifeEffectMonster.at(index).quantity);
             posOutput+=4;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.lifeEffectMonster.at(index).on;
             posOutput+=1;
@@ -790,7 +790,7 @@ void Client::sendBattleReturn()
         posOutput+=1;
         while(index<attackReturnTemp.buffLifeEffectMonster.size())
         {
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(attackReturnTemp.buffLifeEffectMonster.at(index).quantity);
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(attackReturnTemp.buffLifeEffectMonster.at(index).quantity);
             posOutput+=4;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.buffLifeEffectMonster.at(index).on;
             posOutput+=1;

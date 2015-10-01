@@ -87,7 +87,7 @@ public:
     static int privateChatDropTotalCache;
     static int privateChatDropNewValue;
     static std::vector<uint16_t> marketObjectIdList;
-    static quint64 datapack_list_cache_timestamp_base,datapack_list_cache_timestamp_main,datapack_list_cache_timestamp_sub;
+    static uint64_t datapack_list_cache_timestamp_base,datapack_list_cache_timestamp_main,datapack_list_cache_timestamp_sub;
     static std::vector<uint16_t> simplifiedIdList;
     static std::unordered_map<std::string,Client *> playerByPseudo;
     static std::unordered_map<uint32_t,Clan *> clanList;
@@ -170,7 +170,7 @@ private:
     //-------------------
     uint32_t account_id;//0 if not logged
     uint32_t character_id;
-    quint64 market_cash;
+    uint64_t market_cash;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     bool isConnected;
     #endif
@@ -462,13 +462,13 @@ private:
     uint32_t removeObject(const uint16_t &item,const uint32_t &quantity=1);
     void sendRemoveObject(const uint16_t &item,const uint32_t &quantity=1);
     uint32_t objectQuantity(const uint16_t &item) const;
-    bool addMarketCashWithoutSave(const quint64 &cash);
-    void addCash(const quint64 &cash,const bool &forceSave=false);
-    void removeCash(const quint64 &cash);
-    void addWarehouseCash(const quint64 &cash,const bool &forceSave=false);
-    void removeWarehouseCash(const quint64 &cash);
-    void wareHouseStore(const qint64 &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint32_t> &withdrawMonsters, const std::vector<uint32_t> &depositeMonsters);
-    bool wareHouseStoreCheck(const qint64 &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint32_t> &withdrawMonsters, const std::vector<uint32_t> &depositeMonsters);
+    bool addMarketCashWithoutSave(const uint64_t &cash);
+    void addCash(const uint64_t &cash,const bool &forceSave=false);
+    void removeCash(const uint64_t &cash);
+    void addWarehouseCash(const uint64_t &cash,const bool &forceSave=false);
+    void removeWarehouseCash(const uint64_t &cash);
+    void wareHouseStore(const int64_t &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint32_t> &withdrawMonsters, const std::vector<uint32_t> &depositeMonsters);
+    bool wareHouseStoreCheck(const int64_t &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint32_t> &withdrawMonsters, const std::vector<uint32_t> &depositeMonsters);
     void addWarehouseObject(const uint16_t &item,const uint32_t &quantity=1);
     uint32_t removeWarehouseObject(const uint16_t &item,const uint32_t &quantity=1);
 
@@ -496,7 +496,7 @@ private:
     void tradeCanceled();
     void tradeAccepted();
     void tradeFinished();
-    void tradeAddTradeCash(const quint64 &cash);
+    void tradeAddTradeCash(const uint64_t &cash);
     void tradeAddTradeObject(const uint16_t &item,const uint32_t &quantity);
     void tradeAddTradeMonster(const uint32_t &monsterId);
     //quest
@@ -519,7 +519,7 @@ private:
     void addClan_return(const uint8_t &query_id, const uint8_t &action, const std::string &text);
     void addClan_object();
     static void addClan_static(void *object);
-    void haveClanInfo(const uint32_t &clanId, const std::string &clanName, const quint64 &cash);
+    void haveClanInfo(const uint32_t &clanId, const std::string &clanName, const uint64_t &cash);
     void sendClanInfo();
     void clanInvite(const bool &accept);
     void waitingForCityCaputre(const bool &cancel);
@@ -631,7 +631,7 @@ private:
     Client * otherPlayerTrade;
     bool tradeIsValidated;
     bool tradeIsFreezed;
-    quint64 tradeCash;
+    uint64_t tradeCash;
     std::unordered_map<uint32_t,uint32_t> tradeObjects;
     std::vector<PlayerMonster> tradeMonster;
     std::vector<uint32_t> inviteToClanList;
@@ -660,7 +660,7 @@ private:
     bool getInTrade() const;
     void registerTradeRequest(Client * otherPlayerTrade);
     bool getIsFreezed() const;
-    quint64 getTradeCash() const;
+    uint64_t getTradeCash() const;
     std::unordered_map<uint32_t,uint32_t> getTradeObjects() const;
     std::vector<PlayerMonster> getTradeMonster() const;
     void resetTheTrade();

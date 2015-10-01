@@ -7,7 +7,7 @@
 
 using namespace CatchChallenger;
 
-bool LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char *data, const unsigned int &size)
+bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char *data, const unsigned int &size)
 {
     Q_UNUSED(queryNumber);
     Q_UNUSED(size);
@@ -22,7 +22,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
                 parseNetworkReadError(QStringLiteral("wrong size with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
                 return;
             }
-            quint8 returnCode=data[0x00];
+            uint8_t returnCode=data[0x00];
             if(returnCode>=0x04 && returnCode<=0x06)
             {
                 switch(returnCode)
@@ -43,7 +43,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
                         parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
                     return;
                 }
-                if(size!=(sizeof(quint8)))
+                if(size!=(sizeof(uint8_t)))
                 {
                     parseNetworkReadError(QStringLiteral("compression type wrong size (stage 3) with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
                     return;
@@ -72,7 +72,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
     }
 }
 
-void LinkToGameServer::parseMessage(const quint8 &mainCodeType,const char *data,const unsigned int &size)
+void LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char *data,const unsigned int &size)
 {
     if(stat!=Stat::Logged)
     {
@@ -85,7 +85,7 @@ void LinkToGameServer::parseMessage(const quint8 &mainCodeType,const char *data,
         client->packOutcommingData(mainCodeType,data,size);
 }
 
-void LinkToGameServer::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char *rawData,const unsigned int &size)
+void LinkToGameServer::parseFullMessage(const uint8_t &mainCodeType,const uint8_t &subCodeType,const char *rawData,const unsigned int &size)
 {
     if(stat!=Stat::Logged)
     {
@@ -99,7 +99,7 @@ void LinkToGameServer::parseFullMessage(const quint8 &mainCodeType,const quint8 
 }
 
 //have query with reply
-void LinkToGameServer::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+void LinkToGameServer::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char *data,const unsigned int &size)
 {
     Q_UNUSED(data);
     if(stat!=Stat::Logged)
@@ -108,7 +108,7 @@ void LinkToGameServer::parseQuery(const quint8 &mainCodeType,const quint8 &query
         client->packOutcommingQuery(mainCodeType,queryNumber,data,size);
 }
 
-void LinkToGameServer::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *rawData,const unsigned int &size)
+void LinkToGameServer::parseFullQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char *rawData,const unsigned int &size)
 {
     (void)subCodeType;
     (void)queryNumber;
@@ -125,7 +125,7 @@ void LinkToGameServer::parseFullQuery(const quint8 &mainCodeType,const quint8 &s
 }
 
 //send reply
-void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+void LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char *data,const unsigned int &size)
 {
     if(stat!=Stat::Logged)
     {
@@ -148,7 +148,7 @@ void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &q
         client->postReply(queryNumber,data,size);
 }
 
-void LinkToGameServer::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+void LinkToGameServer::parseFullReplyData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char *data,const unsigned int &size)
 {
     if(stat!=Stat::Logged)
     {

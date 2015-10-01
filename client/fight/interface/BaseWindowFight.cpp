@@ -23,7 +23,7 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
 {
     if(!monsters_items_graphical.contains(item))
         return;
-    quint32 monsterId=monsters_items_graphical.value(item);
+    uint32_t monsterId=monsters_items_graphical.value(item);
     if(inSelection)
     {
        objectSelection(true,monsterId);
@@ -101,7 +101,7 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
                 ui->monsterDetailsGender->setPixmap(QPixmap());
                 ui->monsterDetailsGender->setToolTip(QString());
             }
-            quint32 maxXp=monsterGeneralInfo.level_to_xp.at(monster.level-1);
+            uint32_t maxXp=monsterGeneralInfo.level_to_xp.at(monster.level-1);
             ui->monsterDetailsLevel->setText(tr("Level %1").arg(monster.level));
             ui->monsterDetailsStatHeal->setText(tr("Heal: %1/%2").arg(monster.hp).arg(stat.hp));
             ui->monsterDetailsStatSpeed->setText(tr("Speed: %1").arg(stat.speed));
@@ -339,7 +339,7 @@ void BaseWindow::load_monsters()
 
             if(waitedObjectType==ObjectType_MonsterToLearn && inSelection)
             {
-                QHash<quint32,quint8> skillToDisplay;
+                QHash<uint32_t,uint8_t> skillToDisplay;
                 int sub_index=0;
                 while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.monsters.value(monster.monster).learn.size())
                 {
@@ -425,7 +425,7 @@ void BaseWindow::load_monsters()
     ui->selectMonster->setVisible(true);
 }
 
-void BaseWindow::wildFightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y)
+void BaseWindow::wildFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y)
 {
     if(!fightCollision(map,x,y))
         return;
@@ -452,7 +452,7 @@ void BaseWindow::prepareFight()
     escapeSuccess=false;
 }
 
-void BaseWindow::botFight(const quint32 &fightId)
+void BaseWindow::botFight(const uint32_t &fightId)
 {
     if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.contains(fightId))
     {
@@ -465,7 +465,7 @@ void BaseWindow::botFight(const quint32 &fightId)
     botFightFull(fightId);
 }
 
-void BaseWindow::botFightFull(const quint32 &fightId)
+void BaseWindow::botFightFull(const uint32_t &fightId)
 {
     this->fightId=fightId;
     botFightTimer.start();
@@ -506,7 +506,7 @@ void BaseWindow::botFightFullDiffered()
     moveFightMonsterBoth();
 }
 
-bool BaseWindow::fightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y)
+bool BaseWindow::fightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y)
 {
     if(!CatchChallenger::ClientFightEngine::fightEngine.isInFight())
     {
@@ -527,7 +527,7 @@ bool BaseWindow::fightCollision(CatchChallenger::Map_client *map, const quint8 &
     return true;
 }
 
-void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, const quint8 &y)
+void BaseWindow::init_environement_display(Map_client *map, const uint8_t &x, const uint8_t &y)
 {
     Q_UNUSED(x);
     Q_UNUSED(y);
@@ -776,7 +776,7 @@ void BaseWindow::moveFightMonsterBottom()
     }
 }
 
-void BaseWindow::teleportTo(const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
+void BaseWindow::teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
 {
     Q_UNUSED(mapId);
     Q_UNUSED(x);
@@ -806,7 +806,7 @@ void BaseWindow::updateCurrentMonsterInformationXp()
     ui->progressBarFightBottomExp->repaint();
     ui->labelFightBottomLevel->setText(tr("Level %1").arg(monster->level));
     const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.value(monster->monster);
-    quint32 maxXp=monsterInformations.level_to_xp.at(monster->level-1);
+    uint32_t maxXp=monsterInformations.level_to_xp.at(monster->level-1);
     ui->progressBarFightBottomExp->setMaximum(maxXp);
 }
 
@@ -1201,8 +1201,8 @@ void BaseWindow::on_pushButtonFightAttackConfirmed_clicked()
         QMessageBox::warning(this,tr("Selection error"),tr("You need select an attack"));
         return;
     }
-    const quint32 skillEndurance=itemsList.first()->data(99).toUInt();
-    const quint32 skillUsed=fight_attacks_graphical.value(itemsList.first());
+    const uint32_t skillEndurance=itemsList.first()->data(99).toUInt();
+    const uint32_t skillUsed=fight_attacks_graphical.value(itemsList.first());
     if(skillEndurance<=0 && !useTheRescueSkill)
     {
         QMessageBox::warning(this,tr("No endurance"),tr("You have no more endurance to use this skill"));
@@ -1250,7 +1250,7 @@ void BaseWindow::on_listWidgetFightAttack_itemSelectionChanged()
         ui->labelFightAttackDetails->setText(tr("Select an attack"));
         return;
     }
-    quint32 skillId=fight_attacks_graphical.value(itemsList.first());
+    uint32_t skillId=fight_attacks_graphical.value(itemsList.first());
     ui->labelFightAttackDetails->setText(DatapackClientLoader::datapackLoader.monsterSkillsExtra.value(skillId).description);
 }
 
@@ -1436,7 +1436,7 @@ void BaseWindow::loose()
     }
     else if(!botFightList.isEmpty())
     {
-        quint32 fightId=botFightList.first();
+        uint32_t fightId=botFightList.first();
         botFightList.removeFirst();
         botFight(fightId);
     }
@@ -1528,7 +1528,7 @@ void BaseWindow::win()
     }
     else if(!botFightList.isEmpty())
     {
-        quint32 fightId=botFightList.first();
+        uint32_t fightId=botFightList.first();
         botFightList.removeFirst();
         botFight(fightId);
     }
@@ -1619,7 +1619,7 @@ void BaseWindow::doNextAction()
     //if the other monster is KO
     if(CatchChallenger::ClientFightEngine::fightEngine.otherMonsterIsKO())
     {
-        quint32 returnedLastGivenXP=CatchChallenger::ClientFightEngine::fightEngine.lastGivenXP();
+        uint32_t returnedLastGivenXP=CatchChallenger::ClientFightEngine::fightEngine.lastGivenXP();
         if(returnedLastGivenXP>2*1000*1000)
         {
             newError(tr("Internal error"),QStringLiteral("returnedLastGivenXP is negative"));
@@ -1913,7 +1913,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
     if(!currentAttack.addBuffEffectMonster.isEmpty())
     {
         const Skill::BuffEffect &addBuffEffectMonster=currentAttack.addBuffEffectMonster.first();
-        QHash<quint32,QListWidgetItem *> *buffToGraphicalItemCurrentbar=NULL;
+        QHash<uint32_t,QListWidgetItem *> *buffToGraphicalItemCurrentbar=NULL;
         QListWidget *listWidget=NULL;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         bool onBuffCurrentMonster;
@@ -2046,7 +2046,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
     if(!currentAttack.removeBuffEffectMonster.isEmpty())
     {
         const Skill::BuffEffect &removeBuffEffectMonster=currentAttack.removeBuffEffectMonster.first();
-        QHash<quint32,QListWidgetItem *> *buffToGraphicalItemCurrentbar=NULL;
+        QHash<uint32_t,QListWidgetItem *> *buffToGraphicalItemCurrentbar=NULL;
         if(currentAttack.doByTheCurrentMonster)
         {
             if((removeBuffEffectMonster.on & ApplyOn_AllEnemy) || (removeBuffEffectMonster.on & ApplyOn_AloneEnemy))
@@ -2264,7 +2264,7 @@ void BaseWindow::displayAttack()
 
     //attack animation
     {
-        quint32 attackId=attackReturn.attack;
+        uint32_t attackId=attackReturn.attack;
         QString skillAnimation=DatapackClientLoader::datapackLoader.getDatapackPath()+QStringLiteral(DATAPACK_BASE_PATH_SKILLANIMATION);
         QString fileAnimation=skillAnimation+QStringLiteral("%1.mng").arg(attackId);
         if(QFile(fileAnimation).exists())
@@ -2449,7 +2449,7 @@ void BaseWindow::displayExperienceGain()
             doNextAction();
             return;
         }
-        if(currentMonsterLevel==currentMonster->level && (quint32)ui->progressBarFightBottomExp->value()>currentMonster->remaining_xp)
+        if(currentMonsterLevel==currentMonster->level && (uint32_t)ui->progressBarFightBottomExp->value()>currentMonster->remaining_xp)
         {
             newError(tr("Internal error"),QStringLiteral("part0: displayed xp greater than the real xp: %1>%2").arg(ui->progressBarFightBottomExp->value()).arg(currentMonster->remaining_xp));
             mLastGivenXP=0;
@@ -2483,15 +2483,15 @@ void BaseWindow::displayExperienceGain()
     }
     #endif
 
-    quint32 xp_to_change;
+    uint32_t xp_to_change;
     xp_to_change=ui->progressBarFightBottomExp->maximum()/200;//0.5%
     if(xp_to_change==0)
         xp_to_change=1;
     if(xp_to_change>mLastGivenXP)
         xp_to_change=mLastGivenXP;
 
-    quint32 maxXp=ui->progressBarFightBottomExp->maximum();
-    if(((quint32)ui->progressBarFightBottomExp->value()+xp_to_change)>=(quint32)maxXp)
+    uint32_t maxXp=ui->progressBarFightBottomExp->maximum();
+    if(((uint32_t)ui->progressBarFightBottomExp->value()+xp_to_change)>=(uint32_t)maxXp)
     {
         xp_to_change=maxXp-ui->progressBarFightBottomExp->value();
         if(xp_to_change>mLastGivenXP)
@@ -2631,12 +2631,12 @@ void BaseWindow::displayTrap()
         displayTrapProgression=1;
         ui->labelFightTrap->show();
     }
-    quint32 animationTime;
+    uint32_t animationTime;
     if(displayTrapProgression==1)
         animationTime=1500;
     else
         animationTime=2000;
-    if(displayTrapProgression==1 && (quint32)updateTrapTime.elapsed()<animationTime)
+    if(displayTrapProgression==1 && (uint32_t)updateTrapTime.elapsed()<animationTime)
         ui->labelFightTrap->move(
                     ui->labelFightMonsterBottom->pos().x()+(ui->labelFightMonsterTop->pos().x()-ui->labelFightMonsterBottom->pos().x())*updateTrapTime.elapsed()/animationTime,
                     ui->labelFightMonsterBottom->pos().y()-(ui->labelFightMonsterBottom->pos().y()-ui->labelFightMonsterTop->pos().y())*updateTrapTime.elapsed()/animationTime
@@ -2645,7 +2645,7 @@ void BaseWindow::displayTrap()
         ui->labelFightTrap->move(ui->labelFightMonsterTop->pos().x(),ui->labelFightMonsterTop->pos().y());
     if(!CatchChallenger::ClientFightEngine::fightEngine.playerMonster_catchInProgress.isEmpty())
         return;
-    if((quint32)updateTrapTime.elapsed()>animationTime)
+    if((uint32_t)updateTrapTime.elapsed()>animationTime)
     {
         updateTrapTime.restart();
         if(displayTrapProgression==1)
@@ -2818,7 +2818,7 @@ void BaseWindow::on_learnAttackList_itemActivated(QListWidgetItem *item)
     showLearnSkill(monsterToLearn);
 }
 
-bool BaseWindow::learnSkill(const quint32 &monsterId,const quint32 &skill)
+bool BaseWindow::learnSkill(const uint32_t &monsterId,const uint32_t &skill)
 {
     if(!showLearnSkill(monsterId))
     {
@@ -2835,7 +2835,7 @@ bool BaseWindow::learnSkill(const quint32 &monsterId,const quint32 &skill)
 }
 
 //learn
-bool BaseWindow::showLearnSkill(const quint32 &monsterId)
+bool BaseWindow::showLearnSkill(const uint32_t &monsterId)
 {
     QFont MissingQuantity;
     MissingQuantity.setItalic(true);
@@ -2843,7 +2843,7 @@ bool BaseWindow::showLearnSkill(const quint32 &monsterId)
     attack_to_learn_graphical.clear();
     QList<PlayerMonster> playerMonster=ClientFightEngine::fightEngine.getPlayerMonster();
     //get the right monster
-    QHash<quint32,quint8> skillToDisplay;
+    QHash<uint32_t,uint8_t> skillToDisplay;
     int index=0;
     while(index<playerMonster.size())
     {
@@ -2894,11 +2894,11 @@ bool BaseWindow::showLearnSkill(const quint32 &monsterId)
                 }
                 sub_index++;
             }
-            QHashIterator<quint32,quint8> i(skillToDisplay);
+            QHashIterator<uint32_t,uint8_t> i(skillToDisplay);
             while (i.hasNext()) {
                 i.next();
                 QListWidgetItem *item=new QListWidgetItem();
-                const quint32 &level=i.value();
+                const uint32_t &level=i.value();
                 if(CommonSettingsServer::commonSettingsServer.useSP)
                 {
                     if(level<=1)
@@ -2971,7 +2971,7 @@ void BaseWindow::sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn
     doNextAction();
 }
 
-/*void BaseWindow::sendFullBattleReturn(const QList<Skill::AttackReturn> &attackReturn,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
+/*void BaseWindow::sendFullBattleReturn(const QList<Skill::AttackReturn> &attackReturn,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
 {
     if(CatchChallenger::ClientFightEngine::fightEngine.haveBattleOtherMonster())
     {
@@ -2999,7 +2999,7 @@ void BaseWindow::on_listWidgetFightAttack_itemActivated(QListWidgetItem *item)
     on_pushButtonFightAttackConfirmed_clicked();
 }
 
-void BaseWindow::useTrap(const quint32 &itemId)
+void BaseWindow::useTrap(const uint32_t &itemId)
 {
     updateTrapTime.restart();
     displayTrapProgression=0;
@@ -3008,7 +3008,7 @@ void BaseWindow::useTrap(const quint32 &itemId)
     displayTrap();
 }
 
-void BaseWindow::monsterCatch(const quint32 &newMonsterId)
+void BaseWindow::monsterCatch(const uint32_t &newMonsterId)
 {
     if(CatchChallenger::ClientFightEngine::fightEngine.playerMonster_catchInProgress.isEmpty())
     {
@@ -3042,7 +3042,7 @@ void BaseWindow::monsterCatch(const quint32 &newMonsterId)
     displayTrap();
 }
 
-void BaseWindow::battleAcceptedByOther(const QString &pseudo,const quint8 &skinId,const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
+void BaseWindow::battleAcceptedByOther(const QString &pseudo,const uint8_t &skinId,const QList<uint8_t> &stat,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
 {
     BattleInformations battleInformations;
     battleInformations.pseudo=pseudo;
@@ -3110,7 +3110,7 @@ void BaseWindow::battleCanceledByOther()
     }
     else if(!botFightList.isEmpty())
     {
-        quint32 fightId=botFightList.first();
+        uint32_t fightId=botFightList.first();
         botFightList.removeFirst();
         botFight(fightId);
     }

@@ -14,12 +14,12 @@ class TemporaryTile : public QObject
 public:
     explicit TemporaryTile(Tiled::MapObject* object);
     ~TemporaryTile();
-    void startAnimation(Tiled::Tile *tile,const quint32 &ms,const quint8 &count);
+    void startAnimation(Tiled::Tile *tile,const uint32_t &ms,const uint8_t &count);
     static Tiled::Tile *empty;
 private:
     Tiled::MapObject* object;
     int index;
-    quint8 count;
+    uint8_t count;
     QTimer timer;
 private:
     void updateTheTile();

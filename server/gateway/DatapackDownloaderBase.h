@@ -58,13 +58,13 @@ private:
     //file list
     struct query_files
     {
-        quint8 id;
+        uint8_t id;
         std::vector<std::string> filesName;
     };
     std::vector<query_files> query_files_list_base;
     bool wait_datapack_content_base;
     std::vector<std::string> datapackFilesListBase;
-    std::vector<quint32> partialHashListBase;
+    std::vector<uint32_t> partialHashListBase;
     static std::string text_slash;
     static std::string text_dotcoma;
     bool httpError;
@@ -79,7 +79,7 @@ private:
     bool getHttpFileBase(const std::string &url, const std::string &fileName);
 private slots:
     void datapackDownloadFinishedBase();
-    void datapackChecksumDoneBase(const std::vector<std::string> &datapackFilesList,const QByteArray &hash, const std::vector<quint32> &partialHash);
+    void datapackChecksumDoneBase(const std::vector<std::string> &datapackFilesList,const QByteArray &hash, const std::vector<uint32_t> &partialHash);
     void haveTheDatapack();
 };
 }

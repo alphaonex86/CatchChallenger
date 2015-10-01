@@ -82,7 +82,7 @@ void DatapackClientLoader::parseMonstersExtra()
             {
                 if(item.hasAttribute(DatapackClientLoader::text_id))
                 {
-                    quint32 id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
+                    uint32_t id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
                     if(!ok)
                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     else
@@ -293,7 +293,7 @@ void DatapackClientLoader::parseMonstersExtra()
             item = item.nextSiblingElement(DatapackClientLoader::text_monster);
         }
 
-        QHashIterator<quint16,CatchChallenger::Monster> i(CatchChallenger::CommonDatapack::commonDatapack.monsters);
+        QHashIterator<uint16_t,CatchChallenger::Monster> i(CatchChallenger::CommonDatapack::commonDatapack.monsters);
         while(i.hasNext())
         {
             i.next();
@@ -481,7 +481,7 @@ void DatapackClientLoader::parseBuffExtra()
             {
                 if(item.hasAttribute(DatapackClientLoader::text_id))
                 {
-                    quint32 id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
+                    uint32_t id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
                     if(!ok)
                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     else
@@ -592,7 +592,7 @@ void DatapackClientLoader::parseBuffExtra()
             item = item.nextSiblingElement(DatapackClientLoader::text_buff);
         }
 
-        QHashIterator<quint8,CatchChallenger::Buff> i(CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs);
+        QHashIterator<uint8_t,CatchChallenger::Buff> i(CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs);
         while(i.hasNext())
         {
             i.next();
@@ -674,7 +674,7 @@ void DatapackClientLoader::parseSkillsExtra()
             {
                 if(item.hasAttribute(DatapackClientLoader::text_id))
                 {
-                    quint32 id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
+                    uint32_t id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
                     if(!ok)
                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     else
@@ -775,7 +775,7 @@ void DatapackClientLoader::parseSkillsExtra()
             item = item.nextSiblingElement(DatapackClientLoader::text_skill);
         }
 
-        QHashIterator<quint16,CatchChallenger::Skill> i(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills);
+        QHashIterator<uint16_t,CatchChallenger::Skill> i(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills);
         while(i.hasNext())
         {
             i.next();
@@ -848,7 +848,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                 {
                     if(item.hasAttribute(DatapackClientLoader::text_id))
                     {
-                        quint32 id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
+                        uint32_t id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
                         if(ok)
                         {
                             if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.contains(id))
@@ -952,7 +952,7 @@ void DatapackClientLoader::parseBotFightsExtra()
         }
     }
 
-    QHashIterator<quint16,CatchChallenger::BotFight> i(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights);
+    QHashIterator<uint16_t,CatchChallenger::BotFight> i(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights);
     while(i.hasNext())
     {
         i.next();

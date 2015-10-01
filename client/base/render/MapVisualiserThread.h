@@ -56,7 +56,7 @@ public slots:
 private:
     QHash<QString,MapVisualiserThread::Map_full> mapCache;
     Tiled::MapReader reader;
-    QHash<QString/*name*/,QHash<quint32/*bot id*/,CatchChallenger::Bot> > botFiles;
+    QHash<QString/*name*/,QHash<uint32_t/*bot id*/,CatchChallenger::Bot> > botFiles;
     QString language;
 };
 
