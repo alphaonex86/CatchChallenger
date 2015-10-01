@@ -62,7 +62,7 @@ void BaseWindow::loadSettings()
 
 void BaseWindow::loadSettingsWithDatapack()
 {
-    const quint8 &forcedZoom=Options::options.getForcedZoom();
+    const uint8_t &forcedZoom=Options::options.getForcedZoom();
     if(forcedZoom==0)
     {
         ui->zoom->setEnabled(false);

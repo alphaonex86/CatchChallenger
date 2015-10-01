@@ -180,7 +180,7 @@ void Api_client_real::httpFinishedBase()
         datapackDownloadFinishedBase();
 }
 
-void Api_client_real::datapackChecksumDoneBase(const QStringList &datapackFilesList,const QByteArray &hash,const QList<quint32> &partialHashList)
+void Api_client_real::datapackChecksumDoneBase(const QStringList &datapackFilesList,const QByteArray &hash,const QList<uint32_t> &partialHashList)
 {
     if(datapackFilesListBase.size()!=partialHashList.size())
     {
@@ -207,12 +207,12 @@ void Api_client_real::datapackChecksumDoneBase(const QStringList &datapackFilesL
             return;//need CommonSettings::commonSettings.datapackHash send by the server
         }
         qDebug() << "Datapack is empty or hash don't match, get from server, hash local: " << QString(hash.toHex()) << ", hash on server: " << QString(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.toHex());
-        quint8 datapack_content_query_number=queryNumber();
+        uint8_t datapack_content_query_number=queryNumber();
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (quint8)DatapackStatus::Base;
-        out << (quint32)datapackFilesListBase.size();
+        out << (uint8_t)DatapackStatus::Base;
+        out << (uint32_t)datapackFilesListBase.size();
         int index=0;
         while(index<datapackFilesListBase.size())
         {
@@ -232,7 +232,7 @@ void Api_client_real::datapackChecksumDoneBase(const QStringList &datapackFilesL
         {
             /*struct stat info;
             stat(QString(mDatapackBase+datapackFilesListBase.at(index)).toLatin1().data(),&info);*/
-            out << (quint32)partialHashList.at(index);
+            out << (uint32_t)partialHashList.at(index);
 
             index++;
         }
@@ -257,7 +257,7 @@ void Api_client_real::datapackChecksumDoneBase(const QStringList &datapackFilesL
     }
 }
 
-void Api_client_real::downloadProgressDatapackBase(qint64 bytesReceived, qint64 bytesTotal)
+void Api_client_real::downloadProgressDatapackBase(int64_t bytesReceived, int64_t bytesTotal)
 {
     if(!datapackTarXzBase)
     {
@@ -446,7 +446,7 @@ void Api_client_real::httpFinishedForDatapackListBase()
                         int indexInDatapackList=datapackFilesListBase.indexOf(fileString);
                         if(indexInDatapackList!=-1)
                         {
-                            const quint32 &hashFileOnDisk=partialHashListBase.at(indexInDatapackList);
+                            const uint32_t &hashFileOnDisk=partialHashListBase.at(indexInDatapackList);
                             QFileInfo file(mDatapackBase+fileString);
                             if(!file.exists())
                             {
@@ -454,7 +454,7 @@ void Api_client_real::httpFinishedForDatapackListBase()
                                 fileToGet++;
                                 sizeToGet+=sizeString.toUInt();
                             }
-                            else if(hashFileOnDisk!=*reinterpret_cast<const quint32 *>(QByteArray::fromHex(partialHashString.toLatin1()).constData()))
+                            else if(hashFileOnDisk!=*reinterpret_cast<const uint32_t *>(QByteArray::fromHex(partialHashString.toLatin1()).constData()))
                             {
                                 getHttpFileBase(selectedMirror+fileString,fileString);
                                 fileToGet++;

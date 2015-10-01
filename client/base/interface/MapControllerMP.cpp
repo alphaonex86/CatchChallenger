@@ -24,10 +24,10 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer,const bool &debugTag
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_public_informations>("CatchChallenger::Player_public_informations");
     qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("CatchChallenger::Player_private_and_public_informations");
-    qRegisterMetaType<QList<QPair<quint8,CatchChallenger::Direction> > >("QList<QPair<quint8,CatchChallenger::Direction> >");
+    qRegisterMetaType<QList<QPair<uint8_t,CatchChallenger::Direction> > >("QList<QPair<uint8_t,CatchChallenger::Direction> >");
     qRegisterMetaType<QList<MapVisualiserThread::Map_full> >("QList<MapVisualiserThread::Map_full>");
-    qRegisterMetaType<QList<QPair<CatchChallenger::Direction,quint8> > >("QList<QPair<CatchChallenger::Direction,quint8> >");
-    qRegisterMetaType<QList<QPair<CatchChallenger::Orientation,quint8> > >("QList<QPair<CatchChallenger::Orientation,quint8> >");
+    qRegisterMetaType<QList<QPair<CatchChallenger::Direction,uint8_t> > >("QList<QPair<CatchChallenger::Direction,uint8_t> >");
+    qRegisterMetaType<QList<QPair<CatchChallenger::Orientation,uint8_t> > >("QList<QPair<CatchChallenger::Orientation,uint8_t> >");
     connect(&pathFinding,&PathFinding::result,this,&MapControllerMP::pathFindingResult);
 
     playerpseudofont=QFont(QStringLiteral("Arial"));
@@ -68,7 +68,7 @@ void MapControllerMP::resetAll()
     delayedActions.clear();
     skinFolderList.clear();
 
-    QHashIterator<quint16,OtherPlayer> i(otherPlayerList);
+    QHashIterator<uint16_t,OtherPlayer> i(otherPlayerList);
     while (i.hasNext()) {
         i.next();
         unloadOtherPlayerFromMap(i.value());
@@ -96,7 +96,7 @@ void MapControllerMP::setScale(const float &scaleSize)
     this->scaleSize=scaleSize;
 }
 
-bool MapControllerMP::loadPlayerMap(const QString &fileName,const quint8 &x,const quint8 &y)
+bool MapControllerMP::loadPlayerMap(const QString &fileName,const uint8_t &x,const uint8_t &y)
 {
     //position
     this->x=x;
@@ -109,7 +109,7 @@ bool MapControllerMP::loadPlayerMap(const QString &fileName,const quint8 &x,cons
 }
 
 //map move
-void MapControllerMP::insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
+void MapControllerMP::insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
 {
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
@@ -128,7 +128,7 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
         #endif
         return;
     }
-    if(mapId>=(quint32)DatapackClientLoader::datapackLoader.maps.size())
+    if(mapId>=(uint32_t)DatapackClientLoader::datapackLoader.maps.size())
     {
         /// \bug here pass after delete a party, create a new
         emit error("mapId greater than DatapackClientLoader::datapackLoader.maps.size(): "+QString::number(DatapackClientLoader::datapackLoader.maps.size()));
@@ -414,8 +414,8 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
             case CatchChallenger::Direction_move_at_bottom:
             case CatchChallenger::Direction_move_at_left:
             {
-                QList<QPair<quint8, CatchChallenger::Direction> > movement;
-                QPair<quint8, CatchChallenger::Direction> move;
+                QList<QPair<uint8_t, CatchChallenger::Direction> > movement;
+                QPair<uint8_t, CatchChallenger::Direction> move;
                 move.first=0;
                 move.second=direction;
                 movement << move;
@@ -524,7 +524,7 @@ void MapControllerMP::unloadOtherPlayerFromMap(OtherPlayer otherPlayer)
     }
 }
 
-void MapControllerMP::move_player(const quint16 &id, const QList<QPair<quint8, CatchChallenger::Direction> > &movement)
+void MapControllerMP::move_player(const uint16_t &id, const QList<QPair<uint8_t, CatchChallenger::Direction> > &movement)
 {
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
@@ -552,7 +552,7 @@ void MapControllerMP::move_player(const quint16 &id, const QList<QPair<quint8, C
     int index_temp=0;
     while(index_temp<movement.size())
     {
-        QPair<quint8, CatchChallenger::Direction> move=movement.at(index_temp);
+        QPair<uint8_t, CatchChallenger::Direction> move=movement.at(index_temp);
         moveString << QStringLiteral("{%1,%2}").arg(move.first).arg(CatchChallenger::MoveOnTheMap::directionToString(move.second));
         index_temp++;
     }
@@ -585,8 +585,8 @@ void MapControllerMP::move_player(const quint16 &id, const QList<QPair<quint8, C
         otherPlayerList[id].presumed_map=all_map.value(mapPath);
         loadOtherPlayerFromMap(otherPlayerList.value(id));
     }
-    quint8 x=otherPlayerList.value(id).x;
-    quint8 y=otherPlayerList.value(id).y;
+    uint8_t x=otherPlayerList.value(id).x;
+    uint8_t y=otherPlayerList.value(id).y;
     otherPlayerList[id].presumed_x=x;
     otherPlayerList[id].presumed_y=y;
     otherPlayerList[id].presumed_direction=otherPlayerList.value(id).direction;
@@ -597,7 +597,7 @@ void MapControllerMP::move_player(const quint16 &id, const QList<QPair<quint8, C
     int index=0;
     while(index<movement.size())
     {
-        QPair<quint8, CatchChallenger::Direction> move=movement.at(index);
+        QPair<uint8_t, CatchChallenger::Direction> move=movement.at(index);
         int index2=0;
         while(index2<move.first)
         {
@@ -712,7 +712,7 @@ void MapControllerMP::move_player(const quint16 &id, const QList<QPair<quint8, C
     }
 }
 
-void MapControllerMP::remove_player(const quint16 &id)
+void MapControllerMP::remove_player(const uint16_t &id)
 {
     if(id==player_informations.public_informations.simplifiedId)
     {
@@ -795,7 +795,7 @@ void MapControllerMP::remove_player(const quint16 &id)
     otherPlayerList.remove(id);
 }
 
-void MapControllerMP::reinsert_player(const quint16 &id,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction)
+void MapControllerMP::reinsert_player(const uint16_t &id,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction)
 {
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
@@ -844,14 +844,14 @@ void MapControllerMP::reinsert_player(const quint16 &id,const quint8 &x,const qu
         delayedActions << multiplex;
         return;
     }
-    quint32 mapId=(quint32)all_map.value(tempCurrentMap)->logicalMap.id;
+    uint32_t mapId=(uint32_t)all_map.value(tempCurrentMap)->logicalMap.id;
     if(mapId==0)
         qDebug() << QStringLiteral("supected NULL map then error");
     remove_player(id);
     insert_player(informations,mapId,x,y,direction);
 }
 
-void MapControllerMP::full_reinsert_player(const quint16 &id,const quint32 &mapId,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction)
+void MapControllerMP::full_reinsert_player(const uint16_t &id,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction)
 {
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
@@ -904,8 +904,8 @@ void MapControllerMP::dropAllPlayerOnTheMap()
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
     qDebug() << QStringLiteral("dropAllPlayerOnTheMap()");
     #endif
-    QList<quint16> temIdList;
-    QHashIterator<quint16,OtherPlayer> i(otherPlayerList);
+    QList<uint16_t> temIdList;
+    QHashIterator<uint16_t,OtherPlayer> i(otherPlayerList);
     while (i.hasNext()) {
         i.next();
         temIdList << i.key();
@@ -918,7 +918,7 @@ void MapControllerMP::dropAllPlayerOnTheMap()
     }
 }
 
-void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
+void MapControllerMP::teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
 {
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
@@ -933,7 +933,7 @@ void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const qui
         #endif
         return;
     }
-    if(mapId>=(quint32)DatapackClientLoader::datapackLoader.maps.size())
+    if(mapId>=(uint32_t)DatapackClientLoader::datapackLoader.maps.size())
     {
         emit error("mapId greater than DatapackClientLoader::datapackLoader.maps.size(): "+QString::number(DatapackClientLoader::datapackLoader.maps.size()));
         return;
@@ -1201,7 +1201,7 @@ void MapControllerMP::doMoveOtherAnimation()
         qDebug() << "moveOtherPlayerStepSlot() timer not located";
         return;
     }
-    const quint16 &simplifiedId=otherPlayerListByAnimationTimer.value(timer);
+    const uint16_t &simplifiedId=otherPlayerListByAnimationTimer.value(timer);
     moveOtherPlayerStepSlotWithPlayer(otherPlayerList[simplifiedId]);
 }
 
@@ -1213,7 +1213,7 @@ void MapControllerMP::moveOtherPlayerStepSlot()
         qDebug() << "moveOtherPlayerStepSlot() timer not located";
         return;
     }
-    const quint16 &simplifiedId=otherPlayerListByTimer.value(timer);
+    const uint16_t &simplifiedId=otherPlayerListByTimer.value(timer);
     moveOtherPlayerStepSlotWithPlayer(otherPlayerList[simplifiedId]);
 }
 
@@ -1230,8 +1230,8 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
     {
         otherPlayer.animationDisplayed=true;
         CatchChallenger::CommonMap * map=&otherPlayer.presumed_map->logicalMap;
-        quint8 x=otherPlayer.presumed_x;
-        quint8 y=otherPlayer.presumed_y;
+        uint8_t x=otherPlayer.presumed_x;
+        uint8_t y=otherPlayer.presumed_y;
         //set the final value (direction, position, ...)
         switch(otherPlayer.presumed_direction)
         {
@@ -1245,9 +1245,9 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
             break;
         }
         if(all_map.contains(map->map_file))
-            if(all_map.value(map->map_file)->doors.contains(QPair<quint8,quint8>(x,y)))
+            if(all_map.value(map->map_file)->doors.contains(QPair<uint8_t,uint8_t>(x,y)))
             {
-                MapDoor* door=all_map.value(map->map_file)->doors.value(QPair<quint8,quint8>(x,y));
+                MapDoor* door=all_map.value(map->map_file)->doors.value(QPair<uint8_t,uint8_t>(x,y));
                 door->startOpen(otherPlayer.playerSpeed);
                 otherPlayer.moveAnimationTimer->start(door->timeToOpen());
                 return;
@@ -1363,8 +1363,8 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         otherPlayer.animationDisplayed=false;
         CatchChallenger::CommonMap * old_map=&otherPlayer.presumed_map->logicalMap;
         CatchChallenger::CommonMap * map=&otherPlayer.presumed_map->logicalMap;
-        quint8 x=otherPlayer.presumed_x;
-        quint8 y=otherPlayer.presumed_y;
+        uint8_t x=otherPlayer.presumed_x;
+        uint8_t y=otherPlayer.presumed_y;
         //set the final value (direction, position, ...)
         switch(otherPlayer.presumed_direction)
         {
@@ -1497,7 +1497,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
 void MapControllerMP::destroyMap(MapVisualiserThread::Map_full *map)
 {
     //remove the other player
-    QHash<quint16,OtherPlayer>::const_iterator i = otherPlayerList.constBegin();
+    QHash<uint16_t,OtherPlayer>::const_iterator i = otherPlayerList.constBegin();
     while (i != otherPlayerList.constEnd()) {
         if(i.value().presumed_map==map)
         {
@@ -1528,7 +1528,7 @@ CatchChallenger::Direction MapControllerMP::moveFromPath()
     return CatchChallenger::Direction_move_at_bottom;
 }
 
-void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,quint8 x,quint8 y)
+void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,uint8_t x,uint8_t y)
 {
     if(event==CatchChallenger::MapEvent_SimpleClick)
     {
@@ -1584,7 +1584,7 @@ bool MapControllerMP::nextPathStep()//true if have step
     return false;
 }
 
-void MapControllerMP::pathFindingResult(const QList<QPair<CatchChallenger::Orientation,quint8> > &path)
+void MapControllerMP::pathFindingResult(const QList<QPair<CatchChallenger::Orientation,uint8_t> > &path)
 {
     if(!path.isEmpty())
     {

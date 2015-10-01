@@ -1,7 +1,7 @@
 #include "GetPrice.h"
 #include "ui_GetPrice.h"
 
-GetPrice::GetPrice(QWidget *parent, quint32 suggestedPrice) :
+GetPrice::GetPrice(QWidget *parent, uint32_t suggestedPrice) :
     QDialog(parent),
     ui(new Ui::GetPrice)
 {
@@ -26,7 +26,7 @@ void GetPrice::on_ok_clicked()
     close();
 }
 
-quint32 GetPrice::price()
+uint32_t GetPrice::price()
 {
     return ui->price->value();
 }

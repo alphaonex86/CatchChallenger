@@ -47,7 +47,7 @@ void Client::sendLocalChatText(const std::string &text)
         posOutput+=1;
 
         //set the dynamic size
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);
     }
 
     const int &size=static_cast<MapServer *>(map)->clientsForBroadcast.size();

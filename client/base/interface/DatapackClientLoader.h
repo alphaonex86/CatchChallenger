@@ -56,7 +56,7 @@ public:
     };
     struct QuestText
     {
-        QHash<quint32,QString> text;
+        QHash<uint32_t,QString> text;
     };
     struct MonsterExtra
     {
@@ -90,8 +90,8 @@ public:
         QColor defaultColor;
         struct VisualCategoryCondition
         {
-            quint8 event;
-            quint8 eventValue;
+            uint8_t event;
+            uint8_t eventValue;
             QColor color;
         };
         QList<VisualCategoryCondition> conditions;
@@ -103,33 +103,33 @@ public:
     struct PlantIndexContent
     {
         QString map;
-        quint8 x,y;
+        uint8_t x,y;
     };
-    QHash<quint32,TypeText> typeExtra;
-    QHash<quint32,MonsterExtra> monsterExtra;
-    QHash<quint32,MonsterExtra::Buff> monsterBuffsExtra;
-    QHash<quint32,MonsterExtra::Skill> monsterSkillsExtra;
-    QHash<quint32,ItemExtra> itemsExtra;
+    QHash<uint32_t,TypeText> typeExtra;
+    QHash<uint32_t,MonsterExtra> monsterExtra;
+    QHash<uint32_t,MonsterExtra::Buff> monsterBuffsExtra;
+    QHash<uint32_t,MonsterExtra::Skill> monsterSkillsExtra;
+    QHash<uint32_t,ItemExtra> itemsExtra;
     QHash<QString,ReputationExtra> reputationExtra;
     QHash<QString,int> reputationNameToId;
-    QHash<quint32,quint8> itemToPlants;
-    QHash<quint8,PlantExtra> plantExtra;
-    QHash<quint32,QuestExtra> questsExtra;
-    QHash<quint32,QuestText> questsText;
-    QHash<QString,quint32> questsPathToId;
-    QMultiHash<quint32,quint32> botToQuestStart;
-    QHash<quint32,BotFightExtra> botFightsExtra;
+    QHash<uint32_t,uint8_t> itemToPlants;
+    QHash<uint8_t,PlantExtra> plantExtra;
+    QHash<uint32_t,QuestExtra> questsExtra;
+    QHash<uint32_t,QuestText> questsText;
+    QHash<QString,uint32_t> questsPathToId;
+    QMultiHash<uint32_t,uint32_t> botToQuestStart;
+    QHash<uint32_t,BotFightExtra> botFightsExtra;
     QHash<QString,ZoneExtra> zonesExtra;
     QHash<QString,QString> audioAmbiance;
-    QHash<quint32,ProfileText> profileTextList;
+    QHash<uint32_t,ProfileText> profileTextList;
     QHash<QString,VisualCategory> visualCategories;
     QString language;
     QStringList maps,skins;
-    QHash<QString,quint32> mapToId;
-    QHash<QString,quint32> fullMapPathToId;
-    QHash<QString,QHash<QPair<quint8,quint8>,quint8> > itemOnMap;
-    QHash<QString,QHash<QPair<quint8,quint8>,quint8> > plantOnMap;
-    QHash<quint8,PlantIndexContent> plantIndexOfOnMap;
+    QHash<QString,uint32_t> mapToId;
+    QHash<QString,uint32_t> fullMapPathToId;
+    QHash<QString,QHash<QPair<uint8_t,uint8_t>,uint8_t> > itemOnMap;
+    QHash<QString,QHash<QPair<uint8_t,uint8_t>,uint8_t> > plantOnMap;
+    QHash<uint8_t,PlantIndexContent> plantIndexOfOnMap;
     QPixmap defaultInventoryImage();
     bool isParsingDatapack();
     QString getDatapackPath();

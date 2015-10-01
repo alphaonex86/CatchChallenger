@@ -91,11 +91,11 @@ void BaseServer::preload_other()
             posOutput+=1;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;//charactersgroup empty
             posOutput+=1;
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;//unique key, useless here
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;//unique key, useless here
             posOutput+=4;
             {
                 const std::string &text=CommonSettingsServer::commonSettingsServer.exportedXml;
-                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(text.size());
+                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(text.size());
                 posOutput+=2;
                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
                 posOutput+=text.size();
@@ -104,23 +104,23 @@ void BaseServer::preload_other()
             posOutput+=1;
             if(GlobalServerData::serverSettings.sendPlayerNumber)
             {
-                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(GlobalServerData::serverSettings.max_players);
+                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(GlobalServerData::serverSettings.max_players);
                 posOutput+=2;
                 Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber=posOutput;
-                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
                 posOutput+=2;
             }
             else
             {
                 if(GlobalServerData::serverSettings.max_players<=255)
-                    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(255);
+                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(255);
                 else
-                    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65535);
+                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65535);
                 posOutput+=2;
-                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(255/2);
+                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(255/2);
                 posOutput+=2;
             }
-            *reinterpret_cast<quint32 *>(Client::protocolMessageLogicalGroupAndServerListSize+1)=htole32(posOutput-Client::protocolMessageLogicalGroupAndServerListSize-1-4);//set the dynamic size
+            *reinterpret_cast<uint32_t *>(Client::protocolMessageLogicalGroupAndServerListSize+1)=htole32(posOutput-Client::protocolMessageLogicalGroupAndServerListSize-1-4);//set the dynamic size
             Client::protocolMessageLogicalGroupAndServerListSize=posOutput;
         }
         if(Client::protocolMessageLogicalGroupAndServerList!=NULL)
@@ -195,27 +195,27 @@ void BaseServer::preload_other()
         posOutput+=1;
 
         if(GlobalServerData::serverSettings.sendPlayerNumber)
-            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(GlobalServerData::serverSettings.max_players);
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(GlobalServerData::serverSettings.max_players);
         else
         {
             if(GlobalServerData::serverSettings.max_players<=255)
-                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(255);
+                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(255);
             else
-                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65535);
+                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65535);
         }
         posOutput+=2;
         #ifndef EPOLLCATCHCHALLENGERSERVER
         if(GlobalServerData::serverPrivateVariables.timer_city_capture==NULL)
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
         else if(GlobalServerData::serverPrivateVariables.timer_city_capture->isActive())
         {
-            const qint64 &time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(time/1000);
+            const int64_t &time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(time/1000);
         }
         else
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
         #else
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
         #endif
         posOutput+=4;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=GlobalServerData::serverSettings.city.capture.frenquency;
@@ -224,7 +224,7 @@ void BaseServer::preload_other()
         //common settings
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer;
         posOutput+=1;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick);
         posOutput+=4;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange;
         posOutput+=1;

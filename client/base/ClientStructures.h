@@ -16,20 +16,20 @@ class ServerFromPoolForDisplay
 public:
     //connect info
     QString host;
-    quint16 port;
-    quint32 uniqueKey;
+    uint16_t port;
+    uint32_t uniqueKey;
 
     //displayed info
     QString name;
     QString description;
-    quint8 charactersGroupIndex;
-    quint16 maxPlayer;
-    quint16 currentPlayer;
-    quint32 playedTime;
-    quint32 lastConnect;
+    uint8_t charactersGroupIndex;
+    uint16_t maxPlayer;
+    uint16_t currentPlayer;
+    uint32_t playedTime;
+    uint32_t lastConnect;
 
     //select info
-    quint8 serverOrdenedListIndex;
+    uint8_t serverOrdenedListIndex;
 
     bool operator<(const ServerFromPoolForDisplay &serverFromPoolForDisplay) const;
 };
@@ -37,16 +37,16 @@ struct ServerFromPoolForDisplayTemp
 {
     //connect info
     QString host;
-    quint16 port;
-    quint32 uniqueKey;
+    uint16_t port;
+    uint32_t uniqueKey;
 
     //displayed info
-    quint8 charactersGroupIndex;
-    quint16 maxPlayer;
-    quint16 currentPlayer;
+    uint8_t charactersGroupIndex;
+    uint16_t maxPlayer;
+    uint16_t currentPlayer;
 
     //temp
-    quint8 logicalGroupIndex;
+    uint8_t logicalGroupIndex;
     QString xml;
 };
 struct LogicialGroup
@@ -57,9 +57,9 @@ struct LogicialGroup
 };
 struct ServerForSelection
 {
-    quint8 serverIndex;
-    quint32 playedTime;
-    quint32 lastConnect;
+    uint8_t serverIndex;
+    uint32_t playedTime;
+    uint32_t lastConnect;
 };
 }
 

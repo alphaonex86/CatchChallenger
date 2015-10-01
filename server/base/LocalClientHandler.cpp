@@ -160,12 +160,12 @@ void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE 
     }
     else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
     {
-        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(map->id);
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(map->id);
         posOutput+=2;
     }
     else
     {
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(map->id);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(map->id);
         posOutput+=4;
     }
     //send only for this player
@@ -182,7 +182,7 @@ void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE 
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
         posOutput+=1;
-        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.public_informations.simplifiedId);
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.public_informations.simplifiedId);
         posOutput+=2;
     }
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=x;
@@ -212,7 +212,7 @@ void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE 
     posOutput+=1;
 
     //set the dynamic size
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
@@ -497,16 +497,16 @@ void Client::addObjectAndSend(const uint16_t &item,const uint32_t &quantity)
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x55;
     posOutput=1;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(2+2+4);
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(2+2+4);
     posOutput+=4;
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
     posOutput+=1;
-    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(item);
+    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(item);
     posOutput+=2;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(quantity);
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(quantity);
     posOutput+=4;
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -645,16 +645,16 @@ void Client::sendRemoveObject(const uint16_t &item,const uint32_t &quantity)
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x56;
     posOutput=1;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(2+2+4);
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(2+2+4);
     posOutput+=4;
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
     posOutput+=1;
-    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(item);
+    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(item);
     posOutput+=2;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(quantity);
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(quantity);
     posOutput+=4;
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -668,13 +668,13 @@ uint32_t Client::objectQuantity(const uint16_t &item) const
         return 0;
 }
 
-bool Client::addMarketCashWithoutSave(const quint64 &cash)
+bool Client::addMarketCashWithoutSave(const uint64_t &cash)
 {
     market_cash+=cash;
     return true;
 }
 
-void Client::addCash(const quint64 &cash, const bool &forceSave)
+void Client::addCash(const uint64_t &cash, const bool &forceSave)
 {
     if(cash==0 && !forceSave)
         return;
@@ -685,7 +685,7 @@ void Client::addCash(const quint64 &cash, const bool &forceSave)
     dbQueryWriteCommon(queryText);
 }
 
-void Client::removeCash(const quint64 &cash)
+void Client::removeCash(const uint64_t &cash)
 {
     if(cash==0)
         return;
@@ -696,7 +696,7 @@ void Client::removeCash(const quint64 &cash)
     dbQueryWriteCommon(queryText);
 }
 
-void Client::addWarehouseCash(const quint64 &cash, const bool &forceSave)
+void Client::addWarehouseCash(const uint64_t &cash, const bool &forceSave)
 {
     if(cash==0 && !forceSave)
         return;
@@ -707,7 +707,7 @@ void Client::addWarehouseCash(const quint64 &cash, const bool &forceSave)
     dbQueryWriteCommon(queryText);
 }
 
-void Client::removeWarehouseCash(const quint64 &cash)
+void Client::removeWarehouseCash(const uint64_t &cash)
 {
     if(cash==0)
         return;
@@ -718,7 +718,7 @@ void Client::removeWarehouseCash(const quint64 &cash)
     dbQueryWriteCommon(queryText);
 }
 
-void Client::wareHouseStore(const qint64 &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint32_t> &withdrawMonsters, const std::vector<uint32_t> &depositeMonsters)
+void Client::wareHouseStore(const int64_t &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint32_t> &withdrawMonsters, const std::vector<uint32_t> &depositeMonsters)
 {
     if(!wareHouseStoreCheck(cash,items,withdrawMonsters,depositeMonsters))
         return;
@@ -802,10 +802,10 @@ void Client::wareHouseStore(const qint64 &cash, const std::vector<std::pair<uint
             saveMonsterStat(public_and_private_informations.playerMonster.back());
 }
 
-bool Client::wareHouseStoreCheck(const qint64 &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint32_t> &withdrawMonsters, const std::vector<uint32_t> &depositeMonsters)
+bool Client::wareHouseStoreCheck(const int64_t &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint32_t> &withdrawMonsters, const std::vector<uint32_t> &depositeMonsters)
 {
     //check all
-    if((cash>0 && (qint64)public_and_private_informations.warehouse_cash<cash) || (cash<0 && (qint64)public_and_private_informations.cash<-cash))
+    if((cash>0 && (int64_t)public_and_private_informations.warehouse_cash<cash) || (cash<0 && (int64_t)public_and_private_informations.cash<-cash))
     {
         errorOutput("cash transfer is wrong");
         return false;
@@ -822,7 +822,7 @@ bool Client::wareHouseStoreCheck(const qint64 &cash, const std::vector<std::pair
                     errorOutput("warehouse item transfer is wrong due to missing");
                     return false;
                 }
-                if((qint64)public_and_private_informations.warehouse_items.at(item.first)<item.second)
+                if((int64_t)public_and_private_informations.warehouse_items.at(item.first)<item.second)
                 {
                     errorOutput("warehouse item transfer is wrong due to wrong quantity");
                     return false;
@@ -835,7 +835,7 @@ bool Client::wareHouseStoreCheck(const qint64 &cash, const std::vector<std::pair
                     errorOutput("item transfer is wrong due to missing");
                     return false;
                 }
-                if((qint64)public_and_private_informations.items.at(item.first)<-item.second)
+                if((int64_t)public_and_private_informations.items.at(item.first)<-item.second)
                 {
                     errorOutput("item transfer is wrong due to wrong quantity");
                     return false;
@@ -1399,7 +1399,7 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
         posOutput+=1;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(1);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(1);
         posOutput+=4;
 
         //type
@@ -1437,16 +1437,16 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
         posOutput+=1;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(1+4);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(1+4);
         posOutput+=4;
 
         //type
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)ObjectUsage_correctlyUsed;
         posOutput+=1;
         if(maxMonsterId>0)
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(maxMonsterId);
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(maxMonsterId);
         else
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(0x00000000);
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(0x00000000);
         posOutput+=4;
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -1465,7 +1465,7 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
         posOutput+=1;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(1);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(1);
         posOutput+=4;
 
         //type
@@ -1640,21 +1640,21 @@ void Client::getShopList(const uint8_t &query_id,const uint16_t &shopId)
             {
                 if(shop.prices.at(index)>0)
                 {
-                    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(shop.items.at(index));
+                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(shop.items.at(index));
                     posOutput+=2;
-                    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(shop.prices.at(index));
+                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(shop.prices.at(index));
                     posOutput+=4;
-                    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(0);
+                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(0);
                     posOutput+=4;
                     objectCount++;
                 }
             }
             index++;
         }
-        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1+4)=htole16(objectCount);
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1+4)=htole16(objectCount);
 
         //set the dynamic size
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     }
@@ -1774,7 +1774,7 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint
         posOutput+=1;
 
         //set the dynamic size
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
@@ -1786,7 +1786,7 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint
         posOutput+=1;
 
         //set the dynamic size
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
@@ -1797,7 +1797,7 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint
         posOutput+=1;
 
         //set the dynamic size
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
@@ -1806,7 +1806,7 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint
     {
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)BuyStat_BetterPrice;
         posOutput+=1;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(price);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(price);
         posOutput+=4;
     }
     else
@@ -1824,7 +1824,7 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint
     addObject(objectId,quantity);
 
     //set the dynamic size
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
@@ -1955,7 +1955,7 @@ void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uin
         posOutput+=1;
 
         //set the dynamic size
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
@@ -1964,7 +1964,7 @@ void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uin
     {
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)SoldStat_BetterPrice;
         posOutput+=1;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(realPrice);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(realPrice);
         posOutput+=4;
     }
     else
@@ -1976,7 +1976,7 @@ void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uin
     addCash(realPrice*quantity);
 
     //set the dynamic size
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
@@ -2057,43 +2057,43 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
 
     if(GlobalServerData::serverPrivateVariables.industriesStatus.find(factoryId)==GlobalServerData::serverPrivateVariables.industriesStatus.cend())
     {
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
         posOutput+=4;
-        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(industry.resources.size());
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(industry.resources.size());
         posOutput+=2;
         unsigned int index=0;
         while(index<industry.resources.size())
         {
             const Industry::Resource &resource=industry.resources.at(index);
-            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(resource.item);
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(resource.item);
             posOutput+=2;
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonDatapack::commonDatapack.items.item.at(resource.item).price*(100+CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE)/100);
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonDatapack::commonDatapack.items.item.at(resource.item).price*(100+CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE)/100);
             posOutput+=4;
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(resource.quantity*industry.cycletobefull);
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(resource.quantity*industry.cycletobefull);
             posOutput+=4;
             index++;
         }
-        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
         posOutput+=2;
     }
     else
     {
         unsigned int index,count_item;
         const IndustryStatus &industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus.at(factoryId),industry);
-        quint64 currentTime=QDateTime::currentMSecsSinceEpoch()/1000;
+        uint64_t currentTime=QDateTime::currentMSecsSinceEpoch()/1000;
         if(industryStatus.last_update>currentTime)
         {
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
             posOutput+=4;
         }
         else if((currentTime-industryStatus.last_update)>industry.time)
         {
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
             posOutput+=4;
         }
         else
         {
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(industry.time-(currentTime-industryStatus.last_update));
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(industry.time-(currentTime-industryStatus.last_update));
             posOutput+=4;
         }
         //send the resource
@@ -2107,7 +2107,7 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
                 count_item++;
             index++;
         }
-        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(count_item);
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(count_item);
         posOutput+=2;
         index=0;
         while(index<industry.resources.size())
@@ -2116,11 +2116,11 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
             const uint32_t &quantityInStock=industryStatus.resources.at(resource.item);
             if(quantityInStock<resource.quantity*industry.cycletobefull)
             {
-                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(resource.item);
+                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(resource.item);
                 posOutput+=2;
-                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(FacilityLib::getFactoryResourcePrice(quantityInStock,resource,industry));
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(FacilityLib::getFactoryResourcePrice(quantityInStock,resource,industry));
                 posOutput+=4;
-                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(resource.quantity*industry.cycletobefull-quantityInStock);
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(resource.quantity*industry.cycletobefull-quantityInStock);
                 posOutput+=4;
             }
             index++;
@@ -2136,7 +2136,7 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
                 count_item++;
             index++;
         }
-        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(count_item);
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(count_item);
         posOutput+=2;
         index=0;
         while(index<industry.products.size())
@@ -2145,11 +2145,11 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
             const uint32_t &quantityInStock=industryStatus.products.at(product.item);
             if(quantityInStock>0)
             {
-                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(product.item);
+                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(product.item);
                 posOutput+=2;
-                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(FacilityLib::getFactoryProductPrice(quantityInStock,product,industry));
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(FacilityLib::getFactoryProductPrice(quantityInStock,product,industry));
                 posOutput+=4;
-                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(quantityInStock);
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(quantityInStock);
                 posOutput+=4;
             }
             index++;
@@ -2157,7 +2157,7 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
     }
 
     //set the dynamic size
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
@@ -2242,7 +2242,7 @@ void Client::buyFactoryProduct(const uint8_t &query_id,const uint16_t &factoryId
         posOutput+=1;
 
         //set the dynamic size
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
     }
@@ -2252,22 +2252,22 @@ void Client::buyFactoryProduct(const uint8_t &query_id,const uint16_t &factoryId
         posOutput+=1;
 
         //set the dynamic size
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
     }
     if(actualPrice==price)
     {
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
         posOutput+=1;
     }
     else
     {
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
         posOutput+=1;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(actualPrice);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(actualPrice);
         posOutput+=4;
     }
     quantityInStock-=quantity;
@@ -2362,7 +2362,7 @@ void Client::sellFactoryResource(const uint8_t &query_id,const uint16_t &factory
             {
                 if((resource.quantity*industry.cycletobefull-industryStatus.resources.at(resource.item))<quantity)
                 {
-                    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
                     posOutput+=1;
                     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -2371,7 +2371,7 @@ void Client::sellFactoryResource(const uint8_t &query_id,const uint16_t &factory
                 resourcePrice=FacilityLib::getFactoryResourcePrice(industryStatus.resources.at(resource.item),resource,industry);
                 if(price>resourcePrice)
                 {
-                    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x04;
                     posOutput+=1;
                     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -2398,14 +2398,14 @@ void Client::sellFactoryResource(const uint8_t &query_id,const uint16_t &factory
     {
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
         posOutput+=1;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(quantity);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(quantity);
         posOutput+=4;
     }
     else
     {
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
         posOutput+=1;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(resourcePrice);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(resourcePrice);
         posOutput+=4;
     }
     removeObject(objectId,quantity);
@@ -2413,7 +2413,7 @@ void Client::sellFactoryResource(const uint8_t &query_id,const uint16_t &factory
     saveIndustryStatus(factoryId,industryStatus,industry);
     appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.at(factoryId).rewards.reputation);
 
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
@@ -2740,7 +2740,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             {
                 std::cerr << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
 
-                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
                 posOutput+=1;
                 sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -2775,7 +2775,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             removeFromClan();
             clanChangeWithoutDb(public_and_private_informations.clan);
             //send the network reply
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             posOutput+=1;
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -2805,7 +2805,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             }
             const std::vector<Client *> &players=clanList.at(public_and_private_informations.clan)->players;
             //send the network reply
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             posOutput+=1;
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -2863,7 +2863,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                     haveAClan=false;
             bool isFound=playerByPseudo.find(text)!=playerByPseudo.cend();
             //send the network reply
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
             if(isFound && !haveAClan)
             {
                 if(playerByPseudo.at(text)->inviteToClan(public_and_private_informations.clan))
@@ -2907,7 +2907,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                     isIntoTheClan=true;
             bool isFound=playerByPseudo.find(text)!=playerByPseudo.cend();
             //send the network reply
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
             if(isFound && isIntoTheClan)
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             else
@@ -2984,7 +2984,7 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &action,const 
 
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
         posOutput+=1;
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -2994,7 +2994,7 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &action,const 
     const uint32_t clanId=getClanId(&ok);
     if(!ok)
     {
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
         posOutput+=1;
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -3005,10 +3005,10 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &action,const 
     clan->name=text;
     public_and_private_informations.clan_leader=true;
     //send the network reply
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
     posOutput+=1;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(clanId);
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(clanId);
     posOutput+=4;
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     //add into db
@@ -3027,7 +3027,7 @@ uint32_t Client::getPlayerId() const
     return 0;
 }
 
-void Client::haveClanInfo(const uint32_t &clanId,const std::string &clanName,const quint64 &cash)
+void Client::haveClanInfo(const uint32_t &clanId,const std::string &clanName,const uint64_t &cash)
 {
     normalOutput("First client of the clan: "+clanName+", clanId: "+std::to_string(clanId)+" to connect");
     createMemoryClan();
@@ -3054,7 +3054,7 @@ void Client::sendClanInfo()
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,clan->name.data(),clan->name.size());
         posOutput+=clan->name.size();
     }
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
@@ -3068,7 +3068,7 @@ void Client::dissolvedClan()
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x61;
     posOutput+=1+4;
 
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=0;//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=0;//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
     clanChangeWithoutDb(public_and_private_informations.clan);
@@ -3087,7 +3087,7 @@ bool Client::inviteToClan(const uint32_t &clanId)
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x63;
     posOutput+=1+4;
 
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(clanId);
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(clanId);
     posOutput+=4;
     {
         const std::string &text=clan->name;
@@ -3096,7 +3096,7 @@ bool Client::inviteToClan(const uint32_t &clanId)
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
         posOutput+=text.size();
     }
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
     return true;
@@ -3274,7 +3274,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
                 uint32_t posOutput=0;
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5E;
                 posOutput+=1+4;
-                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1);//set the dynamic size
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1);//set the dynamic size
 
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
                 posOutput+=1;
@@ -3305,7 +3305,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
                 posOutput+=text.size();
             }
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             return;
         }
@@ -3605,13 +3605,13 @@ void Client::cityCaptureBattle(const uint16_t &number_of_player,const uint16_t &
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5E;
     posOutput+=1+4;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+2+2);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+2+2);//set the dynamic size
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x04;
     posOutput+=1;
-    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_player);
+    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_player);
     posOutput+=2;
-    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_clan);
+    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_clan);
     posOutput+=2;
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -3623,15 +3623,15 @@ void Client::cityCaptureBotFight(const uint16_t &number_of_player,const uint16_t
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5E;
     posOutput+=1+4;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+2+2+4);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+2+2+4);//set the dynamic size
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x04;
     posOutput+=1;
-    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_player);
+    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_player);
     posOutput+=2;
-    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_clan);
+    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_clan);
     posOutput+=2;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(fightId);
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(fightId);
     posOutput+=4;
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -3643,13 +3643,13 @@ void Client::cityCaptureInWait(const uint16_t &number_of_player,const uint16_t &
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5E;
     posOutput+=1+4;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+2+2);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+2+2);//set the dynamic size
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x05;
     posOutput+=1;
-    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_player);
+    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_player);
     posOutput+=2;
-    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_clan);
+    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_clan);
     posOutput+=2;
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -3661,7 +3661,7 @@ void Client::cityCaptureWin()
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5E;
     posOutput+=1+4;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1);//set the dynamic size
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x06;
     posOutput+=1;
@@ -3675,7 +3675,7 @@ void Client::previousCityCaptureNotFinished()
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5E;
     posOutput+=1+4;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1);//set the dynamic size
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
     posOutput+=1;
@@ -3706,7 +3706,7 @@ void Client::getMarketList(const uint32_t &query_id)
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
     posOutput+=1+4;
 
-    const quint64 converted_market_cash=htole64(market_cash);
+    const uint64_t converted_market_cash=htole64(market_cash);
     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&converted_market_cash,8);
     posOutput+=8;
 
@@ -3736,75 +3736,75 @@ void Client::getMarketList(const uint32_t &query_id)
         index++;
     }
     //object
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketItemList.size());
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketItemList.size());
     posOutput+=4;
     index=0;
     while(index<marketItemList.size())
     {
         const MarketItem &marketObject=marketItemList.at(index);
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.marketObjectId);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.marketObjectId);
         posOutput+=4;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.item);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.item);
         posOutput+=4;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.quantity);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.quantity);
         posOutput+=4;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.cash);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.cash);
         posOutput+=4;
         index++;
     }
     //monster
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonsterList.size());
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonsterList.size());
     posOutput+=4;
     index=0;
     while(index<marketPlayerMonsterList.size())
     {
         const MarketPlayerMonster &marketPlayerMonster=marketPlayerMonsterList.at(index);
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonster.monster.id);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonster.monster.id);
         posOutput+=4;
-        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(marketPlayerMonster.monster.monster);
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(marketPlayerMonster.monster.monster);
         posOutput+=2;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=marketPlayerMonster.monster.level;
         posOutput+=1;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonster.cash);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonster.cash);
         posOutput+=4;
         index++;
     }
     //own object
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketOwnItemList.size());
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketOwnItemList.size());
     posOutput+=4;
     index=0;
     while(index<marketOwnItemList.size())
     {
         const MarketItem &marketObject=marketOwnItemList.at(index);
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.marketObjectId);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.marketObjectId);
         posOutput+=4;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.item);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.item);
         posOutput+=4;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.quantity);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.quantity);
         posOutput+=4;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.cash);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.cash);
         posOutput+=4;
         index++;
     }
     //own monster
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonsterList.size());
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonsterList.size());
     posOutput+=4;
     index=0;
     while(index<marketPlayerMonsterList.size())
     {
         const MarketPlayerMonster &marketPlayerMonster=marketPlayerMonsterList.at(index);
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonster.monster.id);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonster.monster.id);
         posOutput+=4;
-        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(marketPlayerMonster.monster.monster);
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(marketPlayerMonster.monster.monster);
         posOutput+=2;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=marketPlayerMonster.monster.level;
         posOutput+=1;
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonster.cash);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonster.cash);
         posOutput+=4;
         index++;
     }
 
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
@@ -3837,7 +3837,7 @@ void Client::buyMarketObject(const uint32_t &query_id,const uint32_t &marketObje
         {
             if(marketItem.quantity<quantity)
             {
-                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
                 posOutput+=1;
                 sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -3846,7 +3846,7 @@ void Client::buyMarketObject(const uint32_t &query_id,const uint32_t &marketObje
             //check if have the price
             if((quantity*marketItem.cash)>public_and_private_informations.cash)
             {
-                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
                 posOutput+=1;
                 sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -3882,7 +3882,7 @@ void Client::buyMarketObject(const uint32_t &query_id,const uint32_t &marketObje
             dbQueryWriteServer(queryText);
             addObject(marketItem.item,quantity);
 
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             posOutput+=1;
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -3890,7 +3890,7 @@ void Client::buyMarketObject(const uint32_t &query_id,const uint32_t &marketObje
         }
         index++;
     }
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
     posOutput+=1;
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -3913,7 +3913,7 @@ void Client::buyMarketMonster(const uint32_t &query_id,const uint32_t &monsterId
 
     if(public_and_private_informations.playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
     {
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
         posOutput+=1;
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -3929,7 +3929,7 @@ void Client::buyMarketMonster(const uint32_t &query_id,const uint32_t &monsterId
             //check if have the price
             if(marketPlayerMonster.cash>public_and_private_informations.cash)
             {
-                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
                 posOutput+=1;
                 sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -3954,7 +3954,7 @@ void Client::buyMarketMonster(const uint32_t &query_id,const uint32_t &monsterId
             stringreplaceOne(queryText,"%3",std::to_string(marketPlayerMonster.monster.id));
             dbQueryWriteCommon(queryText);
 
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             posOutput+=1;
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -3962,7 +3962,7 @@ void Client::buyMarketMonster(const uint32_t &query_id,const uint32_t &monsterId
         }
         index++;
     }
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
     posOutput+=1;
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -3990,7 +3990,7 @@ void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,c
 
     if(objectQuantity(objectId)<quantity)
     {
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
         posOutput+=1;
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -4007,7 +4007,7 @@ void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,c
             GlobalServerData::serverPrivateVariables.marketItemList[index].cash=price;
             GlobalServerData::serverPrivateVariables.marketItemList[index].quantity+=quantity;
 
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             posOutput+=1;
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -4024,7 +4024,7 @@ void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,c
     }
     if(marketObjectIdList.size()==0)
     {
-        *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
         posOutput+=1;
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -4049,7 +4049,7 @@ void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,c
     marketObjectIdList.erase(marketObjectIdList.begin());
     GlobalServerData::serverPrivateVariables.marketItemList.push_back(marketItem);
 
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
     posOutput+=1;
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -4078,7 +4078,7 @@ void Client::putMarketMonster(const uint32_t &query_id,const uint32_t &monsterId
         {
             if(!remainMonstersToFight(monsterId))
             {
-                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
                 posOutput+=1;
                 sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -4110,7 +4110,7 @@ void Client::putMarketMonster(const uint32_t &query_id,const uint32_t &monsterId
                 index++;
             }
 
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             posOutput+=1;
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -4119,7 +4119,7 @@ void Client::putMarketMonster(const uint32_t &query_id,const uint32_t &monsterId
         }
         index++;
     }
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
     posOutput+=1;
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -4140,8 +4140,8 @@ void Client::withdrawMarketCash(const uint32_t &query_id)
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
     posOutput+=1+4;
 
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(8);//set the dynamic size
-    const quint64 converted_market_cash=htole64(market_cash);
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(8);//set the dynamic size
+    const uint64_t converted_market_cash=htole64(market_cash);
     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&converted_market_cash,8);
     posOutput+=8;
 
@@ -4183,7 +4183,7 @@ void Client::withdrawMarketObject(const uint32_t &query_id,const uint32_t &objec
         {
             if(marketItem.player!=character_id)
             {
-                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
                 posOutput+=1;
                 sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -4191,7 +4191,7 @@ void Client::withdrawMarketObject(const uint32_t &query_id,const uint32_t &objec
             }
             if(marketItem.quantity<quantity)
             {
-                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
                 posOutput+=1;
                 sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -4201,9 +4201,9 @@ void Client::withdrawMarketObject(const uint32_t &query_id,const uint32_t &objec
             posOutput+=1;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             posOutput+=1;
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketItem.item);
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketItem.item);
             posOutput+=4;
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketItem.quantity);
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketItem.quantity);
             posOutput+=4;
 
             GlobalServerData::serverPrivateVariables.marketItemList[index].quantity=marketItem.quantity-quantity;
@@ -4226,14 +4226,14 @@ void Client::withdrawMarketObject(const uint32_t &query_id,const uint32_t &objec
             }
             addObject(objectId,quantity);
 
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
             return;
         }
         index++;
     }
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
     posOutput+=1;
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -4262,7 +4262,7 @@ void Client::withdrawMarketMonster(const uint32_t &query_id,const uint32_t &mons
         {
             if(marketPlayerMonster.player!=character_id)
             {
-                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
                 posOutput+=1;
                 sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -4270,7 +4270,7 @@ void Client::withdrawMarketMonster(const uint32_t &query_id,const uint32_t &mons
             }
             if(public_and_private_informations.playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
             {
-                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
                 posOutput+=1;
                 sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -4292,13 +4292,13 @@ void Client::withdrawMarketMonster(const uint32_t &query_id,const uint32_t &mons
 
             posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.playerMonster.back());
 
-            *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             return;
         }
         index++;
     }
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
     posOutput+=1;
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);

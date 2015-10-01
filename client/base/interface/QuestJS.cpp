@@ -4,14 +4,14 @@
 #include "../../../general/base/CommonDatapackServerSpec.h"
 #include "../../../general/base/GeneralStructures.h"
 
-Quest::Quest(const quint32 &quest) :
+Quest::Quest(const uint32_t &quest) :
     quest(quest)
 {
 }
 
 int Quest::currentQuestStep() const
 {
-    QHash<quint16, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
+    QHash<uint16_t, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
     if(!quests.contains(quest))
         return 0;
     else
@@ -20,7 +20,7 @@ int Quest::currentQuestStep() const
 
 int Quest::currentBot() const
 {
-    QHash<quint16, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
+    QHash<uint16_t, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
     if(!quests.contains(quest))
         return 0;
     else
@@ -29,7 +29,7 @@ int Quest::currentBot() const
 
 bool Quest::finishOneTime() const
 {
-    QHash<quint16, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
+    QHash<uint16_t, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
     if(!quests.contains(quest))
         return false;
     else
@@ -38,7 +38,7 @@ bool Quest::finishOneTime() const
 
 bool Quest::haveQuestStepRequirements() const
 {
-    QHash<quint16, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
+    QHash<uint16_t, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
     if(!quests.contains(quest))
         return false;
     else

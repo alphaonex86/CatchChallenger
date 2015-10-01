@@ -464,7 +464,7 @@ QStringList EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
             if(!CharactersGroup::hash.contains(charactersGroup))
             {
                 CharactersGroup::serverWaitedToBeReady++;
-                const quint8 &considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
+                const uint8_t &considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
                 if(considerDownAfterNumberOfTry==0 || !ok)
                 {
                     std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
@@ -474,7 +474,7 @@ QStringList EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
                 host=settings.value(QStringLiteral("host")).toString();
                 login=settings.value(QStringLiteral("login")).toString();
                 pass=settings.value(QStringLiteral("pass")).toString();
-                const quint8 &tryInterval=settings.value(QStringLiteral("tryInterval")).toUInt(&ok);
+                const uint8_t &tryInterval=settings.value(QStringLiteral("tryInterval")).toUInt(&ok);
                 if(tryInterval==0 || !ok)
                 {
                     std::cerr << "tryInterval==0 (abort)" << std::endl;
@@ -507,14 +507,14 @@ QStringList EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
 void EpollServerLoginMaster::charactersGroupListReply(QStringList &charactersGroupList)
 {
     rawServerListForC211[0x00]=CommonSettingsCommon::commonSettingsCommon.automatic_account_creation;
-    *reinterpret_cast<quint32 *>(rawServerListForC211+0x01)=htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time);
+    *reinterpret_cast<uint32_t *>(rawServerListForC211+0x01)=htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time);
     rawServerListForC211[0x05]=CommonSettingsCommon::commonSettingsCommon.min_character;
     rawServerListForC211[0x06]=CommonSettingsCommon::commonSettingsCommon.max_character;
     rawServerListForC211[0x07]=CommonSettingsCommon::commonSettingsCommon.max_pseudo_size;
     rawServerListForC211[0x08]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
-    *reinterpret_cast<quint16 *>(rawServerListForC211+0x09)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
+    *reinterpret_cast<uint16_t *>(rawServerListForC211+0x09)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
     rawServerListForC211[0x0B]=CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
-    *reinterpret_cast<quint16 *>(rawServerListForC211+0x0C)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
+    *reinterpret_cast<uint16_t *>(rawServerListForC211+0x0C)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
     rawServerListForC211Size=0x0E;
     //do the Characters group
     rawServerListForC211[rawServerListForC211Size]=(unsigned char)charactersGroupList.size();
@@ -552,7 +552,7 @@ void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
     int rawServerListSize=0x01;
 
     QString textToConvert;
-    quint8 logicalGroup=0;
+    uint8_t logicalGroup=0;
     bool logicalGroupContinue=true;
     while(logicalGroupContinue)
     {
@@ -610,7 +610,7 @@ void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
                 }
                 else
                 {
-                    *reinterpret_cast<quint16 *>(rawServerList+rawServerListSize)=0;//not convert to le16... 0 remain 0
+                    *reinterpret_cast<uint16_t *>(rawServerList+rawServerListSize)=0;//not convert to le16... 0 remain 0
                     rawServerListSize+=2;
                 }
             }
@@ -662,7 +662,7 @@ void EpollServerLoginMaster::doTheServerList()
         }
         //key
         {
-            *reinterpret_cast<quint32 *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=htole32(gameServerOnCharactersGroup->uniqueKey);
+            *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=htole32(gameServerOnCharactersGroup->uniqueKey);
             rawServerListSize+=sizeof(gameServerOnCharactersGroup->uniqueKey);
         }
         //host
@@ -691,12 +691,12 @@ void EpollServerLoginMaster::doTheServerList()
                 const QByteArray &utf8data=gameServerOnCharactersGroup->metaData.toUtf8();
                 if(utf8data.size()>65535)
                 {
-                    *reinterpret_cast<quint16 *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=0;
+                    *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=0;
                     rawServerListSize+=2;
                 }
                 else
                 {
-                    *reinterpret_cast<quint16 *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=htole16(utf8data.size());
+                    *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=htole16(utf8data.size());
                     rawServerListSize+=2;
                     memcpy(EpollClientLoginMaster::serverPartialServerList+rawServerListSize,utf8data.constData(),utf8data.size());
                     rawServerListSize+=utf8data.size();
@@ -909,7 +909,7 @@ void EpollServerLoginMaster::loadTheProfile()
     int skinId=0;
     while(skinId<CommonDatapack::commonDatapack.skins.size())
     {
-        *reinterpret_cast<quint16 *>(rawServerListForC211+rawServerListForC211Size)=htole16(BaseServerMasterLoadDictionary::dictionary_skin_internal_to_database.value(skinId));
+        *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(BaseServerMasterLoadDictionary::dictionary_skin_internal_to_database.value(skinId));
         rawServerListForC211Size+=2;
         skinId++;
     }
@@ -923,8 +923,8 @@ void EpollServerLoginMaster::loadTheProfile()
         const Profile &profile=CommonDatapack::commonDatapack.profileList.at(index);
         {
             //database id
-            *reinterpret_cast<quint16 *>(rawServerListForC211+rawServerListForC211Size)=htole16(dictionary_starter_internal_to_database.at(index));
-            rawServerListForC211Size+=sizeof(quint16);
+            *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(dictionary_starter_internal_to_database.at(index));
+            rawServerListForC211Size+=sizeof(uint16_t);
             //skin
             rawServerListForC211[rawServerListForC211Size]=profile.forcedskin.size();
             rawServerListForC211Size+=1;
@@ -939,9 +939,9 @@ void EpollServerLoginMaster::loadTheProfile()
             }
             //cash
             /* crash for unaligned 64Bits on ARM + grsec
-            *reinterpret_cast<quint64 *>(rawServerListForC211+rawServerListForC211Size)=htole64(profile.cash); */
+            *reinterpret_cast<uint64_t *>(rawServerListForC211+rawServerListForC211Size)=htole64(profile.cash); */
             memcpy(rawServerListForC211+rawServerListForC211Size,&htole64(profile.cash),8);
-            rawServerListForC211Size+=sizeof(quint64);
+            rawServerListForC211Size+=sizeof(uint64_t);
 
             //monster
             rawServerListForC211[rawServerListForC211Size]=profile.monsters.size();
@@ -953,25 +953,25 @@ void EpollServerLoginMaster::loadTheProfile()
                     const Profile::Monster &playerMonster=profile.monsters.at(monsterListIndex);
 
                     //monster
-                    *reinterpret_cast<quint16 *>(rawServerListForC211+rawServerListForC211Size)=htole16(playerMonster.id);
-                    rawServerListForC211Size+=sizeof(quint16);
+                    *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(playerMonster.id);
+                    rawServerListForC211Size+=sizeof(uint16_t);
                     //level
                     rawServerListForC211[rawServerListForC211Size]=playerMonster.level;
                     rawServerListForC211Size+=1;
                     //captured with
-                    *reinterpret_cast<quint16 *>(rawServerListForC211+rawServerListForC211Size)=htole16(playerMonster.captured_with);
-                    rawServerListForC211Size+=sizeof(quint16);
+                    *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(playerMonster.captured_with);
+                    rawServerListForC211Size+=sizeof(uint16_t);
 
                     const Monster &monster=CommonDatapack::commonDatapack.monsters.value(playerMonster.id);
                     const Monster::Stat &monsterStat=CommonFightEngineBase::getStat(monster,playerMonster.level);
                     const QList<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngineBase::generateWildSkill(monster,playerMonster.level);
 
                     //hp
-                    *reinterpret_cast<quint32 *>(rawServerListForC211+rawServerListForC211Size)=htole32(monsterStat.hp);
-                    rawServerListForC211Size+=sizeof(quint32);
+                    *reinterpret_cast<uint32_t *>(rawServerListForC211+rawServerListForC211Size)=htole32(monsterStat.hp);
+                    rawServerListForC211Size+=sizeof(uint32_t);
                     //gender
-                    rawServerListForC211[rawServerListForC211Size]=(qint8)monster.ratio_gender;
-                    rawServerListForC211Size+=sizeof(quint8);
+                    rawServerListForC211[rawServerListForC211Size]=(int8_t)monster.ratio_gender;
+                    rawServerListForC211Size+=sizeof(uint8_t);
 
                     //skill list
                     rawServerListForC211[rawServerListForC211Size]=skills.size();
@@ -981,14 +981,14 @@ void EpollServerLoginMaster::loadTheProfile()
                     {
                         const CatchChallenger::PlayerMonster::PlayerSkill &skill=skills.at(skillListIndex);
                         //skill
-                        *reinterpret_cast<quint16 *>(rawServerListForC211+rawServerListForC211Size)=htole16(skill.skill);
-                        rawServerListForC211Size+=sizeof(quint16);
+                        *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(skill.skill);
+                        rawServerListForC211Size+=sizeof(uint16_t);
                         //skill level
                         rawServerListForC211[rawServerListForC211Size]=skill.level;
-                        rawServerListForC211Size+=sizeof(quint8);
+                        rawServerListForC211Size+=sizeof(uint8_t);
                         //skill endurance
                         rawServerListForC211[rawServerListForC211Size]=skill.endurance;
-                        rawServerListForC211Size+=sizeof(quint8);
+                        rawServerListForC211Size+=sizeof(uint8_t);
                         skillListIndex++;
                     }
 
@@ -999,20 +999,20 @@ void EpollServerLoginMaster::loadTheProfile()
             {
                 //reputation
                 rawServerListForC211[rawServerListForC211Size]=profile.reputation.size();
-                rawServerListForC211Size+=sizeof(quint8);
+                rawServerListForC211Size+=sizeof(uint8_t);
                 int reputationIndex=0;
                 while(reputationIndex<profile.reputation.size())
                 {
                     const Profile::Reputation &reputation=profile.reputation.at(reputationIndex);
                     //type
-                    *reinterpret_cast<quint16 *>(rawServerListForC211+rawServerListForC211Size)=htole16(CommonDatapack::commonDatapack.reputation[reputation.reputationId].reverse_database_id);
-                    rawServerListForC211Size+=sizeof(quint16);
+                    *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(CommonDatapack::commonDatapack.reputation[reputation.reputationId].reverse_database_id);
+                    rawServerListForC211Size+=sizeof(uint16_t);
                     //level
                     rawServerListForC211[rawServerListForC211Size]=reputation.level;
-                    rawServerListForC211Size+=sizeof(quint8);
+                    rawServerListForC211Size+=sizeof(uint8_t);
                     //point
-                    *reinterpret_cast<quint32 *>(rawServerListForC211+rawServerListForC211Size)=htole32(reputation.point);
-                    rawServerListForC211Size+=sizeof(quint32);
+                    *reinterpret_cast<uint32_t *>(rawServerListForC211+rawServerListForC211Size)=htole32(reputation.point);
+                    rawServerListForC211Size+=sizeof(uint32_t);
                     reputationIndex++;
                 }
             }
@@ -1020,17 +1020,17 @@ void EpollServerLoginMaster::loadTheProfile()
             {
                 //item
                 rawServerListForC211[rawServerListForC211Size]=profile.items.size();
-                rawServerListForC211Size+=sizeof(quint8);
+                rawServerListForC211Size+=sizeof(uint8_t);
                 int reputationIndex=0;
                 while(reputationIndex<profile.items.size())
                 {
                     const Profile::Item &reputation=profile.items.at(reputationIndex);
                     //item id
-                    *reinterpret_cast<quint16 *>(rawServerListForC211+rawServerListForC211Size)=htole16(reputation.id);
-                    rawServerListForC211Size+=sizeof(quint16);
+                    *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(reputation.id);
+                    rawServerListForC211Size+=sizeof(uint16_t);
                     //quantity
-                    *reinterpret_cast<quint32 *>(rawServerListForC211+rawServerListForC211Size)=htole32(reputation.quantity);
-                    rawServerListForC211Size+=sizeof(quint32);
+                    *reinterpret_cast<uint32_t *>(rawServerListForC211+rawServerListForC211Size)=htole32(reputation.quantity);
+                    rawServerListForC211Size+=sizeof(uint32_t);
                     reputationIndex++;
                 }
             }

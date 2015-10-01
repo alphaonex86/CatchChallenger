@@ -264,16 +264,16 @@ void MapVisualiserPlayer::moveStepSlot()
     if(!animationDisplayed)
     {
         //leave
-        if(map_full->triggerAnimations.contains(QPair<quint8,quint8>(x,y)))
+        if(map_full->triggerAnimations.contains(QPair<uint8_t,uint8_t>(x,y)))
         {
-            TriggerAnimation* triggerAnimation=map_full->triggerAnimations.value(QPair<quint8,quint8>(x,y));
+            TriggerAnimation* triggerAnimation=map_full->triggerAnimations.value(QPair<uint8_t,uint8_t>(x,y));
             triggerAnimation->startLeave();
         }
         animationDisplayed=true;
         //tiger the next tile
         CatchChallenger::CommonMap * map=&map_full->logicalMap;
-        quint8 x=this->x;
-        quint8 y=this->y;
+        uint8_t x=this->x;
+        uint8_t y=this->y;
         //set the final value (direction, position, ...)
         switch(direction)
         {
@@ -287,20 +287,20 @@ void MapVisualiserPlayer::moveStepSlot()
             break;
         }
         //enter
-        if(map_full->triggerAnimations.contains(QPair<quint8,quint8>(x,y)))
+        if(map_full->triggerAnimations.contains(QPair<uint8_t,uint8_t>(x,y)))
         {
-            TriggerAnimation* triggerAnimation=map_full->triggerAnimations.value(QPair<quint8,quint8>(x,y));
+            TriggerAnimation* triggerAnimation=map_full->triggerAnimations.value(QPair<uint8_t,uint8_t>(x,y));
             triggerAnimation->startEnter();
         }
         //door
-        if(map_full->doors.contains(QPair<quint8,quint8>(x,y)))
+        if(map_full->doors.contains(QPair<uint8_t,uint8_t>(x,y)))
         {
-            MapDoor* door=map_full->doors.value(QPair<quint8,quint8>(x,y));
+            MapDoor* door=map_full->doors.value(QPair<uint8_t,uint8_t>(x,y));
             door->startOpen(currentPlayerSpeed);
             moveAnimationTimer.start(door->timeToOpen());
 
             //block but set good look direction
-            quint8 baseTile;
+            uint8_t baseTile;
             switch(direction)
             {
                 case CatchChallenger::Direction_move_at_left:
@@ -498,28 +498,28 @@ bool MapVisualiserPlayer::asyncMapLoaded(const QString &fileName,MapVisualiserTh
                         while(index2<objects.size())
                         {
                             Tiled::MapObject* object=objects.at(index2);
-                            const quint32 &x=object->x();
-                            const quint32 &y=object->y()-1;
+                            const uint32_t &x=object->x();
+                            const uint32_t &y=object->y()-1;
 
                             if(object->type()==MapVisualiserThread::text_object)
                             {
                                 //found into the logical map
-                                if(tempMapObject->logicalMap.itemsOnMap.contains(QPair<quint8,quint8>(x,y)))
+                                if(tempMapObject->logicalMap.itemsOnMap.contains(QPair<uint8_t,uint8_t>(x,y)))
                                 {
                                     if(object->property(MapVisualiserThread::text_visible)==MapVisualiserThread::text_false)
                                     {
                                         //The tiled object not exist on this layer
                                         ObjectGroupItem::objectGroupLink.value(objectGroup)->removeObject(object);
-                                        tempMapObject->logicalMap.itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=NULL;
+                                        tempMapObject->logicalMap.itemsOnMap[QPair<uint8_t,uint8_t>(x,y)].tileObject=NULL;
                                         objects.removeAt(index2);
                                     }
                                     else
                                     {
                                         if(DatapackClientLoader::datapackLoader.itemOnMap.contains(tempMapObject->logicalMap.map_file))
                                         {
-                                            if(DatapackClientLoader::datapackLoader.itemOnMap.value(tempMapObject->logicalMap.map_file).contains(QPair<quint8,quint8>(x,y)))
+                                            if(DatapackClientLoader::datapackLoader.itemOnMap.value(tempMapObject->logicalMap.map_file).contains(QPair<uint8_t,uint8_t>(x,y)))
                                             {
-                                                const quint8 &itemIndex=DatapackClientLoader::datapackLoader.itemOnMap.value(tempMapObject->logicalMap.map_file).value(QPair<quint8,quint8>(x,y));
+                                                const uint8_t &itemIndex=DatapackClientLoader::datapackLoader.itemOnMap.value(tempMapObject->logicalMap.map_file).value(QPair<uint8_t,uint8_t>(x,y));
                                                 if(itemOnMap->contains(itemIndex))
                                                 {
                                                     ObjectGroupItem::objectGroupLink.value(objectGroup)->removeObject(object);
@@ -527,19 +527,19 @@ bool MapVisualiserPlayer::asyncMapLoaded(const QString &fileName,MapVisualiserTh
                                                 }
                                                 else
                                                 {
-                                                    tempMapObject->logicalMap.itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=object;
+                                                    tempMapObject->logicalMap.itemsOnMap[QPair<uint8_t,uint8_t>(x,y)].tileObject=object;
                                                     index2++;
                                                 }
                                             }
                                             else
                                             {
-                                                tempMapObject->logicalMap.itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=object;
+                                                tempMapObject->logicalMap.itemsOnMap[QPair<uint8_t,uint8_t>(x,y)].tileObject=object;
                                                 index2++;
                                             }
                                         }
                                         else
                                         {
-                                            tempMapObject->logicalMap.itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=object;
+                                            tempMapObject->logicalMap.itemsOnMap[QPair<uint8_t,uint8_t>(x,y)].tileObject=object;
                                             index2++;
                                         }
                                     }
@@ -577,7 +577,7 @@ bool MapVisualiserPlayer::asyncMapLoaded(const QString &fileName,MapVisualiserTh
         return false;
 }
 
-void MapVisualiserPlayer::setInformations(QHash<quint16,quint32> *items,QHash<quint16, CatchChallenger::PlayerQuest> *quests,QList<quint8> *events, QSet<quint8> *itemOnMap, QHash<quint8/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap)
+void MapVisualiserPlayer::setInformations(QHash<uint16_t,uint32_t> *items,QHash<uint16_t, CatchChallenger::PlayerQuest> *quests,QList<uint8_t> *events, QSet<uint8_t> *itemOnMap, QHash<uint8_t/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap)
 {
     this->events=events;
     this->items=items;
@@ -824,8 +824,8 @@ bool MapVisualiserPlayer::haveStopTileAction()
 void MapVisualiserPlayer::parseStop()
 {
     CatchChallenger::CommonMap * map=&all_map.value(current_map)->logicalMap;
-    quint8 x=this->x;
-    quint8 y=this->y;
+    uint8_t x=this->x;
+    uint8_t y=this->y;
     switch(direction)
     {
         case CatchChallenger::Direction_look_at_left:
@@ -872,8 +872,8 @@ void MapVisualiserPlayer::parseStop()
 void MapVisualiserPlayer::parseAction()
 {
     CatchChallenger::CommonMap * map=&all_map.value(current_map)->logicalMap;
-    quint8 x=this->x;
-    quint8 y=this->y;
+    uint8_t x=this->x;
+    uint8_t y=this->y;
     switch(direction)
     {
         case CatchChallenger::Direction_look_at_left:
@@ -884,20 +884,20 @@ void MapVisualiserPlayer::parseAction()
             else
             {
                 CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(map);
-                if(map_client->botsDisplay.contains(QPair<quint8,quint8>(x,y)))
+                if(map_client->botsDisplay.contains(QPair<uint8_t,uint8_t>(x,y)))
                 {
-                    CatchChallenger::BotDisplay *botDisplay=&map_client->botsDisplay[QPair<quint8,quint8>(x,y)];
+                    CatchChallenger::BotDisplay *botDisplay=&map_client->botsDisplay[QPair<uint8_t,uint8_t>(x,y)];
                     Tiled::Cell cell=botDisplay->mapObject->cell();
                     cell.tile=botDisplay->tileset->tileAt(4);
                     botDisplay->mapObject->setCell(cell);
                 }
-                else if(map_client->itemsOnMap.contains(QPair<quint8,quint8>(x,y)))
+                else if(map_client->itemsOnMap.contains(QPair<uint8_t,uint8_t>(x,y)))
                 {
-                    const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.value(QPair<quint8,quint8>(x,y));
+                    const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.value(QPair<uint8_t,uint8_t>(x,y));
                     if(item.tileObject!=NULL)
                     {
                         ObjectGroupItem::objectGroupLink[item.tileObject->objectGroup()]->removeObject(item.tileObject);
-                        map_client->itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=NULL;
+                        map_client->itemsOnMap[QPair<uint8_t,uint8_t>(x,y)].tileObject=NULL;
                     }
                 }
                 emit actionOn(map_client,x,y);
@@ -912,20 +912,20 @@ void MapVisualiserPlayer::parseAction()
             else
             {
                 CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(map);
-                if(map_client->botsDisplay.contains(QPair<quint8,quint8>(x,y)))
+                if(map_client->botsDisplay.contains(QPair<uint8_t,uint8_t>(x,y)))
                 {
-                    CatchChallenger::BotDisplay *botDisplay=&map_client->botsDisplay[QPair<quint8,quint8>(x,y)];
+                    CatchChallenger::BotDisplay *botDisplay=&map_client->botsDisplay[QPair<uint8_t,uint8_t>(x,y)];
                     Tiled::Cell cell=botDisplay->mapObject->cell();
                     cell.tile=botDisplay->tileset->tileAt(10);
                     botDisplay->mapObject->setCell(cell);
                 }
-                else if(map_client->itemsOnMap.contains(QPair<quint8,quint8>(x,y)))
+                else if(map_client->itemsOnMap.contains(QPair<uint8_t,uint8_t>(x,y)))
                 {
-                    const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.value(QPair<quint8,quint8>(x,y));
+                    const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.value(QPair<uint8_t,uint8_t>(x,y));
                     if(item.tileObject!=NULL)
                     {
                         ObjectGroupItem::objectGroupLink[item.tileObject->objectGroup()]->removeObject(item.tileObject);
-                        map_client->itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=NULL;
+                        map_client->itemsOnMap[QPair<uint8_t,uint8_t>(x,y)].tileObject=NULL;
                     }
                 }
                 emit actionOn(map_client,x,y);
@@ -940,20 +940,20 @@ void MapVisualiserPlayer::parseAction()
             else
             {
                 CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(map);
-                if(map_client->botsDisplay.contains(QPair<quint8,quint8>(x,y)))
+                if(map_client->botsDisplay.contains(QPair<uint8_t,uint8_t>(x,y)))
                 {
-                    CatchChallenger::BotDisplay *botDisplay=&map_client->botsDisplay[QPair<quint8,quint8>(x,y)];
+                    CatchChallenger::BotDisplay *botDisplay=&map_client->botsDisplay[QPair<uint8_t,uint8_t>(x,y)];
                     Tiled::Cell cell=botDisplay->mapObject->cell();
                     cell.tile=botDisplay->tileset->tileAt(7);
                     botDisplay->mapObject->setCell(cell);
                 }
-                else if(map_client->itemsOnMap.contains(QPair<quint8,quint8>(x,y)))
+                else if(map_client->itemsOnMap.contains(QPair<uint8_t,uint8_t>(x,y)))
                 {
-                    const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.value(QPair<quint8,quint8>(x,y));
+                    const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.value(QPair<uint8_t,uint8_t>(x,y));
                     if(item.tileObject!=NULL)
                     {
                         ObjectGroupItem::objectGroupLink[item.tileObject->objectGroup()]->removeObject(item.tileObject);
-                        map_client->itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=NULL;
+                        map_client->itemsOnMap[QPair<uint8_t,uint8_t>(x,y)].tileObject=NULL;
                     }
                 }
                 emit actionOn(map_client,x,y);
@@ -968,20 +968,20 @@ void MapVisualiserPlayer::parseAction()
             else
             {
                 CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(map);
-                if(map_client->botsDisplay.contains(QPair<quint8,quint8>(x,y)))
+                if(map_client->botsDisplay.contains(QPair<uint8_t,uint8_t>(x,y)))
                 {
-                    CatchChallenger::BotDisplay *botDisplay=&map_client->botsDisplay[QPair<quint8,quint8>(x,y)];
+                    CatchChallenger::BotDisplay *botDisplay=&map_client->botsDisplay[QPair<uint8_t,uint8_t>(x,y)];
                     Tiled::Cell cell=botDisplay->mapObject->cell();
                     cell.tile=botDisplay->tileset->tileAt(1);
                     botDisplay->mapObject->setCell(cell);
                 }
-                else if(map_client->itemsOnMap.contains(QPair<quint8,quint8>(x,y)))
+                else if(map_client->itemsOnMap.contains(QPair<uint8_t,uint8_t>(x,y)))
                 {
-                    const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.value(QPair<quint8,quint8>(x,y));
+                    const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.value(QPair<uint8_t,uint8_t>(x,y));
                     if(item.tileObject!=NULL)
                     {
                         ObjectGroupItem::objectGroupLink[item.tileObject->objectGroup()]->removeObject(item.tileObject);
-                        map_client->itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=NULL;
+                        map_client->itemsOnMap[QPair<uint8_t,uint8_t>(x,y)].tileObject=NULL;
                     }
                 }
                 emit actionOn(map_client,x,y);
@@ -1187,7 +1187,7 @@ void MapVisualiserPlayer::setSpeed(const SPEED_TYPE &speed)
     moveTimer.setInterval(speed/5);
 }
 
-bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, CatchChallenger::CommonMap map, quint8 x, quint8 y, const bool &checkCollision)
+bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, CatchChallenger::CommonMap map, uint8_t x, uint8_t y, const bool &checkCollision)
 {
     CatchChallenger::CommonMap *mapPointer=&map;
     CatchChallenger::ParsedLayerLedges ledge;
@@ -1198,9 +1198,9 @@ bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, C
         if(!CatchChallenger::MoveOnTheMap::move(direction,&mapPointer,&x,&y,checkCollision))
             return false;
         CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(&all_map.value(map.map_file)->logicalMap);
-        if(map_client->itemsOnMap.contains(QPair<quint8,quint8>(x,y)))
+        if(map_client->itemsOnMap.contains(QPair<uint8_t,uint8_t>(x,y)))
         {
-            const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.value(QPair<quint8,quint8>(x,y));
+            const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.value(QPair<uint8_t,uint8_t>(x,y));
             if(item.tileObject!=NULL)
                 return false;
         }
@@ -1386,12 +1386,12 @@ void MapVisualiserPlayer::mapDisplayedSlot(const QString &fileName)
     }
 }
 
-quint8 MapVisualiserPlayer::getX()
+uint8_t MapVisualiserPlayer::getX()
 {
     return x;
 }
 
-quint8 MapVisualiserPlayer::getY()
+uint8_t MapVisualiserPlayer::getY()
 {
     return y;
 }

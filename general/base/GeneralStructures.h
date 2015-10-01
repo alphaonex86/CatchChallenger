@@ -341,13 +341,13 @@ struct PlayerReputation
 struct PlayerPlant
 {
     uint8_t plant;//plant id
-    quint64 mature_at;//timestamp when is mature
+    uint64_t mature_at;//timestamp when is mature
 };
 
 struct Player_private_and_public_informations
 {
     Player_public_informations public_informations;
-    quint64 cash,warehouse_cash;
+    uint64_t cash,warehouse_cash;
     std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t/*quantity*/> items,warehouse_items;
     //crafting
     std::unordered_set<uint16_t> recipes;
@@ -808,7 +808,7 @@ struct Profile
         uint32_t quantity;
     };
     std::vector<uint8_t> forcedskin;
-    quint64 cash;
+    uint64_t cash;
     std::vector<Monster> monsters;
     std::vector<Reputation> reputation;
     std::vector<Item> items;

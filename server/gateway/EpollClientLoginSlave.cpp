@@ -1,7 +1,7 @@
 #include "EpollClientLoginSlave.h"
 
 #include <iostream>
-#include <QString>
+#include <string>
 
 using namespace CatchChallenger;
 
@@ -38,13 +38,13 @@ EpollClientLoginSlave::EpollClientLoginSlave(
     {
         memset(movePacketKick,
                0x00,
-               CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE*sizeof(quint8));
+               CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE*sizeof(uint8_t));
         memset(chatPacketKick,
                0x00,
-               CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE*sizeof(quint8));
+               CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE*sizeof(uint8_t));
         memset(otherPacketKick,
                0x00,
-               CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE*sizeof(quint8));
+               CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE*sizeof(uint8_t));
     }
     client_list.push_back(this);
 }

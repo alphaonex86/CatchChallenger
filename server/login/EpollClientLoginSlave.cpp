@@ -44,13 +44,13 @@ EpollClientLoginSlave::EpollClientLoginSlave(
     {
         memset(movePacketKick,
                0x00,
-               CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE*sizeof(quint8));
+               CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE*sizeof(uint8_t));
         memset(chatPacketKick,
                0x00,
-               CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE*sizeof(quint8));
+               CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE*sizeof(uint8_t));
         memset(otherPacketKick,
                0x00,
-               CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE*sizeof(quint8));
+               CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE*sizeof(uint8_t));
     }
     client_list.push_back(this);
 }
@@ -116,7 +116,7 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
         //selected char
         /// \todo check by crash with ASSERT failure in QHash: "Iterating beyond end()"
         {
-            QHashIterator<quint8/*queryNumber*/,LinkToMaster::DataForSelectedCharacterReturn> j(LinkToMaster::linkToMaster->selectCharacterClients);
+            QHashIterator<uint8_t/*queryNumber*/,LinkToMaster::DataForSelectedCharacterReturn> j(LinkToMaster::linkToMaster->selectCharacterClients);
             while (j.hasNext()) {
                 j.next();
                 if(j.value().client==this)

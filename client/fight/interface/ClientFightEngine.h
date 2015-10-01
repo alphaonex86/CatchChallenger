@@ -19,24 +19,24 @@ class ClientFightEngine : public QObject, public CommonFightEngine
 public:
     struct MonsterSkillEffect
     {
-        quint32 skill;
+        uint32_t skill;
     };
     static ClientFightEngine fightEngine;
     virtual void resetAll();
     virtual bool isInFight() const;
-    bool useObjectOnMonster(const quint32 &object,const quint32 &monster);
+    bool useObjectOnMonster(const uint32_t &object,const uint32_t &monster);
     void errorFightEngine(const QString &error);
     void messageFightEngine(const QString &message) const;
     //current fight
     QList<PublicPlayerMonster> battleCurrentMonster;
-    QList<quint8> battleStat,botMonstersStat;
-    QList<quint8> battleMonsterPlace;//is number with range of 1-max (2 if have 2 monster)
-    QList<quint32> otherMonsterAttack;
+    QList<uint8_t> battleStat,botMonstersStat;
+    QList<uint8_t> battleMonsterPlace;//is number with range of 1-max (2 if have 2 monster)
+    QList<uint32_t> otherMonsterAttack;
     QList<PlayerMonster> playerMonster_catchInProgress;
     virtual void fightFinished();
-    void setBattleMonster(const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
+    void setBattleMonster(const QList<uint8_t> &stat,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
     void setBotMonster(const QList<PlayerMonster> &publicPlayerMonster);
-    bool addBattleMonster(const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
+    bool addBattleMonster(const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
     bool haveWin();
     void addAndApplyAttackReturnList(const QList<Skill::AttackReturn> &fightEffectList);
     QList<Skill::AttackReturn> getAttackReturnList() const;
@@ -47,37 +47,37 @@ public:
     void removeTheFirstRemoveBuffEffectAttackReturn();
     void removeTheFirstAttackReturn();
     bool firstAttackReturnHaveMoreEffect();
-    bool firstLifeEffectQuantityChange(qint32 quantity);
+    bool firstLifeEffectQuantityChange(int32_t quantity);
     virtual PublicPlayerMonster *getOtherMonster();
-    quint8 getOtherSelectedMonsterNumber() const;
+    uint8_t getOtherSelectedMonsterNumber() const;
     void setVariableContent(Player_private_and_public_informations player_informations_local);
     Skill::AttackReturn generateOtherAttack();
     bool isInBattle() const;
     bool haveBattleOtherMonster() const;
-    virtual bool useSkill(const quint32 &skill);
+    virtual bool useSkill(const uint32_t &skill);
     bool dropKOOtherMonster();
-    void tryCatchClient(const quint32 &item);
-    virtual quint32 catchAWild(const bool &toStorage, const PlayerMonster &newMonster);
+    void tryCatchClient(const uint32_t &item);
+    virtual uint32_t catchAWild(const bool &toStorage, const PlayerMonster &newMonster);
     void catchIsDone();
     bool doTheOtherMonsterTurn();
     PlayerMonster * evolutionByLevelUp();
-    void confirmEvolution(const quint32 &monterId);
+    void confirmEvolution(const uint32_t &monterId);
     bool giveXPSP(int xp,int sp);
-    quint32 lastGivenXP();
+    uint32_t lastGivenXP();
     void newRandomNumber(const QByteArray &data);
 private:
-    quint32 mLastGivenXP;
+    uint32_t mLastGivenXP;
     QList<int> mEvolutionByLevelUp;
     QList<Skill::AttackReturn> fightEffectList;
     Player_private_and_public_informations player_informations_local;
     QByteArray randomSeeds;
-    Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel);
+    Skill::AttackReturn doTheCurrentMonsterAttack(const uint32_t &skill, const uint8_t &skillLevel);
     bool applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &effectReturn);
     bool internalTryEscape();
-    void levelUp(const quint8 &level,const quint8 &monsterIndex);
+    void levelUp(const uint8_t &level,const uint8_t &monsterIndex);
     void addXPSP();
-    quint8 getOneSeed(const quint8 &max);
-    quint32 randomSeedsSize() const;
+    uint8_t getOneSeed(const uint8_t &max);
+    uint32_t randomSeedsSize() const;
 private:
     explicit ClientFightEngine();
     ~ClientFightEngine();

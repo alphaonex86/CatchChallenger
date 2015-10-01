@@ -104,8 +104,8 @@ void BaseWindow::on_warehouseDepositMonster_clicked()
 
 void BaseWindow::on_warehousePlayerInventory_itemActivated(QListWidgetItem *item)
 {
-    quint32 quantity=0;
-    quint32 id=item->data(99).toUInt();
+    uint32_t quantity=0;
+    uint32_t id=item->data(99).toUInt();
     if(items.contains(id))
         quantity+=items.value(id);
     if(change_warehouse_items.contains(id))
@@ -134,8 +134,8 @@ void BaseWindow::on_warehousePlayerInventory_itemActivated(QListWidgetItem *item
 
 void BaseWindow::on_warehousePlayerStoredInventory_itemActivated(QListWidgetItem *item)
 {
-    quint32 quantity=0;
-    quint32 id=item->data(99).toUInt();
+    uint32_t quantity=0;
+    uint32_t id=item->data(99).toUInt();
     if(warehouse_items.contains(id))
         quantity+=warehouse_items.value(id);
     if(change_warehouse_items.contains(id))
@@ -164,7 +164,7 @@ void BaseWindow::on_warehousePlayerStoredInventory_itemActivated(QListWidgetItem
 
 void BaseWindow::on_warehousePlayerMonster_itemActivated(QListWidgetItem *item)
 {
-    quint32 id=item->data(99).toUInt();
+    uint32_t id=item->data(99).toUInt();
     bool remain_valid_monster=false;
     int index=0;
     QList<PlayerMonster> warehouseMonsterOnPlayerList=warehouseMonsterOnPlayer();
@@ -190,7 +190,7 @@ void BaseWindow::on_warehousePlayerMonster_itemActivated(QListWidgetItem *item)
 
 void BaseWindow::on_warehousePlayerStoredMonster_itemActivated(QListWidgetItem *item)
 {
-    quint32 id=item->data(99).toUInt();
+    uint32_t id=item->data(99).toUInt();
     QList<PlayerMonster> warehouseMonsterOnPlayerList=warehouseMonsterOnPlayer();
     if(warehouseMonsterOnPlayerList.size()>CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
     {
@@ -243,10 +243,10 @@ void BaseWindow::on_toolButton_quit_warehouse_clicked()
 void BaseWindow::on_warehouseValidate_clicked()
 {
     {
-        QList<QPair<quint16,qint32> > change_warehouse_items_list;
-        QHash<quint16,qint32>::const_iterator i = change_warehouse_items.constBegin();
+        QList<QPair<uint16_t,int32_t> > change_warehouse_items_list;
+        QHash<uint16_t,int32_t>::const_iterator i = change_warehouse_items.constBegin();
         while (i != change_warehouse_items.constEnd()) {
-            change_warehouse_items_list << QPair<quint16,qint32>(i.key(),i.value());
+            change_warehouse_items_list << QPair<uint16_t,int32_t>(i.key(),i.value());
             ++i;
         }
         CatchChallenger::Api_client_real::client->wareHouseStore(temp_warehouse_cash,change_warehouse_items_list,monster_to_withdraw,monster_to_deposit);
@@ -258,7 +258,7 @@ void BaseWindow::on_warehouseValidate_clicked()
         removeCash(-temp_warehouse_cash);
     warehouse_cash-=temp_warehouse_cash;
     {
-        QHash<quint16,qint32>::const_iterator i = change_warehouse_items.constBegin();
+        QHash<uint16_t,int32_t>::const_iterator i = change_warehouse_items.constBegin();
         while (i != change_warehouse_items.constEnd()) {
             if(i.value()>0)
             {

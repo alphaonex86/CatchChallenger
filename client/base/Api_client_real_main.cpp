@@ -166,7 +166,7 @@ void Api_client_real::httpFinishedMain()
         checkIfContinueOrFinished();
 }
 
-void Api_client_real::datapackChecksumDoneMain(const QStringList &datapackFilesList,const QByteArray &hash,const QList<quint32> &partialHashList)
+void Api_client_real::datapackChecksumDoneMain(const QStringList &datapackFilesList,const QByteArray &hash,const QList<uint32_t> &partialHashList)
 {
     if(datapackFilesListMain.size()!=partialHashList.size())
     {
@@ -211,12 +211,12 @@ void Api_client_real::datapackChecksumDoneMain(const QStringList &datapackFilesL
             return;//need CommonSettings::commonSettings.datapackHash send by the server
         }
         qDebug() << "Datapack is empty or hash don't match, get from server, hash local: " << QString(hash.toHex()) << ", hash on server: " << QString(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.toHex());
-        quint8 datapack_content_query_number=queryNumber();
+        uint8_t datapack_content_query_number=queryNumber();
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (quint8)DatapackStatus::Main;
-        out << (quint32)datapackFilesListMain.size();
+        out << (uint8_t)DatapackStatus::Main;
+        out << (uint32_t)datapackFilesListMain.size();
         int index=0;
         while(index<datapackFilesListMain.size())
         {
@@ -236,7 +236,7 @@ void Api_client_real::datapackChecksumDoneMain(const QStringList &datapackFilesL
         {
             /*struct stat info;
             stat(QString(mDatapackBase+datapackFilesListMain.at(index)).toLatin1().data(),&info);*/
-            out << (quint32)partialHashList.at(index);
+            out << (uint32_t)partialHashList.at(index);
 
             index++;
         }
@@ -457,7 +457,7 @@ void Api_client_real::httpFinishedForDatapackListMain()
                         int indexInDatapackList=datapackFilesListMain.indexOf(fileString);
                         if(indexInDatapackList!=-1)
                         {
-                            const quint32 &hashFileOnDisk=partialHashListMain.at(indexInDatapackList);
+                            const uint32_t &hashFileOnDisk=partialHashListMain.at(indexInDatapackList);
                             QFileInfo file(mDatapackMain+fileString);
                             if(!file.exists())
                             {
@@ -465,7 +465,7 @@ void Api_client_real::httpFinishedForDatapackListMain()
                                 fileToGet++;
                                 sizeToGet+=sizeString.toUInt();
                             }
-                            else if(hashFileOnDisk!=*reinterpret_cast<const quint32 *>(QByteArray::fromHex(partialHashString.toLatin1()).constData()))
+                            else if(hashFileOnDisk!=*reinterpret_cast<const uint32_t *>(QByteArray::fromHex(partialHashString.toLatin1()).constData()))
                             {
                                 getHttpFileMain(selectedMirror+fileString,fileString);
                                 fileToGet++;
@@ -565,7 +565,7 @@ void Api_client_real::datapackDownloadFinishedMain()
 
 }
 
-void Api_client_real::downloadProgressDatapackMain(qint64 bytesReceived, qint64 bytesTotal)
+void Api_client_real::downloadProgressDatapackMain(int64_t bytesReceived, int64_t bytesTotal)
 {
     if(!datapackTarXzMain && !datapackTarXzSub)
     {

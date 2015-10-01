@@ -80,14 +80,14 @@ void BaseWindow::captureCityPreviousNotFinished()
     zonecatch=false;
 }
 
-void BaseWindow::captureCityStartBattle(const quint16 &player_count,const quint16 &clan_count)
+void BaseWindow::captureCityStartBattle(const uint16_t &player_count,const uint16_t &clan_count)
 {
     ui->zonecaptureCancel->setVisible(false);
     ui->zonecaptureWaitTime->setText("<i>"+tr("%1 and %2 in wainting to capture the city").arg("<b>"+tr("%n player(s)","",player_count)+"</b>").arg("<b>"+tr("%n clan(s)","",clan_count)+"</b>")+"</i>");
     updater_page_zonecatch.stop();
 }
 
-void BaseWindow::captureCityStartBotFight(const quint16 &player_count,const quint16 &clan_count,const quint32 &fightId)
+void BaseWindow::captureCityStartBotFight(const uint16_t &player_count,const uint16_t &clan_count,const uint32_t &fightId)
 {
     ui->zonecaptureCancel->setVisible(false);
     ui->zonecaptureWaitTime->setText("<i>"+tr("%1 and %2 in wainting to capture the city").arg("<b>"+tr("%n player(s)","",player_count)+"</b>").arg("<b>"+tr("%n clan(s)","",clan_count)+"</b>")+"</i>");
@@ -95,7 +95,7 @@ void BaseWindow::captureCityStartBotFight(const quint16 &player_count,const quin
     botFight(fightId);
 }
 
-void BaseWindow::captureCityDelayedStart(const quint16 &player_count,const quint16 &clan_count)
+void BaseWindow::captureCityDelayedStart(const uint16_t &player_count,const uint16_t &clan_count)
 {
     ui->zonecaptureCancel->setVisible(false);
     ui->zonecaptureWaitTime->setText("<i>"+tr("In waiting fight.")+" "+tr("%1 and %2 in wainting to capture the city").arg("<b>"+tr("%n player(s)","",player_count)+"</b>").arg("<b>"+tr("%n clan(s)","",clan_count)+"</b>")+"</i>");

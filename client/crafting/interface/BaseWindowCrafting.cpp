@@ -18,11 +18,11 @@
 
 using namespace CatchChallenger;
 
-void BaseWindow::insert_plant(const quint32 &mapId, const quint8 &x, const quint8 &y, const quint8 &plant_id, const quint16 &seconds_to_mature)
+void BaseWindow::insert_plant(const uint32_t &mapId, const uint8_t &x, const uint8_t &y, const uint8_t &plant_id, const uint16_t &seconds_to_mature)
 {
     Q_UNUSED(plant_id);
     Q_UNUSED(seconds_to_mature);
-    if(mapId>=(quint32)DatapackClientLoader::datapackLoader.maps.size())
+    if(mapId>=(uint32_t)DatapackClientLoader::datapackLoader.maps.size())
     {
         qDebug() << "MapController::insert_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return;
@@ -30,9 +30,9 @@ void BaseWindow::insert_plant(const quint32 &mapId, const quint8 &x, const quint
     cancelAllPlantQuery(MapController::mapController->mapIdToString(mapId),x,y);
 }
 
-void BaseWindow::remove_plant(const quint32 &mapId,const quint8 &x,const quint8 &y)
+void BaseWindow::remove_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y)
 {
-    if(mapId>=(quint32)DatapackClientLoader::datapackLoader.maps.size())
+    if(mapId>=(uint32_t)DatapackClientLoader::datapackLoader.maps.size())
     {
         qDebug() << "MapController::insert_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return;
@@ -40,7 +40,7 @@ void BaseWindow::remove_plant(const quint32 &mapId,const quint8 &x,const quint8 
     cancelAllPlantQuery(MapController::mapController->mapIdToString(mapId),x,y);
 }
 
-void BaseWindow::cancelAllPlantQuery(const QString map,const quint8 x,const quint8 y)
+void BaseWindow::cancelAllPlantQuery(const QString map,const uint8_t x,const uint8_t y)
 {
     int index;
     index=0;
@@ -78,14 +78,14 @@ void BaseWindow::seed_planted(const bool &ok)
         showTip(tr("Seed correctly planted"));
         //do the rewards
         {
-            const quint32 &itemId=seed_in_waiting.first().seedItemId;
+            const uint32_t &itemId=seed_in_waiting.first().seedItemId;
             if(!DatapackClientLoader::datapackLoader.itemToPlants.contains(itemId))
             {
                 qDebug() << "Item is not a plant";
                 QMessageBox::critical(this,tr("Error"),tr("Internal error"));
                 return;
             }
-            const quint8 &plant=DatapackClientLoader::datapackLoader.itemToPlants.value(itemId);
+            const uint8_t &plant=DatapackClientLoader::datapackLoader.itemToPlants.value(itemId);
             appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.plants.value(plant).rewards.reputation);
         }
     }
@@ -141,12 +141,12 @@ void BaseWindow::load_plant_inventory()
     ui->listPlantList->clear();
     plants_items_graphical.clear();
     plants_items_to_graphical.clear();
-    QHashIterator<quint16,quint32> i(items);
+    QHashIterator<uint16_t,uint32_t> i(items);
     while (i.hasNext()) {
         i.next();
         if(DatapackClientLoader::datapackLoader.itemToPlants.contains(i.key()))
         {
-            const quint8 &plantId=DatapackClientLoader::datapackLoader.itemToPlants.value(i.key());
+            const uint8_t &plantId=DatapackClientLoader::datapackLoader.itemToPlants.value(i.key());
             QListWidgetItem *item;
             item=new QListWidgetItem();
             plants_items_to_graphical[plantId]=item;
@@ -181,10 +181,10 @@ void BaseWindow::load_crafting_inventory()
     crafting_recipes_items_to_graphical.clear();
     crafting_recipes_items_graphical.clear();
     Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
-    QSetIterator<quint16> i(informations.recipes);
+    QSetIterator<uint16_t> i(informations.recipes);
     while (i.hasNext())
     {
-        quint32 recipe=i.next();
+        uint32_t recipe=i.next();
         //load the material item
         if(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.contains(recipe))
         {
@@ -449,7 +449,7 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
     int index=0;
     QString nameMaterials;
     QListWidgetItem *item;
-    quint32 quantity;
+    uint32_t quantity;
     while(index<content.materials.size())
     {
         //load the material item
@@ -507,7 +507,7 @@ void BaseWindow::on_craftingUse_clicked()
             return;
         if(items[content.materials.at(index).item]<content.materials.at(index).quantity)
             return;
-        quint32 sub_index=0;
+        uint32_t sub_index=0;
         while(sub_index<content.materials.at(index).quantity)
         {
             mIngredients << QUrl::fromLocalFile(DatapackClientLoader::datapackLoader.itemsExtra[content.materials.at(index).item].imagePath).toEncoded();
@@ -516,10 +516,10 @@ void BaseWindow::on_craftingUse_clicked()
         index++;
     }
     index=0;
-    QList<QPair<quint32,quint32> > recipeUsage;
+    QList<QPair<uint32_t,uint32_t> > recipeUsage;
     while(index<content.materials.size())
     {
-        QPair<quint32,quint32> pair;
+        QPair<uint32_t,uint32_t> pair;
         pair.first=content.materials.at(index).item;
         pair.second=content.materials.at(index).quantity;
         remove_to_inventory(pair.first,pair.second);
@@ -528,7 +528,7 @@ void BaseWindow::on_craftingUse_clicked()
     }
     materialOfRecipeInUsing << recipeUsage;
     //the product do
-    QPair<quint32,quint32> pair;
+    QPair<uint32_t,uint32_t> pair;
     pair.first=content.doItemId;
     pair.second=content.quantity;
     productOfRecipeInUsing << pair;

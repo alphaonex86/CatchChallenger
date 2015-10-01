@@ -789,10 +789,10 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                             int index=0;
                             while(index<CATCHCHALLENGER_MONSTER_LEVEL_MAX)
                             {
-                                quint64 xp_for_this_level=qPow(index+1,pow);
-                                quint64 xp_for_max_level=monster.xp_for_max_level;
-                                quint64 max_xp=qPow(CATCHCHALLENGER_MONSTER_LEVEL_MAX,pow);
-                                quint64 tempXp=xp_for_this_level*xp_for_max_level/max_xp;
+                                uint64_t xp_for_this_level=qPow(index+1,pow);
+                                uint64_t xp_for_max_level=monster.xp_for_max_level;
+                                uint64_t max_xp=qPow(CATCHCHALLENGER_MONSTER_LEVEL_MAX,pow);
+                                uint64_t tempXp=xp_for_this_level*xp_for_max_level/max_xp;
                                 if(tempXp<1)
                                     tempXp=1;
                                 monster.level_to_xp.push_back(tempXp);

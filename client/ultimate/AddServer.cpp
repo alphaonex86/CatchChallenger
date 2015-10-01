@@ -38,7 +38,7 @@ QString AddOrEditServer::server() const
     return ui->server->text();
 }
 
-quint16 AddOrEditServer::port() const
+uint16_t AddOrEditServer::port() const
 {
     return ui->port->value();
 }
@@ -48,7 +48,7 @@ QString AddOrEditServer::proxyServer() const
     return ui->proxyServer->text();
 }
 
-quint16 AddOrEditServer::proxyPort() const
+uint16_t AddOrEditServer::proxyPort() const
 {
     return ui->proxyPort->value();
 }
@@ -63,7 +63,7 @@ void AddOrEditServer::setServer(const QString &server)
     ui->server->setText(server);
 }
 
-void AddOrEditServer::setPort(const quint16 &port)
+void AddOrEditServer::setPort(const uint16_t &port)
 {
     ui->port->setValue(port);
 }
@@ -78,7 +78,7 @@ void AddOrEditServer::setProxyServer(const QString &proxyServer)
     ui->proxyServer->setText(proxyServer);
 }
 
-void AddOrEditServer::setProxyPort(const quint16 &proxyPort)
+void AddOrEditServer::setProxyPort(const uint16_t &proxyPort)
 {
     ui->proxyPort->setValue(proxyPort);
 }
