@@ -492,7 +492,7 @@ void DatapackClientLoader::parseReputationExtra()
                     }
                 }
 
-                QList<qint32> point_list_positive,point_list_negative;
+                QList<int32_t> point_list_positive,point_list_negative;
                 QStringList text_positive,text_negative;
                 QDomElement level = item.firstChildElement(DatapackClientLoader::text_level);
                 ok=true;
@@ -502,7 +502,7 @@ void DatapackClientLoader::parseReputationExtra()
                     {
                         if(level.hasAttribute(DatapackClientLoader::text_point))
                         {
-                            const qint32 &point=level.attribute(DatapackClientLoader::text_point).toInt(&ok);
+                            const int32_t &point=level.attribute(DatapackClientLoader::text_point).toInt(&ok);
                             //QString text_val;
                             if(ok)
                             {
@@ -632,7 +632,7 @@ void DatapackClientLoader::parseReputationExtra()
                     if(!point_list_negative.empty() && !point_list_negative.contains(-1))
                     {
                         //qDebug() << (QStringLiteral("Unable to open the file: %1, no starting level for the negative client: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                        QList<qint32> point_list_negative_new;
+                        QList<int32_t> point_list_negative_new;
                         int lastValue=-1;
                         int index=0;
                         while(index<point_list_negative.size())
@@ -747,7 +747,7 @@ void DatapackClientLoader::parseItemsExtra()
             {
                 if(item.hasAttribute(DatapackClientLoader::text_id))
                 {
-                    const quint32 &id=item.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
+                    const uint32_t &id=item.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
                     if(ok)
                     {
                         if(!DatapackClientLoader::itemsExtra.contains(id))
@@ -992,7 +992,7 @@ void DatapackClientLoader::parseMaps()
                     while(index<mapLoader.map_to_send.dirts.size())
                     {
                         const CatchChallenger::Map_to_send::DirtOnMap_Semi &dirt=mapLoader.map_to_send.dirts.at(index);
-                        plantOnMap[basePath+fileName][QPair<quint8,quint8>(dirt.point.x,dirt.point.y)]=plantOnMapIndex;
+                        plantOnMap[basePath+fileName][QPair<uint8_t,uint8_t>(dirt.point.x,dirt.point.y)]=plantOnMapIndex;
                         PlantIndexContent plantIndexContent;
                         plantIndexContent.map=basePath+fileName;
                         plantIndexContent.x=dirt.point.x;
@@ -1026,13 +1026,13 @@ void DatapackClientLoader::parseMaps()
                                     {
                                         /** the -1 is important to fix object layer bug into tiled!!!
                                          * Don't remove! */
-                                        const quint32 &object_y=(object.attribute(DatapackClientLoader::text_y).toUInt(&ok)/tileheight)-1;
+                                        const uint32_t &object_y=(object.attribute(DatapackClientLoader::text_y).toUInt(&ok)/tileheight)-1;
                                         if(ok)
                                         {
-                                            const quint32 &object_x=object.attribute(DatapackClientLoader::text_x).toUInt(&ok)/tilewidth;
+                                            const uint32_t &object_x=object.attribute(DatapackClientLoader::text_x).toUInt(&ok)/tilewidth;
                                             if(ok)
                                             {
-                                                itemOnMap[datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+fileName][QPair<quint8,quint8>(object_x,object_y)]=indexOfItemOnMap;
+                                                itemOnMap[datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+fileName][QPair<uint8_t,uint8_t>(object_x,object_y)]=indexOfItemOnMap;
                                                 indexOfItemOnMap++;
                                             }
                                         }
@@ -1085,7 +1085,7 @@ void DatapackClientLoader::resetAll()
     skins.clear();
 
     {
-        QHashIterator<quint8,PlantExtra> i(plantExtra);
+        QHashIterator<uint8_t,PlantExtra> i(plantExtra);
         while (i.hasNext()) {
             i.next();
             delete i.value().tileset;
@@ -1130,7 +1130,7 @@ void DatapackClientLoader::parseQuestsExtra()
             continue;
         }
         bool ok;
-        const quint32 &id=entryList.at(index).fileName().toUInt(&ok);
+        const uint32_t &id=entryList.at(index).fileName().toUInt(&ok);
         if(!ok)
         {
             qDebug() << QStringLiteral("Unable to open the folder: %1, because is folder name is not a number").arg(entryList.at(index).fileName());
@@ -1230,7 +1230,7 @@ void DatapackClientLoader::parseQuestsExtra()
                     autostep=true;
         }
 
-        QHash<quint32,QString> steps;
+        QHash<uint32_t,QString> steps;
         {
             //load step
             QDomElement step = root.firstChildElement(DatapackClientLoader::text_step);
@@ -1240,7 +1240,7 @@ void DatapackClientLoader::parseQuestsExtra()
                 {
                     if(step.hasAttribute(DatapackClientLoader::text_id))
                     {
-                        const quint32 &id=step.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
+                        const uint32_t &id=step.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
                         if(ok)
                         {
                             CatchChallenger::Quest::Step stepObject;
@@ -1250,7 +1250,7 @@ void DatapackClientLoader::parseQuestsExtra()
                                 int index=0;
                                 while(index<tempStringList.size())
                                 {
-                                    quint32 tempInt=tempStringList.at(index).toUInt(&ok);
+                                    uint32_t tempInt=tempStringList.at(index).toUInt(&ok);
                                     if(ok)
                                         stepObject.bots << tempInt;
                                     index++;
@@ -1372,7 +1372,7 @@ void DatapackClientLoader::parseQuestsText()
 
         //load the content
         bool ok;
-        QHash<quint32,QString> client_logic_texts;
+        QHash<uint32_t,QString> client_logic_texts;
         //load text
         QDomElement client_logic = root.firstChildElement(DatapackClientLoader::text_client_logic);
         while(!client_logic.isNull())
@@ -1381,7 +1381,7 @@ void DatapackClientLoader::parseQuestsText()
             {
                 if(client_logic.hasAttribute(DatapackClientLoader::text_id))
                 {
-                    const quint32 &id=client_logic.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
+                    const uint32_t &id=client_logic.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
                     if(ok)
                     {
                         QDomElement text = client_logic.firstChildElement(DatapackClientLoader::text_text);
@@ -1503,12 +1503,12 @@ void DatapackClientLoader::parseAudioAmbiance()
 
 void DatapackClientLoader::parseQuestsLink()
 {
-    QHashIterator<quint16,CatchChallenger::Quest> i(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests);
+    QHashIterator<uint16_t,CatchChallenger::Quest> i(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests);
     while(i.hasNext()) {
         i.next();
         if(!i.value().steps.isEmpty())
         {
-            QList<quint16> bots=i.value().steps.first().bots;
+            QList<uint16_t> bots=i.value().steps.first().bots;
             int index=0;
             while(index<bots.size())
             {

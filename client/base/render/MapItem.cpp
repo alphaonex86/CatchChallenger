@@ -128,7 +128,7 @@ void MapItem::removeMap(Tiled::Map *map)
     displayed_layer.remove(map);
 }
 
-void MapItem::setMapPosition(Tiled::Map *map,qint16 x,qint16 y)
+void MapItem::setMapPosition(Tiled::Map *map,int16_t x,int16_t y)
 {
     QList<QGraphicsItem *> values = displayed_layer.values(map);
     int index=0;

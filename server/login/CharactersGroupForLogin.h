@@ -12,66 +12,66 @@ namespace CatchChallenger {
 class CharactersGroupForLogin : public BaseClassSwitch
 {
 public:
-    explicit CharactersGroupForLogin(const char * const db,const char * const host,const char * const login,const char * const pass,const quint8 &considerDownAfterNumberOfTry,const quint8 &tryInterval);
+    explicit CharactersGroupForLogin(const char * const db,const char * const host,const char * const login,const char * const pass,const uint8_t &considerDownAfterNumberOfTry,const uint8_t &tryInterval);
     ~CharactersGroupForLogin();
     BaseClassSwitch::EpollObjectType getType() const;
 
     struct InternalGameServer
     {
         QString host;
-        quint16 port;
-        quint8 indexOnFlatList;
+        uint16_t port;
+        uint8_t indexOnFlatList;
     };
 
     void clearServerPair();
-    void setServerUniqueKey(const quint8 &indexOnFlatList,const quint32 &serverUniqueKey,const char * const hostData,const quint8 &hostDataSize,const quint16 &port);
-    bool containsServerUniqueKey(const quint32 &serverUniqueKey) const;
-    InternalGameServer getServerInformation(const quint32 &serverUniqueKey) const;
+    void setServerUniqueKey(const uint8_t &indexOnFlatList,const uint32_t &serverUniqueKey,const char * const hostData,const uint8_t &hostDataSize,const uint16_t &port);
+    bool containsServerUniqueKey(const uint32_t &serverUniqueKey) const;
+    InternalGameServer getServerInformation(const uint32_t &serverUniqueKey) const;
 
     QList<EpollClientLoginSlave *> clientQueryForReadReturn;
-    std::vector<quint32> maxCharacterId;
-    std::vector<quint32> maxMonsterId;
-    quint8 index;
+    std::vector<uint32_t> maxCharacterId;
+    std::vector<uint32_t> maxMonsterId;
+    uint8_t index;
     struct AddCharacterParam
     {
         void * client;
-        quint8 query_id;
-        quint8 profileIndex;
+        uint8_t query_id;
+        uint8_t profileIndex;
         QString pseudo;
-        quint8 skinId;
+        uint8_t skinId;
     };
     QList<AddCharacterParam> addCharacterParamList;
     struct RemoveCharacterParam
     {
         void * client;
-        quint8 query_id;
-        quint32 characterId;
+        uint8_t query_id;
+        uint32_t characterId;
     };
     QList<RemoveCharacterParam> removeCharacterParamList;
 
     static QHash<QString,CharactersGroupForLogin *> hash;
     static QList<CharactersGroupForLogin *> list;
 
-    void deleteCharacterNow(const quint32 &characterId);
+    void deleteCharacterNow(const uint32_t &characterId);
     static void deleteCharacterNow_static(void *object);
     void deleteCharacterNow_object();
-    void deleteCharacterNow_return(const quint32 &characterId);
-    qint8 addCharacter(void * const client,const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
+    void deleteCharacterNow_return(const uint32_t &characterId);
+    int8_t addCharacter(void * const client,const uint8_t &query_id, const uint8_t &profileIndex, const QString &pseudo, const uint8_t &skinId);
     static void addCharacterStep1_static(void *object);
     void addCharacterStep1_object();
-    void addCharacterStep1_return(EpollClientLoginSlave * const client,const quint8 &query_id,const quint8 &profileIndex,const QString &pseudo,const quint8 &skinId);
+    void addCharacterStep1_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const QString &pseudo,const uint8_t &skinId);
     static void addCharacterStep2_static(void *object);
     void addCharacterStep2_object();
-    void addCharacterStep2_return(EpollClientLoginSlave * const client,const quint8 &query_id,const quint8 &profileIndex,const QString &pseudo,const quint8 &skinId);
-    bool removeCharacter(void * const client,const quint8 &query_id, const quint32 &characterId);
+    void addCharacterStep2_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const QString &pseudo,const uint8_t &skinId);
+    bool removeCharacter(void * const client,const uint8_t &query_id, const uint32_t &characterId);
     static void removeCharacter_static(void *object);
     void removeCharacter_object();
-    void removeCharacter_return(EpollClientLoginSlave * const client,const quint8 &query_id,const quint32 &characterId);
+    void removeCharacter_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint32_t &characterId);
 
-    void character_list(EpollClientLoginSlave * const client,const quint32 &account_id);
+    void character_list(EpollClientLoginSlave * const client,const uint32_t &account_id);
     static void character_list_static(void *object);
     void character_list_object();
-    void server_list(EpollClientLoginSlave * const client,const quint32 &account_id);
+    void server_list(EpollClientLoginSlave * const client,const uint32_t &account_id);
     static void server_list_static(void *object);
     void server_list_object();
     DatabaseBase::DatabaseType databaseType() const;
@@ -89,11 +89,11 @@ private:
     void dbQueryWriteCommon(const char * const queryText);
 private:
     EpollPostgresql *databaseBaseCommon;
-    QHash<quint32,InternalGameServer> servers;
+    QHash<uint32_t,InternalGameServer> servers;
     QList<void * const> clientAddReturnList;
     QList<void * const> clientRemoveReturnList;
-    QList<quint32> deleteCharacterNowCharacterIdList;
-    QHash<quint32,quint8> uniqueKeyToIndex;
+    QList<uint32_t> deleteCharacterNowCharacterIdList;
+    QHash<uint32_t,uint8_t> uniqueKeyToIndex;
 
     static char tempBuffer[4096];
 };

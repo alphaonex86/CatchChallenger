@@ -91,15 +91,15 @@ public:
 
     struct DatapackCacheFile
     {
-        //quint32 mtime;
-        quint32 partialHash;
+        //uint32_t mtime;
+        uint32_t partialHash;
     };
     struct DatapackData
     {
-        //quint32 mtime;
+        //uint32_t mtime;
         std::unordered_map<std::string,DatapackCacheFile> datapack_file_hash_cache;
     };
-    //static std::unordered_map<std::string,quint32> datapack_file_list_cache_base,datapack_file_list_cache_main,datapack_file_list_cache_sub;//same than above
+    //static std::unordered_map<std::string,uint32_t> datapack_file_list_cache_base,datapack_file_list_cache_main,datapack_file_list_cache_sub;//same than above
     static DatapackData datapack_file_base;
     static std::unordered_set<std::string> compressedExtension;
     static std::unordered_map<std::string,DatapackData> datapack_file_main;
@@ -118,20 +118,20 @@ private:
     void errorParsingLayer(const char * const error);
     void messageParsingLayer(const char * const message) const;
     //have message without reply
-    bool parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size);
+    bool parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size);
     //have query with reply
-    bool parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
+    bool parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
     //send reply
-    bool parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
+    bool parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
 
-    bool parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size);
+    bool parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size);
     void disconnectClient();
 
     bool sendFile(const std::string &datapackPath, const std::string &fileName);
-    void datapackList(const quint8 &query_id, const std::vector<std::string> &files, const std::vector<quint32> &partialHashList);
+    void datapackList(const uint8_t &query_id, const std::vector<std::string> &files, const std::vector<uint32_t> &partialHashList);
 
     void addDatapackListReply(const bool &fileRemove);
-    void purgeDatapackListReply(const quint8 &query_id);
+    void purgeDatapackListReply(const uint8_t &query_id);
     void sendFileContent();
     void sendCompressedFileContent();
 public:
@@ -139,22 +139,22 @@ public:
 private:
     static std::vector<EpollClientLoginSlave *> client_list;
 
-    quint8 movePacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE];
-    quint8 movePacketKickSize;
-    quint8 movePacketKickTotalCache;
-    quint8 movePacketKickNewValue;
-    quint8 chatPacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE];
-    quint8 chatPacketKickSize;
-    quint8 chatPacketKickTotalCache;
-    quint8 chatPacketKickNewValue;
-    quint8 otherPacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE];
-    quint8 otherPacketKickSize;
-    quint8 otherPacketKickTotalCache;
-    quint8 otherPacketKickNewValue;
+    uint8_t movePacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE];
+    uint8_t movePacketKickSize;
+    uint8_t movePacketKickTotalCache;
+    uint8_t movePacketKickNewValue;
+    uint8_t chatPacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE];
+    uint8_t chatPacketKickSize;
+    uint8_t chatPacketKickTotalCache;
+    uint8_t chatPacketKickNewValue;
+    uint8_t otherPacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE];
+    uint8_t otherPacketKickSize;
+    uint8_t otherPacketKickTotalCache;
+    uint8_t otherPacketKickNewValue;
 
-    static quint8 tempDatapackListReplySize;
+    static uint8_t tempDatapackListReplySize;
     static QByteArray tempDatapackListReplyArray;
-    static quint8 tempDatapackListReply;
+    static uint8_t tempDatapackListReply;
     static int tempDatapackListReplyTestCount;
     static QByteArray rawFilesBuffer,compressedFilesBuffer;
     static int rawFilesBufferCount,compressedFilesBufferCount;

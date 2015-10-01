@@ -277,7 +277,7 @@ void BaseWindow::have_main_and_sub_datapack_loaded()
     updateClanDisplay();
 }
 
-void BaseWindow::insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction)
+void BaseWindow::insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction)
 {
     Q_UNUSED(player);
     Q_UNUSED(mapId);
@@ -313,14 +313,14 @@ void BaseWindow::haveTheDatapackMainSub()
         emit parseDatapackMainSub(CatchChallenger::Api_client_real::client->mainDatapackCode(),CatchChallenger::Api_client_real::client->subDatapackCode());
 }
 
-void BaseWindow::datapackSize(const quint32 &datapackFileNumber,const quint32 &datapackFileSize)
+void BaseWindow::datapackSize(const uint32_t &datapackFileNumber,const uint32_t &datapackFileSize)
 {
     this->datapackFileNumber=datapackFileNumber;
     this->datapackFileSize=datapackFileSize;
     updateConnectingStatus();
 }
 
-void BaseWindow::newDatapackFile(const quint32 &size)
+void BaseWindow::newDatapackFile(const uint32_t &size)
 {
     progressingDatapackFileSize=0;
     datapackDownloadedCount++;
@@ -328,13 +328,13 @@ void BaseWindow::newDatapackFile(const quint32 &size)
     updateConnectingStatus();
 }
 
-void BaseWindow::progressingDatapackFile(const quint32 &size)
+void BaseWindow::progressingDatapackFile(const uint32_t &size)
 {
     progressingDatapackFileSize=size;
     updateConnectingStatus();
 }
 
-void BaseWindow::have_inventory(const QHash<quint16,quint32> &items, const QHash<quint16, quint32> &warehouse_items)
+void BaseWindow::have_inventory(const QHash<uint16_t,uint32_t> &items, const QHash<uint16_t, uint32_t> &warehouse_items)
 {
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::have_inventory()";
@@ -360,7 +360,7 @@ void BaseWindow::load_inventory()
     ui->inventory->clear();
     items_graphical.clear();
     items_to_graphical.clear();
-    QHashIterator<quint16,quint32> i(items);
+    QHashIterator<uint16_t,uint32_t> i(items);
     while (i.hasNext()) {
         i.next();
 
@@ -478,13 +478,13 @@ void BaseWindow::loadSoundSettings()
     }
 }
 
-void BaseWindow::setEvents(const QList<QPair<quint8,quint8> > &events)
+void BaseWindow::setEvents(const QList<QPair<uint8_t,uint8_t> > &events)
 {
     this->events.clear();
     int index=0;
     while(index<events.size())
     {
-        const QPair<quint8,quint8> event=events.at(index);
+        const QPair<uint8_t,uint8_t> event=events.at(index);
         if(event.first>=CommonDatapack::commonDatapack.events.size())
         {
             emit error("BaseWindow::setEvents() event out of range");
@@ -538,7 +538,7 @@ void BaseWindow::updateConnectingStatus()
             if(ui->stackedWidget->currentWidget()!=ui->page_character)
             {
                 ui->stackedWidget->setCurrentWidget(ui->page_character);
-                const quint8 &charactersGroupIndex=serverOrdenedList.at(serverSelected)->charactersGroupIndex;
+                const uint8_t &charactersGroupIndex=serverOrdenedList.at(serverSelected)->charactersGroupIndex;
                 const QList<CharacterEntry> &characterEntryList=characterListForSelection.at(charactersGroupIndex);
                 ui->character_add->setEnabled(characterEntryList.size()<CommonSettingsCommon::commonSettingsCommon.max_character);
                 ui->character_remove->setEnabled(characterEntryList.size()>CommonSettingsCommon::commonSettingsCommon.min_character);
@@ -587,7 +587,7 @@ void BaseWindow::updateConnectingStatus()
             waitedData << tr("Loading of the datapack");
         else if(datapackFileSize<0)
             waitedData << tr("Loaded datapack size: %1KB").arg((datapackDownloadedSize+progressingDatapackFileSize)/1000);//when the http server don't send the size
-        else if((datapackDownloadedSize+progressingDatapackFileSize)>=(quint32)datapackFileSize)
+        else if((datapackDownloadedSize+progressingDatapackFileSize)>=(uint32_t)datapackFileSize)
             waitedData << tr("Loaded datapack file: 100%");
         else
             waitedData << tr("Loaded datapack file: %1%").arg(((datapackDownloadedSize+progressingDatapackFileSize)*100)/datapackFileSize);
@@ -627,7 +627,7 @@ bool BaseWindow::check_senddata()
     if(!check_monsters())
         return false;
     //check the reputation here
-    QMapIterator<quint8,PlayerReputation> i(CatchChallenger::Api_client_real::client->player_informations.reputation);
+    QMapIterator<uint8_t,PlayerReputation> i(CatchChallenger::Api_client_real::client->player_informations.reputation);
     while(i.hasNext())
     {
         i.next();
@@ -690,7 +690,7 @@ bool BaseWindow::check_senddata()
 void BaseWindow::show_reputation()
 {
     QString html="<ul>";
-    QMapIterator<quint8,PlayerReputation> i(CatchChallenger::Api_client_real::client->player_informations.reputation);
+    QMapIterator<uint8_t,PlayerReputation> i(CatchChallenger::Api_client_real::client->player_informations.reputation);
     while(i.hasNext())
     {
         i.next();
@@ -701,7 +701,7 @@ void BaseWindow::show_reputation()
                     .arg(DatapackClientLoader::datapackLoader.reputationExtra.value(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).name).reputation_positive.last());
             else
             {
-                qint32 next_level_xp=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).reputation_positive.at(i.value().level+1);
+                int32_t next_level_xp=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).reputation_positive.at(i.value().level+1);
                 if(next_level_xp==0)
                 {
                     error("Next level can't be need 0 xp");
@@ -718,7 +718,7 @@ void BaseWindow::show_reputation()
                     .arg(DatapackClientLoader::datapackLoader.reputationExtra.value(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).name).reputation_negative.last());
             else
             {
-                qint32 next_level_xp=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).reputation_negative.at(-i.value().level);
+                int32_t next_level_xp=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).reputation_negative.at(-i.value().level);
                 if(next_level_xp==0)
                 {
                     error("Next level can't be need 0 xp");
@@ -743,7 +743,7 @@ QPixmap BaseWindow::getFrontSkin(const QString &skinName) const
     return QPixmap(":/images/player_default/front.png");
 }
 
-QPixmap BaseWindow::getFrontSkin(const quint32 &skinId) const
+QPixmap BaseWindow::getFrontSkin(const uint32_t &skinId) const
 {
     const QPixmap skin(getFrontSkinPath(skinId));
     if(!skin.isNull())
@@ -751,7 +751,7 @@ QPixmap BaseWindow::getFrontSkin(const quint32 &skinId) const
     return QPixmap(":/images/player_default/front.png");
 }
 
-QPixmap BaseWindow::getBackSkin(const quint32 &skinId) const
+QPixmap BaseWindow::getBackSkin(const uint32_t &skinId) const
 {
     const QPixmap skin(getBackSkinPath(skinId));
     if(!skin.isNull())
@@ -791,11 +791,11 @@ QString BaseWindow::getSkinPath(const QString &skinName,const QString &type) con
     return QString();
 }
 
-QString BaseWindow::getFrontSkinPath(const quint32 &skinId) const
+QString BaseWindow::getFrontSkinPath(const uint32_t &skinId) const
 {
     const QStringList &skinFolderList=DatapackClientLoader::datapackLoader.skins;
     //front image
-    if(skinId<(quint32)skinFolderList.size())
+    if(skinId<(uint32_t)skinFolderList.size())
         return getSkinPath(skinFolderList.at(skinId),"front");
     else
         qDebug() << "The skin id: "+QString::number(skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) into BaseWindow::updatePlayerImage()";
@@ -807,11 +807,11 @@ QString BaseWindow::getFrontSkinPath(const QString &skin) const
     return getSkinPath(skin,"front");
 }
 
-QString BaseWindow::getBackSkinPath(const quint32 &skinId) const
+QString BaseWindow::getBackSkinPath(const uint32_t &skinId) const
 {
     const QStringList &skinFolderList=DatapackClientLoader::datapackLoader.skins;
     //front image
-    if(skinId<(quint32)skinFolderList.size())
+    if(skinId<(uint32_t)skinFolderList.size())
         return getSkinPath(skinFolderList.at(skinId),"back");
     else
         qDebug() << "The skin id: "+QString::number(skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) into BaseWindow::updatePlayerImage()";
@@ -840,7 +840,7 @@ void BaseWindow::updateDisplayedQuests()
     QString html=QStringLiteral("<ul>");
     ui->questsList->clear();
     quests_to_id_graphical.clear();
-    QHashIterator<quint16, PlayerQuest> i(quests);
+    QHashIterator<uint16_t, PlayerQuest> i(quests);
     while (i.hasNext()) {
         i.next();
         if(DatapackClientLoader::datapackLoader.questsExtra.contains(i.key()))
@@ -887,7 +887,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
         ui->questDetails->setText(tr("Select a quest"));
         return;
     }
-    quint32 questId=quests_to_id_graphical.value(items.first());
+    uint32_t questId=quests_to_id_graphical.value(items.first());
     if(!quests.contains(questId))
     {
         qDebug() << "Selected quest is not into the player list";
@@ -1027,7 +1027,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
     ui->questDetails->setText(stepDescription+stepRequirements+finalRewards);
 }
 
-QListWidgetItem * BaseWindow::itemToGraphic(const quint32 &id,const quint32 &quantity)
+QListWidgetItem * BaseWindow::itemToGraphic(const uint32_t &id,const uint32_t &quantity)
 {
     QListWidgetItem *item=new QListWidgetItem();
     item->setData(99,id);
@@ -1057,16 +1057,16 @@ void BaseWindow::updateTheWareHouseContent()
     //inventory
     {
         ui->warehousePlayerInventory->clear();
-        QHashIterator<quint16,quint32> i(items);
+        QHashIterator<uint16_t,uint32_t> i(items);
         while (i.hasNext()) {
             i.next();
-            qint64 quantity=i.value();
+            int64_t quantity=i.value();
             if(change_warehouse_items.contains(i.key()))
                 quantity+=change_warehouse_items.value(i.key());
             if(quantity>0)
                 ui->warehousePlayerInventory->addItem(itemToGraphic(i.key(),quantity));
         }
-        QHashIterator<quint16,qint32> j(change_warehouse_items);
+        QHashIterator<uint16_t,int32_t> j(change_warehouse_items);
         while (j.hasNext()) {
             j.next();
             if(!items.contains(j.key()) && j.value()>0)
@@ -1079,16 +1079,16 @@ void BaseWindow::updateTheWareHouseContent()
     //inventory warehouse
     {
         ui->warehousePlayerStoredInventory->clear();
-        QHashIterator<quint16,quint32> i(warehouse_items);
+        QHashIterator<uint16_t,uint32_t> i(warehouse_items);
         while (i.hasNext()) {
             i.next();
-            qint64 quantity=i.value();
+            int64_t quantity=i.value();
             if(change_warehouse_items.contains(i.key()))
                 quantity-=change_warehouse_items.value(i.key());
             if(quantity>0)
                 ui->warehousePlayerStoredInventory->addItem(itemToGraphic(i.key(),quantity));
         }
-        QHashIterator<quint16,qint32> j(change_warehouse_items);
+        QHashIterator<uint16_t,int32_t> j(change_warehouse_items);
         while (j.hasNext()) {
             j.next();
             if(!warehouse_items.contains(j.key()) && j.value()<0)
@@ -1166,7 +1166,7 @@ void BaseWindow::updateTheWareHouseContent()
     ui->warehouseWithdrawMonster->setEnabled(ui->warehousePlayerStoredMonster->count()>0);
 }
 
-void BaseWindow::cityCapture(const quint32 &remainingTime,const quint8 &type)
+void BaseWindow::cityCapture(const uint32_t &remainingTime,const uint8_t &type)
 {
     if(remainingTime==0)
     {

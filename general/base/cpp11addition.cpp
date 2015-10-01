@@ -67,10 +67,28 @@ bool stringEndsWith(std::string const &fullString, std::string const &ending)
     }
 }
 
+bool stringEndsWith(std::string const &fullString, char const &ending)
+{
+    if (fullString.length()>0) {
+        return fullString[fullString.size()-1]==ending;
+    } else {
+        return false;
+    }
+}
+
 bool stringStartWith(std::string const &fullString, std::string const &starting)
 {
     if (fullString.length() >= starting.length()) {
         return (fullString.substr(0,starting.length())==starting);
+    } else {
+        return false;
+    }
+}
+
+bool stringStartWith(std::string const &fullString, char const &starting)
+{
+    if (fullString.length()>0) {
+        return fullString[0]==starting;
     } else {
         return false;
     }

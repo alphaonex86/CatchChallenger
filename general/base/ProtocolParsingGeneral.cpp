@@ -522,12 +522,12 @@ ProtocolParsingBase::~ProtocolParsingBase()
 }
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
-quint64 ProtocolParsingInputOutput::getRXSize() const
+uint64_t ProtocolParsingInputOutput::getRXSize() const
 {
     return RXSize;
 }
 
-quint64 ProtocolParsingInputOutput::getTXSize() const
+uint64_t ProtocolParsingInputOutput::getTXSize() const
 {
     return TXSize;
 }

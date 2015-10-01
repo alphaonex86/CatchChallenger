@@ -126,7 +126,7 @@ void Api_protocol::socketDestroyed()
     socket=NULL;
 }
 
-QMap<quint8,QTime> Api_protocol::getQuerySendTimeList() const
+QMap<uint8_t,QTime> Api_protocol::getQuerySendTimeList() const
 {
     return querySendTime;
 }
@@ -164,14 +164,14 @@ QString Api_protocol::getPseudo()
     return player_informations.public_informations.pseudo;
 }
 
-quint16 Api_protocol::getId()
+uint16_t Api_protocol::getId()
 {
     return player_informations.public_informations.simplifiedId;
 }
 
-quint8 Api_protocol::queryNumber()
+uint8_t Api_protocol::queryNumber()
 {
-    const quint8 lastQueryNumberTemp=this->lastQueryNumber.back();
+    const uint8_t lastQueryNumberTemp=this->lastQueryNumber.back();
     querySendTime[lastQueryNumberTemp].start();
     this->lastQueryNumber.pop_back();
     return lastQueryNumberTemp;
@@ -319,7 +319,7 @@ bool Api_protocol::tryCreate()
     return true;
 }
 
-void Api_protocol::send_player_move(const quint8 &moved_unit,const Direction &direction)
+void Api_protocol::send_player_move(const uint8_t &moved_unit,const Direction &direction)
 {
     #ifdef BENCHMARKMUTIPLECLIENT
     hurgeBufferMove[1]=moved_unit;
@@ -341,7 +341,7 @@ void Api_protocol::send_player_move(const quint8 &moved_unit,const Direction &di
         DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
-    quint8 directionInt=static_cast<quint8>(direction);
+    uint8_t directionInt=static_cast<uint8_t>(direction);
     if(directionInt<1 || directionInt>8)
     {
         DebugClass::debugConsole(QStringLiteral("direction given wrong: %1").arg(directionInt));
@@ -390,7 +390,7 @@ void Api_protocol::sendChatText(const Chat_type &chatType, const QString &text)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)chatType;
+    out << (uint8_t)chatType;
     {
         const QByteArray &tempText=text.toUtf8();
         if(tempText.size()>255)
@@ -398,7 +398,7 @@ void Api_protocol::sendChatText(const Chat_type &chatType, const QString &text)
             DebugClass::debugConsole(QStringLiteral("text in Utf8 too big, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
             return;
         }
-        out << (quint8)tempText.size();
+        out << (uint8_t)tempText.size();
         outputData+=tempText;
         out.device()->seek(out.device()->pos()+tempText.size());
     }
@@ -422,7 +422,7 @@ void Api_protocol::sendPM(const QString &text,const QString &pseudo)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)Chat_type_pm;
+    out << (uint8_t)Chat_type_pm;
     {
         const QByteArray &tempText=text.toUtf8();
         if(tempText.size()>255)
@@ -430,7 +430,7 @@ void Api_protocol::sendPM(const QString &text,const QString &pseudo)
             DebugClass::debugConsole(QStringLiteral("text in Utf8 too big, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
             return;
         }
-        out << (quint8)tempText.size();
+        out << (uint8_t)tempText.size();
         outputData+=tempText;
         out.device()->seek(out.device()->pos()+tempText.size());
     }
@@ -441,7 +441,7 @@ void Api_protocol::sendPM(const QString &text,const QString &pseudo)
             DebugClass::debugConsole(QStringLiteral("text in Utf8 too big, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
             return;
         }
-        out << (quint8)tempText.size();
+        out << (uint8_t)tempText.size();
         outputData+=tempText;
         out.device()->seek(out.device()->pos()+tempText.size());
     }
@@ -464,7 +464,7 @@ void Api_protocol::teleportDone()
     teleportList.removeFirst();
 }
 
-bool Api_protocol::addCharacter(const quint8 &charactersGroupIndex,const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId)
+bool Api_protocol::addCharacter(const uint8_t &charactersGroupIndex,const uint8_t &profileIndex, const QString &pseudo, const uint8_t &skinId)
 {
     if(!is_logged)
     {
@@ -485,8 +485,8 @@ bool Api_protocol::addCharacter(const quint8 &charactersGroupIndex,const quint8 
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)charactersGroupIndex;
-    out << (quint8)profileIndex;
+    out << (uint8_t)charactersGroupIndex;
+    out << (uint8_t)profileIndex;
     {
         const QByteArray &rawPseudo=FacilityLibGeneral::toUTF8WithHeader(pseudo);
         if(rawPseudo.size()>255 || rawPseudo.isEmpty())
@@ -497,12 +497,12 @@ bool Api_protocol::addCharacter(const quint8 &charactersGroupIndex,const quint8 
         outputData+=rawPseudo;
         out.device()->seek(out.device()->size());
     }
-    out << (quint8)skinId;
+    out << (uint8_t)skinId;
     is_logged=packFullOutcommingQuery(0x02,0x03,queryNumber(),outputData.constData(),outputData.size());
     return true;
 }
 
-bool Api_protocol::removeCharacter(const quint8 &charactersGroupIndex,const quint32 &characterId)
+bool Api_protocol::removeCharacter(const uint8_t &charactersGroupIndex,const uint32_t &characterId)
 {
     if(!is_logged)
     {
@@ -512,13 +512,13 @@ bool Api_protocol::removeCharacter(const quint8 &charactersGroupIndex,const quin
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)charactersGroupIndex;
+    out << (uint8_t)charactersGroupIndex;
     out << characterId;
     is_logged=packFullOutcommingQuery(0x02,0x04,queryNumber(),outputData.constData(),outputData.size());
     return true;
 }
 
-bool Api_protocol::selectCharacter(const quint8 &charactersGroupIndex,const quint32 &serverUniqueKey,const quint32 &characterId,const quint8 &selectedServerIndex)
+bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex,const uint32_t &serverUniqueKey,const uint32_t &characterId,const uint8_t &selectedServerIndex)
 {
     if(!is_logged)
     {
@@ -528,15 +528,15 @@ bool Api_protocol::selectCharacter(const quint8 &charactersGroupIndex,const quin
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)charactersGroupIndex;
-    out << (quint32)serverUniqueKey;
+    out << (uint8_t)charactersGroupIndex;
+    out << (uint32_t)serverUniqueKey;
     out << characterId;
     is_logged=packFullOutcommingQuery(0x02,0x05,queryNumber(),outputData.constData(),outputData.size());
     this->selectedServerIndex=selectedServerIndex;
     return true;
 }
 
-void Api_protocol::useSeed(const quint8 &plant_id)
+void Api_protocol::useSeed(const uint8_t &plant_id)
 {
     if(!is_logged)
     {
@@ -556,7 +556,7 @@ void Api_protocol::useSeed(const quint8 &plant_id)
         is_logged=character_selected=packFullOutcommingData(0x50,0x08,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::monsterMoveUp(const quint8 &number)
+void Api_protocol::monsterMoveUp(const uint8_t &number)
 {
     if(!is_logged)
     {
@@ -571,12 +571,12 @@ void Api_protocol::monsterMoveUp(const quint8 &number)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x01;
+    out << (uint8_t)0x01;
     out << number;
     is_logged=character_selected=packFullOutcommingData(0x60,0x08,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::confirmEvolution(const quint32 &monterId)
+void Api_protocol::confirmEvolution(const uint32_t &monterId)
 {
     if(!is_logged)
     {
@@ -591,11 +591,11 @@ void Api_protocol::confirmEvolution(const quint32 &monterId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint32)monterId;
+    out << (uint32_t)monterId;
     is_logged=character_selected=packFullOutcommingData(0x60,0x000A,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::monsterMoveDown(const quint8 &number)
+void Api_protocol::monsterMoveDown(const uint8_t &number)
 {
     if(!is_logged)
     {
@@ -610,13 +610,13 @@ void Api_protocol::monsterMoveDown(const quint8 &number)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x02;
+    out << (uint8_t)0x02;
     out << number;
     is_logged=character_selected=packFullOutcommingData(0x60,0x08,outputData.constData(),outputData.size());
 }
 
 //inventory
-void Api_protocol::destroyObject(const quint16 &object, const quint32 &quantity)
+void Api_protocol::destroyObject(const uint16_t &object, const uint32_t &quantity)
 {
     if(!is_logged)
     {
@@ -636,7 +636,7 @@ void Api_protocol::destroyObject(const quint16 &object, const quint32 &quantity)
     is_logged=character_selected=packFullOutcommingData(0x50,0x02,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::useObject(const quint16 &object)
+void Api_protocol::useObject(const uint16_t &object)
 {
     if(!is_logged)
     {
@@ -656,7 +656,7 @@ void Api_protocol::useObject(const quint16 &object)
     lastObjectUsed << object;
 }
 
-void Api_protocol::useObjectOnMonster(const quint16 &object,const quint32 &monster)
+void Api_protocol::useObjectOnMonster(const uint16_t &object,const uint32_t &monster)
 {
     if(!is_logged)
     {
@@ -677,7 +677,7 @@ void Api_protocol::useObjectOnMonster(const quint16 &object,const quint32 &monst
 }
 
 
-void Api_protocol::wareHouseStore(const qint64 &cash, const QList<QPair<quint16,qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters)
+void Api_protocol::wareHouseStore(const int64_t &cash, const QList<QPair<uint16_t,int32_t> > &items, const QList<uint32_t> &withdrawMonsters, const QList<uint32_t> &depositeMonsters)
 {
     if(!is_logged)
     {
@@ -694,27 +694,27 @@ void Api_protocol::wareHouseStore(const qint64 &cash, const QList<QPair<quint16,
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << cash;
 
-    out << (quint16)items.size();
+    out << (uint16_t)items.size();
     int index=0;
     while(index<items.size())
     {
-        out << (quint16)items.at(index).first;
-        out << (qint32)items.at(index).second;
+        out << (uint16_t)items.at(index).first;
+        out << (int32_t)items.at(index).second;
         index++;
     }
 
-    out << (quint32)withdrawMonsters.size();
+    out << (uint32_t)withdrawMonsters.size();
     index=0;
     while(index<withdrawMonsters.size())
     {
-        out << (quint32)withdrawMonsters.at(index);
+        out << (uint32_t)withdrawMonsters.at(index);
         index++;
     }
-    out << (quint32)depositeMonsters.size();
+    out << (uint32_t)depositeMonsters.size();
     index=0;
     while(index<depositeMonsters.size())
     {
-        out << (quint32)depositeMonsters.at(index);
+        out << (uint32_t)depositeMonsters.at(index);
         index++;
     }
 
@@ -726,7 +726,7 @@ void Api_protocol::takeAnObjectOnMap()
     packFullOutcommingData(0x50,0x07,NULL,0);
 }
 
-void Api_protocol::getShopList(const quint32 &shopId)
+void Api_protocol::getShopList(const uint32_t &shopId)
 {
     if(!is_logged)
     {
@@ -741,11 +741,11 @@ void Api_protocol::getShopList(const quint32 &shopId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint16)shopId;
+    out << (uint16_t)shopId;
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x000A,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::buyObject(const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
+void Api_protocol::buyObject(const uint32_t &shopId,const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     if(!is_logged)
     {
@@ -760,14 +760,14 @@ void Api_protocol::buyObject(const quint32 &shopId,const quint32 &objectId,const
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint16)shopId;
-    out << (quint16)objectId;
-    out << (quint32)quantity;
-    out << (quint32)price;
+    out << (uint16_t)shopId;
+    out << (uint16_t)objectId;
+    out << (uint32_t)quantity;
+    out << (uint32_t)price;
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x000B,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::sellObject(const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
+void Api_protocol::sellObject(const uint32_t &shopId,const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     if(!is_logged)
     {
@@ -782,14 +782,14 @@ void Api_protocol::sellObject(const quint32 &shopId,const quint32 &objectId,cons
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint16)shopId;
-    out << (quint16)objectId;
-    out << (quint32)quantity;
-    out << (quint32)price;
+    out << (uint16_t)shopId;
+    out << (uint16_t)objectId;
+    out << (uint32_t)quantity;
+    out << (uint32_t)price;
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x000C,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::getFactoryList(const quint16 &factoryId)
+void Api_protocol::getFactoryList(const uint16_t &factoryId)
 {
     if(!is_logged)
     {
@@ -804,11 +804,11 @@ void Api_protocol::getFactoryList(const quint16 &factoryId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint16)factoryId;
+    out << (uint16_t)factoryId;
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x0D,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::buyFactoryProduct(const quint16 &factoryId,const quint16 &objectId,const quint32 &quantity,const quint32 &price)
+void Api_protocol::buyFactoryProduct(const uint16_t &factoryId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     if(!is_logged)
     {
@@ -823,14 +823,14 @@ void Api_protocol::buyFactoryProduct(const quint16 &factoryId,const quint16 &obj
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint16)factoryId;
-    out << (quint16)objectId;
-    out << (quint32)quantity;
-    out << (quint32)price;
+    out << (uint16_t)factoryId;
+    out << (uint16_t)objectId;
+    out << (uint32_t)quantity;
+    out << (uint32_t)price;
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x000E,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::sellFactoryResource(const quint16 &factoryId,const quint16 &objectId,const quint32 &quantity,const quint32 &price)
+void Api_protocol::sellFactoryResource(const uint16_t &factoryId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     if(!is_logged)
     {
@@ -845,10 +845,10 @@ void Api_protocol::sellFactoryResource(const quint16 &factoryId,const quint16 &o
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint16)factoryId;
-    out << (quint16)objectId;
-    out << (quint32)quantity;
-    out << (quint32)price;
+    out << (uint16_t)factoryId;
+    out << (uint16_t)objectId;
+    out << (uint32_t)quantity;
+    out << (uint32_t)price;
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x000F,queryNumber(),outputData.constData(),outputData.size());
 }
 
@@ -882,7 +882,7 @@ void Api_protocol::heal()
     is_logged=character_selected=packFullOutcommingData(0x60,0x06,NULL,0);
 }
 
-void Api_protocol::requestFight(const quint32 &fightId)
+void Api_protocol::requestFight(const uint32_t &fightId)
 {
     if(!is_logged)
     {
@@ -897,11 +897,11 @@ void Api_protocol::requestFight(const quint32 &fightId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint16)fightId;
+    out << (uint16_t)fightId;
     is_logged=character_selected=packFullOutcommingData(0x60,0x07,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::changeOfMonsterInFight(const quint32 &monsterId)
+void Api_protocol::changeOfMonsterInFight(const uint32_t &monsterId)
 {
     if(!is_logged)
     {
@@ -916,11 +916,11 @@ void Api_protocol::changeOfMonsterInFight(const quint32 &monsterId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint32)monsterId;
+    out << (uint32_t)monsterId;
     is_logged=character_selected=packFullOutcommingData(0x60,0x09,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::useSkill(const quint16 &skill)
+void Api_protocol::useSkill(const uint16_t &skill)
 {
     if(!is_logged)
     {
@@ -935,11 +935,11 @@ void Api_protocol::useSkill(const quint16 &skill)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint16)skill;
+    out << (uint16_t)skill;
     is_logged=character_selected=packOutcommingData(0x61,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::learnSkill(const quint32 &monsterId,const quint16 &skill)
+void Api_protocol::learnSkill(const uint32_t &monsterId,const uint16_t &skill)
 {
     if(!is_logged)
     {
@@ -954,12 +954,12 @@ void Api_protocol::learnSkill(const quint32 &monsterId,const quint16 &skill)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint32)monsterId;
-    out << (quint16)skill;
+    out << (uint32_t)monsterId;
+    out << (uint16_t)skill;
     is_logged=character_selected=packFullOutcommingData(0x60,0x04,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::startQuest(const quint16 &questId)
+void Api_protocol::startQuest(const uint16_t &questId)
 {
     if(!is_logged)
     {
@@ -974,11 +974,11 @@ void Api_protocol::startQuest(const quint16 &questId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint16)questId;
+    out << (uint16_t)questId;
     is_logged=character_selected=packFullOutcommingData(0x6a,0x01,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::finishQuest(const quint16 &questId)
+void Api_protocol::finishQuest(const uint16_t &questId)
 {
     if(!is_logged)
     {
@@ -993,11 +993,11 @@ void Api_protocol::finishQuest(const quint16 &questId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint16)questId;
+    out << (uint16_t)questId;
     is_logged=character_selected=packFullOutcommingData(0x6a,0x02,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::cancelQuest(const quint16 &questId)
+void Api_protocol::cancelQuest(const uint16_t &questId)
 {
     if(!is_logged)
     {
@@ -1012,11 +1012,11 @@ void Api_protocol::cancelQuest(const quint16 &questId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint16)questId;
+    out << (uint16_t)questId;
     is_logged=character_selected=packFullOutcommingData(0x6a,0x03,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::nextQuestStep(const quint16 &questId)
+void Api_protocol::nextQuestStep(const uint16_t &questId)
 {
     if(!is_logged)
     {
@@ -1031,7 +1031,7 @@ void Api_protocol::nextQuestStep(const quint16 &questId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint16)questId;
+    out << (uint16_t)questId;
     is_logged=character_selected=packFullOutcommingData(0x6a,0x04,outputData.constData(),outputData.size());
 }
 
@@ -1050,7 +1050,7 @@ void Api_protocol::createClan(const QString &name)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x01;
+    out << (uint8_t)0x01;
     {
         const QByteArray &rawText=FacilityLibGeneral::toUTF8WithHeader(name.toStdString());
         if(rawText.size()>255 || rawText.isEmpty())
@@ -1079,7 +1079,7 @@ void Api_protocol::leaveClan()
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x02;
+    out << (uint8_t)0x02;
     is_logged=character_selected=packFullOutcommingQuery(0x02,0x0D,queryNumber(),outputData.constData(),outputData.size());
 }
 
@@ -1098,7 +1098,7 @@ void Api_protocol::dissolveClan()
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x03;
+    out << (uint8_t)0x03;
     is_logged=character_selected=packFullOutcommingQuery(0x02,0x0D,queryNumber(),outputData.constData(),outputData.size());
 }
 
@@ -1117,7 +1117,7 @@ void Api_protocol::inviteClan(const QString &pseudo)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x04;
+    out << (uint8_t)0x04;
     {
         const QByteArray &rawText=FacilityLibGeneral::toUTF8WithHeader(pseudo.toStdString());
         if(rawText.size()>255 || rawText.isEmpty())
@@ -1146,7 +1146,7 @@ void Api_protocol::ejectClan(const QString &pseudo)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x05;
+    out << (uint8_t)0x05;
     {
         const QByteArray &rawText=FacilityLibGeneral::toUTF8WithHeader(pseudo.toStdString());
         if(rawText.size()>255 || rawText.isEmpty())
@@ -1176,9 +1176,9 @@ void Api_protocol::inviteAccept(const bool &accept)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     if(accept)
-        out << (quint8)0x01;
+        out << (uint8_t)0x01;
     else
-        out << (quint8)0x02;
+        out << (uint8_t)0x02;
     is_logged=character_selected=packFullOutcommingData(0x42,0x04,outputData.constData(),outputData.size());
 }
 
@@ -1198,9 +1198,9 @@ void Api_protocol::waitingForCityCapture(const bool &cancel)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     if(!cancel)
-        out << (quint8)0x00;
+        out << (uint8_t)0x00;
     else
-        out << (quint8)0x01;
+        out << (uint8_t)0x01;
     is_logged=character_selected=packFullOutcommingData(0x6a,0x05,outputData.constData(),outputData.size());
 }
 
@@ -1220,7 +1220,7 @@ void Api_protocol::getMarketList()
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x10,queryNumber(),NULL,0);
 }
 
-void Api_protocol::buyMarketObject(const quint32 &marketObjectId, const quint32 &quantity)
+void Api_protocol::buyMarketObject(const uint32_t &marketObjectId, const uint32_t &quantity)
 {
     if(!is_logged)
     {
@@ -1235,13 +1235,13 @@ void Api_protocol::buyMarketObject(const quint32 &marketObjectId, const quint32 
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x01;
+    out << (uint8_t)0x01;
     out << marketObjectId;
     out << quantity;
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x11,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::buyMarketMonster(const quint32 &monsterId)
+void Api_protocol::buyMarketMonster(const uint32_t &monsterId)
 {
     if(!is_logged)
     {
@@ -1256,12 +1256,12 @@ void Api_protocol::buyMarketMonster(const quint32 &monsterId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x02;
+    out << (uint8_t)0x02;
     out << monsterId;
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x11,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::putMarketObject(const quint32 &objectId,const quint32 &quantity,const quint32 &price)
+void Api_protocol::putMarketObject(const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     if(!is_logged)
     {
@@ -1276,14 +1276,14 @@ void Api_protocol::putMarketObject(const quint32 &objectId,const quint32 &quanti
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x01;
+    out << (uint8_t)0x01;
     out << objectId;
     out << quantity;
     out << price;
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x12,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::putMarketMonster(const quint32 &monsterId,const quint32 &price)
+void Api_protocol::putMarketMonster(const uint32_t &monsterId,const uint32_t &price)
 {
     if(!is_logged)
     {
@@ -1298,7 +1298,7 @@ void Api_protocol::putMarketMonster(const quint32 &monsterId,const quint32 &pric
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x02;
+    out << (uint8_t)0x02;
     out << monsterId;
     out << price;
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x12,queryNumber(),outputData.constData(),outputData.size());
@@ -1319,7 +1319,7 @@ void Api_protocol::recoverMarketCash()
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x13,queryNumber(),NULL,0);
 }
 
-void Api_protocol::withdrawMarketObject(const quint32 &objectId,const quint32 &quantity)
+void Api_protocol::withdrawMarketObject(const uint32_t &objectId,const uint32_t &quantity)
 {
     if(!is_logged)
     {
@@ -1334,13 +1334,13 @@ void Api_protocol::withdrawMarketObject(const quint32 &objectId,const quint32 &q
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x01;
+    out << (uint8_t)0x01;
     out << objectId;
     out << quantity;
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x14,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::withdrawMarketMonster(const quint32 &monsterId)
+void Api_protocol::withdrawMarketMonster(const uint32_t &monsterId)
 {
     if(!is_logged)
     {
@@ -1355,7 +1355,7 @@ void Api_protocol::withdrawMarketMonster(const quint32 &monsterId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x02;
+    out << (uint8_t)0x02;
     out << monsterId;
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x14,queryNumber(),outputData.constData(),outputData.size());
 }
@@ -1379,7 +1379,7 @@ void Api_protocol::collectMaturePlant()
 }
 
 //crafting
-void Api_protocol::useRecipe(const quint16 &recipeId)
+void Api_protocol::useRecipe(const uint16_t &recipeId)
 {
     if(!is_logged)
     {
@@ -1394,11 +1394,11 @@ void Api_protocol::useRecipe(const quint16 &recipeId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint16)recipeId;
+    out << (uint16_t)recipeId;
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x08,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::addRecipe(const quint16 &recipeId)
+void Api_protocol::addRecipe(const uint16_t &recipeId)
 {
     player_informations.recipes << recipeId;
 }
@@ -1423,7 +1423,7 @@ void Api_protocol::battleRefused()
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x02;
+    out << (uint8_t)0x02;
     is_logged=character_selected=postReplyData(battleRequestId.first(),outputData.constData(),outputData.size());
     battleRequestId.removeFirst();
 }
@@ -1448,7 +1448,7 @@ void Api_protocol::battleAccepted()
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x01;
+    out << (uint8_t)0x01;
     is_logged=character_selected=postReplyData(battleRequestId.first(),outputData.constData(),outputData.size());
     battleRequestId.removeFirst();
 }
@@ -1474,7 +1474,7 @@ void Api_protocol::tradeRefused()
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x02;
+    out << (uint8_t)0x02;
     is_logged=character_selected=postReplyData(tradeRequestId.first(),outputData.constData(),outputData.size());
     tradeRequestId.removeFirst();
 }
@@ -1499,7 +1499,7 @@ void Api_protocol::tradeAccepted()
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x01;
+    out << (uint8_t)0x01;
     is_logged=character_selected=postReplyData(tradeRequestId.first(),outputData.constData(),outputData.size());
     tradeRequestId.removeFirst();
     isInTrade=true;
@@ -1546,7 +1546,7 @@ void Api_protocol::tradeFinish()
     is_logged=character_selected=packFullOutcommingData(0x50,0x04,NULL,0);
 }
 
-void Api_protocol::addTradeCash(const quint64 &cash)
+void Api_protocol::addTradeCash(const uint64_t &cash)
 {
     if(!is_logged)
     {
@@ -1571,12 +1571,12 @@ void Api_protocol::addTradeCash(const quint64 &cash)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x01;
+    out << (uint8_t)0x01;
     out << cash;
     is_logged=character_selected=packFullOutcommingData(0x50,0x03,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::addObject(const quint16 &item, const quint32 &quantity)
+void Api_protocol::addObject(const uint16_t &item, const uint32_t &quantity)
 {
     if(!is_logged)
     {
@@ -1601,13 +1601,13 @@ void Api_protocol::addObject(const quint16 &item, const quint32 &quantity)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x02;
+    out << (uint8_t)0x02;
     out << item;
     out << quantity;
     is_logged=character_selected=packFullOutcommingData(0x50,0x03,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::addMonster(const quint32 &monsterId)
+void Api_protocol::addMonster(const uint32_t &monsterId)
 {
     if(!is_logged)
     {
@@ -1627,7 +1627,7 @@ void Api_protocol::addMonster(const quint32 &monsterId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x03;
+    out << (uint8_t)0x03;
     out << monsterId;
     is_logged=character_selected=packFullOutcommingData(0x50,0x03,outputData.constData(),outputData.size());
 }
@@ -1984,7 +1984,7 @@ void Api_protocol::readForFirstHeader()
             newError(QStringLiteral("Internal problem"),QStringLiteral("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol::readForFirstHeader()"));
             return;
         }
-        quint8 value;
+        uint8_t value;
         if(socket->sslSocket->read((char*)&value,sizeof(value))==sizeof(value))
         {
             haveFirstHeader=true;

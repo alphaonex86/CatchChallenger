@@ -19,47 +19,47 @@ public:
     ~EpollServerLoginSlave();
     bool tryListen();
     void close();
-    void setSkinPair(const quint8 &internalId,const quint16 &databaseId);
-    void setProfilePair(const quint8 &internalId,const quint16 &databaseId);
+    void setSkinPair(const uint8_t &internalId,const uint16_t &databaseId);
+    void setProfilePair(const uint8_t &internalId,const uint16_t &databaseId);
     void compose04Reply();
 public:
     struct LoginProfile
     {
         struct Reputation
         {
-            quint16 reputationDatabaseId;//datapack order, can can need the dicionary to db resolv
-            qint8 level;
-            qint32 point;
+            uint16_t reputationDatabaseId;//datapack order, can can need the dicionary to db resolv
+            int8_t level;
+            int32_t point;
         };
         struct Monster
         {
             struct Skill
             {
-                quint16 id;
-                quint8 level;
-                quint8 endurance;
+                uint16_t id;
+                uint8_t level;
+                uint8_t endurance;
             };
-            quint16 id;
-            quint8 level;
-            quint16 captured_with;
-            quint32 hp;
-            qint8 ratio_gender;
+            uint16_t id;
+            uint8_t level;
+            uint16_t captured_with;
+            uint32_t hp;
+            int8_t ratio_gender;
             std::vector<Skill> skills;
         };
         struct Item
         {
             CATCHCHALLENGER_TYPE_ITEM id;
-            quint32 quantity;
+            uint32_t quantity;
         };
-        quint16 databaseId;
-        std::vector<quint8> forcedskin;
-        quint64 cash;
+        uint16_t databaseId;
+        std::vector<uint8_t> forcedskin;
+        uint64_t cash;
         std::vector<Monster> monsters;
         std::vector<Reputation> reputation;
         std::vector<Item> items;
         char * preparedQueryChar;
-        quint8 preparedQueryPos[6];
-        quint8 preparedQuerySize[6];
+        uint8_t preparedQueryPos[6];
+        uint8_t preparedQuerySize[6];
     };
     std::vector<LoginProfile> loginProfileList;
 

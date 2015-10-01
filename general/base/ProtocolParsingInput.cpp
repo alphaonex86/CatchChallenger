@@ -109,8 +109,9 @@ void ProtocolParsingInputOutput::closeSocket()
     #endif
 }
 
-bool ProtocolParsingInputOutput::forwardTo(ProtocolParsingBase * const destination)
+bool ProtocolParsingBase::forwardTo(ProtocolParsingBase * const destination)
 {
+    uint32_t size=0;
     if(!header_cut.isEmpty())
     {
         const unsigned int &size_to_get=CATCHCHALLENGER_COMMONBUFFERSIZE-header_cut.size();
@@ -132,7 +133,8 @@ bool ProtocolParsingInputOutput::forwardTo(ProtocolParsingBase * const destinati
             //qDebug() << "without header cut" << tempDataToDebug.toHex() << "and size" << size;
         }
     }
-    destination->sendRawSmallPacket(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,size);
+    if(size>0)
+        destination->internalSendRawSmallPacket(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,size);
     return true;
 }
 

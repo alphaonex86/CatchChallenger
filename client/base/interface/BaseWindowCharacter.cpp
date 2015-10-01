@@ -70,7 +70,7 @@ void BaseWindow::newProfileFinished()
     ui->label_connecting_status->setText(tr("Creating your new character"));
 }
 
-void BaseWindow::newCharacterId(const quint8 &returnCode, const quint32 &characterId)
+void BaseWindow::newCharacterId(const uint8_t &returnCode, const uint32_t &characterId)
 {
     CharacterEntry characterEntry=characterEntryListInWaiting.first();
     characterEntryListInWaiting.removeFirst();
@@ -141,8 +141,8 @@ void BaseWindow::on_character_remove_clicked()
     QList<QListWidgetItem *> selectedItems=ui->characterEntryList->selectedItems();
     if(selectedItems.size()!=1)
         return;
-    const quint32 &character_id=selectedItems.first()->data(99).toUInt();
-    const quint32 &delete_time_left=selectedItems.first()->data(98).toUInt();
+    const uint32_t &character_id=selectedItems.first()->data(99).toUInt();
+    const uint32_t &delete_time_left=selectedItems.first()->data(98).toUInt();
     if(delete_time_left>0)
     {
         QMessageBox::warning(this,tr("Error"),tr("Deleting already planned"));
@@ -207,7 +207,7 @@ void BaseWindow::updateServerList()
     bool fullView=true;
     if(serverOrdenedList.size()>10)
         fullView=false;
-    const quint64 &current__date=QDateTime::currentDateTime().toTime_t();
+    const uint64_t &current__date=QDateTime::currentDateTime().toTime_t();
 
     //reload, bug if before init
     if(icon_server_list_star1.isNull())
@@ -259,7 +259,7 @@ bool ServerFromPoolForDisplay::operator<(const ServerFromPoolForDisplay &serverF
         return false;
 }
 
-void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *item, const quint64 &currentDate, const bool &fullView)
+void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *item, const uint64_t &currentDate, const bool &fullView)
 {
     item->setText(0,logicialGroup.name);
     {
@@ -325,7 +325,7 @@ void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *
             }
             else if(server.playedTime>0 || server.lastConnect>0)
             {
-                quint64 dateDiff=0;
+                uint64_t dateDiff=0;
                 if(currentDate>server.lastConnect)
                     dateDiff=currentDate-server.lastConnect;
                 if(server.playedTime>24*3600*31)

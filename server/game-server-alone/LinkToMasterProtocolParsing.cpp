@@ -6,7 +6,7 @@
 
 using namespace CatchChallenger;
 
-void LinkToMaster::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size)
+void LinkToMaster::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
 {
     Q_UNUSED(queryNumber);
     Q_UNUSED(size);
@@ -19,7 +19,7 @@ void LinkToMaster::parseInputBeforeLogin(const quint8 &mainCodeType, const quint
     }
 }
 
-void LinkToMaster::parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size)
+void LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size)
 {
     (void)data;
     (void)size;
@@ -32,7 +32,7 @@ void LinkToMaster::parseMessage(const quint8 &mainCodeType,const char * const da
     }
 }
 
-void LinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const rawData,const unsigned int &size)
+void LinkToMaster::parseFullMessage(const uint8_t &mainCodeType,const uint8_t &subCodeType,const char * const rawData,const unsigned int &size)
 {
     if(stat!=Stat::Logged)
     {
@@ -55,7 +55,7 @@ void LinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                         return;
                     }
                     #endif
-                    const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
+                    const uint32_t &characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData)));
                     Client::disconnectClientById(characterId);
                 }
                 return;
@@ -82,7 +82,7 @@ void LinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
 }
 
 //have query with reply
-void LinkToMaster::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+void LinkToMaster::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     Q_UNUSED(data);
     if(stat!=Stat::Logged)
@@ -99,7 +99,7 @@ void LinkToMaster::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumb
     }
 }
 
-void LinkToMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const rawData,const unsigned int &size)
+void LinkToMaster::parseFullQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const rawData,const unsigned int &size)
 {
     (void)subCodeType;
     (void)queryNumber;
@@ -126,10 +126,10 @@ void LinkToMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCo
                     }
                     else
                     {
-                        const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
+                        const uint32_t &characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData)));
                         if(Q_LIKELY(!Client::characterConnected(characterId)))
                         {
-                            const quint32 &accountId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+4)));
+                            const uint32_t &accountId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+4)));
                             const char * const token=Client::addAuthGetToken(characterId,accountId);
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             queryReceived.remove(queryNumber);
@@ -167,7 +167,7 @@ void LinkToMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCo
 }
 
 //send reply
-void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+void LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     queryNumberList.push_back(queryNumber);
     Q_UNUSED(data);
@@ -183,7 +183,7 @@ void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                 abort();
             }
             //Protocol initialization
-            const quint8 &returnCode=data[0x00];
+            const uint8_t &returnCode=data[0x00];
             if(returnCode>=0x04 && returnCode<=0x06)
             {
                 if(size!=(1+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
@@ -242,7 +242,7 @@ void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                     abort();
                 }
                 {
-                    const quint32 &uniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+pos)));
+                    const uint32_t &uniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
                     pos+=4;
                     settings->setValue(QLatin1Literal("uniqueKey"),uniqueKey);
                 }
@@ -256,7 +256,7 @@ void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                     int index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
                     {
-                        GlobalServerData::serverPrivateVariables.maxMonsterId.push_back(le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+pos))));
+                        GlobalServerData::serverPrivateVariables.maxMonsterId.push_back(le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos))));
                         pos+=4;
                         index++;
                     }
@@ -268,7 +268,7 @@ void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                     index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)
                     {
-                        GlobalServerData::serverPrivateVariables.maxClanId.push_back(le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+pos))));
+                        GlobalServerData::serverPrivateVariables.maxClanId.push_back(le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos))));
                         pos+=4;
                         index++;
                     }
@@ -279,11 +279,11 @@ void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                     }
                     CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters=data[pos];
                     pos+=1;
-                    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data+pos)));
+                    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
                     pos+=2;
                     CommonSettingsCommon::commonSettingsCommon.maxPlayerItems=data[pos];
                     pos+=1;
-                    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data+pos)));
+                    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
                     pos+=2;
                     if((size-pos)!=0)
                     {
@@ -317,7 +317,7 @@ void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &query
     return;
 }
 
-void LinkToMaster::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+void LinkToMaster::parseFullReplyData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     if(stat!=Stat::Logged)
     {
@@ -346,7 +346,7 @@ void LinkToMaster::parseFullReplyData(const quint8 &mainCodeType,const quint8 &s
                 while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
                 {
                     GlobalServerData::serverPrivateVariables.maxMonsterId.push_back(
-                                le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+index*sizeof(unsigned int))))
+                                le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+index*sizeof(unsigned int))))
                                 );
                     index++;
                 }
@@ -365,7 +365,7 @@ void LinkToMaster::parseFullReplyData(const quint8 &mainCodeType,const quint8 &s
                 while(index<CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)
                 {
                     GlobalServerData::serverPrivateVariables.maxClanId.push_back(
-                                le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+index*sizeof(unsigned int))))
+                                le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+index*sizeof(unsigned int))))
                                 );
                     index++;
                 }

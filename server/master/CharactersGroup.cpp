@@ -10,7 +10,7 @@ int CharactersGroup::serverWaitedToBeReady=0;
 QHash<QString,CharactersGroup *> CharactersGroup::hash;
 QList<CharactersGroup *> CharactersGroup::list;
 
-CharactersGroup::CharactersGroup(const char * const db, const char * const host, const char * const login, const char * const pass, const quint8 &considerDownAfterNumberOfTry, const quint8 &tryInterval, const QString &name) :
+CharactersGroup::CharactersGroup(const char * const db, const char * const host, const char * const login, const char * const pass, const uint8_t &considerDownAfterNumberOfTry, const uint8_t &tryInterval, const QString &name) :
     databaseBaseCommon(new EpollPostgresql())
 {
     this->index=0;
@@ -180,15 +180,15 @@ BaseClassSwitch::EpollObjectType CharactersGroup::getType() const
     return BaseClassSwitch::EpollObjectType::Client;
 }
 
-CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(void * const link, const quint32 &uniqueKey, const QString &host,
-                                                                              const quint16 &port, const QString &metaData, const quint32 &logicalGroupIndex,
-                                                                              const quint16 &currentPlayer, const quint16 &maxPlayer,const QSet<quint32> &lockedAccount)
+CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(void * const link, const uint32_t &uniqueKey, const QString &host,
+                                                                              const uint16_t &port, const QString &metaData, const uint32_t &logicalGroupIndex,
+                                                                              const uint16_t &currentPlayer, const uint16_t &maxPlayer,const QSet<uint32_t> &lockedAccount)
 {
     //old locked account
     if(lockedAccountByDisconnectedServer.contains(uniqueKey))
     {
         //new key found on master server
-        QSet<quint32>::const_iterator i = lockedAccountByDisconnectedServer.value(uniqueKey).constBegin();
+        QSet<uint32_t>::const_iterator i = lockedAccountByDisconnectedServer.value(uniqueKey).constBegin();
         while (i != lockedAccountByDisconnectedServer.value(uniqueKey).constEnd()) {
             if(!lockedAccount.contains(*i))
             {
@@ -213,13 +213,13 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
 
     //new key found on game server, mostly when the master server is restarted
     {
-        QSet<quint32>::const_iterator i = lockedAccount.constBegin();
+        QSet<uint32_t>::const_iterator i = lockedAccount.constBegin();
         while (i != lockedAccount.constEnd()) {
             if(this->lockedAccount.contains(*i))
             {
-                const quint64 &timeLock=this->lockedAccount.value(*i);
+                const uint64_t &timeLock=this->lockedAccount.value(*i);
                 //drop the timeouted lock
-                if(timeLock>0 && timeLock<(quint64)QDateTime::currentMSecsSinceEpoch()/1000)
+                if(timeLock>0 && timeLock<(uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)
                 {
                     tempServer.lockedAccount << *i;
                     this->lockedAccount[*i]=0;
@@ -230,7 +230,7 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
                     //find the other game server and disconnect character on it
                     if(Q_UNLIKELY(timeLock==0))
                     {
-                        QHashIterator<quint32/*serverUniqueKey*/,InternalGameServer> j(gameServers);
+                        QHashIterator<uint32_t/*serverUniqueKey*/,InternalGameServer> j(gameServers);
                         while (j.hasNext()) {
                             j.next();
                             if(j.value().lockedAccount.contains(*i))
@@ -266,25 +266,25 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
 
 void CharactersGroup::removeGameServerUniqueKey(void * const link)
 {
-    const quint32 &uniqueKey=gameServersLinkToUniqueKey.value(link);
+    const uint32_t &uniqueKey=gameServersLinkToUniqueKey.value(link);
     const InternalGameServer &internalGameServer=gameServers.value(uniqueKey);
     lockedAccountByDisconnectedServer.insert(uniqueKey,internalGameServer.lockedAccount);
     gameServers.remove(uniqueKey);
     gameServersLinkToUniqueKey.remove(link);
 }
 
-bool CharactersGroup::containsGameServerUniqueKey(const quint32 &serverUniqueKey) const
+bool CharactersGroup::containsGameServerUniqueKey(const uint32_t &serverUniqueKey) const
 {
     return gameServers.contains(serverUniqueKey);
 }
 
-bool CharactersGroup::characterIsLocked(const quint32 &characterId)
+bool CharactersGroup::characterIsLocked(const uint32_t &characterId)
 {
     if(lockedAccount.contains(characterId))
     {
         if(lockedAccount.value(characterId)==0)
             return true;
-        if(lockedAccount.value(characterId)<(quint64)QDateTime::currentMSecsSinceEpoch()/1000)
+        if(lockedAccount.value(characterId)<(uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)
         {
             lockedAccount.remove(characterId);
             return false;
@@ -298,7 +298,7 @@ bool CharactersGroup::characterIsLocked(const quint32 &characterId)
 
 //need check if is already locked before this call
 //don't apply on InternalGameServer
-void CharactersGroup::lockTheCharacter(const quint32 &characterId)
+void CharactersGroup::lockTheCharacter(const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(lockedAccount.contains(characterId))
@@ -314,7 +314,7 @@ void CharactersGroup::lockTheCharacter(const quint32 &characterId)
             return;
         }
     }
-    QHashIterator<quint32/*serverUniqueKey*/,InternalGameServer> j(gameServers);
+    QHashIterator<uint32_t/*serverUniqueKey*/,InternalGameServer> j(gameServers);
     while (j.hasNext()) {
         j.next();
         if(j.value().lockedAccount.contains(characterId))
@@ -329,7 +329,7 @@ void CharactersGroup::lockTheCharacter(const quint32 &characterId)
 }
 
 //don't apply on InternalGameServer
-void CharactersGroup::unlockTheCharacter(const quint32 &characterId)
+void CharactersGroup::unlockTheCharacter(const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(!lockedAccount.contains(characterId))
@@ -341,7 +341,7 @@ void CharactersGroup::unlockTheCharacter(const quint32 &characterId)
     qDebug() << QStringLiteral("unlock the char %1 total locked: %2").arg(characterId).arg(lockedAccount.size());
 }
 
-void CharactersGroup::waitBeforeReconnect(const quint32 &characterId)
+void CharactersGroup::waitBeforeReconnect(const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(!lockedAccount.contains(characterId))
@@ -356,15 +356,15 @@ void CharactersGroup::waitBeforeReconnect(const quint32 &characterId)
 void CharactersGroup::purgeTheLockedAccount()
 {
     bool clockDriftDetected=false;
-    QList<quint32> charactedToUnlock;
-    QHashIterator<quint32/*uniqueKey*/,quint64/*can reconnect after this time stamps if !=0, else locked*/> i(lockedAccount);
+    QList<uint32_t> charactedToUnlock;
+    QHashIterator<uint32_t/*uniqueKey*/,uint64_t/*can reconnect after this time stamps if !=0, else locked*/> i(lockedAccount);
     while (i.hasNext()) {
         i.next();
         if(i.value()!=0)
         {
-            if(i.value()<(quint64)QDateTime::currentMSecsSinceEpoch()/1000)
+            if(i.value()<(uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)
                 charactedToUnlock << i.key();
-            else if(i.value()>((quint64)QDateTime::currentMSecsSinceEpoch()/1000)+3600)
+            else if(i.value()>((uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)+3600)
             {
                 charactedToUnlock << i.key();
                 clockDriftDetected=true;

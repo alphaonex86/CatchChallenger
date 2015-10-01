@@ -13,27 +13,27 @@ class TriggerAnimation : public QObject
     Q_OBJECT
 public:
     explicit TriggerAnimation(Tiled::MapObject* object,
-                              const quint8 &framesCountEnter, const quint16 &msEnter,
-                              const quint8 &framesCountLeave, const quint16 &msLeave,
-                              const quint8 &framesCountAgain, const quint16 &msAgain,
+                              const uint8_t &framesCountEnter, const uint16_t &msEnter,
+                              const uint8_t &framesCountLeave, const uint16_t &msLeave,
+                              const uint8_t &framesCountAgain, const uint16_t &msAgain,
                               bool over=false
                               );
     explicit TriggerAnimation(Tiled::MapObject* object,
-                              const quint8 &framesCountEnter, const quint16 &msEnter,
-                              const quint8 &framesCountLeave, const quint16 &msLeave,
-                              bool over=false
-                              );
-    explicit TriggerAnimation(Tiled::MapObject* object,
-                              Tiled::MapObject* objectOver,
-                              const quint8 &framesCountEnter, const quint16 &msEnter,
-                              const quint8 &framesCountLeave, const quint16 &msLeave,
-                              const quint8 &framesCountAgain, const quint16 &msAgain,
+                              const uint8_t &framesCountEnter, const uint16_t &msEnter,
+                              const uint8_t &framesCountLeave, const uint16_t &msLeave,
                               bool over=false
                               );
     explicit TriggerAnimation(Tiled::MapObject* object,
                               Tiled::MapObject* objectOver,
-                              const quint8 &framesCountEnter, const quint16 &msEnter,
-                              const quint8 &framesCountLeave, const quint16 &msLeave,
+                              const uint8_t &framesCountEnter, const uint16_t &msEnter,
+                              const uint8_t &framesCountLeave, const uint16_t &msLeave,
+                              const uint8_t &framesCountAgain, const uint16_t &msAgain,
+                              bool over=false
+                              );
+    explicit TriggerAnimation(Tiled::MapObject* object,
+                              Tiled::MapObject* objectOver,
+                              const uint8_t &framesCountEnter, const uint16_t &msEnter,
+                              const uint8_t &framesCountLeave, const uint16_t &msLeave,
                               bool over=false
                               );
     ~TriggerAnimation();
@@ -46,30 +46,30 @@ private:
     Tiled::Cell cellOver;
     const Tiled::Tile* baseTile;
     const Tiled::Tile* baseTileOver;
-    const quint8 framesCountEnter;
-    const quint16 msEnter;
-    const quint8 framesCountLeave;
-    const quint16 msLeave;
-    const quint8 framesCountAgain;
-    const quint16 msAgain;
+    const uint8_t framesCountEnter;
+    const uint16_t msEnter;
+    const uint8_t framesCountLeave;
+    const uint16_t msLeave;
+    const uint8_t framesCountAgain;
+    const uint16_t msAgain;
     bool over;
-    quint16 playerOnThisTile;
+    uint16_t playerOnThisTile;
     bool firstTime;
 
     struct EnterEventCall
     {
         QTimer *timer;
-        quint8 frame;//0 to framesCount*2 -> open + close
+        uint8_t frame;//0 to framesCount*2 -> open + close
     };
     QList<EnterEventCall> enterEvents;
     struct LeaveEventCall
     {
         QTimer *timer;
-        quint8 frame;//0 to framesCount*2 -> open + close
+        uint8_t frame;//0 to framesCount*2 -> open + close
     };
     QList<LeaveEventCall> leaveEvents;
 private:
-    void setTileOffset(const quint8 &offset);
+    void setTileOffset(const uint8_t &offset);
 private slots:
     void timerFinishEnter();
     void timerFinishLeave();

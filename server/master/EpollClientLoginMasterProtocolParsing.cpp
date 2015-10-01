@@ -8,7 +8,7 @@
 
 using namespace CatchChallenger;
 
-void EpollClientLoginMaster::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+void EpollClientLoginMaster::parseInputBeforeLogin(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     Q_UNUSED(size);
     switch(mainCodeType)
@@ -96,7 +96,7 @@ void EpollClientLoginMaster::parseInputBeforeLogin(const quint8 &mainCodeType,co
     }
 }
 
-void EpollClientLoginMaster::parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size)
+void EpollClientLoginMaster::parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size)
 {
     (void)data;
     (void)size;
@@ -109,7 +109,7 @@ void EpollClientLoginMaster::parseMessage(const quint8 &mainCodeType,const char 
     }
 }
 
-void EpollClientLoginMaster::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const rawData,const unsigned int &size)
+void EpollClientLoginMaster::parseFullMessage(const uint8_t &mainCodeType,const uint8_t &subCodeType,const char * const rawData,const unsigned int &size)
 {
     (void)rawData;
     (void)size;
@@ -131,7 +131,7 @@ void EpollClientLoginMaster::parseFullMessage(const quint8 &mainCodeType,const q
                     parseNetworkReadError("charactersGroupForGameServer==NULL main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
                     return;
                 }
-                const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
+                const uint32_t &characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData)));
                 charactersGroupForGameServer->unlockTheCharacter(characterId);
                 charactersGroupForGameServerInformation->lockedAccount.remove(characterId);
             }
@@ -155,7 +155,7 @@ void EpollClientLoginMaster::parseFullMessage(const quint8 &mainCodeType,const q
                     return;
                 }
                 #endif
-                charactersGroupForGameServerInformation->currentPlayer=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                charactersGroupForGameServerInformation->currentPlayer=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData)));
                 if(charactersGroupForGameServerInformation->currentPlayer>charactersGroupForGameServerInformation->maxPlayer)
                 {
                     parseNetworkReadError("charactersGroupForGameServerInformation->currentPlayer > charactersGroupForGameServerInformation->maxPlayer main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
@@ -173,8 +173,8 @@ void EpollClientLoginMaster::parseFullMessage(const quint8 &mainCodeType,const q
                     }
                     const int posFromZero=gameServers.size()-1-index;
                     const unsigned int bufferPos=2-2*/*last is zero*/posFromZero;
-                    *reinterpret_cast<quint16 *>(EpollClientLoginMaster::serverServerList+EpollClientLoginMaster::serverServerListSize-bufferPos)=*reinterpret_cast<quint16 *>(const_cast<char *>(rawData));
-                    *reinterpret_cast<quint16 *>(EpollClientLoginMaster::loginPreviousToReplyCache+EpollClientLoginMaster::loginPreviousToReplyCacheSize-bufferPos)=*reinterpret_cast<quint16 *>(const_cast<char *>(rawData));
+                    *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::serverServerList+EpollClientLoginMaster::serverServerListSize-bufferPos)=*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData));
+                    *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::loginPreviousToReplyCache+EpollClientLoginMaster::loginPreviousToReplyCacheSize-bufferPos)=*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData));
                 }
                 currentPlayerForGameServerToUpdate=true;
             }
@@ -193,7 +193,7 @@ void EpollClientLoginMaster::parseFullMessage(const quint8 &mainCodeType,const q
 }
 
 //have query with reply
-void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+void EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     Q_UNUSED(data);
     if(stat==EpollClientLoginMasterStat::None)
@@ -235,19 +235,19 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
             QString charactersGroup;
             QString host;
             QString xml;
-            quint16 port=0;
-            quint32 uniqueKey=0;
-            quint32 logicalGroupIndex=0;
-            quint16 currentPlayer=0,maxPlayer=0;
+            uint16_t port=0;
+            uint32_t uniqueKey=0;
+            uint32_t logicalGroupIndex=0;
+            uint16_t currentPlayer=0,maxPlayer=0;
             //charactersGroup
             {
-                if((size-pos)<(int)sizeof(quint8))
+                if((size-pos)<(int)sizeof(uint8_t))
                 {
                     parseNetworkReadError("wrong utf8 to QString size for text size");
                     return;
                 }
-                const quint8 &textSize=data[pos];
-                pos+=sizeof(quint8);
+                const uint8_t &textSize=data[pos];
+                pos+=sizeof(uint8_t);
                 if(textSize>0)
                 {
                     if((size-pos)<(int)textSize)
@@ -268,22 +268,22 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
             }
             charactersGroupForGameServer=CharactersGroup::hash.value(charactersGroup);
             //uniqueKey
-            if((size-pos)<(int)sizeof(quint32))
+            if((size-pos)<(int)sizeof(uint32_t))
             {
                 parseNetworkReadError(QStringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
                 return;
             }
-            uniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+pos)));
-            pos+=sizeof(quint32);
+            uniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+            pos+=sizeof(uint32_t);
             //host
             {
-                if((size-pos)<(int)sizeof(quint8))
+                if((size-pos)<(int)sizeof(uint8_t))
                 {
                     parseNetworkReadError("wrong utf8 to QString size for text size");
                     return;
                 }
-                const quint8 &textSize=data[pos];
-                pos+=sizeof(quint8);
+                const uint8_t &textSize=data[pos];
+                pos+=sizeof(uint8_t);
                 if(textSize>0)
                 {
                     if((size-pos)<(int)textSize)
@@ -301,22 +301,22 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                 }
             }
             //port
-            if((size-pos)<(int)sizeof(quint16))
+            if((size-pos)<(int)sizeof(uint16_t))
             {
                 parseNetworkReadError(QStringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
                 return;
             }
-            port=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data+pos)));
-            pos+=sizeof(quint16);
+            port=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+            pos+=sizeof(uint16_t);
             //xml
             {
-                if((size-pos)<(int)sizeof(quint16))
+                if((size-pos)<(int)sizeof(uint16_t))
                 {
                     parseNetworkReadError("wrong utf8 to QString size for text size");
                     return;
                 }
-                const quint16 textSize=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data+pos)));
-                pos+=sizeof(quint16);
+                const uint16_t textSize=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(uint16_t);
                 if(textSize>0)
                 {
                     if((size-pos)<(int)textSize)
@@ -330,14 +330,14 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
             }
             //logical group
             {
-                if((size-pos)<(int)sizeof(quint8))
+                if((size-pos)<(int)sizeof(uint8_t))
                 {
                     parseNetworkReadError("wrong utf8 to QString size for text size");
                     return;
                 }
                 QString logicalGroup;
-                const quint8 &textSize=data[pos];
-                pos+=sizeof(quint8);
+                const uint8_t &textSize=data[pos];
+                pos+=sizeof(uint8_t);
                 if(textSize>0)
                 {
                     if((size-pos)<(int)textSize)
@@ -364,41 +364,41 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                 }
             }
             //current player
-            if((size-pos)<(int)sizeof(quint16))
+            if((size-pos)<(int)sizeof(uint16_t))
             {
                 parseNetworkReadError(QStringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
                 return;
             }
-            currentPlayer=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data+pos)));
-            pos+=sizeof(quint16);
+            currentPlayer=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+            pos+=sizeof(uint16_t);
             //max player
-            if((size-pos)<(int)sizeof(quint16))
+            if((size-pos)<(int)sizeof(uint16_t))
             {
                 parseNetworkReadError(QStringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
                 return;
             }
-            maxPlayer=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data+pos)));
-            pos+=sizeof(quint16);
-            QSet<quint32/*characterId*/> connectedPlayer;
+            maxPlayer=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+            pos+=sizeof(uint16_t);
+            QSet<uint32_t/*characterId*/> connectedPlayer;
             //connected player
             {
                 unsigned int index=0;
-                if((size-pos)<(int)sizeof(quint16))
+                if((size-pos)<(int)sizeof(uint16_t))
                 {
                     parseNetworkReadError(QStringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
                     return;
                 }
-                unsigned int disconnectedPlayerNumber=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data+pos)));
-                pos+=sizeof(quint16);
+                unsigned int disconnectedPlayerNumber=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(uint16_t);
                 while(index<disconnectedPlayerNumber)
                 {
-                    if((size-pos)<(int)sizeof(quint32))
+                    if((size-pos)<(int)sizeof(uint32_t))
                     {
                         parseNetworkReadError(QStringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
                         return;
                     }
-                    unsigned int characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+pos)));
-                    pos+=sizeof(quint32);
+                    unsigned int characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                    pos+=sizeof(uint32_t);
                     connectedPlayer << characterId;
                     charactersGroupForGameServerInformation->lockedAccount.remove(characterId);
                     index++;
@@ -409,7 +409,7 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                 unsigned int destinationPos=0;
                 if(Q_UNLIKELY(charactersGroupForGameServer->gameServers.contains(uniqueKey)))
                 {
-                    quint32 newUniqueKey;
+                    uint32_t newUniqueKey;
                     do
                     {
                         newUniqueKey = rng();
@@ -418,7 +418,7 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                     std::cerr << "Generate new unique key for a game server" << std::endl;
                     destinationPos=1+4;
                     EpollClientLoginMaster::replyToIdListBuffer[0x00]=0x02;
-                    *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+1)=(quint32)htole32(newUniqueKey);
+                    *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::replyToIdListBuffer+1)=(uint32_t)htole32(newUniqueKey);
                 }
                 else
                 {
@@ -435,7 +435,7 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                     int index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
                     {
-                        *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+destinationPos+index*4/*size of int*/)=(quint32)htole32(charactersGroupForGameServer->maxMonsterId+1+index);
+                        *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::replyToIdListBuffer+destinationPos+index*4/*size of int*/)=(uint32_t)htole32(charactersGroupForGameServer->maxMonsterId+1+index);
                         index++;
                     }
                     destinationPos+=4*CATCHCHALLENGER_SERVER_MAXIDBLOCK;
@@ -451,7 +451,7 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                     int index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)
                     {
-                        *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+destinationPos+index*4/*size of int*/)=(quint32)htole32(charactersGroupForGameServer->maxClanId+1+index);
+                        *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::replyToIdListBuffer+destinationPos+index*4/*size of int*/)=(uint32_t)htole32(charactersGroupForGameServer->maxClanId+1+index);
                         index++;
                     }
                     destinationPos+=4*CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK;
@@ -469,7 +469,7 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                 }
                 //Max warehouse player monsters
                 {
-                    *reinterpret_cast<quint16 *>(EpollClientLoginMaster::replyToIdListBuffer+destinationPos)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
+                    *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::replyToIdListBuffer+destinationPos)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
                     destinationPos+=2;
                 }
                 //Max player items
@@ -479,7 +479,7 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                 }
                 //Max warehouse player monsters
                 {
-                    *reinterpret_cast<quint16 *>(EpollClientLoginMaster::replyToIdListBuffer+destinationPos)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
+                    *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::replyToIdListBuffer+destinationPos)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
                     destinationPos+=2;
                 }
 
@@ -562,7 +562,7 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
             int index=0;
             while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
             {
-                *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToRegisterLoginServer+pos+index*4/*size of int*/)=(quint32)htole32(maxAccountId+1+index);
+                *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::replyToRegisterLoginServer+pos+index*4/*size of int*/)=(uint32_t)htole32(maxAccountId+1+index);
                 index++;
             }
             pos+=4*CATCHCHALLENGER_SERVER_MAXIDBLOCK;
@@ -580,14 +580,14 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                     int index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
                     {
-                        *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToRegisterLoginServer+EpollClientLoginMaster::replyToRegisterLoginServerBaseOffset+
+                        *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::replyToRegisterLoginServer+EpollClientLoginMaster::replyToRegisterLoginServerBaseOffset+
                                                      (CATCHCHALLENGER_SERVER_MAXIDBLOCK*1+index)*4/*size of int*/+
-                                                     charactersGroupIndex*(CATCHCHALLENGER_SERVER_MAXIDBLOCK*2*sizeof(quint32))
-                                                     )=(quint32)htole32(charactersGroup->maxCharacterId+1+index);
-                        *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToRegisterLoginServer+EpollClientLoginMaster::replyToRegisterLoginServerBaseOffset+
+                                                     charactersGroupIndex*(CATCHCHALLENGER_SERVER_MAXIDBLOCK*2*sizeof(uint32_t))
+                                                     )=(uint32_t)htole32(charactersGroup->maxCharacterId+1+index);
+                        *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::replyToRegisterLoginServer+EpollClientLoginMaster::replyToRegisterLoginServerBaseOffset+
                                                      (CATCHCHALLENGER_SERVER_MAXIDBLOCK*2+index)*4/*size of int*/+
-                                                     charactersGroupIndex*(CATCHCHALLENGER_SERVER_MAXIDBLOCK*2*sizeof(quint32))
-                                                     )=(quint32)htole32(charactersGroup->maxMonsterId+1+index);
+                                                     charactersGroupIndex*(CATCHCHALLENGER_SERVER_MAXIDBLOCK*2*sizeof(uint32_t))
+                                                     )=(uint32_t)htole32(charactersGroup->maxMonsterId+1+index);
                         index++;
                     }
                     charactersGroup->maxCharacterId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
@@ -609,7 +609,7 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
     }
 }
 
-void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const rawData,const unsigned int &size)
+void EpollClientLoginMaster::parseFullQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const rawData,const unsigned int &size)
 {
     (void)subCodeType;
     (void)queryNumber;
@@ -632,10 +632,10 @@ void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const qui
             {
                 case 0x07:
                 {
-                    const quint8 &charactersGroupIndex=rawData[0];
-                    const quint32 &serverUniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+1)));
-                    const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+5)));
-                    const quint32 &accountId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+9)));
+                    const uint8_t &charactersGroupIndex=rawData[0];
+                    const uint32_t &serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+1)));
+                    const uint32_t &characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+5)));
+                    const uint32_t &accountId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+9)));
                     selectCharacter(queryNumber,serverUniqueKey,charactersGroupIndex,characterId,accountId);
                 }
                 break;
@@ -669,7 +669,7 @@ void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const qui
                     int index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
                     {
-                        *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+2+index*4/*size of int*/)=(quint32)htole32(maxAccountId+1+index);
+                        *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::replyToIdListBuffer+2+index*4/*size of int*/)=(uint32_t)htole32(maxAccountId+1+index);
                         index++;
                     }
                     maxAccountId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
@@ -703,7 +703,7 @@ void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const qui
                     int index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
                     {
-                        *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+2+index*4/*size of int*/)=(quint32)htole32(charactersGroup->maxCharacterId+1+index);
+                        *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::replyToIdListBuffer+2+index*4/*size of int*/)=(uint32_t)htole32(charactersGroup->maxCharacterId+1+index);
                         index++;
                     }
                     charactersGroup->maxCharacterId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
@@ -737,7 +737,7 @@ void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const qui
                     int index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
                     {
-                        *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+2+index*4/*size of int*/)=(quint32)htole32(charactersGroup->maxMonsterId+1+index);
+                        *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::replyToIdListBuffer+2+index*4/*size of int*/)=(uint32_t)htole32(charactersGroup->maxMonsterId+1+index);
                         index++;
                     }
                     charactersGroup->maxMonsterId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
@@ -771,7 +771,7 @@ void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const qui
                     int index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
                     {
-                        *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+2+index*4/*size of int*/)=(quint32)htole32(charactersGroup->maxMonsterId+1+index);
+                        *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::replyToIdListBuffer+2+index*4/*size of int*/)=(uint32_t)htole32(charactersGroup->maxMonsterId+1+index);
                         index++;
                     }
                     charactersGroup->maxMonsterId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
@@ -805,7 +805,7 @@ void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const qui
                     int index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)
                     {
-                        *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+2+index*4/*size of int*/)=(quint32)htole32(charactersGroup->maxClanId+1+index);
+                        *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::replyToIdListBuffer+2+index*4/*size of int*/)=(uint32_t)htole32(charactersGroup->maxClanId+1+index);
                         index++;
                     }
                     charactersGroup->maxClanId+=CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK;
@@ -830,7 +830,7 @@ void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const qui
 }
 
 //send reply
-void EpollClientLoginMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+void EpollClientLoginMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     //queryNumberList << queryNumber;
     Q_UNUSED(data);
@@ -839,7 +839,7 @@ void EpollClientLoginMaster::parseReplyData(const quint8 &mainCodeType,const qui
     return;
 }
 
-void EpollClientLoginMaster::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+void EpollClientLoginMaster::parseFullReplyData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     (void)data;
     (void)size;

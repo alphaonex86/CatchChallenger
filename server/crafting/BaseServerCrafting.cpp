@@ -140,7 +140,7 @@ void BaseServer::preload_plant_on_map_return()
             DebugClass::debugConsole(std::stringLiteral("Plant ignored because is not into dirt layer: %1 (%2,%3)").arg(mapForPlantOnServer->map_file).arg(x).arg(y));
             continue;
         }
-        const quint64 &plant_timestamps=std::string(GlobalServerData::serverPrivateVariables.db_server->value(6)).toULongLong(&ok);
+        const uint64_t &plant_timestamps=std::string(GlobalServerData::serverPrivateVariables.db_server->value(6)).toULongLong(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(std::stringLiteral("Plant timestamps is not a number: %1 (%2,%3)").arg(mapForPlantOnServer->map_file).arg(x).arg(y));

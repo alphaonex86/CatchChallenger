@@ -21,7 +21,7 @@ public:
 protected:
     //add clients linked
     void insertClient();
-    void moveClient(const quint8 &previousMovedUnit,const Direction &direction);
+    void moveClient(const uint8_t &previousMovedUnit,const Direction &direction);
     void removeClient();
     void mapVisiblity_unloadFromTheMap();
     void extraStop();
@@ -29,8 +29,8 @@ protected:
     bool singleMove(const Direction &direction);
 public:
     //map slots, transmited by the current ClientNetworkRead
-    //void put_on_the_map(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,Map_server_MapVisibility_simple *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
-    bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
+    //void put_on_the_map(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,Map_server_MapVisibility_simple *map,const uint16_t &x,const uint16_t &y,const Orientation &orientation,const uint16_t &speed);
+    bool moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction);
 
     void purgeBuffer();
 };

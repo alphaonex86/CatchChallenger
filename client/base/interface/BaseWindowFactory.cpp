@@ -18,9 +18,9 @@ void BaseWindow::on_factoryBuy_clicked()
 
 void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
 {
-    quint32 id=item->data(99).toUInt();
-    quint32 price=item->data(98).toUInt();
-    quint32 quantity=item->data(97).toUInt();
+    uint32_t id=item->data(99).toUInt();
+    uint32_t price=item->data(98).toUInt();
+    uint32_t quantity=item->data(97).toUInt();
     if(cash<price)
     {
         QMessageBox::warning(this,tr("No cash"),tr("No bash to buy this item"));
@@ -79,9 +79,9 @@ void BaseWindow::on_factorySell_clicked()
 
 void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
 {
-    quint32 id=item->data(99).toUInt();
-    quint32 price=item->data(98).toUInt();
-    quint32 quantity=item->data(97).toUInt();
+    uint32_t id=item->data(99).toUInt();
+    uint32_t price=item->data(98).toUInt();
+    uint32_t quantity=item->data(97).toUInt();
     if(!items.contains(id))
     {
         QMessageBox::warning(this,tr("No item"),tr("You have not the item to sell"));
@@ -95,7 +95,7 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
     int i=1;
     if(items.value(id)>1 && quantity>1)
     {
-        quint32 quantityToSell=quantity;
+        uint32_t quantityToSell=quantity;
         if(items.value(id)<quantityToSell)
             quantityToSell=items.value(id);
         bool ok;
@@ -133,10 +133,10 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
     appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.value(factoryId).rewards.reputation);
 }
 
-void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPrice)
+void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const uint32_t &newPrice)
 {
     const ItemToSellOrBuy &itemToSellOrBuy=itemsToBuy.first();
-    QHash<quint16,quint32> items;
+    QHash<uint16_t,uint32_t> items;
     switch(stat)
     {
         case BuyStat_Done:
@@ -196,7 +196,7 @@ void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPric
     itemsToBuy.removeFirst();
 }
 
-void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const quint32 &newPrice)
+void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const uint32_t &newPrice)
 {
     waitToSell=false;
     switch(stat)
@@ -255,7 +255,7 @@ void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const quint32 &newPr
     }
 }
 
-void BaseWindow::haveFactoryList(const quint32 &remainingProductionTime,const QList<ItemToSellOrBuy> &resources,const QList<ItemToSellOrBuy> &products)
+void BaseWindow::haveFactoryList(const uint32_t &remainingProductionTime,const QList<ItemToSellOrBuy> &resources,const QList<ItemToSellOrBuy> &products)
 {
     industryStatus.products.clear();
     industryStatus.resources.clear();
@@ -312,7 +312,7 @@ void BaseWindow::updateFactoryStatProduction(const IndustryStatus &industryStatu
         factoryInProduction=true;
         #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
         QString productionTime;
-        quint32 remainingProductionTime=0;
+        uint32_t remainingProductionTime=0;
         if((industryStatus.last_update+industry.time)>(QDateTime::currentMSecsSinceEpoch()/1000))
             remainingProductionTime=(industryStatus.last_update+industry.time)-(QDateTime::currentMSecsSinceEpoch()/1000);
         else if((industryStatus.last_update+industry.time)<(QDateTime::currentMSecsSinceEpoch()/1000))

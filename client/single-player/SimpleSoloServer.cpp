@@ -251,7 +251,7 @@ void MainWindow::saveTime()
                     locaction.remove(0,mapPath.size());
                 if(!locaction.isEmpty())
                     metaData.setValue(QStringLiteral("location"),locaction);
-                quint64 current_date_time=QDateTime::currentDateTimeUtc().toTime_t();
+                uint64_t current_date_time=QDateTime::currentDateTimeUtc().toTime_t();
                 if(current_date_time>timeLaunched)
                     metaData.setValue(QStringLiteral("time_played"),metaData.value(QStringLiteral("time_played")).toUInt()+(current_date_time-timeLaunched));
                 settingOk=true;

@@ -42,7 +42,7 @@ void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
     {
         if(!items.contains(shop_items_graphical.value(item)))
             return;
-        quint32 objectItem=shop_items_graphical.value(item);
+        uint32_t objectItem=shop_items_graphical.value(item);
         bool ok=true;
         if(items.value(objectItem)>1)
             tempQuantityForSell=QInputDialog::getInt(this,tr("Sell"),tr("Quantity to sell"),1,1,items.value(objectItem),1,&ok);
@@ -152,7 +152,7 @@ void BaseWindow::displaySellList()
     itemsIntoTheShop.clear();
     shop_items_graphical.clear();
     shop_items_to_graphical.clear();
-    QHashIterator<quint16,quint32> i(items);
+    QHashIterator<uint16_t,uint32_t> i(items);
     while (i.hasNext()) {
         i.next();
         if(DatapackClientLoader::datapackLoader.itemsExtra.contains(i.key()) && CatchChallenger::CommonDatapack::commonDatapack.items.item.value(i.key()).price>0)
@@ -179,10 +179,10 @@ void BaseWindow::displaySellList()
     on_shopItemList_itemSelectionChanged();
 }
 
-void BaseWindow::haveBuyObject(const BuyStat &stat,const quint32 &newPrice)
+void BaseWindow::haveBuyObject(const BuyStat &stat,const uint32_t &newPrice)
 {
     const ItemToSellOrBuy &itemToSellOrBuy=itemsToBuy.first();
-    QHash<quint32,quint32> items;
+    QHash<uint32_t,uint32_t> items;
     switch(stat)
     {
         case BuyStat_Done:
@@ -213,7 +213,7 @@ void BaseWindow::haveBuyObject(const BuyStat &stat,const quint32 &newPrice)
     itemsToBuy.removeFirst();
 }
 
-void BaseWindow::haveSellObject(const SoldStat &stat,const quint32 &newPrice)
+void BaseWindow::haveSellObject(const SoldStat &stat,const uint32_t &newPrice)
 {
     waitToSell=false;
     switch(stat)

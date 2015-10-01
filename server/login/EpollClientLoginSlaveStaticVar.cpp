@@ -26,7 +26,7 @@ char EpollClientLoginSlave::characterSelectionIsWrongBufferCharacterNotFound[];
 char EpollClientLoginSlave::characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline[];
 char EpollClientLoginSlave::characterSelectionIsWrongBufferServerInternalProblem[];
 char EpollClientLoginSlave::characterSelectionIsWrongBufferServerNotFound[];
-quint8 EpollClientLoginSlave::characterSelectionIsWrongBufferSize=0;
+uint8_t EpollClientLoginSlave::characterSelectionIsWrongBufferSize=0;
 unsigned char EpollClientLoginSlave::loginIsWrongBufferReply[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x00/*temp return code*/};
 
 unsigned char EpollClientLoginSlave::loginInProgressBuffer[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x06/*return code*/};

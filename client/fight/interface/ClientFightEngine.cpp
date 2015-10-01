@@ -20,7 +20,7 @@ ClientFightEngine::~ClientFightEngine()
 {
 }
 
-void ClientFightEngine::setBattleMonster(const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
+void ClientFightEngine::setBattleMonster(const QList<uint8_t> &stat,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
 {
     if(!battleCurrentMonster.isEmpty() || !battleStat.isEmpty() || !botFightMonsters.isEmpty())
     {
@@ -67,7 +67,7 @@ void ClientFightEngine::setBotMonster(const QList<PlayerMonster> &botFightMonste
     mLastGivenXP=0;
 }
 
-bool ClientFightEngine::addBattleMonster(const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
+bool ClientFightEngine::addBattleMonster(const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
 {
     if(battleStat.isEmpty())
     {
@@ -222,7 +222,7 @@ bool ClientFightEngine::internalTryEscape()
     return CommonFightEngine::internalTryEscape();
 }
 
-void ClientFightEngine::tryCatchClient(const quint32 &item)
+void ClientFightEngine::tryCatchClient(const uint32_t &item)
 {
     if(wildMonsters.isEmpty())
     {
@@ -246,14 +246,14 @@ void ClientFightEngine::tryCatchClient(const quint32 &item)
     playerMonster_catchInProgress << newMonster;
 }
 
-quint32 ClientFightEngine::catchAWild(const bool &toStorage, const PlayerMonster &newMonster)
+uint32_t ClientFightEngine::catchAWild(const bool &toStorage, const PlayerMonster &newMonster)
 {
     Q_UNUSED(toStorage);
     Q_UNUSED(newMonster);
     return 0;
 }
 
-Skill::AttackReturn ClientFightEngine::doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel)
+Skill::AttackReturn ClientFightEngine::doTheCurrentMonsterAttack(const uint32_t &skill,const uint8_t &skillLevel)
 {
     fightEffectList << CommonFightEngine::doTheCurrentMonsterAttack(skill,skillLevel);
     return fightEffectList.last();
@@ -270,7 +270,7 @@ bool ClientFightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectRetu
     #ifdef DEBUG_CLIENT_BATTLE
     emit message("applyCurrentLifeEffectReturn on: "+QString::number(effectReturn.on));
     #endif
-    qint32 quantity;
+    int32_t quantity;
     Monster::Stat stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(playerMonster->monster),playerMonster->level);
     switch(effectReturn.on)
     {
@@ -292,13 +292,13 @@ bool ClientFightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectRetu
             }
             quantity=effectReturn.quantity;
             qDebug() << "applyCurrentLifeEffect() add hp on the ennemy " << quantity;
-            if(quantity<0 && (-quantity)>(qint32)publicPlayerMonster->hp)
+            if(quantity<0 && (-quantity)>(int32_t)publicPlayerMonster->hp)
             {
                 qDebug() << "applyCurrentLifeEffect() ennemy is KO";
                 publicPlayerMonster->hp=0;
                 ableToFight=false;
             }
-            else if(quantity>0 && quantity>(qint32)(stat.hp-publicPlayerMonster->hp))
+            else if(quantity>0 && quantity>(int32_t)(stat.hp-publicPlayerMonster->hp))
             {
                 qDebug() << "applyCurrentLifeEffect() ennemy is fully healled";
                 publicPlayerMonster->hp=stat.hp;
@@ -311,12 +311,12 @@ bool ClientFightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectRetu
         case ApplyOn_AllAlly:
             quantity=effectReturn.quantity;
             qDebug() << "applyCurrentLifeEffect() add hp " << quantity;
-            if(quantity<0 && (-quantity)>(qint32)playerMonster->hp)
+            if(quantity<0 && (-quantity)>(int32_t)playerMonster->hp)
             {
                 qDebug() << "applyCurrentLifeEffect() current monster is KO";
                 playerMonster->hp=0;
             }
-            else if(quantity>0 && quantity>(qint32)(stat.hp-playerMonster->hp))
+            else if(quantity>0 && quantity>(int32_t)(stat.hp-playerMonster->hp))
             {
                 qDebug() << "applyCurrentLifeEffect() you are fully healled";
                 playerMonster->hp=stat.hp;
@@ -402,7 +402,7 @@ PublicPlayerMonster * ClientFightEngine::getOtherMonster()
     return CommonFightEngine::getOtherMonster();
 }
 
-quint8 ClientFightEngine::getOtherSelectedMonsterNumber() const
+uint8_t ClientFightEngine::getOtherSelectedMonsterNumber() const
 {
     return 0;
 }
@@ -476,7 +476,7 @@ bool ClientFightEngine::firstAttackReturnHaveMoreEffect()
     return false;
 }
 
-bool ClientFightEngine::firstLifeEffectQuantityChange(qint32 quantity)
+bool ClientFightEngine::firstLifeEffectQuantityChange(int32_t quantity)
 {
     if(fightEffectList.isEmpty())
     {
@@ -508,7 +508,7 @@ bool ClientFightEngine::haveBattleOtherMonster() const
     return !battleCurrentMonster.isEmpty();
 }
 
-bool ClientFightEngine::useSkill(const quint32 &skill)
+bool ClientFightEngine::useSkill(const uint32_t &skill)
 {
     mLastGivenXP=0;
     Api_client_real::client->useSkill(skill);
@@ -529,7 +529,7 @@ bool ClientFightEngine::doTheOtherMonsterTurn()
     return true;
 }
 
-void ClientFightEngine::levelUp(const quint8 &level, const quint8 &monsterIndex)//call after done the level
+void ClientFightEngine::levelUp(const uint8_t &level, const uint8_t &monsterIndex)//call after done the level
 {
     CommonFightEngine::levelUp(level,monsterIndex);
     const PlayerMonster &monster=public_and_private_informations.playerMonster.at(monsterIndex);
@@ -551,12 +551,12 @@ PlayerMonster * ClientFightEngine::evolutionByLevelUp()
 {
     if(mEvolutionByLevelUp.isEmpty())
         return NULL;
-    quint8 monsterIndex=mEvolutionByLevelUp.first();
+    uint8_t monsterIndex=mEvolutionByLevelUp.first();
     mEvolutionByLevelUp.removeFirst();
     return &public_and_private_informations.playerMonster[monsterIndex];
 }
 
-void ClientFightEngine::confirmEvolution(const quint32 &monterId)
+void ClientFightEngine::confirmEvolution(const uint32_t &monterId)
 {
     CatchChallenger::Api_client_real::client->confirmEvolution(monterId);
     int index=0;
@@ -594,9 +594,9 @@ bool ClientFightEngine::giveXPSP(int xp,int sp)
     return haveChangeOfLevel;
 }
 
-quint32 ClientFightEngine::lastGivenXP()
+uint32_t ClientFightEngine::lastGivenXP()
 {
-    quint32 tempLastGivenXP=mLastGivenXP;
+    uint32_t tempLastGivenXP=mLastGivenXP;
     mLastGivenXP=0;
     return tempLastGivenXP;
 }
@@ -612,14 +612,14 @@ void ClientFightEngine::messageFightEngine(const QString &message) const
     qDebug() << message;
 }
 
-quint32 ClientFightEngine::randomSeedsSize() const
+uint32_t ClientFightEngine::randomSeedsSize() const
 {
     return randomSeeds.size();
 }
 
-quint8 ClientFightEngine::getOneSeed(const quint8 &max)
+uint8_t ClientFightEngine::getOneSeed(const uint8_t &max)
 {
-    const quint8 &number=randomSeeds.at(0);
+    const uint8_t &number=randomSeeds.at(0);
     randomSeeds.remove(0,1);
     return number%(max+1);
 }
@@ -630,7 +630,7 @@ void ClientFightEngine::newRandomNumber(const QByteArray &data)
 }
 
 //duplicate to have a return
-bool ClientFightEngine::useObjectOnMonster(const quint32 &object,const quint32 &monster)
+bool ClientFightEngine::useObjectOnMonster(const uint32_t &object,const uint32_t &monster)
 {
     PlayerMonster * playerMonster=monsterById(monster);
     if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.contains(object))
@@ -665,7 +665,7 @@ bool ClientFightEngine::useObjectOnMonster(const quint32 &object,const quint32 &
                 {
                     //duplicate to have a return
                     case MonsterItemEffectType_AddHp:
-                        if(effect.value>0 && (playerMonsterStat.hp-playerMonster->hp)>(quint32)effect.value)
+                        if(effect.value>0 && (playerMonsterStat.hp-playerMonster->hp)>(uint32_t)effect.value)
                         {
                             hpChange(playerMonster,playerMonster->hp+effect.value);
                             Skill::LifeEffectReturn lifeEffectReturn;

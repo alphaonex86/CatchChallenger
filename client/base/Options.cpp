@@ -47,7 +47,7 @@ Options::~Options()
     delete settings;
 }
 
-void Options::setFPS(const quint16 &fps)
+void Options::setFPS(const uint16_t &fps)
 {
     if(this->fps==fps)
         return;
@@ -71,7 +71,7 @@ void Options::setLimitedFPS(const bool &limitedFPS)
         emit newFinalFPS(0);
 }
 
-void Options::setForcedZoom(const quint8 &zoom/*0 is no forced*/)
+void Options::setForcedZoom(const uint8_t &zoom/*0 is no forced*/)
 {
     if(this->zoom==zoom)
         return;
@@ -80,7 +80,7 @@ void Options::setForcedZoom(const quint8 &zoom/*0 is no forced*/)
     emit newZoomEnabled(zoom);
 }
 
-void Options::setAudioVolume(const quint8 &audioVolume)
+void Options::setAudioVolume(const uint8_t &audioVolume)
 {
     if(this->audioVolume==audioVolume)
         return;
@@ -129,7 +129,7 @@ int Options::getIndexDevice() const
     return indexDevice;
 }
 
-quint16 Options::getFPS() const
+uint16_t Options::getFPS() const
 {
     return fps;
 }
@@ -139,7 +139,7 @@ bool Options::getLimitedFPS() const
     return limitedFPS;
 }
 
-quint16 Options::getFinalFPS() const
+uint16_t Options::getFinalFPS() const
 {
     if(!limitedFPS)
         return 0;
@@ -147,12 +147,12 @@ quint16 Options::getFinalFPS() const
         return fps;
 }
 
-quint8 Options::getForcedZoom() const/*0 is no forced*/
+uint8_t Options::getForcedZoom() const/*0 is no forced*/
 {
     return zoom;
 }
 
-quint8 Options::getAudioVolume() const
+uint8_t Options::getAudioVolume() const
 {
     return audioVolume;
 }

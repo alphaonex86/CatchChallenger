@@ -44,7 +44,7 @@ public:
     void setShowFPS(const bool &showFPS);
     void setTargetFPS(int targetFPS);
     void setOpenGl(const bool &OpenGL);
-    virtual void eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,quint8 x,quint8 y);
+    virtual void eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,uint8_t x,uint8_t y);
 
     MapVisualiserThread::Map_full * getMap(const QString &map) const;
 
@@ -62,10 +62,10 @@ protected:
     bool debugTags;
     QString mLastError;
 
-    quint8 waitRenderTime;
+    uint8_t waitRenderTime;
     QTimer timerRender;
     QTime timeRender;
-    quint16 frameCounter;
+    uint16_t frameCounter;
     QTimer timerUpdateFPS;
     QTime timeUpdateFPS;
     QGraphicsSimpleTextItem *FPSText;
@@ -77,15 +77,15 @@ protected:
 
     MapVisualiserThread mapVisualiserThread;
     QStringList asyncMap;
-    QHash<quint8/*intervale*/,QTimer *> animationTimer;
-    QHash<quint8/*intervale*/,QHash<quint8/*frame total*/,quint8/*actual frame*/> > animationFrame;
+    QHash<uint8_t/*intervale*/,QTimer *> animationTimer;
+    QHash<uint8_t/*intervale*/,QHash<uint8_t/*frame total*/,uint8_t/*actual frame*/> > animationFrame;
 
     virtual void destroyMap(MapVisualiserThread::Map_full *map);
 protected slots:
     virtual void resetAll();
 public slots:
     void loadOtherMap(const QString &resolvedFileName);
-    virtual void loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap, const quint32 &botId, const quint8 &x, const quint8 &y, const QString &lookAt, const QString &skin);
+    virtual void loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap, const uint32_t &botId, const uint8_t &x, const uint8_t &y, const QString &lookAt, const QString &skin);
     //virtual QSet<QString> loadMap(MapVisualiserThread::Map_full *map, const bool &display);
     virtual void removeUnusedMap();
     virtual void hideNotloadedMap();

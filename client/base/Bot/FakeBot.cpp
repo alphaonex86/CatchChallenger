@@ -123,8 +123,8 @@ void FakeBot::random_new_step()
         DebugClass::debugConsole(QStringLiteral("FakeBot::random_new_step(), step 3, id: %1, map: %2 (%3,%4) after move: %5").arg(api.getId()).arg(map->map_file).arg(x).arg(y).arg(MoveOnTheMap::directionToString(final_direction)));
 }
 
-//quint32,QString,quint16,quint16,quint8,quint16
-void FakeBot::insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
+//uint32_t,QString,uint16_t,uint16_t,uint8_t,uint16_t
+void FakeBot::insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
 {
     Q_UNUSED(player);
     Q_UNUSED(mapId);
@@ -202,17 +202,17 @@ void FakeBot::show_details()
     DebugClass::debugConsole(QStringLiteral("FakeBot::show_details(), x: %1, y:%2").arg(x).arg(y));
 }
 
-quint64 FakeBot::get_TX_size()
+uint64_t FakeBot::get_TX_size()
 {
     return fakeSocket.getTXSize();
 }
 
-quint64 FakeBot::get_RX_size()
+uint64_t FakeBot::get_RX_size()
 {
     return fakeSocket.getRXSize();
 }
 
-void FakeBot::send_player_move(const quint8 &moved_unit,const Direction &the_direction)
+void FakeBot::send_player_move(const uint8_t &moved_unit,const Direction &the_direction)
 {
     api.send_player_move(moved_unit,the_direction);
 }

@@ -83,8 +83,8 @@ protected:
     struct Monster_Semi_Market
     {
         //conversion x,y to position: x+y*width
-        quint32 id;
-        quint64 price;
+        uint32_t id;
+        uint64_t price;
     };
 
     void preload_randomBlock();
@@ -113,7 +113,7 @@ protected:
     void load_sql_monsters_max_id();
     static void load_monsters_max_id_static(void *object);
     void load_monsters_max_id_return();
-    std::unordered_map<uint16_t,std::vector<MonsterDrops> > loadMonsterDrop(const std::string &file, std::unordered_map<quint16,Item> items,const std::unordered_map<quint16,Monster> &monsters);
+    std::unordered_map<uint16_t,std::vector<MonsterDrops> > loadMonsterDrop(const std::string &file, std::unordered_map<uint16_t,Item> items,const std::unordered_map<uint16_t,Monster> &monsters);
     virtual void criticalDatabaseQueryFailed();
     virtual void quitForCriticalDatabaseQueryFailed() = 0;
 
@@ -159,11 +159,11 @@ protected:
     void unload_dictionary();
     void unload_profile();
 
-    void loadMonsterBuffs(const quint32 &index);
+    void loadMonsterBuffs(const uint32_t &index);
     static void loadMonsterBuffs_static(void *object);
     void loadMonsterBuffs_return();
 
-    void loadMonsterSkills(const quint32 &index);
+    void loadMonsterSkills(const uint32_t &index);
     static void loadMonsterSkills_static(void *object);
     void loadMonsterSkills_return();
 
@@ -174,8 +174,8 @@ protected:
     //to keep client list, std::unordered_set because it will have lot of more disconnecion than server closing
     bool dataLoaded;
 
-    std::unordered_map<std::string/*file name*/,std::unordered_map<quint8/*bot id*/,CatchChallenger::Bot> > botFiles;
-    std::unordered_set<quint32> botIdLoaded;
+    std::unordered_map<std::string/*file name*/,std::unordered_map<uint8_t/*bot id*/,CatchChallenger::Bot> > botFiles;
+    std::unordered_set<uint32_t> botIdLoaded;
     QTime timeDatapack;
     unsigned int dictionary_pointOnMap_maxId;
     BaseServerMasterSendDatapack baseServerMasterSendDatapack;

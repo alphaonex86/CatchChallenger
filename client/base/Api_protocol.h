@@ -44,7 +44,7 @@ public:
     //get the stored data
     Player_private_and_public_informations get_player_informations();
     QString getPseudo();
-    quint16 getId();
+    uint16_t getId();
 
     virtual void sendDatapackContentBase() = 0;
     virtual void sendDatapackContentMainSub() = 0;
@@ -69,7 +69,7 @@ public:
 
     bool getIsLogged() const;
     bool getCaracterSelected() const;
-    QMap<quint8,QTime> getQuerySendTimeList() const;
+    QMap<uint8_t,QTime> getQuerySendTimeList() const;
 
     //to manipulate the monsters
     Player_private_and_public_informations player_informations;
@@ -104,7 +104,7 @@ private:
     StageConnexion stageConnexion;
 
     //to send trame
-    std::vector<quint8> lastQueryNumber;
+    std::vector<uint8_t> lastQueryNumber;
 
     #ifdef BENCHMARKMUTIPLECLIENT
     static char hurgeBufferForBenchmark[4096];
@@ -122,7 +122,7 @@ protected:
     void errorParsingLayer(const QString &error);
     void messageParsingLayer(const QString &message) const;
 
-    void parseCharacterBlock(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+    void parseCharacterBlock(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const QByteArray &data);
 
     inline void registerOutputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
     //send message without reply
@@ -133,18 +133,18 @@ protected:
     bool postReplyData(const uint8_t &queryNumber, const char * const data,const int &size);
 protected:
     //have message without reply
-    virtual void parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size);
+    virtual void parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size);
     //have query with reply
-    virtual void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
+    virtual void parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
     //send reply
-    virtual void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
+    virtual void parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
 
     //have message without reply
-    virtual void parseMessage(const quint8 &mainCodeType,const QByteArray &data);
+    virtual void parseMessage(const uint8_t &mainCodeType,const QByteArray &data);
     //have query with reply
-    virtual void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
+    virtual void parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const QByteArray &data);
     //send reply
-    virtual void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
+    virtual void parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const QByteArray &data);
 
     //servers list
     LogicialGroup * addLogicalGroup(const QString &path, const QString &xml, const QString &language);
@@ -154,19 +154,19 @@ protected:
     void parseError(const QString &userMessage, const QString &errorString);
 
     //general data
-    virtual void defineMaxPlayers(const quint16 &maxPlayers) = 0;
+    virtual void defineMaxPlayers(const uint16_t &maxPlayers) = 0;
 
     //stored local player info
-    quint16 max_players;
-    quint32 number_of_map;
+    uint16_t max_players;
+    uint32_t number_of_map;
 
     //to send trame
-    quint8 queryNumber();
+    uint8_t queryNumber();
     static QSet<QString> extensionAllowed;
-    QMap<quint8,QTime> querySendTime;
+    QMap<uint8_t,QTime> querySendTime;
 
     //inventory
-    QList<quint32> lastObjectUsed;
+    QList<uint32_t> lastObjectUsed;
 
     //datapack
     QString mDatapackBase;
@@ -174,20 +174,20 @@ protected:
     QString mDatapackSub;
 
     //teleport list query id
-    QList<quint8> teleportList;
+    QList<uint8_t> teleportList;
 
     //trade
-    QList<quint32> tradeRequestId;
+    QList<uint32_t> tradeRequestId;
     bool isInTrade;
     //battle
-    QList<quint32> battleRequestId;
+    QList<uint32_t> battleRequestId;
     bool isInBattle;
     QByteArray token;
     QByteArray passHash;
     QByteArray loginHash;
 
     //server list
-    qint32 selectedServerIndex;
+    int32_t selectedServerIndex;
     QList<ServerFromPoolForDisplay *> serverOrdenedList;
     QList<LogicialGroup *> logicialGroupIndexList;
     QList<QList<CharacterEntry> > characterListForSelection;
@@ -195,7 +195,7 @@ protected:
 signals:
     void newError(const QString &error,const QString &detailedError) const;
     void message(const QString &message) const;
-    void lastReplyTime(const quint32 &time) const;
+    void lastReplyTime(const uint32_t &time) const;
 
     //protocol/connection info
     void disconnected(const QString &reason) const;
@@ -207,35 +207,35 @@ signals:
     void connectedOnGameServer() const;
 
     //general info
-    void number_of_player(const quint16 &number,const quint16 &max_players) const;
+    void number_of_player(const uint16_t &number,const uint16_t &max_players) const;
     void random_seeds(const QByteArray &data) const;
 
     //character
-    void newCharacterId(const quint8 &returnCode,const quint32 &characterId) const;
+    void newCharacterId(const uint8_t &returnCode,const uint32_t &characterId) const;
     void haveCharacter() const;
     //events
-    void setEvents(const QList<QPair<quint8,quint8> > &events) const;
-    void newEvent(const quint8 &event,const quint8 &event_value) const;
+    void setEvents(const QList<QPair<uint8_t,uint8_t> > &events) const;
+    void newEvent(const uint8_t &event,const uint8_t &event_value) const;
 
     //map move
-    void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction) const;
-    void move_player(const quint16 &id,const QList<QPair<quint8,CatchChallenger::Direction> > &movement) const;
-    void remove_player(const quint16 &id) const;
-    void reinsert_player(const quint16 &id,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction) const;
-    void full_reinsert_player(const quint16 &id,const quint32 &mapId,const quint8 &x,const quint8 y,const CatchChallenger::Direction &direction) const;
+    void insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) const;
+    void move_player(const uint16_t &id,const QList<QPair<uint8_t,CatchChallenger::Direction> > &movement) const;
+    void remove_player(const uint16_t &id) const;
+    void reinsert_player(const uint16_t &id,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) const;
+    void full_reinsert_player(const uint16_t &id,const uint32_t &mapId,const uint8_t &x,const uint8_t y,const CatchChallenger::Direction &direction) const;
     void dropAllPlayerOnTheMap() const;
-    void teleportTo(const quint32 &mapId,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction) const;
+    void teleportTo(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) const;
 
     //plant
-    void insert_plant(const quint32 &mapId,const quint8 &x,const quint8 &y,const quint8 &plant_id,const quint16 &seconds_to_mature) const;
-    void remove_plant(const quint32 &mapId,const quint8 &x,const quint8 &y) const;
+    void insert_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature) const;
+    void remove_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y) const;
     void seed_planted(const bool &ok) const;
     void plant_collected(const CatchChallenger::Plant_collect &stat) const;
     //crafting
     void recipeUsed(const RecipeUsage &recipeUsage) const;
     //inventory
     void objectUsed(const ObjectUsage &objectUsage) const;
-    void monsterCatch(const quint32 &newMonsterId) const;
+    void monsterCatch(const uint32_t &newMonsterId) const;
 
     //chat
     void new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type) const;
@@ -243,9 +243,9 @@ signals:
 
     //player info
     void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations) const;
-    void have_inventory(const QHash<quint16,quint32> &items,const QHash<quint16,quint32> &warehouse_items) const;
-    void add_to_inventory(const QHash<quint16,quint32> &items) const;
-    void remove_to_inventory(const QHash<quint16,quint32> &items) const;
+    void have_inventory(const QHash<uint16_t,uint32_t> &items,const QHash<uint16_t,uint32_t> &warehouse_items) const;
+    void add_to_inventory(const QHash<uint16_t,uint32_t> &items) const;
+    void remove_to_inventory(const QHash<uint16_t,uint32_t> &items) const;
 
     //datapack
     void haveTheDatapack() const;
@@ -254,138 +254,138 @@ signals:
     void newFileBase(const QString &fileName,const QByteArray &data) const;
     void newHttpFileBase(const QString &url,const QString &fileName) const;
     void removeFileBase(const QString &fileName) const;
-    void datapackSizeBase(const quint32 &datapckFileNumber,const quint32 &datapckFileSize) const;
+    void datapackSizeBase(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize) const;
     //main
     void newFileMain(const QString &fileName,const QByteArray &data) const;
     void newHttpFileMain(const QString &url,const QString &fileName) const;
     void removeFileMain(const QString &fileName) const;
-    void datapackSizeMain(const quint32 &datapckFileNumber,const quint32 &datapckFileSize) const;
+    void datapackSizeMain(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize) const;
     //sub
     void newFileSub(const QString &fileName,const QByteArray &data) const;
     void newHttpFileSub(const QString &url,const QString &fileName) const;
     void removeFileSub(const QString &fileName) const;
-    void datapackSizeSub(const quint32 &datapckFileNumber,const quint32 &datapckFileSize) const;
+    void datapackSizeSub(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize) const;
 
     //shop
     void haveShopList(const QList<ItemToSellOrBuy> &items) const;
-    void haveBuyObject(const BuyStat &stat,const quint32 &newPrice) const;
-    void haveSellObject(const SoldStat &stat,const quint32 &newPrice) const;
+    void haveBuyObject(const BuyStat &stat,const uint32_t &newPrice) const;
+    void haveSellObject(const SoldStat &stat,const uint32_t &newPrice) const;
 
     //factory
-    void haveFactoryList(const quint32 &remainingProductionTime,const QList<ItemToSellOrBuy> &resources,const QList<ItemToSellOrBuy> &products) const;
-    void haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPrice) const;
-    void haveSellFactoryObject(const SoldStat &stat,const quint32 &newPrice) const;
+    void haveFactoryList(const uint32_t &remainingProductionTime,const QList<ItemToSellOrBuy> &resources,const QList<ItemToSellOrBuy> &products) const;
+    void haveBuyFactoryObject(const BuyStat &stat,const uint32_t &newPrice) const;
+    void haveSellFactoryObject(const SoldStat &stat,const uint32_t &newPrice) const;
 
     //trade
-    void tradeRequested(const QString &pseudo,const quint8 &skinInt) const;
-    void tradeAcceptedByOther(const QString &pseudo,const quint8 &skinInt) const;
+    void tradeRequested(const QString &pseudo,const uint8_t &skinInt) const;
+    void tradeAcceptedByOther(const QString &pseudo,const uint8_t &skinInt) const;
     void tradeCanceledByOther() const;
     void tradeFinishedByOther() const;
     void tradeValidatedByTheServer() const;
-    void tradeAddTradeCash(const quint64 &cash) const;
-    void tradeAddTradeObject(const quint32 &item,const quint32 &quantity) const;
+    void tradeAddTradeCash(const uint64_t &cash) const;
+    void tradeAddTradeObject(const uint32_t &item,const uint32_t &quantity) const;
     void tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster) const;
 
     //battle
-    void battleRequested(const QString &pseudo,const quint8 &skinInt) const;
-    void battleAcceptedByOther(const QString &pseudo,const quint8 &skinId,const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster) const;
+    void battleRequested(const QString &pseudo,const uint8_t &skinInt) const;
+    void battleAcceptedByOther(const QString &pseudo,const uint8_t &skinId,const QList<uint8_t> &stat,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster) const;
     void battleCanceledByOther() const;
     void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn) const;
 
     //clan
-    void clanActionSuccess(const quint32 &clanId) const;
+    void clanActionSuccess(const uint32_t &clanId) const;
     void clanActionFailed() const;
     void clanDissolved() const;
     void clanInformations(const QString &name) const;
-    void clanInvite(const quint32 &clanId,const QString &name) const;
-    void cityCapture(const quint32 &remainingTime,const quint8 &type) const;
+    void clanInvite(const uint32_t &clanId,const QString &name) const;
+    void cityCapture(const uint32_t &remainingTime,const uint8_t &type) const;
 
     //city
     void captureCityYourAreNotLeader();
     void captureCityYourLeaderHaveStartInOtherCity(const QString &zone);
     void captureCityPreviousNotFinished();
-    void captureCityStartBattle(const quint16 &player_count,const quint16 &clan_count);
-    void captureCityStartBotFight(const quint16 &player_count,const quint16 &clan_count,const quint32 &fightId);
-    void captureCityDelayedStart(const quint16 &player_count,const quint16 &clan_count);
+    void captureCityStartBattle(const uint16_t &player_count,const uint16_t &clan_count);
+    void captureCityStartBotFight(const uint16_t &player_count,const uint16_t &clan_count,const uint32_t &fightId);
+    void captureCityDelayedStart(const uint16_t &player_count,const uint16_t &clan_count);
     void captureCityWin();
 
     //market
-    void marketList(const quint64 &price,const QList<MarketObject> &marketObjectList,const QList<MarketMonster> &marketMonsterList,const QList<MarketObject> &marketOwnObjectList,const QList<MarketMonster> &marketOwnMonsterList) const;
+    void marketList(const uint64_t &price,const QList<MarketObject> &marketObjectList,const QList<MarketMonster> &marketMonsterList,const QList<MarketObject> &marketOwnObjectList,const QList<MarketMonster> &marketOwnMonsterList) const;
     void marketBuy(const bool &success) const;
     void marketBuyMonster(const PlayerMonster &playerMonster) const;
     void marketPut(const bool &success) const;
-    void marketGetCash(const quint64 &cash) const;
+    void marketGetCash(const uint64_t &cash) const;
     void marketWithdrawCanceled() const;
-    void marketWithdrawObject(const quint32 &objectId,const quint32 &quantity) const;
+    void marketWithdrawObject(const uint32_t &objectId,const uint32_t &quantity) const;
     void marketWithdrawMonster(const PlayerMonster &playerMonster) const;
 public:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
-    void send_player_move(const quint8 &moved_unit,const CatchChallenger::Direction &direction);
+    void send_player_move(const uint8_t &moved_unit,const CatchChallenger::Direction &direction);
     void sendChatText(const CatchChallenger::Chat_type &chatType,const QString &text);
     void sendPM(const QString &text,const QString &pseudo);
     void teleportDone();
 
     //character
-    bool addCharacter(const quint8 &charactersGroupIndex,const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
-    bool removeCharacter(const quint8 &charactersGroupIndex,const quint32 &characterId);
-    bool selectCharacter(const quint8 &charactersGroupIndex, const quint32 &serverUniqueKey, const quint32 &characterId, const quint8 &selectedServerIndex);
+    bool addCharacter(const uint8_t &charactersGroupIndex,const uint8_t &profileIndex, const QString &pseudo, const uint8_t &skinId);
+    bool removeCharacter(const uint8_t &charactersGroupIndex,const uint32_t &characterId);
+    bool selectCharacter(const uint8_t &charactersGroupIndex, const uint32_t &serverUniqueKey, const uint32_t &characterId, const uint8_t &selectedServerIndex);
     LogicialGroup getLogicialGroup() const;
 
     //plant, can do action only if the previous is finish
-    void useSeed(const quint8 &plant_id);
+    void useSeed(const uint8_t &plant_id);
     void collectMaturePlant();
     //crafting
-    void useRecipe(const quint16 &recipeId);
-    void addRecipe(const quint16 &recipeId);
+    void useRecipe(const uint16_t &recipeId);
+    void addRecipe(const uint16_t &recipeId);
 
     //trade
     void tradeRefused();
     void tradeAccepted();
     void tradeCanceled();
     void tradeFinish();
-    void addTradeCash(const quint64 &cash);
-    void addObject(const quint16 &item,const quint32 &quantity);
-    void addMonster(const quint32 &monsterId);
+    void addTradeCash(const uint64_t &cash);
+    void addObject(const uint16_t &item,const uint32_t &quantity);
+    void addMonster(const uint32_t &monsterId);
 
     //battle
     void battleRefused();
     void battleAccepted();
 
     //inventory
-    void destroyObject(const quint16 &object,const quint32 &quantity=1);
-    void useObject(const quint16 &object);
-    void useObjectOnMonster(const quint16 &object,const quint32 &monster);
-    void wareHouseStore(const qint64 &cash, const QList<QPair<quint16, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters);
+    void destroyObject(const uint16_t &object,const uint32_t &quantity=1);
+    void useObject(const uint16_t &object);
+    void useObjectOnMonster(const uint16_t &object,const uint32_t &monster);
+    void wareHouseStore(const int64_t &cash, const QList<QPair<uint16_t, int32_t> > &items, const QList<uint32_t> &withdrawMonsters, const QList<uint32_t> &depositeMonsters);
     void takeAnObjectOnMap();
 
     //shop
-    void getShopList(const quint32 &shopId);
-    void buyObject(const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
-    void sellObject(const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
+    void getShopList(const uint32_t &shopId);
+    void buyObject(const uint32_t &shopId,const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price);
+    void sellObject(const uint32_t &shopId,const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price);
 
     //factory
-    void getFactoryList(const quint16 &factoryId);
-    void buyFactoryProduct(const quint16 &factoryId,const quint16 &objectId,const quint32 &quantity,const quint32 &price);
-    void sellFactoryResource(const quint16 &factoryId, const quint16 &objectId, const quint32 &quantity, const quint32 &price);
+    void getFactoryList(const uint16_t &factoryId);
+    void buyFactoryProduct(const uint16_t &factoryId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price);
+    void sellFactoryResource(const uint16_t &factoryId, const uint16_t &objectId, const uint32_t &quantity, const uint32_t &price);
 
     //fight
     void tryEscape();
-    void useSkill(const quint16 &skill);
+    void useSkill(const uint16_t &skill);
     void heal();
-    void requestFight(const quint32 &fightId);
-    void changeOfMonsterInFight(const quint32 &monsterId);
+    void requestFight(const uint32_t &fightId);
+    void changeOfMonsterInFight(const uint32_t &monsterId);
 
     //monster
-    void learnSkill(const quint32 &monsterId, const quint16 &skill);
-    void monsterMoveDown(const quint8 &number);
-    void monsterMoveUp(const quint8 &number);
-    void confirmEvolution(const quint32 &monterId);
+    void learnSkill(const uint32_t &monsterId, const uint16_t &skill);
+    void monsterMoveDown(const uint8_t &number);
+    void monsterMoveUp(const uint8_t &number);
+    void confirmEvolution(const uint32_t &monterId);
 
     //quest
-    void startQuest(const quint16 &questId);
-    void finishQuest(const quint16 &questId);
-    void cancelQuest(const quint16 &questId);
-    void nextQuestStep(const quint16 &questId);
+    void startQuest(const uint16_t &questId);
+    void finishQuest(const uint16_t &questId);
+    void cancelQuest(const uint16_t &questId);
+    void nextQuestStep(const uint16_t &questId);
 
     //clan
     void createClan(const QString &name);
@@ -398,13 +398,13 @@ public:
 
     //market
     void getMarketList();
-    void buyMarketObject(const quint32 &marketObjectId,const quint32 &quantity=1);
-    void buyMarketMonster(const quint32 &monsterId);
-    void putMarketObject(const quint32 &objectId,const quint32 &quantity,const quint32 &price);
-    void putMarketMonster(const quint32 &monsterId,const quint32 &price);
+    void buyMarketObject(const uint32_t &marketObjectId,const uint32_t &quantity=1);
+    void buyMarketMonster(const uint32_t &monsterId);
+    void putMarketObject(const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price);
+    void putMarketMonster(const uint32_t &monsterId,const uint32_t &price);
     void recoverMarketCash();
-    void withdrawMarketObject(const quint32 &objectId,const quint32 &quantity=1);
-    void withdrawMarketMonster(const quint32 &monsterId);
+    void withdrawMarketObject(const uint32_t &objectId,const uint32_t &quantity=1);
+    void withdrawMarketMonster(const uint32_t &monsterId);
 };
 }
 

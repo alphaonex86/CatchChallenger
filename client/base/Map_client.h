@@ -19,9 +19,9 @@ class ClientPlantWithTimer : public QTimer
 {
 public:
     Tiled::MapObject * mapObject;
-    quint8 x,y;
-    quint8 plant_id;
-    quint64 mature_at;
+    uint8_t x,y;
+    uint8_t plant_id;
+    uint64_t mature_at;
 };
 
 class Map_client : public CommonMap
@@ -30,9 +30,9 @@ public:
     struct ItemOnMapForClient
     {
         Tiled::MapObject* tileObject;
-        quint32 item;
+        uint32_t item;
         bool infinite;
-        quint8 indexOfItemOnMap;
+        uint8_t indexOfItemOnMap;
     };
 
     QList<Map_semi_teleport> teleport_semi;
@@ -45,11 +45,11 @@ public:
     Map_client();
 
     QList<ClientPlantWithTimer *> plantList;
-    QHash<QPair<quint8,quint8>,Bot> bots;
-    QHash<QPair<quint8,quint8>,BotDisplay> botsDisplay;
+    QHash<QPair<uint8_t,uint8_t>,Bot> bots;
+    QHash<QPair<uint8_t,uint8_t>,BotDisplay> botsDisplay;
 
-    QMultiHash<QPair<quint8,quint8>,QPair<quint8,quint8> > botsFightTriggerExtra;//trigger line in front of bot fight, tigger x,y, bot x,y
-    QHash<QPair<quint8,quint8>,ItemOnMapForClient> itemsOnMap;
+    QMultiHash<QPair<uint8_t,uint8_t>,QPair<uint8_t,uint8_t> > botsFightTriggerExtra;//trigger line in front of bot fight, tigger x,y, bot x,y
+    QHash<QPair<uint8_t,uint8_t>,ItemOnMapForClient> itemsOnMap;
 
     QDomElement xmlRoot;
 };

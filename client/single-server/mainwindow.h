@@ -75,7 +75,7 @@ private:
     CatchChallenger::ConnectedSocket *socket;
     QHash<QString,QString> serverLoginList;
     QHash<QString,QDateTime> lastServerConnect;
-    QHash<QString,quint32> lastServerWaitBeforeConnectAfterKick;
+    QHash<QString,uint32_t> lastServerWaitBeforeConnectAfterKick;
     QHash<QString,bool> lastServerIsKick;
     QTimer updateTheOkButtonTimer;
     libvlc_media_player_t *vlcPlayer;
@@ -83,8 +83,8 @@ private:
     QString server_name;
     QString server_dns_or_ip;
     QString proxy_dns_or_ip;
-    quint16 server_port;
-    quint16 proxy_port;
+    uint16_t server_port;
+    uint16_t proxy_port;
 };
 
 #endif // MAINWINDOW_H

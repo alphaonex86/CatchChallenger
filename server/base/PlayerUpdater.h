@@ -25,7 +25,7 @@ public:
     explicit PlayerUpdater();
 #ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
-    void newConnectedPlayer(quint16 connected_players) const;
+    void newConnectedPlayer(uint16_t connected_players) const;
     void send_addConnectedPlayer() const;
     void send_removeConnectedPlayer() const;
     void try_initAll() const;
@@ -39,8 +39,8 @@ private:
     void exec();
     void initAll();
 private:
-    static quint16 connected_players;
-    static quint16 sended_connected_players;
+    static uint16_t connected_players;
+    static uint16_t sended_connected_players;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     QTimer *next_send_timer;
     #else

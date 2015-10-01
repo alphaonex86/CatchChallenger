@@ -32,7 +32,7 @@ public:
     void tryDisconnect();
 protected:
     //general data
-    void defineMaxPlayers(const quint16 &);
+    void defineMaxPlayers(const uint16_t &);
 };
 }
 

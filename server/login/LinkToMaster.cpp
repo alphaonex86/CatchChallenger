@@ -17,7 +17,7 @@ LinkToMaster *LinkToMaster::linkToMaster=NULL;
 int LinkToMaster::linkToMasterSocketFd=-1;
 bool LinkToMaster::haveTheFirstSslHeader=false;
 char LinkToMaster::host[];
-quint16 LinkToMaster::port=0;
+uint16_t LinkToMaster::port=0;
 
 LinkToMaster::LinkToMaster(
         #ifdef SERVERSSL
@@ -52,7 +52,7 @@ LinkToMaster::~LinkToMaster()
     closeSocket();
 }
 
-int LinkToMaster::tryConnect(const char * const host, const quint16 &port,const quint8 &tryInterval,const quint8 &considerDownAfterNumberOfTry)
+int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const uint8_t &tryInterval,const uint8_t &considerDownAfterNumberOfTry)
 {
     if(port==0)
     {
@@ -104,9 +104,9 @@ int LinkToMaster::tryConnect(const char * const host, const quint16 &port,const 
             auto end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> elapsed = end-start;
             index++;
-            if(elapsed.count()<(quint32)tryInterval*1000 && index<considerDownAfterNumberOfTry && connStatusType<0)
+            if(elapsed.count()<(uint32_t)tryInterval*1000 && index<considerDownAfterNumberOfTry && connStatusType<0)
             {
-                const unsigned int ms=(quint32)tryInterval*1000-elapsed.count();
+                const unsigned int ms=(uint32_t)tryInterval*1000-elapsed.count();
                 std::this_thread::sleep_for(std::chrono::milliseconds(ms));
             }
         }
@@ -313,7 +313,7 @@ void LinkToMaster::tryReconnect()
     }
 }
 
-bool LinkToMaster::trySelectCharacter(void * const client,const quint8 &client_query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId)
+bool LinkToMaster::trySelectCharacter(void * const client,const uint8_t &client_query_id,const uint32_t &serverUniqueKey,const uint8_t &charactersGroupIndex,const uint32_t &characterId)
 {
     if(queryNumberList.empty())
         return false;
@@ -328,9 +328,9 @@ bool LinkToMaster::trySelectCharacter(void * const client,const quint8 &client_q
     //the data
     EpollClientLoginSlave::selectCharaterRequestOnMaster[0x02]=queryNumberList.back();
     EpollClientLoginSlave::selectCharaterRequestOnMaster[0x03]=charactersGroupIndex;
-    *reinterpret_cast<quint32 *>(EpollClientLoginSlave::selectCharaterRequestOnMaster+0x04)=serverUniqueKey;
-    *reinterpret_cast<quint32 *>(EpollClientLoginSlave::selectCharaterRequestOnMaster+0x08)=htole32(characterId);
-    *reinterpret_cast<quint32 *>(EpollClientLoginSlave::selectCharaterRequestOnMaster+0x0C)=htole32(static_cast<EpollClientLoginSlave *>(client)->account_id);
+    *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::selectCharaterRequestOnMaster+0x04)=serverUniqueKey;
+    *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::selectCharaterRequestOnMaster+0x08)=htole32(characterId);
+    *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::selectCharaterRequestOnMaster+0x0C)=htole32(static_cast<EpollClientLoginSlave *>(client)->account_id);
 
     queryNumberList.pop_back();
     return internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::selectCharaterRequestOnMaster),sizeof(EpollClientLoginSlave::selectCharaterRequestOnMaster));

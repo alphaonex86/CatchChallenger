@@ -20,7 +20,7 @@ TemporaryTile::~TemporaryTile()
 {
 }
 
-void TemporaryTile::startAnimation(Tiled::Tile *tile,const quint32 &ms,const quint8 &count)
+void TemporaryTile::startAnimation(Tiled::Tile *tile,const uint32_t &ms,const uint8_t &count)
 {
     Tiled::Cell cell=object->cell();
     cell.tile=tile;

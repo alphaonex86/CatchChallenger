@@ -52,34 +52,34 @@ public:
     ~EpollClientLoginSlave();
     struct AddCharacterParam
     {
-        quint8 query_id;
-        quint8 profileIndex;
+        uint8_t query_id;
+        uint8_t profileIndex;
         QString pseudo;
-        quint8 skinId;
+        uint8_t skinId;
     };
     struct RemoveCharacterParam
     {
-        quint8 query_id;
-        quint32 characterId;
+        uint8_t query_id;
+        uint32_t characterId;
     };
     struct DeleteCharacterNow
     {
-        quint32 characterId;
+        uint32_t characterId;
     };
     struct AskLoginParam
     {
-        quint8 query_id;
+        uint8_t query_id;
         QByteArray login;
         QByteArray pass;
     };
     struct SelectCharacterParam
     {
-        quint8 query_id;
-        quint32 characterId;
+        uint8_t query_id;
+        uint32_t characterId;
     };
     struct SelectIndexParam
     {
-        quint32 index;
+        uint32_t index;
     };
     enum ProxyMode
     {
@@ -104,22 +104,22 @@ public:
     void doDDOSCompute();
     static void doDDOSComputeAll();
 
-    void selectCharacter_ReturnToken(const quint8 &query_id,const char * const token);
-    void selectCharacter_ReturnFailed(const quint8 &query_id,const quint8 &errorCode);
-    void addCharacter_ReturnOk(const quint8 &query_id,const quint32 &characterId);
-    void addCharacter_ReturnFailed(const quint8 &query_id,const quint8 &errorCode);
-    void removeCharacter_ReturnOk(const quint8 &query_id);
-    void removeCharacter_ReturnFailed(const quint8 &query_id,const quint8 &errorCode,const QString &errorString=QString());
+    void selectCharacter_ReturnToken(const uint8_t &query_id,const char * const token);
+    void selectCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode);
+    void addCharacter_ReturnOk(const uint8_t &query_id,const uint32_t &characterId);
+    void addCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode);
+    void removeCharacter_ReturnOk(const uint8_t &query_id);
+    void removeCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode,const QString &errorString=QString());
     void parseNetworkReadError(const QString &errorString);
 
     LinkToGameServer *linkToGameServer;
-    quint8 charactersGroupIndex;
-    quint32 serverUniqueKey;
+    uint8_t charactersGroupIndex;
+    uint32_t serverUniqueKey;
     char *socketString;
     int socketStringSize;
     unsigned int account_id;
     /** \warning Need be checked in real time because can be opened on multiple login server
-     * quint8 accountCharatersCount; */
+     * uint8_t accountCharatersCount; */
 
     static QList<unsigned int> maxAccountIdList;
     static QList<unsigned int> maxCharacterIdList;
@@ -153,7 +153,7 @@ public:
     static char characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline[64];
     static char characterSelectionIsWrongBufferServerInternalProblem[64];
     static char characterSelectionIsWrongBufferServerNotFound[64];
-    static quint8 characterSelectionIsWrongBufferSize;
+    static uint8_t characterSelectionIsWrongBufferSize;
 private:
     QList<DatabaseBase::CallBack *> callbackRegistred;
     QList<void *> paramToPassToCallBack;
@@ -181,48 +181,48 @@ private:
     void errorParsingLayer(const char * const error);
     void messageParsingLayer(const char * const message) const;
     //have message without reply
-    void parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size);
-    void parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const data,const unsigned int &size);
+    void parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size);
+    void parseFullMessage(const uint8_t &mainCodeType,const uint8_t &subCodeType,const char * const data,const unsigned int &size);
     //have query with reply
-    void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
-    void parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
+    void parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    void parseFullQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
     //send reply
-    void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
-    void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
+    void parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    void parseFullReplyData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
 
-    void parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size);
+    void parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size);
     void disconnectClient();
 public:
     void askLogin_cancel();
-    void askLogin(const quint8 &query_id,const char *rawdata);
+    void askLogin(const uint8_t &query_id,const char *rawdata);
     static void askLogin_static(void *object);
     void askLogin_object();
     void askLogin_return(AskLoginParam *askLoginParam);
-    void createAccount(const quint8 &query_id, const char *rawdata);
+    void createAccount(const uint8_t &query_id, const char *rawdata);
     static void createAccount_static(void *object);
     void createAccount_object();
     void createAccount_return(AskLoginParam *askLoginParam);
 
-    void character_list_return(const quint8 &characterGroupIndex,char * const tempRawData,const int &tempRawDataSize);
-    void server_list_return(const quint8 &serverCount,char * const tempRawData,const int &tempRawDataSize);
+    void character_list_return(const uint8_t &characterGroupIndex,char * const tempRawData,const int &tempRawDataSize);
+    void server_list_return(const uint8_t &serverCount,char * const tempRawData,const int &tempRawDataSize);
 
-    void sendFullPacket(const quint8 &mainIdent,const quint8 &subIdent,const char * const data, const unsigned int &size);
-    void sendFullPacket(const quint8 &mainIdent,const quint8 &subIdent);
-    void sendPacket(const quint8 &mainIdent, const char * const data, const unsigned int &size);
-    void sendPacket(const quint8 &mainIdent);
+    void sendFullPacket(const uint8_t &mainIdent,const uint8_t &subIdent,const char * const data, const unsigned int &size);
+    void sendFullPacket(const uint8_t &mainIdent,const uint8_t &subIdent);
+    void sendPacket(const uint8_t &mainIdent, const char * const data, const unsigned int &size);
+    void sendPacket(const uint8_t &mainIdent);
     void sendRawSmallPacket(const char * const data, const unsigned int &size);
-    void sendQuery(const quint8 &mainIdent,const quint8 &subIdent,const quint8 &queryNumber,const char * const data, const unsigned int &size);
-    void sendQuery(const quint8 &mainIdent,const quint8 &subIdent,const quint8 &queryNumber);
-    void postReply(const quint8 &queryNumber,const char * const data, const unsigned int &size);
-    void postReply(const quint8 &queryNumber);
+    void sendQuery(const uint8_t &mainIdent,const uint8_t &subIdent,const uint8_t &queryNumber,const char * const data, const unsigned int &size);
+    void sendQuery(const uint8_t &mainIdent,const uint8_t &subIdent,const uint8_t &queryNumber);
+    void postReply(const uint8_t &queryNumber,const char * const data, const unsigned int &size);
+    void postReply(const uint8_t &queryNumber);
 private:
-    void deleteCharacterNow(const quint32 &characterId);
-    void addCharacter(const quint8 &query_id, const quint8 &characterGroupIndex, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
-    void removeCharacter(const quint8 &query_id, const quint8 &characterGroupIndex, const quint32 &characterId);
+    void deleteCharacterNow(const uint32_t &characterId);
+    void addCharacter(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint8_t &profileIndex, const QString &pseudo, const uint8_t &skinId);
+    void removeCharacter(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint32_t &characterId);
     void dbQueryWriteLogin(const char * const queryText);
 
-    void loginIsWrong(const quint8 &query_id,const quint8 &returnCode,const QString &debugMessage);
-    void selectCharacter(const quint8 &query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId);
+    void loginIsWrong(const uint8_t &query_id,const uint8_t &returnCode,const QString &debugMessage);
+    void selectCharacter(const uint8_t &query_id,const uint32_t &serverUniqueKey,const uint8_t &charactersGroupIndex,const uint32_t &characterId);
 private:
     struct CharacterListForReply
     {
@@ -230,27 +230,27 @@ private:
         int rawDataSize;
     };
     //to be ordered
-    QMap<quint8,CharacterListForReply> characterTempListForReply;
-    quint8 characterListForReplyInSuspend;
+    QMap<uint8_t,CharacterListForReply> characterTempListForReply;
+    uint8_t characterListForReplyInSuspend;
     //by client because is where is merged all servers time reply from all catchchallenger_common*
     char *serverListForReplyRawData;
     unsigned int serverListForReplyRawDataSize;
 
-    quint8 serverListForReplyInSuspend;
+    uint8_t serverListForReplyInSuspend;
     static std::vector<EpollClientLoginSlave *> client_list;
 
-    quint8 movePacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE];
-    quint8 movePacketKickSize;
-    quint8 movePacketKickTotalCache;
-    quint8 movePacketKickNewValue;
-    quint8 chatPacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE];
-    quint8 chatPacketKickSize;
-    quint8 chatPacketKickTotalCache;
-    quint8 chatPacketKickNewValue;
-    quint8 otherPacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE];
-    quint8 otherPacketKickSize;
-    quint8 otherPacketKickTotalCache;
-    quint8 otherPacketKickNewValue;
+    uint8_t movePacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE];
+    uint8_t movePacketKickSize;
+    uint8_t movePacketKickTotalCache;
+    uint8_t movePacketKickNewValue;
+    uint8_t chatPacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE];
+    uint8_t chatPacketKickSize;
+    uint8_t chatPacketKickTotalCache;
+    uint8_t chatPacketKickNewValue;
+    uint8_t otherPacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE];
+    uint8_t otherPacketKickSize;
+    uint8_t otherPacketKickTotalCache;
+    uint8_t otherPacketKickNewValue;
 public:
     static EpollPostgresql databaseBaseLogin;
     static EpollPostgresql databaseBaseCommon;

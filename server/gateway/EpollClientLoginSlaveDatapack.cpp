@@ -7,26 +7,26 @@
 #include <QCryptographicHash>
 #include <QFileInfo>
 #include <QFile>
-#include <QStringList>
-#include <QRegularExpression>
+#include <vector>
+#include <regex>
 
 using namespace CatchChallenger;
 
 #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-QHash<QString,EpollClientLoginSlave::DatapackCacheFile> EpollClientLoginSlave::datapack_file_list(const QString &path,const bool withHash)
+std::unordered_map<std::string,EpollClientLoginSlave::DatapackCacheFile> EpollClientLoginSlave::datapack_file_list(const std::string &path,const bool withHash)
 {
-    QHash<QString,DatapackCacheFile> filesList;
-    QRegularExpression datapack_rightFileName(DATAPACK_FILE_REGEX);
+    std::unordered_map<std::string,DatapackCacheFile> filesList;
+    std::regex datapack_rightFileName(DATAPACK_FILE_REGEX);
 
-    const QStringList &returnList=FacilityLibGeneral::listFolder(path);
+    const std::vector<std::string> &returnList=FacilityLibGeneral::listFolder(path);
     int index=0;
     const int &size=returnList.size();
     while(index<size)
     {
         #ifdef Q_OS_WIN32
-        QString fileName=returnList.at(index);
+        std::string fileName=returnList.at(index);
         #else
-        const QString &fileName=returnList.at(index);
+        const std::string &fileName=returnList.at(index);
         #endif
         if(fileName.contains(datapack_rightFileName))
         {
@@ -62,11 +62,11 @@ QHash<QString,EpollClientLoginSlave::DatapackCacheFile> EpollClientLoginSlave::d
 }
 
 //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
-void EpollClientLoginSlave::datapackList(const quint8 &query_id,const QStringList &files,const QList<quint32> &partialHashList)
+void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vector<std::string> &files,const QList<uint32_t> &partialHashList)
 {
     if(linkToGameServer==NULL)
     {
-        std::cerr << "EpollClientLoginSlave::datapackList(const quint8 &query_id,const QStringList &files,const QList<quint32> &partialHashList) linkToGameServer==NULL" << std::endl;
+        std::cerr << "EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vector<std::string> &files,const QList<uint32_t> &partialHashList) linkToGameServer==NULL" << std::endl;
         return;
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -80,8 +80,8 @@ void EpollClientLoginSlave::datapackList(const quint8 &query_id,const QStringLis
     EpollClientLoginSlave::compressedFilesBufferCount=0;
     tempDatapackListReply=0;
     tempDatapackListReplySize=0;
-    QString datapackPath;
-    QHash<QString,DatapackCacheFile> filesList;
+    std::string datapackPath;
+    std::unordered_map<std::string,DatapackCacheFile> filesList;
     switch(datapackStatus)
     {
         case DatapackStatus::Base:
@@ -140,36 +140,36 @@ void EpollClientLoginSlave::datapackList(const quint8 &query_id,const QStringLis
     //send the size to download on the client
     {
         //clone to drop the ask file and remain the missing client files
-        QHash<QString,DatapackCacheFile> filesListForSize(filesList);
+        std::unordered_map<std::string,DatapackCacheFile> filesListForSize(filesList);
         int index=0;
-        quint32 datapckFileNumber=0;
-        quint32 datapckFileSize=0;
+        uint32_t datapckFileNumber=0;
+        uint32_t datapckFileSize=0;
         while(index<loop_size)
         {
-            const QString &fileName=files.at(index);
-            const quint32 &clientPartialHash=partialHashList.at(index);
+            const std::string &fileName=files.at(index);
+            const uint32_t &clientPartialHash=partialHashList.at(index);
             if(fileName.contains(EpollClientLoginSlave::text_dotslash) || fileName.contains(EpollClientLoginSlave::text_antislash) || fileName.contains(EpollClientLoginSlave::text_double_slash))
             {
-                std::cerr << QStringLiteral("file name contains illegale char: %1").arg(fileName).toStdString() << std::endl;
+                std::cerr << std::stringLiteral("file name contains illegale char: %1").arg(fileName).toStdString() << std::endl;
                 return;
             }
             if(fileName.contains(fileNameStartStringRegex) || fileName.startsWith(EpollClientLoginSlave::text_slash))
             {
-                std::cerr << QStringLiteral("start with wrong string: %1").arg(fileName).toStdString() << std::endl;
+                std::cerr << std::stringLiteral("start with wrong string: %1").arg(fileName).toStdString() << std::endl;
                 return;
             }
             if(!fileName.contains(EpollClientLoginSlave::datapack_rightFileName))
             {
-                std::cerr << QStringLiteral("file name sended wrong: %1").arg(fileName).toStdString() << std::endl;
+                std::cerr << std::stringLiteral("file name sended wrong: %1").arg(fileName).toStdString() << std::endl;
                 return;
             }
             if(filesListForSize.contains(fileName))
             {
-                const quint32 &serverPartialHash=filesListForSize.value(fileName).partialHash;
+                const uint32_t &serverPartialHash=filesListForSize.value(fileName).partialHash;
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(serverPartialHash==0)
                 {
-                    std::cerr << QStringLiteral("serverPartialHash==0 at %1").arg(__FILE__).arg(__LINE__).toStdString() << std::endl;
+                    std::cerr << std::stringLiteral("serverPartialHash==0 at %1").arg(__FILE__).arg(__LINE__).toStdString() << std::endl;
                     abort();
                 }
                 #endif
@@ -195,7 +195,7 @@ void EpollClientLoginSlave::datapackList(const quint8 &query_id,const QStringLis
                 addDatapackListReply(true);//to delete
             index++;
         }
-        QHashIterator<QString,DatapackCacheFile> i(filesListForSize);
+        std::unordered_mapIterator<std::string,DatapackCacheFile> i(filesListForSize);
         while (i.hasNext()) {
             i.next();
             QFile file(datapackPath+i.key());
@@ -209,11 +209,8 @@ void EpollClientLoginSlave::datapackList(const quint8 &query_id,const QStringLis
                 file.close();
             }
         }
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (quint32)datapckFileNumber;
-        out << (quint32)datapckFileSize;
+        out << (uint32_t)datapckFileNumber;
+        out << (uint32_t)datapckFileSize;
         sendFullPacket(0xC2,0x0C,outputData.constData(),outputData.size());
     }
     if(fileToSendList.isEmpty())
@@ -330,7 +327,7 @@ void EpollClientLoginSlave::addDatapackListReply(const bool &fileRemove)
     }
 }
 
-void EpollClientLoginSlave::purgeDatapackListReply(const quint8 &query_id)
+void EpollClientLoginSlave::purgeDatapackListReply(const uint8_t &query_id)
 {
     if(tempDatapackListReplySize>0)
     {
@@ -348,10 +345,7 @@ void EpollClientLoginSlave::sendFileContent()
 {
     if(EpollClientLoginSlave::rawFilesBuffer.size()>0 && EpollClientLoginSlave::rawFilesBufferCount>0)
     {
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (quint8)EpollClientLoginSlave::rawFilesBufferCount;
+        out << (uint8_t)EpollClientLoginSlave::rawFilesBufferCount;
         const QByteArray newData(outputData+EpollClientLoginSlave::rawFilesBuffer);
         sendFullPacket(0xC2,0x03,newData.constData(),newData.size());
         EpollClientLoginSlave::rawFilesBuffer.clear();
@@ -363,10 +357,7 @@ void EpollClientLoginSlave::sendCompressedFileContent()
 {
     if(EpollClientLoginSlave::compressedFilesBuffer.size()>0 && EpollClientLoginSlave::compressedFilesBufferCount>0)
     {
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (quint8)EpollClientLoginSlave::compressedFilesBufferCount;
+        out << (uint8_t)EpollClientLoginSlave::compressedFilesBufferCount;
         const QByteArray newData(outputData+EpollClientLoginSlave::compressedFilesBuffer);
         sendFullPacket(0xC2,0x04,newData.constData(),newData.size());
         EpollClientLoginSlave::compressedFilesBuffer.clear();
@@ -374,7 +365,7 @@ void EpollClientLoginSlave::sendCompressedFileContent()
     }
 }
 
-bool EpollClientLoginSlave::sendFile(const QString &datapackPath,const QString &fileName)
+bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::string &fileName)
 {
     if(fileName.size()>255 || fileName.isEmpty())
     {
@@ -392,11 +383,8 @@ bool EpollClientLoginSlave::sendFile(const QString &datapackPath,const QString &
     {
         const QByteArray &content=file.readAll();
         const int &contentsize=content.size();
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (quint32)contentsize;
-        const QString &suffix=QFileInfo(file).suffix();
+        out << (uint32_t)contentsize;
+        const std::string &suffix=QFileInfo(file).suffix();
         if(EpollClientLoginSlave::compressedExtension.contains(suffix) &&
                 ProtocolParsing::compressionTypeServer!=ProtocolParsing::CompressionType::None &&
                 (
@@ -429,7 +417,7 @@ bool EpollClientLoginSlave::sendFile(const QString &datapackPath,const QString &
                 if((1+fileNameRaw.size()+outputData.size()+contentsize)>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                 {
                     std::cerr << "Unable to open into CatchChallenger::sendFile(): " << file.errorString().toStdString() << std::endl;
-                    std::cerr << QString("Error: outputData2(%1)+fileNameRaw(%2)+outputData(%3)+content(%4)>CATCHCHALLENGER_MAX_PACKET_SIZE for file %5")
+                    std::cerr << std::string("Error: outputData2(%1)+fileNameRaw(%2)+outputData(%3)+content(%4)>CATCHCHALLENGER_MAX_PACKET_SIZE for file %5")
                                  .arg(1)
                                  .arg(fileNameRaw.size())
                                  .arg(outputData.size())

@@ -74,7 +74,7 @@ void Client::useRecipe(const uint8_t &query_id,const uint32_t &recipe_id)
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
     posOutput+=1+4;
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
 
     if(success)
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)RecipeUsage_ok;

@@ -51,7 +51,7 @@ LinkToGameServer::~LinkToGameServer()
     }
 }
 
-int LinkToGameServer::tryConnect(const char * const host, const quint16 &port,const quint8 &tryInterval,const quint8 &considerDownAfterNumberOfTry)
+int LinkToGameServer::tryConnect(const char * const host, const uint16_t &port,const uint8_t &tryInterval,const uint8_t &considerDownAfterNumberOfTry)
 {
     if(port==0)
     {
@@ -95,9 +95,9 @@ int LinkToGameServer::tryConnect(const char * const host, const quint16 &port,co
             auto end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> elapsed = end-start;
             index++;
-            if(elapsed.count()<(quint32)tryInterval*1000 && index<considerDownAfterNumberOfTry && connStatusType<0)
+            if(elapsed.count()<(uint32_t)tryInterval*1000 && index<considerDownAfterNumberOfTry && connStatusType<0)
             {
-                const unsigned int ms=(quint32)tryInterval*1000-elapsed.count();
+                const unsigned int ms=(uint32_t)tryInterval*1000-elapsed.count();
                 std::this_thread::sleep_for(std::chrono::milliseconds(ms));
             }
         }

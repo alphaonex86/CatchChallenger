@@ -11,18 +11,18 @@ class MapVisualiserPlayerWithFight : public MapVisualiserPlayer
 public:
     explicit MapVisualiserPlayerWithFight(const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true, const bool &OpenGL=false);
     ~MapVisualiserPlayerWithFight();
-    void setBotsAlreadyBeaten(const QSet<quint16> &botAlreadyBeaten);
-    void addBeatenBotFight(const quint16 &botFightId);
-    bool haveBeatBot(const quint16 &botFightId) const;
-    void addRepelStep(const quint32 &repel_step);
+    void setBotsAlreadyBeaten(const QSet<uint16_t> &botAlreadyBeaten);
+    void addBeatenBotFight(const uint16_t &botFightId);
+    bool haveBeatBot(const uint16_t &botFightId) const;
+    void addRepelStep(const uint32_t &repel_step);
 protected slots:
     virtual void keyPressParse();
     virtual bool haveStopTileAction();
     virtual bool canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::CommonMap map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);
     virtual void resetAll();
 protected:
-    QSet<quint16> botAlreadyBeaten;
-    quint32 repel_step;
+    QSet<uint16_t> botAlreadyBeaten;
+    uint32_t repel_step;
     Tiled::Tileset *fightCollisionBot;
 signals:
     void repelEffectIsOver() const;

@@ -303,7 +303,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             const QString &charactersGroup=settings.value(QStringLiteral("charactersGroup")).toString();
             if(!CharactersGroupForLogin::hash.contains(charactersGroup))
             {
-                const quint8 &considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
+                const uint8_t &considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
                 if(considerDownAfterNumberOfTry==0 || !ok)
                 {
                     std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
@@ -313,7 +313,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
                 host=settings.value(QStringLiteral("host")).toString();
                 login=settings.value(QStringLiteral("login")).toString();
                 pass=settings.value(QStringLiteral("pass")).toString();
-                const quint8 &tryInterval=settings.value(QStringLiteral("tryInterval")).toUInt(&ok);
+                const uint8_t &tryInterval=settings.value(QStringLiteral("tryInterval")).toUInt(&ok);
                 if(tryInterval==0 || !ok)
                 {
                     std::cerr << "tryInterval==0 (abort)" << std::endl;
@@ -381,19 +381,19 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             settings.setValue(QStringLiteral("tryInterval"),5);
         settings.sync();
         const QString &host=settings.value(QStringLiteral("host")).toString();
-        const quint16 &port=settings.value(QStringLiteral("port")).toUInt(&ok);
+        const uint16_t &port=settings.value(QStringLiteral("port")).toUInt(&ok);
         if(port==0 || !ok)
         {
             std::cerr << "Master port not a number or 0:" << settings.value(QStringLiteral("port")).toString().toStdString() << std::endl;
             abort();
         }
-        const quint8 &tryInterval=settings.value(QStringLiteral("tryInterval")).toUInt(&ok);
+        const uint8_t &tryInterval=settings.value(QStringLiteral("tryInterval")).toUInt(&ok);
         if(tryInterval==0 || !ok)
         {
             std::cerr << "tryInterval==0 (abort)" << std::endl;
             abort();
         }
-        const quint8 &considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
+        const uint8_t &considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
         if(considerDownAfterNumberOfTry==0 || !ok)
         {
             std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
@@ -521,7 +521,7 @@ void EpollServerLoginSlave::generateToken(QSettings &settings)
     settings.sync();
 }
 
-void EpollServerLoginSlave::setSkinPair(const quint8 &internalId,const quint16 &databaseId)
+void EpollServerLoginSlave::setSkinPair(const uint8_t &internalId,const uint16_t &databaseId)
 {
     while(DictionaryLogin::dictionary_skin_database_to_internal.size()<(databaseId+1))
         DictionaryLogin::dictionary_skin_database_to_internal << 0;
@@ -531,7 +531,7 @@ void EpollServerLoginSlave::setSkinPair(const quint8 &internalId,const quint16 &
     DictionaryLogin::dictionary_skin_database_to_internal[databaseId]=internalId;
 }
 
-void EpollServerLoginSlave::setProfilePair(const quint8 &internalId,const quint16 &databaseId)
+void EpollServerLoginSlave::setProfilePair(const uint8_t &internalId,const uint16_t &databaseId)
 {
     while(DictionaryLogin::dictionary_starter_database_to_internal.size()<(databaseId+1))
         DictionaryLogin::dictionary_starter_database_to_internal << 0;
@@ -545,14 +545,14 @@ void EpollServerLoginSlave::compose04Reply()
 {
     EpollClientLoginSlave::loginGood[0x00]=0x01;//good
 
-    *reinterpret_cast<quint32 *>(EpollClientLoginSlave::loginGood+0x01)=htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time);
+    *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::loginGood+0x01)=htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time);
     EpollClientLoginSlave::loginGood[0x05]=CommonSettingsCommon::commonSettingsCommon.max_character;
     EpollClientLoginSlave::loginGood[0x06]=CommonSettingsCommon::commonSettingsCommon.min_character;
     EpollClientLoginSlave::loginGood[0x07]=CommonSettingsCommon::commonSettingsCommon.max_pseudo_size;
     EpollClientLoginSlave::loginGood[0x08]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
-    *reinterpret_cast<quint16 *>(EpollClientLoginSlave::loginGood+0x09)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
+    *reinterpret_cast<uint16_t *>(EpollClientLoginSlave::loginGood+0x09)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
     EpollClientLoginSlave::loginGood[0x0B]=CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
-    *reinterpret_cast<quint16 *>(EpollClientLoginSlave::loginGood+0x0C)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
+    *reinterpret_cast<uint16_t *>(EpollClientLoginSlave::loginGood+0x0C)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
     EpollClientLoginSlave::loginGoodSize=0x0E;
 
     memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,EpollClientLoginSlave::baseDatapackSum,sizeof(EpollClientLoginSlave::baseDatapackSum));
@@ -569,7 +569,7 @@ void EpollServerLoginSlave::compose04Reply()
         std::cerr << "httpDatapackMirrorData size>255 (abort)" << std::endl;
         abort();
     }
-    EpollClientLoginSlave::loginGood[EpollClientLoginSlave::loginGoodSize]=(quint8)httpDatapackMirrorData.size();
+    EpollClientLoginSlave::loginGood[EpollClientLoginSlave::loginGoodSize]=(uint8_t)httpDatapackMirrorData.size();
     EpollClientLoginSlave::loginGoodSize+=1;
     memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,httpDatapackMirrorData.constData(),httpDatapackMirrorData.size());
     EpollClientLoginSlave::loginGoodSize+=httpDatapackMirrorData.size();

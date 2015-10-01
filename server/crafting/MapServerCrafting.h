@@ -11,17 +11,17 @@ class MapServerCrafting
 public:
     struct PlantOnMap
     {
-        quint32 pointOnMapDbCode;
+        uint32_t pointOnMapDbCode;
         #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-        quint8 indexOfOnMap;//see for that's Player_private_and_public_informations
+        uint8_t indexOfOnMap;//see for that's Player_private_and_public_informations
         #else
-        quint8 plant;//plant id
-        quint32 character;//player id
-        quint64 mature_at;//timestamp when is mature
-        quint64 player_owned_expire_at;//timestamp when is mature
+        uint8_t plant;//plant id
+        uint32_t character;//player id
+        uint64_t mature_at;//timestamp when is mature
+        uint64_t player_owned_expire_at;//timestamp when is mature
         #endif
     };
-    std::unordered_map<std::pair<quint8,quint8>,PlantOnMap,pairhash> plants;//position, plant id
+    std::unordered_map<std::pair<uint8_t,uint8_t>,PlantOnMap,pairhash> plants;//position, plant id
 };
 }
 

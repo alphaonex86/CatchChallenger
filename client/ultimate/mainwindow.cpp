@@ -290,7 +290,7 @@ QList<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
             QString port_string=connexion;
             port_string.remove(postRemove);
             bool ok;
-            quint16 port=port_string.toInt(&ok);
+            uint16_t port=port_string.toInt(&ok);
             if(ok)
             {
                 ConnexionInfo connexionInfo;
@@ -315,7 +315,7 @@ QList<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
                     QString proxy_port_string=proxy;
                     proxy_port_string.remove(postRemove);
                     bool ok;
-                    quint16 proxy_port=proxy_port_string.toInt(&ok);
+                    uint16_t proxy_port=proxy_port_string.toInt(&ok);
                     if(ok)
                     {
                         connexionInfo.proxyHost=host;
@@ -374,7 +374,7 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlC
                 ConnexionInfo connexionInfo;
                 connexionInfo.host=server.attribute(QStringLiteral("host"));
                 connexionInfo.unique_code=server.attribute(QStringLiteral("unique_code"));
-                quint32 temp_port=server.attribute(QStringLiteral("port")).toUInt(&ok);
+                uint32_t temp_port=server.attribute(QStringLiteral("port")).toUInt(&ok);
                 if(!connexionInfo.host.contains(regexHost))
                     qDebug() << QStringLiteral("Unable to open the file: %1, host is wrong: %4 child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(server.tagName()).arg(server.lineNumber()).arg(connexionInfo.host);
                 else if(!ok)
@@ -562,7 +562,7 @@ void MainWindow::displayServerList()
             star+=QStringLiteral("<img src=\":/images/interface/top.png\" alt=\"\" />");
         QString lastConnexion;
         if(connexionInfo.connexionCounter>0)
-            lastConnexion=tr("Last connexion: %1").arg(QDateTime::fromMSecsSinceEpoch((quint64)connexionInfo.lastConnexion*1000).toString());
+            lastConnexion=tr("Last connexion: %1").arg(QDateTime::fromMSecsSinceEpoch((uint64_t)connexionInfo.lastConnexion*1000).toString());
         QString custom;
         if(connexionInfo.unique_code.isEmpty())
         {
@@ -1559,7 +1559,7 @@ void MainWindow::saveTime()
                     locaction.remove(0,mapPath.size());
                 if(!locaction.isEmpty())
                     metaData.setValue(QStringLiteral("location"),locaction);
-                quint64 current_date_time=QDateTime::currentDateTimeUtc().toTime_t();
+                uint64_t current_date_time=QDateTime::currentDateTimeUtc().toTime_t();
                 if(current_date_time>timeLaunched)
                     metaData.setValue(QStringLiteral("time_played"),metaData.value(QStringLiteral("time_played")).toUInt()+(current_date_time-timeLaunched));
                 settingOk=true;
@@ -1705,11 +1705,11 @@ void MainWindow::updateTheOkButton()
         ui->pushButtonTryLogin->setText(tr("Ok"));
         return;
     }
-    quint32 timeToWait=5;
+    uint32_t timeToWait=5;
     if(lastServerIsKick.value(serverConnexion.value(selectedServer)->host))
         if(lastServerWaitBeforeConnectAfterKick.value(serverConnexion.value(selectedServer)->host)>timeToWait)
             timeToWait=lastServerWaitBeforeConnectAfterKick.value(serverConnexion.value(selectedServer)->host);
-    quint32 secondLastSinceConnexion=QDateTime::currentDateTime().toTime_t()-lastServerConnect.value(serverConnexion.value(selectedServer)->host).toTime_t();
+    uint32_t secondLastSinceConnexion=QDateTime::currentDateTime().toTime_t()-lastServerConnect.value(serverConnexion.value(selectedServer)->host).toTime_t();
     if(secondLastSinceConnexion>=timeToWait)
     {
         ui->pushButtonTryLogin->setEnabled(true);

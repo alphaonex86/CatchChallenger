@@ -35,14 +35,14 @@ void BroadCastWithoutSender::emit_new_chat_message(const QString &pseudo,const C
 }
 #endif
 
-void BroadCastWithoutSender::receive_instant_player_number(const qint16 &connected_players)
+void BroadCastWithoutSender::receive_instant_player_number(const int16_t &connected_players)
 {
     if(GlobalServerData::serverSettings.sendPlayerNumber)
     {
         if(Client::clientBroadCastList.empty())
             return;
 
-        quint8 outputSize;
+        uint8_t outputSize;
         if(GlobalServerData::serverSettings.max_players<=255)
         {
             bufferSendPlayer[0x01]=connected_players;
@@ -50,7 +50,7 @@ void BroadCastWithoutSender::receive_instant_player_number(const qint16 &connect
         }
         else
         {
-            *reinterpret_cast<quint16 *>(bufferSendPlayer+0x01)=htole16(connected_players);
+            *reinterpret_cast<uint16_t *>(bufferSendPlayer+0x01)=htole16(connected_players);
             outputSize=3;
         }
 

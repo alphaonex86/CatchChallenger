@@ -248,7 +248,7 @@ struct Clan
 
     //the db info
     std::string name;
-    quint64 cash;
+    uint64_t cash;
 };
 
 struct CaptureCityValidated

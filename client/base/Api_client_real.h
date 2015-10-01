@@ -37,10 +37,10 @@ public:
     void resetAll();
 
     //connection related
-    void tryConnect(QString host,quint16 port);
+    void tryConnect(QString host,uint16_t port);
     void tryDisconnect();
     QString getHost();
-    quint16 getPort();
+    uint16_t getPort();
 
     //datapack related
     void sendDatapackContentBase();
@@ -70,11 +70,11 @@ public:
     void cleanDatapackSub(QString suffix);
     void setProxy(const QNetworkProxy &proxy);
 protected:
-    void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
-    void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
+    void parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const QByteArray &data);
+    void parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
 
     //general data
-    void defineMaxPlayers(const quint16 &maxPlayers);
+    void defineMaxPlayers(const uint16_t &maxPlayers);
 private:
     static QRegularExpression regex_DATAPACK_FILE_REGEX;
     /// \todo group into one thread by change for queue
@@ -86,8 +86,8 @@ private:
     bool datapackTarXzSub;
     CatchChallenger::DatapackChecksum datapackChecksum;
     QString host;
-    quint16 port;
-    quint64 RXSize,TXSize;
+    uint16_t port;
+    uint64_t RXSize,TXSize;
     int index_mirror_base;
     int index_mirror_main;
     int index_mirror_sub;
@@ -106,7 +106,7 @@ private:
     //file list
     struct query_files
     {
-        quint8 id;
+        uint8_t id;
         QStringList filesName;
     };
     QList<query_files> query_files_list_base;
@@ -118,9 +118,9 @@ private:
     QStringList datapackFilesListBase;
     QStringList datapackFilesListMain;
     QStringList datapackFilesListSub;
-    QList<quint32> partialHashListBase;
-    QList<quint32> partialHashListMain;
-    QList<quint32> partialHashListSub;
+    QList<uint32_t> partialHashListBase;
+    QList<uint32_t> partialHashListMain;
+    QList<uint32_t> partialHashListSub;
     static QString text_slash;
     static QString text_dotcoma;
     bool httpError;
@@ -152,22 +152,22 @@ private slots:
     void datapackDownloadFinishedBase();
     void datapackDownloadFinishedMain();
     void datapackDownloadFinishedSub();
-    void datapackChecksumDoneBase(const QStringList &datapackFilesList,const QByteArray &hash, const QList<quint32> &partialHash);
-    void datapackChecksumDoneMain(const QStringList &datapackFilesList,const QByteArray &hash, const QList<quint32> &partialHash);
-    void datapackChecksumDoneSub(const QStringList &datapackFilesList,const QByteArray &hash, const QList<quint32> &partialHash);
-    void downloadProgressDatapackBase(qint64 bytesReceived, qint64 bytesTotal);
-    void downloadProgressDatapackMain(qint64 bytesReceived, qint64 bytesTotal);
-    void downloadProgressDatapackSub(qint64 bytesReceived, qint64 bytesTotal);
+    void datapackChecksumDoneBase(const QStringList &datapackFilesList,const QByteArray &hash, const QList<uint32_t> &partialHash);
+    void datapackChecksumDoneMain(const QStringList &datapackFilesList,const QByteArray &hash, const QList<uint32_t> &partialHash);
+    void datapackChecksumDoneSub(const QStringList &datapackFilesList,const QByteArray &hash, const QList<uint32_t> &partialHash);
+    void downloadProgressDatapackBase(int64_t bytesReceived, int64_t bytesTotal);
+    void downloadProgressDatapackMain(int64_t bytesReceived, int64_t bytesTotal);
+    void downloadProgressDatapackSub(int64_t bytesReceived, int64_t bytesTotal);
 signals:
-    void newDatapackFileBase(const quint32 &size) const;
-    void newDatapackFileMain(const quint32 &size) const;
-    void newDatapackFileSub(const quint32 &size) const;
+    void newDatapackFileBase(const uint32_t &size) const;
+    void newDatapackFileMain(const uint32_t &size) const;
+    void newDatapackFileSub(const uint32_t &size) const;
     void doDifferedChecksumBase(const QString &datapackPath);
     void doDifferedChecksumMain(const QString &datapackPath);
     void doDifferedChecksumSub(const QString &datapackPath);
-    void progressingDatapackFileBase(const quint32 &size);
-    void progressingDatapackFileMain(const quint32 &size);
-    void progressingDatapackFileSub(const quint32 &size);
+    void progressingDatapackFileBase(const uint32_t &size);
+    void progressingDatapackFileMain(const uint32_t &size);
+    void progressingDatapackFileSub(const uint32_t &size);
 };
 }
 

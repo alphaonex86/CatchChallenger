@@ -39,8 +39,8 @@ public:
     void setNormalSettings(const NormalServerSettings &settings);
     NormalServerSettings getNormalSettings() const;
     //stat function
-    quint16 player_current();
-    quint16 player_max();
+    uint16_t player_current();
+    uint16_t player_max();
 public:
     //to manipulate the server for restart and stop
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -58,7 +58,7 @@ private:
     //init, constructor, destructor
     virtual void initAll();//call before all
     //internal usefull function
-    QString listenIpAndPort(QString server_ip,quint16 server_port);
+    QString listenIpAndPort(QString server_ip,uint16_t server_port);
     //store about the network
     QSslServer *sslServer;
     int number_of_client;

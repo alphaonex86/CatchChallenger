@@ -14,7 +14,7 @@ extern "C" {
 static uint8_t in[BUFSIZ];
 static uint8_t out[BUFSIZ];
 
-QXzDecode::QXzDecode(QByteArray data,quint64 maxSize)
+QXzDecode::QXzDecode(QByteArray data,uint64_t maxSize)
 {
 	error="Unknow error";
 	this->data=data;

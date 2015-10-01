@@ -225,7 +225,7 @@ void MainWindow::update_the_info()
         ui->listLatency->item(0)->setText(tr("%1ms").arg(internal_currentLatency));
     if(server.isListen())
     {
-        quint16 player_current,player_max;
+        uint16_t player_current,player_max;
         player_current=server.player_current();
         player_max=server.player_max();
         ui->label_player->setText(QStringLiteral("%1/%2").arg(player_current).arg(player_max));
@@ -342,7 +342,7 @@ void MainWindow::load_settings()
     ui->proxy_port->setValue(settings->value(QLatin1Literal("proxy_port")).toUInt());
     ui->httpDatapackMirror->setText(settings->value(QLatin1Literal("httpDatapackMirror")).toString());
     {
-        const qint32 &datapackCache=settings->value(QLatin1Literal("datapackCache")).toInt();
+        const int32_t &datapackCache=settings->value(QLatin1Literal("datapackCache")).toInt();
         if(datapackCache<0)
         {
             ui->datapack_cache->setChecked(false);
@@ -435,17 +435,17 @@ void MainWindow::load_settings()
     ui->dontSendPseudo->setChecked(settings->value(QLatin1Literal("dontSendPseudo")).toBool());
     ui->dontSendPlayerType->setChecked(settings->value(QLatin1Literal("dontSendPlayerType")).toBool());
 
-    quint32 tempValue=0;
+    uint32_t tempValue=0;
     settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm"));
     tempValue=settings->value(QLatin1Literal("MapVisibilityAlgorithm")).toUInt();
     settings->endGroup();
-    if(tempValue<(quint32)ui->MapVisibilityAlgorithm->count())
+    if(tempValue<(uint32_t)ui->MapVisibilityAlgorithm->count())
         ui->MapVisibilityAlgorithm->setCurrentIndex(tempValue);
     ui->groupBoxMapVisibilityAlgorithmSimple->setEnabled(tempValue==0);
     ui->groupBoxMapVisibilityAlgorithmWithBorder->setEnabled(tempValue==2);
 
     {
-        quint32 reshow=0;
+        uint32_t reshow=0;
         settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-Simple"));
         tempValue=settings->value(QLatin1Literal("Max")).toUInt();
         reshow=settings->value(QLatin1Literal("Reshow")).toUInt();
@@ -462,9 +462,9 @@ void MainWindow::load_settings()
         ui->MapVisibilityAlgorithmSimpleReemit->setChecked(settings->value(QLatin1Literal("Reemit")).toBool());
     }
     {
-        quint32 tempValueWithBorder=0;
-        quint32 reshowWithBorder=0;
-        quint32 reshow=0;
+        uint32_t tempValueWithBorder=0;
+        uint32_t reshowWithBorder=0;
+        uint32_t reshow=0;
         settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-WithBorder"));
         tempValueWithBorder=settings->value(QLatin1Literal("MaxWithBorder")).toUInt();
         reshowWithBorder=settings->value(QLatin1Literal("ReshowWithBorder")).toUInt();
@@ -543,12 +543,12 @@ void MainWindow::load_settings()
     QString db_mysql_base=settings->value(QLatin1Literal("mysql_db")).toString();
     QString db_fight_sync=settings->value(QLatin1Literal("db_fight_sync")).toString();
     bool positionTeleportSync=settings->value(QLatin1Literal("positionTeleportSync")).toBool();
-    quint32 secondToPositionSync=settings->value(QLatin1Literal("secondToPositionSync")).toUInt();
+    uint32_t secondToPositionSync=settings->value(QLatin1Literal("secondToPositionSync")).toUInt();
 
     if(!settings->contains(QLatin1Literal("db_fight_sync")))
         settings->setValue(QLatin1Literal("db_fight_sync"),"FightSync_AtTheEndOfBattle");
-    quint32 tryInterval;
-    quint32 considerDownAfterNumberOfTry;
+    uint32_t tryInterval;
+    uint32_t considerDownAfterNumberOfTry;
     tryInterval=settings->value(QLatin1Literal("tryInterval")).toUInt();
     considerDownAfterNumberOfTry=settings->value(QLatin1Literal("considerDownAfterNumberOfTry")).toUInt();
     settings->endGroup();

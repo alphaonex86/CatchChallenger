@@ -21,7 +21,7 @@ public:
     std::vector<MapVisibilityAlgorithm_Simple_StoreOnSender *> clients;//manipulated by thread of ClientMapManagement()
 
     //mostly less remove than don't remove
-    std::vector<quint16> to_send_remove;
+    std::vector<uint16_t> to_send_remove;
     int to_send_remove_size;
     bool show;
     bool to_send_insert;

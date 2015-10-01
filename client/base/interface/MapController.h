@@ -21,27 +21,27 @@ public:
     static MapController *mapController;
     virtual void connectAllSignals();
     virtual void resetAll();
-    QString mapIdToString(const quint32 &mapId) const;
-    void remove_plant_full(const QString &map,const quint8 &x,const quint8 &y);
-    void insert_plant_full(const QString &map,const quint8 &x,const quint8 &y,const quint8 &plant_id,const quint16 &seconds_to_mature);
-    void setColor(const QColor &color, const quint32 &timeInMS=0);
+    QString mapIdToString(const uint32_t &mapId) const;
+    void remove_plant_full(const QString &map,const uint8_t &x,const uint8_t &y);
+    void insert_plant_full(const QString &map,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
+    void setColor(const QColor &color, const uint32_t &timeInMS=0);
     virtual bool asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full * tempMapObject);
 private:
     //the delayed action
     struct DelayedPlantInsert
     {
-        quint32 mapId;
-        quint8 x,y;
-        quint8 plant_id;
-        quint16 seconds_to_mature;
+        uint32_t mapId;
+        uint8_t x,y;
+        uint8_t plant_id;
+        uint16_t seconds_to_mature;
     };
     QList<DelayedPlantInsert> delayedPlantInsert;
     QMultiHash<QString,DelayedPlantInsert> delayedPlantInsertOnMap;
     struct PlantTimer
     {
         Tiled::MapObject * mapObject;
-        quint8 plant_id;
-        quint16 seconds_to_mature;
+        uint8_t plant_id;
+        uint16_t seconds_to_mature;
     };
     Tiled::Tileset *botFlags;
     QGraphicsPixmapItem *imageOver;
@@ -53,8 +53,8 @@ protected slots:
     //plant
     void getPlantTimerEvent();
     bool updatePlantGrowing(CatchChallenger::ClientPlantWithTimer *plant);//return true if is growing
-    void insert_plant(const quint32 &mapId,const quint8 &x,const quint8 &y,const quint8 &plant_id,const quint16 &seconds_to_mature);
-    void remove_plant(const quint32 &mapId,const quint8 &x,const quint8 &y);
+    void insert_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
+    void remove_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y);
     void seed_planted(const bool &ok);
     void plant_collected(const CatchChallenger::Plant_collect &stat);
     virtual bool canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::CommonMap map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);
@@ -67,7 +67,7 @@ public slots:
     virtual void datapackParsedMainSub();
     virtual void reinject_signals();
 private slots:
-    void loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap, const quint32 &botId, const quint8 &x, const quint8 &y, const QString &lookAt, const QString &skin);
+    void loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap, const uint32_t &botId, const uint8_t &x, const uint8_t &y, const QString &lookAt, const QString &skin);
 protected:
     static QString text_left;
     static QString text_right;

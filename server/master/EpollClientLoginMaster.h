@@ -24,11 +24,11 @@ public:
         );
     ~EpollClientLoginMaster();
     void parseIncommingData();
-    void selectCharacter(const quint8 &query_id, const quint32 &serverUniqueKey, const quint8 &charactersGroupIndex, const quint32 &characterId, const quint32 &accountId);
-    bool trySelectCharacterGameServer(EpollClientLoginMaster * const loginServer,const quint8 &client_query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId, const quint32 &accountId);
-    void selectCharacter_ReturnToken(const quint8 &query_id,const char * const token);
-    void selectCharacter_ReturnFailed(const quint8 &query_id, const quint8 &errorCode);
-    void disconnectForDuplicateConnexionDetected(const quint32 &characterId);
+    void selectCharacter(const uint8_t &query_id, const uint32_t &serverUniqueKey, const uint8_t &charactersGroupIndex, const uint32_t &characterId, const uint32_t &accountId);
+    bool trySelectCharacterGameServer(EpollClientLoginMaster * const loginServer,const uint8_t &client_query_id,const uint32_t &serverUniqueKey,const uint8_t &charactersGroupIndex,const uint32_t &characterId, const uint32_t &accountId);
+    void selectCharacter_ReturnToken(const uint8_t &query_id,const char * const token);
+    void selectCharacter_ReturnFailed(const uint8_t &query_id, const uint8_t &errorCode);
+    void disconnectForDuplicateConnexionDetected(const uint32_t &characterId);
     static void broadcastGameServerChange();
     bool sendRawSmallPacket(const char * const data,const int &size);
     enum EpollClientLoginMasterStat
@@ -49,16 +49,16 @@ public:
     struct DataForSelectedCharacterReturn
     {
         EpollClientLoginMaster * loginServer;
-        quint8 client_query_id;
-        quint32 serverUniqueKey;
-        quint8 charactersGroupIndex;
-        quint32 characterId;
+        uint8_t client_query_id;
+        uint32_t serverUniqueKey;
+        uint8_t charactersGroupIndex;
+        uint32_t characterId;
     };
     //to unordered reply
-    //QHash<quint8,DataForSelectedCharacterReturn> loginServerReturnForCharaterSelect;
+    //QHash<uint8_t,DataForSelectedCharacterReturn> loginServerReturnForCharaterSelect;
     //to ordered reply
     QList<DataForSelectedCharacterReturn> loginServerReturnForCharaterSelect;
-    std::vector<quint8> queryNumberList;
+    std::vector<uint8_t> queryNumberList;
     QByteArray tokenForAuth;
 
     static char private_token[TOKEN_SIZE_FOR_MASTERAUTH];
@@ -72,12 +72,12 @@ public:
     static char characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline[64];
     static char characterSelectionIsWrongBufferServerInternalProblem[64];
     static char characterSelectionIsWrongBufferServerNotFound[64];
-    static quint8 characterSelectionIsWrongBufferSize;
+    static uint8_t characterSelectionIsWrongBufferSize;
     static char selectCharaterRequestOnGameServer[3/*header*/+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
     static unsigned char duplicateConnexionDetected[2/*header*/+4];
     static unsigned char getTokenForCharacterSelect[3/*header*/+4+4];
-    static unsigned char replyToRegisterLoginServer[sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint16)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)
-    +sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK
+    static unsigned char replyToRegisterLoginServer[sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)
+    +sizeof(uint32_t)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(uint32_t)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(uint32_t)*CATCHCHALLENGER_SERVER_MAXIDBLOCK
     +16*1024];
     static char tempBuffer[16*4096];
     static char tempBuffer2[16*4096];
@@ -92,7 +92,7 @@ public:
     static unsigned int serverLogicalGroupListSize;
     static char loginPreviousToReplyCache[256*1024*3];
     static unsigned int loginPreviousToReplyCacheSize;
-    static unsigned char replyToIdListBuffer[sizeof(quint8)+sizeof(quint8)+1024];//reply for 07
+    static unsigned char replyToIdListBuffer[sizeof(uint8_t)+sizeof(uint8_t)+1024];//reply for 07
     static QHash<QString,int> logicalGroupHash;
 
     static FILE *fpRandomFile;
@@ -101,7 +101,7 @@ public:
 
     BaseClassSwitch::EpollObjectType getType() const;
     static void sendCurrentPlayer();
-    static quint32 maxAccountId;
+    static uint32_t maxAccountId;
 private:
     void parseNetworkReadError(const QString &errorString);
 
@@ -110,16 +110,16 @@ private:
     void errorParsingLayer(const char * const error);
     void messageParsingLayer(const char * const message) const;
     //have message without reply
-    void parseMessage(const quint8 &mainCodeType,const char *data,const unsigned int &size);
-    void parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char *data,const unsigned int &size);
+    void parseMessage(const uint8_t &mainCodeType,const char *data,const unsigned int &size);
+    void parseFullMessage(const uint8_t &mainCodeType,const uint8_t &subCodeType,const char *data,const unsigned int &size);
     //have query with reply
-    void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
-    void parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
+    void parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char *data,const unsigned int &size);
+    void parseFullQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char *data,const unsigned int &size);
     //send reply
-    void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
-    void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
+    void parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char *data,const unsigned int &size);
+    void parseFullReplyData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char *data,const unsigned int &size);
 
-    void parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
+    void parseInputBeforeLogin(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
     void disconnectClient();
 };
 }

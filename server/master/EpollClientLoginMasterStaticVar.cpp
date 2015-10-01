@@ -18,7 +18,7 @@ char EpollClientLoginMaster::characterSelectionIsWrongBufferCharacterNotFound[];
 char EpollClientLoginMaster::characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline[];
 char EpollClientLoginMaster::characterSelectionIsWrongBufferServerInternalProblem[];
 char EpollClientLoginMaster::characterSelectionIsWrongBufferServerNotFound[];
-quint8 EpollClientLoginMaster::characterSelectionIsWrongBufferSize=0;
+uint8_t EpollClientLoginMaster::characterSelectionIsWrongBufferSize=0;
 char EpollClientLoginMaster::selectCharaterRequestOnGameServer[]={0x02/*reply server to client*/,0x06/*query id*/,0x00/*the init reply query number*/};
 unsigned char EpollClientLoginMaster::duplicateConnexionDetected[]={0xE1/*reply server to client*/,0x02/*query id*/};
 unsigned char EpollClientLoginMaster::getTokenForCharacterSelect[]={0x81/*reply server to client*/,0x01/*query id*/,0x00/*the init reply query number*/};
@@ -40,7 +40,7 @@ QHash<QString,int> EpollClientLoginMaster::logicalGroupHash;
 bool EpollClientLoginMaster::currentPlayerForGameServerToUpdate=false;
 
 //start to 0 due to pre incrementation before use
-quint32 EpollClientLoginMaster::maxAccountId=0;
+uint32_t EpollClientLoginMaster::maxAccountId=0;
 
 QList<EpollClientLoginMaster *> EpollClientLoginMaster::gameServers;
 QList<EpollClientLoginMaster *> EpollClientLoginMaster::loginServers;

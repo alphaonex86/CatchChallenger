@@ -33,7 +33,7 @@ public:
     void emit_player_is_disconnected(const std::string &oldPlayer);
     void emit_new_chat_message(const std::string &pseudo,const Chat_type &type,const std::string &text);
 #endif
-    void receive_instant_player_number(const qint16 &connected_players);
+    void receive_instant_player_number(const int16_t &connected_players);
     void doDDOSChat();
 };
 }

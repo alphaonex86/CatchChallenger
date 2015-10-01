@@ -144,7 +144,7 @@ void MapVisualiser::paintEvent(QPaintEvent * event)
 
     QGraphicsView::paintEvent(event);
 
-    quint32 elapsed=timeRender.elapsed();
+    uint32_t elapsed=timeRender.elapsed();
     if(waitRenderTime<=elapsed)
         timerRender.start(0);
     else
@@ -188,7 +188,7 @@ void MapVisualiser::setTargetFPS(int targetFPS)
     }
 }
 
-void MapVisualiser::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,quint8 x,quint8 y)
+void MapVisualiser::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,uint8_t x,uint8_t y)
 {
     if(event==CatchChallenger::MapEvent_SimpleClick)
     {

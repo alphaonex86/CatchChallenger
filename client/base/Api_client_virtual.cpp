@@ -37,6 +37,6 @@ void Api_client_virtual::tryDisconnect()
 }
 
 //general data
-void Api_client_virtual::defineMaxPlayers(const quint16 &)
+void Api_client_virtual::defineMaxPlayers(const uint16_t &)
 {
 }

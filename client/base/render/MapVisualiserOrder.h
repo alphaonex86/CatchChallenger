@@ -30,7 +30,7 @@ class MapVisualiserOrder
 public:
     struct Map_animation_object
     {
-        quint8 randomOffset;
+        uint8_t randomOffset;
         Tiled::MapObject * animatedObject;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         int minId;
@@ -39,8 +39,8 @@ public:
     };
     struct Map_animation
     {
-        quint8 count;
-        quint8 frameCountTotal;
+        uint8_t count;
+        uint8_t frameCountTotal;
         QList<Map_animation_object> animatedObjectList;
     };
     struct Map_full
@@ -49,13 +49,13 @@ public:
         Tiled::Map * tiledMap;
         Tiled::MapRenderer * tiledRender;
         Tiled::ObjectGroup * objectGroup;
-        QHash<quint16,Map_animation> animatedObject;
+        QHash<uint16_t,Map_animation> animatedObject;
         int objectGroupIndex;
         int relative_x,relative_y;//needed for the async load
         int relative_x_pixel,relative_y_pixel;
         bool displayed;
-        QHash<QPair<quint8,quint8>,MapDoor*> doors;
-        QHash<QPair<quint8,quint8>,TriggerAnimation*> triggerAnimations;
+        QHash<QPair<uint8_t,uint8_t>,MapDoor*> doors;
+        QHash<QPair<uint8_t,uint8_t>,TriggerAnimation*> triggerAnimations;
         QString visualType;
         QString name;
         QString zone;
@@ -64,12 +64,12 @@ public:
     {
         Tiled::Tile* objectTile;
         Tiled::Tile* objectTileOver;
-        quint8 framesCountEnter;
-        quint16 msEnter;
-        quint8 framesCountLeave;
-        quint16 msLeave;
-        quint8 framesCountAgain;
-        quint16 msAgain;
+        uint8_t framesCountEnter;
+        uint16_t msEnter;
+        uint8_t framesCountLeave;
+        uint16_t msLeave;
+        uint8_t framesCountAgain;
+        uint16_t msAgain;
         bool over;
     };
     QHash<Tiled::Tile *,TriggerAnimationContent> tileToTriggerAnimationContent;
