@@ -16,25 +16,23 @@
 /// \brief The decode class for the xz stream
 class QXzDecode : public QObject
 {
-	public:
-		/** \brief create the object to decode it
-		 * \param data the compressed data
-		 * \param maxSize the max size
-		 * **/
-		QXzDecode(QByteArray data,uint64_t maxSize=0);
-		/// \brief lunch the decode
-		bool decode();
-		/// \brief the error string
-		QString errorString();
-		/// \brief the un-compressed data
-		QByteArray decodedData();
-		/// \brief un-compress the data by stream
-		bool decodeStream(QDataStream *stream_xz_decode_in,QDataStream *stream_xz_decode_out);
-	private:
-		QByteArray data;
-		QString error;
-		bool isDecoded;
-		uint64_t maxSize;
+    public:
+        /** \brief create the object to decode it
+         * \param data the compressed data
+         * \param maxSize the max size
+         * **/
+        QXzDecode(QByteArray data,uint64_t maxSize=0);
+        /// \brief lunch the decode
+        bool decode();
+        /// \brief the error string
+        std::string errorString();
+        /// \brief the un-compressed data
+        std::vector<char> decodedData();
+    private:
+        std::vector<char> data;
+        std::string error;
+        bool isDecoded;
+        uint64_t maxSize;
 };
 
 #endif // QXZDECODE_H

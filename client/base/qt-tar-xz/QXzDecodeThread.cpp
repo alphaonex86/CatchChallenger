@@ -22,7 +22,7 @@ QXzDecodeThread::~QXzDecodeThread()
         delete DataToDecode;
 }
 
-void QXzDecodeThread::setData(QByteArray data,uint64_t maxSize)
+void QXzDecodeThread::setData(std::vector<char>, uint64_t maxSize)
 {
     if(DataToDecode!=NULL)
         delete DataToDecode;
@@ -34,12 +34,12 @@ bool QXzDecodeThread::errorFound()
     return error;
 }
 
-QString QXzDecodeThread::errorString()
+std::string QXzDecodeThread::errorString()
 {
     return DataToDecode->errorString();
 }
 
-QByteArray QXzDecodeThread::decodedData()
+std::vector<char> QXzDecodeThread::decodedData()
 {
     return DataToDecode->decodedData();
 }

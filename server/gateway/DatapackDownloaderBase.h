@@ -47,13 +47,14 @@ public:
     QByteArray sendedHashBase;
     static std::unordered_set<std::string> extensionAllowed;
     static std::string commandUpdateDatapackBase;
+    static std::vector<std::string> httpDatapackMirrorBaseList;
 private:
     static std::regex regex_DATAPACK_FILE_REGEX;
     /// \todo group into one thread by change for queue
     QXzDecodeThread xzDecodeThreadBase;
     bool datapackTarXzBase;
     CatchChallenger::DatapackChecksum datapackChecksum;
-    int index_mirror_base;
+    unsigned int index_mirror_base;
     static std::regex excludePathBase;
     //file list
     struct query_files
