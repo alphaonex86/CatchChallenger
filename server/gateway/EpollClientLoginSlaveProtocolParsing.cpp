@@ -312,7 +312,7 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
                     case DatapackStatus::Sub:
                         if(linkToGameServer->sub.empty())
                         {
-                            parseNetworkReadError("linkToGameServer->sub.isEmpty()");
+                            parseNetworkReadError("linkToGameServer->sub.empty()");
                             return false;
                         }
                     case DatapackStatus::Main:

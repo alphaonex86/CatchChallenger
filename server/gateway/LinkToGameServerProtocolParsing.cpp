@@ -589,8 +589,13 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 parseNetworkReadError("need more size");
                 return false;
             }
-            CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase=std::string(data+pos,stringSize);
+            const std::string httpDatapackMirrorBase(data+pos,stringSize);
             pos+=stringSize;
+            if(stringSize>0 && DatapackDownloaderBase::httpDatapackMirrorBaseList.empty())//can't change for performance
+            {
+                DatapackDownloaderBase::httpDatapackMirrorBaseList=stringsplit(httpDatapackMirrorBase,';');
+                vectorRemoveEmpty(DatapackDownloaderBase::httpDatapackMirrorBaseList);
+            }
             unsigned int remainingSize=size-pos;
             if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
             {
@@ -791,8 +796,13 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     parseNetworkReadError("need more size");
                     return false;
                 }
-                CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=std::string(data+pos,stringSize);
+                const std::string httpDatapackMirrorServer(data+pos,stringSize);
                 pos+=stringSize;
+                if(stringSize>0 && DatapackDownloaderMainSub::httpDatapackMirrorServerList.empty())//can't change for performance
+                {
+                    DatapackDownloaderMainSub::httpDatapackMirrorServerList=stringsplit(httpDatapackMirrorServer,';');
+                    vectorRemoveEmpty(DatapackDownloaderMainSub::httpDatapackMirrorServerList);
+                }
                 unsigned int remainingSize=size-pos;
                 reply0205inWaitSize=startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
                 reply0205inWait=new char[reply0205inWaitSize];

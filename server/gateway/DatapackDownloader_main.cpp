@@ -33,18 +33,18 @@ void DatapackDownloaderMainSub::writeNewFileMain(const std::string &fileName,con
         if(file.exists())
             if(!file.remove())
             {
-                DebugClass::debugConsole(std::stringLiteral("Can't remove: %1: %2").arg(fileName).arg(file.errorString()));
+                std::cerr << "Can't remove: " << fileName << ": " << file.errorString().toStdString() << std::endl;
                 return;
             }
         if(!file.open(QIODevice::WriteOnly))
         {
-            DebugClass::debugConsole(std::stringLiteral("Can't open: %1: %2").arg(fileName).arg(file.errorString()));
+            std::cerr << "Can't open: " << fileName << ": " << file.errorString().toStdString() << std::endl;
             return;
         }
         if(file.write(data)!=data.size())
         {
             file.close();
-            DebugClass::debugConsole(std::stringLiteral("Can't write: %1: %2").arg(fileName).arg(file.errorString()));
+            std::cerr << "Can't write: " << fileName << ": " << file.errorString().toStdString() << std::endl;
             return;
         }
         file.flush();
@@ -74,7 +74,7 @@ bool DatapackDownloaderMainSub::getHttpFileMain(const std::string &url, const st
     FILE *fp = fopen(fullPath.toLocal8Bit().constData(),"wb");
     if(fp!=NULL)
     {
-        curl_easy_setopt(curl, CURLOPT_URL, url.toUtf8().constData());
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &fwrite);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
         const CURLcode res = curl_easy_perform(curl);
@@ -84,7 +84,7 @@ bool DatapackDownloaderMainSub::getHttpFileMain(const std::string &url, const st
         if(res!=CURLE_OK || http_code!=200)
         {
             httpError=true;
-            qDebug() << (std::stringLiteral("get url %1: %2 failed with code %3").arg(url).arg(res).arg(http_code));
+            std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << std::endl;
             datapackDownloadError();
             return false;
         }
@@ -98,7 +98,7 @@ bool DatapackDownloaderMainSub::getHttpFileMain(const std::string &url, const st
     }
 }
 
-void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::string> &datapackFilesList,const QByteArray &hash,const QList<uint32_t> &partialHashList)
+void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::string> &datapackFilesList,const QByteArray &hash,const std::vector<uint32_t> &partialHashList)
 {
     if(datapackFilesListMain.size()!=partialHashList.size())
     {
@@ -123,7 +123,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
     hashMain=hash;
     this->datapackFilesListMain=datapackFilesList;
     this->partialHashListMain=partialHashList;
-    if(!datapackFilesListMain.isEmpty() && hash==sendedHashMain)
+    if(!datapackFilesListMain.empty() && hash==sendedHashMain)
     {
         qDebug() << "Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote";
         wait_datapack_content_main=false;
@@ -131,7 +131,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
         return;
     }
 
-    if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.isEmpty())
+    if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
     {
         {
             QFile file(mDatapackBase+std::string("/pack/datapack-main-%1.tar.xz").arg(mainDatapackCode));
@@ -151,7 +151,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
                     return;
                 }
         }
-        if(sendedHashMain.isEmpty())
+        if(sendedHashMain.empty())
         {
             qDebug() << "Datapack checksum done but not send by the server";
             abort();//need CommonSettings::commonSettings.datapackHash send by the server
@@ -184,7 +184,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
         while(index<datapackFilesListMain.size())
         {
             const QByteArray &rawFileName=FacilityLibGeneral::toUTF8WithHeader(datapackFilesListMain.at(index));
-            if(rawFileName.size()>255 || rawFileName.isEmpty())
+            if(rawFileName.size()>255 || rawFileName.empty())
             {
                 DebugClass::debugConsole(std::stringLiteral("rawFileName too big or not compatible with utf8"));
                 return;
@@ -207,7 +207,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
             std::cerr << "curl_easy_init() failed abort" << std::endl;
             abort();
         }
-        if(datapackFilesListMain.isEmpty())
+        if(datapackFilesListMain.empty())
         {
             {
                 if(mainDatapackCode=="[main]")
@@ -229,12 +229,12 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
         {
             qDebug() << "Datapack don't match with server hash, get from mirror";
 
-            const std::string url=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,std::string::SkipEmptyParts).at(index_mirror_main)+std::stringLiteral("pack/diff/datapack-main-")+mainDatapackCode+std::stringLiteral("-%1.tar.xz").arg(std::string(hash.toHex()));
+            const std::string url=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index_mirror_main)+std::stringLiteral("pack/diff/datapack-main-")+mainDatapackCode+std::stringLiteral("-%1.tar.xz").arg(std::string(hash.toHex()));
 
             struct MemoryStruct chunk;
             chunk.memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
             chunk.size = 0;    /* no data at this point */
-            curl_easy_setopt(curl, CURLOPT_URL, url.toUtf8().constData());
+            curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
             curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EpollServerLoginSlave::WriteMemoryCallback);
             curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
             const CURLcode res = curl_easy_perform(curl);
@@ -242,7 +242,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
             if(res!=CURLE_OK || http_code!=200)
             {
-                qDebug() << (std::stringLiteral("get url %1: %2 failed with code %3").arg(url).arg(res).arg(http_code));
+                std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << std::endl;
                 httpFinishedForDatapackListMain();
                 return;
             }
@@ -254,15 +254,14 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
 
 void DatapackDownloaderMainSub::test_mirror_main()
 {
-    const std::vector<std::string> &httpDatapackMirrorList=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,std::string::SkipEmptyParts);
     if(!datapackTarXzMain)
     {
-        const std::string url=httpDatapackMirrorList.at(index_mirror_main)+std::stringLiteral("pack/datapack-main-")+mainDatapackCode+std::stringLiteral(".tar.xz");
+        const std::string url=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index_mirror_main)+std::stringLiteral("pack/datapack-main-")+mainDatapackCode+std::stringLiteral(".tar.xz");
 
         struct MemoryStruct chunk;
         chunk.memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
         chunk.size = 0;    /* no data at this point */
-        curl_easy_setopt(curl, CURLOPT_URL, url.toUtf8().constData());
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EpollServerLoginSlave::WriteMemoryCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
         const CURLcode res = curl_easy_perform(curl);
@@ -270,7 +269,7 @@ void DatapackDownloaderMainSub::test_mirror_main()
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
         if(res!=CURLE_OK || http_code!=200)
         {
-            qDebug() << (std::stringLiteral("get url %1: %2 failed with code %3").arg(url).arg(res).arg(http_code));
+            std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << std::endl;
             httpFinishedForDatapackListMain();
             return;
         }
@@ -283,12 +282,12 @@ void DatapackDownloaderMainSub::test_mirror_main()
             /* here and not above because at last mirror you need try the tar.xz and after the datapack-list/main-XXXX.txt, and only after that's quit */
             return;
 
-        const std::string url=httpDatapackMirrorList.at(index_mirror_main)+std::stringLiteral("datapack-list/main-")+mainDatapackCode+std::stringLiteral(".txt");
+        const std::string url=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index_mirror_main)+std::stringLiteral("datapack-list/main-")+mainDatapackCode+std::stringLiteral(".txt");
 
         struct MemoryStruct chunk;
         chunk.memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
         chunk.size = 0;    /* no data at this point */
-        curl_easy_setopt(curl, CURLOPT_URL, url.toUtf8().constData());
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EpollServerLoginSlave::WriteMemoryCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
         const CURLcode res = curl_easy_perform(curl);
@@ -296,7 +295,7 @@ void DatapackDownloaderMainSub::test_mirror_main()
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
         if(res!=CURLE_OK || http_code!=200)
         {
-            qDebug() << (std::stringLiteral("get url %1: %2 failed with code %3").arg(url).arg(res).arg(http_code));
+            std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << std::endl;
             httpFinishedForDatapackListMain();
             return;
         }
@@ -317,7 +316,7 @@ void DatapackDownloaderMainSub::decodedIsFinishMain()
         {
             QDir dir;
             const std::vector<std::string> &fileList=tarDecode.getFileList();
-            const QList<QByteArray> &dataList=tarDecode.getDataList();
+            const std::vector<QByteArray> &dataList=tarDecode.getDataList();
             int index=0;
             while(index<fileList.size())
             {
@@ -376,7 +375,7 @@ bool DatapackDownloaderMainSub::mirrorTryNextMain()
 
 void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const QByteArray data)
 {
-    if(data.isEmpty())
+    if(data.empty())
     {
         mirrorTryNextMain();
         return;
@@ -581,7 +580,7 @@ void DatapackDownloaderMainSub::sendDatapackContentMain()
 void DatapackDownloaderMainSub::checkIfContinueOrFinished()
 {
     wait_datapack_content_main=false;
-    if(subDatapackCode.isEmpty())
+    if(subDatapackCode.empty())
         haveTheDatapackMainSub();
     else
     {

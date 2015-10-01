@@ -8,7 +8,9 @@ class CommonSettingsCommon
 {
 public:
     bool automatic_account_creation;
+    #ifndef CATCHCHALLENGER_CLASS_GATEWAY
     std::string httpDatapackMirrorBase;
+    #endif
     std::vector<char> datapackHashBase;
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

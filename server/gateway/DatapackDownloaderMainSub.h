@@ -65,6 +65,7 @@ public:
     static std::unordered_set<std::string> extensionAllowed;
     static std::string commandUpdateDatapackMain;
     static std::string commandUpdateDatapackSub;
+    static std::vector<std::string> httpDatapackMirrorServerList;
 private:
     static std::regex regex_DATAPACK_FILE_REGEX;
     /// \todo group into one thread by change for queue

@@ -31,7 +31,7 @@ std::unordered_map<std::string,EpollClientLoginSlave::DatapackCacheFile> EpollCl
         if(fileName.contains(datapack_rightFileName))
         {
             QFileInfo fileInfo(fileName);
-            if(!fileInfo.suffix().isEmpty() && DatapackDownloaderBase::extensionAllowed.contains(QFileInfo(fileName).suffix()))
+            if(!fileInfo.suffix().empty() && DatapackDownloaderBase::extensionAllowed.contains(QFileInfo(fileName).suffix()))
             {
                 QFile file(path+returnList.at(index));
                 if(file.size()<=8*1024*1024)
@@ -62,11 +62,11 @@ std::unordered_map<std::string,EpollClientLoginSlave::DatapackCacheFile> EpollCl
 }
 
 //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
-void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vector<std::string> &files,const QList<uint32_t> &partialHashList)
+void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vector<std::string> &files,const std::vector<uint32_t> &partialHashList)
 {
     if(linkToGameServer==NULL)
     {
-        std::cerr << "EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vector<std::string> &files,const QList<uint32_t> &partialHashList) linkToGameServer==NULL" << std::endl;
+        std::cerr << "EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vector<std::string> &files,const std::vector<uint32_t> &partialHashList) linkToGameServer==NULL" << std::endl;
         return;
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -134,7 +134,7 @@ void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vect
         default:
         return;
     }
-    QList<FileToSend> fileToSendList;
+    std::vector<FileToSend> fileToSendList;
 
     const int &loop_size=files.size();
     //send the size to download on the client
@@ -213,7 +213,7 @@ void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vect
         out << (uint32_t)datapckFileSize;
         sendFullPacket(0xC2,0x0C,outputData.constData(),outputData.size());
     }
-    if(fileToSendList.isEmpty())
+    if(fileToSendList.empty())
     {
         std::cerr << "Ask datapack list where the checksum match" << std::endl;
         return;
@@ -335,7 +335,7 @@ void EpollClientLoginSlave::purgeDatapackListReply(const uint8_t &query_id)
         tempDatapackListReplySize=0;
         tempDatapackListReply=0;
     }
-    if(tempDatapackListReplyArray.isEmpty())
+    if(tempDatapackListReplyArray.empty())
         tempDatapackListReplyArray[0x00]=0x00;
     postReply(query_id,tempDatapackListReplyArray.constData(),tempDatapackListReplyArray.size());
     tempDatapackListReplyArray.clear();
@@ -367,15 +367,15 @@ void EpollClientLoginSlave::sendCompressedFileContent()
 
 bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::string &fileName)
 {
-    if(fileName.size()>255 || fileName.isEmpty())
+    if(fileName.size()>255 || fileName.empty())
     {
-        std::cerr << "Unable to open into CatchChallenger::sendFile(): fileName.size()>255 || fileName.isEmpty()" << std::endl;
+        std::cerr << "Unable to open into CatchChallenger::sendFile(): fileName.size()>255 || fileName.empty()" << std::endl;
         return false;
     }
     const QByteArray &fileNameRaw=FacilityLibGeneral::toUTF8WithHeader(fileName);
-    if(fileNameRaw.size()>255 || fileNameRaw.isEmpty())
+    if(fileNameRaw.size()>255 || fileNameRaw.empty())
     {
-        std::cerr << "Unable to open into CatchChallenger::sendFile(): fileNameRaw.size()>255 || fileNameRaw.isEmpty()" << std::endl;
+        std::cerr << "Unable to open into CatchChallenger::sendFile(): fileNameRaw.size()>255 || fileNameRaw.empty()" << std::endl;
         return false;
     }
     QFile file(datapackPath+fileName);
