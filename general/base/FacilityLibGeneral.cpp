@@ -84,7 +84,7 @@ std::vector<std::string> FacilityLibGeneral::skinIdList(const std::string& skinP
     return skinFolderList;
 }
 
-/*std::string FacilityLibGeneral::secondsToString(const quint64 &seconds)
+/*std::string FacilityLibGeneral::secondsToString(const uint64_t &seconds)
 {
     if(seconds<60)
         return QObject::tr("%n second(s)","",seconds);

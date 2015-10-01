@@ -87,8 +87,8 @@ private:
     bool wait_datapack_content_sub;
     std::vector<std::string> datapackFilesListMain;
     std::vector<std::string> datapackFilesListSub;
-    std::vector<quint32> partialHashListMain;
-    std::vector<quint32> partialHashListSub;
+    std::vector<uint32_t> partialHashListMain;
+    std::vector<uint32_t> partialHashListSub;
     static std::string text_slash;
     static std::string text_dotcoma;
     bool httpError;
@@ -107,8 +107,8 @@ private slots:
     void haveTheDatapackMainSub();
     void datapackDownloadFinishedMain();
     void datapackDownloadFinishedSub();
-    void datapackChecksumDoneMain(const std::vector<std::string> &datapackFilesList,const QByteArray &hash, const std::vector<quint32> &partialHash);
-    void datapackChecksumDoneSub(const std::vector<std::string> &datapackFilesList,const QByteArray &hash, const std::vector<quint32> &partialHash);
+    void datapackChecksumDoneMain(const std::vector<std::string> &datapackFilesList,const QByteArray &hash, const std::vector<uint32_t> &partialHash);
+    void datapackChecksumDoneSub(const std::vector<std::string> &datapackFilesList,const QByteArray &hash, const std::vector<uint32_t> &partialHash);
 };
 }
 

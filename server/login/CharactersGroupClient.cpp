@@ -10,7 +10,7 @@
 
 using namespace CatchChallenger;
 
-void CharactersGroupForLogin::character_list(EpollClientLoginSlave * const client,const quint32 &account_id)
+void CharactersGroupForLogin::character_list(EpollClientLoginSlave * const client,const uint32_t &account_id)
 {
     const QString &queryText=QString(PreparedDBQueryCommon::db_query_characters).arg(account_id).arg(CommonSettingsCommon::commonSettingsCommon.max_character*2);
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroupForLogin::character_list_static);
@@ -38,16 +38,16 @@ void CharactersGroupForLogin::character_list_object()
     //memset(tempRawData,0x00,sizeof(4*1024));//performance
     int tempRawDataSize=0x01;
 
-    const quint64 &current_time=QDateTime::currentDateTime().toTime_t();
+    const uint64_t &current_time=QDateTime::currentDateTime().toTime_t();
     bool ok;
-    quint8 validCharaterCount=0;
+    uint8_t validCharaterCount=0;
     while(databaseBaseCommon->next() && validCharaterCount<CommonSettingsCommon::commonSettingsCommon.max_character)
     {
         unsigned int character_id=QString(databaseBaseCommon->value(0)).toUInt(&ok);
         if(ok)
         {
             //delete
-            quint32 time_to_delete=QString(databaseBaseCommon->value(3)).toUInt(&ok);
+            uint32_t time_to_delete=QString(databaseBaseCommon->value(3)).toUInt(&ok);
             if(!ok)
             {
                 qDebug() << (QStringLiteral("time_to_delete is not number: %1 for %2 fixed by 0").arg(QString(databaseBaseCommon->value(3))).arg(character_id));
@@ -61,18 +61,18 @@ void CharactersGroupForLogin::character_list_object()
 
                 //Character id
                 {
-                    *reinterpret_cast<quint32 *>(tempRawData+tempRawDataSize)=htole32(character_id);
-                    tempRawDataSize+=sizeof(quint32);
+                    *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(character_id);
+                    tempRawDataSize+=sizeof(uint32_t);
                 }
 
                 //can't be empty or have wrong or too large utf8 data
                 //pseudo
                 {
-                    const quint8 &newSize=FacilityLibGeneral::toUTF8WithHeader(databaseBaseCommon->value(1),tempRawData+tempRawDataSize);
+                    const uint8_t &newSize=FacilityLibGeneral::toUTF8WithHeader(databaseBaseCommon->value(1),tempRawData+tempRawDataSize);
                     if(newSize==0)
                     {
                         qDebug() << (QStringLiteral("can't be empty or have wrong or too large utf8 data: %1 by hide this char").arg(databaseBaseCommon->value(1)));
-                        tempRawDataSize-=sizeof(quint32);
+                        tempRawDataSize-=sizeof(uint32_t);
                         validCharaterCount--;
                         continue;
                     }
@@ -81,7 +81,7 @@ void CharactersGroupForLogin::character_list_object()
 
                 //skin
                 {
-                    const quint32 databaseSkinId=QString(databaseBaseCommon->value(2)).toUInt(&ok);
+                    const uint32_t databaseSkinId=QString(databaseBaseCommon->value(2)).toUInt(&ok);
                     if(!ok)//if not number
                     {
                         qDebug() << (QStringLiteral("character return skin is not number: %1 for %2 fixed by 0").arg(databaseBaseCommon->value(5)).arg(character_id));
@@ -90,7 +90,7 @@ void CharactersGroupForLogin::character_list_object()
                     }
                     else
                     {
-                        if(databaseSkinId>=(quint32)DictionaryLogin::dictionary_skin_database_to_internal.size())//out of range
+                        if(databaseSkinId>=(uint32_t)DictionaryLogin::dictionary_skin_database_to_internal.size())//out of range
                         {
                             qDebug() << (QStringLiteral("character return skin out of range: %1 for %2 fixed by 0").arg(databaseBaseCommon->value(5)).arg(character_id));
                             tempRawData[tempRawDataSize]=0;
@@ -110,8 +110,8 @@ void CharactersGroupForLogin::character_list_object()
                         delete_time_left=0;
                     else
                         delete_time_left=time_to_delete-current_time;
-                    *reinterpret_cast<quint32 *>(tempRawData+tempRawDataSize)=htole32(delete_time_left);
-                    tempRawDataSize+=sizeof(quint32);
+                    *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(delete_time_left);
+                    tempRawDataSize+=sizeof(uint32_t);
                 }
 
                 //played_time
@@ -122,8 +122,8 @@ void CharactersGroupForLogin::character_list_object()
                         qDebug() << (QStringLiteral("played_time is not number: %1 for %2 fixed by 0").arg(databaseBaseCommon->value(4)).arg(character_id));
                         played_time=0;
                     }
-                    *reinterpret_cast<quint32 *>(tempRawData+tempRawDataSize)=htole32(played_time);
-                    tempRawDataSize+=sizeof(quint32);
+                    *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(played_time);
+                    tempRawDataSize+=sizeof(uint32_t);
                 }
 
                 //last_connect
@@ -134,8 +134,8 @@ void CharactersGroupForLogin::character_list_object()
                         qDebug() << (QStringLiteral("last_connect is not number: %1 for %2 fixed by 0").arg(databaseBaseCommon->value(5)).arg(character_id));
                         last_connect=current_time;
                     }
-                    *reinterpret_cast<quint32 *>(tempRawData+tempRawDataSize)=htole32(last_connect);
-                    tempRawDataSize+=sizeof(quint32);
+                    *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(last_connect);
+                    tempRawDataSize+=sizeof(uint32_t);
                 }
             }
             else
@@ -147,13 +147,13 @@ void CharactersGroupForLogin::character_list_object()
     tempRawData[0]=validCharaterCount;
 
     client->character_list_return(this->index,tempRawData,tempRawDataSize);
-    //delete tempRawData;//delete later to order the list, see EpollClientLoginSlave::server_list_return(), QMapIterator<quint8,CharacterListForReply> i(characterTempListForReply);, delete i.value().rawData;
+    //delete tempRawData;//delete later to order the list, see EpollClientLoginSlave::server_list_return(), QMapIterator<uint8_t,CharacterListForReply> i(characterTempListForReply);, delete i.value().rawData;
 
     //get server list
     server_list(client,client->account_id);
 }
 
-void CharactersGroupForLogin::server_list(EpollClientLoginSlave * const client,const quint32 &account_id)
+void CharactersGroupForLogin::server_list(EpollClientLoginSlave * const client,const uint32_t &account_id)
 {
     const QString &queryText=QString(PreparedDBQueryCommon::db_query_select_server_time).arg(account_id);
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroupForLogin::server_list_static);
@@ -181,9 +181,9 @@ void CharactersGroupForLogin::server_list_object()
     //memset(tempRawData,0x00,sizeof(4*1024));
     int tempRawDataSize=0x00;
 
-    const quint64 &current_time=QDateTime::currentDateTime().toTime_t();
+    const uint64_t &current_time=QDateTime::currentDateTime().toTime_t();
     bool ok;
-    quint8 validServerCount=0;
+    uint8_t validServerCount=0;
     while(databaseBaseCommon->next() && validServerCount<CommonSettingsCommon::commonSettingsCommon.max_character)
     {
         const unsigned int server_id=QString(databaseBaseCommon->value(0)).toUInt(&ok);
@@ -203,8 +203,8 @@ void CharactersGroupForLogin::server_list_object()
                     qDebug() << (QStringLiteral("played_time is not number: %1 fixed by 0").arg(databaseBaseCommon->value(4)));
                     played_time=0;
                 }
-                *reinterpret_cast<quint32 *>(tempRawData+tempRawDataSize)=htole32(played_time);
-                tempRawDataSize+=sizeof(quint32);
+                *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(played_time);
+                tempRawDataSize+=sizeof(uint32_t);
 
                 //last_connect
                 unsigned int last_connect=QString(databaseBaseCommon->value(2)).toUInt(&ok);
@@ -213,8 +213,8 @@ void CharactersGroupForLogin::server_list_object()
                     qDebug() << (QStringLiteral("last_connect is not number: %1 fixed by 0").arg(databaseBaseCommon->value(5)));
                     last_connect=current_time;
                 }
-                *reinterpret_cast<quint32 *>(tempRawData+tempRawDataSize)=htole32(last_connect);
-                tempRawDataSize+=sizeof(quint32);
+                *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(last_connect);
+                tempRawDataSize+=sizeof(uint32_t);
 
                 validServerCount++;
             }
@@ -227,7 +227,7 @@ void CharactersGroupForLogin::server_list_object()
     delete tempRawData;
 }
 
-void CharactersGroupForLogin::deleteCharacterNow(const quint32 &characterId)
+void CharactersGroupForLogin::deleteCharacterNow(const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryCommon::db_query_monster_by_character_id==0)
@@ -295,12 +295,12 @@ void CharactersGroupForLogin::deleteCharacterNow_object()
     databaseBaseCommon->clear();
 }
 
-void CharactersGroupForLogin::deleteCharacterNow_return(const quint32 &characterId)
+void CharactersGroupForLogin::deleteCharacterNow_return(const uint32_t &characterId)
 {
     bool ok;
     while(databaseBaseCommon->next())
     {
-        const quint32 &monsterId=QString(databaseBaseCommon->value(0)).toUInt(&ok);
+        const uint32_t &monsterId=QString(databaseBaseCommon->value(0)).toUInt(&ok);
         if(ok)
         {
             dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_monster_buff).arg(monsterId).toUtf8().constData());
@@ -316,7 +316,7 @@ void CharactersGroupForLogin::deleteCharacterNow_return(const quint32 &character
     dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_allow).arg(characterId).toUtf8().constData());
 }
 
-qint8 CharactersGroupForLogin::addCharacter(void * const client,const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId)
+int8_t CharactersGroupForLogin::addCharacter(void * const client,const uint8_t &query_id, const uint8_t &profileIndex, const QString &pseudo, const uint8_t &skinId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryCommon::db_query_select_character_by_pseudo==NULL)
@@ -348,7 +348,7 @@ qint8 CharactersGroupForLogin::addCharacter(void * const client,const quint8 &qu
         qDebug() << (QStringLiteral("pseudo is empty, not allowed"));
         return -1;
     }
-    if((quint32)pseudo.size()>CommonSettingsCommon::commonSettingsCommon.max_pseudo_size)
+    if((uint32_t)pseudo.size()>CommonSettingsCommon::commonSettingsCommon.max_pseudo_size)
     {
         qDebug() << (QStringLiteral("pseudo size is too big: %1 because is greater than %2").arg(pseudo.size()).arg(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size));
         return -1;
@@ -398,7 +398,7 @@ void CharactersGroupForLogin::addCharacterStep1_object()
     databaseBaseCommon->clear();
 }
 
-void CharactersGroupForLogin::addCharacterStep1_return(EpollClientLoginSlave * const client,const quint8 &query_id,const quint8 &profileIndex,const QString &pseudo,const quint8 &skinId)
+void CharactersGroupForLogin::addCharacterStep1_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const QString &pseudo,const uint8_t &skinId)
 {
     if(!databaseBaseCommon->next())
     {
@@ -407,7 +407,7 @@ void CharactersGroupForLogin::addCharacterStep1_return(EpollClientLoginSlave * c
         return;
     }
     bool ok;
-    quint32 characterCount=QString(databaseBaseCommon->value(0)).toUInt(&ok);
+    uint32_t characterCount=QString(databaseBaseCommon->value(0)).toUInt(&ok);
     if(!ok)
     {
         qDebug() << QStringLiteral("Character count query return not a number");
@@ -457,7 +457,7 @@ void CharactersGroupForLogin::addCharacterStep2_object()
     databaseBaseCommon->clear();
 }
 
-void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * const client,const quint8 &query_id,const quint8 &profileIndex,const QString &pseudo,const quint8 &skinId)
+void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const QString &pseudo,const uint8_t &skinId)
 {
     if(databaseBaseCommon->next())
     {
@@ -466,7 +466,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     }
     const EpollServerLoginSlave::LoginProfile &profile=EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.at(profileIndex);
 
-    const quint32 &characterId=maxCharacterId.back();
+    const uint32_t &characterId=maxCharacterId.back();
     maxCharacterId.pop_back();
     unsigned int index=0;
     int monster_position=1;
@@ -517,7 +517,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     while(index<profile.monsters.size())
     {
         const EpollServerLoginSlave::LoginProfile::Monster &monster=profile.monsters.at(index);
-        quint32 gender=Gender_Unknown;
+        uint32_t gender=Gender_Unknown;
         if(monster.ratio_gender!=-1)
         {
             if(rand()%101<monster.ratio_gender)
@@ -526,7 +526,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
                 gender=Gender_Male;
         }
 
-        quint32 monster_id=maxMonsterId.back();
+        uint32_t monster_id=maxMonsterId.back();
         maxMonsterId.pop_back();
 
         //insert the monster is db
@@ -584,11 +584,11 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
 
     //send the network reply
     CharactersGroupForLogin::tempBuffer[0]=0x00;
-    *reinterpret_cast<quint32 *>(CharactersGroupForLogin::tempBuffer+1)=htole32(characterId);
+    *reinterpret_cast<uint32_t *>(CharactersGroupForLogin::tempBuffer+1)=htole32(characterId);
     client->postReply(query_id,CharactersGroupForLogin::tempBuffer,1+4);
 }
 
-bool CharactersGroupForLogin::removeCharacter(void * const client,const quint8 &query_id, const quint32 &characterId)
+bool CharactersGroupForLogin::removeCharacter(void * const client,const uint8_t &query_id, const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryCommon::db_query_account_time_to_delete_character_by_id==NULL)
@@ -629,7 +629,7 @@ void CharactersGroupForLogin::removeCharacter_object()
     databaseBaseCommon->clear();
 }
 
-void CharactersGroupForLogin::removeCharacter_return(EpollClientLoginSlave * const client,const quint8 &query_id,const quint32 &characterId)
+void CharactersGroupForLogin::removeCharacter_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint32_t &characterId)
 {
     if(!databaseBaseCommon->next())
     {
@@ -637,7 +637,7 @@ void CharactersGroupForLogin::removeCharacter_return(EpollClientLoginSlave * con
         return;
     }
     bool ok;
-    const quint32 &account_id=QString(databaseBaseCommon->value(0)).toUInt(&ok);
+    const uint32_t &account_id=QString(databaseBaseCommon->value(0)).toUInt(&ok);
     if(!ok)
     {
         client->removeCharacter_ReturnFailed(query_id,0x02,QStringLiteral("Account for character: %1 is not an id").arg(databaseBaseCommon->value(0)));
@@ -648,7 +648,7 @@ void CharactersGroupForLogin::removeCharacter_return(EpollClientLoginSlave * con
         client->removeCharacter_ReturnFailed(query_id,0x02,QStringLiteral("Character: %1 is not owned by the account: %2").arg(characterId).arg(account_id));
         return;
     }
-    const quint32 &time_to_delete=QString(databaseBaseCommon->value(1)).toUInt(&ok);
+    const uint32_t &time_to_delete=QString(databaseBaseCommon->value(1)).toUInt(&ok);
     if(ok && time_to_delete>0)
     {
         client->removeCharacter_ReturnFailed(query_id,0x02,QStringLiteral("Character: %1 is already in deleting for the account: %2").arg(characterId).arg(account_id));

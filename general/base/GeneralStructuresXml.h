@@ -48,7 +48,7 @@ struct Map_to_send
     {
         Map_Point point;
         std::string file;
-        quint16 id;
+        uint16_t id;
         std::unordered_map<std::string,std::string> property_text;
     };
     std::vector<Bot_Semi> bots;
@@ -60,15 +60,15 @@ struct Map_to_send
         bool visible;
         bool infinite;
     };
-    std::vector<ItemOnMap_Semi> items;//list to keep to keep the order to do the indexOfItemOnMap to send to player, use less bandwith due to send quint8 not map,x,y
+    std::vector<ItemOnMap_Semi> items;//list to keep to keep the order to do the indexOfItemOnMap to send to player, use less bandwith due to send uint8_t not map,x,y
     //used only on server
     struct DirtOnMap_Semi
     {
         Map_Point point;
     };
-    std::vector<DirtOnMap_Semi> dirts;//list to keep to keep the order to do the indexOfDirtsOnMap to send to player, use less bandwith due to send quint8 not map,x,y
+    std::vector<DirtOnMap_Semi> dirts;//list to keep to keep the order to do the indexOfDirtsOnMap to send to player, use less bandwith due to send uint8_t not map,x,y
 
-    quint8 *monstersCollisionMap;
+    uint8_t *monstersCollisionMap;
     std::vector<MonstersCollisionValue> monstersCollisionList;
 
     QDomElement xmlRoot;
@@ -77,7 +77,7 @@ struct Map_to_send
 //permanent bot on client, temp to parse on the server
 struct Bot
 {
-    std::unordered_map<quint8,QDomElement> step;
+    std::unordered_map<uint8_t,QDomElement> step;
     std::unordered_map<std::string,std::string> properties;
     uint32_t botId;//id need be unique for the quests, then 32Bits
     std::string skin;

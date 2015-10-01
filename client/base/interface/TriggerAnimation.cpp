@@ -3,9 +3,9 @@
 #include <QApplication>
 
 TriggerAnimation::TriggerAnimation(Tiled::MapObject* object,
-                          const quint8 &framesCountEnter, const quint16 &msEnter,
-                          const quint8 &framesCountLeave, const quint16 &msLeave,
-                          const quint8 &framesCountAgain, const quint16 &msAgain,
+                          const uint8_t &framesCountEnter, const uint16_t &msEnter,
+                          const uint8_t &framesCountLeave, const uint16_t &msLeave,
+                          const uint8_t &framesCountAgain, const uint16_t &msAgain,
                           bool over
                           ) :
     object(object),
@@ -27,8 +27,8 @@ TriggerAnimation::TriggerAnimation(Tiled::MapObject* object,
 }
 
 TriggerAnimation::TriggerAnimation(Tiled::MapObject* object,
-                          const quint8 &framesCountEnter, const quint16 &msEnter,
-                          const quint8 &framesCountLeave, const quint16 &msLeave,
+                          const uint8_t &framesCountEnter, const uint16_t &msEnter,
+                          const uint8_t &framesCountLeave, const uint16_t &msLeave,
                           bool over
                           ) :
     object(object),
@@ -51,9 +51,9 @@ TriggerAnimation::TriggerAnimation(Tiled::MapObject* object,
 
 TriggerAnimation::TriggerAnimation(Tiled::MapObject* object,
                                    Tiled::MapObject* objectOver,
-                          const quint8 &framesCountEnter, const quint16 &msEnter,
-                          const quint8 &framesCountLeave, const quint16 &msLeave,
-                          const quint8 &framesCountAgain, const quint16 &msAgain,
+                          const uint8_t &framesCountEnter, const uint16_t &msEnter,
+                          const uint8_t &framesCountLeave, const uint16_t &msLeave,
+                          const uint8_t &framesCountAgain, const uint16_t &msAgain,
                           bool over
                           ) :
     object(object),
@@ -80,8 +80,8 @@ TriggerAnimation::TriggerAnimation(Tiled::MapObject* object,
 
 TriggerAnimation::TriggerAnimation(Tiled::MapObject* object,
                                    Tiled::MapObject* objectOver,
-                          const quint8 &framesCountEnter, const quint16 &msEnter,
-                          const quint8 &framesCountLeave, const quint16 &msLeave,
+                          const uint8_t &framesCountEnter, const uint16_t &msEnter,
+                          const uint8_t &framesCountLeave, const uint16_t &msLeave,
                           bool over
                           ) :
     object(object),
@@ -145,7 +145,7 @@ void TriggerAnimation::startLeave()
     leaveEvents << eventCall;
 }
 
-void TriggerAnimation::setTileOffset(const quint8 &offset)
+void TriggerAnimation::setTileOffset(const uint8_t &offset)
 {
     cell.tile=baseTile->tileset()->tileAt(baseTile->id()+offset);
     object->setCell(cell);
@@ -159,7 +159,7 @@ void TriggerAnimation::setTileOffset(const quint8 &offset)
 void TriggerAnimation::timerFinishEnter()
 {
     QTimer *timer         = qobject_cast<QTimer *>(sender());
-    quint8 lowerFrame=framesCountEnter+framesCountLeave+framesCountAgain-1;
+    uint8_t lowerFrame=framesCountEnter+framesCountLeave+framesCountAgain-1;
     int index=0;
     while(index<enterEvents.size())
     {
@@ -204,7 +204,7 @@ void TriggerAnimation::timerFinishEnter()
 void TriggerAnimation::timerFinishLeave()
 {
     QTimer *timer         = qobject_cast<QTimer *>(sender());
-    quint8 lowerFrame=framesCountEnter+framesCountLeave+framesCountAgain-1;
+    uint8_t lowerFrame=framesCountEnter+framesCountLeave+framesCountAgain-1;
     int index=0;
     while(index<leaveEvents.size())
     {

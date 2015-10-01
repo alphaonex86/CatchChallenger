@@ -28,7 +28,7 @@ class QXzDecodeThread
         /// \brief to get the decoded data
         QByteArray decodedData();
         /// \brief to send the data
-        void setData(QByteArray data,quint64 maxSize=0);
+        void setData(QByteArray data,uint64_t maxSize=0);
     #ifndef QT_NO_EMIT
     protected:
         void run();

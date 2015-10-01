@@ -49,8 +49,8 @@ MainWindow::MainWindow(QWidget *parent) :
         if(settingsServer.contains(QStringLiteral("server_dns_or_ip")) && settingsServer.contains(QStringLiteral("server_port")) && settingsServer.contains(QStringLiteral("proxy_port")))
         {
             bool ok,ok2;
-            quint16 server_port_temp=settingsServer.value(QStringLiteral("server_port")).toString().toUShort(&ok);
-            quint16 proxy_port_temp=settingsServer.value(QStringLiteral("proxy_port")).toString().toUShort(&ok2);
+            uint16_t server_port_temp=settingsServer.value(QStringLiteral("server_port")).toString().toUShort(&ok);
+            uint16_t proxy_port_temp=settingsServer.value(QStringLiteral("proxy_port")).toString().toUShort(&ok2);
             if(settingsServer.value(QStringLiteral("server_dns_or_ip")).toString().contains(QRegularExpression(QStringLiteral("^([a-zA-Z0-9]{8}\\.onion|.*\\.i2p)$"))) && ok && ok2 && server_port_temp>0 && proxy_port_temp>0)
             {
                 server_name=tr("Hidden server");
@@ -309,7 +309,7 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     }
 
     QString host=server_dns_or_ip;
-    quint16 port=server_port;
+    uint16_t port=server_port;
 
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
     realSslSocket=new QSslSocket();
@@ -547,11 +547,11 @@ void MainWindow::updateTheOkButton()
         ui->pushButtonTryLogin->setText(tr("Ok"));
         return;
     }
-    quint32 timeToWait=5;
+    uint32_t timeToWait=5;
     if(lastServerIsKick.value(server_dns_or_ip))
         if(lastServerWaitBeforeConnectAfterKick.value(server_dns_or_ip)>timeToWait)
             timeToWait=lastServerWaitBeforeConnectAfterKick.value(server_dns_or_ip);
-    quint32 secondLstSinceConnexion=lastServerConnect.value(server_dns_or_ip).toTime_t()-QDateTime::currentDateTime().toTime_t();
+    uint32_t secondLstSinceConnexion=lastServerConnect.value(server_dns_or_ip).toTime_t()-QDateTime::currentDateTime().toTime_t();
     if(secondLstSinceConnexion>=timeToWait)
     {
         ui->pushButtonTryLogin->setEnabled(true);

@@ -9,7 +9,7 @@
 #include <QMessageBox>
 #include <QDebug>
 
-NewGame::NewGame(const QString &skinPath,const QList<quint8> &forcedSkin,QWidget *parent) :
+NewGame::NewGame(const QString &skinPath,const QList<uint8_t> &forcedSkin,QWidget *parent) :
     QDialog(parent),
     ui(new Ui::NewGame)
 {
@@ -93,7 +93,7 @@ QString NewGame::skin()
     return skinList.at(currentSkin);
 }
 
-quint32 NewGame::skinId()
+uint32_t NewGame::skinId()
 {
     return skinListId.at(currentSkin);
 }

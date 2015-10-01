@@ -24,7 +24,7 @@ void MapVisualiser::destroyMap(MapVisualiserThread::Map_full *map)
     //logicalMap.plantList, delete plants useless, destroyed into removeMap()
     //logicalMap.botsDisplay, delete bot useless, destroyed into removeMap()
     //remove from the list
-    QHashIterator<QPair<quint8,quint8>,MapDoor*> i(map->doors);
+    QHashIterator<QPair<uint8_t,uint8_t>,MapDoor*> i(map->doors);
     while (i.hasNext()) {
         i.next();
         //object pointer removed by group
@@ -129,7 +129,7 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
         mapItem->setMapPosition(tempMapObject->tiledMap,tempMapObject->relative_x_pixel,tempMapObject->relative_y_pixel);
         emit mapDisplayed(tempMapObject->logicalMap.map_file);
         //display the bot
-        QHashIterator<QPair<quint8,quint8>,CatchChallenger::Bot> i(tempMapObject->logicalMap.bots);
+        QHashIterator<QPair<uint8_t,uint8_t>,CatchChallenger::Bot> i(tempMapObject->logicalMap.bots);
         while (i.hasNext()) {
             i.next();
             QString skin;
@@ -177,7 +177,7 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
     {
         tempMapObject->displayed=false;
         all_map[tempMapObject->logicalMap.map_file]=tempMapObject;
-        QHash<quint16,MapVisualiserThread::Map_animation>::const_iterator i = tempMapObject->animatedObject.constBegin();
+        QHash<uint16_t,MapVisualiserThread::Map_animation>::const_iterator i = tempMapObject->animatedObject.constBegin();
         while (i != tempMapObject->animatedObject.constEnd()) {
             if(!animationTimer.contains(i.key()))
             {
@@ -192,7 +192,7 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                 animationFrame[i.key()][i.value().count]=0;
             else
             {
-                const quint8 &count=animationFrame.value(i.key()).value(i.value().count);
+                const uint8_t &count=animationFrame.value(i.key()).value(i.value().count);
                 const int &oldcount=tempMapObject->animatedObject[i.key()].count;
                 const int &count_diff=count-oldcount;
                 tempMapObject->animatedObject[i.key()].count+=count_diff;
@@ -206,8 +206,8 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                         Tiled::Tile *tile=mapObject->cell().tile;
                         Tiled::Tile *newTile;
                         int diff=0;
-                        const quint8 &randomOffset=i.value().animatedObjectList.at(index).randomOffset;
-                        const quint8 &frameCountTotal=i.value().frameCountTotal;
+                        const uint8_t &randomOffset=i.value().animatedObjectList.at(index).randomOffset;
+                        const uint8_t &frameCountTotal=i.value().frameCountTotal;
                         if((oldcount+randomOffset)>=frameCountTotal)
                             diff=+frameCountTotal;
                         /*diff+=-oldcount;
@@ -393,11 +393,11 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
 void MapVisualiser::applyTheAnimationTimer()
 {
     QTimer *timer=qobject_cast<QTimer *>(QObject::sender());
-    const quint16 &interval=timer->interval();
+    const uint16_t &interval=timer->interval();
     if(animationFrame.contains(interval))
     {
-        QHash<quint8/*frame total*/,quint8/*actual frame*/> countList=animationFrame.value(interval);
-        QHashIterator<quint8/*frame total*/,quint8/*actual frame*/> i(countList);
+        QHash<uint8_t/*frame total*/,uint8_t/*actual frame*/> countList=animationFrame.value(interval);
+        QHashIterator<uint8_t/*frame total*/,uint8_t/*actual frame*/> i(countList);
         while (i.hasNext()) {
             i.next();
             countList[i.key()]++;
@@ -422,7 +422,7 @@ void MapVisualiser::applyTheAnimationTimer()
                     int index=0;
                     while(index<animatedObject.size())
                     {
-                        qint8 frameOffset=1;
+                        int8_t frameOffset=1;
                         if((tempMap->animatedObject.value(interval).count+animatedObject.at(index).randomOffset)==tempMap->animatedObject.value(interval).frameCountTotal)
                             frameOffset-=tempMap->animatedObject.value(interval).frameCountTotal;
                         Tiled::MapObject * mapObject=animatedObject.at(index).animatedObject;
@@ -463,7 +463,7 @@ void MapVisualiser::applyTheAnimationTimer()
     }
 }
 
-void MapVisualiser::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,const quint32 &botId,const quint8 &x,const quint8 &y,const QString &lookAt,const QString &skin)
+void MapVisualiser::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,const uint32_t &botId,const uint8_t &x,const uint8_t &y,const QString &lookAt,const QString &skin)
 {
     Q_UNUSED(botId);
     Q_UNUSED(parsedMap);

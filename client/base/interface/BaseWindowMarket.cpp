@@ -9,7 +9,7 @@
 
 using namespace CatchChallenger;
 
-void BaseWindow::marketList(const quint64 &price,const QList<MarketObject> &marketObjectList,const QList<MarketMonster> &marketMonsterList,const QList<MarketObject> &marketOwnObjectList,const QList<MarketMonster> &marketOwnMonsterList)
+void BaseWindow::marketList(const uint64_t &price,const QList<MarketObject> &marketObjectList,const QList<MarketMonster> &marketMonsterList,const QList<MarketObject> &marketOwnObjectList,const QList<MarketMonster> &marketOwnMonsterList)
 {
     ui->marketWithdraw->setVisible(true);
     ui->marketStat->setText(tr("Cash to withdraw: %1$").arg(price));
@@ -108,7 +108,7 @@ void BaseWindow::marketBuy(const bool &success)
     }
     else
     {
-        QHash<quint16,quint32> items;
+        QHash<uint16_t,uint32_t> items;
         items[marketBuyObjectList.first().first]=marketBuyObjectList.first().second;
         add_to_inventory(items);
         marketBuyObjectList.removeFirst();
@@ -167,7 +167,7 @@ void BaseWindow::marketPut(const bool &success)
     marketPutMonsterPlaceList.clear();
 }
 
-void BaseWindow::marketGetCash(const quint64 &cash)
+void BaseWindow::marketGetCash(const uint64_t &cash)
 {
     addCash(cash);
     ui->marketStat->setText(tr("Cash to withdraw: %1$").arg(0));
@@ -189,7 +189,7 @@ void BaseWindow::marketWithdrawCanceled()
     marketWithdrawMonsterList.clear();
 }
 
-void BaseWindow::marketWithdrawObject(const quint32 &objectId,const quint32 &quantity)
+void BaseWindow::marketWithdrawObject(const uint32_t &objectId,const uint32_t &quantity)
 {
     marketWithdrawInSuspend=false;
     marketWithdrawObjectList.clear();
@@ -259,14 +259,14 @@ void BaseWindow::on_marketObject_itemActivated(QListWidgetItem *item)
         QMessageBox::warning(this,tr("Error"),tr("You have aleady a buy in progress"));
         return;
     }
-    quint32 priceQuantity;
+    uint32_t priceQuantity;
     if(item->data(97).toUInt()>0)
         priceQuantity=cash/item->data(97).toUInt();
     else
         priceQuantity=item->data(98).toUInt();
     if(priceQuantity>item->data(98).toUInt())
         priceQuantity=item->data(98).toUInt();
-    quint32 quantity=priceQuantity;
+    uint32_t quantity=priceQuantity;
     if(quantity==0)
     {
         QMessageBox::warning(this,tr("Error"),tr("Have not cash to buy it"));
@@ -280,7 +280,7 @@ void BaseWindow::on_marketObject_itemActivated(QListWidgetItem *item)
             return;
     }
     CatchChallenger::Api_client_real::client->buyMarketObject(item->data(99).toUInt(),quantity);
-    QPair<quint32,quint32> newEntry;
+    QPair<uint32_t,uint32_t> newEntry;
     newEntry.first=item->data(99).toUInt();
     newEntry.second=quantity;
     marketBuyObjectList << newEntry;
@@ -309,7 +309,7 @@ void BaseWindow::on_marketOwnObject_itemActivated(QListWidgetItem *item)
         return;
     }
     bool ok;
-    quint32 quantity=1;
+    uint32_t quantity=1;
     if(item->data(98).toUInt()>1)
     {
         quantity=QInputDialog::getInt(this,tr("Quantity"),tr("How many item wish you withdraw?"),item->data(98).toUInt(),1,item->data(98).toUInt(),1,&ok);
@@ -338,14 +338,14 @@ void BaseWindow::on_marketMonster_itemActivated(QListWidgetItem *item)
         QMessageBox::warning(this,tr("Error"),tr("You have aleady a buy in progress"));
         return;
     }
-    quint32 priceQuantity;
+    uint32_t priceQuantity;
     if(item->data(98).toUInt()>0)
         priceQuantity=cash/item->data(98).toUInt();
     else
         priceQuantity=1;
     if(priceQuantity>1)
         priceQuantity=1;
-    quint32 quantity=priceQuantity;
+    uint32_t quantity=priceQuantity;
     marketBuyCashInSuspend=item->data(98).toUInt();
     removeCash(marketBuyCashInSuspend);
     if(quantity==0)

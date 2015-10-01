@@ -2,7 +2,7 @@
 
 #include <QApplication>
 
-MapDoor::MapDoor(Tiled::MapObject* object, const quint8 &framesCount, const quint16 &ms) :
+MapDoor::MapDoor(Tiled::MapObject* object, const uint8_t &framesCount, const uint16_t &ms) :
     object(object),
     cell(object->cell()),
     baseTile(object->cell().tile),
@@ -25,7 +25,7 @@ MapDoor::~MapDoor()
     }
 }
 
-void MapDoor::startOpen(const quint16 &timeRemainOpen)
+void MapDoor::startOpen(const uint16_t &timeRemainOpen)
 {
     Q_UNUSED(timeRemainOpen);
     EventCall eventCall;
@@ -46,7 +46,7 @@ void MapDoor::startClose()
     events << eventCall;
 }
 
-quint16 MapDoor::timeToOpen()
+uint16_t MapDoor::timeToOpen()
 {
     return ms*framesCount;
 }
@@ -54,7 +54,7 @@ quint16 MapDoor::timeToOpen()
 void MapDoor::timerFinish()
 {
     QTimer *timer         = qobject_cast<QTimer *>(sender());
-    quint8 highterFrame=0;
+    uint8_t highterFrame=0;
     int index=0;
     while(index<events.size())
     {
@@ -80,7 +80,7 @@ void MapDoor::timerFinish()
             }
             else
             {
-                const quint8 &reverseFrameCount=framesCount*2-eventCall.frame-1;
+                const uint8_t &reverseFrameCount=framesCount*2-eventCall.frame-1;
                 if(highterFrame<reverseFrameCount)
                     highterFrame=reverseFrameCount;
             }

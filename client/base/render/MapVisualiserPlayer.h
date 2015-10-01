@@ -39,8 +39,8 @@ public:
         LandFight_Grass,
         LandFight_Cave
     };
-    quint8 getX();
-    quint8 getY();
+    uint8_t getX();
+    uint8_t getY();
     CatchChallenger::Map_client * getMapObject();
 
     //the datapack
@@ -48,7 +48,7 @@ public:
     virtual void datapackParsed();
     virtual void datapackParsedMainSub();
 
-    void setInformations(QHash<quint16,quint32> *items, QHash<quint16, CatchChallenger::PlayerQuest> *quests, QList<quint8> *events, QSet<quint8> *itemOnMap, QHash<quint8/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap);
+    void setInformations(QHash<uint16_t,uint32_t> *items, QHash<uint16_t, CatchChallenger::PlayerQuest> *quests, QList<uint8_t> *events, QSet<uint8_t> *itemOnMap, QHash<uint8_t/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap);
     void unblock();
 protected:
     //datapack
@@ -65,7 +65,7 @@ protected:
     QString defaultTileset;
     int moveStep;
     CatchChallenger::Direction direction;
-    quint8 x,y;
+    uint8_t x,y;
     bool inMove;
     bool teleportedOnPush;
     bool stepAlternance;
@@ -91,14 +91,14 @@ protected:
     bool haveNextCurrentObject;
     Tiled::MapObject * nextCurrentObject;
     Tiled::Tileset * animationTileset;
-    quint32 currentPlayerSpeed;
+    uint32_t currentPlayerSpeed;
     bool animationDisplayed;
 
-    QList<quint8> *events;
-    QHash<quint16,quint32> *items;
-    QHash<quint16, CatchChallenger::PlayerQuest> *quests;
-    QSet<quint8> *itemOnMap;
-    QHash<quint8/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap;
+    QList<uint8_t> *events;
+    QHash<uint16_t,uint32_t> *items;
+    QHash<uint16_t, CatchChallenger::PlayerQuest> *quests;
+    QSet<uint8_t> *itemOnMap;
+    QHash<uint8_t/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap;
 protected:
     static QString text_DATAPACK_BASE_PATH_SKIN;
     static QString text_DATAPACK_BASE_PATH_MAPBASE;
@@ -138,12 +138,12 @@ protected slots:
     virtual bool asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full * tempMapObject);
 signals:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
-    void stopped_in_front_of(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
-    void actionOn(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
+    void stopped_in_front_of(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
+    void actionOn(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
     void actionOnNothing();
     void blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);
-    void wildFightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
-    void botFightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
+    void wildFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
+    void botFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
     void error(const QString &error);
     void errorWithTheCurrentMap();
     void inWaitingOfMap();

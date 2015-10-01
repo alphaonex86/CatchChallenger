@@ -8,7 +8,7 @@ QHash<QString,CharactersGroupForLogin *> CharactersGroupForLogin::hash;
 QList<CharactersGroupForLogin *> CharactersGroupForLogin::list;
 char CharactersGroupForLogin::tempBuffer[4096];
 
-CharactersGroupForLogin::CharactersGroupForLogin(const char * const db,const char * const host,const char * const login,const char * const pass,const quint8 &considerDownAfterNumberOfTry,const quint8 &tryInterval) :
+CharactersGroupForLogin::CharactersGroupForLogin(const char * const db,const char * const host,const char * const login,const char * const pass,const uint8_t &considerDownAfterNumberOfTry,const uint8_t &tryInterval) :
     databaseBaseCommon(new EpollPostgresql())
 {
     databaseBaseCommon->considerDownAfterNumberOfTry=considerDownAfterNumberOfTry;
@@ -34,7 +34,7 @@ void CharactersGroupForLogin::clearServerPair()
     servers.clear();
 }
 
-void CharactersGroupForLogin::setServerUniqueKey(const quint8 &indexOnFlatList,const quint32 &serverUniqueKey,const char * const hostData,const quint8 &hostDataSize,const quint16 &port)
+void CharactersGroupForLogin::setServerUniqueKey(const uint8_t &indexOnFlatList,const uint32_t &serverUniqueKey,const char * const hostData,const uint8_t &hostDataSize,const uint16_t &port)
 {
     InternalGameServer tempServer;
     tempServer.host=QString::fromUtf8(hostData,hostDataSize);
@@ -43,12 +43,12 @@ void CharactersGroupForLogin::setServerUniqueKey(const quint8 &indexOnFlatList,c
     servers[serverUniqueKey]=tempServer;
 }
 
-bool CharactersGroupForLogin::containsServerUniqueKey(const quint32 &serverUniqueKey) const
+bool CharactersGroupForLogin::containsServerUniqueKey(const uint32_t &serverUniqueKey) const
 {
     return servers.contains(serverUniqueKey);
 }
 
-CharactersGroupForLogin::InternalGameServer CharactersGroupForLogin::getServerInformation(const quint32 &serverUniqueKey) const
+CharactersGroupForLogin::InternalGameServer CharactersGroupForLogin::getServerInformation(const uint32_t &serverUniqueKey) const
 {
     return servers.value(serverUniqueKey);
 }

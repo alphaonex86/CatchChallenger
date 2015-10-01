@@ -35,14 +35,14 @@ public:
     struct DataForSelectedCharacterReturn
     {
         void * client;
-        quint8 client_query_id;
-        quint32 serverUniqueKey;
-        quint8 charactersGroupIndex;
+        uint8_t client_query_id;
+        uint32_t serverUniqueKey;
+        uint8_t charactersGroupIndex;
     };
 
     QString httpDatapackMirror;
     //to unordered reply
-    QHash<quint8/*queryNumber*/,DataForSelectedCharacterReturn> selectCharacterClients;
+    QHash<uint8_t/*queryNumber*/,DataForSelectedCharacterReturn> selectCharacterClients;
     static char protocolReplyNoMoreToken[4];
     static char protocolReplyAlreadyConnectedToken[4];
     static char protocolReplyGetToken[3+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
@@ -54,18 +54,18 @@ public:
     static LinkToMaster *linkToMaster;
     static int linkToMasterSocketFd;
     static bool haveTheFirstSslHeader;
-    std::vector<quint8> queryNumberList;
+    std::vector<uint8_t> queryNumberList;
     BaseClassSwitch::EpollObjectType getType() const;
     void parseIncommingData();
-    static int tryConnect(const char * const host,const quint16 &port,const quint8 &tryInterval=1,const quint8 &considerDownAfterNumberOfTry=30);
+    static int tryConnect(const char * const host,const uint16_t &port,const uint8_t &tryInterval=1,const uint8_t &considerDownAfterNumberOfTry=30);
     void connectInternal();
     void setConnexionSettings();
     bool registerGameServer(const QString &exportedXml,const char * const dynamicToken);
     void generateToken();
     void sendProtocolHeader();
     bool setSettings(QSettings * const settings);
-    void characterDisconnected(const quint32 &characterId);
-    void currentPlayerChange(const quint16 &currentPlayer);
+    void characterDisconnected(const uint32_t &characterId);
+    void currentPlayerChange(const uint16_t &currentPlayer);
     void askMoreMaxMonsterId();
     void askMoreMaxClanId();
     void tryReconnect();
@@ -79,16 +79,16 @@ protected:
     void parseNetworkReadError(const QString &errorString);
 
     //have message without reply
-    void parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size);
-    void parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const data,const unsigned int &size);
+    void parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size);
+    void parseFullMessage(const uint8_t &mainCodeType,const uint8_t &subCodeType,const char * const data,const unsigned int &size);
     //have query with reply
-    void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
-    void parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
+    void parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    void parseFullQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
     //send reply
-    void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
-    void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
+    void parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    void parseFullReplyData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
 
-    void parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size);
+    void parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size);
 private:
     QSettings * settings;
     std::mt19937 rng;

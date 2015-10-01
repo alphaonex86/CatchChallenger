@@ -176,7 +176,7 @@ void Client::seedValidated()
     postReply(plant_list_in_waiting.front().query_id,data.constData(),data.size());
     #endif
 
-    const quint64 &current_time=QDateTime::currentMSecsSinceEpoch()/1000;
+    const uint64_t &current_time=QDateTime::currentMSecsSinceEpoch()/1000;
     const std::pair<uint8_t,uint8_t> pos(plant_list_in_waiting.front().x,plant_list_in_waiting.front().y);
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     const MapServer::PlantOnMap &plantOnMap=static_cast<MapServer *>(plant_list_in_waiting.front().map)->plants.at(pos);
@@ -211,9 +211,6 @@ void Client::seedValidated()
         QByteArray finalData;
         {
             //Insert plant on map
-            QByteArray outputData;
-            QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
             out << (uint16_t)1;
             if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
                 out << (uint8_t)map->id;
@@ -260,9 +257,6 @@ void Client::sendNearPlant()
     //Insert plant on map
     if(static_cast<MapServer *>(map)->plants.isEmpty())
         return;
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << static_cast<MapServer *>(map)->plants.size();
 
     std::unordered_mapIterator<std::pair<uint8_t,uint8_t>,MapServerCrafting::PlantOnMap> i(static_cast<MapServer *>(map)->plants);
@@ -279,7 +273,7 @@ void Client::sendNearPlant()
         out << i.key().first;
         out << i.key().second;
         out << plant.plant;
-        quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
+        uint64_t current_time=QDateTime::currentMSecsSinceEpoch()/1000;
         if(current_time>=plant.mature_at)
             out << (uint16_t)0;
         else if((plant.mature_at-current_time)>65535)
@@ -311,9 +305,6 @@ void Client::removeNearPlant()
     const uint16_t &plant_list_size=static_cast<MapServer *>(map)->plants.size();
     if(plant_list_size==0)
         return;
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << plant_list_size;
     std::unordered_mapIterator<std::pair<uint8_t,uint8_t>,MapServerCrafting::PlantOnMap> i(static_cast<MapServer *>(map)->plants);
     while (i.hasNext()) {
@@ -425,7 +416,7 @@ void Client::collectPlant(
         return;
     }
     //check if is free
-    const quint64 &current_time=QDateTime::currentMSecsSinceEpoch()/1000;
+    const uint64_t &current_time=QDateTime::currentMSecsSinceEpoch()/1000;
     const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.at(std::pair<uint8_t,uint8_t>(x,y));
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     if(public_and_private_informations.plantOnMap.find(plant.indexOfOnMap)!=public_and_private_informations.plantOnMap.cend())
@@ -487,9 +478,6 @@ void Client::collectPlant(
         QByteArray finalData;
         {
             //Remove plant on map
-            QByteArray outputData;
-            QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
             out << (uint16_t)1;
             if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
                 out << (uint8_t)map->id;

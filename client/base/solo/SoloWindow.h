@@ -86,7 +86,7 @@ private:
 
     //loaded game
     QString pass;
-    quint64 timeLaunched;
+    uint64_t timeLaunched;
     QString launchedGamePath;
     bool haveLaunchedGame;
     */

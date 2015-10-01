@@ -42,7 +42,7 @@ private:
     QTimer timer_update_the_info;
     QTimer check_latency;
     QTime time_latency;
-    quint16 internal_currentLatency;
+    uint16_t internal_currentLatency;
     QList<Event> events;
     QHash<QString,QHash<QString,GameServerSettings::ProgrammedEvent> > programmedEventList;
     QString sizeToString(double size);

@@ -82,9 +82,9 @@ void QFakeSocket::connectToHost()
     emit connected();
 }
 
-qint64	QFakeSocket::bytesAvailableWithMutex()
+int64_t	QFakeSocket::bytesAvailableWithMutex()
 {
-    qint64 size;
+    int64_t size;
     {
         QMutexLocker lock(&mutex);
         #ifdef FAKESOCKETDEBUG
@@ -95,7 +95,7 @@ qint64	QFakeSocket::bytesAvailableWithMutex()
     return size;
 }
 
-qint64	QFakeSocket::bytesAvailable() const
+int64_t	QFakeSocket::bytesAvailable() const
 {
     return const_cast<QFakeSocket *>(this)->bytesAvailableWithMutex();
 }
@@ -115,12 +115,12 @@ QFakeSocket * QFakeSocket::getTheOtherSocket()
     return theOtherSocket;
 }
 
-quint64 QFakeSocket::getRXSize()
+uint64_t QFakeSocket::getRXSize()
 {
     return RX_size;
 }
 
-quint64 QFakeSocket::getTXSize()
+uint64_t QFakeSocket::getTXSize()
 {
     if(theOtherSocket==NULL)
         return 0;
@@ -140,7 +140,7 @@ QAbstractSocket::SocketState QFakeSocket::state() const
         return QAbstractSocket::ConnectedState;
 }
 
-qint64	QFakeSocket::readData(char * rawData, qint64 maxSize)
+int64_t	QFakeSocket::readData(char * rawData, int64_t maxSize)
 {
     QMutexLocker lock(&mutex);
     QByteArray extractedData=this->data.mid(0,maxSize);
@@ -152,7 +152,7 @@ qint64	QFakeSocket::readData(char * rawData, qint64 maxSize)
     return extractedData.size();
 }
 
-qint64	QFakeSocket::writeData(const char * rawData, qint64 size)
+int64_t	QFakeSocket::writeData(const char * rawData, int64_t size)
 {
     if(theOtherSocket==NULL)
     {

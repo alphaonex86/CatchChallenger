@@ -284,7 +284,7 @@ bool ConnectedSocket::waitForDisconnected(int msecs)
     return false;
 }
 
-qint64 ConnectedSocket::bytesAvailable() const
+int64_t ConnectedSocket::bytesAvailable() const
 {
     if(fakeSocket!=NULL)
         return fakeSocket->bytesAvailable();
@@ -323,7 +323,7 @@ void ConnectedSocket::close()
     disconnectFromHost();
 }
 
-qint64 ConnectedSocket::readData(char * data, qint64 maxSize)
+int64_t ConnectedSocket::readData(char * data, int64_t maxSize)
 {
     if(fakeSocket!=NULL)
         return fakeSocket->read(data,maxSize);
@@ -334,7 +334,7 @@ qint64 ConnectedSocket::readData(char * data, qint64 maxSize)
     return -1;
 }
 
-qint64 ConnectedSocket::writeData(const char * data, qint64 maxSize)
+int64_t ConnectedSocket::writeData(const char * data, int64_t maxSize)
 {
     if(fakeSocket!=NULL)
         return fakeSocket->write(data,maxSize);

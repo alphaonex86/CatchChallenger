@@ -38,11 +38,11 @@ public:
     QAbstractSocket::SocketState state() const;
     bool	waitForConnected(int msecs = 30000);
     bool	waitForDisconnected(int msecs = 30000);
-    qint64	bytesAvailable() const;
+    int64_t	bytesAvailable() const;
     OpenMode openMode() const;
     std::string errorString() const;
-    qint64	readData(char * data, qint64 maxSize);
-    qint64	writeData(const char * data, qint64 maxSize);
+    int64_t	readData(char * data, int64_t maxSize);
+    int64_t	writeData(const char * data, int64_t maxSize);
     void	close();
     QFakeSocket *fakeSocket;
     QSslSocket *sslSocket;

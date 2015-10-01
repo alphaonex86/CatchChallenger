@@ -28,7 +28,9 @@ std::vector<std::string> stringregexsplit(const std::string& input, const std::r
 std::vector<std::string> &stringsplit(const std::string &s, char delim, std::vector<std::string> &elems);
 std::vector<std::string> stringsplit(const std::string &s, char delim);
 bool stringEndsWith(std::string const &fullString, std::string const &ending);
+bool stringEndsWith(std::string const &fullString, char const &ending);
 bool stringStartWith(std::string const &fullString, std::string const &starting);
+bool stringStartWith(std::string const &fullString, char const &starting);
 std::string& stringimplode(const std::vector<std::string>& elems, char delim, std::string& s);
 std::string stringimplode(const std::vector<std::string>& elems, char delim);
 std::string stringimplode(const std::queue<std::string>& elems, char delim);

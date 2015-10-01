@@ -5,7 +5,7 @@
 
 using namespace CatchChallenger;
 
-void BaseWindow::clanActionSuccess(const quint32 &clanId)
+void BaseWindow::clanActionSuccess(const uint32_t &clanId)
 {
     switch(actionClan.first())
     {
@@ -126,7 +126,7 @@ void BaseWindow::clanInformations(const QString &name)
     updateClanDisplay();
 }
 
-void BaseWindow::clanInvite(const quint32 &clanId,const QString &name)
+void BaseWindow::clanInvite(const uint32_t &clanId,const QString &name)
 {
     QMessageBox::StandardButton button=QMessageBox::question(this,tr("Invite"),tr("The clan %1 invite you to become a member. Do you accept?").arg(QStringLiteral("<b>%1</b>").arg(name)));
     CatchChallenger::Api_client_real::client->inviteAccept(button==QMessageBox::Yes);

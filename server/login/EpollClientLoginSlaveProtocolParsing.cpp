@@ -114,7 +114,7 @@ void EpollClientLoginSlave::doDDOSCompute()
     }
 }
 
-void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+void EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
@@ -141,7 +141,7 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
                     BaseServerLogin::tokenForAuthSize--;
                     if(BaseServerLogin::tokenForAuthSize>0)
                     {
-                        quint32 index=0;
+                        uint32_t index=0;
                         while(index<BaseServerLogin::tokenForAuthSize)
                         {
                             BaseServerLogin::tokenForAuth[index]=BaseServerLogin::tokenForAuth[index+1];
@@ -292,7 +292,7 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
     }
 }
 
-void EpollClientLoginSlave::parseMessage(const quint8 &mainCodeType, const char * const data, const unsigned int &size)
+void EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType, const char * const data, const unsigned int &size)
 {
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {
@@ -350,7 +350,7 @@ void EpollClientLoginSlave::parseMessage(const quint8 &mainCodeType, const char 
     }
 }
 
-void EpollClientLoginSlave::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const rawData,const unsigned int &size)
+void EpollClientLoginSlave::parseFullMessage(const uint8_t &mainCodeType,const uint8_t &subCodeType,const char * const rawData,const unsigned int &size)
 {
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {
@@ -389,7 +389,7 @@ void EpollClientLoginSlave::parseFullMessage(const quint8 &mainCodeType,const qu
 }
 
 //have query with reply
-void EpollClientLoginSlave::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+void EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
@@ -425,7 +425,7 @@ void EpollClientLoginSlave::parseQuery(const quint8 &mainCodeType,const quint8 &
     }
 }
 
-void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const rawData,const unsigned int &size)
+void EpollClientLoginSlave::parseFullQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const rawData,const unsigned int &size)
 {
     (void)subCodeType;
     (void)queryNumber;
@@ -475,13 +475,13 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
             case 0x03:
             {
                 int cursor=0;
-                quint8 charactersGroupIndex;
-                quint8 profileIndex;
+                uint8_t charactersGroupIndex;
+                uint8_t profileIndex;
                 QString pseudo;
-                quint8 skinId;
-                quint8 pseudoSize;
+                uint8_t skinId;
+                uint8_t pseudoSize;
                 {
-                    if((size-cursor)<(int)sizeof(quint8))
+                    if((size-cursor)<(int)sizeof(uint8_t))
                     {
                         parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
                         return;
@@ -490,7 +490,7 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
                     cursor+=1;
                 }
                 {
-                    if((size-cursor)<(int)sizeof(quint8))
+                    if((size-cursor)<(int)sizeof(uint8_t))
                     {
                         parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
                         return;
@@ -499,7 +499,7 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
                     cursor+=1;
                 }
                 {
-                    if((size-cursor)<(int)sizeof(quint8))
+                    if((size-cursor)<(int)sizeof(uint8_t))
                     {
                         parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
                         return;
@@ -515,7 +515,7 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
                     cursor+=pseudoSize;
                 }
                 {
-                    if((size-cursor)<(int)sizeof(quint8))
+                    if((size-cursor)<(int)sizeof(uint8_t))
                     {
                         parseNetworkReadError(QStringLiteral("error to get skin with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
                         return;
@@ -540,23 +540,23 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
             case 0x04:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if(size!=((int)sizeof(quint32)+(int)sizeof(quint8)))
+                if(size!=((int)sizeof(uint32_t)+(int)sizeof(uint8_t)))
                 {
                     parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
                     return;
                 }
                 #endif
-                const quint8 &charactersGroupIndex=rawData[0];
-                const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+1)));
+                const uint8_t &charactersGroupIndex=rawData[0];
+                const uint32_t &characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+1)));
                 removeCharacter(queryNumber,charactersGroupIndex,characterId);
             }
             break;
             //Select character
             case 0x05:
             {
-                const quint8 &charactersGroupIndex=rawData[0];
-                const quint32 &serverUniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+1)));
-                const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+5)));
+                const uint8_t &charactersGroupIndex=rawData[0];
+                const uint32_t &serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+1)));
+                const uint32_t &characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+5)));
                 selectCharacter(queryNumber,serverUniqueKey,charactersGroupIndex,characterId);
                 return;
             }
@@ -575,7 +575,7 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
 }
 
 //send reply
-void EpollClientLoginSlave::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+void EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {
@@ -608,7 +608,7 @@ void EpollClientLoginSlave::parseReplyData(const quint8 &mainCodeType,const quin
     return;
 }
 
-void EpollClientLoginSlave::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+void EpollClientLoginSlave::parseFullReplyData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {

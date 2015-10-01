@@ -34,17 +34,17 @@ class ConnexionInfo
 {
 public:
     QString host;
-    quint16 port;
+    uint16_t port;
     QString name;
-    quint32 connexionCounter;
-    quint32 lastConnexion;
+    uint32_t connexionCounter;
+    uint32_t lastConnexion;
     QString register_page;
     QString lost_passwd_page;
     QString site_page;
     QString unique_code;
     bool operator<(const ConnexionInfo &connexionInfo) const;
     QString proxyHost;
-    quint16 proxyPort;
+    uint16_t proxyPort;
 };
 
 class MainWindow : public QMainWindow
@@ -150,14 +150,14 @@ private:
     QNetworkReply *reply;
     SoloWindow *solowindow;
     QString pass;
-    quint64 timeLaunched;
+    uint64_t timeLaunched;
     QString launchedGamePath;
     bool haveLaunchedGame;
     CatchChallenger::InternalServer * internalServer;
     QSet<QString> customServerName;
     QHash<QString,QString> serverLoginList;
     QHash<QString,QDateTime> lastServerConnect;
-    QHash<QString,quint32> lastServerWaitBeforeConnectAfterKick;
+    QHash<QString,uint32_t> lastServerWaitBeforeConnectAfterKick;
     QHash<QString,bool> lastServerIsKick;
     QTimer updateTheOkButtonTimer;
     libvlc_media_player_t *vlcPlayer;

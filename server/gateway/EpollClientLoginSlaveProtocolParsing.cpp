@@ -115,7 +115,7 @@ void EpollClientLoginSlave::doDDOSCompute()
     }
 }
 
-bool EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
@@ -173,7 +173,7 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
     return true;
 }
 
-bool EpollClientLoginSlave::parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size)
+bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size)
 {
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {
@@ -238,7 +238,7 @@ bool EpollClientLoginSlave::parseMessage(const quint8 &mainCodeType,const char *
 }
 
 //have query with reply
-bool EpollClientLoginSlave::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
@@ -273,8 +273,8 @@ bool EpollClientLoginSlave::parseQuery(const quint8 &mainCodeType,const quint8 &
                     parseNetworkReadError("Select character: wrong size");
                     return false;
                 }
-                const quint8 &charactersGroupIndex=data[0x00];
-                const quint32 &uniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+1)));
+                const uint8_t &charactersGroupIndex=data[0x00];
+                const uint32_t &uniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+1)));
                 if(linkToGameServer->serverReconnectList.find(charactersGroupIndex)==linkToGameServer->serverReconnectList.cend())
                 {
                     parseNetworkReadError("Select character: charactersGroupIndex not found");
@@ -293,6 +293,7 @@ bool EpollClientLoginSlave::parseQuery(const quint8 &mainCodeType,const quint8 &
             //Send datapack file list
             case 0xA1:
             {
+                uint32_t pos=0;
                 #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                 switch(datapackStatus)
                 {
@@ -309,7 +310,7 @@ bool EpollClientLoginSlave::parseQuery(const quint8 &mainCodeType,const quint8 &
                         }
                     break;
                     case DatapackStatus::Sub:
-                        if(linkToGameServer->sub.isEmpty())
+                        if(linkToGameServer->sub.empty())
                         {
                             parseNetworkReadError("linkToGameServer->sub.isEmpty()");
                             return false;
@@ -326,17 +327,13 @@ bool EpollClientLoginSlave::parseQuery(const quint8 &mainCodeType,const quint8 &
                     return false;
                 }
 
-                QByteArray data(rawData,size);
-                QDataStream in(data);
-                in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
-
-                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                if((size-pos)<(int)sizeof(uint8_t))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
-                    return;
+                    parseNetworkReadError("wrong size with the main ident: "+std::to_string(mainCodeType));
+                    return false;
                 }
-                quint8 stepToSkip;
-                in >> stepToSkip;
+                const uint8_t &stepToSkip=data[pos];
+                pos+=1;
                 switch(stepToSkip)
                 {
                     case 0x01:
@@ -344,8 +341,8 @@ bool EpollClientLoginSlave::parseQuery(const quint8 &mainCodeType,const quint8 &
                         {}
                         else
                         {
-                            parseNetworkReadError(QStringLiteral("step out of range to get datapack base but already in highter level"));
-                            return;
+                            parseNetworkReadError("step out of range to get datapack base but already in highter level");
+                            return false;
                         }
                     break;
                     case 0x02:
@@ -355,8 +352,8 @@ bool EpollClientLoginSlave::parseQuery(const quint8 &mainCodeType,const quint8 &
                         {}
                         else
                         {
-                            parseNetworkReadError(QStringLiteral("step out of range to get datapack base but already in highter level"));
-                            return;
+                            parseNetworkReadError("step out of range to get datapack base but already in highter level");
+                            return false;
                         }
                     break;
                     case 0x03:
@@ -368,87 +365,75 @@ bool EpollClientLoginSlave::parseQuery(const quint8 &mainCodeType,const quint8 &
                         {}
                         else
                         {
-                            parseNetworkReadError(QStringLiteral("step out of range to get datapack base but already in highter level"));
-                            return;
+                            parseNetworkReadError("step out of range to get datapack base but already in highter level");
+                            return false;
                         }
                     break;
                     default:
-                        parseNetworkReadError(QStringLiteral("step out of range to get datapack: %1").arg(stepToSkip));
-                    return;
+                        parseNetworkReadError("step out of range to get datapack: "+std::to_string(stepToSkip));
+                    return false;
                 }
 
-                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                if((size-pos)<(int)sizeof(uint32_t))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
-                    return;
+                    parseNetworkReadError("wrong size with the main ident: "+std::to_string(mainCodeType));
+                    return false;
                 }
-                quint8 textSize;
-                quint32 number_of_file;
-                in >> number_of_file;
-                QStringList files;
-                QList<quint32> partialHashList;
-                QString tempFileName;
-                quint32 partialHash;
-                quint32 index=0;
+                const uint32_t &number_of_file=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(uint32_t);
+                std::vector<std::string> files;
+                std::vector<uint32_t> partialHashList;
+                std::string tempFileName;
+                uint32_t index=0;
                 while(index<number_of_file)
                 {
                     {
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        if((size-pos)<(int)sizeof(uint8_t))
                         {
-                            parseNetworkReadError("wrong utf8 to QString size in PM for text size");
-                            return;
+                            parseNetworkReadError("wrong utf8 to std::string size in PM for text size");
+                            return false;
                         }
-                        in >> textSize;
+                        const uint8_t &textSize=data[pos];
+                        pos+=1;
                         //control the regex file into Client::datapackList()
                         if(textSize>0)
                         {
-                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
+                            if((size-pos)<(int)textSize)
                             {
-                                parseNetworkReadError(QStringLiteral("wrong utf8 to QString size for file name: parseQuery(%1,%2,%3): %4 %5")
-                                           .arg(mainCodeType)
-                                           .arg(subCodeType)
-                                           .arg(queryNumber)
-                                           .arg(QString(data.mid(0,in.device()->pos()).toHex()))
-                                           .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
-                                           );
-                                return;
+                                parseNetworkReadError("wrong utf8 to std::string size for file name: parseQuery("+
+                                                      std::to_string(mainCodeType)+","+
+                                                      std::to_string(queryNumber)+
+                                                      ")");
+                                return false;
                             }
-                            const QByteArray &rawText=data.mid(in.device()->pos(),textSize);
-                            tempFileName=std::string(rawText.data(),rawText.size());
-                            in.device()->seek(in.device()->pos()+rawText.size());
+                            tempFileName=std::string(data+pos,textSize);
+                            pos+=textSize;
                         }
                     }
-                    if((in.device()->size()-in.device()->pos())<1)
+                    if((size-pos)<1)
                     {
-                        parseNetworkReadError(QStringLiteral("missing header utf8 datapack file list query"));
-                        return;
+                        parseNetworkReadError("missing header utf8 datapack file list query");
+                        return false;
                     }
-                    files << tempFileName;
-                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    files.push_back(tempFileName);
+                    if((size-pos)<(int)sizeof(uint32_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size for id with main ident: %1, subIdent: %2, remaining: %3, lower than: %4")
-                            .arg(mainCodeType)
-                            .arg(subCodeType)
-                            .arg(in.device()->size()-in.device()->pos())
-                            .arg((int)sizeof(quint32))
-                            );
-                        return;
+                        parseNetworkReadError("wrong size for id with main ident: "+std::to_string(mainCodeType)+
+                                              ", remaining: "+std::to_string(size-pos)+
+                                              ", lower than: "+std::to_string((int)sizeof(uint32_t))
+                                              );
+                        return false;
                     }
-                    in >> partialHash;
-                    partialHashList << partialHash;
+                    const uint32_t &partialHash=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                    pos+=sizeof(uint32_t);
+                    partialHashList.push_back(partialHash);
                     index++;
                 }
                 datapackList(queryNumber,files,partialHashList);
-                if((in.device()->size()-in.device()->pos())!=0)
+                if((size-pos)!=0)
                 {
-                    parseNetworkReadError(QStringLiteral("remaining data: parseQuery(%1,%2,%3): %4 %5")
-                               .arg(mainCodeType)
-                               .arg(subCodeType)
-                               .arg(queryNumber)
-                               .arg(QString(data.mid(0,in.device()->pos()).toHex()))
-                               .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
-                               );
-                    return;
+                    parseNetworkReadError("remaining data: parseQuery("+std::to_string(mainCodeType)+","+std::to_string(queryNumber)+")");
+                    return false;
                 }
                 return true;
                 #else
@@ -480,7 +465,7 @@ bool EpollClientLoginSlave::parseQuery(const quint8 &mainCodeType,const quint8 &
 }
 
 //send reply
-bool EpollClientLoginSlave::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {

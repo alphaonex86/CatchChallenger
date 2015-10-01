@@ -29,7 +29,7 @@ public:
     {
         QStringList datapackFilesList;
         QByteArray hash;
-        QList<quint32> partialHashList;
+        QList<uint32_t> partialHashList;
     };
     static QByteArray doChecksumBase(const QString &datapackPath);
     static QByteArray doChecksumMain(const QString &datapackPath);
@@ -43,9 +43,9 @@ public slots:
     void doDifferedChecksumMain(const QString &datapackPath);
     void doDifferedChecksumSub(const QString &datapackPath);
 signals:
-    void datapackChecksumDoneBase(const QStringList &datapackFilesList,const QByteArray &hash,const QList<quint32> &partialHashList);
-    void datapackChecksumDoneMain(const QStringList &datapackFilesList,const QByteArray &hash,const QList<quint32> &partialHashList);
-    void datapackChecksumDoneSub(const QStringList &datapackFilesList,const QByteArray &hash,const QList<quint32> &partialHashList);
+    void datapackChecksumDoneBase(const QStringList &datapackFilesList,const QByteArray &hash,const QList<uint32_t> &partialHashList);
+    void datapackChecksumDoneMain(const QStringList &datapackFilesList,const QByteArray &hash,const QList<uint32_t> &partialHashList);
+    void datapackChecksumDoneSub(const QStringList &datapackFilesList,const QByteArray &hash,const QList<uint32_t> &partialHashList);
     #endif
 };
 }

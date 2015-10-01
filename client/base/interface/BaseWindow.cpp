@@ -39,7 +39,7 @@ QString BaseWindow::text_lang=QLatin1Literal("lang");
 QString BaseWindow::text_en=QLatin1Literal("en");
 QString BaseWindow::text_text=QLatin1Literal("text");
 QFile BaseWindow::debugFile;
-quint8 BaseWindow::debugFileStatus=0;
+uint8_t BaseWindow::debugFileStatus=0;
 
 // bug if init here
 QIcon BaseWindow::icon_server_list_star1;
@@ -66,12 +66,12 @@ BaseWindow::BaseWindow() :
     qRegisterMetaType<Player_type>("Player_type");
     qRegisterMetaType<Player_private_and_public_informations>("Player_private_and_public_informations");
 
-    qRegisterMetaType<QHash<quint32,quint32> >("QHash<quint32,quint32>");
-    qRegisterMetaType<QHash<quint32,quint32> >("CatchChallenger::Plant_collect");
+    qRegisterMetaType<QHash<uint32_t,uint32_t> >("QHash<uint32_t,uint32_t>");
+    qRegisterMetaType<QHash<uint32_t,uint32_t> >("CatchChallenger::Plant_collect");
     qRegisterMetaType<QList<ItemToSellOrBuy> >("QList<ItemToSell>");
-    qRegisterMetaType<QList<QPair<quint8,quint8> > >("QList<QPair<quint8,quint8> >");
+    qRegisterMetaType<QList<QPair<uint8_t,uint8_t> > >("QList<QPair<uint8_t,uint8_t> >");
     qRegisterMetaType<Skill::AttackReturn>("Skill::AttackReturn");
-    qRegisterMetaType<QList<quint32> >("QList<quint32>");
+    qRegisterMetaType<QList<uint32_t> >("QList<uint32_t>");
     qRegisterMetaType<QList<QList<CharacterEntry> > >("QList<QList<CharacterEntry> >");
     qmlRegisterUncreatableType<EvolutionControl>("EvolutionControl", 1, 0, "EvolutionControl","");
     qmlRegisterUncreatableType<AnimationControl>("AnimationControl", 2, 0, "AnimationControl","");
@@ -374,7 +374,7 @@ void BaseWindow::connectAllSignals()
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::insert_player,              this,&BaseWindow::insert_player,Qt::QueuedConnection);
 }
 
-void BaseWindow::tradeRequested(const QString &pseudo,const quint8 &skinInt)
+void BaseWindow::tradeRequested(const QString &pseudo,const uint8_t &skinInt)
 {
     WithAnotherPlayer withAnotherPlayerDialog(this,WithAnotherPlayer::WithAnotherPlayerType_Trade,getFrontSkin(skinInt),pseudo);
     withAnotherPlayerDialog.exec();
@@ -387,7 +387,7 @@ void BaseWindow::tradeRequested(const QString &pseudo,const quint8 &skinInt)
     tradeAcceptedByOther(pseudo,skinInt);
 }
 
-void BaseWindow::tradeAcceptedByOther(const QString &pseudo,const quint8 &skinInt)
+void BaseWindow::tradeAcceptedByOther(const QString &pseudo,const uint8_t &skinInt)
 {
     ui->stackedWidget->setCurrentWidget(ui->page_trade);
     tradeOtherStat=TradeOtherStat_InWait;
@@ -469,19 +469,19 @@ void BaseWindow::tradeValidatedByTheServer()
     checkEvolution();
 }
 
-void BaseWindow::tradeAddTradeCash(const quint64 &cash)
+void BaseWindow::tradeAddTradeCash(const uint64_t &cash)
 {
     ui->tradeOtherCash->setValue(ui->tradeOtherCash->value()+cash);
 }
 
-void BaseWindow::tradeAddTradeObject(const quint32 &item,const quint32 &quantity)
+void BaseWindow::tradeAddTradeObject(const uint32_t &item,const uint32_t &quantity)
 {
     if(tradeOtherObjects.contains(item))
         tradeOtherObjects[item]+=quantity;
     else
         tradeOtherObjects[item]=quantity;
     ui->tradeOtherItems->clear();
-    QHashIterator<quint16,quint32> i(tradeOtherObjects);
+    QHashIterator<uint16_t,uint32_t> i(tradeOtherObjects);
     while (i.hasNext()) {
         i.next();
         ui->tradeOtherItems->addItem(itemToGraphic(i.key(),i.value()));
@@ -491,14 +491,14 @@ void BaseWindow::tradeAddTradeObject(const quint32 &item,const quint32 &quantity
 void BaseWindow::tradeUpdateCurrentObject()
 {
     ui->tradePlayerItems->clear();
-    QHashIterator<quint16,quint32> i(tradeCurrentObjects);
+    QHashIterator<uint16_t,uint32_t> i(tradeCurrentObjects);
     while (i.hasNext()) {
         i.next();
         ui->tradePlayerItems->addItem(itemToGraphic(i.key(),i.value()));
     }
 }
 
-void BaseWindow::battleRequested(const QString &pseudo, const quint8 &skinInt)
+void BaseWindow::battleRequested(const QString &pseudo, const uint8_t &skinInt)
 {
     if(CatchChallenger::ClientFightEngine::fightEngine.isInFight())
     {
@@ -521,12 +521,12 @@ QString BaseWindow::lastLocation() const
     return MapController::mapController->lastLocation();
 }
 
-QHash<quint16, PlayerQuest> BaseWindow::getQuests() const
+QHash<uint16_t, PlayerQuest> BaseWindow::getQuests() const
 {
     return quests;
 }
 
-quint8 BaseWindow::getActualBotId() const
+uint8_t BaseWindow::getActualBotId() const
 {
     return actualBot.botId;
 }
@@ -548,7 +548,7 @@ void BaseWindow::message(QString message) const
     qDebug() << message;
 }
 
-void BaseWindow::number_of_player(quint16 number,quint16 max)
+void BaseWindow::number_of_player(uint16_t number,uint16_t max)
 {
     ui->frame_main_display_interface_player->show();
     QString stringMax;
@@ -627,7 +627,7 @@ void BaseWindow::selectObject(const ObjectType &objectType)
     }
 }
 
-void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const quint32 &quantity)
+void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const uint32_t &quantity)
 {
     inSelection=false;
     ObjectType tempWaitedObjectType=waitedObjectType;
@@ -639,8 +639,8 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
         case ObjectType_ItemOnMonster:
         case ObjectType_ItemOnMonsterOutOfFight:
         {
-            const quint32 monsterUniqueId=itemId;
-            const quint32 item=objectInUsing.last();
+            const uint32_t monsterUniqueId=itemId;
+            const uint32_t item=objectInUsing.last();
             objectInUsing.removeLast();
             if(!ok)
             {
@@ -762,7 +762,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
                 qDebug() << "item id have not the quantity";
                 break;
             }
-            quint32 suggestedPrice=50;
+            uint32_t suggestedPrice=50;
             if(CommonDatapack::commonDatapack.items.item.contains(itemId))
                 suggestedPrice=CommonDatapack::commonDatapack.items.item.value(itemId).price;
             GetPrice getPrice(this,suggestedPrice);
@@ -772,7 +772,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
             CatchChallenger::Api_client_real::client->putMarketObject(itemId,quantity,getPrice.price());
             marketPutCashInSuspend=getPrice.price();
             remove_to_inventory(itemId,quantity);
-            QPair<quint16,quint32> pair;
+            QPair<uint16_t,uint32_t> pair;
             pair.first=itemId;
             pair.second=quantity;
             marketPutObjectInSuspendList << pair;
@@ -964,7 +964,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
                 seed_in_waiting.removeLast();
                 return;
             }
-            const quint8 &plantId=DatapackClientLoader::datapackLoader.itemToPlants.value(itemId);
+            const uint8_t &plantId=DatapackClientLoader::datapackLoader.itemToPlants.value(itemId);
             if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.plants.value(plantId).requirements.reputation))
             {
                 qDebug() << "You don't have the requirements to plant the seed";
@@ -1032,7 +1032,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
             }
             else//else it's to use on current monster
             {
-                const quint32 &monsterUniqueId=ClientFightEngine::fightEngine.getCurrentMonster()->id;
+                const uint32_t &monsterUniqueId=ClientFightEngine::fightEngine.getCurrentMonster()->id;
                 if(ClientFightEngine::fightEngine.useObjectOnMonster(itemId,monsterUniqueId))
                 {
                     remove_to_inventory(itemId);
@@ -1067,22 +1067,22 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
     waitedObjectType=ObjectType_All;
 }
 
-void BaseWindow::add_to_inventory_slot(const QHash<quint16,quint32> &items)
+void BaseWindow::add_to_inventory_slot(const QHash<uint16_t,uint32_t> &items)
 {
     add_to_inventory(items);
 }
 
-void BaseWindow::add_to_inventory(const quint32 &item,const quint32 &quantity,const bool &showGain)
+void BaseWindow::add_to_inventory(const uint32_t &item,const uint32_t &quantity,const bool &showGain)
 {
-    QList<QPair<quint16,quint32> > items;
-    items << QPair<quint16,quint32>(item,quantity);
+    QList<QPair<uint16_t,uint32_t> > items;
+    items << QPair<uint16_t,uint32_t>(item,quantity);
     add_to_inventory(items,showGain);
 }
 
-void BaseWindow::add_to_inventory(const QList<QPair<quint16,quint32> > &items,const bool &showGain)
+void BaseWindow::add_to_inventory(const QList<QPair<uint16_t,uint32_t> > &items,const bool &showGain)
 {
     int index=0;
-    QHash<quint16,quint32> tempHash;
+    QHash<uint16_t,uint32_t> tempHash;
     while(index<items.size())
     {
         tempHash[items.at(index).first]=items.at(index).second;
@@ -1091,14 +1091,14 @@ void BaseWindow::add_to_inventory(const QList<QPair<quint16,quint32> > &items,co
     add_to_inventory(tempHash,showGain);
 }
 
-void BaseWindow::add_to_inventory(const QHash<quint16,quint32> &items,const bool &showGain)
+void BaseWindow::add_to_inventory(const QHash<uint16_t,uint32_t> &items,const bool &showGain)
 {
     if(items.empty())
         return;
     if(showGain)
     {
         QStringList objects;
-        QHashIterator<quint16,quint32> i(items);
+        QHashIterator<uint16_t,uint32_t> i(items);
         while (i.hasNext()) {
             i.next();
 
@@ -1142,7 +1142,7 @@ void BaseWindow::add_to_inventory(const QHash<quint16,quint32> &items,const bool
     else
     {
         //add without show
-        QHashIterator<quint16,quint32> i(items);
+        QHashIterator<uint16_t,uint32_t> i(items);
         while (i.hasNext()) {
             i.next();
             //add really to the list
@@ -1158,21 +1158,21 @@ void BaseWindow::add_to_inventory(const QHash<quint16,quint32> &items,const bool
     on_listCraftingList_itemSelectionChanged();
 }
 
-void BaseWindow::remove_to_inventory(const quint32 &itemId,const quint32 &quantity)
+void BaseWindow::remove_to_inventory(const uint32_t &itemId,const uint32_t &quantity)
 {
-    QHash<quint16,quint32> items;
+    QHash<uint16_t,uint32_t> items;
     items[itemId]=quantity;
     remove_to_inventory(items);
 }
 
-void BaseWindow::remove_to_inventory_slot(const QHash<quint16,quint32> &items)
+void BaseWindow::remove_to_inventory_slot(const QHash<uint16_t,uint32_t> &items)
 {
     remove_to_inventory(items);
 }
 
-void BaseWindow::remove_to_inventory(const QHash<quint16,quint32> &items)
+void BaseWindow::remove_to_inventory(const QHash<uint16_t,uint32_t> &items)
 {
-    QHashIterator<quint16,quint32> i(items);
+    QHashIterator<uint16_t,uint32_t> i(items);
     while (i.hasNext()) {
         i.next();
 
@@ -1420,7 +1420,7 @@ void BaseWindow::on_toolButton_quit_options_clicked()
     ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
 
-void BaseWindow::stopped_in_front_of(CatchChallenger::Map_client *map, quint8 x, quint8 y)
+void BaseWindow::stopped_in_front_of(CatchChallenger::Map_client *map, uint8_t x, uint8_t y)
 {
     if(stopped_in_front_of_check_bot(map,x,y))
         return;
@@ -1431,7 +1431,7 @@ void BaseWindow::stopped_in_front_of(CatchChallenger::Map_client *map, quint8 x,
         {
             if(map->plantList.at(index)->x==x && map->plantList.at(index)->y==y)
             {
-                quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
+                uint64_t current_time=QDateTime::currentMSecsSinceEpoch()/1000;
                 if(map->plantList.at(index)->mature_at<=current_time)
                     showTip(tr("To recolt the plant press <i>Enter</i>"));
                 else
@@ -1478,16 +1478,16 @@ void BaseWindow::stopped_in_front_of(CatchChallenger::Map_client *map, quint8 x,
     }
 }
 
-bool BaseWindow::stopped_in_front_of_check_bot(CatchChallenger::Map_client *map, quint8 x, quint8 y)
+bool BaseWindow::stopped_in_front_of_check_bot(CatchChallenger::Map_client *map, uint8_t x, uint8_t y)
 {
-    if(!map->bots.contains(QPair<quint8,quint8>(x,y)))
+    if(!map->bots.contains(QPair<uint8_t,uint8_t>(x,y)))
         return false;
     showTip(tr("To interact with the bot press <i><b>Enter</b></i>"));
     return true;
 }
 
 //return -1 if not found, else the index
-qint32 BaseWindow::havePlant(CatchChallenger::Map_client *map, quint8 x, quint8 y) const
+int32_t BaseWindow::havePlant(CatchChallenger::Map_client *map, uint8_t x, uint8_t y) const
 {
     if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
     {
@@ -1504,7 +1504,7 @@ qint32 BaseWindow::havePlant(CatchChallenger::Map_client *map, quint8 x, quint8 
     {
         if(!DatapackClientLoader::datapackLoader.plantOnMap.contains(map->map_file))
             return -1;
-        if(!DatapackClientLoader::datapackLoader.plantOnMap.value(map->map_file).contains(QPair<quint8,quint8>(x,y)))
+        if(!DatapackClientLoader::datapackLoader.plantOnMap.value(map->map_file).contains(QPair<uint8_t,uint8_t>(x,y)))
             return -1;
         int index=0;
         while(index<map->plantList.size())
@@ -1522,7 +1522,7 @@ void BaseWindow::actionOnNothing()
     ui->IG_dialog->setVisible(false);
 }
 
-void BaseWindow::actionOn(Map_client *map, quint8 x, quint8 y)
+void BaseWindow::actionOn(Map_client *map, uint8_t x, uint8_t y)
 {
     if(ui->IG_dialog->isVisible())
         ui->IG_dialog->setVisible(false);
@@ -1533,7 +1533,7 @@ void BaseWindow::actionOn(Map_client *map, quint8 x, quint8 y)
         int index=havePlant(map,x,y);
         if(index>=0)
         {
-            quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
+            uint64_t current_time=QDateTime::currentMSecsSinceEpoch()/1000;
             if(map->plantList.at(index)->mature_at<=current_time)
             {
                 if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
@@ -1552,7 +1552,7 @@ void BaseWindow::actionOn(Map_client *map, quint8 x, quint8 y)
                 {
                     if(!DatapackClientLoader::datapackLoader.plantOnMap.contains(map->map_file))
                         return;
-                    if(!DatapackClientLoader::datapackLoader.plantOnMap.value(map->map_file).contains(QPair<quint8,quint8>(x,y)))
+                    if(!DatapackClientLoader::datapackLoader.plantOnMap.value(map->map_file).contains(QPair<uint8_t,uint8_t>(x,y)))
                         return;
                     emit collectMaturePlant();
 
@@ -1575,9 +1575,9 @@ void BaseWindow::actionOn(Map_client *map, quint8 x, quint8 y)
         }
         return;
     }
-    else if(map->itemsOnMap.contains(QPair<quint8,quint8>(x,y)))
+    else if(map->itemsOnMap.contains(QPair<uint8_t,uint8_t>(x,y)))
     {
-        const Map_client::ItemOnMapForClient &item=map->itemsOnMap.value(QPair<quint8,quint8>(x,y));
+        const Map_client::ItemOnMapForClient &item=map->itemsOnMap.value(QPair<uint8_t,uint8_t>(x,y));
         if(!itemOnMap.contains(item.indexOfItemOnMap))
         {
             if(!item.infinite)
@@ -1618,25 +1618,25 @@ void BaseWindow::actionOn(Map_client *map, quint8 x, quint8 y)
     }
 }
 
-bool BaseWindow::actionOnCheckBot(CatchChallenger::Map_client *map, quint8 x, quint8 y)
+bool BaseWindow::actionOnCheckBot(CatchChallenger::Map_client *map, uint8_t x, uint8_t y)
 {
-    if(!map->bots.contains(QPair<quint8,quint8>(x,y)))
+    if(!map->bots.contains(QPair<uint8_t,uint8_t>(x,y)))
         return false;
-    actualBot=map->bots.value(QPair<quint8,quint8>(x,y));
+    actualBot=map->bots.value(QPair<uint8_t,uint8_t>(x,y));
     isInQuest=false;
     goToBotStep(1);
     return true;
 }
 
-void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, quint8 x, quint8 y)
+void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, uint8_t x, uint8_t y)
 {
-    if(!map->bots.contains(QPair<quint8,quint8>(x,y)))
+    if(!map->bots.contains(QPair<uint8_t,uint8_t>(x,y)))
     {
         newError(tr("Internal error"),"Bot trigged but no bot at this place");
         return;
     }
-    quint8 step=1;
-    actualBot=map->bots.value(QPair<quint8,quint8>(x,y));
+    uint8_t step=1;
+    actualBot=map->bots.value(QPair<uint8_t,uint8_t>(x,y));
     isInQuest=false;
     if(!actualBot.step.contains(step))
     {
@@ -1651,7 +1651,7 @@ void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, quint8 x, q
             return;
         }
         bool ok;
-        quint32 fightId=actualBot.step.value(step).attribute("fightid").toUInt(&ok);
+        uint32_t fightId=actualBot.step.value(step).attribute("fightid").toUInt(&ok);
         if(!ok)
         {
             showTip(tr("Bot step wrong data type error, repport this error please"));
@@ -1809,7 +1809,7 @@ void BaseWindow::currentMapLoaded()
     }
 }
 
-void BaseWindow::newEvent(const quint8 &event,const quint8 &event_value)
+void BaseWindow::newEvent(const uint8_t &event,const uint8_t &event_value)
 {
     if(this->events.at(event)==event_value)
         return;
@@ -1854,8 +1854,8 @@ void BaseWindow::updateRXTX()
     int updateRXTXTimeElapsed=updateRXTXTime.elapsed();
     if(updateRXTXTimeElapsed==0)
         return;
-    quint64 RXSize=CatchChallenger::Api_client_real::client->getRXSize();
-    quint64 TXSize=CatchChallenger::Api_client_real::client->getTXSize();
+    uint64_t RXSize=CatchChallenger::Api_client_real::client->getRXSize();
+    uint64_t TXSize=CatchChallenger::Api_client_real::client->getTXSize();
     if(previousRXSize>RXSize)
         previousRXSize=RXSize;
     if(previousTXSize>TXSize)
@@ -1900,7 +1900,7 @@ bool BaseWindow::haveNextStepQuestRequirements(const CatchChallenger::Quest &que
         qDebug() << "step out of range for: " << quest.id;
         return false;
     }
-    quint8 step=quests.value(quest.id).step;
+    uint8_t step=quests.value(quest.id).step;
     if(step<=0 || step>quest.steps.size())
     {
         qDebug() << "step out of range for: " << quest.id;
@@ -1926,7 +1926,7 @@ bool BaseWindow::haveNextStepQuestRequirements(const CatchChallenger::Quest &que
     index=0;
     while(index<requirements.fightId.size())
     {
-        const quint32 &fightId=requirements.fightId.at(index);
+        const uint32_t &fightId=requirements.fightId.at(index);
         if(!MapController::mapController->haveBeatBot(fightId))
         {
             #ifdef DEBUG_CLIENT_QUEST
@@ -1965,7 +1965,7 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest) 
     int index=0;
     while(index<quest.requirements.quests.size())
     {
-        const quint16 &questId=quest.requirements.quests.at(index).quest;
+        const uint16_t &questId=quest.requirements.quests.at(index).quest;
         if(
                 (!quests.contains(questId) && !quest.requirements.quests.at(index).inverse)
                 ||
@@ -2048,7 +2048,7 @@ bool BaseWindow::nextStepQuest(const Quest &quest)
         qDebug() << "step out of range for: " << quest.id;
         return false;
     }
-    quint8 step=quests.value(quest.id).step;
+    uint8_t step=quests.value(quest.id).step;
     if(step<=0 || step>quest.steps.size())
     {
         qDebug() << "step out of range for: " << quest.id;
@@ -2059,7 +2059,7 @@ bool BaseWindow::nextStepQuest(const Quest &quest)
     while(index<requirements.items.size())
     {
         const CatchChallenger::Quest::Item &item=requirements.items.at(index);
-        QHash<quint16,quint32> items;
+        QHash<uint16_t,uint32_t> items;
         items[item.item]=item.quantity;
         remove_to_inventory(items);
         index++;
@@ -2090,7 +2090,7 @@ bool BaseWindow::nextStepQuest(const Quest &quest)
 }
 
 //reputation
-void BaseWindow::appendReputationPoint(const QString &type,const qint32 &point)
+void BaseWindow::appendReputationPoint(const QString &type,const int32_t &point)
 {
     if(point==0)
         return;
@@ -2099,7 +2099,7 @@ void BaseWindow::appendReputationPoint(const QString &type,const qint32 &point)
         emit error(QStringLiteral("Unknow reputation: %1").arg(type));
         return;
     }
-    const quint16 &reputatioId=DatapackClientLoader::datapackLoader.reputationNameToId.value(type);
+    const uint16_t &reputatioId=DatapackClientLoader::datapackLoader.reputationNameToId.value(type);
     PlayerReputation playerReputation;
     if(CatchChallenger::Api_client_real::client->player_informations.reputation.contains(reputatioId))
         playerReputation=CatchChallenger::Api_client_real::client->player_informations.reputation.value(reputatioId);
@@ -2112,7 +2112,7 @@ void BaseWindow::appendReputationPoint(const QString &type,const qint32 &point)
     emit message(QStringLiteral("Reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
     #endif
     PlayerReputation oldPlayerReputation=playerReputation;
-    qint32 old_level=playerReputation.level;
+    int32_t old_level=playerReputation.level;
     FacilityLib::appendReputationPoint(&playerReputation,point,CommonDatapack::commonDatapack.reputation.at(reputatioId));
     if(oldPlayerReputation.level==playerReputation.level && oldPlayerReputation.point==playerReputation.point)
         return;
@@ -2152,17 +2152,17 @@ bool BaseWindow::startQuest(const Quest &quest)
     return true;
 }
 
-bool BaseWindow::botHaveQuest(const quint32 &botId)
+bool BaseWindow::botHaveQuest(const uint32_t &botId)
 {
     #ifdef DEBUG_CLIENT_QUEST
     qDebug() << "check bot quest for: " << botId;
     #endif
     //do the not started quest here
-    QList<quint32> botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
+    QList<uint32_t> botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
     int index=0;
     while(index<botQuests.size())
     {
-        const quint32 &questId=botQuests.at(index);
+        const uint32_t &questId=botQuests.at(index);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(questId!=botQuests.at(index))
             qDebug() << "cast error for questId at BaseWindow::getQuestList()";
@@ -2202,7 +2202,7 @@ bool BaseWindow::botHaveQuest(const quint32 &botId)
                 }
                 else
                 {
-                    QList<quint16> bots=currentQuest.steps.at(quests.value(questId).step-1).bots;
+                    QList<uint16_t> bots=currentQuest.steps.at(quests.value(questId).step-1).bots;
                     if(bots.contains(botId))
                         return true;//in progress
                     else
@@ -2213,13 +2213,13 @@ bool BaseWindow::botHaveQuest(const quint32 &botId)
         index++;
     }
     //do the started quest here
-    QHashIterator<quint16, PlayerQuest> i(quests);
+    QHashIterator<uint16_t, PlayerQuest> i(quests);
     while (i.hasNext()) {
         i.next();
         if(!botQuests.contains(i.key()) && i.value().step>0)
         {
             CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(i.key());
-            QList<quint16> bots=currentQuest.steps.at(i.value().step-1).bots;
+            QList<uint16_t> bots=currentQuest.steps.at(i.value().step-1).bots;
             if(bots.contains(botId))
                 return true;//in progress, but not the starting bot
             else
@@ -2229,16 +2229,16 @@ bool BaseWindow::botHaveQuest(const quint32 &botId)
     return false;
 }
 
-QList<QPair<quint32,QString> > BaseWindow::getQuestList(const quint32 &botId)
+QList<QPair<uint32_t,QString> > BaseWindow::getQuestList(const uint32_t &botId)
 {
-    QList<QPair<quint32,QString> > entryList;
-    QPair<quint32,QString> oneEntry;
+    QList<QPair<uint32_t,QString> > entryList;
+    QPair<uint32_t,QString> oneEntry;
     //do the not started quest here
-    QList<quint32> botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
+    QList<uint32_t> botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
     int index=0;
     while(index<botQuests.size())
     {
-        const quint32 &questId=botQuests.at(index);
+        const uint32_t &questId=botQuests.at(index);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(questId!=botQuests.at(index))
             qDebug() << "cast error for questId at BaseWindow::getQuestList()";
@@ -2298,7 +2298,7 @@ QList<QPair<quint32,QString> > BaseWindow::getQuestList(const quint32 &botId)
                 }
                 else
                 {
-                    QList<quint16> bots=currentQuest.steps.at(quests.value(questId).step-1).bots;
+                    QList<uint16_t> bots=currentQuest.steps.at(quests.value(questId).step-1).bots;
                     if(bots.contains(botId))
                     {
                         oneEntry.first=questId;
@@ -2319,13 +2319,13 @@ QList<QPair<quint32,QString> > BaseWindow::getQuestList(const quint32 &botId)
         index++;
     }
     //do the started quest here
-    QHashIterator<quint16, PlayerQuest> i(quests);
+    QHashIterator<uint16_t, PlayerQuest> i(quests);
     while (i.hasNext()) {
         i.next();
         if(!botQuests.contains(i.key()) && i.value().step>0)
         {
             CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(i.key());
-            QList<quint16> bots=currentQuest.steps.at(i.value().step-1).bots;
+            QList<uint16_t> bots=currentQuest.steps.at(i.value().step-1).bots;
             if(bots.contains(botId))
             {
                 //in progress, but not the starting bot
@@ -2341,7 +2341,7 @@ QList<QPair<quint32,QString> > BaseWindow::getQuestList(const quint32 &botId)
 }
 
 //bot
-void BaseWindow::goToBotStep(const quint8 &step)
+void BaseWindow::goToBotStep(const uint8_t &step)
 {
     lastStepUsed=step;
     isInQuest=false;
@@ -2494,12 +2494,12 @@ void BaseWindow::goToBotStep(const quint8 &step)
     else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("quests"))
     {
         QString textToShow;
-        const QList<QPair<quint32,QString> > &quests=BaseWindow::getQuestList(actualBot.botId);
+        const QList<QPair<uint32_t,QString> > &quests=BaseWindow::getQuestList(actualBot.botId);
         if(step==1)
         {
             if(quests.size()==1)
             {
-                const QPair<quint32,QString> &quest=quests.at(0);
+                const QPair<uint32_t,QString> &quest=quests.at(0);
                 if(DatapackClientLoader::datapackLoader.questsExtra.value(quest.first).autostep)
                 {
                     on_IG_dialog_text_linkActivated(QString("quest_%1").arg(quest.first));
@@ -2520,7 +2520,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
             int index=0;
             while(index<quests.size())
             {
-                const QPair<quint32,QString> &quest=quests.at(index);
+                const QPair<uint32_t,QString> &quest=quests.at(index);
                 textToShow+=QStringLiteral("<li><a href=\"quest_%1\">%2</a></li>").arg(quest.first).arg(quest.second);
                 index++;
             }
@@ -2697,7 +2697,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
             return;
         }
         QScriptValue returnValue=getTextEntryPoint.call();
-        quint32 textEntryPoint=returnValue.toNumber();
+        uint32_t textEntryPoint=returnValue.toNumber();
         if(returnValue.isError())
         {
             qDebug() << "script error:" << QString::fromLatin1("%1: %2")
@@ -2719,7 +2719,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
             return;
         }
         bool ok;
-        quint32 fightId=actualBot.step.value(step).attribute(QStringLiteral("fightid")).toUInt(&ok);
+        uint32_t fightId=actualBot.step.value(step).attribute(QStringLiteral("fightid")).toUInt(&ok);
         if(!ok)
         {
             showTip(tr("Bot step wrong data type error, repport this error please"));
@@ -2775,10 +2775,10 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
         qDebug() << "BaseWindow::on_inventory_itemActivated(): activated item not found";
         return;
     }
-    const quint32 &itemId=items_graphical.value(item);
+    const uint32_t &itemId=items_graphical.value(item);
     if(inSelection)
     {
-        quint32 tempQuantitySelected;
+        uint32_t tempQuantitySelected;
         bool ok=true;
         switch(waitedObjectType)
         {
@@ -2809,7 +2809,7 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
             objectSelection(false);
             return;
         }
-        quint32 objectItem=itemId;
+        uint32_t objectItem=itemId;
         objectSelection(true,objectItem,tempQuantitySelected);
         return;
     }
@@ -2914,14 +2914,14 @@ void BaseWindow::on_inventoryDestroy_clicked()
     QList<QListWidgetItem *> items=ui->inventory->selectedItems();
     if(items.size()!=1)
         return;
-    quint32 itemId=items_graphical.value(items.first());
+    uint32_t itemId=items_graphical.value(items.first());
     if(!this->items.contains(itemId))
         return;
-    quint32 quantity=this->items.value(itemId);
+    uint32_t quantity=this->items.value(itemId);
     if(quantity>1)
     {
         bool ok;
-        quint32 quantity_temp=QInputDialog::getInt(this,tr("Destroy"),tr("Quantity to destroy"),quantity,1,quantity,1,&ok);
+        uint32_t quantity_temp=QInputDialog::getInt(this,tr("Destroy"),tr("Quantity to destroy"),quantity,1,quantity,1,&ok);
         if(!ok)
             return;
         quantity=quantity_temp;
@@ -2943,7 +2943,7 @@ void BaseWindow::on_inventoryDestroy_clicked()
     load_plant_inventory();
 }
 
-quint32 BaseWindow::itemQuantity(const quint32 &itemId) const
+uint32_t BaseWindow::itemQuantity(const uint32_t &itemId) const
 {
     if(items.contains(itemId))
         return items.value(itemId);
@@ -3017,7 +3017,7 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
         {
             QString tempLink=link;
             tempLink.remove("quest_");
-            quint32 questId=tempLink.toUShort(&ok);
+            uint32_t questId=tempLink.toUShort(&ok);
             if(!ok)
             {
                 showTip(QStringLiteral("Unable to open the link: %1").arg(link));
@@ -3078,7 +3078,7 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
             index++;
             continue;
         }
-        quint8 step=link.toUShort(&ok);
+        uint8_t step=link.toUShort(&ok);
         if(!ok)
         {
             showTip(QStringLiteral("Unable to open the link: %1").arg(link));
@@ -3186,7 +3186,7 @@ void BaseWindow::getTextEntryPoint()
     QTextStream stream(&scriptFile);
     QString contents = stream.readAll();
     contents="function getTextEntryPoint()\n{\n"+contents+"\n}";
-    quint8 currentQuestStepVar;
+    uint8_t currentQuestStepVar;
     bool haveNextStepQuestRequirementsVar;
     bool finishOneTimeVar;
     scriptFile.close();
@@ -3258,7 +3258,7 @@ void BaseWindow::getTextEntryPoint()
         return;
     }
     QScriptValue returnValue=getTextEntryPoint.call();
-    quint32 textEntryPoint=(quint32)returnValue.toInt32();
+    uint32_t textEntryPoint=(uint32_t)returnValue.toInt32();
     if(returnValue.isError())
     {
         qDebug() << "script error:" << QString::fromLatin1("%0:%1: %2")
@@ -3279,7 +3279,7 @@ void BaseWindow::getTextEntryPoint()
     Q_UNUSED(finishOneTimeVar);
 }
 
-void BaseWindow::showQuestText(const quint32 &textId)
+void BaseWindow::showQuestText(const uint32_t &textId)
 {
     if(!DatapackClientLoader::datapackLoader.questsText.contains(questId))
     {
@@ -3300,7 +3300,7 @@ void BaseWindow::showQuestText(const quint32 &textId)
     ui->IG_dialog->setVisible(true);
 }
 
-void BaseWindow::addCash(const quint32 &cash)
+void BaseWindow::addCash(const uint32_t &cash)
 {
     this->cash+=cash;
     ui->player_informations_cash->setText(QStringLiteral("%1$").arg(this->cash));
@@ -3308,7 +3308,7 @@ void BaseWindow::addCash(const quint32 &cash)
     ui->tradePlayerCash->setMaximum(this->cash);
 }
 
-void BaseWindow::removeCash(const quint32 &cash)
+void BaseWindow::removeCash(const uint32_t &cash)
 {
     this->cash-=cash;
     ui->player_informations_cash->setText(QStringLiteral("%1$").arg(this->cash));
@@ -3362,7 +3362,7 @@ void BaseWindow::on_tradeCancel_clicked()
     //return the pending stuff
     {
         //item
-        QHash<quint16,quint32> i(tradeCurrentObjects);
+        QHash<uint16_t,uint32_t> i(tradeCurrentObjects);
         add_to_inventory(tradeCurrentObjects,false);
         tradeCurrentObjects.clear();
 
@@ -3502,7 +3502,7 @@ void BaseWindow::changeDeviceIndex(int device)
     }*/
 }
 
-void BaseWindow::lastReplyTime(const quint32 &time)
+void BaseWindow::lastReplyTime(const uint32_t &time)
 {
     ui->labelLastReplyTime->setText(tr("Last reply time: %1ms").arg(time));
     if(lastReplyTimeValue<=TIMEINMSTOBESLOW || lastReplyTimeSince.elapsed()>TIMETOSHOWTHETURTLE)
@@ -3525,16 +3525,16 @@ void BaseWindow::detectSlowDown()
 {
     if(CatchChallenger::Api_client_real::client==NULL)
         return;
-    quint32 queryCount=0;
+    uint32_t queryCount=0;
     worseQueryTime=0;
     QStringList middleQueryList;
-    const QMap<quint8,QTime> &values=CatchChallenger::Api_client_real::client->getQuerySendTimeList();
+    const QMap<uint8_t,QTime> &values=CatchChallenger::Api_client_real::client->getQuerySendTimeList();
     queryCount+=values.size();
-    QMapIterator<quint8,QTime> i(values);
+    QMapIterator<uint8_t,QTime> i(values);
     while (i.hasNext()) {
         i.next();
         middleQueryList << QString::number(i.key());
-        const quint32 &time=i.value().elapsed();
+        const uint32_t &time=i.value().elapsed();
         if(time>worseQueryTime)
             worseQueryTime=time;
     }

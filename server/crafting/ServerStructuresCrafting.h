@@ -5,8 +5,8 @@ namespace CatchChallenger {
 
 struct Plant
 {
-    quint32 itemUsed;
-    quint8 mature_hours;
+    uint32_t itemUsed;
+    uint8_t mature_hours;
     float quantity;
 };
 

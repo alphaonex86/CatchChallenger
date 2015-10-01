@@ -405,7 +405,7 @@ PlayerMonster CommonFightEngine::getRandomMonster(const std::vector<MapMonster> 
     Monster monsterDef=CommonDatapack::commonDatapack.monsters.at(playerMonster.monster);
     if(monsterDef.ratio_gender>0 && monsterDef.ratio_gender<100)
     {
-        qint8 temp_ratio=getOneSeed(101);
+        int8_t temp_ratio=getOneSeed(101);
         if(temp_ratio<monsterDef.ratio_gender)
             playerMonster.gender=Gender_Male;
         else
@@ -628,7 +628,7 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const uint8_t &type,c
                 {
                     if(typeDefinition.multiplicator.find(typeList.at(index))!=typeDefinition.multiplicator.cend())
                     {
-                        const qint8 &multiplicator=typeDefinition.multiplicator.at(typeList.at(index));
+                        const int8_t &multiplicator=typeDefinition.multiplicator.at(typeList.at(index));
                         if(multiplicator>0)
                         {
                             #ifdef CATCHCHALLENGER_DEBUG_FIGHT
@@ -689,7 +689,7 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const uint8_t &type,c
                     const Type &typeDefinition=CatchChallenger::CommonDatapack::commonDatapack.types.at(typeList.at(index));
                     if(typeDefinition.multiplicator.contains(type))
                     {
-                        const qint8 &multiplicator=typeDefinition.multiplicator.at(type);
+                        const int8_t &multiplicator=typeDefinition.multiplicator.at(type);
                         if(multiplicator>=0)
                             quantity*=multiplicator;
                         else
@@ -701,7 +701,7 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const uint8_t &type,c
         }
     }
     else
-        quantity=((qint64)currentMonster->hp*(qint64)effect.quantity)/(qint64)100;
+        quantity=((int64_t)currentMonster->hp*(int64_t)effect.quantity)/(int64_t)100;
     if(effect.quantity<0)
     {
         if(quantity==0)
@@ -2096,7 +2096,7 @@ std::vector<Skill::LifeEffectReturn> CommonFightEngine::applyBuffLifeEffect(Publ
                     }
                     if(effect.type==QuantityType_Percent)
                     {
-                        quantity=((qint64)currentMonsterStat.hp*(qint64)effect.quantity)/(qint64)100;
+                        quantity=((int64_t)currentMonsterStat.hp*(int64_t)effect.quantity)/(int64_t)100;
                         if(effect.quantity<0)
                         {
                             if(quantity==0)

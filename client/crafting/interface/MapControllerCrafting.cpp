@@ -3,9 +3,9 @@
 #include "../../base/interface/DatapackClientLoader.h"
 
 
-QString MapController::mapIdToString(const quint32 &mapId) const
+QString MapController::mapIdToString(const uint32_t &mapId) const
 {
-    if(mapId>=(quint32)DatapackClientLoader::datapackLoader.maps.size())
+    if(mapId>=(uint32_t)DatapackClientLoader::datapackLoader.maps.size())
     {
         qDebug() << "MapController::insert_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return QString();
@@ -14,7 +14,7 @@ QString MapController::mapIdToString(const quint32 &mapId) const
 }
 
 //plant
-void MapController::insert_plant(const quint32 &mapId, const quint8 &x, const quint8 &y, const quint8 &plant_id, const quint16 &seconds_to_mature)
+void MapController::insert_plant(const uint32_t &mapId, const uint8_t &x, const uint8_t &y, const uint8_t &plant_id, const uint16_t &seconds_to_mature)
 {
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
@@ -27,7 +27,7 @@ void MapController::insert_plant(const quint32 &mapId, const quint8 &x, const qu
         delayedPlantInsert << tempItem;
         return;
     }
-    if(mapId>=(quint32)DatapackClientLoader::datapackLoader.maps.size())
+    if(mapId>=(uint32_t)DatapackClientLoader::datapackLoader.maps.size())
     {
         qDebug() << "MapController::insert_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return;
@@ -48,7 +48,7 @@ void MapController::insert_plant(const quint32 &mapId, const quint8 &x, const qu
     insert_plant_full(map,x,y,plant_id,seconds_to_mature);
 }
 
-void MapController::insert_plant_full(const QString &map,const quint8 &x,const quint8 &y,const quint8 &plant_id,const quint16 &seconds_to_mature)
+void MapController::insert_plant_full(const QString &map,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature)
 {
     if(!CatchChallenger::CommonDatapack::commonDatapack.plants.contains(plant_id))
     {
@@ -67,7 +67,7 @@ void MapController::insert_plant_full(const QString &map,const quint8 &x,const q
         else
             index++;
     }
-    quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
+    uint64_t current_time=QDateTime::currentMSecsSinceEpoch()/1000;
     CatchChallenger::ClientPlantWithTimer *plant=new CatchChallenger::ClientPlantWithTimer();
     plant->setSingleShot(true);
     plant->mapObject=new Tiled::MapObject();
@@ -102,7 +102,7 @@ void MapController::getPlantTimerEvent()
 //return true if is growing
 bool MapController::updatePlantGrowing(CatchChallenger::ClientPlantWithTimer *plant)
 {
-    quint64 currentTime=QDateTime::currentMSecsSinceEpoch()/1000;
+    uint64_t currentTime=QDateTime::currentMSecsSinceEpoch()/1000;
     Tiled::Cell cell=plant->mapObject->cell();
     if(plant->mature_at<=currentTime)
     {
@@ -138,7 +138,7 @@ bool MapController::updatePlantGrowing(CatchChallenger::ClientPlantWithTimer *pl
     return true;
 }
 
-void MapController::remove_plant(const quint32 &mapId, const quint8 &x, const quint8 &y)
+void MapController::remove_plant(const uint32_t &mapId, const uint8_t &x, const uint8_t &y)
 {
     if(!mHaveTheDatapack)
     {
@@ -155,7 +155,7 @@ void MapController::remove_plant(const quint32 &mapId, const quint8 &x, const qu
         qDebug() << "MapController::remove_plant() remove item not found into the insert";
         return;
     }
-    if(mapId>=(quint32)DatapackClientLoader::datapackLoader.maps.size())
+    if(mapId>=(uint32_t)DatapackClientLoader::datapackLoader.maps.size())
     {
         qDebug() << "MapController::remove_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return;
@@ -163,7 +163,7 @@ void MapController::remove_plant(const quint32 &mapId, const quint8 &x, const qu
     remove_plant_full(QFileInfo(datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.value(mapId)).absoluteFilePath(),x,y);
 }
 
-void MapController::remove_plant_full(const QString &map, const quint8 &x, const quint8 &y)
+void MapController::remove_plant_full(const QString &map, const uint8_t &x, const uint8_t &y)
 {
     #ifdef DEBUG_CLIENT_PLANTS
     qDebug() << QStringLiteral("remove_plant(%1,%2,%3)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y);

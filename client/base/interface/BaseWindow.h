@@ -48,8 +48,8 @@ public:
     void serverIsLoading();
     void serverIsReady();
     QString lastLocation() const;
-    QHash<quint16, PlayerQuest> getQuests() const;
-    quint8 getActualBotId() const;
+    QHash<uint16_t, PlayerQuest> getQuests() const;
+    uint8_t getActualBotId() const;
     bool haveNextStepQuestRequirements(const Quest &quest) const;
     bool haveStartQuestRequirement(const Quest &quest) const;
     enum ObjectType
@@ -110,20 +110,20 @@ public:
     struct BattleInformations
     {
         QString pseudo;
-        quint8 skinId;
-        QList<quint8> stat;
-        quint8 monsterPlace;
+        uint8_t skinId;
+        QList<uint8_t> stat;
+        uint8_t monsterPlace;
         PublicPlayerMonster publicPlayerMonster;
     };
 protected:
     void changeEvent(QEvent *e);
     static void customMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg);
     static QFile debugFile;
-    static quint8 debugFileStatus;
+    static uint8_t debugFileStatus;
 public slots:
     void stateChanged(QAbstractSocket::SocketState socketState);
     void selectObject(const ObjectType &objectType);
-    void objectSelection(const bool &ok, const quint16 &itemId=0, const quint32 &quantity=1);
+    void objectSelection(const bool &ok, const uint16_t &itemId=0, const uint32_t &quantity=1);
     void connectAllSignals();
 private slots:
     void message(QString message) const;
@@ -134,8 +134,8 @@ private slots:
     void errorWithTheCurrentMap();
     void repelEffectIsOver();
     void send_player_direction(const CatchChallenger::Direction &the_direction);
-    void setEvents(const QList<QPair<quint8, quint8> > &events);
-    void newEvent(const quint8 &event,const quint8 &event_value);
+    void setEvents(const QList<QPair<uint8_t, uint8_t> > &events);
+    void newEvent(const uint8_t &event,const uint8_t &event_value);
 
     //player UI
     void on_pushButton_interface_bag_clicked();
@@ -154,21 +154,21 @@ private slots:
     void loadSettings();
     void loadSettingsWithDatapack();
     void updateTheWareHouseContent();
-    QListWidgetItem * itemToGraphic(const quint32 &id, const quint32 &quantity);
+    QListWidgetItem * itemToGraphic(const uint32_t &id, const uint32_t &quantity);
     //player
     void logged(const QList<ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CharacterEntry> > &characterEntryList);
     void updatePlayerImage();
     void have_character_position();
     void haveCharacter();
     void have_main_and_sub_datapack_loaded();
-    void have_inventory(const QHash<quint16,quint32> &items,const QHash<quint16,quint32> &warehouse_items);
-    void add_to_inventory(const quint32 &item,const quint32 &quantity=1,const bool &showGain=true);
-    void add_to_inventory(const QList<QPair<quint16,quint32> > &items,const bool &showGain=true);
-    void add_to_inventory(const QHash<quint16,quint32> &items, const bool &showGain=true);
-    void add_to_inventory_slot(const QHash<quint16,quint32> &items);
-    void remove_to_inventory(const QHash<quint16,quint32> &items);
-    void remove_to_inventory_slot(const QHash<quint16,quint32> &items);
-    void remove_to_inventory(const quint32 &itemId,const quint32 &quantity=1);
+    void have_inventory(const QHash<uint16_t,uint32_t> &items,const QHash<uint16_t,uint32_t> &warehouse_items);
+    void add_to_inventory(const uint32_t &item,const uint32_t &quantity=1,const bool &showGain=true);
+    void add_to_inventory(const QList<QPair<uint16_t,uint32_t> > &items,const bool &showGain=true);
+    void add_to_inventory(const QHash<uint16_t,uint32_t> &items, const bool &showGain=true);
+    void add_to_inventory_slot(const QHash<uint16_t,uint32_t> &items);
+    void remove_to_inventory(const QHash<uint16_t,uint32_t> &items);
+    void remove_to_inventory_slot(const QHash<uint16_t,uint32_t> &items);
+    void remove_to_inventory(const uint32_t &itemId,const uint32_t &quantity=1);
     void load_inventory();
     void load_plant_inventory();
     void load_crafting_inventory();
@@ -177,31 +177,31 @@ private slots:
     bool check_monsters();
     bool check_senddata();//with the datapack content
     void show_reputation();
-    void addCash(const quint32 &cash);
-    void removeCash(const quint32 &cash);
+    void addCash(const uint32_t &cash);
+    void removeCash(const uint32_t &cash);
     QPixmap getFrontSkin(const QString &skinName) const;
-    QPixmap getFrontSkin(const quint32 &skinId) const;
-    QPixmap getBackSkin(const quint32 &skinId) const;
+    QPixmap getFrontSkin(const uint32_t &skinId) const;
+    QPixmap getBackSkin(const uint32_t &skinId) const;
     QString getSkinPath(const QString &skinName, const QString &type) const;
-    QString getFrontSkinPath(const quint32 &skinId) const;
+    QString getFrontSkinPath(const uint32_t &skinId) const;
     QString getFrontSkinPath(const QString &skin) const;
-    QString getBackSkinPath(const quint32 &skinId) const;
-    void monsterCatch(const quint32 &newMonsterId);
+    QString getBackSkinPath(const uint32_t &skinId) const;
+    void monsterCatch(const uint32_t &newMonsterId);
     //render
-    void stopped_in_front_of(CatchChallenger::Map_client *map, quint8 x, quint8 y);
-    bool stopped_in_front_of_check_bot(CatchChallenger::Map_client *map, quint8 x, quint8 y);
-    qint32 havePlant(CatchChallenger::Map_client *map, quint8 x, quint8 y) const;//return -1 if not found, else the index
+    void stopped_in_front_of(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
+    bool stopped_in_front_of_check_bot(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
+    int32_t havePlant(CatchChallenger::Map_client *map, uint8_t x, uint8_t y) const;//return -1 if not found, else the index
     void actionOnNothing();
-    void actionOn(CatchChallenger::Map_client *map, quint8 x, quint8 y);
-    bool actionOnCheckBot(CatchChallenger::Map_client *map, quint8 x, quint8 y);
-    void botFightCollision(CatchChallenger::Map_client *map, quint8 x, quint8 y);
+    void actionOn(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
+    bool actionOnCheckBot(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
+    void botFightCollision(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
     void blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);
     void currentMapLoaded();
     void pathFindingNotFound();
     void updateFactoryStatProduction(const IndustryStatus &industryStatus,const Industry &industry);
     void factoryToProductItem(QListWidgetItem *item);
     void factoryToResourceItem(QListWidgetItem *item);
-    void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction);
+    void insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
     void animationFinished();
     void evolutionCanceled();
     void teleportConditionNotRespected(const QString &text);
@@ -210,47 +210,47 @@ private slots:
     //datapack
     void haveTheDatapack();
     void haveTheDatapackMainSub();
-    void newDatapackFile(const quint32 &size);
-    void progressingDatapackFile(const quint32 &size);
-    void datapackSize(const quint32 &datapackFileNumber,const quint32 &datapackFileSize);
+    void newDatapackFile(const uint32_t &size);
+    void progressingDatapackFile(const uint32_t &size);
+    void datapackSize(const uint32_t &datapackFileNumber,const uint32_t &datapackFileSize);
 
     //inventory
     void on_inventory_itemActivated(QListWidgetItem *item);
     void objectUsed(const ObjectUsage &objectUsage);
-    quint32 itemQuantity(const quint32 &itemId) const;
+    uint32_t itemQuantity(const uint32_t &itemId) const;
     //trade
-    void tradeRequested(const QString &pseudo, const quint8 &skinInt);
-    void tradeAcceptedByOther(const QString &pseudo,const quint8 &skinInt);
+    void tradeRequested(const QString &pseudo, const uint8_t &skinInt);
+    void tradeAcceptedByOther(const QString &pseudo,const uint8_t &skinInt);
     void tradeCanceledByOther();
     void tradeFinishedByOther();
     void tradeValidatedByTheServer();
-    void tradeAddTradeCash(const quint64 &cash);
-    void tradeAddTradeObject(const quint32 &item,const quint32 &quantity);
+    void tradeAddTradeCash(const uint64_t &cash);
+    void tradeAddTradeObject(const uint32_t &item,const uint32_t &quantity);
     void tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster);
     void tradeUpdateCurrentObject();
     QList<PlayerMonster> warehouseMonsterOnPlayer() const;
     //battle
-    void battleRequested(const QString &pseudo, const quint8 &skinInt);
-    void battleAcceptedByOther(const QString &pseudo, const quint8 &skinId, const QList<quint8> &stat, const quint8 &monsterPlace, const PublicPlayerMonster &publicPlayerMonster);
+    void battleRequested(const QString &pseudo, const uint8_t &skinInt);
+    void battleAcceptedByOther(const QString &pseudo, const uint8_t &skinId, const QList<uint8_t> &stat, const uint8_t &monsterPlace, const PublicPlayerMonster &publicPlayerMonster);
     void battleAcceptedByOtherFull(const BattleInformations &battleInformations);
     void battleCanceledByOther();
     void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn);
 
     //shop
     void haveShopList(const QList<ItemToSellOrBuy> &items);
-    void haveBuyObject(const BuyStat &stat,const quint32 &newPrice);
-    void haveSellObject(const SoldStat &stat,const quint32 &newPrice);
+    void haveBuyObject(const BuyStat &stat,const uint32_t &newPrice);
+    void haveSellObject(const SoldStat &stat,const uint32_t &newPrice);
     void displaySellList();
 
     //shop
-    void haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPrice);
-    void haveSellFactoryObject(const SoldStat &stat,const quint32 &newPrice);
-    void haveFactoryList(const quint32 &remainingProductionTime, const QList<ItemToSellOrBuy> &resources, const QList<ItemToSellOrBuy> &products);
+    void haveBuyFactoryObject(const BuyStat &stat,const uint32_t &newPrice);
+    void haveSellFactoryObject(const SoldStat &stat,const uint32_t &newPrice);
+    void haveFactoryList(const uint32_t &remainingProductionTime, const QList<ItemToSellOrBuy> &resources, const QList<ItemToSellOrBuy> &products);
 
     //plant
-    void insert_plant(const quint32 &mapId,const quint8 &x,const quint8 &y,const quint8 &plant_id,const quint16 &seconds_to_mature);
-    void remove_plant(const quint32 &mapId, const quint8 &x, const quint8 &y);
-    void cancelAllPlantQuery(const QString map, const quint8 x, const quint8 y);//without ref because after reset them self will failed all reset
+    void insert_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
+    void remove_plant(const uint32_t &mapId, const uint8_t &x, const uint8_t &y);
+    void cancelAllPlantQuery(const QString map, const uint8_t x, const uint8_t y);//without ref because after reset them self will failed all reset
     void seed_planted(const bool &ok);
     void plant_collected(const CatchChallenger::Plant_collect &stat);
     //crafting
@@ -260,16 +260,16 @@ private slots:
     void updateRXTX();
 
     //bot
-    void goToBotStep(const quint8 &step);
+    void goToBotStep(const uint8_t &step);
     QString parseHtmlToDisplay(const QString &htmlContent);
 
     //fight
-    void wildFightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
+    void wildFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
     void prepareFight();
-    void botFight(const quint32 &fightId);
-    void botFightFull(const quint32 &fightId);
+    void botFight(const uint32_t &fightId);
+    void botFightFull(const uint32_t &fightId);
     void botFightFullDiffered();
-    bool fightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
+    bool fightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
     void on_pushButtonFightEnterNext_clicked();
     void moveFightMonsterBottom();
     void updateCurrentMonsterInformation();
@@ -285,73 +285,73 @@ private slots:
     void on_pushButtonFightReturn_clicked();
     void on_listWidgetFightAttack_itemSelectionChanged();
     void finalFightTextQuit();
-    void teleportTo(const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
+    void teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
     void doNextAction();
     void pageChanged();
     void displayAttack();
     bool displayFirstAttackText(bool firstText);
     void displayText(const QString &text);
     void resetPosition(bool outOfScreen=false, bool topMonster=true, bool bottomMonster=true);
-    void init_environement_display(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
+    void init_environement_display(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
     void init_current_monster_display(PlayerMonster *fightMonster=NULL);
     void init_other_monster_display();
-    void useTrap(const quint32 &itemId);
+    void useTrap(const uint32_t &itemId);
     void displayTrap();
     void displayExperienceGain();
     void checkEvolution();
 
     //clan/city
-    void cityCapture(const quint32 &remainingTime,const quint8 &type);
+    void cityCapture(const uint32_t &remainingTime,const uint8_t &type);
     void cityCaptureUpdateTime();
     void updatePageZoneCatch();
 
     //learn
-    bool showLearnSkill(const quint32 &monsterId);
-    bool learnSkill(const quint32 &monsterId,const quint32 &skill);
+    bool showLearnSkill(const uint32_t &monsterId);
+    bool learnSkill(const uint32_t &monsterId,const uint32_t &skill);
 
     //quest
     bool haveReputationRequirements(const QList<ReputationRequirements> &reputationList) const;
     void appendReputationRewards(const QList<ReputationRewards> &reputationList);
     void getTextEntryPoint();
-    void showQuestText(const quint32 &textId);
+    void showQuestText(const uint32_t &textId);
     bool tryValidateQuestStep(bool silent=false);
     bool nextStepQuest(const Quest &quest);
     bool startQuest(const Quest &quest);
-    bool botHaveQuest(const quint32 &botId);
-    QList<QPair<quint32,QString> > getQuestList(const quint32 &botId);
+    bool botHaveQuest(const uint32_t &botId);
+    QList<QPair<uint32_t,QString> > getQuestList(const uint32_t &botId);
     void updateDisplayedQuests();
-    void appendReputationPoint(const QString &type,const qint32 &point);
+    void appendReputationPoint(const QString &type,const int32_t &point);
 
     //clan
-    void clanActionSuccess(const quint32 &clanId);
+    void clanActionSuccess(const uint32_t &clanId);
     void clanActionFailed();
     void clanDissolved();
     void updateClanDisplay();
     void clanInformations(const QString &name);
-    void clanInvite(const quint32 &clanId, const QString &name);
+    void clanInvite(const uint32_t &clanId, const QString &name);
 
     //city
     void captureCityYourAreNotLeader();
     void captureCityYourLeaderHaveStartInOtherCity(const QString &zone);
     void captureCityPreviousNotFinished();
-    void captureCityStartBattle(const quint16 &player_count,const quint16 &clan_count);
-    void captureCityStartBotFight(const quint16 &player_count,const quint16 &clan_count,const quint32 &fightId);
-    void captureCityDelayedStart(const quint16 &player_count,const quint16 &clan_count);
+    void captureCityStartBattle(const uint16_t &player_count,const uint16_t &clan_count);
+    void captureCityStartBotFight(const uint16_t &player_count,const uint16_t &clan_count,const uint32_t &fightId);
+    void captureCityDelayedStart(const uint16_t &player_count,const uint16_t &clan_count);
     void captureCityWin();
 
     //market
-    void marketList(const quint64 &price,const QList<MarketObject> &marketObjectList,const QList<MarketMonster> &marketMonsterList,const QList<MarketObject> &marketOwnObjectList,const QList<MarketMonster> &marketOwnMonsterList);
+    void marketList(const uint64_t &price,const QList<MarketObject> &marketObjectList,const QList<MarketMonster> &marketMonsterList,const QList<MarketObject> &marketOwnObjectList,const QList<MarketMonster> &marketOwnMonsterList);
     void addOwnMonster(const MarketMonster &marketMonster);
     void marketBuy(const bool &success);
     void marketBuyMonster(const PlayerMonster &playerMonster);
     void marketPut(const bool &success);
-    void marketGetCash(const quint64 &cash);
+    void marketGetCash(const uint64_t &cash);
     void marketWithdrawCanceled();
-    void marketWithdrawObject(const quint32 &objectId,const quint32 &quantity);
+    void marketWithdrawObject(const uint32_t &objectId,const uint32_t &quantity);
     void marketWithdrawMonster(const PlayerMonster &playerMonster);
 
     //autoconnect
-    void number_of_player(quint16 number,quint16 max);
+    void number_of_player(uint16_t number,uint16_t max);
     void on_toolButton_interface_quit_clicked();
     void on_toolButton_quit_interface_clicked();
     void on_pushButton_interface_trainer_clicked();
@@ -429,7 +429,7 @@ private slots:
     void on_audioVolume_valueChanged(int value);
     void newProfileFinished();
     void updateCharacterList();
-    void newCharacterId(const quint8 &returnCode,const quint32 &characterId);
+    void newCharacterId(const uint8_t &returnCode,const uint32_t &characterId);
     void on_character_add_clicked();
     void on_character_back_clicked();
     void on_character_select_clicked();
@@ -439,12 +439,12 @@ private slots:
     void on_forceZoom_toggled(bool checked);
     void on_zoom_valueChanged(int value);
     void changeDeviceIndex(int device);
-    void lastReplyTime(const quint32 &time);
+    void lastReplyTime(const uint32_t &time);
     void detectSlowDown();
     void updateTheTurtle();
     void on_serverListBack_clicked();
     void updateServerList();
-    void addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *item, const quint64 &currentDate, const bool &fullView=true);
+    void addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *item, const uint64_t &currentDate, const bool &fullView=true);
     void on_serverList_activated(const QModelIndex &index);
     void on_serverListSelect_clicked();
 protected slots:
@@ -462,33 +462,33 @@ private:
     QTimer tip_timeout;
     QTimer gain_timeout;
     QList<QueryType> queryList;
-    quint32 shopId;
-    QHash<quint32,ItemToSellOrBuy> itemsIntoTheShop;
-    quint64 cash,warehouse_cash;
-    qint64 temp_warehouse_cash;// if >0 then Withdraw
+    uint32_t shopId;
+    QHash<uint32_t,ItemToSellOrBuy> itemsIntoTheShop;
+    uint64_t cash,warehouse_cash;
+    int64_t temp_warehouse_cash;// if >0 then Withdraw
     //selection of quantity
-    quint32 tempQuantityForSell;
+    uint32_t tempQuantityForSell;
     bool waitToSell;
     QList<ItemToSellOrBuy> itemsToSell,itemsToBuy;
     QPixmap playerFrontImage,playerBackImage;
     QString playerFrontImagePath,playerBackImagePath;
-    quint32 clan;
+    uint32_t clan;
     bool clan_leader;
     QSet<ActionAllow> allow;
     QList<ActionClan> actionClan;
     QString clanName;
     bool haveClanInformations;
-    quint32 factoryId;
+    uint32_t factoryId;
     IndustryStatus industryStatus;
     bool factoryInProduction;
     ObjectType waitedObjectType;
-    quint32 datapackDownloadedCount;
-    quint32 datapackDownloadedSize;
-    quint32 progressingDatapackFileSize;
+    uint32_t datapackDownloadedCount;
+    uint32_t datapackDownloadedSize;
+    uint32_t progressingDatapackFileSize;
 
     NewProfile *newProfile;
-    quint32 datapackFileNumber;
-    qint32 datapackFileSize;
+    uint32_t datapackFileNumber;
+    int32_t datapackFileSize;
     AnimationControl animationControl;
     EvolutionControl *evolutionControl;
     QWidget *previousAnimationWidget;
@@ -497,12 +497,12 @@ private:
     QWidget *qQuickViewContainer;
     QmlMonsterGeneralInformations *baseMonsterEvolution;
     QmlMonsterGeneralInformations *targetMonsterEvolution;
-    quint32 idMonsterEvolution;
-    quint32 mLastGivenXP;
-    quint32 currentMonsterLevel;
+    uint32_t idMonsterEvolution;
+    uint32_t mLastGivenXP;
+    uint32_t currentMonsterLevel;
     QSet<QString> supportedImageFormats;
     QString lastPlaceDisplayed;
-    QList<quint8> events;
+    QList<uint8_t> events;
     QString visualCategory;
     QTimer botFightTimer;
     QStringList add_to_inventoryGainList;
@@ -516,9 +516,9 @@ private:
 
     //for server/character selection
     bool isLogged;
-    quint32 averagePlayedTime,averageLastConnect;
+    uint32_t averagePlayedTime,averageLastConnect;
     QList<ServerFromPoolForDisplay *> serverOrdenedList;
-    QHash<quint8/*character group index*/,QPair<quint8/*server count*/,quint8/*temp Index to display*/> > serverByCharacterGroup;
+    QHash<uint8_t/*character group index*/,QPair<uint8_t/*server count*/,uint8_t/*temp Index to display*/> > serverByCharacterGroup;
     QList<QList<CharacterEntry> > characterListForSelection;
     QList<CharacterEntry> characterEntryListInWaiting;
     int serverSelected;
@@ -526,24 +526,24 @@ private:
     //plant seed in waiting
     struct SeedInWaiting
     {
-        quint32 seedItemId;
-        quint8 x,y;
+        uint32_t seedItemId;
+        uint8_t x,y;
         QString map;
     };
     QList<SeedInWaiting> seed_in_waiting;
     struct ClientPlantInCollecting
     {
         QString map;
-        quint8 x,y;
-        quint8 plant_id;
-        quint16 seconds_to_mature;
+        uint8_t x,y;
+        uint8_t plant_id;
+        uint16_t seconds_to_mature;
     };
     QList<ClientPlantInCollecting> plant_collect_in_waiting;
     //bool seedWait,collectWait;
 
     QTime updateRXTXTime;
     QTimer updateRXTXTimer;
-    quint64 previousRXSize,previousTXSize;
+    uint64_t previousRXSize,previousTXSize;
     QString toHtmlEntities(QString text);
     QSettings settings;
     bool haveShowDisconnectionReason;
@@ -552,17 +552,17 @@ private:
     QAbstractSocket::SocketState socketState;
     bool haveDatapack,haveDatapackMainSub,haveCharacterPosition,haveCharacterInformation,haveInventory,datapackIsParsed,mainSubDatapackIsParsed;
     bool characterSelected;
-    quint32 fightId;
+    uint32_t fightId;
 
     //market buy
-    QList<QPair<quint32,quint32> > marketBuyObjectList;
-    quint32 marketBuyCashInSuspend;
+    QList<QPair<uint32_t,uint32_t> > marketBuyObjectList;
+    uint32_t marketBuyCashInSuspend;
     bool marketBuyInSuspend;
     //market put
-    quint32 marketPutCashInSuspend;
-    QList<QPair<quint16,quint32> > marketPutObjectInSuspendList;
+    uint32_t marketPutCashInSuspend;
+    QList<QPair<uint16_t,uint32_t> > marketPutObjectInSuspendList;
     QList<CatchChallenger::PlayerMonster> marketPutMonsterList;
-    QList<quint8> marketPutMonsterPlaceList;
+    QList<uint8_t> marketPutMonsterPlaceList;
     bool marketPutInSuspend;
     //market withdraw
     bool marketWithdrawInSuspend;
@@ -570,29 +570,29 @@ private:
     QList<MarketMonster> marketWithdrawMonsterList;
 
     //player items
-    QSet<quint8> itemOnMap;
-    QHash<quint8/*dirtOnMap*/,PlayerPlant> plantOnMap;
-    QHash<quint16,qint32> change_warehouse_items;//negative = deposite, positive = withdraw
-    QHash<quint16,quint32> items,warehouse_items;
-    QHash<QListWidgetItem *,quint32> items_graphical;
-    QHash<quint32,QListWidgetItem *> items_to_graphical;
-    QHash<QListWidgetItem *,quint32> shop_items_graphical;
-    QHash<quint32,QListWidgetItem *> shop_items_to_graphical;
-    QHash<QListWidgetItem *,quint32> plants_items_graphical;
-    QHash<quint32,QListWidgetItem *> plants_items_to_graphical;
-    QHash<QListWidgetItem *,quint32> crafting_recipes_items_graphical;
-    QHash<quint32,QListWidgetItem *> crafting_recipes_items_to_graphical;
-    QHash<QListWidgetItem *,quint32> fight_attacks_graphical;
-    QHash<QListWidgetItem *,quint32> monsters_items_graphical;
-    QHash<QListWidgetItem *,quint32> attack_to_learn_graphical;
-    QHash<QListWidgetItem *,quint32> quests_to_id_graphical;
+    QSet<uint8_t> itemOnMap;
+    QHash<uint8_t/*dirtOnMap*/,PlayerPlant> plantOnMap;
+    QHash<uint16_t,int32_t> change_warehouse_items;//negative = deposite, positive = withdraw
+    QHash<uint16_t,uint32_t> items,warehouse_items;
+    QHash<QListWidgetItem *,uint32_t> items_graphical;
+    QHash<uint32_t,QListWidgetItem *> items_to_graphical;
+    QHash<QListWidgetItem *,uint32_t> shop_items_graphical;
+    QHash<uint32_t,QListWidgetItem *> shop_items_to_graphical;
+    QHash<QListWidgetItem *,uint32_t> plants_items_graphical;
+    QHash<uint32_t,QListWidgetItem *> plants_items_to_graphical;
+    QHash<QListWidgetItem *,uint32_t> crafting_recipes_items_graphical;
+    QHash<uint32_t,QListWidgetItem *> crafting_recipes_items_to_graphical;
+    QHash<QListWidgetItem *,uint32_t> fight_attacks_graphical;
+    QHash<QListWidgetItem *,uint32_t> monsters_items_graphical;
+    QHash<QListWidgetItem *,uint32_t> attack_to_learn_graphical;
+    QHash<QListWidgetItem *,uint32_t> quests_to_id_graphical;
     bool inSelection;
-    QList<quint32> objectInUsing;
-    QList<quint32> monster_to_deposit,monster_to_withdraw;
+    QList<uint32_t> objectInUsing;
+    QList<uint32_t> monster_to_deposit,monster_to_withdraw;
 
     //crafting
-    QList<QList<QPair<quint32,quint32> > > materialOfRecipeInUsing;
-    QList<QPair<quint32,quint32> > productOfRecipeInUsing;
+    QList<QList<QPair<uint32_t,uint32_t> > > materialOfRecipeInUsing;
+    QList<QPair<uint32_t,uint32_t> > productOfRecipeInUsing;
 
     //bot
     Bot actualBot;
@@ -609,7 +609,7 @@ private:
     MoveType moveType;
     bool fightTimerFinish;
     int displayAttackProgression;
-    quint8 lastStepUsed;
+    uint8_t lastStepUsed;
     enum DoNextActionStep
     {
         DoNextActionStep_Start,
@@ -625,14 +625,14 @@ private:
     BattleType battleType;
     QMovie *movie;
     QList<PlayerMonster> warehouse_playerMonster;
-    quint32 trapItemId;
+    uint32_t trapItemId;
     int displayTrapProgression;
     QTimer displayTrapTimer;
     bool trapSuccess;
-    qint32 attack_quantity_changed;
+    int32_t attack_quantity_changed;
     QList<BattleInformations> battleInformationsList;
-    QList<quint32> botFightList;
-    QHash<quint32,QListWidgetItem *> buffToGraphicalItemTop,buffToGraphicalItemBottom;
+    QList<uint32_t> botFightList;
+    QHash<uint32_t,QListWidgetItem *> buffToGraphicalItemTop,buffToGraphicalItemBottom;
     bool useTheRescueSkill;
 
     //city
@@ -645,17 +645,17 @@ private:
 
     //trade
     TradeOtherStat tradeOtherStat;
-    QHash<quint16,quint32> tradeOtherObjects,tradeCurrentObjects;
+    QHash<uint16_t,uint32_t> tradeOtherObjects,tradeCurrentObjects;
     QList<CatchChallenger::PlayerMonster> tradeEvolutionMonsters,tradeOtherMonsters,tradeCurrentMonsters;
-    QList<quint8> tradeCurrentMonstersPosition;
+    QList<uint8_t> tradeCurrentMonstersPosition;
 
     //learn
-    quint32 monsterToLearn;
+    uint32_t monsterToLearn;
 
     //quest
     bool isInQuest;
-    quint16 questId;
-    QHash<quint16, PlayerQuest> quests;
+    uint16_t questId;
+    QHash<uint16_t, PlayerQuest> quests;
 
     //battle
     BattleStep battleStep;
@@ -688,7 +688,7 @@ private:
     QTimer checkQueryTime;
     int lastReplyTimeValue;
     QTime lastReplyTimeSince;
-    quint32 worseQueryTime;
+    uint32_t worseQueryTime;
     bool multiplayer;
 signals:
     void newError(QString error,QString detailedError);
@@ -699,10 +699,10 @@ signals:
     void sendsetMultiPlayer(const bool & multiplayer);
     void teleportDone();
     //plant, can do action only if the previous is finish
-    void useSeed(const quint8 &plant_id);
+    void useSeed(const uint8_t &plant_id);
     void collectMaturePlant();
     //inventory
-    void destroyObject(quint32 object,quint32 quantity=1);
+    void destroyObject(uint32_t object,uint32_t quantity=1);
     void gameIsLoaded();
 };
 }

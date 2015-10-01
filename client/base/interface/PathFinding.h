@@ -13,37 +13,37 @@ public:
     explicit PathFinding();
     virtual ~PathFinding();
 signals:
-    void result(QList<QPair<CatchChallenger::Orientation,quint8> > path);
+    void result(QList<QPair<CatchChallenger::Orientation,uint8_t> > path);
     void internalCancel();
-    void emitSearchPath(const QString &destination_map,const quint8 &destination_x,const quint8 &destination_y,const QString &current_map,const quint8 &x,const quint8 &y,const QHash<quint16,quint32> &items);
+    void emitSearchPath(const QString &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const QString &current_map,const uint8_t &x,const uint8_t &y,const QHash<uint16_t,uint32_t> &items);
 public slots:
-    void searchPath(const QHash<QString, MapVisualiserThread::Map_full *> &all_map,const QString &destination_map,const quint8 &destination_x,const quint8 &destination_y,const QString &current_map,const quint8 &x,const quint8 &y,const QHash<quint16,quint32> &items);
-    void internalSearchPath(const QString &destination_map,const quint8 &destination_x,const quint8 &destination_y,const QString &current_map,const quint8 &x,const quint8 &y,const QHash<quint16,quint32> &items);
+    void searchPath(const QHash<QString, MapVisualiserThread::Map_full *> &all_map,const QString &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const QString &current_map,const uint8_t &x,const uint8_t &y,const QHash<uint16_t,uint32_t> &items);
+    void internalSearchPath(const QString &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const QString &current_map,const uint8_t &x,const uint8_t &y,const QHash<uint16_t,uint32_t> &items);
     void cancel();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    static void extraControlOnData(const QList<QPair<CatchChallenger::Orientation,quint8/*step number*/> > &controlVar,const CatchChallenger::Orientation &orientation);
+    static void extraControlOnData(const QList<QPair<CatchChallenger::Orientation,uint8_t/*step number*/> > &controlVar,const CatchChallenger::Orientation &orientation);
     #endif
 private:
     struct SimplifiedMapForPathFinding
     {
         bool *walkable;
-        quint8 *monstersCollisionMap;//to know if have the item
+        uint8_t *monstersCollisionMap;//to know if have the item
         bool *dirt;
-        quint8 *ledges;
+        uint8_t *ledges;
 
-        quint8 width,height;
+        uint8_t width,height;
 
         struct Map_Border
         {
             struct Map_BorderContent_TopBottom
             {
                 SimplifiedMapForPathFinding *map;
-                qint32 x_offset;
+                int32_t x_offset;
             };
             struct Map_BorderContent_LeftRight
             {
                 SimplifiedMapForPathFinding *map;
-                qint32 y_offset;
+                int32_t y_offset;
             };
             Map_BorderContent_TopBottom top;
             Map_BorderContent_TopBottom bottom;
@@ -53,19 +53,19 @@ private:
         Map_Border border;
         struct PathToGo
         {
-            QList<QPair<CatchChallenger::Orientation,quint8/*step number*/> > left;
-            QList<QPair<CatchChallenger::Orientation,quint8/*step number*/> > right;
-            QList<QPair<CatchChallenger::Orientation,quint8/*step number*/> > top;
-            QList<QPair<CatchChallenger::Orientation,quint8/*step number*/> > bottom;
+            QList<QPair<CatchChallenger::Orientation,uint8_t/*step number*/> > left;
+            QList<QPair<CatchChallenger::Orientation,uint8_t/*step number*/> > right;
+            QList<QPair<CatchChallenger::Orientation,uint8_t/*step number*/> > top;
+            QList<QPair<CatchChallenger::Orientation,uint8_t/*step number*/> > bottom;
         };
-        QHash<QPair<quint8,quint8>,PathToGo> pathToGo;
-        QSet<QPair<quint8,quint8> > pointQueued;
+        QHash<QPair<uint8_t,uint8_t>,PathToGo> pathToGo;
+        QSet<QPair<uint8_t,uint8_t> > pointQueued;
     };
 
     struct MapPointToParse
     {
         QString map;
-        quint8 x,y;
+        uint8_t x,y;
     };
 
     QMutex mutex;
@@ -73,7 +73,7 @@ private:
     bool tryCancel;
     QList<MapVisualiserThread::Map_full> mapList;
 public:
-    static bool canGoOn(const SimplifiedMapForPathFinding &simplifiedMapForPathFinding,const quint8 &x, const quint8 &y);
+    static bool canGoOn(const SimplifiedMapForPathFinding &simplifiedMapForPathFinding,const uint8_t &x, const uint8_t &y);
 };
 
 #endif // PATHFINDING_H

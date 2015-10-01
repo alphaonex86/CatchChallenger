@@ -23,22 +23,22 @@ MapVisualiserPlayerWithFight::~MapVisualiserPlayerWithFight()
     }
 }
 
-void MapVisualiserPlayerWithFight::setBotsAlreadyBeaten(const QSet<quint16> &botAlreadyBeaten)
+void MapVisualiserPlayerWithFight::setBotsAlreadyBeaten(const QSet<uint16_t> &botAlreadyBeaten)
 {
     this->botAlreadyBeaten=botAlreadyBeaten;
 }
 
-void MapVisualiserPlayerWithFight::addBeatenBotFight(const quint16 &botFightId)
+void MapVisualiserPlayerWithFight::addBeatenBotFight(const uint16_t &botFightId)
 {
     botAlreadyBeaten << botFightId;
 }
 
-bool MapVisualiserPlayerWithFight::haveBeatBot(const quint16 &botFightId) const
+bool MapVisualiserPlayerWithFight::haveBeatBot(const uint16_t &botFightId) const
 {
     return botAlreadyBeaten.contains(botFightId);
 }
 
-void MapVisualiserPlayerWithFight::addRepelStep(const quint32 &repel_step)
+void MapVisualiserPlayerWithFight::addRepelStep(const uint32_t &repel_step)
 {
     this->repel_step+=repel_step;
 }
@@ -84,8 +84,8 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         fightMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
     if(fightMonster!=NULL)
     {
-        QList<quint32> botFightList=all_map.value(current_map)->logicalMap.botsFightTrigger.values(QPair<quint8,quint8>(x,y));
-        QList<QPair<quint8,quint8> > botFightRemotePointList=all_map.value(current_map)->logicalMap.botsFightTriggerExtra.values(QPair<quint8,quint8>(x,y));
+        QList<uint32_t> botFightList=all_map.value(current_map)->logicalMap.botsFightTrigger.values(QPair<uint8_t,uint8_t>(x,y));
+        QList<QPair<uint8_t,uint8_t> > botFightRemotePointList=all_map.value(current_map)->logicalMap.botsFightTriggerExtra.values(QPair<uint8_t,uint8_t>(x,y));
         int index=0;
         while(index<botFightList.size())
         {
@@ -148,7 +148,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
     return false;
 }
 
-bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &direction, CatchChallenger::CommonMap map, quint8 x, quint8 y, const bool &checkCollision)
+bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &direction, CatchChallenger::CommonMap map, uint8_t x, uint8_t y, const bool &checkCollision)
 {
     if(!MapVisualiserPlayer::canGoTo(direction,map,x,y,checkCollision))
         return false;
@@ -222,7 +222,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
         }
     }
 
-    QList<quint32> botFightList=map_client.botsFightTrigger.values(QPair<quint8,quint8>(x,y));
+    QList<uint32_t> botFightList=map_client.botsFightTrigger.values(QPair<uint8_t,uint8_t>(x,y));
     int index=0;
     while(index<botFightList.size())
     {

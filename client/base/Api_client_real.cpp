@@ -72,12 +72,12 @@ Api_client_real::~Api_client_real()
     }
 }
 
-void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+void Api_client_real::parseFullReplyData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     return parseFullReplyData(mainCodeType,subCodeType,queryNumber,QByteArray(data,size));
 }
 
-void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
+void Api_client_real::parseFullReplyData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const QByteArray &data)
 {
     if(querySendTime.contains(queryNumber))
     {
@@ -109,7 +109,7 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint8
                                 QList<bool> boolList;
                                 while((in.device()->size()-in.device()->pos())>0)
                                 {
-                                    quint8 returnCode;
+                                    uint8_t returnCode;
                                     in >> returnCode;
                                     boolList.append(returnCode&0x01);
                                     boolList.append(returnCode&0x02);
@@ -162,7 +162,7 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint8
                                 QList<bool> boolList;
                                 while((in.device()->size()-in.device()->pos())>0)
                                 {
-                                    quint8 returnCode;
+                                    uint8_t returnCode;
                                     in >> returnCode;
                                     boolList.append(returnCode&0x01);
                                     boolList.append(returnCode&0x02);
@@ -215,7 +215,7 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint8
                                 QList<bool> boolList;
                                 while((in.device()->size()-in.device()->pos())>0)
                                 {
-                                    quint8 returnCode;
+                                    uint8_t returnCode;
                                     in >> returnCode;
                                     boolList.append(returnCode&0x01);
                                     boolList.append(returnCode&0x02);
@@ -284,7 +284,7 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint8
 }
 
 //general data
-void Api_client_real::defineMaxPlayers(const quint16 &maxPlayers)
+void Api_client_real::defineMaxPlayers(const uint16_t &maxPlayers)
 {
     ProtocolParsing::setMaxPlayers(maxPlayers);
 }
@@ -310,7 +310,7 @@ void Api_client_real::resetAll()
     Api_protocol::resetAll();
 }
 
-void Api_client_real::tryConnect(QString host,quint16 port)
+void Api_client_real::tryConnect(QString host,uint16_t port)
 {
     if(socket==NULL)
         return;
@@ -342,7 +342,7 @@ QString Api_client_real::getHost()
     return host;
 }
 
-quint16 Api_client_real::getPort()
+uint16_t Api_client_real::getPort()
 {
     return port;
 }

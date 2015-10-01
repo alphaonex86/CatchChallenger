@@ -181,8 +181,6 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
         QByteArray purgeBuffer;
         //prepare the data
         {
-            QDataStream out(&purgeBuffer, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
             //////////////////////////// insert //////////////////////////
             // can be only this map with this algo, then 1 map
@@ -249,8 +247,6 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
         QByteArray purgeBuffer_outputData;
         //prepare the data
         {
-            QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
             //////////////////////////// insert //////////////////////////
             // can be only this map with this algo, then 1 map
@@ -313,8 +309,6 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
             if(clients.at(index)->to_send_insert)
             {
                 QByteArray purgeBuffer_outputData;
-                QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-                out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
                 //////////////////////////// insert //////////////////////////
                 // can be only this map with this algo, then 1 map
@@ -405,8 +399,6 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
             purgeBuffer_outputData.resize(to_send_remove.size()*(to_send_remove.size()*sizeof(uint16_t))+sizeof(uint16_t));
         //prepare the data
         {
-            QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
             //////////////////////////// insert //////////////////////////
             if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
@@ -450,8 +442,6 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
             if(real_reinsert_count>0)
             {
                 QByteArray purgeBuffer_outputData;
-                QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-                out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
                 //////////////////////////// insert //////////////////////////
                 if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
@@ -500,8 +490,6 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
                 if(real_reinsert_count>0)
                 {
                     QByteArray purgeBuffer_outputData;
-                    QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-                    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
                     //////////////////////////// insert //////////////////////////
                     if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)

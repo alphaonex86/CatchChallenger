@@ -15,7 +15,7 @@ void DatapackClientLoader::parsePlantsExtra()
     const QString &text_dotpng=QStringLiteral(".png");
     const QString &text_dotgif=QStringLiteral(".gif");
     const QString &basePath=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLANTS);
-    QHash<quint8,CatchChallenger::Plant>::const_iterator i = CatchChallenger::CommonDatapack::commonDatapack.plants.constBegin();
+    QHash<uint8_t,CatchChallenger::Plant>::const_iterator i = CatchChallenger::CommonDatapack::commonDatapack.plants.constBegin();
     while (i != CatchChallenger::CommonDatapack::commonDatapack.plants.constEnd()) {
         //try load the tileset
         PlantExtra plant;

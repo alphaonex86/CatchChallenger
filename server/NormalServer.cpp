@@ -356,7 +356,7 @@ void NormalServer::serverCommand(const QString &command, const QString &extraTex
 }
 
 //////////////////////////////////// Function secondary //////////////////////////////
-QString NormalServer::listenIpAndPort(QString server_ip,quint16 server_port)
+QString NormalServer::listenIpAndPort(QString server_ip,uint16_t server_port)
 {
     if(server_ip.isEmpty())
         server_ip=QLatin1Literal("*");
@@ -395,7 +395,7 @@ void NormalServer::newConnection()
             const QHostAddress &peerAddress=socket->peerAddress();
             bool kicked=kickedHosts.contains(peerAddress);
             if(kicked)
-                if((QDateTime::currentDateTime().toTime_t()-kickedHosts.value(peerAddress).toTime_t())>=(quint32)CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick)
+                if((QDateTime::currentDateTime().toTime_t()-kickedHosts.value(peerAddress).toTime_t())>=(uint32_t)CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick)
                 {
                     kickedHosts.remove(peerAddress);
                     kicked=false;
@@ -470,7 +470,7 @@ void NormalServer::purgeKickedHost()
     QHashIterator<QHostAddress,QDateTime> i(kickedHosts);
     while (i.hasNext()) {
         i.next();
-        if((currentDateTime.toTime_t()-i.value().toTime_t())>=(quint32)CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick)
+        if((currentDateTime.toTime_t()-i.value().toTime_t())>=(uint32_t)CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick)
             hostsToRemove << i.key();
     }
     int index=0;
@@ -501,12 +501,12 @@ bool NormalServer::isStopped()
     return QtServer::isStopped();
 }
 
-quint16 NormalServer::player_current()
+uint16_t NormalServer::player_current()
 {
     return GlobalServerData::serverPrivateVariables.connected_players;
 }
 
-quint16 NormalServer::player_max()
+uint16_t NormalServer::player_max()
 {
     return GlobalServerData::serverSettings.max_players;
 }

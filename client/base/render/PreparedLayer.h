@@ -26,7 +26,7 @@ private:
     MapVisualiserThread::Map_full * tempMapObject;
     QTime clickDuration;
 signals:
-    void eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,quint8 x,quint8 y);
+    void eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,uint8_t x,uint8_t y);
 };
 
 #endif // PREPAREDLAYER_H

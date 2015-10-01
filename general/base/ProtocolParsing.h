@@ -158,10 +158,10 @@ private:
     static QByteArray lzmaUncompress(QByteArray data);
 public:
     virtual void storeInputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
+    bool internalSendRawSmallPacket(const char * const data,const int &size);
 protected:
     //reply to the query
     bool removeFromQueryReceived(const uint8_t &queryNumber);
-    bool internalSendRawSmallPacket(const char * const data,const int &size);
     virtual void disconnectClient() = 0;
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     virtual ProtocolParsing::CompressionType getCompressType() const = 0;
@@ -188,8 +188,8 @@ public:
     virtual ~ProtocolParsingInputOutput();
     friend class Client;
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    quint64 getTXSize() const;
-    quint64 getRXSize() const;
+    uint64_t getTXSize() const;
+    uint64_t getRXSize() const;
     #endif
     void storeInputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
 
@@ -214,8 +214,8 @@ protected:
     ProtocolParsingCheck *protocolParsingCheck;
     #endif
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    quint64 TXSize;
-    quint64 RXSize;
+    uint64_t TXSize;
+    uint64_t RXSize;
     #endif
     #ifndef EPOLLCATCHCHALLENGERSERVER
     char commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];

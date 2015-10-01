@@ -60,7 +60,7 @@ LinkToMaster::~LinkToMaster()
     abort();
 }
 
-int LinkToMaster::tryConnect(const char * const host, const quint16 &port,const quint8 &tryInterval,const quint8 &considerDownAfterNumberOfTry)
+int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const uint8_t &tryInterval,const uint8_t &considerDownAfterNumberOfTry)
 {
     if(port==0)
     {
@@ -102,9 +102,9 @@ int LinkToMaster::tryConnect(const char * const host, const quint16 &port,const 
             auto end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> elapsed = end-start;
             index++;
-            if(elapsed.count()<(quint32)tryInterval*1000 && index<considerDownAfterNumberOfTry && connStatusType<0)
+            if(elapsed.count()<(uint32_t)tryInterval*1000 && index<considerDownAfterNumberOfTry && connStatusType<0)
             {
-                const unsigned int ms=(quint32)tryInterval*1000-elapsed.count();
+                const unsigned int ms=(uint32_t)tryInterval*1000-elapsed.count();
                 std::this_thread::sleep_for(std::chrono::milliseconds(ms));
             }
         }
@@ -367,7 +367,7 @@ bool LinkToMaster::registerGameServer(const QString &exportedXml, const char * c
                 settings->setValue(QLatin1Literal("uniqueKey"),uniqueKey);
             }
         }
-        *reinterpret_cast<quint32 *>(tempBuffer+pos)=htole32(uniqueKey);
+        *reinterpret_cast<uint32_t *>(tempBuffer+pos)=htole32(uniqueKey);
         pos+=4;
     }
 
@@ -399,7 +399,7 @@ bool LinkToMaster::registerGameServer(const QString &exportedXml, const char * c
             externalServerPort = rng()%(65535-8192)+8192;
             settings->setValue(QLatin1Literal("external-server-port"),externalServerPort);
         }
-        *reinterpret_cast<quint16 *>(tempBuffer+pos)=htole16(externalServerPort);
+        *reinterpret_cast<uint16_t *>(tempBuffer+pos)=htole16(externalServerPort);
         pos+=2;
     }
     settings->endGroup();
@@ -435,37 +435,37 @@ bool LinkToMaster::registerGameServer(const QString &exportedXml, const char * c
     //current player number and max player
     if(GlobalServerData::serverSettings.sendPlayerNumber)
     {
-        *reinterpret_cast<quint16 *>(tempBuffer+pos)=htole16(GlobalServerData::serverPrivateVariables.connected_players);
+        *reinterpret_cast<uint16_t *>(tempBuffer+pos)=htole16(GlobalServerData::serverPrivateVariables.connected_players);
         pos+=2;
-        *reinterpret_cast<quint16 *>(tempBuffer+pos)=htole16(GlobalServerData::serverSettings.max_players);
+        *reinterpret_cast<uint16_t *>(tempBuffer+pos)=htole16(GlobalServerData::serverSettings.max_players);
         pos+=2;
     }
     else
     {
         if(GlobalServerData::serverPrivateVariables.connected_players<=255)
-            *reinterpret_cast<quint16 *>(tempBuffer+pos)=htole16(255/2);
+            *reinterpret_cast<uint16_t *>(tempBuffer+pos)=htole16(255/2);
         else
-            *reinterpret_cast<quint16 *>(tempBuffer+pos)=htole16(65535/2);
+            *reinterpret_cast<uint16_t *>(tempBuffer+pos)=htole16(65535/2);
         pos+=2;
         if(GlobalServerData::serverSettings.max_players<=255)
-            *reinterpret_cast<quint16 *>(tempBuffer+pos)=htole16(255);
+            *reinterpret_cast<uint16_t *>(tempBuffer+pos)=htole16(255);
         else
-            *reinterpret_cast<quint16 *>(tempBuffer+pos)=htole16(65535);
+            *reinterpret_cast<uint16_t *>(tempBuffer+pos)=htole16(65535);
         pos+=2;
     }
 
     //send the connected player
     {
-        quint32 character_count=0;
+        uint32_t character_count=0;
         unsigned int sizePos=pos;
         pos+=2;
         unsigned short int index=0;
         while(index<Client::clientBroadCastList.size())
         {
-            const quint32 &character_id=Client::clientBroadCastList.at(index)->getPlayerId();
+            const uint32_t &character_id=Client::clientBroadCastList.at(index)->getPlayerId();
             if(character_id!=0)
             {
-                *reinterpret_cast<quint32 *>(tempBuffer+pos)=htole32(character_id);
+                *reinterpret_cast<uint32_t *>(tempBuffer+pos)=htole32(character_id);
                 pos+=4;
                 character_count++;
             }
@@ -473,7 +473,7 @@ bool LinkToMaster::registerGameServer(const QString &exportedXml, const char * c
                 break;
             index++;
         }
-        *reinterpret_cast<quint16 *>(tempBuffer+sizePos)=htole16(character_count);
+        *reinterpret_cast<uint16_t *>(tempBuffer+sizePos)=htole16(character_count);
     }
 
     packOutcommingQuery(0x07,queryNumberList.back(),tempBuffer,pos);
@@ -481,15 +481,15 @@ bool LinkToMaster::registerGameServer(const QString &exportedXml, const char * c
     return true;
 }
 
-void LinkToMaster::characterDisconnected(const quint32 &characterId)
+void LinkToMaster::characterDisconnected(const uint32_t &characterId)
 {
-    *reinterpret_cast<quint32 *>(LinkToMaster::sendDisconnectedPlayer+0x02)=htole32(characterId);
+    *reinterpret_cast<uint32_t *>(LinkToMaster::sendDisconnectedPlayer+0x02)=htole32(characterId);
     internalSendRawSmallPacket(LinkToMaster::sendDisconnectedPlayer,sizeof(LinkToMaster::sendDisconnectedPlayer));
 }
 
-void LinkToMaster::currentPlayerChange(const quint16 &currentPlayer)
+void LinkToMaster::currentPlayerChange(const uint16_t &currentPlayer)
 {
-    *reinterpret_cast<quint16 *>(LinkToMaster::sendCurrentPlayer+0x02)=htole16(currentPlayer);
+    *reinterpret_cast<uint16_t *>(LinkToMaster::sendCurrentPlayer+0x02)=htole16(currentPlayer);
     internalSendRawSmallPacket(LinkToMaster::sendCurrentPlayer,sizeof(LinkToMaster::sendCurrentPlayer));
 }
 

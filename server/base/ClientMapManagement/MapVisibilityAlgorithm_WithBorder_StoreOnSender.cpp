@@ -718,12 +718,12 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_insert()
             }
             else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
             {
-                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(map->id);
+                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(map->id);
                 posOutput+=2;
             }
             else
             {
-                *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(map->id);
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(map->id);
                 posOutput+=4;
             }
             if(GlobalServerData::serverSettings.max_players<=255)
@@ -733,7 +733,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_insert()
             }
             else
             {
-                *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(list_size);
+                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(list_size);
                 posOutput+=2;
             }
 
@@ -760,7 +760,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_insert()
                 }
                 else
                 {
-                    *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(client->public_and_private_informations.public_informations.simplifiedId);
+                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(client->public_and_private_informations.public_informations.simplifiedId);
                     posOutput+=2;
                 }
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->x;
@@ -796,7 +796,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_insert()
         }
     }
 
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
@@ -824,7 +824,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_move()
     }
     else
     {
-        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(to_send_move.size());
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(to_send_move.size());
         posOutput+=2;
     }
     while (i_move != to_send_move.cend())
@@ -839,7 +839,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_move()
         }
         else
         {
-            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(i_move->first);
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(i_move->first);
             posOutput+=2;
         }
 
@@ -859,7 +859,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_move()
     }
     to_send_move.clear();
 
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
@@ -885,7 +885,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_remove()
     }
     else
     {
-        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(to_send_remove.size());
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(to_send_remove.size());
         posOutput+=2;
     }
     while (i_remove != to_send_remove.cend())
@@ -900,14 +900,14 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_remove()
         }
         else
         {
-            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(*i_remove);
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(*i_remove);
             posOutput+=2;
         }
         ++i_remove;
     }
     to_send_remove.clear();
 
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
@@ -932,7 +932,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_reinsert()
     }
     else
     {
-        *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(to_send_reinsert.size());
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(to_send_reinsert.size());
         posOutput+=2;
     }
 
@@ -954,7 +954,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_reinsert()
         }
         else
         {
-            *reinterpret_cast<quint16 *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(i_insert->first);
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(i_insert->first);
             posOutput+=2;
         }
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i_insert->second->x;
@@ -968,7 +968,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_reinsert()
     }
     to_send_reinsert.clear();
 
-    *reinterpret_cast<quint32 *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
