@@ -402,7 +402,7 @@ void NormalServer::newConnection()
                 }
             if(!kicked)
             {
-                connect(socket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&NormalServer::sslErrors);
+                connect(socket,static_cast<void(QSslSocket::*)(const std::vector<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&NormalServer::sslErrors);
                 if(socket!=NULL)
                 {
                     #ifdef Q_OS_LINUX
@@ -465,7 +465,7 @@ void NormalServer::kicked(const QHostAddress &host)
 
 void NormalServer::purgeKickedHost()
 {
-    QList<QHostAddress> hostsToRemove;
+    std::vector<QHostAddress> hostsToRemove;
     const QDateTime &currentDateTime=QDateTime::currentDateTime();
     std::unordered_mapIterator<QHostAddress,QDateTime> i(kickedHosts);
     while (i.hasNext()) {
@@ -481,7 +481,7 @@ void NormalServer::purgeKickedHost()
     }
 }
 
-void NormalServer::sslErrors(const QList<QSslError> &errors)
+void NormalServer::sslErrors(const std::vector<QSslError> &errors)
 {
     int index=0;
     while(index<errors.size())

@@ -907,7 +907,7 @@ void BaseServer::loadMonsterBuffs_static(void *object)
 void BaseServer::loadMonsterBuffs_return()
 {
     const uint32_t &monsterId=GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.at(entryListIndex).monster.id;
-    QList<PlayerBuff> buffs;
+    std::vector<PlayerBuff> buffs;
     bool ok;
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
@@ -988,7 +988,7 @@ void BaseServer::loadMonsterSkills_static(void *object)
 void BaseServer::loadMonsterSkills_return()
 {
     const uint32_t &monsterId=GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.at(entryListIndex).monster.id;
-    QList<PlayerMonster::PlayerSkill> skills;
+    std::vector<PlayerMonster::PlayerSkill> skills;
     bool ok;
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {

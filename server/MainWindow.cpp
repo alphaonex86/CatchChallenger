@@ -163,13 +163,13 @@ void MainWindow::new_player_is_connected(Player_private_and_public_informations 
         break;
     }
 
-    ui->listPlayer->addItem(new QListWidgetItem(icon,player.public_informations.pseudo));
+    ui->listPlayer->addItem(new std::vectorWidgetItem(icon,player.public_informations.pseudo));
     players << player;
 }
 
 void MainWindow::player_is_disconnected(std::string pseudo)
 {
-    QList<QListWidgetItem *> tempList=ui->listPlayer->findItems(pseudo,Qt::MatchExactly);
+    std::vector<std::vectorWidgetItem *> tempList=ui->listPlayer->findItems(pseudo,Qt::MatchExactly);
     int index=0;
     while(index<tempList.size())
     {
@@ -1351,7 +1351,7 @@ void CatchChallenger::MainWindow::on_programmedEventType_currentIndexChanged(int
         std::unordered_mapIterator<std::string,GameServerSettings::ProgrammedEvent> i(list);
         while (i.hasNext()) {
             i.next();
-            QListWidgetItem *listWidgetItem=new QListWidgetItem(
+            std::vectorWidgetItem *listWidgetItem=new std::vectorWidgetItem(
                         tr("%1\nCycle: %2mins, offset: %3mins\nValue: %4")
                         .arg(i.key())
                         .arg(i.value().cycle)
@@ -1364,7 +1364,7 @@ void CatchChallenger::MainWindow::on_programmedEventType_currentIndexChanged(int
     }
 }
 
-void CatchChallenger::MainWindow::on_programmedEventList_itemActivated(QListWidgetItem *item)
+void CatchChallenger::MainWindow::on_programmedEventList_itemActivated(std::vectorWidgetItem *item)
 {
     Q_UNUSED(item);
     on_programmedEventEdit_clicked();
@@ -1409,7 +1409,7 @@ void CatchChallenger::MainWindow::on_programmedEventAdd_clicked()
 
 void CatchChallenger::MainWindow::on_programmedEventEdit_clicked()
 {
-    const QList<QListWidgetItem*> &selectedItems=ui->programmedEventList->selectedItems();
+    const std::vector<std::vectorWidgetItem*> &selectedItems=ui->programmedEventList->selectedItems();
     if(selectedItems.size()!=1)
         return;
     const std::string &selectedEvent=ui->programmedEventType->currentText();
@@ -1455,7 +1455,7 @@ void CatchChallenger::MainWindow::on_programmedEventEdit_clicked()
 
 void CatchChallenger::MainWindow::on_programmedEventRemove_clicked()
 {
-    const QList<QListWidgetItem*> &selectedItems=ui->programmedEventList->selectedItems();
+    const std::vector<std::vectorWidgetItem*> &selectedItems=ui->programmedEventList->selectedItems();
     if(selectedItems.size()!=1)
         return;
     const std::string &selectedEvent=ui->programmedEventType->currentText();

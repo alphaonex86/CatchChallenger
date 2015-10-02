@@ -42,7 +42,7 @@ bool EpollClientLoginMaster::currentPlayerForGameServerToUpdate=false;
 //start to 0 due to pre incrementation before use
 uint32_t EpollClientLoginMaster::maxAccountId=0;
 
-QList<EpollClientLoginMaster *> EpollClientLoginMaster::gameServers;
-QList<EpollClientLoginMaster *> EpollClientLoginMaster::loginServers;
+std::vector<EpollClientLoginMaster *> EpollClientLoginMaster::gameServers;
+std::vector<EpollClientLoginMaster *> EpollClientLoginMaster::loginServers;
 FILE *EpollClientLoginMaster::fpRandomFile=NULL;
 

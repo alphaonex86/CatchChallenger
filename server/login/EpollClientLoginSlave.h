@@ -121,9 +121,9 @@ public:
     /** \warning Need be checked in real time because can be opened on multiple login server
      * uint8_t accountCharatersCount; */
 
-    static QList<unsigned int> maxAccountIdList;
-    static QList<unsigned int> maxCharacterIdList;
-    static QList<unsigned int> maxClanIdList;
+    static std::vector<unsigned int> maxAccountIdList;
+    static std::vector<unsigned int> maxCharacterIdList;
+    static std::vector<unsigned int> maxClanIdList;
     static bool maxAccountIdRequested;
     static bool maxCharacterIdRequested;
     static bool maxMonsterIdRequested;
@@ -155,8 +155,8 @@ public:
     static char characterSelectionIsWrongBufferServerNotFound[64];
     static uint8_t characterSelectionIsWrongBufferSize;
 private:
-    QList<DatabaseBase::CallBack *> callbackRegistred;
-    QList<void *> paramToPassToCallBack;
+    std::vector<DatabaseBase::CallBack *> callbackRegistred;
+    std::vector<void *> paramToPassToCallBack;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     std::stringList paramToPassToCallBackType;
     #endif

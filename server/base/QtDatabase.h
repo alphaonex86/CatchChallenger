@@ -54,8 +54,8 @@ private:
     QSqlQuery *sqlQuery;
     static char emptyString[1];
     std::string lastErrorMessage;
-    QList<CallBack> queue;
-    QList<std::string> queriesList;
+    std::vector<CallBack> queue;
+    std::vector<std::string> queriesList;
     static std::vector<char> valueReturnedData;
     DatabaseBase::DatabaseType databaseConnected;
 };

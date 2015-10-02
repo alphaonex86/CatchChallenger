@@ -18,7 +18,7 @@ private:
     QSslKey sslKey;
     std::vector<char> firstHeader;
 private:
-    void sslErrors(const QList<QSslError> &errors);
+    void sslErrors(const std::vector<QSslError> &errors);
 };
 
 #endif // QSSLSERVER_H

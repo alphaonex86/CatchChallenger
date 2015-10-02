@@ -1,8 +1,10 @@
 #ifndef CATCHCHALLENGER_CLIENT_H
 #define CATCHCHALLENGER_CLIENT_H
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QObject>
-#include <std::vector<char>>
+#endif
+#include <vector>
 #include <QTimer>
 
 #include "ServerStructures.h"

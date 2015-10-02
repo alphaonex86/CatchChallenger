@@ -28,7 +28,7 @@ public:
     bool containsServerUniqueKey(const uint32_t &serverUniqueKey) const;
     InternalGameServer getServerInformation(const uint32_t &serverUniqueKey) const;
 
-    QList<EpollClientLoginSlave *> clientQueryForReadReturn;
+    std::vector<EpollClientLoginSlave *> clientQueryForReadReturn;
     std::vector<uint32_t> maxCharacterId;
     std::vector<uint32_t> maxMonsterId;
     uint8_t index;
@@ -40,17 +40,17 @@ public:
         std::string pseudo;
         uint8_t skinId;
     };
-    QList<AddCharacterParam> addCharacterParamList;
+    std::vector<AddCharacterParam> addCharacterParamList;
     struct RemoveCharacterParam
     {
         void * client;
         uint8_t query_id;
         uint32_t characterId;
     };
-    QList<RemoveCharacterParam> removeCharacterParamList;
+    std::vector<RemoveCharacterParam> removeCharacterParamList;
 
     static std::unordered_map<std::string,CharactersGroupForLogin *> hash;
-    static QList<CharactersGroupForLogin *> list;
+    static std::vector<CharactersGroupForLogin *> list;
 
     void deleteCharacterNow(const uint32_t &characterId);
     static void deleteCharacterNow_static(void *object);
@@ -90,9 +90,9 @@ private:
 private:
     EpollPostgresql *databaseBaseCommon;
     std::unordered_map<uint32_t,InternalGameServer> servers;
-    QList<void * const> clientAddReturnList;
-    QList<void * const> clientRemoveReturnList;
-    QList<uint32_t> deleteCharacterNowCharacterIdList;
+    std::vector<void * const> clientAddReturnList;
+    std::vector<void * const> clientRemoveReturnList;
+    std::vector<uint32_t> deleteCharacterNowCharacterIdList;
     std::unordered_map<uint32_t,uint8_t> uniqueKeyToIndex;
 
     static char tempBuffer[4096];

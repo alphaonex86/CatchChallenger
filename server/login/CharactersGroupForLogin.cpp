@@ -5,7 +5,7 @@
 using namespace CatchChallenger;
 
 std::unordered_map<std::string,CharactersGroupForLogin *> CharactersGroupForLogin::hash;
-QList<CharactersGroupForLogin *> CharactersGroupForLogin::list;
+std::vector<CharactersGroupForLogin *> CharactersGroupForLogin::list;
 char CharactersGroupForLogin::tempBuffer[4096];
 
 CharactersGroupForLogin::CharactersGroupForLogin(const char * const db,const char * const host,const char * const login,const char * const pass,const uint8_t &considerDownAfterNumberOfTry,const uint8_t &tryInterval) :
