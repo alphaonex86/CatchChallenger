@@ -6,8 +6,8 @@
 #include "../VariableServer.h"
 
 #include <random>
-#include <QString>
-#include <QRegularExpression>
+#include <std::string>
+#include <std::regex>
 
 #define BASE_PROTOCOL_MAGIC_SIZE 9
 
@@ -55,7 +55,7 @@ public:
         uint32_t characterId;
     };
     //to unordered reply
-    //QHash<uint8_t,DataForSelectedCharacterReturn> loginServerReturnForCharaterSelect;
+    //std::unordered_map<uint8_t,DataForSelectedCharacterReturn> loginServerReturnForCharaterSelect;
     //to ordered reply
     QList<DataForSelectedCharacterReturn> loginServerReturnForCharaterSelect;
     std::vector<uint8_t> queryNumberList;
@@ -93,7 +93,7 @@ public:
     static char loginPreviousToReplyCache[256*1024*3];
     static unsigned int loginPreviousToReplyCacheSize;
     static unsigned char replyToIdListBuffer[sizeof(uint8_t)+sizeof(uint8_t)+1024];//reply for 07
-    static QHash<QString,int> logicalGroupHash;
+    static std::unordered_map<std::string,int> logicalGroupHash;
 
     static FILE *fpRandomFile;
     static QList<EpollClientLoginMaster *> gameServers;
@@ -103,10 +103,10 @@ public:
     static void sendCurrentPlayer();
     static uint32_t maxAccountId;
 private:
-    void parseNetworkReadError(const QString &errorString);
+    void parseNetworkReadError(const std::string &errorString);
 
-    void errorParsingLayer(const QString &error);
-    void messageParsingLayer(const QString &message) const;
+    void errorParsingLayer(const std::string &error);
+    void messageParsingLayer(const std::string &message) const;
     void errorParsingLayer(const char * const error);
     void messageParsingLayer(const char * const message) const;
     //have message without reply

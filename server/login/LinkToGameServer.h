@@ -46,11 +46,11 @@ public:
     void readTheFirstSslHeader();
 protected:
     void disconnectClient();
-    void errorParsingLayer(const QString &error);
-    void messageParsingLayer(const QString &message) const;
+    void errorParsingLayer(const std::string &error);
+    void messageParsingLayer(const std::string &message) const;
     void errorParsingLayer(const char * const error);
     void messageParsingLayer(const char * const message) const;
-    void parseNetworkReadError(const QString &errorString);
+    void parseNetworkReadError(const std::string &errorString);
 
     //have message without reply
     void parseMessage(const uint8_t &mainCodeType,const char *data,const unsigned int &size);

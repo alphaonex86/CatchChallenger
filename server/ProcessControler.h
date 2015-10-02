@@ -19,16 +19,16 @@ private:
     CatchChallenger::NormalServer server;
     bool need_be_restarted;
     bool need_be_closed;
-    QString sizeToString(double size);
-    QString adaptString(float size);
-    QSettings *settings;
+    std::string sizeToString(double size);
+    std::string adaptString(float size);
+    std::unordered_settings *settings;
     void send_settings();
     void haveQuitForCriticalDatabaseQueryFailed();
 private slots:
     void server_is_started(bool is_started);
     void server_need_be_stopped();
     void server_need_be_restarted();
-    void error(const QString &error);
+    void error(const std::string &error);
 signals:
     void record_latency();
 };

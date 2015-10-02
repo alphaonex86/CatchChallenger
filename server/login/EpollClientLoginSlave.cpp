@@ -2,7 +2,7 @@
 #include "CharactersGroupForLogin.h"
 
 #include <iostream>
-#include <QString>
+#include <std::string>
 
 using namespace CatchChallenger;
 
@@ -114,9 +114,9 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
         }
 
         //selected char
-        /// \todo check by crash with ASSERT failure in QHash: "Iterating beyond end()"
+        /// \todo check by crash with ASSERT failure in std::unordered_map: "Iterating beyond end()"
         {
-            QHashIterator<uint8_t/*queryNumber*/,LinkToMaster::DataForSelectedCharacterReturn> j(LinkToMaster::linkToMaster->selectCharacterClients);
+            std::unordered_mapIterator<uint8_t/*queryNumber*/,LinkToMaster::DataForSelectedCharacterReturn> j(LinkToMaster::linkToMaster->selectCharacterClients);
             while (j.hasNext()) {
                 j.next();
                 if(j.value().client==this)
@@ -147,13 +147,13 @@ void EpollClientLoginSlave::disconnectClient()
 }
 
 //input/ouput layer
-void EpollClientLoginSlave::errorParsingLayer(const QString &error)
+void EpollClientLoginSlave::errorParsingLayer(const std::string &error)
 {
     std::cerr << socketString << ": " << error.toLocal8Bit().constData() << std::endl;
     disconnectClient();
 }
 
-void EpollClientLoginSlave::messageParsingLayer(const QString &message) const
+void EpollClientLoginSlave::messageParsingLayer(const std::string &message) const
 {
     std::cout << socketString << ": " << message.toLocal8Bit().constData() << std::endl;
 }

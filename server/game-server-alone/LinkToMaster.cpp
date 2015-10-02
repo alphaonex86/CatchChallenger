@@ -238,7 +238,7 @@ void LinkToMaster::disconnectClient()
 }
 
 //input/ouput layer
-void LinkToMaster::errorParsingLayer(const QString &error)
+void LinkToMaster::errorParsingLayer(const std::string &error)
 {
     std::cerr << error.toLocal8Bit().constData() << std::endl;
     //critical error, prefer restart from 0
@@ -247,7 +247,7 @@ void LinkToMaster::errorParsingLayer(const QString &error)
     disconnectClient();
 }
 
-void LinkToMaster::messageParsingLayer(const QString &message) const
+void LinkToMaster::messageParsingLayer(const std::string &message) const
 {
     std::cout << message.toLocal8Bit().constData() << std::endl;
 }
@@ -273,18 +273,18 @@ void LinkToMaster::parseIncommingData()
     ProtocolParsingInputOutput::parseIncommingData();
 }
 
-bool LinkToMaster::setSettings(QSettings * const settings)
+bool LinkToMaster::setSettings(std::unordered_settings * const settings)
 {
     this->settings=settings;
 
     //token
-    settings->beginGroup(QStringLiteral("master"));
-    if(!settings->contains(QStringLiteral("token")))
+    settings->beginGroup(std::stringLiteral("master"));
+    if(!settings->contains(std::stringLiteral("token")))
         generateToken();
-    QString token=settings->value(QStringLiteral("token")).toString();
+    std::string token=settings->value(std::stringLiteral("token")).toString();
     if(token.size()!=TOKEN_SIZE_FOR_MASTERAUTH*2/*String Hexa, not binary*/)
         generateToken();
-    token=settings->value(QStringLiteral("token")).toString();
+    token=settings->value(std::stringLiteral("token")).toString();
     memcpy(LinkToMaster::private_token,std::vector<char>::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
     settings->endGroup();
 
@@ -305,7 +305,7 @@ void LinkToMaster::generateToken()
         std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from /dev/urandom" << std::endl;
         abort();
     }
-    settings->setValue(QStringLiteral("token"),QString(
+    settings->setValue(std::stringLiteral("token"),std::string(
                           std::vector<char>(
                               reinterpret_cast<char *>(LinkToMaster::private_token)
                               ,TOKEN_SIZE_FOR_MASTERAUTH)
@@ -314,7 +314,7 @@ void LinkToMaster::generateToken()
     settings->sync();
 }
 
-bool LinkToMaster::registerGameServer(const QString &exportedXml, const char * const dynamicToken)
+bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char * const dynamicToken)
 {
     if(queryNumberList.empty())
         return false;
@@ -333,10 +333,10 @@ bool LinkToMaster::registerGameServer(const QString &exportedXml, const char * c
         memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));
     }
 
-    QString server_ip=settings->value(QLatin1Literal("server-ip")).toString();
-    QString server_port=settings->value(QLatin1Literal("server-port")).toString();
+    std::string server_ip=settings->value(QLatin1Literal("server-ip")).toString();
+    std::string server_port=settings->value(QLatin1Literal("server-port")).toString();
 
-    settings->beginGroup(QStringLiteral("master"));
+    settings->beginGroup(std::stringLiteral("master"));
     //group to find the catchchallenger_common database
     {
         if(!settings->value(QLatin1Literal("charactersGroup")).toString().isEmpty())
@@ -375,10 +375,10 @@ bool LinkToMaster::registerGameServer(const QString &exportedXml, const char * c
     {
         if(!settings->contains(QLatin1Literal("external-server-ip")))
             settings->setValue(QLatin1Literal("external-server-ip"),server_ip);
-        QString externalServerIp=settings->value(QLatin1Literal("external-server-ip")).toString();
+        std::string externalServerIp=settings->value(QLatin1Literal("external-server-ip")).toString();
         if(externalServerIp.isEmpty())
         {
-            externalServerIp=QStringLiteral("localhost");
+            externalServerIp=std::stringLiteral("localhost");
             settings->setValue(QLatin1Literal("external-server-ip"),externalServerIp);
         }
 
@@ -416,7 +416,7 @@ bool LinkToMaster::registerGameServer(const QString &exportedXml, const char * c
         pos+=newSizeCharactersGroup;
     }
 
-    settings->beginGroup(QStringLiteral("master"));
+    settings->beginGroup(std::stringLiteral("master"));
     //logical group
     {
         if(!settings->value(QLatin1Literal("logicalGroup")).toString().isEmpty())

@@ -209,7 +209,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
     if(stopIt)
         return false;
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    normalOutput("parseInputBeforeLogin("+std::to_string(packetCode)+","+std::to_string(queryNumber)+","+QString(std::vector<char>(data,size).toHex()).toStdString()+")");
+    normalOutput("parseInputBeforeLogin("+std::to_string(packetCode)+","+std::to_string(queryNumber)+","+std::string(std::vector<char>(data,size).toHex()).toStdString()+")");
     #endif
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
@@ -481,7 +481,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
     #endif
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    normalOutput("parsenormalOutput("+std::to_string(packetCode)+","+QString(std::vector<char>(data,size).toHex()).toStdString()+")");
+    normalOutput("parsenormalOutput("+std::to_string(packetCode)+","+std::string(std::vector<char>(data,size).toHex()).toStdString()+")");
     #endif
     switch(packetCode)
     {
@@ -976,9 +976,9 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 errorOutput("remaining data: parsenormalOutput("+
                                       std::to_string(packetCode)+
                                       "): "+
-                                      QString(std::vector<char>(data,pos).toHex()).toStdString()+
+                                      std::string(std::vector<char>(data,pos).toHex()).toStdString()+
                                       " "+
-                                      QString(std::vector<char>(data+pos,size-pos).toHex()).toStdString()
+                                      std::string(std::vector<char>(data+pos,size-pos).toHex()).toStdString()
                                       );
                 return false;
             }
@@ -1089,9 +1089,9 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 errorOutput("remaining data: parsenormalOutput("+
                             std::to_string(packetCode)+
                             "): "+
-                            QString(std::vector<char>(data,pos).toHex()).toStdString()+
+                            std::string(std::vector<char>(data,pos).toHex()).toStdString()+
                             " "+
-                            QString(std::vector<char>(data+pos,size-pos).toHex()).toStdString()
+                            std::string(std::vector<char>(data+pos,size-pos).toHex()).toStdString()
                             );
                 return false;
             }
@@ -1108,7 +1108,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(size!=(int)sizeof(uint8_t))
             {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return false;
             }
             #endif
@@ -1250,7 +1250,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(size!=(int)sizeof(uint8_t))
             {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return;
             }
             #endif
@@ -1270,7 +1270,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(size!=(int)sizeof(uint16_t))
             {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return false;
             }
             #endif
@@ -1285,7 +1285,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(size!=(int)sizeof(uint16_t))
             {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return false;
             }
             #endif
@@ -1300,7 +1300,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(size!=(int)sizeof(uint16_t))
             {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return false;
             }
             #endif
@@ -1315,7 +1315,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(size!=(int)sizeof(uint16_t)*2+sizeof(uint32_t)*2)
             {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return false;
             }
             #endif
@@ -1333,7 +1333,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(size!=(int)sizeof(uint16_t)*2+sizeof(uint32_t)*2)
             {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return false;
             }
             #endif
@@ -1351,7 +1351,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(size!=(int)sizeof(uint16_t))
             {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return false;
             }
             #endif
@@ -1366,7 +1366,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(size!=(int)sizeof(uint16_t)*2+sizeof(uint32_t)*2)
             {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return false;
             }
             #endif
@@ -1384,7 +1384,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(size!=(int)sizeof(uint16_t)*2+sizeof(uint32_t)*2)
             {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return false;
             }
             #endif
@@ -1407,7 +1407,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             uint32_t pos=0;
             if((size-pos)<(int)sizeof(uint8_t))
             {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return false;
             }
             const uint8_t &queryType=data[pos];
@@ -1418,21 +1418,21 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 case 0x02:
                 break;
                 default:
-                    errorOutput("market return type with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                    errorOutput("market return type with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return false;
             }
             if(queryType==0x01)
             {
                 if((size-pos)<(int)sizeof(uint32_t))
                 {
-                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                     return false;
                 }
                 const uint32_t &marketObjectId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
                 pos+=sizeof(uint32_t);
                 if((size-pos)<(int)sizeof(uint32_t))
                 {
-                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                     return false;
                 }
                 const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
@@ -1443,7 +1443,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             {
                 if((size-pos)<(int)sizeof(uint32_t))
                 {
-                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                     return false;
                 }
                 const uint32_t &monsterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
@@ -1457,9 +1457,9 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                                       ","+
                                       std::to_string(queryNumber)+
                                       "): "+
-                                      QString(std::vector<char>(data,size).mid(0,pos).toHex()).toStdString()+
+                                      std::string(std::vector<char>(data,size).mid(0,pos).toHex()).toStdString()+
                                       " "+
-                                      QString(std::vector<char>(data,size).mid(pos,(size-pos)).toHex()).toStdString()
+                                      std::string(std::vector<char>(data,size).mid(pos,(size-pos)).toHex()).toStdString()
                                       );
                 return false;
             }
@@ -1472,7 +1472,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             uint32_t pos=0;
             if((size-pos)<(int)sizeof(uint8_t))
             {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return false;
             }
             const uint8_t &queryType=data[pos];
@@ -1483,35 +1483,35 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 case 0x02:
                 break;
                 default:
-                    errorOutput("market return type with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                    errorOutput("market return type with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return false;
             }
             if(queryType==0x01)
             {
                 if((size-pos)<(int)sizeof(uint16_t))
                 {
-                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                     return false;
                 }
                 const uint16_t &objectId=le32toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
                 pos+=sizeof(uint16_t);
                 if((size-pos)<(int)sizeof(uint32_t))
                 {
-                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                     return false;
                 }
                 const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
                 pos+=sizeof(uint32_t);
                 if((size-pos)<(int)sizeof(uint32_t))
                 {
-                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                     return false;
                 }
                 const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
                 pos+=sizeof(uint32_t);
                 if((size-pos)<(int)sizeof(double))
                 {
-                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                     return false;
                 }
                 putMarketObject(queryNumber,objectId,quantity,price);
@@ -1520,21 +1520,21 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             {
                 if((size-pos)<(int)sizeof(uint32_t))
                 {
-                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                     return false;
                 }
                 const uint32_t &monsterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
                 pos+=sizeof(uint32_t);
                 if((size-pos)<(int)sizeof(uint32_t))
                 {
-                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                     return false;
                 }
                 const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
                 pos+=sizeof(uint32_t);
                 if((size-pos)<(int)sizeof(double))
                 {
-                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                     return false;
                 }
                 putMarketMonster(queryNumber,monsterId,price);
@@ -1546,9 +1546,9 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                                     ","+
                                     std::to_string(queryNumber)+
                                     "): "+
-                                    QString(std::vector<char>(data,pos).toHex()).toStdString()+
+                                    std::string(std::vector<char>(data,pos).toHex()).toStdString()+
                                     " "+
-                                    QString(std::vector<char>(data+pos,size-pos).toHex()).toStdString()
+                                    std::string(std::vector<char>(data+pos,size-pos).toHex()).toStdString()
                                     );
                 return false;
             }
@@ -1566,7 +1566,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             uint32_t pos=0;
             if((size-pos)<(int)sizeof(uint8_t))
             {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return false;
             }
             const uint8_t &queryType=data[pos];
@@ -1577,21 +1577,21 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 case 0x02:
                 break;
                 default:
-                    errorOutput("market return type with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                    errorOutput("market return type with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return false;
             }
             if(queryType==0x01)
             {
                 if((size-pos)<(int)sizeof(uint32_t))
                 {
-                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                     return false;
                 }
                 const uint32_t &objectId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
                 pos+=sizeof(uint32_t);
                 if((size-pos)<(int)sizeof(uint32_t))
                 {
-                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                     return false;
                 }
                 const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
@@ -1602,7 +1602,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             {
                 if((size-pos)<(int)sizeof(uint32_t))
                 {
-                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                     return false;
                 }
                 const uint32_t &monsterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
@@ -1616,9 +1616,9 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                     ","+
                     std::to_string(queryNumber)+
                     "): "+
-                    QString(std::vector<char>(data,pos).toHex()).toStdString()+
+                    std::string(std::vector<char>(data,pos).toHex()).toStdString()+
                     " "+
-                    QString(std::vector<char>(data+pos,size-pos).toHex()).toStdString()
+                    std::string(std::vector<char>(data+pos,size-pos).toHex()).toStdString()
                     );
                 return false;
             }
@@ -1631,7 +1631,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             uint32_t pos=0;
             if((size-pos)<(int)sizeof(uint8_t))
             {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return false;
             }
             const uint8_t &clanActionId=data[pos];
@@ -1673,9 +1673,9 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                     ","+
                     std::to_string(queryNumber)+
                     "): "+
-                    QString(std::vector<char>(data,pos).toHex()).toStdString()+
+                    std::string(std::vector<char>(data,pos).toHex()).toStdString()+
                     " "+
-                    QString(std::vector<char>(data+pos,size-pos).toHex()).toStdString()
+                    std::string(std::vector<char>(data+pos,size-pos).toHex()).toStdString()
                     );
                 return false;
             }
@@ -1741,7 +1741,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             uint32_t pos=0;
             if((size-pos)<(int)sizeof(uint8_t))
             {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return false;
             }
             const uint8_t &stepToSkip=data[pos];
@@ -1788,7 +1788,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
 
             if((size-pos)<(int)sizeof(uint32_t))
             {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return false;
             }
             const uint32_t &number_of_file=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
@@ -1819,9 +1819,9 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                                 ","+
                                 std::to_string(queryNumber)+
                                 "): "+
-                                QString(std::vector<char>(data,pos).toHex()).toStdString()+
+                                std::string(std::vector<char>(data,pos).toHex()).toStdString()+
                                 " "+
-                                QString(std::vector<char>(data+pos,size-pos).toHex()).toStdString()
+                                std::string(std::vector<char>(data+pos,size-pos).toHex()).toStdString()
                                 );
                             return false;
                         }
@@ -1859,9 +1859,9 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                     ","+
                     std::to_string(queryNumber)+
                     "): "+
-                    QString(std::vector<char>(data,pos).toHex()).toStdString()+
+                    std::string(std::vector<char>(data,pos).toHex()).toStdString()+
                     " "+
-                    QString(std::vector<char>(data+pos,size-pos).toHex()).toStdString()
+                    std::string(std::vector<char>(data+pos,size-pos).toHex()).toStdString()
                     );
                 return false;
             }
@@ -1886,14 +1886,14 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             std::string pseudo;
             if((size-pos)<(int)sizeof(uint8_t))
             {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString()+"");
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString()+"");
                 return false;
             }
             //const uint8_t &charactersGroupIndex=data[pos];
             pos+=1;
             if((size-pos)<(int)sizeof(uint8_t))
             {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString()+"");
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString()+"");
                 return false;
             }
             const uint8_t &profileIndex=data[pos];
@@ -1925,7 +1925,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             }
             if((size-pos)<(int)sizeof(uint8_t))
             {
-                errorOutput("error to get skin with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                errorOutput("error to get skin with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return false;
             }
             const uint8_t &skinId=data[pos];
@@ -1938,9 +1938,9 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                     ","+
                     std::to_string(queryNumber)+
                     "): "+
-                    QString(std::vector<char>(data,pos).toHex()).toStdString()+
+                    std::string(std::vector<char>(data,pos).toHex()).toStdString()+
                     " "+
-                    QString(std::vector<char>(data+pos,size-pos).toHex()).toStdString()
+                    std::string(std::vector<char>(data+pos,size-pos).toHex()).toStdString()
                     );
                 return false;
             }
@@ -1958,7 +1958,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(size!=(int)sizeof(uint8_t)+sizeof(uint32_t))
             {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return false;
             }
             #endif
@@ -1978,7 +1978,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(size!=(int)sizeof(uint8_t)+sizeof(uint32_t)+sizeof(uint32_t))
             {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+QString(std::vector<char>(data,size).toHex()).toStdString());
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString());
                 return false;
             }
             #endif
@@ -2024,7 +2024,7 @@ bool Client::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber
     #endif
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    normalOutput("parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+","+QString(std::vector<char>(data,size).toHex()).toStdString()+")");
+    normalOutput("parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+","+std::string(std::vector<char>(data,size).toHex()).toStdString()+")");
     #endif
     switch(packetCode)
     {
@@ -2035,7 +2035,7 @@ bool Client::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber
             if(size!=(int)sizeof(uint8_t))
             {
                 errorOutput("wrong size with the full reply data main ident: "+std::to_string(packetCode)+
-                                      ", data: "+QString(std::vector<char>(data,size).toHex()).toStdString()
+                                      ", data: "+std::string(std::vector<char>(data,size).toHex()).toStdString()
                                       );
                 return false;
             }
@@ -2077,7 +2077,7 @@ bool Client::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber
                 errorOutput("wrong size with the full reply data main ident: "+
                                       std::to_string(packetCode)+
                                       ", data: "+
-                                      QString(std::vector<char>(data,size).toHex()).toStdString()
+                                      std::string(std::vector<char>(data,size).toHex()).toStdString()
                                       );
                 return false;
             }

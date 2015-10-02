@@ -78,7 +78,7 @@ bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
     askLoginParam->pass=std::vector<char>(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
 
     std::string queryText=PreparedDBQueryLogin::db_query_login;
-    stringreplaceOne(queryText,"%1",QString(login.toHex()).toStdString());
+    stringreplaceOne(queryText,"%1",std::string(login.toHex()).toStdString());
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_login->asyncRead(queryText,this,&Client::askLogin_static);
     if(callback==NULL)
     {
@@ -163,7 +163,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
             }
             else
             {
-                loginIsWrong(askLoginParam->query_id,0x02,"Bad login for: "+QString(askLoginParam->login.toHex()).toStdString()+", pass: "+QString(askLoginParam->pass.toHex()).toStdString());
+                loginIsWrong(askLoginParam->query_id,0x02,"Bad login for: "+std::string(askLoginParam->login.toHex()).toStdString()+", pass: "+std::string(askLoginParam->pass.toHex()).toStdString());
                 delete askLoginParam;
                 return;
             }
@@ -220,17 +220,17 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 loginIsWrong(askLoginParam->query_id,0x03,"Password wrong: "+
-                             QString(askLoginParam->pass.toHex()).toStdString()+
+                             std::string(askLoginParam->pass.toHex()).toStdString()+
                              " with token "+
-                             QString(tempAddedToken.toHex()).toStdString()+
+                             std::string(tempAddedToken.toHex()).toStdString()+
                              " for the login: "+
-                             QString(askLoginParam->login.toHex()).toStdString()
+                             std::string(askLoginParam->login.toHex()).toStdString()
                              );
                 #else
                 loginIsWrong(askLoginParam->query_id,0x03,"Password wrong: "+
-                             QString(askLoginParam->pass.toHex()).toStdString()+
+                             std::string(askLoginParam->pass.toHex()).toStdString()+
                              " for the login: "+
-                             QString(askLoginParam->login.toHex()).toStdString()
+                             std::string(askLoginParam->login.toHex()).toStdString()
                              );
                 #endif
                 delete askLoginParam;
@@ -301,7 +301,7 @@ bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
     askLoginParam->pass=std::vector<char>(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
 
     std::string queryText=PreparedDBQueryLogin::db_query_login;
-    stringreplaceOne(queryText,"%1",QString(login.toHex()).toStdString());
+    stringreplaceOne(queryText,"%1",std::string(login.toHex()).toStdString());
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_login->asyncRead(queryText,this,&Client::createAccount_static);
     if(callback==NULL)
     {
@@ -374,8 +374,8 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         account_id=GlobalServerData::serverPrivateVariables.maxAccountId;
         std::string queryText=PreparedDBQueryLogin::db_query_insert_login;
         stringreplaceOne(queryText,"%1",std::to_string(account_id));
-        stringreplaceOne(queryText,"%2",QString(askLoginParam->login.toHex()).toStdString());
-        stringreplaceOne(queryText,"%3",QString(askLoginParam->pass.toHex()).toStdString());
+        stringreplaceOne(queryText,"%2",std::string(askLoginParam->login.toHex()).toStdString());
+        stringreplaceOne(queryText,"%3",std::string(askLoginParam->pass.toHex()).toStdString());
         stringreplaceOne(queryText,"%4",std::to_string(QDateTime::currentDateTime().toTime_t()));
         dbQueryWriteLogin(queryText);
 
@@ -396,7 +396,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         is_logging_in_progess=false;
     }
     else
-        loginIsWrong(askLoginParam->query_id,0x02,"Login already used: "+QString(askLoginParam->login.toHex()).toStdString());
+        loginIsWrong(askLoginParam->query_id,0x02,"Login already used: "+std::string(askLoginParam->login.toHex()).toStdString());
 }
 
 void Client::character_list_static(void *object)
@@ -1369,12 +1369,12 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
         #endif
         if(std::regex_match(fileName,GlobalServerData::serverPrivateVariables.datapack_rightFileName))
         {
-            QFileInfo fileInfo(QString::fromStdString(fileName));
+            QFileInfo fileInfo(std::string::fromStdString(fileName));
             if(!fileInfo.suffix().toStdString().empty() &&
-                    BaseServerMasterSendDatapack::extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())
+                    BaseServerMasterSendDatapack::extensionAllowed.find(QFileInfo(std::string::fromStdString(fileName)).suffix().toStdString())
                     !=BaseServerMasterSendDatapack::extensionAllowed.cend())
             {
-                QFile file(QString::fromStdString(path+returnList.at(index)));
+                QFile file(std::string::fromStdString(path+returnList.at(index)));
                 if(file.size()<=8*1024*1024)
                 {
                     if(file.open(QIODevice::ReadOnly))
@@ -1554,7 +1554,7 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
                     addDatapackListReply(false);//file found don't need be updated
                 else
                 {
-                    QFile file(QString::fromStdString(datapackPath+fileName));
+                    QFile file(std::string::fromStdString(datapackPath+fileName));
                     if(file.open(QIODevice::ReadOnly))
                     {
                         addDatapackListReply(false);//found but need an update
@@ -1575,7 +1575,7 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
         auto i=filesListForSize.begin();
         while(i!=filesListForSize.cend())
         {
-            QFile file(QString::fromStdString(datapackPath+i->first));
+            QFile file(std::string::fromStdString(datapackPath+i->first));
             if(file.open(QIODevice::ReadOnly))
             {
                 datapckFileNumber++;
@@ -1804,7 +1804,7 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
         return false;
     }
 
-    QFile file(QString::fromStdString(datapackPath+fileName));
+    QFile file(std::string::fromStdString(datapackPath+fileName));
     if(file.open(QIODevice::ReadOnly))
     {
         const std::vector<char> &content=file.readAll();
