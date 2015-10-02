@@ -17,8 +17,6 @@ using namespace CatchChallenger;
 
 //need host + port here to have datapack base
 
-std::string DatapackDownloaderMainSub::text_slash=QLatin1Literal("/");
-std::string DatapackDownloaderMainSub::text_dotcoma=QLatin1Literal(";");
 std::regex DatapackDownloaderMainSub::regex_DATAPACK_FILE_REGEX(DATAPACK_FILE_REGEX);
 std::unordered_set<std::string> DatapackDownloaderMainSub::extensionAllowed;
 std::regex DatapackDownloaderMainSub::excludePathMain("^sub[/\\\\]");
@@ -63,7 +61,7 @@ void DatapackDownloaderMainSub::datapackDownloadError()
     clientInSuspend.clear();
 }
 
-void DatapackDownloaderMainSub::writeNewFileToRoute(const std::string &fileName, const QByteArray &data)
+void DatapackDownloaderMainSub::writeNewFileToRoute(const std::string &fileName, const std::vector<char> &data)
 {
     switch(datapackStatus)
     {
@@ -116,8 +114,8 @@ void DatapackDownloaderMainSub::datapackFileList(const char * const data,const u
             {
                 if(boolList.at(index))
                 {
-                    DebugClass::debugConsole(std::stringLiteral("remove the file: %1").arg(mDatapackMain+text_slash+datapackFilesListMain.at(index)));
-                    QFile file(mDatapackMain+text_slash+datapackFilesListMain.at(index));
+                    DebugClass::debugConsole(std::stringLiteral("remove the file: %1").arg(mDatapackMain+'/'+datapackFilesListMain.at(index)));
+                    QFile file(mDatapackMain+'/'+datapackFilesListMain.at(index));
                     if(!file.remove())
                         DebugClass::debugConsole(std::stringLiteral("unable to remove the file: %1: %2").arg(datapackFilesListMain.at(index)).arg(file.errorString()));
                     //removeFile(datapackFilesListMain.at(index));
@@ -171,8 +169,8 @@ void DatapackDownloaderMainSub::datapackFileList(const char * const data,const u
             {
                 if(boolList.at(index))
                 {
-                    DebugClass::debugConsole(std::stringLiteral("remove the file: %1").arg(mDatapackSub+text_slash+datapackFilesListSub.at(index)));
-                    QFile file(mDatapackSub+text_slash+datapackFilesListSub.at(index));
+                    DebugClass::debugConsole(std::stringLiteral("remove the file: %1").arg(mDatapackSub+'/'+datapackFilesListSub.at(index)));
+                    QFile file(mDatapackSub+'/'+datapackFilesListSub.at(index));
                     if(!file.remove())
                         DebugClass::debugConsole(std::stringLiteral("unable to remove the file: %1: %2").arg(datapackFilesListSub.at(index)).arg(file.errorString()));
                     //removeFile(datapackFilesListSub.at(index));

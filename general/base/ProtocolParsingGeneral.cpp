@@ -52,9 +52,9 @@ extern "C" void lz_free(void *opaque, void *ptr)
 }
 
 
-QByteArray ProtocolParsingBase::lzmaCompress(QByteArray data)
+std::vector<char> ProtocolParsingBase::lzmaCompress(std::vector<char> data)
 {
-    QByteArray arr;
+    std::vector<char> arr;
     lzma_check check = LZMA_CHECK_CRC64;
     lzma_stream strm = LZMA_STREAM_INIT; /* alloc and init lzma_stream struct */
     lzma_allocator al;
@@ -70,7 +70,7 @@ QByteArray ProtocolParsingBase::lzmaCompress(QByteArray data)
     /* initialize xz encoder */
     ret_xz = lzma_easy_encoder (&strm, ProtocolParsing::compressionLevel, check);
     if (ret_xz != LZMA_OK) {
-        return QByteArray();
+        return std::vector<char>();
     }
 
     in_len = data.size();
@@ -149,7 +149,7 @@ QByteArray ProtocolParsingBase::lzmaCompress(QByteArray data)
             fprintf(stderr, "Decoder error: "
                     "%s (error code %u)\n",
                     msg, ret_xz);
-            return QByteArray();
+            return std::vector<char>();
         }
 
         out_len = OUT_BUF_MAX - strm.avail_out;
@@ -160,7 +160,7 @@ QByteArray ProtocolParsingBase::lzmaCompress(QByteArray data)
     return arr;
 }
 
-QByteArray ProtocolParsingBase::lzmaUncompress(QByteArray data)
+std::vector<char> ProtocolParsingBase::lzmaUncompress(std::vector<char> data)
 {
     lzma_stream strm = LZMA_STREAM_INIT; /* alloc and init lzma_stream struct */
     const uint32_t flags = LZMA_TELL_UNSUPPORTED_CHECK;
@@ -170,11 +170,11 @@ QByteArray ProtocolParsingBase::lzmaUncompress(QByteArray data)
     size_t in_len;  /* length of useful data in in_buf */
     size_t out_len; /* length of useful data in out_buf */
     lzma_ret ret_xz;
-    QByteArray arr;
+    std::vector<char> arr;
 
     ret_xz = lzma_stream_decoder (&strm, memory_limit, flags);
     if (ret_xz != LZMA_OK) {
-        return QByteArray();
+        return std::vector<char>();
     }
 
     in_len = data.size();
@@ -253,7 +253,7 @@ QByteArray ProtocolParsingBase::lzmaUncompress(QByteArray data)
             fprintf(stderr, "Decoder error: "
                     "%s (error code %u)\n",
                     msg, ret_xz);
-            return QByteArray();
+            return std::vector<char>();
         }
 
         out_len = OUT_BUF_MAX - strm.avail_out;

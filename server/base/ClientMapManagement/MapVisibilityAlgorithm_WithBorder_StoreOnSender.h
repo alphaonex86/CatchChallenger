@@ -7,7 +7,7 @@
 
 #include <unordered_map>
 #include <unordered_set>
-#include <QByteArray>
+#include <std::vector<char>>
 
 namespace CatchChallenger {
 class MapVisibilityAlgorithm_WithBorder_StoreOnSender : public Client

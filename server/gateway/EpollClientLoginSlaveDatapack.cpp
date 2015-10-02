@@ -346,7 +346,7 @@ void EpollClientLoginSlave::sendFileContent()
     if(EpollClientLoginSlave::rawFilesBuffer.size()>0 && EpollClientLoginSlave::rawFilesBufferCount>0)
     {
         out << (uint8_t)EpollClientLoginSlave::rawFilesBufferCount;
-        const QByteArray newData(outputData+EpollClientLoginSlave::rawFilesBuffer);
+        const std::vector<char> newData(outputData+EpollClientLoginSlave::rawFilesBuffer);
         sendFullPacket(0xC2,0x03,newData.constData(),newData.size());
         EpollClientLoginSlave::rawFilesBuffer.clear();
         EpollClientLoginSlave::rawFilesBufferCount=0;
@@ -358,7 +358,7 @@ void EpollClientLoginSlave::sendCompressedFileContent()
     if(EpollClientLoginSlave::compressedFilesBuffer.size()>0 && EpollClientLoginSlave::compressedFilesBufferCount>0)
     {
         out << (uint8_t)EpollClientLoginSlave::compressedFilesBufferCount;
-        const QByteArray newData(outputData+EpollClientLoginSlave::compressedFilesBuffer);
+        const std::vector<char> newData(outputData+EpollClientLoginSlave::compressedFilesBuffer);
         sendFullPacket(0xC2,0x04,newData.constData(),newData.size());
         EpollClientLoginSlave::compressedFilesBuffer.clear();
         EpollClientLoginSlave::compressedFilesBufferCount=0;
@@ -372,7 +372,7 @@ bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::
         std::cerr << "Unable to open into CatchChallenger::sendFile(): fileName.size()>255 || fileName.empty()" << std::endl;
         return false;
     }
-    const QByteArray &fileNameRaw=FacilityLibGeneral::toUTF8WithHeader(fileName);
+    const std::vector<char> &fileNameRaw=FacilityLibGeneral::toUTF8WithHeader(fileName);
     if(fileNameRaw.size()>255 || fileNameRaw.empty())
     {
         std::cerr << "Unable to open into CatchChallenger::sendFile(): fileNameRaw.size()>255 || fileNameRaw.empty()" << std::endl;
@@ -381,7 +381,7 @@ bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::
     QFile file(datapackPath+fileName);
     if(file.open(QIODevice::ReadOnly))
     {
-        const QByteArray &content=file.readAll();
+        const std::vector<char> &content=file.readAll();
         const int &contentsize=content.size();
         out << (uint32_t)contentsize;
         const std::string &suffix=QFileInfo(file).suffix();
@@ -426,9 +426,9 @@ bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::
                                  .toStdString() << std::endl;
                 }
                 #endif
-                QByteArray outputData2;
+                std::vector<char> outputData2;
                 outputData2[0x00]=0x01;
-                const QByteArray newData(outputData2+fileNameRaw+outputData+content);
+                const std::vector<char> newData(outputData2+fileNameRaw+outputData+content);
                 sendFullPacket(0xC2,0x03,newData.constData(),newData.size());
             }
             else

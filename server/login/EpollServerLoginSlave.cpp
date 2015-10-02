@@ -7,7 +7,7 @@
 using namespace CatchChallenger;
 
 #include <QFile>
-#include <QByteArray>
+#include <std::vector<char>>
 #include <QCoreApplication>
 
 #include <stdio.h>      /* printf, scanf, puts, NULL */
@@ -103,7 +103,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     if(!settings.contains(QStringLiteral("ip")))
         settings.setValue(QStringLiteral("ip"),QString());
     const QString &server_ip_string=settings.value(QStringLiteral("ip")).toString();
-    const QByteArray &server_ip_data=server_ip_string.toLocal8Bit();
+    const std::vector<char> &server_ip_data=server_ip_string.toLocal8Bit();
     if(!server_ip_string.isEmpty())
     {
         server_ip=new char[server_ip_data.size()+1];
@@ -111,7 +111,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     }
     if(!settings.contains(QStringLiteral("port")))
         settings.setValue(QStringLiteral("port"),rand()%40000+10000);
-    const QByteArray &server_port_data=settings.value(QStringLiteral("port")).toString().toLocal8Bit();
+    const std::vector<char> &server_port_data=settings.value(QStringLiteral("port")).toString().toLocal8Bit();
     server_port=new char[server_port_data.size()+1];
     strcpy(server_port,server_port_data.constData());
 
@@ -123,7 +123,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     if(token.size()!=TOKEN_SIZE_FOR_MASTERAUTH*2/*String Hexa, not binary*/)
         generateToken(settings);
     token=settings.value(QStringLiteral("token")).toString();
-    memcpy(LinkToMaster::private_token,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
+    memcpy(LinkToMaster::private_token,std::vector<char>::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
     settings.endGroup();
 
     //mode
@@ -348,7 +348,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         while(index<charactersGroupForLoginList.size())
         {
             const QString &CharactersGroupForLoginName=charactersGroupForLoginList.at(index);
-            const QByteArray &data=CharactersGroupForLoginName.toUtf8();
+            const std::vector<char> &data=CharactersGroupForLoginName.toUtf8();
             if(data.size()>20)
             {
                 std::cerr << "CharactersGroupForLoginName too big (abort)" << std::endl;
@@ -513,7 +513,7 @@ void EpollServerLoginSlave::generateToken(QSettings &settings)
         abort();
     }
     settings.setValue(QStringLiteral("token"),QString(
-                          QByteArray(
+                          std::vector<char>(
                               reinterpret_cast<char *>(LinkToMaster::private_token)
                               ,TOKEN_SIZE_FOR_MASTERAUTH)
                           .toHex()));
@@ -558,7 +558,7 @@ void EpollServerLoginSlave::compose04Reply()
     memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,EpollClientLoginSlave::baseDatapackSum,sizeof(EpollClientLoginSlave::baseDatapackSum));
     EpollClientLoginSlave::loginGoodSize+=sizeof(EpollClientLoginSlave::baseDatapackSum);
 
-    const QByteArray &httpDatapackMirrorData=LinkToMaster::linkToMaster->httpDatapackMirror.toUtf8();
+    const std::vector<char> &httpDatapackMirrorData=LinkToMaster::linkToMaster->httpDatapackMirror.toUtf8();
     if(LinkToMaster::linkToMaster->httpDatapackMirror.isEmpty())
     {
         std::cerr << "EpollClientLoginSlave::linkToMaster->httpDatapackMirror.isEmpty(), not coded for now (abort)" << std::endl;
@@ -630,7 +630,7 @@ void EpollServerLoginSlave::preload_profile()
             int sub_index=0;
             while(sub_index<tempStringList.size())
             {
-                const QByteArray &tempStringData=tempStringList.at(sub_index).toUtf8();
+                const std::vector<char> &tempStringData=tempStringList.at(sub_index).toUtf8();
                 preparedQueryCharTempSize+=tempStringData.size();
                 sub_index++;
             }
@@ -641,7 +641,7 @@ void EpollServerLoginSlave::preload_profile()
             int sub_index=0;
             while(sub_index<tempStringList.size())
             {
-                const QByteArray &tempStringData=tempStringList.at(sub_index).toUtf8();
+                const std::vector<char> &tempStringData=tempStringList.at(sub_index).toUtf8();
                 profile.preparedQuerySize[sub_index]=tempStringData.size();
                 if(sub_index>0)
                     profile.preparedQueryPos[sub_index]=profile.preparedQueryPos[sub_index-1]+profile.preparedQuerySize[sub_index-1];

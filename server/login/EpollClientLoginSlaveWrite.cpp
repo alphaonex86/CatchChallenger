@@ -33,7 +33,7 @@ void EpollClientLoginSlave::postReply(const uint8_t &queryNumber,const char * co
 {
     if(!ProtocolParsingBase::postReplyData(queryNumber,data,size))
     {
-        std::cerr << "can't send reply: postReply(" << queryNumber << "," << QByteArray(data,size).toHex().constData() << ")" << std::endl;
+        std::cerr << "can't send reply: postReply(" << queryNumber << "," << std::vector<char>(data,size).toHex().constData() << ")" << std::endl;
         return;
     }
 }

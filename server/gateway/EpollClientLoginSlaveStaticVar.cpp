@@ -9,11 +9,11 @@ std::vector<EpollClientLoginSlave *> EpollClientLoginSlave::client_list;
 const unsigned char EpollClientLoginSlave::protocolHeaderToMatch[] = PROTOCOL_HEADER_LOGIN;
 
 uint8_t EpollClientLoginSlave::tempDatapackListReplySize=0;
-QByteArray EpollClientLoginSlave::tempDatapackListReplyArray;
+std::vector<char> EpollClientLoginSlave::tempDatapackListReplyArray;
 uint8_t EpollClientLoginSlave::tempDatapackListReply=0;
 int EpollClientLoginSlave::tempDatapackListReplyTestCount=0;
-QByteArray EpollClientLoginSlave::rawFilesBuffer;
-QByteArray EpollClientLoginSlave::compressedFilesBuffer;
+std::vector<char> EpollClientLoginSlave::rawFilesBuffer;
+std::vector<char> EpollClientLoginSlave::compressedFilesBuffer;
 int EpollClientLoginSlave::rawFilesBufferCount=0;
 int EpollClientLoginSlave::compressedFilesBufferCount=0;
 

@@ -4,7 +4,7 @@
 
 #include <QAbstractSocket>
 #include <QMutex>
-#include <QByteArray>
+#include <std::vector<char>>
 #include <QIODevice>
 
 namespace CatchChallenger {
@@ -42,9 +42,9 @@ protected:
     virtual int64_t	readData(char * data, int64_t maxSize);
     virtual int64_t	writeData(const char * data, int64_t maxSize);
 private:
-    QByteArray data;
+    std::vector<char> data;
     QMutex mutex;
-    void internal_writeData(QByteArray rawData);
+    void internal_writeData(std::vector<char> rawData);
     uint64_t RX_size;
     int64_t	bytesAvailableWithMutex();
 };

@@ -6,7 +6,7 @@
 #include <vector>
 #include <vector>
 #include <utility>
-#include <QByteArray>
+#include <std::vector<char>>
 
 #include "GeneralStructures.h"
 

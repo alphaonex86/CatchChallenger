@@ -16,9 +16,9 @@ using namespace CatchChallenger;
 #include "LinkToGameServer.h"
 #include "EpollServerLoginSlave.h"
 
-void DatapackDownloaderMainSub::writeNewFileSub(const std::string &fileName,const QByteArray &data)
+void DatapackDownloaderMainSub::writeNewFileSub(const std::string &fileName,const std::vector<char> &data)
 {
-    const std::string &fullPath=mDatapackSub+text_slash+fileName;
+    const std::string &fullPath=mDatapackSub+'/'+fileName;
     //to be sure the QFile is destroyed
     {
         QFile file(fullPath);
@@ -64,7 +64,7 @@ bool DatapackDownloaderMainSub::getHttpFileSub(const std::string &url, const std
     if(!httpModeSub)
         httpModeSub=true;
 
-    const std::string &fullPath=mDatapackSub+text_slash+fileName;
+    const std::string &fullPath=mDatapackSub+'/'+fileName;
     {
         QFile file(fullPath);
         QFileInfo fileInfo(file);
@@ -109,7 +109,7 @@ void DatapackDownloaderMainSub::datapackDownloadFinishedSub()
     resetAll();
 }
 
-void DatapackDownloaderMainSub::datapackChecksumDoneSub(const std::vector<std::string> &datapackFilesList,const QByteArray &hash,const std::vector<uint32_t> &partialHashList)
+void DatapackDownloaderMainSub::datapackChecksumDoneSub(const std::vector<std::string> &datapackFilesList,const std::vector<char> &hash,const std::vector<uint32_t> &partialHashList)
 {
     if(subDatapackCode.empty())
     {
@@ -189,7 +189,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneSub(const std::vector<std::s
         int index=0;
         while(index<datapackFilesListSub.size())
         {
-            const QByteArray &rawFileName=FacilityLibGeneral::toUTF8WithHeader(datapackFilesListSub.at(index));
+            const std::vector<char> &rawFileName=FacilityLibGeneral::toUTF8WithHeader(datapackFilesListSub.at(index));
             if(rawFileName.size()>255 || rawFileName.empty())
             {
                 DebugClass::debugConsole(std::stringLiteral("rawFileName too big or not compatible with utf8"));
@@ -239,7 +239,9 @@ void DatapackDownloaderMainSub::datapackChecksumDoneSub(const std::vector<std::s
                 httpFinishedForDatapackListSub();
                 return;
             }
-            httpFinishedForDatapackListSub(QByteArray(chunk.memory,chunk.size));
+            std::vector<char> data(chunk.size);
+            memcpy(data.data(),chunk.memory,chunk.size);
+            httpFinishedForDatapackListSub(data);
             free(chunk.memory);
         }
     }
@@ -252,7 +254,7 @@ void DatapackDownloaderMainSub::test_mirror_sub()
         qDebug() << "subDatapackCode.empty() to get from mirror";
         abort();
     }
-    const std::vector<std::string> &httpDatapackMirrorList=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,std::string::SkipEmptyParts);
+    const std::vector<std::string> &httpDatapackMirrorList=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::';',std::string::SkipEmptyParts);
     if(!datapackTarXzSub)
     {
         const std::string url=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index_mirror_sub)+std::stringLiteral("pack/datapack-sub-")+mainDatapackCode+std::stringLiteral("-")+subDatapackCode+std::stringLiteral(".tar.xz");
@@ -272,7 +274,9 @@ void DatapackDownloaderMainSub::test_mirror_sub()
             httpFinishedForDatapackListSub();
             return;
         }
-        httpFinishedForDatapackListSub(QByteArray(chunk.memory,chunk.size));
+        std::vector<char> data(chunk.size);
+        memcpy(data.data(),chunk.memory,chunk.size);
+        httpFinishedForDatapackListSub(data);
         free(chunk.memory);
     }
     else
@@ -298,7 +302,9 @@ void DatapackDownloaderMainSub::test_mirror_sub()
             httpFinishedForDatapackListSub();
             return;
         }
-        httpFinishedForDatapackListSub(QByteArray(chunk.memory,chunk.size));
+        std::vector<char> data(chunk.size);
+        memcpy(data.data(),chunk.memory,chunk.size);
+        httpFinishedForDatapackListSub(data);
         free(chunk.memory);
     }
 }
@@ -314,13 +320,13 @@ void DatapackDownloaderMainSub::decodedIsFinishSub()
         test_mirror_sub();
     else
     {
-        const QByteArray &decodedData=xzDecodeThreadSub.decodedData();
+        const std::vector<char> &decodedData=xzDecodeThreadSub.decodedData();
         QTarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
             QDir dir;
             const std::vector<std::string> &fileList=tarDecode.getFileList();
-            const std::vector<QByteArray> &dataList=tarDecode.getDataList();
+            const std::vector<std::vector<char>> &dataList=tarDecode.getDataList();
             int index=0;
             while(index<fileList.size())
             {
@@ -372,7 +378,7 @@ bool DatapackDownloaderMainSub::mirrorTryNextSub()
     {
         datapackTarXzSub=false;
         index_mirror_sub++;
-        if(index_mirror_sub>=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,std::string::SkipEmptyParts).size())
+        if(index_mirror_sub>=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::';',std::string::SkipEmptyParts).size())
         {
             qDebug() << (std::stringLiteral("Get the list failed"));
             return false;
@@ -383,7 +389,7 @@ bool DatapackDownloaderMainSub::mirrorTryNextSub()
     return true;
 }
 
-void DatapackDownloaderMainSub::httpFinishedForDatapackListSub(const QByteArray data)
+void DatapackDownloaderMainSub::httpFinishedForDatapackListSub(const std::vector<char> data)
 {
     if(subDatapackCode.empty())
     {
@@ -419,7 +425,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListSub(const QByteArray 
                 abort();
                 return;
             }
-            /*ref crash here*/const std::string selectedMirror=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,std::string::SkipEmptyParts).at(index_mirror_sub)+"map/main/"+mainDatapackCode+"/sub/"+subDatapackCode+"/";
+            /*ref crash here*/const std::string selectedMirror=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::';',std::string::SkipEmptyParts).at(index_mirror_sub)+"map/main/"+mainDatapackCode+"/sub/"+subDatapackCode+"/";
             int correctContent=0;
             while(index<content.size())
             {
@@ -447,7 +453,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListSub(const QByteArray 
                                     return;
                                 }
                             }
-                            else if(hashFileOnDisk!=*reinterpret_cast<const uint32_t *>(QByteArray::fromHex(partialHashString.toLatin1()).constData()))
+                            else if(hashFileOnDisk!=*reinterpret_cast<const uint32_t *>(std::vector<char>::fromHex(partialHashString.toLatin1()).constData()))
                             {
                                 if(!getHttpFileSub(selectedMirror+fileString,fileString))
                                 {
@@ -498,7 +504,7 @@ const std::vector<std::string> DatapackDownloaderMainSub::listDatapackSub(std::s
     {
         QFileInfo fileInfo=entryList.at(index);
         if(fileInfo.isDir())
-            returnFile << listDatapackSub(suffix+fileInfo.fileName()+text_slash);//put unix separator because it's transformed into that's under windows too
+            returnFile << listDatapackSub(suffix+fileInfo.fileName()+'/');//put unix separator because it's transformed into that's under windows too
         else
         {
             //if match with correct file name, considere as valid
@@ -527,7 +533,7 @@ void DatapackDownloaderMainSub::cleanDatapackSub(std::string suffix)
     {
         QFileInfo fileInfo=entryList.at(index);
         if(fileInfo.isDir())
-            cleanDatapackSub(suffix+fileInfo.fileName()+text_slash);//put unix separator because it's transformed into that's under windows too
+            cleanDatapackSub(suffix+fileInfo.fileName()+'/');//put unix separator because it's transformed into that's under windows too
         else
             return;
     }

@@ -1,7 +1,7 @@
 #ifndef CommonFightEngine_H
 #define CommonFightEngine_H
 
-#include <QByteArray>
+#include <std::vector<char>>
 #include <unordered_map>
 #include <string>
 #include <vector>

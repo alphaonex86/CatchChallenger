@@ -8,7 +8,7 @@
 
 #include <QFile>
 #include <string>
-#include <QByteArray>
+#include <std::vector<char>>
 #include <QDomDocument>
 #include <QDomElement>
 
@@ -87,7 +87,7 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
     {
         #endif
         QFile xmlFile(QString::fromStdString(file));
-        QByteArray xmlContent;
+        std::vector<char> xmlContent;
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
             std::cerr << "Unable to open the xml monsters drop file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;

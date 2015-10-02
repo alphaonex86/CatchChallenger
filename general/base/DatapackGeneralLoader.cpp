@@ -5,7 +5,7 @@
 #include "FacilityLibGeneral.h"
 
 #include <QFile>
-#include <QByteArray>
+#include <std::vector<char>>
 #include <QDomDocument>
 #include <QDomElement>
 #include <QFileInfoList>
@@ -33,7 +33,7 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
             std::cerr << "Unable to open the file: " << file << ", error: " << itemsFile.errorString().toStdString() << std::endl;
             return reputation;
         }
-        const QByteArray &xmlContent=itemsFile.readAll();
+        const std::vector<char> &xmlContent=itemsFile.readAll();
         itemsFile.close();
         QString errorStr;
         int errorLine,errorColumn;
@@ -266,7 +266,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
             std::cerr << "Unable to open the file: " << file << ", error: " << itemsFile.errorString().toStdString() << std::endl;
             return std::pair<bool,Quest>(false,quest);
         }
-        const QByteArray &xmlContent=itemsFile.readAll();
+        const std::vector<char> &xmlContent=itemsFile.readAll();
         itemsFile.close();
 
         QString errorStr;
@@ -656,7 +656,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
             std::cerr << "Unable to open the file: " << file << ", error: " << plantsFile.errorString().toStdString() << std::endl;
             return plants;
         }
-        const QByteArray &xmlContent=plantsFile.readAll();
+        const std::vector<char> &xmlContent=plantsFile.readAll();
         plantsFile.close();
 
         QString errorStr;
@@ -949,7 +949,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
             std::cerr << "Unable to open the file: " << file << ", error: " << craftingRecipesFile.errorString().toStdString() << std::endl;
             return std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
         }
-        const QByteArray &xmlContent=craftingRecipesFile.readAll();
+        const std::vector<char> &xmlContent=craftingRecipesFile.readAll();
         craftingRecipesFile.close();
 
         QString errorStr;
@@ -1255,7 +1255,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                 file_index++;
                 continue;
             }
-            const QByteArray &xmlContent=industryFile.readAll();
+            const std::vector<char> &xmlContent=industryFile.readAll();
             industryFile.close();
             QString errorStr;
             int errorLine,errorColumn;
@@ -1517,7 +1517,7 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
             std::cerr << "Unable to open the file: " << file << ", error: " << industriesLinkFile.errorString().toStdString() << std::endl;
             return industriesLink;
         }
-        const QByteArray &xmlContent=industriesLinkFile.readAll();
+        const std::vector<char> &xmlContent=industriesLinkFile.readAll();
         industriesLinkFile.close();
         QString errorStr;
         int errorLine,errorColumn;
@@ -1688,7 +1688,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                 file_index++;
                 continue;
             }
-            const QByteArray &xmlContent=itemsFile.readAll();
+            const std::vector<char> &xmlContent=itemsFile.readAll();
             itemsFile.close();
             QString errorStr;
             int errorLine,errorColumn;
@@ -2002,7 +2002,7 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
             std::cerr << "Unable to open the file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
             return returnVar;
         }
-        const QByteArray &xmlContent=xmlFile.readAll();
+        const std::vector<char> &xmlContent=xmlFile.readAll();
         xmlFile.close();
         QString errorStr;
         int errorLine,errorColumn;
@@ -2287,7 +2287,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
             std::cerr << "Unable to open the file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
             return returnVar;
         }
-        const QByteArray &xmlContent=xmlFile.readAll();
+        const std::vector<char> &xmlContent=xmlFile.readAll();
         xmlFile.close();
         QString errorStr;
         int errorLine,errorColumn;
@@ -2480,7 +2480,7 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const std::string &file)
             std::cerr << "Unable to open the file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
             return returnVar;
         }
-        const QByteArray &xmlContent=xmlFile.readAll();
+        const std::vector<char> &xmlContent=xmlFile.readAll();
         xmlFile.close();
         QString errorStr;
         int errorLine,errorColumn;
@@ -2540,7 +2540,7 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
             std::cerr << "Unable to open the file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
             return returnVar;
         }
-        const QByteArray &xmlContent=xmlFile.readAll();
+        const std::vector<char> &xmlContent=xmlFile.readAll();
         xmlFile.close();
         QString errorStr;
         int errorLine,errorColumn;
@@ -2603,7 +2603,7 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
     {
         #endif
         QFile shopFile(QString::fromStdString(file));
-        QByteArray xmlContent;
+        std::vector<char> xmlContent;
         if(!shopFile.open(QIODevice::ReadOnly))
         {
             std::cerr << "Unable to open the file: " << file << ", error: " << shopFile.errorString().toStdString() << std::endl;
@@ -2774,7 +2774,7 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(
             std::cerr << "Unable to open the file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
             return serverProfileList;
         }
-        const QByteArray &xmlContent=xmlFile.readAll();
+        const std::vector<char> &xmlContent=xmlFile.readAll();
         xmlFile.close();
         QString errorStr;
         int errorLine,errorColumn;

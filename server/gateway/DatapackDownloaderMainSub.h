@@ -9,7 +9,6 @@
 #include <QCoreApplication>
 #include <QAbstractSocket>
 #include <string>
-#include <QByteArray>
 #include <vector>
 #include <QDir>
 #include <unordered_map>
@@ -34,7 +33,7 @@ public:
     void datapackDownloadError();
     void resetAll();
     void datapackFileList(const char * const data,const unsigned int &size);
-    void writeNewFileToRoute(const std::string &fileName, const QByteArray &data);
+    void writeNewFileToRoute(const std::string &fileName, const std::vector<char> &data);
 
     //datapack related
     void sendDatapackContentMainSub();
@@ -48,8 +47,8 @@ public:
     void decodedIsFinishSub();
     bool mirrorTryNextMain();
     bool mirrorTryNextSub();
-    void httpFinishedForDatapackListMain(const QByteArray data=QByteArray());
-    void httpFinishedForDatapackListSub(const QByteArray data=QByteArray());
+    void httpFinishedForDatapackListMain(const std::vector<char> data=std::vector<char>());
+    void httpFinishedForDatapackListSub(const std::vector<char> data=std::vector<char>());
     const std::vector<std::string> listDatapackMain(std::string suffix);
     const std::vector<std::string> listDatapackSub(std::string suffix);
     void cleanDatapackMain(std::string suffix);
@@ -58,10 +57,10 @@ public:
     const std::string mDatapackBase;
     const std::string mDatapackMain;
     std::string mDatapackSub;
-    QByteArray hashMain;
-    QByteArray hashSub;
-    QByteArray sendedHashMain;
-    QByteArray sendedHashSub;
+    std::vector<char> hashMain;
+    std::vector<char> hashSub;
+    std::vector<char> sendedHashMain;
+    std::vector<char> sendedHashSub;
     static std::unordered_set<std::string> extensionAllowed;
     static std::string commandUpdateDatapackMain;
     static std::string commandUpdateDatapackSub;
@@ -90,8 +89,6 @@ private:
     std::vector<std::string> datapackFilesListSub;
     std::vector<uint32_t> partialHashListMain;
     std::vector<uint32_t> partialHashListSub;
-    static std::string text_slash;
-    static std::string text_dotcoma;
     bool httpError;
     bool httpModeMain;
     bool httpModeSub;
@@ -102,14 +99,14 @@ private:
     bool getHttpFileMain(const std::string &url, const std::string &fileName);
     bool getHttpFileSub(const std::string &url, const std::string &fileName);
 private slots:
-    void writeNewFileMain(const std::string &fileName, const QByteArray &data);
-    void writeNewFileSub(const std::string &fileName, const QByteArray &data);
+    void writeNewFileMain(const std::string &fileName, const std::vector<char> &data);
+    void writeNewFileSub(const std::string &fileName, const std::vector<char> &data);
     void checkIfContinueOrFinished();
     void haveTheDatapackMainSub();
     void datapackDownloadFinishedMain();
     void datapackDownloadFinishedSub();
-    void datapackChecksumDoneMain(const std::vector<std::string> &datapackFilesList,const QByteArray &hash, const std::vector<uint32_t> &partialHash);
-    void datapackChecksumDoneSub(const std::vector<std::string> &datapackFilesList,const QByteArray &hash, const std::vector<uint32_t> &partialHash);
+    void datapackChecksumDoneMain(const std::vector<std::string> &datapackFilesList,const std::vector<char> &hash, const std::vector<uint32_t> &partialHash);
+    void datapackChecksumDoneSub(const std::vector<std::string> &datapackFilesList,const std::vector<char> &hash, const std::vector<uint32_t> &partialHash);
 };
 }
 

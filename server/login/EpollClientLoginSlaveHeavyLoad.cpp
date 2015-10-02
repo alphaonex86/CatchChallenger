@@ -18,7 +18,7 @@ void EpollClientLoginSlave::askLogin(const uint8_t &query_id,const char *rawdata
         return;
     }
     #endif
-    QByteArray login;
+    std::vector<char> login;
     {
         QCryptographicHash hash(QCryptographicHash::Sha224);
         hash.addData(rawdata,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
@@ -27,7 +27,7 @@ void EpollClientLoginSlave::askLogin(const uint8_t &query_id,const char *rawdata
     AskLoginParam *askLoginParam=new AskLoginParam;
     askLoginParam->query_id=query_id;
     askLoginParam->login=login;
-    askLoginParam->pass=QByteArray(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+    askLoginParam->pass=std::vector<char>(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
 
     const QString &queryText=QString(PreparedDBQueryLogin::db_query_login).arg(QString(login.toHex()));
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseLogin.asyncRead(queryText.toLatin1(),this,&EpollClientLoginSlave::askLogin_static);
@@ -124,9 +124,9 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
         }
         else
         {
-            QByteArray hashedToken;
+            std::vector<char> hashedToken;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            QByteArray tempAddedToken;
+            std::vector<char> tempAddedToken;
             #endif
             {
                 int32_t tokenForAuthIndex=0;
@@ -136,11 +136,11 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                     if(tokenLink.client==this)
                     {
                         const QString &secretToken(databaseBaseLogin.value(1));
-                        const QByteArray &secretTokenBinary=QByteArray::fromHex(secretToken.toLatin1());
+                        const std::vector<char> &secretTokenBinary=std::vector<char>::fromHex(secretToken.toLatin1());
                         QCryptographicHash hash(QCryptographicHash::Sha224);
                         hash.addData(secretTokenBinary);
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                        tempAddedToken=QByteArray(tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        tempAddedToken=std::vector<char>(tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         #endif
                         hash.addData(tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         hashedToken=hash.result();
@@ -370,7 +370,7 @@ void EpollClientLoginSlave::createAccount(const uint8_t &query_id, const char *r
         loginIsWrong(query_id,0x04,QStringLiteral("maxAccountIdList is empty"));
         return;
     }
-    QByteArray login;
+    std::vector<char> login;
     {
         QCryptographicHash hash(QCryptographicHash::Sha224);
         hash.addData(rawdata,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
@@ -379,7 +379,7 @@ void EpollClientLoginSlave::createAccount(const uint8_t &query_id, const char *r
     AskLoginParam *askLoginParam=new AskLoginParam;
     askLoginParam->query_id=query_id;
     askLoginParam->login=login;
-    askLoginParam->pass=QByteArray(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+    askLoginParam->pass=std::vector<char>(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
 
     const QString &queryText=QString(PreparedDBQueryLogin::db_query_login).arg(QString(login.toHex()));
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseLogin.asyncRead(queryText.toLatin1(),this,&EpollClientLoginSlave::createAccount_static);
@@ -473,7 +473,7 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
         account_id=maxAccountIdList.takeFirst();
         dbQueryWriteLogin(QString(PreparedDBQueryLogin::db_query_insert_login).arg(account_id).arg(QString(askLoginParam->login.toHex())).arg(QString(askLoginParam->pass.toHex())).arg(QDateTime::currentDateTime().toTime_t()).toUtf8().constData());
         //send the network reply
-        QByteArray outputData;
+        std::vector<char> outputData;
         outputData[0x00]=0x01;
         postReply(askLoginParam->query_id,outputData.constData(),outputData.size());
         stat=EpollClientLoginStat::ProtocolGood;

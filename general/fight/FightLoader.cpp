@@ -5,7 +5,7 @@
 #include "../base/CommonDatapack.h"
 
 #include <QFile>
-#include <QByteArray>
+#include <std::vector<char>>
 #include <QDomDocument>
 #include <QDomElement>
 #include <QtCore/qmath.h>
@@ -99,7 +99,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
     {
         #endif
         QFile itemsFile(QString::fromStdString(file));
-        QByteArray xmlContent;
+        std::vector<char> xmlContent;
         if(!itemsFile.open(QIODevice::ReadOnly))
         {
             std::cerr << "Unable to open the file: " << file << ", error: " << itemsFile.errorString().toStdString() << std::endl;
@@ -267,7 +267,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
         {
             #endif
             QFile xmlFile(QString::fromStdString(file));
-            QByteArray xmlContent;
+            std::vector<char> xmlContent;
             if(!xmlFile.open(QIODevice::ReadOnly))
             {
                 std::cerr << "Unable to open the xml monster file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
@@ -979,7 +979,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
             {
                 #endif
                 QFile xmlFile(QString::fromStdString(file));
-                QByteArray xmlContent;
+                std::vector<char> xmlContent;
                 if(!xmlFile.open(QIODevice::ReadOnly))
                 {
                     std::cerr << "Unable to open the xml fight file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
@@ -1241,7 +1241,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
         {
             #endif
             QFile xmlFile(QString::fromStdString(file));
-            QByteArray xmlContent;
+            std::vector<char> xmlContent;
             if(!xmlFile.open(QIODevice::ReadOnly))
             {
                 std::cerr << "Unable to open the xml skill monster " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
@@ -1607,7 +1607,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
         {
             #endif
             QFile xmlFile(QString::fromStdString(file));
-            QByteArray xmlContent;
+            std::vector<char> xmlContent;
             if(!xmlFile.open(QIODevice::ReadOnly))
             {
                 std::cerr << "Unable to open the xml buff monster file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;

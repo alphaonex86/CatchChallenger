@@ -10,7 +10,7 @@
 #include <QFile>
 #include <QDomElement>
 #include <QDomDocument>
-#include <QByteArray>
+#include <std::vector<char>>
 #include <QDir>
 #include <QFileInfoList>
 #include <QMutexLocker>

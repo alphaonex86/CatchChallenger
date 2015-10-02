@@ -9,7 +9,7 @@
 using namespace CatchChallenger;
 
 char QtDatabase::emptyString[]={'\0'};
-QByteArray QtDatabase::valueReturnedData;
+std::vector<char> QtDatabase::valueReturnedData;
 
 QtDatabase::QtDatabase() :
     conn(NULL),

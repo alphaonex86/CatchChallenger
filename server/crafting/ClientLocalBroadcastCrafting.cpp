@@ -116,7 +116,7 @@ void Client::plantSeed(
         #else
         if(plantOnMap.character!=0)
         {
-            QByteArray data;
+            std::vector<char> data;
             data[0]=0x02;
             postReply(query_id,data.constData(),data.size());
             return;
@@ -145,7 +145,7 @@ void Client::seedValidated()
     /* useless, clean the protocol
     if(!ok)
     {
-        QByteArray data;
+        std::vector<char> data;
         data[0]=0x02;
         postReply(plant_list_in_waiting.first().query_id,data);
         plant_list_in_waiting.removeFirst();
@@ -160,7 +160,7 @@ void Client::seedValidated()
             if(x==static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.at(index).x && y==static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.at(index).y)
             {
                 addObject(CommonDatapack::commonDatapack.plants.value(plant_list_in_waiting.first().plant_id).itemUsed);
-                QByteArray data;
+                std::vector<char> data;
                 data[0]=0x02;
                 postReply(plant_list_in_waiting.first().query_id,data.constData(),data.size());
                 plant_list_in_waiting.removeFirst();
@@ -171,7 +171,7 @@ void Client::seedValidated()
     }*/
     //post the reply
     #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-    QByteArray data;
+    std::vector<char> data;
     data[0]=0x01;
     postReply(plant_list_in_waiting.front().query_id,data.constData(),data.size());
     #endif
@@ -208,7 +208,7 @@ void Client::seedValidated()
     //send to all player
     #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     {
-        QByteArray finalData;
+        std::vector<char> finalData;
         {
             //Insert plant on map
             out << (uint16_t)1;
@@ -453,14 +453,14 @@ void Client::collectPlant(
     #else
     if(current_time<plant.mature_at)
     {
-        QByteArray data;
+        std::vector<char> data;
         data[0]=Plant_collect_impossible;
         postReply(query_id,data.constData(),data.size());
         return;
     }
     if(plant.character==0)
     {
-        QByteArray data;
+        std::vector<char> data;
         data[0]=Plant_collect_empty_dirt;
         postReply(query_id,data.constData(),data.size());
         return;
@@ -475,7 +475,7 @@ void Client::collectPlant(
         //remove plant from db
         dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_plant_by_index.arg(character_id).arg(plant.pointOnMapDbCode));
 
-        QByteArray finalData;
+        std::vector<char> finalData;
         {
             //Remove plant on map
             out << (uint16_t)1;
@@ -512,7 +512,7 @@ void Client::collectPlant(
             quantity++;
 
         //send the object collected to the current character
-        QByteArray data;
+        std::vector<char> data;
         data[0]=Plant_collect_correctly_collected;
         postReply(query_id,data.constData(),data.size());
         addObjectAndSend(CommonDatapack::commonDatapack.plants.value(plant.plant).itemUsed,quantity);
@@ -525,7 +525,7 @@ void Client::collectPlant(
     }
     else
     {
-        QByteArray data;
+        std::vector<char> data;
         data[0]=Plant_collect_owned_by_another_player;
         postReply(query_id,data.constData(),data.size());
         return;

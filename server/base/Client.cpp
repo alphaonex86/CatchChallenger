@@ -431,7 +431,7 @@ void Client::dropAllBorderClients()
 }
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
-/*void Client::fake_receive_data(QByteArray data)
+/*void Client::fake_receive_data(std::vector<char> data)
 {
     fake_send_received_data(data);
 }*/

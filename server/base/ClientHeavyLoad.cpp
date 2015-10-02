@@ -66,7 +66,7 @@ bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
         return false;
     }
     #endif
-    QByteArray login;
+    std::vector<char> login;
     {
         QCryptographicHash hash(QCryptographicHash::Sha224);
         hash.addData(rawdata,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
@@ -75,7 +75,7 @@ bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
     AskLoginParam *askLoginParam=new AskLoginParam;
     askLoginParam->query_id=query_id;
     askLoginParam->login=login;
-    askLoginParam->pass=QByteArray(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+    askLoginParam->pass=std::vector<char>(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
 
     std::string queryText=PreparedDBQueryLogin::db_query_login;
     stringreplaceOne(queryText,"%1",QString(login.toHex()).toStdString());
@@ -170,9 +170,9 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         }
         else
         {
-            QByteArray hashedToken;
+            std::vector<char> hashedToken;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            QByteArray tempAddedToken;
+            std::vector<char> tempAddedToken;
             #endif
             {
                 int32_t tokenForAuthIndex=0;
@@ -182,11 +182,11 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                     if(tokenLink.client==this)
                     {
                         const std::string &secretToken(GlobalServerData::serverPrivateVariables.db_login->value(1));
-                        const QByteArray &secretTokenBinary=QByteArray::fromHex(secretToken.c_str());
+                        const std::vector<char> &secretTokenBinary=std::vector<char>::fromHex(secretToken.c_str());
                         QCryptographicHash hash(QCryptographicHash::Sha224);
                         hash.addData(secretTokenBinary);
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                        tempAddedToken=QByteArray(tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        tempAddedToken=std::vector<char>(tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         #endif
                         hash.addData(tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         hashedToken=hash.result();
@@ -294,11 +294,11 @@ bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
         return false;
     }
     #endif
-    const QByteArray login=QByteArray(rawdata,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+    const std::vector<char> login=std::vector<char>(rawdata,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
     AskLoginParam *askLoginParam=new AskLoginParam;
     askLoginParam->query_id=query_id;
     askLoginParam->login=login;
-    askLoginParam->pass=QByteArray(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+    askLoginParam->pass=std::vector<char>(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
 
     std::string queryText=PreparedDBQueryLogin::db_query_login;
     stringreplaceOne(queryText,"%1",QString(login.toHex()).toStdString());
@@ -1807,7 +1807,7 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
     QFile file(QString::fromStdString(datapackPath+fileName));
     if(file.open(QIODevice::ReadOnly))
     {
-        const QByteArray &content=file.readAll();
+        const std::vector<char> &content=file.readAll();
         const int &contentsize=content.size();
 
         const std::string &suffix=QFileInfo(file).suffix().toStdString();
@@ -1831,7 +1831,7 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(contentsize);
             posOutput+=4;
 
-            BaseServerMasterSendDatapack::compressedFilesBuffer+=QByteArray(ProtocolParsingBase::tempBigBufferForOutput,posOutput)+content;
+            BaseServerMasterSendDatapack::compressedFilesBuffer+=std::vector<char>(ProtocolParsingBase::tempBigBufferForOutput,posOutput)+content;
             BaseServerMasterSendDatapack::compressedFilesBufferCount++;
             switch(ProtocolParsing::compressionTypeServer)
             {
@@ -1901,7 +1901,7 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
                 *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(contentsize);
                 posOutput+=4;
 
-                BaseServerMasterSendDatapack::rawFilesBuffer+=QByteArray(ProtocolParsingBase::tempBigBufferForOutput,posOutput)+content;
+                BaseServerMasterSendDatapack::rawFilesBuffer+=std::vector<char>(ProtocolParsingBase::tempBigBufferForOutput,posOutput)+content;
                 BaseServerMasterSendDatapack::rawFilesBufferCount++;
                 if(BaseServerMasterSendDatapack::rawFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_MAX_FILEPURGE_KB*1024 || BaseServerMasterSendDatapack::rawFilesBufferCount>=255)
                     sendFileContent();

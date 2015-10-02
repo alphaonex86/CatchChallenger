@@ -6,7 +6,7 @@
 #include <QTimer>
 #include <QCoreApplication>
 #include <vector>
-#include <QByteArray>
+#include <std::vector<char>>
 #include <QDir>
 #include <QSemaphore>
 #include <string>

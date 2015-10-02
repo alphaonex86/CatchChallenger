@@ -152,7 +152,7 @@ void NormalServer::start_internal_server()
             error(QStringLiteral("Unable to access to the server key"));
             return;
         }
-        QByteArray keyData=key.readAll();
+        std::vector<char> keyData=key.readAll();
         key.close();
         QSslKey sslKey(keyData,QSsl::Rsa);
         if(sslKey.isNull())
@@ -175,7 +175,7 @@ void NormalServer::start_internal_server()
             error(QStringLiteral("Unable to access to the server certificate"));
             return;
         }
-        QByteArray certificateData=certificate.readAll();
+        std::vector<char> certificateData=certificate.readAll();
         certificate.close();
         QSslCertificate sslCertificate(certificateData);
         if(sslCertificate.isNull())

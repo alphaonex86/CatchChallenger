@@ -285,7 +285,7 @@ bool LinkToMaster::setSettings(QSettings * const settings)
     if(token.size()!=TOKEN_SIZE_FOR_MASTERAUTH*2/*String Hexa, not binary*/)
         generateToken();
     token=settings->value(QStringLiteral("token")).toString();
-    memcpy(LinkToMaster::private_token,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
+    memcpy(LinkToMaster::private_token,std::vector<char>::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
     settings->endGroup();
 
     return true;
@@ -306,7 +306,7 @@ void LinkToMaster::generateToken()
         abort();
     }
     settings->setValue(QStringLiteral("token"),QString(
-                          QByteArray(
+                          std::vector<char>(
                               reinterpret_cast<char *>(LinkToMaster::private_token)
                               ,TOKEN_SIZE_FOR_MASTERAUTH)
                           .toHex()));
@@ -327,7 +327,7 @@ bool LinkToMaster::registerGameServer(const QString &exportedXml, const char * c
         QCryptographicHash hash(QCryptographicHash::Sha224);
         hash.addData(reinterpret_cast<const char *>(LinkToMaster::private_token),TOKEN_SIZE_FOR_MASTERAUTH);
         hash.addData(dynamicToken,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-        const QByteArray &hashedToken=hash.result();
+        const std::vector<char> &hashedToken=hash.result();
         memcpy(tempBuffer,hashedToken.constData(),hashedToken.size());
         pos+=hashedToken.size();
         memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));

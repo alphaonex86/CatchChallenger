@@ -4,7 +4,7 @@
 #include <QTcpServer>
 #include <QSslCertificate>
 #include <QSslKey>
-#include <QByteArray>
+#include <std::vector<char>>
 
 class QSslServer : public QTcpServer
 {
@@ -16,7 +16,7 @@ protected:
 private:
     QSslCertificate sslCertificate;
     QSslKey sslKey;
-    QByteArray firstHeader;
+    std::vector<char> firstHeader;
 private:
     void sslErrors(const QList<QSslError> &errors);
 };

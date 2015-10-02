@@ -22,7 +22,7 @@ public:
 
     static std::unordered_set<std::string> compressedExtension;
     static std::unordered_set<std::string> extensionAllowed;
-    static QByteArray rawFilesBuffer,compressedFilesBuffer;
+    static std::vector<char> rawFilesBuffer,compressedFilesBuffer;
     static int rawFilesBufferCount,compressedFilesBufferCount;
     struct DatapackCacheFile
     {
