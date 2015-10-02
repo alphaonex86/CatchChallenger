@@ -18,7 +18,7 @@ class QtDatabaseThread : public QThread
     Q_OBJECT
 public:
     QtDatabaseThread();
-    void receiveQuery(const QString &query, const QSqlDatabase &db);
+    void receiveQuery(const std::string &query, const QSqlDatabase &db);
 signals:
     void sendReply(const QSqlQuery &queryReturn);
 };
@@ -48,14 +48,14 @@ public:
 
     QtDatabaseThread dbThread;
 signals:
-    void sendQuery(const QString &query, const QSqlDatabase &db);
+    void sendQuery(const std::string &query, const QSqlDatabase &db);
 private:
     QSqlDatabase *conn;
     QSqlQuery *sqlQuery;
     static char emptyString[1];
-    QString lastErrorMessage;
+    std::string lastErrorMessage;
     QList<CallBack> queue;
-    QList<QString> queriesList;
+    QList<std::string> queriesList;
     static std::vector<char> valueReturnedData;
     DatabaseBase::DatabaseType databaseConnected;
 };

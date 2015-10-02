@@ -42,7 +42,7 @@ void QSslServer::sslErrors(const QList<QSslError> &errors)
     int index=0;
     while(index<errors.size())
     {
-        DebugClass::debugConsole(QStringLiteral("Ssl error: %1").arg(errors.at(index).errorString()));
+        DebugClass::debugConsole(std::stringLiteral("Ssl error: %1").arg(errors.at(index).errorString()));
         index++;
     }
     QSslSocket *socket=qobject_cast<QSslSocket *>(QObject::sender());

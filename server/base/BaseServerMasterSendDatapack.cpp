@@ -70,7 +70,7 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
 
     unsigned int index=0;
     while(index<datapack_file_temp.size()) {
-        QFile file(QString::fromStdString(text_datapack+datapack_file_temp.at(index)));
+        QFile file(std::string::fromStdString(text_datapack+datapack_file_temp.at(index)));
         if(std::regex_match(datapack_file_temp.at(index),datapack_rightFileName))
         {
             if(file.size()<=8*1024*1024)

@@ -2,7 +2,7 @@
 #include "EpollServerLoginMaster.h"
 
 #include <iostream>
-#include <QString>
+#include <std::string>
 #include <time.h>
 
 using namespace CatchChallenger;
@@ -84,13 +84,13 @@ void EpollClientLoginMaster::disconnectClient()
 }
 
 //input/ouput layer
-void EpollClientLoginMaster::errorParsingLayer(const QString &error)
+void EpollClientLoginMaster::errorParsingLayer(const std::string &error)
 {
     std::cerr << socketString << ": " << error.toLocal8Bit().constData() << std::endl;
     disconnectClient();
 }
 
-void EpollClientLoginMaster::messageParsingLayer(const QString &message) const
+void EpollClientLoginMaster::messageParsingLayer(const std::string &message) const
 {
     std::cout << socketString << ": " << message.toLocal8Bit().constData() << std::endl;
 }

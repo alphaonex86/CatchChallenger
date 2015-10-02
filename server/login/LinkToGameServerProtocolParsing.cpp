@@ -19,7 +19,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
             //Protocol initialization
             if(size<1)
             {
-                parseNetworkReadError(QStringLiteral("wrong size with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                parseNetworkReadError(std::stringLiteral("wrong size with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
                 return;
             }
             uint8_t returnCode=data[0x00];
@@ -40,12 +40,12 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                         ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Lz4;
                     break;
                     default:
-                        parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                        parseNetworkReadError(std::stringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
                     return;
                 }
                 if(size!=(sizeof(uint8_t)))
                 {
-                    parseNetworkReadError(QStringLiteral("compression type wrong size (stage 3) with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                    parseNetworkReadError(std::stringLiteral("compression type wrong size (stage 3) with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
                     return;
                 }
                 //send token to game server
@@ -60,13 +60,13 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                 if(returnCode==0x03)
                     parseNetworkReadError("Server full");
                 else
-                    parseNetworkReadError(QStringLiteral("Unknown error %1").arg(returnCode));
+                    parseNetworkReadError(std::stringLiteral("Unknown error %1").arg(returnCode));
                 return;
             }
         }
         break;
         default:
-            parseNetworkReadError(QStringLiteral("unknown sort ident reply code: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            parseNetworkReadError(std::stringLiteral("unknown sort ident reply code: %1, line: %2").arg(mainCodeType).arg(std::stringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
             return;
         break;
     }
@@ -76,7 +76,7 @@ void LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char *data
 {
     if(stat!=Stat::Logged)
     {
-        parseNetworkReadError("parseFullMessage() not logged to send: "+QString::number(mainCodeType));
+        parseNetworkReadError("parseFullMessage() not logged to send: "+std::string::number(mainCodeType));
         return;
     }
     (void)data;
@@ -89,7 +89,7 @@ void LinkToGameServer::parseFullMessage(const uint8_t &mainCodeType,const uint8_
 {
     if(stat!=Stat::Logged)
     {
-        parseNetworkReadError("parseFullMessage() not logged to send: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+        parseNetworkReadError("parseFullMessage() not logged to send: "+std::string::number(mainCodeType)+" "+std::string::number(subCodeType));
         return;
     }
     (void)rawData;
@@ -116,7 +116,7 @@ void LinkToGameServer::parseFullQuery(const uint8_t &mainCodeType,const uint8_t 
     (void)size;
     if(stat!=Stat::Logged)
     {
-        parseNetworkReadError(QStringLiteral("is not logged, parseFullQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+        parseNetworkReadError(std::stringLiteral("is not logged, parseFullQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
         return;
     }
     //do the work here
@@ -136,7 +136,7 @@ void LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
         }
         else
         {
-            parseNetworkReadError(QStringLiteral("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
+            parseNetworkReadError(std::stringLiteral("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
             return;
         }
     }
@@ -156,7 +156,7 @@ void LinkToGameServer::parseFullReplyData(const uint8_t &mainCodeType,const uint
         {}
         else
         {
-            parseNetworkReadError(QStringLiteral("is not logged, parseFullReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
+            parseNetworkReadError(std::stringLiteral("is not logged, parseFullReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
             return;
         }
     }
@@ -180,19 +180,19 @@ void LinkToGameServer::parseFullReplyData(const uint8_t &mainCodeType,const uint
                             }
                             else
                             {
-                                parseNetworkReadError(QString("invalid code %1 main ident: ").arg(data[0x00])+QString::number(mainCodeType)+QString(", sub ident: %1 file:%2:%3").arg(subCodeType).arg(__FILE__).arg(__LINE__));
+                                parseNetworkReadError(std::string("invalid code %1 main ident: ").arg(data[0x00])+std::string::number(mainCodeType)+std::string(", sub ident: %1 file:%2:%3").arg(subCodeType).arg(__FILE__).arg(__LINE__));
                                 return;
                             }
                         }
                         else
                         {
-                            parseNetworkReadError("size==0 main ident: "+QString::number(mainCodeType)+QString(", sub ident: %1 file:%2:%3").arg(subCodeType).arg(__FILE__).arg(__LINE__));
+                            parseNetworkReadError("size==0 main ident: "+std::string::number(mainCodeType)+std::string(", sub ident: %1 file:%2:%3").arg(subCodeType).arg(__FILE__).arg(__LINE__));
                             return;
                         }
                     }
                     else
                     {
-                        parseNetworkReadError("stat wrong main ident: "+QString::number(mainCodeType)+QString(", sub ident: %1 file:%2:%3").arg(subCodeType).arg(__FILE__).arg(__LINE__));
+                        parseNetworkReadError("stat wrong main ident: "+std::string::number(mainCodeType)+std::string(", sub ident: %1 file:%2:%3").arg(subCodeType).arg(__FILE__).arg(__LINE__));
                         return;
                     }
                 break;
@@ -204,7 +204,7 @@ void LinkToGameServer::parseFullReplyData(const uint8_t &mainCodeType,const uint
     }
 }
 
-void LinkToGameServer::parseNetworkReadError(const QString &errorString)
+void LinkToGameServer::parseNetworkReadError(const std::string &errorString)
 {
     errorParsingLayer(errorString);
 }

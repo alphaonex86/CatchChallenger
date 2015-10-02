@@ -10,7 +10,7 @@
 #include <QDir>
 #include <QSemaphore>
 #include <string>
-#include <QRegularExpression>
+#include <std::regex>
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QSqlDatabase>
@@ -186,7 +186,7 @@ protected:
     int plant_on_the_map;
     std::vector<Map_semi> semi_loaded_map;
 
-    static QRegularExpression regexXmlFile;
+    static std::regex regexXmlFile;
     static const std::string text_dotxml;
     static const std::string text_zone;
     static const std::string text_capture;

@@ -38,7 +38,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     CommonSettingsCommon::commonSettingsCommon.maxPlayerItems               = 30;
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems      = 150;
 
-    QSettings settings(QCoreApplication::applicationDirPath()+"/login.conf",QSettings::IniFormat);
+    std::unordered_settings settings(QCoreApplication::applicationDirPath()+"/login.conf",std::unordered_settings::IniFormat);
 
     {
         memset(EpollClientLoginSlave::serverServerList,0x00,sizeof(EpollClientLoginSlave::serverServerList));
@@ -100,43 +100,43 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
     srand(time(NULL));
 
-    if(!settings.contains(QStringLiteral("ip")))
-        settings.setValue(QStringLiteral("ip"),QString());
-    const QString &server_ip_string=settings.value(QStringLiteral("ip")).toString();
+    if(!settings.contains(std::stringLiteral("ip")))
+        settings.setValue(std::stringLiteral("ip"),std::string());
+    const std::string &server_ip_string=settings.value(std::stringLiteral("ip")).toString();
     const std::vector<char> &server_ip_data=server_ip_string.toLocal8Bit();
     if(!server_ip_string.isEmpty())
     {
         server_ip=new char[server_ip_data.size()+1];
         strcpy(server_ip,server_ip_data.constData());
     }
-    if(!settings.contains(QStringLiteral("port")))
-        settings.setValue(QStringLiteral("port"),rand()%40000+10000);
-    const std::vector<char> &server_port_data=settings.value(QStringLiteral("port")).toString().toLocal8Bit();
+    if(!settings.contains(std::stringLiteral("port")))
+        settings.setValue(std::stringLiteral("port"),rand()%40000+10000);
+    const std::vector<char> &server_port_data=settings.value(std::stringLiteral("port")).toString().toLocal8Bit();
     server_port=new char[server_port_data.size()+1];
     strcpy(server_port,server_port_data.constData());
 
     //token
-    settings.beginGroup(QStringLiteral("master"));
-    if(!settings.contains(QStringLiteral("token")))
+    settings.beginGroup(std::stringLiteral("master"));
+    if(!settings.contains(std::stringLiteral("token")))
         generateToken(settings);
-    QString token=settings.value(QStringLiteral("token")).toString();
+    std::string token=settings.value(std::stringLiteral("token")).toString();
     if(token.size()!=TOKEN_SIZE_FOR_MASTERAUTH*2/*String Hexa, not binary*/)
         generateToken(settings);
-    token=settings.value(QStringLiteral("token")).toString();
+    token=settings.value(std::stringLiteral("token")).toString();
     memcpy(LinkToMaster::private_token,std::vector<char>::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
     settings.endGroup();
 
     //mode
     {
-        if(!settings.contains(QStringLiteral("mode")))
-            settings.setValue(QStringLiteral("mode"),QStringLiteral("direct"));//or proxy
-        QString mode=settings.value(QStringLiteral("mode")).toString();
-        if(mode!=QStringLiteral("direct") && mode!=QStringLiteral("proxy"))
+        if(!settings.contains(std::stringLiteral("mode")))
+            settings.setValue(std::stringLiteral("mode"),std::stringLiteral("direct"));//or proxy
+        std::string mode=settings.value(std::stringLiteral("mode")).toString();
+        if(mode!=std::stringLiteral("direct") && mode!=std::stringLiteral("proxy"))
         {
-            mode=QStringLiteral("direct");
-            settings.setValue(QStringLiteral("mode"),mode);
+            mode=std::stringLiteral("direct");
+            settings.setValue(std::stringLiteral("mode"),mode);
         }
-        if(mode==QStringLiteral("direct"))
+        if(mode==std::stringLiteral("direct"))
         {
             EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Reconnect;
             EpollClientLoginSlave::serverServerList[0x00]=0x01;//Reconnect mode
@@ -148,10 +148,10 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         }
     }
 
-    if(!settings.contains(QStringLiteral("httpDatapackMirror")))
-        settings.setValue(QStringLiteral("httpDatapackMirror"),QString());
-    QString httpDatapackMirror=settings.value(QStringLiteral("httpDatapackMirror")).toString();
-    httpDatapackMirror=settings.value(QStringLiteral("httpDatapackMirror")).toString();
+    if(!settings.contains(std::stringLiteral("httpDatapackMirror")))
+        settings.setValue(std::stringLiteral("httpDatapackMirror"),std::string());
+    std::string httpDatapackMirror=settings.value(std::stringLiteral("httpDatapackMirror")).toString();
+    httpDatapackMirror=settings.value(std::stringLiteral("httpDatapackMirror")).toString();
     if(httpDatapackMirror.isEmpty())
     {
         std::cerr << "empty mirror in the settings but not supported from now (abort)" << std::endl;
@@ -164,13 +164,13 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     }
     else
     {
-        QStringList newMirrorList;
-        QRegularExpression httpMatch("^https?://.+$");
-        const QStringList &mirrorList=httpDatapackMirror.split(";");
+        std::stringList newMirrorList;
+        std::regex httpMatch("^https?://.+$");
+        const std::stringList &mirrorList=httpDatapackMirror.split(";");
         int index=0;
         while(index<mirrorList.size())
         {
-            const QString &mirror=mirrorList.at(index);
+            const std::string &mirror=mirrorList.at(index);
             if(!mirror.contains(httpMatch))
             {
                 std::cerr << "Mirror wrong: " << mirror.toStdString() << std::endl;
@@ -187,71 +187,71 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
     //connection
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    if(!settings.contains(QStringLiteral("compression")))
-        settings.setValue(QStringLiteral("compression"),QStringLiteral("zlib"));
-    if(settings.value(QStringLiteral("compression")).toString()==QStringLiteral("none"))
+    if(!settings.contains(std::stringLiteral("compression")))
+        settings.setValue(std::stringLiteral("compression"),std::stringLiteral("zlib"));
+    if(settings.value(std::stringLiteral("compression")).toString()==std::stringLiteral("none"))
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::None;
-    else if(settings.value(QStringLiteral("compression")).toString()==QStringLiteral("xz"))
+    else if(settings.value(std::stringLiteral("compression")).toString()==std::stringLiteral("xz"))
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Xz;
-    else if(settings.value(QStringLiteral("compression")).toString()==QStringLiteral("lz4"))
+    else if(settings.value(std::stringLiteral("compression")).toString()==std::stringLiteral("lz4"))
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Lz4;
     else
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Zlib;
-    ProtocolParsing::compressionLevel          = settings.value(QStringLiteral("compressionLevel")).toUInt();
+    ProtocolParsing::compressionLevel          = settings.value(std::stringLiteral("compressionLevel")).toUInt();
     #endif
 
-    settings.beginGroup(QStringLiteral("Linux"));
-    if(!settings.contains(QStringLiteral("tcpCork")))
-        settings.setValue(QStringLiteral("tcpCork"),true);
-    if(!settings.contains(QStringLiteral("tcpNodelay")))
-        settings.setValue(QStringLiteral("tcpNodelay"),false);
-    tcpCork=settings.value(QStringLiteral("tcpCork")).toBool();
-    tcpNodelay=settings.value(QStringLiteral("tcpNodelay")).toBool();
+    settings.beginGroup(std::stringLiteral("Linux"));
+    if(!settings.contains(std::stringLiteral("tcpCork")))
+        settings.setValue(std::stringLiteral("tcpCork"),true);
+    if(!settings.contains(std::stringLiteral("tcpNodelay")))
+        settings.setValue(std::stringLiteral("tcpNodelay"),false);
+    tcpCork=settings.value(std::stringLiteral("tcpCork")).toBool();
+    tcpNodelay=settings.value(std::stringLiteral("tcpNodelay")).toBool();
     settings.endGroup();
     settings.sync();
 
-    QString db;
-    QString host;
-    QString login;
-    QString pass;
-    QString type;
+    std::string db;
+    std::string host;
+    std::string login;
+    std::string pass;
+    std::string type;
     bool ok;
     //here to have by login server an auth
     {
-        settings.beginGroup(QStringLiteral("db-login"));
-        if(!settings.contains(QStringLiteral("considerDownAfterNumberOfTry")))
-            settings.setValue(QStringLiteral("considerDownAfterNumberOfTry"),30);
-        if(!settings.contains(QStringLiteral("tryInterval")))
-            settings.setValue(QStringLiteral("tryInterval"),1);
-        if(!settings.contains(QStringLiteral("db")))
-            settings.setValue(QStringLiteral("db"),QStringLiteral("catchchallenger_login"));
-        if(!settings.contains(QStringLiteral("host")))
-            settings.setValue(QStringLiteral("host"),QStringLiteral("localhost"));
-        if(!settings.contains(QStringLiteral("login")))
-            settings.setValue(QStringLiteral("login"),QStringLiteral("root"));
-        if(!settings.contains(QStringLiteral("pass")))
-            settings.setValue(QStringLiteral("pass"),QStringLiteral("root"));
-        if(!settings.contains(QStringLiteral("type")))
-            settings.setValue(QStringLiteral("type"),QStringLiteral("postgresql"));
+        settings.beginGroup(std::stringLiteral("db-login"));
+        if(!settings.contains(std::stringLiteral("considerDownAfterNumberOfTry")))
+            settings.setValue(std::stringLiteral("considerDownAfterNumberOfTry"),30);
+        if(!settings.contains(std::stringLiteral("tryInterval")))
+            settings.setValue(std::stringLiteral("tryInterval"),1);
+        if(!settings.contains(std::stringLiteral("db")))
+            settings.setValue(std::stringLiteral("db"),std::stringLiteral("catchchallenger_login"));
+        if(!settings.contains(std::stringLiteral("host")))
+            settings.setValue(std::stringLiteral("host"),std::stringLiteral("localhost"));
+        if(!settings.contains(std::stringLiteral("login")))
+            settings.setValue(std::stringLiteral("login"),std::stringLiteral("root"));
+        if(!settings.contains(std::stringLiteral("pass")))
+            settings.setValue(std::stringLiteral("pass"),std::stringLiteral("root"));
+        if(!settings.contains(std::stringLiteral("type")))
+            settings.setValue(std::stringLiteral("type"),std::stringLiteral("postgresql"));
         settings.sync();
-        EpollClientLoginSlave::databaseBaseLogin.considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
+        EpollClientLoginSlave::databaseBaseLogin.considerDownAfterNumberOfTry=settings.value(std::stringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
         if(EpollClientLoginSlave::databaseBaseLogin.considerDownAfterNumberOfTry==0 || !ok)
         {
             std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
             abort();
         }
-        db=settings.value(QStringLiteral("db")).toString();
-        host=settings.value(QStringLiteral("host")).toString();
-        login=settings.value(QStringLiteral("login")).toString();
-        pass=settings.value(QStringLiteral("pass")).toString();
-        EpollClientLoginSlave::databaseBaseLogin.tryInterval=settings.value(QStringLiteral("tryInterval")).toUInt(&ok);
+        db=settings.value(std::stringLiteral("db")).toString();
+        host=settings.value(std::stringLiteral("host")).toString();
+        login=settings.value(std::stringLiteral("login")).toString();
+        pass=settings.value(std::stringLiteral("pass")).toString();
+        EpollClientLoginSlave::databaseBaseLogin.tryInterval=settings.value(std::stringLiteral("tryInterval")).toUInt(&ok);
         if(EpollClientLoginSlave::databaseBaseLogin.tryInterval==0 || !ok)
         {
             std::cerr << "tryInterval==0 (abort)" << std::endl;
             abort();
         }
-        type=settings.value(QStringLiteral("type")).toString();
-        if(type!=QStringLiteral("postgresql"))
+        type=settings.value(std::stringLiteral("type")).toString();
+        if(type!=std::stringLiteral("postgresql"))
         {
             std::cerr << "only db type postgresql supported (abort)" << std::endl;
             abort();
@@ -270,57 +270,57 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         //PreparedDBQueryBase::initDatabaseQueryBase(EpollClientLoginSlave::databaseBaseLogin.databaseType());//don't exist, allow dictionary and loaded without cache
     }
 
-    QStringList charactersGroupForLoginList;
+    std::stringList charactersGroupForLoginList;
     bool continueCharactersGroupForLoginSettings=true;
     int CharactersGroupForLoginId=0;
     while(continueCharactersGroupForLoginSettings)
     {
-        settings.beginGroup(QStringLiteral("db-common-")+QString::number(CharactersGroupForLoginId));
+        settings.beginGroup(std::stringLiteral("db-common-")+std::string::number(CharactersGroupForLoginId));
         if(CharactersGroupForLoginId==0)
         {
-            if(!settings.contains(QStringLiteral("considerDownAfterNumberOfTry")))
-                settings.setValue(QStringLiteral("considerDownAfterNumberOfTry"),3);
-            if(!settings.contains(QStringLiteral("tryInterval")))
-                settings.setValue(QStringLiteral("tryInterval"),5);
-            if(!settings.contains(QStringLiteral("db")))
-                settings.setValue(QStringLiteral("db"),QStringLiteral("catchchallenger_common"));
-            if(!settings.contains(QStringLiteral("host")))
-                settings.setValue(QStringLiteral("host"),QStringLiteral("localhost"));
-            if(!settings.contains(QStringLiteral("login")))
-                settings.setValue(QStringLiteral("login"),QStringLiteral("root"));
-            if(!settings.contains(QStringLiteral("pass")))
-                settings.setValue(QStringLiteral("pass"),QStringLiteral("root"));
-            if(!settings.contains(QStringLiteral("type")))
-                settings.setValue(QStringLiteral("type"),QStringLiteral("postgresql"));
-            if(!settings.contains(QStringLiteral("charactersGroup")))
-                settings.setValue(QStringLiteral("charactersGroup"),QString());
-            if(!settings.contains(QStringLiteral("comment")))
-                settings.setValue(QStringLiteral("comment"),QStringLiteral("to do maxClanId, maxCharacterId, maxMonsterId"));
+            if(!settings.contains(std::stringLiteral("considerDownAfterNumberOfTry")))
+                settings.setValue(std::stringLiteral("considerDownAfterNumberOfTry"),3);
+            if(!settings.contains(std::stringLiteral("tryInterval")))
+                settings.setValue(std::stringLiteral("tryInterval"),5);
+            if(!settings.contains(std::stringLiteral("db")))
+                settings.setValue(std::stringLiteral("db"),std::stringLiteral("catchchallenger_common"));
+            if(!settings.contains(std::stringLiteral("host")))
+                settings.setValue(std::stringLiteral("host"),std::stringLiteral("localhost"));
+            if(!settings.contains(std::stringLiteral("login")))
+                settings.setValue(std::stringLiteral("login"),std::stringLiteral("root"));
+            if(!settings.contains(std::stringLiteral("pass")))
+                settings.setValue(std::stringLiteral("pass"),std::stringLiteral("root"));
+            if(!settings.contains(std::stringLiteral("type")))
+                settings.setValue(std::stringLiteral("type"),std::stringLiteral("postgresql"));
+            if(!settings.contains(std::stringLiteral("charactersGroup")))
+                settings.setValue(std::stringLiteral("charactersGroup"),std::string());
+            if(!settings.contains(std::stringLiteral("comment")))
+                settings.setValue(std::stringLiteral("comment"),std::stringLiteral("to do maxClanId, maxCharacterId, maxMonsterId"));
             settings.sync();
         }
-        if(settings.contains(QStringLiteral("login")))
+        if(settings.contains(std::stringLiteral("login")))
         {
-            const QString &charactersGroup=settings.value(QStringLiteral("charactersGroup")).toString();
+            const std::string &charactersGroup=settings.value(std::stringLiteral("charactersGroup")).toString();
             if(!CharactersGroupForLogin::hash.contains(charactersGroup))
             {
-                const uint8_t &considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
+                const uint8_t &considerDownAfterNumberOfTry=settings.value(std::stringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
                 if(considerDownAfterNumberOfTry==0 || !ok)
                 {
                     std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
                     abort();
                 }
-                db=settings.value(QStringLiteral("db")).toString();
-                host=settings.value(QStringLiteral("host")).toString();
-                login=settings.value(QStringLiteral("login")).toString();
-                pass=settings.value(QStringLiteral("pass")).toString();
-                const uint8_t &tryInterval=settings.value(QStringLiteral("tryInterval")).toUInt(&ok);
+                db=settings.value(std::stringLiteral("db")).toString();
+                host=settings.value(std::stringLiteral("host")).toString();
+                login=settings.value(std::stringLiteral("login")).toString();
+                pass=settings.value(std::stringLiteral("pass")).toString();
+                const uint8_t &tryInterval=settings.value(std::stringLiteral("tryInterval")).toUInt(&ok);
                 if(tryInterval==0 || !ok)
                 {
                     std::cerr << "tryInterval==0 (abort)" << std::endl;
                     abort();
                 }
-                type=settings.value(QStringLiteral("type")).toString();
-                if(type!=QStringLiteral("postgresql"))
+                type=settings.value(std::stringLiteral("type")).toString();
+                if(type!=std::stringLiteral("postgresql"))
                 {
                     std::cerr << "only db type postgresql supported (abort)" << std::endl;
                     abort();
@@ -347,7 +347,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         int index=0;
         while(index<charactersGroupForLoginList.size())
         {
-            const QString &CharactersGroupForLoginName=charactersGroupForLoginList.at(index);
+            const std::string &CharactersGroupForLoginName=charactersGroupForLoginList.at(index);
             const std::vector<char> &data=CharactersGroupForLoginName.toUtf8();
             if(data.size()>20)
             {
@@ -370,30 +370,30 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     }
 
     {
-        settings.beginGroup(QStringLiteral("master"));
-        if(!settings.contains(QStringLiteral("host")))
-            settings.setValue(QStringLiteral("host"),QStringLiteral("localhost"));
-        if(!settings.contains(QStringLiteral("port")))
-            settings.setValue(QStringLiteral("port"),9999);
-        if(!settings.contains(QStringLiteral("considerDownAfterNumberOfTry")))
-            settings.setValue(QStringLiteral("considerDownAfterNumberOfTry"),3);
-        if(!settings.contains(QStringLiteral("tryInterval")))
-            settings.setValue(QStringLiteral("tryInterval"),5);
+        settings.beginGroup(std::stringLiteral("master"));
+        if(!settings.contains(std::stringLiteral("host")))
+            settings.setValue(std::stringLiteral("host"),std::stringLiteral("localhost"));
+        if(!settings.contains(std::stringLiteral("port")))
+            settings.setValue(std::stringLiteral("port"),9999);
+        if(!settings.contains(std::stringLiteral("considerDownAfterNumberOfTry")))
+            settings.setValue(std::stringLiteral("considerDownAfterNumberOfTry"),3);
+        if(!settings.contains(std::stringLiteral("tryInterval")))
+            settings.setValue(std::stringLiteral("tryInterval"),5);
         settings.sync();
-        const QString &host=settings.value(QStringLiteral("host")).toString();
-        const uint16_t &port=settings.value(QStringLiteral("port")).toUInt(&ok);
+        const std::string &host=settings.value(std::stringLiteral("host")).toString();
+        const uint16_t &port=settings.value(std::stringLiteral("port")).toUInt(&ok);
         if(port==0 || !ok)
         {
-            std::cerr << "Master port not a number or 0:" << settings.value(QStringLiteral("port")).toString().toStdString() << std::endl;
+            std::cerr << "Master port not a number or 0:" << settings.value(std::stringLiteral("port")).toString().toStdString() << std::endl;
             abort();
         }
-        const uint8_t &tryInterval=settings.value(QStringLiteral("tryInterval")).toUInt(&ok);
+        const uint8_t &tryInterval=settings.value(std::stringLiteral("tryInterval")).toUInt(&ok);
         if(tryInterval==0 || !ok)
         {
             std::cerr << "tryInterval==0 (abort)" << std::endl;
             abort();
         }
-        const uint8_t &considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
+        const uint8_t &considerDownAfterNumberOfTry=settings.value(std::stringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
         if(considerDownAfterNumberOfTry==0 || !ok)
         {
             std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
@@ -498,7 +498,7 @@ bool EpollServerLoginSlave::tryListen()
     return returnedValue;
 }
 
-void EpollServerLoginSlave::generateToken(QSettings &settings)
+void EpollServerLoginSlave::generateToken(std::unordered_settings &settings)
 {
     FILE *fpRandomFile = fopen("/dev/urandom","rb");
     if(fpRandomFile==NULL)
@@ -512,7 +512,7 @@ void EpollServerLoginSlave::generateToken(QSettings &settings)
         std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from /dev/urandom" << std::endl;
         abort();
     }
-    settings.setValue(QStringLiteral("token"),QString(
+    settings.setValue(std::stringLiteral("token"),std::string(
                           std::vector<char>(
                               reinterpret_cast<char *>(LinkToMaster::private_token)
                               ,TOKEN_SIZE_FOR_MASTERAUTH)
@@ -583,7 +583,7 @@ void EpollServerLoginSlave::preload_profile()
         abort();
     }
     const DatabaseBase::DatabaseType &type=CharactersGroupForLogin::list.at(0)->databaseType();
-    QStringList tempStringList;
+    std::stringList tempStringList;
 
     unsigned int index=0;
     while(index<EpollServerLoginSlave::loginProfileList.size())
@@ -594,34 +594,34 @@ void EpollServerLoginSlave::preload_profile()
         {
             default:
             case DatabaseBase::DatabaseType::Mysql:
-                tempStringList << QStringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(");
+                tempStringList << std::stringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(");
                 tempStringList << QLatin1String(",");
                 tempStringList << QLatin1String(",'");
                 tempStringList << QLatin1String("',");
                 tempStringList << QLatin1String(",0,0,")+
-                        QString::number(profile.cash)+QLatin1String(",");
+                        std::string::number(profile.cash)+QLatin1String(",");
                 tempStringList << QLatin1String(",0,0,0,0,0,")+
-                        QString::number(profile.databaseId)+QLatin1String(");");
+                        std::string::number(profile.databaseId)+QLatin1String(");");
             break;
             case DatabaseBase::DatabaseType::SQLite:
-                tempStringList << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
+                tempStringList << std::stringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
                 tempStringList << QLatin1String(",");
                 tempStringList << QLatin1String(",'");
                 tempStringList << QLatin1String("',");
                 tempStringList << QLatin1String(",0,0,")+
-                        QString::number(profile.cash)+QLatin1String(",");
+                        std::string::number(profile.cash)+QLatin1String(",");
                 tempStringList << QLatin1String(",0,0,0,0,0,")+
-                        QString::number(index)+QLatin1String(");");
+                        std::string::number(index)+QLatin1String(");");
             break;
             case DatabaseBase::DatabaseType::PostgreSQL:
-                tempStringList << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
+                tempStringList << std::stringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
                 tempStringList << QLatin1String(",");
                 tempStringList << QLatin1String(",'");
                 tempStringList << QLatin1String("',");
                 tempStringList << QLatin1String(",0,0,")+
-                        QString::number(profile.cash)+QLatin1String(",");
+                        std::string::number(profile.cash)+QLatin1String(",");
                 tempStringList << QLatin1String(",0,FALSE,0,0,0,")+
-                        QString::number(index)+QLatin1String(");");
+                        std::string::number(index)+QLatin1String(");");
             break;
         }
         unsigned int preparedQueryCharTempSize=0;

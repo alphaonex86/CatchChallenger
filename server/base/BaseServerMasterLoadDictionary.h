@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_BASESERVERMASTERLOGINDICTIONARY_H
 
 #include <vector>
-#include <QRegularExpression>
+#include <std::regex>
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../VariableServer.h"

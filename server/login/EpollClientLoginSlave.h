@@ -9,7 +9,7 @@
 #include "LinkToMaster.h"
 #include "LinkToGameServer.h"
 
-#include <QString>
+#include <std::string>
 #include <vector>
 
 #define BASE_PROTOCOL_MAGIC_SIZE 8
@@ -54,7 +54,7 @@ public:
     {
         uint8_t query_id;
         uint8_t profileIndex;
-        QString pseudo;
+        std::string pseudo;
         uint8_t skinId;
     };
     struct RemoveCharacterParam
@@ -109,8 +109,8 @@ public:
     void addCharacter_ReturnOk(const uint8_t &query_id,const uint32_t &characterId);
     void addCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode);
     void removeCharacter_ReturnOk(const uint8_t &query_id);
-    void removeCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode,const QString &errorString=QString());
-    void parseNetworkReadError(const QString &errorString);
+    void removeCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode,const std::string &errorString=std::string());
+    void parseNetworkReadError(const std::string &errorString);
 
     LinkToGameServer *linkToGameServer;
     uint8_t charactersGroupIndex;
@@ -158,7 +158,7 @@ private:
     QList<DatabaseBase::CallBack *> callbackRegistred;
     QList<void *> paramToPassToCallBack;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    QStringList paramToPassToCallBackType;
+    std::stringList paramToPassToCallBackType;
     #endif
 
     static unsigned char protocolReplyProtocolNotSupported[4];
@@ -176,8 +176,8 @@ private:
     static const unsigned char protocolHeaderToMatch[5];
     BaseClassSwitch::EpollObjectType getType() const;
 private:
-    void errorParsingLayer(const QString &error);
-    void messageParsingLayer(const QString &message) const;
+    void errorParsingLayer(const std::string &error);
+    void messageParsingLayer(const std::string &message) const;
     void errorParsingLayer(const char * const error);
     void messageParsingLayer(const char * const message) const;
     //have message without reply
@@ -217,11 +217,11 @@ public:
     void postReply(const uint8_t &queryNumber);
 private:
     void deleteCharacterNow(const uint32_t &characterId);
-    void addCharacter(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint8_t &profileIndex, const QString &pseudo, const uint8_t &skinId);
+    void addCharacter(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &skinId);
     void removeCharacter(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint32_t &characterId);
     void dbQueryWriteLogin(const char * const queryText);
 
-    void loginIsWrong(const uint8_t &query_id,const uint8_t &returnCode,const QString &debugMessage);
+    void loginIsWrong(const uint8_t &query_id,const uint8_t &returnCode,const std::string &debugMessage);
     void selectCharacter(const uint8_t &query_id,const uint32_t &serverUniqueKey,const uint8_t &charactersGroupIndex,const uint32_t &characterId);
 private:
     struct CharacterListForReply

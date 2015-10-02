@@ -12,7 +12,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    settings=new QSettings(QCoreApplication::applicationDirPath()+QLatin1Literal("/server.properties"),QSettings::IniFormat);
+    settings=new std::unordered_settings(QCoreApplication::applicationDirPath()+QLatin1Literal("/server.properties"),std::unordered_settings::IniFormat);
     NormalServer::checkSettingsFile(settings);
     ui->setupUi(this);
     updateActionButton();
@@ -128,10 +128,10 @@ void MainWindow::server_is_started(bool is_started)
             send_settings();
             server.start_server();
         }
-        ui->displayPort->setText(QString());
+        ui->displayPort->setText(std::string());
     }
     else
-        ui->displayPort->setText(QString::number(server.getNormalSettings().server_port));
+        ui->displayPort->setText(std::string::number(server.getNormalSettings().server_port));
 }
 
 void MainWindow::server_need_be_stopped()
@@ -167,7 +167,7 @@ void MainWindow::new_player_is_connected(Player_private_and_public_informations 
     players << player;
 }
 
-void MainWindow::player_is_disconnected(QString pseudo)
+void MainWindow::player_is_disconnected(std::string pseudo)
 {
     QList<QListWidgetItem *> tempList=ui->listPlayer->findItems(pseudo,Qt::MatchExactly);
     int index=0;
@@ -188,14 +188,14 @@ void MainWindow::player_is_disconnected(QString pseudo)
     }
 }
 
-void MainWindow::new_chat_message(QString pseudo,Chat_type type,QString text)
+void MainWindow::new_chat_message(std::string pseudo,Chat_type type,std::string text)
 {
     int index=0;
     while(index<players.size())
     {
         if(players.at(index).public_informations.pseudo==pseudo)
         {
-            QString html=ui->textBrowserChat->toHtml();
+            std::string html=ui->textBrowserChat->toHtml();
             html+=ChatParsing::new_chat_message(players.at(index).public_informations.pseudo,players.at(index).public_informations.type,type,text);
             if(html.size()>1024*1024)
                 html=html.mid(html.size()-1024*1024,1024*1024);
@@ -207,7 +207,7 @@ void MainWindow::new_chat_message(QString pseudo,Chat_type type,QString text)
     QMessageBox::information(this,"Warning","unable to locate the player");
 }
 
-void MainWindow::server_error(QString error)
+void MainWindow::server_error(std::string error)
 {
     QMessageBox::information(this,"Warning",error);
 }
@@ -228,7 +228,7 @@ void MainWindow::update_the_info()
         uint16_t player_current,player_max;
         player_current=server.player_current();
         player_max=server.player_max();
-        ui->label_player->setText(QStringLiteral("%1/%2").arg(player_current).arg(player_max));
+        ui->label_player->setText(std::stringLiteral("%1/%2").arg(player_current).arg(player_max));
         ui->progressBar_player->setMaximum(player_max);
         ui->progressBar_player->setValue(player_current);
     }
@@ -238,10 +238,10 @@ void MainWindow::update_the_info()
     }
 }
 
-QString MainWindow::sizeToString(double size)
+std::string MainWindow::sizeToString(double size)
 {
     if(size<1024)
-        return QString::number(size)+tr("B");
+        return std::string::number(size)+tr("B");
     if((size=size/1024)<1024)
         return adaptString(size)+tr("KB");
     if((size=size/1024)<1024)
@@ -261,12 +261,12 @@ QString MainWindow::sizeToString(double size)
     return tr("Too big");
 }
 
-QString MainWindow::adaptString(float size)
+std::string MainWindow::adaptString(float size)
 {
     if(size>=100)
-        return QString::number(size,'f',0);
+        return std::string::number(size,'f',0);
     else
-        return QString::number(size,'g',3);
+        return std::string::number(size,'g',3);
 }
 
 
@@ -370,17 +370,17 @@ void MainWindow::load_settings()
     }
     {
         settings->beginGroup(QLatin1Literal("programmedEvent"));
-            const QStringList &tempListType=settings->childGroups();
+            const std::stringList &tempListType=settings->childGroups();
             int indexType=0;
             while(indexType<tempListType.size())
             {
-                const QString &type=tempListType.at(indexType);
+                const std::string &type=tempListType.at(indexType);
                 settings->beginGroup(type);
-                    const QStringList &tempList=settings->childGroups();
+                    const std::stringList &tempList=settings->childGroups();
                     int index=0;
                     while(index<tempList.size())
                     {
-                        const QString &groupName=tempList.at(index);
+                        const std::string &groupName=tempList.at(index);
                         settings->beginGroup(groupName);
                         if(settings->contains(QLatin1Literal("value")) && settings->contains(QLatin1Literal("cycle")) && settings->contains(QLatin1Literal("offset")))
                         {
@@ -536,12 +536,12 @@ void MainWindow::load_settings()
     }
 
     settings->beginGroup(QLatin1Literal("db"));
-    QString db_type=settings->value(QLatin1Literal("type")).toString();
-    QString db_mysql_host=settings->value(QLatin1Literal("mysql_host")).toString();
-    QString db_mysql_login=settings->value(QLatin1Literal("mysql_login")).toString();
-    QString db_mysql_pass=settings->value(QLatin1Literal("mysql_pass")).toString();
-    QString db_mysql_base=settings->value(QLatin1Literal("mysql_db")).toString();
-    QString db_fight_sync=settings->value(QLatin1Literal("db_fight_sync")).toString();
+    std::string db_type=settings->value(QLatin1Literal("type")).toString();
+    std::string db_mysql_host=settings->value(QLatin1Literal("mysql_host")).toString();
+    std::string db_mysql_login=settings->value(QLatin1Literal("mysql_login")).toString();
+    std::string db_mysql_pass=settings->value(QLatin1Literal("mysql_pass")).toString();
+    std::string db_mysql_base=settings->value(QLatin1Literal("mysql_db")).toString();
+    std::string db_fight_sync=settings->value(QLatin1Literal("db_fight_sync")).toString();
     bool positionTeleportSync=settings->value(QLatin1Literal("positionTeleportSync")).toBool();
     uint32_t secondToPositionSync=settings->value(QLatin1Literal("secondToPositionSync")).toUInt();
 
@@ -618,7 +618,7 @@ void MainWindow::load_settings()
         else if(settings->value(QLatin1Literal("capture_day")).toString()==QLatin1Literal("sunday"))
             capture_day_int=6;
         int capture_time_hours=0,capture_time_minutes=0;
-        QStringList capture_time_string_list=settings->value(QLatin1Literal("capture_time")).toString().split(QLatin1Literal(":"));
+        std::stringList capture_time_string_list=settings->value(QLatin1Literal("capture_time")).toString().split(QLatin1Literal(":"));
         if(capture_time_string_list.size()!=2)
             settings->setValue(QLatin1Literal("capture_time"),QLatin1Literal("0:0"));
         else
@@ -999,7 +999,7 @@ void MainWindow::on_sendPlayerNumber_toggled(bool checked)
 
 void MainWindow::on_db_sqlite_browse_clicked()
 {
-    QString file=QFileDialog::getOpenFileName(this,tr("Select the SQLite database"));
+    std::string file=QFileDialog::getOpenFileName(this,tr("Select the SQLite database"));
     if(file.isEmpty())
         return;
     ui->db_sqlite_file->setText(file);
@@ -1078,7 +1078,7 @@ void MainWindow::on_timeEdit_city_capture_time_editingFinished()
 {
     settings->beginGroup(QLatin1Literal("city"));
     QTime time=ui->timeEdit_city_capture_time->time();
-    settings->setValue(QLatin1Literal("capture_time"),QStringLiteral("%1:%2").arg(time.hour()).arg(time.minute()));
+    settings->setValue(QLatin1Literal("capture_time"),std::stringLiteral("%1:%2").arg(time.hour()).arg(time.minute()));
     settings->endGroup();
 }
 
@@ -1342,13 +1342,13 @@ void CatchChallenger::MainWindow::on_programmedEventType_currentIndexChanged(int
 {
     Q_UNUSED(index);
     ui->programmedEventList->clear();
-    const QString &selectedEvent=ui->programmedEventType->currentText();
+    const std::string &selectedEvent=ui->programmedEventType->currentText();
     if(selectedEvent.isEmpty())
         return;
     if(programmedEventList.contains(selectedEvent))
     {
-        const QHash<QString,GameServerSettings::ProgrammedEvent> &list=programmedEventList.value(selectedEvent);
-        QHashIterator<QString,GameServerSettings::ProgrammedEvent> i(list);
+        const std::unordered_map<std::string,GameServerSettings::ProgrammedEvent> &list=programmedEventList.value(selectedEvent);
+        std::unordered_mapIterator<std::string,GameServerSettings::ProgrammedEvent> i(list);
         while (i.hasNext()) {
             i.next();
             QListWidgetItem *listWidgetItem=new QListWidgetItem(
@@ -1372,12 +1372,12 @@ void CatchChallenger::MainWindow::on_programmedEventList_itemActivated(QListWidg
 
 void CatchChallenger::MainWindow::on_programmedEventAdd_clicked()
 {
-    const QString &selectedEvent=ui->programmedEventType->currentText();
+    const std::string &selectedEvent=ui->programmedEventType->currentText();
     if(selectedEvent.isEmpty())
         return;
     GameServerSettings::ProgrammedEvent programmedEvent;
     bool ok;
-    const QString &name=QInputDialog::getText(this,tr("Name"),tr("Name:"),QLineEdit::Normal,QString(),&ok);
+    const std::string &name=QInputDialog::getText(this,tr("Name"),tr("Name:"),QLineEdit::Normal,std::string(),&ok);
     if(!ok)
         return;
     if(programmedEventList.value(selectedEvent).contains(name))
@@ -1391,7 +1391,7 @@ void CatchChallenger::MainWindow::on_programmedEventAdd_clicked()
     programmedEvent.offset=QInputDialog::getInt(this,tr("Name"),tr("Name:"),0,1,60*24,1,&ok);
     if(!ok)
         return;
-    programmedEvent.value=QInputDialog::getText(this,tr("Value"),tr("Value:"),QLineEdit::Normal,QString(),&ok);
+    programmedEvent.value=QInputDialog::getText(this,tr("Value"),tr("Value:"),QLineEdit::Normal,std::string(),&ok);
     if(!ok)
         return;
     programmedEventList[selectedEvent][name]=programmedEvent;
@@ -1412,13 +1412,13 @@ void CatchChallenger::MainWindow::on_programmedEventEdit_clicked()
     const QList<QListWidgetItem*> &selectedItems=ui->programmedEventList->selectedItems();
     if(selectedItems.size()!=1)
         return;
-    const QString &selectedEvent=ui->programmedEventType->currentText();
+    const std::string &selectedEvent=ui->programmedEventType->currentText();
     if(selectedEvent.isEmpty())
         return;
     GameServerSettings::ProgrammedEvent programmedEvent;
     bool ok;
-    const QString &oldName=selectedItems.first()->data(99).toString();
-    const QString &name=QInputDialog::getText(this,tr("Name"),tr("Name:"),QLineEdit::Normal,oldName,&ok);
+    const std::string &oldName=selectedItems.first()->data(99).toString();
+    const std::string &name=QInputDialog::getText(this,tr("Name"),tr("Name:"),QLineEdit::Normal,oldName,&ok);
     if(!ok)
         return;
     if(programmedEventList.value(selectedEvent).contains(name))
@@ -1432,7 +1432,7 @@ void CatchChallenger::MainWindow::on_programmedEventEdit_clicked()
     programmedEvent.offset=QInputDialog::getInt(this,tr("Name"),tr("Name:"),0,1,60*24,1,&ok);
     if(!ok)
         return;
-    programmedEvent.value=QInputDialog::getText(this,tr("Value"),tr("Value:"),QLineEdit::Normal,QString(),&ok);
+    programmedEvent.value=QInputDialog::getText(this,tr("Value"),tr("Value:"),QLineEdit::Normal,std::string(),&ok);
     if(!ok)
         return;
     if(oldName!=name)
@@ -1458,10 +1458,10 @@ void CatchChallenger::MainWindow::on_programmedEventRemove_clicked()
     const QList<QListWidgetItem*> &selectedItems=ui->programmedEventList->selectedItems();
     if(selectedItems.size()!=1)
         return;
-    const QString &selectedEvent=ui->programmedEventType->currentText();
+    const std::string &selectedEvent=ui->programmedEventType->currentText();
     if(selectedEvent.isEmpty())
         return;
-    const QString &name=selectedItems.first()->data(99).toString();
+    const std::string &name=selectedItems.first()->data(99).toString();
     programmedEventList[selectedEvent].remove(name);
     settings->beginGroup(QLatin1Literal("programmedEvent"));
         settings->beginGroup(selectedEvent);

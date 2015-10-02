@@ -7,7 +7,7 @@
 #include "../base/BaseServerLogin.h"
 #include "EpollClientLoginSlave.h"
 
-#include <QSettings>
+#include <std::unordered_settings>
 #include <string>
 #include <vector>
 
