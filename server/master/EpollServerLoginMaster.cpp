@@ -964,7 +964,7 @@ void EpollServerLoginMaster::loadTheProfile()
 
                     const Monster &monster=CommonDatapack::commonDatapack.monsters.value(playerMonster.id);
                     const Monster::Stat &monsterStat=CommonFightEngineBase::getStat(monster,playerMonster.level);
-                    const QList<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngineBase::generateWildSkill(monster,playerMonster.level);
+                    const std::vector<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngineBase::generateWildSkill(monster,playerMonster.level);
 
                     //hp
                     *reinterpret_cast<uint32_t *>(rawServerListForC211+rawServerListForC211Size)=htole32(monsterStat.hp);

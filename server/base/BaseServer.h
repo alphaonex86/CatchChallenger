@@ -6,11 +6,10 @@
 #include <QTimer>
 #include <QCoreApplication>
 #include <vector>
-#include <std::vector<char>>
 #include <QDir>
 #include <QSemaphore>
 #include <string>
-#include <std::regex>
+#include <regex>
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QSqlDatabase>

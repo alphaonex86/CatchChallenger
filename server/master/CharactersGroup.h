@@ -56,7 +56,7 @@ public:
 
     static int serverWaitedToBeReady;
     static std::unordered_map<std::string,CharactersGroup *> hash;
-    static QList<CharactersGroup *> list;
+    static std::vector<CharactersGroup *> list;
     std::string name;
     uint8_t index;
 private:
