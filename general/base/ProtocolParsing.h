@@ -3,8 +3,7 @@
 
 #include <unordered_set>
 #include <unordered_map>
-#include <std::vector<char>>
-#include <QDebug>
+#include <vector>
 
 #include "GeneralVariable.h"
 #ifdef EPOLLCATCHCHALLENGERSERVER

@@ -1,7 +1,6 @@
 #ifndef CommonFightEngine_H
 #define CommonFightEngine_H
 
-#include <std::vector<char>>
 #include <unordered_map>
 #include <string>
 #include <vector>

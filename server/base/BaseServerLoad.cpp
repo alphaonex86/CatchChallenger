@@ -21,7 +21,7 @@
 #include "../../general/base/cpp11addition.h"
 
 #include <QFile>
-#include <std::vector<char>>
+#include <vector>
 #include <QDateTime>
 #include <QTime>
 #include <QCryptographicHash>
@@ -38,12 +38,10 @@ using namespace CatchChallenger;
 void BaseServer::preload_randomBlock()
 {
     //don't use BaseServerLogin::fpRandomFile to prevent lost entropy
-    QDataStream randomDataStream(&GlobalServerData::serverPrivateVariables.randomData, QIODevice::WriteOnly);
-    randomDataStream.setVersion(QDataStream::Qt_4_4);
     int index=0;
     while(index<CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
     {
-        randomDataStream << uint8_t(rand()%256);
+        GlobalServerData::serverPrivateVariables.randomData[index]=uint8_t(rand()%256);
         index++;
     }
 }
@@ -395,7 +393,7 @@ bool BaseServer::preload_zone_init()
             index++;
             continue;
         }
-        if(!entryListZone.at(index).fileName().contains(regexXmlFile))
+        if(!std::regex_match(entryListZone.at(index).fileName().toStdString(),regexXmlFile))
         {
             std::cerr << entryListZone.at(index).fileName().toStdString() << " the zone file name not match" << std::endl;
             index++;
@@ -412,7 +410,7 @@ bool BaseServer::preload_zone_init()
         {
         #endif
             QFile itemsFile(file.c_str());
-            std::vector<char> xmlContent;
+            QByteArray xmlContent;
             if(!itemsFile.open(QIODevice::ReadOnly))
             {
                 std::cerr << "Unable to open the file: " << file.c_str() << ", error: " << itemsFile.errorString().toStdString() << std::endl;
@@ -2229,7 +2227,7 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
             std::cerr << mapfile << botFile.fileName().toStdString() << ": " << botFile.errorString().toStdString() << std::endl;
             return;
         }
-        std::vector<char> xmlContent=botFile.readAll();
+        QByteArray xmlContent=botFile.readAll();
         botFile.close();
         QString errorStr;
         int errorLine,errorColumn;

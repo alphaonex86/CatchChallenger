@@ -1,8 +1,6 @@
 #ifndef CATCHCHALLENGER_BASESERVERLOGIN_H
 #define CATCHCHALLENGER_BASESERVERLOGIN_H
 
-#include <QList>
-#include <std::regex>
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../VariableServer.h"

@@ -1,7 +1,7 @@
 #ifndef CATCHCHALLENGER_FACILITYLIB_H
 #define CATCHCHALLENGER_FACILITYLIB_H
 
-#include <std::vector<char>>
+#include <vector>
 #include <string>
 #include <QRect>
 #include <QDir>

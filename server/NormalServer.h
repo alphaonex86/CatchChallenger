@@ -7,7 +7,7 @@
 #include <QDebug>
 #include <QTimer>
 #include <QCoreApplication>
-#include <QList>
+#include <std::vector>
 #include <std::vector<char>>
 #include <QSqlDatabase>
 #include <QSqlError>
@@ -89,7 +89,7 @@ private:
     void stop_internal_server();
     bool check_if_now_stopped();
     virtual void start_internal_server();
-    void sslErrors(const QList<QSslError> &errors);
+    void sslErrors(const std::vector<QSslError> &errors);
     virtual void loadAndFixSettings();
     void preload_finish();
 signals:

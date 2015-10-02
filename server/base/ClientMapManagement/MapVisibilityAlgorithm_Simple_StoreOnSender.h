@@ -5,8 +5,6 @@
 #include "Map_server_MapVisibility_Simple_StoreOnSender.h"
 #include "../../../general/base/CommonMap.h"
 
-#include <QList>
-
 namespace CatchChallenger {
 class MapVisibilityAlgorithm_Simple_StoreOnSender : public Client
 {

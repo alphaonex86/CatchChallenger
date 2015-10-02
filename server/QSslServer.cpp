@@ -26,18 +26,18 @@ void QSslServer::incomingConnection(qintptr socketDescriptor)
     {
         socket->setPrivateKey(sslKey);
         socket->setLocalCertificate(sslCertificate);
-        QList<QSslCertificate> certificates;
+        std::vector<QSslCertificate> certificates;
         certificates << sslCertificate;
         socket->setCaCertificates(certificates);
         socket->setPeerVerifyMode(QSslSocket::VerifyNone);
         socket->ignoreSslErrors();
         socket->startServerEncryption();
-        connect(socket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),this,&QSslServer::sslErrors);
+        connect(socket,static_cast<void(QSslSocket::*)(const std::vector<QSslError> &errors)>(&QSslSocket::sslErrors),this,&QSslServer::sslErrors);
     }
     addPendingConnection(socket);
 }
 
-void QSslServer::sslErrors(const QList<QSslError> &errors)
+void QSslServer::sslErrors(const std::vector<QSslError> &errors)
 {
     int index=0;
     while(index<errors.size())

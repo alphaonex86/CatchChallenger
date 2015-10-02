@@ -3,7 +3,6 @@
 
 #include <QObject>
 #include <vector>
-#include <std::vector<char>>
 #include <string>
 #include <unordered_map>
 #include <QVariant>

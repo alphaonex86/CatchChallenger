@@ -1,8 +1,7 @@
 #ifndef CATCHCHALLENGER_CLIENTMAPMANAGEMENT_H
 #define CATCHCHALLENGER_CLIENTMAPMANAGEMENT_H
 
-#include <QObject>
-#include <std::string>
+#include <string>
 
 #include "../ServerStructures.h"
 #include "../EventThreader.h"
