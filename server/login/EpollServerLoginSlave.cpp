@@ -38,7 +38,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     CommonSettingsCommon::commonSettingsCommon.maxPlayerItems               = 30;
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems      = 150;
 
-    std::unordered_settings settings(QCoreApplication::applicationDirPath()+"/login.conf",std::unordered_settings::IniFormat);
+    QSettings settings(QCoreApplication::applicationDirPath()+"/login.conf",QSettings::IniFormat);
 
     {
         memset(EpollClientLoginSlave::serverServerList,0x00,sizeof(EpollClientLoginSlave::serverServerList));
@@ -275,7 +275,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     int CharactersGroupForLoginId=0;
     while(continueCharactersGroupForLoginSettings)
     {
-        settings.beginGroup(std::stringLiteral("db-common-")+std::string::number(CharactersGroupForLoginId));
+        settings.beginGroup(std::stringLiteral("db-common-")+std::to_string(CharactersGroupForLoginId));
         if(CharactersGroupForLoginId==0)
         {
             if(!settings.contains(std::stringLiteral("considerDownAfterNumberOfTry")))
@@ -498,7 +498,7 @@ bool EpollServerLoginSlave::tryListen()
     return returnedValue;
 }
 
-void EpollServerLoginSlave::generateToken(std::unordered_settings &settings)
+void EpollServerLoginSlave::generateToken(QSettings &settings)
 {
     FILE *fpRandomFile = fopen("/dev/urandom","rb");
     if(fpRandomFile==NULL)
@@ -599,9 +599,9 @@ void EpollServerLoginSlave::preload_profile()
                 tempStringList << QLatin1String(",'");
                 tempStringList << QLatin1String("',");
                 tempStringList << QLatin1String(",0,0,")+
-                        std::string::number(profile.cash)+QLatin1String(",");
+                        std::to_string(profile.cash)+QLatin1String(",");
                 tempStringList << QLatin1String(",0,0,0,0,0,")+
-                        std::string::number(profile.databaseId)+QLatin1String(");");
+                        std::to_string(profile.databaseId)+QLatin1String(");");
             break;
             case DatabaseBase::DatabaseType::SQLite:
                 tempStringList << std::stringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
@@ -609,9 +609,9 @@ void EpollServerLoginSlave::preload_profile()
                 tempStringList << QLatin1String(",'");
                 tempStringList << QLatin1String("',");
                 tempStringList << QLatin1String(",0,0,")+
-                        std::string::number(profile.cash)+QLatin1String(",");
+                        std::to_string(profile.cash)+QLatin1String(",");
                 tempStringList << QLatin1String(",0,0,0,0,0,")+
-                        std::string::number(index)+QLatin1String(");");
+                        std::to_string(index)+QLatin1String(");");
             break;
             case DatabaseBase::DatabaseType::PostgreSQL:
                 tempStringList << std::stringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
@@ -619,9 +619,9 @@ void EpollServerLoginSlave::preload_profile()
                 tempStringList << QLatin1String(",'");
                 tempStringList << QLatin1String("',");
                 tempStringList << QLatin1String(",0,0,")+
-                        std::string::number(profile.cash)+QLatin1String(",");
+                        std::to_string(profile.cash)+QLatin1String(",");
                 tempStringList << QLatin1String(",0,FALSE,0,0,0,")+
-                        std::string::number(index)+QLatin1String(");");
+                        std::to_string(index)+QLatin1String(");");
             break;
         }
         unsigned int preparedQueryCharTempSize=0;
