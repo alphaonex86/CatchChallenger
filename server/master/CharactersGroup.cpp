@@ -8,7 +8,7 @@ using namespace CatchChallenger;
 
 int CharactersGroup::serverWaitedToBeReady=0;
 std::unordered_map<std::string,CharactersGroup *> CharactersGroup::hash;
-QList<CharactersGroup *> CharactersGroup::list;
+std::vector<CharactersGroup *> CharactersGroup::list;
 
 CharactersGroup::CharactersGroup(const char * const db, const char * const host, const char * const login, const char * const pass, const uint8_t &considerDownAfterNumberOfTry, const uint8_t &tryInterval, const std::string &name) :
     databaseBaseCommon(new EpollPostgresql())
@@ -356,7 +356,7 @@ void CharactersGroup::waitBeforeReconnect(const uint32_t &characterId)
 void CharactersGroup::purgeTheLockedAccount()
 {
     bool clockDriftDetected=false;
-    QList<uint32_t> charactedToUnlock;
+    std::vector<uint32_t> charactedToUnlock;
     std::unordered_mapIterator<uint32_t/*uniqueKey*/,uint64_t/*can reconnect after this time stamps if !=0, else locked*/> i(lockedAccount);
     while (i.hasNext()) {
         i.next();

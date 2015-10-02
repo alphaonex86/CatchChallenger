@@ -1,7 +1,7 @@
 #ifndef CATCHCHALLENGER_MAPVISIBILITYALGORITHM_WITHOUTSENDER_H
 #define CATCHCHALLENGER_MAPVISIBILITYALGORITHM_WITHOUTSENDER_H
 
-#include <QList>
+#include <std::vector>
 
 namespace CatchChallenger {
 class MapVisibilityAlgorithm_WithoutSender

@@ -2603,7 +2603,7 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
     {
         #endif
         QFile shopFile(QString::fromStdString(file));
-        std::vector<char> xmlContent;
+        QByteArray xmlContent;
         if(!shopFile.open(QIODevice::ReadOnly))
         {
             std::cerr << "Unable to open the file: " << file << ", error: " << shopFile.errorString().toStdString() << std::endl;

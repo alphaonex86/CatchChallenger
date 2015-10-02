@@ -3,11 +3,9 @@
 
 #include <QObject>
 #include <vector>
-#include <std::vector<char>>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <QVariant>
 
 #include "cpp11addition.h"
 

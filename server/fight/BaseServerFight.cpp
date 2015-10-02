@@ -87,7 +87,7 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
     {
         #endif
         QFile xmlFile(QString::fromStdString(file));
-        std::vector<char> xmlContent;
+        QByteArray xmlContent;
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
             std::cerr << "Unable to open the xml monsters drop file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;

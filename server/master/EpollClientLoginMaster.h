@@ -57,7 +57,7 @@ public:
     //to unordered reply
     //std::unordered_map<uint8_t,DataForSelectedCharacterReturn> loginServerReturnForCharaterSelect;
     //to ordered reply
-    QList<DataForSelectedCharacterReturn> loginServerReturnForCharaterSelect;
+    std::vector<DataForSelectedCharacterReturn> loginServerReturnForCharaterSelect;
     std::vector<uint8_t> queryNumberList;
     std::vector<char> tokenForAuth;
 
@@ -96,8 +96,8 @@ public:
     static std::unordered_map<std::string,int> logicalGroupHash;
 
     static FILE *fpRandomFile;
-    static QList<EpollClientLoginMaster *> gameServers;
-    static QList<EpollClientLoginMaster *> loginServers;
+    static std::vector<EpollClientLoginMaster *> gameServers;
+    static std::vector<EpollClientLoginMaster *> loginServers;
 
     BaseClassSwitch::EpollObjectType getType() const;
     static void sendCurrentPlayer();
