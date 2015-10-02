@@ -17,8 +17,8 @@ std::unordered_map<std::string,uint8_t> BaseServerMasterSendDatapack::skinList;
 std::unordered_set<std::string> BaseServerMasterSendDatapack::compressedExtension;
 std::unordered_set<std::string> BaseServerMasterSendDatapack::extensionAllowed;
 
-QByteArray BaseServerMasterSendDatapack::rawFilesBuffer;
-QByteArray BaseServerMasterSendDatapack::compressedFilesBuffer;
+std::vector<char> BaseServerMasterSendDatapack::rawFilesBuffer;
+std::vector<char> BaseServerMasterSendDatapack::compressedFilesBuffer;
 int BaseServerMasterSendDatapack::rawFilesBufferCount;
 int BaseServerMasterSendDatapack::compressedFilesBufferCount;
 
@@ -79,7 +79,7 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
                 {
                     if(file.open(QIODevice::ReadOnly))
                     {
-                        const QByteArray &data=file.readAll();
+                        const std::vector<char> &data=file.readAll();
                         {
                             QCryptographicHash hashFile(QCryptographicHash::Sha224);
                             hashFile.addData(data);

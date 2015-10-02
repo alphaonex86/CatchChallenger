@@ -412,9 +412,9 @@ void LinkToMaster::parseFullMessage(const uint8_t &mainCodeType,const uint8_t &s
                     {
                         std::cerr << "C210 remaining data (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                         std::cerr << "Data: "
-                                  << QString(QByteArray(rawData,pos).toHex()).toStdString()
+                                  << QString(std::vector<char>(rawData,pos).toHex()).toStdString()
                                   << " "
-                                  << QString(QByteArray(rawData+pos,size-pos).toHex()).toStdString()
+                                  << QString(std::vector<char>(rawData+pos,size-pos).toHex()).toStdString()
                                   << " "
                                   << __FILE__ << ":" <<__LINE__ << std::endl;
                         abort();
@@ -944,7 +944,7 @@ void LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     QCryptographicHash hash(QCryptographicHash::Sha224);
                     hash.addData(reinterpret_cast<const char *>(LinkToMaster::private_token),TOKEN_SIZE_FOR_MASTERAUTH);
                     hash.addData(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                    const QByteArray &hashedToken=hash.result();
+                    const std::vector<char> &hashedToken=hash.result();
                     memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));
 
                     packOutcommingQuery(0x08,queryNumberList.back(),hashedToken.constData(),hashedToken.size());

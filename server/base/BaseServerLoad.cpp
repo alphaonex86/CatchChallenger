@@ -21,7 +21,7 @@
 #include "../../general/base/cpp11addition.h"
 
 #include <QFile>
-#include <QByteArray>
+#include <std::vector<char>>
 #include <QDateTime>
 #include <QTime>
 #include <QCryptographicHash>
@@ -412,7 +412,7 @@ bool BaseServer::preload_zone_init()
         {
         #endif
             QFile itemsFile(file.c_str());
-            QByteArray xmlContent;
+            std::vector<char> xmlContent;
             if(!itemsFile.open(QIODevice::ReadOnly))
             {
                 std::cerr << "Unable to open the file: " << file.c_str() << ", error: " << itemsFile.errorString().toStdString() << std::endl;
@@ -1490,7 +1490,7 @@ void BaseServer::preload_the_datapack()
                 if(file.open(QIODevice::ReadOnly))
                 {
                     //read and load the file
-                    const QByteArray &data=file.readAll();
+                    const std::vector<char> &data=file.readAll();
 
                     if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
@@ -1556,7 +1556,7 @@ void BaseServer::preload_the_datapack()
                 if(file.open(QIODevice::ReadOnly))
                 {
                     //read and load the file
-                    const QByteArray &data=file.readAll();
+                    const std::vector<char> &data=file.readAll();
 
                     if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
@@ -1620,7 +1620,7 @@ void BaseServer::preload_the_datapack()
                 if(file.open(QIODevice::ReadOnly))
                 {
                     //read and load the file
-                    const QByteArray &data=file.readAll();
+                    const std::vector<char> &data=file.readAll();
 
                     if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
@@ -1670,11 +1670,11 @@ void BaseServer::preload_the_datapack()
               << " file for datapack loaded main, "
               << Client::datapack_file_hash_cache_sub.size()
               << " file for datapack loaded sub" << std::endl;
-    std::cout << QString(QByteArray(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()).toHex()).toStdString()
+    std::cout << QString(std::vector<char>(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()).toHex()).toStdString()
               << " hash for datapack loaded base, "
-              << QString(QByteArray(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()).toHex()).toStdString()
+              << QString(std::vector<char>(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()).toHex()).toStdString()
               << " hash for datapack loaded main, "
-              << QString(QByteArray(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()).toHex()).toStdString()
+              << QString(std::vector<char>(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()).toHex()).toStdString()
               << " hash for datapack loaded sub" << std::endl;
 }
 
@@ -2229,7 +2229,7 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
             std::cerr << mapfile << botFile.fileName().toStdString() << ": " << botFile.errorString().toStdString() << std::endl;
             return;
         }
-        QByteArray xmlContent=botFile.readAll();
+        std::vector<char> xmlContent=botFile.readAll();
         botFile.close();
         QString errorStr;
         int errorLine,errorColumn;

@@ -153,10 +153,10 @@ private:
     uint8_t otherPacketKickNewValue;
 
     static uint8_t tempDatapackListReplySize;
-    static QByteArray tempDatapackListReplyArray;
+    static std::vector<char> tempDatapackListReplyArray;
     static uint8_t tempDatapackListReply;
     static int tempDatapackListReplyTestCount;
-    static QByteArray rawFilesBuffer,compressedFilesBuffer;
+    static std::vector<char> rawFilesBuffer,compressedFilesBuffer;
     static int rawFilesBufferCount,compressedFilesBufferCount;
 
     static std::regex fileNameStartStringRegex;

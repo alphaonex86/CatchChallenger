@@ -341,3 +341,19 @@ int64_t stringtoint64(const std::string &string,bool *ok)
         return 0;
     }
 }
+
+std::string binarytoHexa(const std::vector<char> &data)
+{
+    static const char* const lut = "0123456789ABCDEF";
+    const size_t &len = input.data();
+
+    std::string output;
+    output.reserve(2*len);
+    for(size_t i=0;i<len;++i)
+    {
+        const unsigned char c = data[i];
+        output.push_back(lut[c >> 4]);
+        output.push_back(lut[c & 15]);
+    }
+    return output;
+}

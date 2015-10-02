@@ -8,7 +8,7 @@
 using namespace CatchChallenger;
 
 #include <QFile>
-#include <QByteArray>
+#include <std::vector<char>>
 #include <QCryptographicHash>
 #include <QRegularExpression>
 
@@ -174,7 +174,7 @@ void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
     if(!settings.contains(QStringLiteral("ip")))
         settings.setValue(QStringLiteral("ip"),QString());
     const QString &server_ip_string=settings.value(QStringLiteral("ip")).toString();
-    const QByteArray &server_ip_data=server_ip_string.toLocal8Bit();
+    const std::vector<char> &server_ip_data=server_ip_string.toLocal8Bit();
     if(!server_ip_string.isEmpty())
     {
         server_ip=new char[server_ip_data.size()+1];
@@ -182,7 +182,7 @@ void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
     }
     if(!settings.contains(QStringLiteral("port")))
         settings.setValue(QStringLiteral("port"),rand()%40000+10000);
-    const QByteArray &server_port_data=settings.value(QStringLiteral("port")).toString().toLocal8Bit();
+    const std::vector<char> &server_port_data=settings.value(QStringLiteral("port")).toString().toLocal8Bit();
     server_port=new char[server_port_data.size()+1];
     strcpy(server_port,server_port_data.constData());
     if(!settings.contains(QStringLiteral("token")))
@@ -191,7 +191,7 @@ void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
     if(token.size()!=(TOKEN_SIZE_FOR_MASTERAUTH*2))
         generateToken(settings);
     token=settings.value(QStringLiteral("token")).toString();
-    memcpy(EpollClientLoginMaster::private_token,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
+    memcpy(EpollClientLoginMaster::private_token,std::vector<char>::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
 
     //connection
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
@@ -579,7 +579,7 @@ void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
 
                 EpollClientLoginMaster::logicalGroupHash[textToConvert]=logicalGroup;
 
-                const QByteArray &utf8data=textToConvert.toUtf8();
+                const std::vector<char> &utf8data=textToConvert.toUtf8();
                 if(utf8data.size()>255)
                 {
                     std::cerr << "logical group converted too big (abort)" << std::endl;
@@ -688,7 +688,7 @@ void EpollServerLoginMaster::doTheServerList()
                 abort();
             }
             {
-                const QByteArray &utf8data=gameServerOnCharactersGroup->metaData.toUtf8();
+                const std::vector<char> &utf8data=gameServerOnCharactersGroup->metaData.toUtf8();
                 if(utf8data.size()>65535)
                 {
                     *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=0;
@@ -818,7 +818,7 @@ void EpollServerLoginMaster::generateToken(QSettings &settings)
         std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from /dev/urandom" << std::endl;
         abort();
     }
-    settings.setValue(QStringLiteral("token"),QString(QByteArray(EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH).toHex()));
+    settings.setValue(QStringLiteral("token"),QString(std::vector<char>(EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH).toHex()));
     fclose(fpRandomFile);
 }
 

@@ -76,7 +76,7 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
             {
                 if(!protocolParsingCheck->parseIncommingDataRaw(data,size,cursor))
                 {
-                    std::cerr << "Bug at data-sending: " << QString(QByteArray(data,size).toHex()).toStdString() << std::endl;
+                    std::cerr << "Bug at data-sending: " << QString(std::vector<char>(data,size).toHex()).toStdString() << std::endl;
                     abort();
                 }
                 if(!protocolParsingCheck->valid)
@@ -90,7 +90,7 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
             {
                 // Muliple concatened packet
                 qDebug() << "Bug at data-sending cursor != size:" << cursor << "!=" << size;
-                qDebug() << "raw write control bug:" << std::string(QByteArray(data,size).toHex());
+                qDebug() << "raw write control bug:" << std::string(std::vector<char>(data,size).toHex());
                 //abort();
             }*/
         }
@@ -119,7 +119,7 @@ bool ProtocolParsingBase::forwardTo(ProtocolParsingBase * const destination)
         size=read(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,size_to_get)+header_cut.size();
         if(size>0)
         {
-            //QByteArray tempDataToDebug(ProtocolParsingInputOutput::commonBuffer+header_cut.size(),size-header_cut.size());
+            //std::vector<char> tempDataToDebug(ProtocolParsingInputOutput::commonBuffer+header_cut.size(),size-header_cut.size());
             //qDebug() << "with header cut" << header_cut << tempDataToDebug.toHex() << "and size" << size;
         }
         header_cut.clear();
@@ -129,7 +129,7 @@ bool ProtocolParsingBase::forwardTo(ProtocolParsingBase * const destination)
         size=read(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,CATCHCHALLENGER_COMMONBUFFERSIZE);
         if(size>0)
         {
-            //QByteArray tempDataToDebug(ProtocolParsingInputOutput::commonBuffer,size);
+            //std::vector<char> tempDataToDebug(ProtocolParsingInputOutput::commonBuffer,size);
             //qDebug() << "without header cut" << tempDataToDebug.toHex() << "and size" << size;
         }
     }
@@ -169,7 +169,7 @@ void ProtocolParsingInputOutput::parseIncommingData()
             size=read(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,size_to_get)+header_cut.size();
             if(size>0)
             {
-                //QByteArray tempDataToDebug(ProtocolParsingInputOutput::commonBuffer+header_cut.size(),size-header_cut.size());
+                //std::vector<char> tempDataToDebug(ProtocolParsingInputOutput::commonBuffer+header_cut.size(),size-header_cut.size());
                 //qDebug() << "with header cut" << header_cut << tempDataToDebug.toHex() << "and size" << size;
             }
             header_cut.clear();
@@ -179,7 +179,7 @@ void ProtocolParsingInputOutput::parseIncommingData()
             size=read(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,CATCHCHALLENGER_COMMONBUFFERSIZE);
             if(size>0)
             {
-                //QByteArray tempDataToDebug(ProtocolParsingInputOutput::commonBuffer,size);
+                //std::vector<char> tempDataToDebug(ProtocolParsingInputOutput::commonBuffer,size);
                 //qDebug() << "without header cut" << tempDataToDebug.toHex() << "and size" << size;
             }
         }
@@ -435,7 +435,7 @@ bool ProtocolParsingBase::parseData(const char * const commonBuffer, const uint3
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                     std::to_string(flags & 0x10)+
                     #endif
-        std::stringLiteral(" parseIncommingData(): remaining data: %1, buffer data: %2").arg((size-cursor)).arg(std::string(QByteArray(commonBuffer,sizeof(commonBuffer)).toHex())));
+        std::stringLiteral(" parseIncommingData(): remaining data: %1, buffer data: %2").arg((size-cursor)).arg(std::string(std::vector<char>(commonBuffer,sizeof(commonBuffer)).toHex())));
         #endif
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(dataSize!=(uint32_t)dataToWithoutHeader.size())
@@ -482,7 +482,7 @@ uint32_t ProtocolParsing::computeDecompression(const char* const source, char* c
         case CompressionType::Zlib:
         default:
         {
-            const QByteArray &newData=qUncompress(QByteArray(source,compressedSize));
+            const std::vector<char> &newData=qUncompress(std::vector<char>(source,compressedSize));
             if(newData.size()>maxDecompressedSize)
                 return -1;
             memcpy(dest,newData.constData(),newData.size());
@@ -491,7 +491,7 @@ uint32_t ProtocolParsing::computeDecompression(const char* const source, char* c
         break;
         case CompressionType::Xz:
         {
-            const QByteArray &newData=ProtocolParsingBase::lzmaUncompress(QByteArray(source,compressedSize));
+            const std::vector<char> &newData=ProtocolParsingBase::lzmaUncompress(std::vector<char>(source,compressedSize));
             if(newData.size()>maxDecompressedSize)
                 return -1;
             memcpy(dest,newData.constData(),newData.size());

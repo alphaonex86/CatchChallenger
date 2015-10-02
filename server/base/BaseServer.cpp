@@ -22,7 +22,7 @@
 
 #include <QFile>
 #include <QDir>
-#include <QByteArray>
+#include <std::vector<char>>
 #include <QDateTime>
 #include <QTime>
 #include <QCryptographicHash>

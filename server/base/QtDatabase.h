@@ -56,7 +56,7 @@ private:
     QString lastErrorMessage;
     QList<CallBack> queue;
     QList<QString> queriesList;
-    static QByteArray valueReturnedData;
+    static std::vector<char> valueReturnedData;
     DatabaseBase::DatabaseType databaseConnected;
 };
 

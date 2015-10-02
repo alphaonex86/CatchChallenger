@@ -314,7 +314,7 @@ struct ServerPrivateVariables
     std::unordered_map<std::string,CityStatus> cityStatusList;
     std::unordered_map<uint32_t,std::string > cityStatusListReverse;
     std::unordered_set<uint32_t> tradedMonster;
-    QByteArray randomData;
+    std::vector<char> randomData;
 
     //market
     std::vector<MarketItem> marketItemList;
