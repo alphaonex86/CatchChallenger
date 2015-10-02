@@ -29,7 +29,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     server_ip(NULL),
     server_port(NULL)
 {
-    std::unordered_settings settings(QCoreApplication::applicationDirPath()+"/gateway.conf",std::unordered_settings::IniFormat);
+    QSettings settings(QCoreApplication::applicationDirPath()+"/gateway.conf",QSettings::IniFormat);
 
     srand(time(NULL));
 

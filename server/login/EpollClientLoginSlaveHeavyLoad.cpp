@@ -573,18 +573,18 @@ void EpollClientLoginSlave::selectCharacter_ReturnFailed(const uint8_t &query_id
         case 0x02:
         EpollClientLoginSlave::characterSelectionIsWrongBufferCharacterNotFound[1]=query_id;
         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::characterSelectionIsWrongBufferCharacterNotFound),EpollClientLoginSlave::characterSelectionIsWrongBufferSize);
-        errorParsingLayer("EpollClientLoginSlave::selectCharacter_ReturnFailed() errorCode:"+std::string::number(errorCode));
+        errorParsingLayer("EpollClientLoginSlave::selectCharacter_ReturnFailed() errorCode:"+std::to_string(errorCode));
         break;
         default:
         case 0x03:
         EpollClientLoginSlave::characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline[1]=query_id;
         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline),EpollClientLoginSlave::characterSelectionIsWrongBufferSize);
-        errorParsingLayer("EpollClientLoginSlave::selectCharacter_ReturnFailed() errorCode:"+std::string::number(errorCode));
+        errorParsingLayer("EpollClientLoginSlave::selectCharacter_ReturnFailed() errorCode:"+std::to_string(errorCode));
         break;
         case 0x04:
         EpollClientLoginSlave::characterSelectionIsWrongBufferServerInternalProblem[1]=query_id;
         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::characterSelectionIsWrongBufferServerInternalProblem),EpollClientLoginSlave::characterSelectionIsWrongBufferSize);
-        errorParsingLayer("EpollClientLoginSlave::selectCharacter_ReturnFailed() errorCode:"+std::string::number(errorCode));
+        errorParsingLayer("EpollClientLoginSlave::selectCharacter_ReturnFailed() errorCode:"+std::to_string(errorCode));
         break;
         case 0x05:
         EpollClientLoginSlave::characterSelectionIsWrongBufferServerNotFound[1]=query_id;

@@ -441,9 +441,9 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                     fileName=std::string(data+pos,fileNameSize);
                     pos+=fileNameSize;
                 }
-                if(DatapackDownloaderBase::extensionAllowed.find(QFileInfo(std::string::fromStdString(fileName)).suffix().toStdString())==DatapackDownloaderBase::extensionAllowed.cend())
+                if(DatapackDownloaderBase::extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())==DatapackDownloaderBase::extensionAllowed.cend())
                 {
-                    parseNetworkReadError("extension not allowed: "+QFileInfo(std::string::fromStdString(fileName)).suffix().toStdString()+" with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
+                    parseNetworkReadError("extension not allowed: "+QFileInfo(QString::fromStdString(fileName)).suffix().toStdString()+" with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
                     return false;
                 }
                 if((size-pos)<(int)(sizeof(uint32_t)))

@@ -273,7 +273,7 @@ void LinkToMaster::parseIncommingData()
     ProtocolParsingInputOutput::parseIncommingData();
 }
 
-bool LinkToMaster::setSettings(std::unordered_settings * const settings)
+bool LinkToMaster::setSettings(QSettings * const settings)
 {
     this->settings=settings;
 

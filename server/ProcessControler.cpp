@@ -15,7 +15,7 @@ ProcessControler::ProcessControler()
     need_be_restarted=false;
     need_be_closed=false;
 
-    settings=new std::unordered_settings(QCoreApplication::applicationDirPath()+QLatin1Literal("/server.properties"),std::unordered_settings::IniFormat);
+    settings=new QSettings(QCoreApplication::applicationDirPath()+QLatin1Literal("/server.properties"),QSettings::IniFormat);
     NormalServer::checkSettingsFile(settings);
     send_settings();
     server.start_server();
@@ -311,7 +311,7 @@ void ProcessControler::server_need_be_restarted()
 std::string ProcessControler::sizeToString(double size)
 {
     if(size<1024)
-        return std::string::number(size)+tr("B");
+        return std::to_string(size)+tr("B");
     if((size=size/1024)<1024)
         return adaptString(size)+tr("KB");
     if((size=size/1024)<1024)
@@ -334,9 +334,9 @@ std::string ProcessControler::sizeToString(double size)
 std::string ProcessControler::adaptString(float size)
 {
     if(size>=100)
-        return std::string::number(size,'f',0);
+        return std::to_string(size,'f',0);
     else
-        return std::string::number(size,'g',3);
+        return std::to_string(size,'g',3);
 }
 
 void ProcessControler::haveQuitForCriticalDatabaseQueryFailed()

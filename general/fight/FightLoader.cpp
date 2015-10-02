@@ -98,7 +98,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
     else
     {
         #endif
-        QFile itemsFile(std::string::fromStdString(file));
+        QFile itemsFile(QString::fromStdString(file));
         std::vector<char> xmlContent;
         if(!itemsFile.open(QIODevice::ReadOnly))
         {
@@ -107,7 +107,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
         }
         xmlContent=itemsFile.readAll();
         itemsFile.close();
-        std::string errorStr;
+        QString errorStr;
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
@@ -129,14 +129,14 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
     bool ok;
     {
         std::unordered_set<std::string> duplicate;
-        QDomElement typeItem = root.firstChildElement(std::string::fromStdString("type"));
+        QDomElement typeItem = root.firstChildElement(QString::fromStdString("type"));
         while(!typeItem.isNull())
         {
             if(typeItem.isElement())
             {
-                if(typeItem.hasAttribute(std::string::fromStdString(FightLoader::text_name)))
+                if(typeItem.hasAttribute(QString::fromStdString(FightLoader::text_name)))
                 {
-                    std::string name=typeItem.attribute(std::string::fromStdString(FightLoader::text_name)).toStdString();
+                    std::string name=typeItem.attribute(QString::fromStdString(FightLoader::text_name)).toStdString();
                     if(duplicate.find(name)==duplicate.cend())
                     {
                         duplicate.insert(name);
@@ -153,31 +153,31 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
             }
             else
                 std::cerr << "Unable to open the file: " << file << ", is not an element: child.tagName(): " << typeItem.tagName().toStdString() << " (at line: " << typeItem.lineNumber() << ")" << std::endl;
-            typeItem = typeItem.nextSiblingElement(std::string::fromStdString("type"));
+            typeItem = typeItem.nextSiblingElement(QString::fromStdString("type"));
         }
     }
     {
         std::unordered_set<std::string> duplicate;
-        QDomElement typeItem = root.firstChildElement(std::string::fromStdString("type"));
+        QDomElement typeItem = root.firstChildElement(QString::fromStdString("type"));
         while(!typeItem.isNull())
         {
             if(typeItem.isElement())
             {
-                if(typeItem.hasAttribute(std::string::fromStdString(FightLoader::text_name)))
+                if(typeItem.hasAttribute(QString::fromStdString(FightLoader::text_name)))
                 {
-                    std::string name=typeItem.attribute(std::string::fromStdString(FightLoader::text_name)).toStdString();
+                    std::string name=typeItem.attribute(QString::fromStdString(FightLoader::text_name)).toStdString();
                     if(duplicate.find(name)==duplicate.cend())
                     {
                         duplicate.insert(name);
-                        QDomElement multiplicator = typeItem.firstChildElement(std::string::fromStdString(FightLoader::text_multiplicator));
+                        QDomElement multiplicator = typeItem.firstChildElement(QString::fromStdString(FightLoader::text_multiplicator));
                         while(!multiplicator.isNull())
                         {
                             if(multiplicator.isElement())
                             {
-                                if(multiplicator.hasAttribute(std::string::fromStdString("number")) && multiplicator.hasAttribute(std::string::fromStdString(FightLoader::text_to)))
+                                if(multiplicator.hasAttribute(QString::fromStdString("number")) && multiplicator.hasAttribute(QString::fromStdString(FightLoader::text_to)))
                                 {
-                                    float number=multiplicator.attribute(std::string::fromStdString("number")).toFloat(&ok);
-                                    std::vector<std::string> to=stringsplit(multiplicator.attribute(std::string::fromStdString(FightLoader::text_to)).toStdString(),';');
+                                    float number=multiplicator.attribute(QString::fromStdString("number")).toFloat(&ok);
+                                    std::vector<std::string> to=stringsplit(multiplicator.attribute(QString::fromStdString(FightLoader::text_to)).toStdString(),';');
                                     if(ok && (number==2.0 || number==0.5 || number==0.0))
                                     {
                                         unsigned int index=0;
@@ -206,7 +206,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
                             }
                             else
                                 std::cerr << "Unable to open the file: " << file << ", is not an element: child.tagName(): " << multiplicator.tagName().toStdString() << " (at line: " << multiplicator.lineNumber() << ")" << std::endl;
-                            multiplicator = multiplicator.nextSiblingElement(std::string::fromStdString(FightLoader::text_multiplicator));
+                            multiplicator = multiplicator.nextSiblingElement(QString::fromStdString(FightLoader::text_multiplicator));
                         }
                     }
                     else
@@ -217,7 +217,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
             }
             else
                 std::cerr << "Unable to open the file: " << file << ", is not an element: child.tagName(): " << typeItem.tagName().toStdString() << " (at line: " << typeItem.lineNumber() << ")" << std::endl;
-            typeItem = typeItem.nextSiblingElement(std::string::fromStdString("type"));
+            typeItem = typeItem.nextSiblingElement(QString::fromStdString("type"));
         }
     }
     return types;
@@ -231,7 +231,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                 )
 {
     std::unordered_map<uint16_t,Monster> monsters;
-    QDir dir(std::string::fromStdString(folder));
+    QDir dir(QString::fromStdString(folder));
     QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     unsigned int file_index=0;
     while(file_index<(uint32_t)fileList.size())
@@ -266,7 +266,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
         else
         {
             #endif
-            QFile xmlFile(std::string::fromStdString(file));
+            QFile xmlFile(QString::fromStdString(file));
             std::vector<char> xmlContent;
             if(!xmlFile.open(QIODevice::ReadOnly))
             {
@@ -276,7 +276,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
             }
             xmlContent=xmlFile.readAll();
             xmlFile.close();
-            std::string errorStr;
+            QString errorStr;
             int errorLine,errorColumn;
             if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
             {
@@ -297,69 +297,69 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
 
         //load the content
         bool ok,ok2;
-        QDomElement item = root.firstChildElement(std::string::fromStdString("monster"));
+        QDomElement item = root.firstChildElement(QString::fromStdString("monster"));
         while(!item.isNull())
         {
             if(item.isElement())
             {
                 bool attributeIsOk=true;
-                if(!item.hasAttribute(std::string::fromStdString("id")))
+                if(!item.hasAttribute(QString::fromStdString("id")))
                 {
                     std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"id\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
                 }
                 #ifndef CATCHCHALLENGER_CLASS_MASTER
-                if(!item.hasAttribute(std::string::fromStdString(FightLoader::text_egg_step)))
+                if(!item.hasAttribute(QString::fromStdString(FightLoader::text_egg_step)))
                 {
                     std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"egg_step\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(std::string::fromStdString(FightLoader::text_xp_for_max_level)) && !item.hasAttribute(std::string::fromStdString(FightLoader::text_xp_max)))
+                if(!item.hasAttribute(QString::fromStdString(FightLoader::text_xp_for_max_level)) && !item.hasAttribute(QString::fromStdString(FightLoader::text_xp_max)))
                 {
                     std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"xp_for_max_level\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
                 }
                 else
                 {
-                    if(!item.hasAttribute(std::string::fromStdString(FightLoader::text_xp_for_max_level)))
-                        item.setAttribute(std::string::fromStdString(FightLoader::text_xp_for_max_level),item.attribute(std::string::fromStdString(FightLoader::text_xp_max)));
+                    if(!item.hasAttribute(QString::fromStdString(FightLoader::text_xp_for_max_level)))
+                        item.setAttribute(QString::fromStdString(FightLoader::text_xp_for_max_level),item.attribute(QString::fromStdString(FightLoader::text_xp_max)));
                 }
-                if(!item.hasAttribute(std::string::fromStdString("hp")))
+                if(!item.hasAttribute(QString::fromStdString("hp")))
                 {
                     std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"hp\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(std::string::fromStdString("attack")))
+                if(!item.hasAttribute(QString::fromStdString("attack")))
                 {
                     std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"attack\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(std::string::fromStdString("defense")))
+                if(!item.hasAttribute(QString::fromStdString("defense")))
                 {
                     std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"defense\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(std::string::fromStdString(FightLoader::text_special_attack)))
+                if(!item.hasAttribute(QString::fromStdString(FightLoader::text_special_attack)))
                 {
                     std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"special_attack\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(std::string::fromStdString(FightLoader::text_special_defense)))
+                if(!item.hasAttribute(QString::fromStdString(FightLoader::text_special_defense)))
                 {
                     std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"special_defense\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(std::string::fromStdString(FightLoader::text_speed)))
+                if(!item.hasAttribute(QString::fromStdString(FightLoader::text_speed)))
                 {
                     std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"speed\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(std::string::fromStdString(FightLoader::text_give_sp)))
+                if(!item.hasAttribute(QString::fromStdString(FightLoader::text_give_sp)))
                 {
                     std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"give_sp\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(std::string::fromStdString(FightLoader::text_give_xp)))
+                if(!item.hasAttribute(QString::fromStdString(FightLoader::text_give_xp)))
                 {
                     std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"give_xp\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     attributeIsOk=false;
@@ -369,7 +369,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                 {
                     Monster monster;
                     monster.catch_rate=100;
-                    uint32_t id=item.attribute(std::string::fromStdString("id")).toUInt(&ok);
+                    uint32_t id=item.attribute(QString::fromStdString("id")).toUInt(&ok);
                     if(!ok)
                         std::cerr << "Unable to open the xml file: " << file << ", id not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                     else if(monsters.find(id)!=monsters.cend())
@@ -377,10 +377,10 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                     else
                     {
                         #ifndef CATCHCHALLENGER_CLASS_MASTER
-                        if(item.hasAttribute(std::string::fromStdString(FightLoader::text_catch_rate)))
+                        if(item.hasAttribute(QString::fromStdString(FightLoader::text_catch_rate)))
                         {
                             bool ok2;
-                            uint32_t catch_rate=item.attribute(std::string::fromStdString(FightLoader::text_catch_rate)).toUInt(&ok2);
+                            uint32_t catch_rate=item.attribute(QString::fromStdString(FightLoader::text_catch_rate)).toUInt(&ok2);
                             if(ok2)
                             {
                                 if(catch_rate<=255)
@@ -391,38 +391,38 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                             else
                                 std::cerr << "Unable to open the xml file: " << file << ", catch_rate is not a number: " << item.attribute("catch_rate").toStdString() << " child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
-                        if(item.hasAttribute(std::string::fromStdString("type")))
+                        if(item.hasAttribute(QString::fromStdString("type")))
                         {
-                            const std::vector<std::string> &typeList=stringsplit(item.attribute(std::string::fromStdString("type")).toStdString(),';');
+                            const std::vector<std::string> &typeList=stringsplit(item.attribute(QString::fromStdString("type")).toStdString(),';');
                             unsigned int index=0;
                             while(index<typeList.size())
                             {
                                 if(typeNameToId.find(typeList.at(index))!=typeNameToId.cend())
                                     monster.type.push_back(typeNameToId.at(typeList.at(index)));
                                 else
-                                    std::cerr << "Unable to open the xml file: " << file << ", type not found into the list: " << item.attribute(std::string::fromStdString("type")).toStdString() << " child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                    std::cerr << "Unable to open the xml file: " << file << ", type not found into the list: " << item.attribute(QString::fromStdString("type")).toStdString() << " child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                 index++;
                             }
                         }
-                        if(item.hasAttribute(std::string::fromStdString(FightLoader::text_type2)))
+                        if(item.hasAttribute(QString::fromStdString(FightLoader::text_type2)))
                         {
-                            const std::vector<std::string> &typeList=stringsplit(item.attribute(std::string::fromStdString(FightLoader::text_type2)).toStdString(),';');
+                            const std::vector<std::string> &typeList=stringsplit(item.attribute(QString::fromStdString(FightLoader::text_type2)).toStdString(),';');
                             unsigned int index=0;
                             while(index<typeList.size())
                             {
                                 if(typeNameToId.find(typeList.at(index))!=typeNameToId.cend())
                                     monster.type.push_back(typeNameToId.at(typeList.at(index)));
                                 else
-                                    std::cerr << "Unable to open the xml file: " << file << ", type not found into the list: " << item.attribute(std::string::fromStdString(FightLoader::text_type2)).toStdString() << " child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                    std::cerr << "Unable to open the xml file: " << file << ", type not found into the list: " << item.attribute(QString::fromStdString(FightLoader::text_type2)).toStdString() << " child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                                 index++;
                             }
                         }
                         qreal pow=1.0;
                         if(ok)
                         {
-                            if(item.hasAttribute(std::string::fromStdString(FightLoader::text_pow)))
+                            if(item.hasAttribute(QString::fromStdString(FightLoader::text_pow)))
                             {
-                                pow=item.attribute(std::string::fromStdString(FightLoader::text_pow)).toDouble(&ok);
+                                pow=item.attribute(QString::fromStdString(FightLoader::text_pow)).toDouble(&ok);
                                 if(!ok)
                                 {
                                     pow=1.0;
@@ -446,64 +446,64 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                         #endif
                         if(ok)
                         {
-                            monster.egg_step=item.attribute(std::string::fromStdString(FightLoader::text_egg_step)).toUInt(&ok);
+                            monster.egg_step=item.attribute(QString::fromStdString(FightLoader::text_egg_step)).toUInt(&ok);
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", egg_step is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.xp_for_max_level=item.attribute(std::string::fromStdString(FightLoader::text_xp_for_max_level)).toUInt(&ok);
+                            monster.xp_for_max_level=item.attribute(QString::fromStdString(FightLoader::text_xp_for_max_level)).toUInt(&ok);
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", xp_for_max_level is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
                         #endif
                         if(ok)
                         {
-                            monster.stat.hp=item.attribute(std::string::fromStdString("hp")).toUInt(&ok);
+                            monster.stat.hp=item.attribute(QString::fromStdString("hp")).toUInt(&ok);
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", hp is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
                         #ifndef CATCHCHALLENGER_CLASS_MASTER
                         if(ok)
                         {
-                            monster.stat.attack=item.attribute(std::string::fromStdString("attack")).toUInt(&ok);
+                            monster.stat.attack=item.attribute(QString::fromStdString("attack")).toUInt(&ok);
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", attack is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.stat.defense=item.attribute(std::string::fromStdString("defense")).toUInt(&ok);
+                            monster.stat.defense=item.attribute(QString::fromStdString("defense")).toUInt(&ok);
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", defense is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.stat.special_attack=item.attribute(std::string::fromStdString(FightLoader::text_special_attack)).toUInt(&ok);
+                            monster.stat.special_attack=item.attribute(QString::fromStdString(FightLoader::text_special_attack)).toUInt(&ok);
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", special_attack is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.stat.special_defense=item.attribute(std::string::fromStdString(FightLoader::text_special_defense)).toUInt(&ok);
+                            monster.stat.special_defense=item.attribute(QString::fromStdString(FightLoader::text_special_defense)).toUInt(&ok);
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", special_defense is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.stat.speed=item.attribute(std::string::fromStdString(FightLoader::text_speed)).toUInt(&ok);
+                            monster.stat.speed=item.attribute(QString::fromStdString(FightLoader::text_speed)).toUInt(&ok);
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", speed is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
                         #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
                         if(ok)
                         {
-                            monster.give_xp=item.attribute(std::string::fromStdString(FightLoader::text_give_xp)).toUInt(&ok)*CommonSettingsServer::commonSettingsServer.rates_xp;
+                            monster.give_xp=item.attribute(QString::fromStdString(FightLoader::text_give_xp)).toUInt(&ok)*CommonSettingsServer::commonSettingsServer.rates_xp;
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", give_xp is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.give_sp=item.attribute(std::string::fromStdString(FightLoader::text_give_sp)).toUInt(&ok)*CommonSettingsServer::commonSettingsServer.rates_xp;
+                            monster.give_sp=item.attribute(QString::fromStdString(FightLoader::text_give_sp)).toUInt(&ok)*CommonSettingsServer::commonSettingsServer.rates_xp;
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", give_sp is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                         }
@@ -514,9 +514,9 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                         #endif
                         if(ok)
                         {
-                            if(item.hasAttribute(std::string::fromStdString(FightLoader::text_ratio_gender)))
+                            if(item.hasAttribute(QString::fromStdString(FightLoader::text_ratio_gender)))
                             {
-                                std::string ratio_gender=item.attribute(std::string::fromStdString(FightLoader::text_ratio_gender)).toStdString();
+                                std::string ratio_gender=item.attribute(QString::fromStdString(FightLoader::text_ratio_gender)).toStdString();
                                 stringreplaceOne(ratio_gender,FightLoader::text_percent,"");
                                 monster.ratio_gender=stringtouint8(ratio_gender,&ok2);
                                 if(!ok2)
@@ -535,27 +535,27 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                         if(ok)
                         {
                             {
-                                QDomElement attack_list = item.firstChildElement(std::string::fromStdString(FightLoader::text_attack_list));
+                                QDomElement attack_list = item.firstChildElement(QString::fromStdString(FightLoader::text_attack_list));
                                 if(!attack_list.isNull())
                                 {
                                     if(attack_list.isElement())
                                     {
-                                        QDomElement attack = attack_list.firstChildElement(std::string::fromStdString("attack"));
+                                        QDomElement attack = attack_list.firstChildElement(QString::fromStdString("attack"));
                                         while(!attack.isNull())
                                         {
                                             if(attack.isElement())
                                             {
-                                                if(attack.hasAttribute(std::string::fromStdString("skill")) || attack.hasAttribute(std::string::fromStdString("id")))
+                                                if(attack.hasAttribute(QString::fromStdString("skill")) || attack.hasAttribute(QString::fromStdString("id")))
                                                 {
                                                     ok=true;
-                                                    if(!attack.hasAttribute(std::string::fromStdString("skill")))
-                                                        attack.setAttribute(std::string::fromStdString("skill"),attack.attribute(std::string::fromStdString("id")));
+                                                    if(!attack.hasAttribute(QString::fromStdString("skill")))
+                                                        attack.setAttribute(QString::fromStdString("skill"),attack.attribute(QString::fromStdString("id")));
                                                     Monster::AttackToLearn attackVar;
-                                                    if(attack.hasAttribute(std::string::fromStdString(FightLoader::text_skill_level)) || attack.hasAttribute(std::string::fromStdString(FightLoader::text_attack_level)))
+                                                    if(attack.hasAttribute(QString::fromStdString(FightLoader::text_skill_level)) || attack.hasAttribute(QString::fromStdString(FightLoader::text_attack_level)))
                                                     {
-                                                        if(!attack.hasAttribute(std::string::fromStdString(FightLoader::text_skill_level)))
-                                                            attack.setAttribute(std::string::fromStdString(FightLoader::text_skill_level),attack.attribute(std::string::fromStdString(FightLoader::text_attack_level)));
-                                                        attackVar.learnSkillLevel=attack.attribute(std::string::fromStdString(FightLoader::text_skill_level)).toUShort(&ok);
+                                                        if(!attack.hasAttribute(QString::fromStdString(FightLoader::text_skill_level)))
+                                                            attack.setAttribute(QString::fromStdString(FightLoader::text_skill_level),attack.attribute(QString::fromStdString(FightLoader::text_attack_level)));
+                                                        attackVar.learnSkillLevel=attack.attribute(QString::fromStdString(FightLoader::text_skill_level)).toUShort(&ok);
                                                         if(!ok)
                                                             std::cerr << "Unable to open the xml file: " << file << ", skill_level is not a number: child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                     }
@@ -563,7 +563,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                         attackVar.learnSkillLevel=1;
                                                     if(ok)
                                                     {
-                                                        attackVar.learnSkill=attack.attribute(std::string::fromStdString("skill")).toUShort(&ok);
+                                                        attackVar.learnSkill=attack.attribute(QString::fromStdString("skill")).toUShort(&ok);
                                                         if(!ok)
                                                             std::cerr << "Unable to open the xml file: " << file << ", skill is not a number: child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                     }
@@ -583,11 +583,11 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                             ok=false;
                                                         }
                                                     }
-                                                    if(attack.hasAttribute(std::string::fromStdString("level")))
+                                                    if(attack.hasAttribute(QString::fromStdString("level")))
                                                     {
                                                         if(ok)
                                                         {
-                                                            attackVar.learnAtLevel=attack.attribute(std::string::fromStdString("level")).toUShort(&ok);
+                                                            attackVar.learnAtLevel=attack.attribute(QString::fromStdString("level")).toUShort(&ok);
                                                             if(ok)
                                                             {
                                                                 unsigned int index;
@@ -643,12 +643,12 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                     else
                                                     {
                                                         #ifndef CATCHCHALLENGER_CLASS_MASTER
-                                                        if(attack.hasAttribute(std::string::fromStdString(FightLoader::text_byitem)))
+                                                        if(attack.hasAttribute(QString::fromStdString(FightLoader::text_byitem)))
                                                         {
                                                             uint32_t itemId;
                                                             if(ok)
                                                             {
-                                                                itemId=attack.attribute(std::string::fromStdString(FightLoader::text_byitem)).toUShort(&ok);
+                                                                itemId=attack.attribute(QString::fromStdString(FightLoader::text_byitem)).toUShort(&ok);
                                                                 if(!ok)
                                                                     std::cerr << "Unable to open the xml file: " << file << ", item to learn is not a number " << attack.attribute("byitem").toStdString() << ": child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
                                                             }
@@ -689,7 +689,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                             }
                                             else
                                                 std::cerr << "Unable to open the xml file: " << file << ", attack_list balise is not an element: child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
-                                            attack = attack.nextSiblingElement(std::string::fromStdString("attack"));
+                                            attack = attack.nextSiblingElement(QString::fromStdString("attack"));
                                         }
                                         qSort(monster.learn);
                                     }
@@ -701,32 +701,32 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                             }
                             #ifndef CATCHCHALLENGER_CLASS_MASTER
                             {
-                                QDomElement evolutionsItem = item.firstChildElement(std::string::fromStdString(FightLoader::text_evolutions));
+                                QDomElement evolutionsItem = item.firstChildElement(QString::fromStdString(FightLoader::text_evolutions));
                                 if(!evolutionsItem.isNull())
                                 {
                                     if(evolutionsItem.isElement())
                                     {
-                                        QDomElement evolutionItem = evolutionsItem.firstChildElement(std::string::fromStdString(FightLoader::text_evolution));
+                                        QDomElement evolutionItem = evolutionsItem.firstChildElement(QString::fromStdString(FightLoader::text_evolution));
                                         while(!evolutionItem.isNull())
                                         {
                                             if(evolutionItem.isElement())
                                             {
-                                                if(evolutionItem.hasAttribute(std::string::fromStdString("type")) && (
-                                                       evolutionItem.hasAttribute(std::string::fromStdString("level")) ||
-                                                       (evolutionItem.attribute(std::string::fromStdString("type"))=="trade" && evolutionItem.hasAttribute(std::string::fromStdString(FightLoader::text_evolveTo))) ||
-                                                       (evolutionItem.attribute(std::string::fromStdString("type"))=="item" && evolutionItem.hasAttribute(std::string::fromStdString("item")))
+                                                if(evolutionItem.hasAttribute(QString::fromStdString("type")) && (
+                                                       evolutionItem.hasAttribute(QString::fromStdString("level")) ||
+                                                       (evolutionItem.attribute(QString::fromStdString("type"))=="trade" && evolutionItem.hasAttribute(QString::fromStdString(FightLoader::text_evolveTo))) ||
+                                                       (evolutionItem.attribute(QString::fromStdString("type"))=="item" && evolutionItem.hasAttribute(QString::fromStdString("item")))
                                                        )
                                                    )
                                                 {
                                                     ok=true;
                                                     Monster::Evolution evolutionVar;
-                                                    const std::string &typeText=evolutionItem.attribute(std::string::fromStdString("type")).toStdString();
+                                                    const std::string &typeText=evolutionItem.attribute(QString::fromStdString("type")).toStdString();
                                                     if(typeText!=FightLoader::text_trade)
                                                     {
                                                         if(typeText==FightLoader::text_item)
-                                                            evolutionVar.level=evolutionItem.attribute(std::string::fromStdString("item")).toUInt(&ok);
+                                                            evolutionVar.level=evolutionItem.attribute(QString::fromStdString("item")).toUInt(&ok);
                                                         else
-                                                            evolutionVar.level=evolutionItem.attribute(std::string::fromStdString("level")).toInt(&ok);
+                                                            evolutionVar.level=evolutionItem.attribute(QString::fromStdString("level")).toInt(&ok);
                                                         if(!ok)
                                                             std::cerr << "Unable to open the xml file: " << file << ", level is not a number: child.tagName(): " << evolutionItem.tagName().toStdString() << " (at line: " << evolutionItem.lineNumber() << ")" << std::endl;
                                                     }
@@ -734,7 +734,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                         evolutionVar.level=0;
                                                     if(ok)
                                                     {
-                                                        evolutionVar.evolveTo=evolutionItem.attribute(std::string::fromStdString(FightLoader::text_evolveTo)).toUInt(&ok);
+                                                        evolutionVar.evolveTo=evolutionItem.attribute(QString::fromStdString(FightLoader::text_evolveTo)).toUInt(&ok);
                                                         if(!ok)
                                                             std::cerr << "Unable to open the xml file: " << file << ", evolveTo is not a number: child.tagName(): " << evolutionItem.tagName().toStdString() << " (at line: " << evolutionItem.lineNumber() << ")" << std::endl;
                                                     }
@@ -779,7 +779,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                             }
                                             else
                                                 std::cerr << "Unable to open the xml file: " << file << ", attack_list balise is not an element: child.tagName(): " << evolutionItem.tagName().toStdString() << " (at line: " << evolutionItem.lineNumber() << ")" << std::endl;
-                                            evolutionItem = evolutionItem.nextSiblingElement(std::string::fromStdString(FightLoader::text_evolution));
+                                            evolutionItem = evolutionItem.nextSiblingElement(QString::fromStdString(FightLoader::text_evolution));
                                         }
                                     }
                                     else
@@ -829,7 +829,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
             }
             else
                 std::cerr << "Unable to open the xml file: " << file << ", is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
-            item = item.nextSiblingElement(std::string::fromStdString("monster"));
+            item = item.nextSiblingElement(QString::fromStdString("monster"));
         }
         //check the evolveTo
         auto i = monsters.begin();
@@ -962,7 +962,7 @@ std::vector<PlayerMonster::PlayerSkill> FightLoader::loadDefaultAttack(const uin
 std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &folder, const std::unordered_map<uint16_t,Monster> &monsters, const std::unordered_map<uint16_t, Skill> &monsterSkills, const std::unordered_map<uint16_t, Item> &items)
 {
     std::unordered_map<uint16_t,BotFight> botFightList;
-    QDir dir(std::string::fromStdString(folder));
+    QDir dir(QString::fromStdString(folder));
     QFileInfoList list=dir.entryInfoList(std::stringList(),QDir::NoDotAndDotDot|QDir::Files);
     int index_file=0;
     while(index_file<list.size())
@@ -978,7 +978,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
             else
             {
                 #endif
-                QFile xmlFile(std::string::fromStdString(file));
+                QFile xmlFile(QString::fromStdString(file));
                 std::vector<char> xmlContent;
                 if(!xmlFile.open(QIODevice::ReadOnly))
                 {
@@ -988,7 +988,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                 }
                 xmlContent=xmlFile.readAll();
                 xmlFile.close();
-                std::string errorStr;
+                QString errorStr;
                 int errorLine,errorColumn;
                 if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
                 {
@@ -1205,7 +1205,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                    )
 {
     std::unordered_map<uint16_t,Skill> monsterSkills;
-    QDir dir(std::string::fromStdString(folder));
+    QDir dir(QString::fromStdString(folder));
     QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     int file_index=0;
     while(file_index<fileList.size())
@@ -1240,7 +1240,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
         else
         {
             #endif
-            QFile xmlFile(std::string::fromStdString(file));
+            QFile xmlFile(QString::fromStdString(file));
             std::vector<char> xmlContent;
             if(!xmlFile.open(QIODevice::ReadOnly))
             {
@@ -1250,7 +1250,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
             }
             xmlContent=xmlFile.readAll();
             xmlFile.close();
-            std::string errorStr;
+            QString errorStr;
             int errorLine,errorColumn;
             if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
             {
@@ -1582,7 +1582,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
 std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string &folder)
 {
     std::unordered_map<uint8_t,Buff> monsterBuffs;
-    QDir dir(std::string::fromStdString(folder));
+    QDir dir(QString::fromStdString(folder));
     QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     int file_index=0;
     while(file_index<fileList.size())
@@ -1606,7 +1606,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
         else
         {
             #endif
-            QFile xmlFile(std::string::fromStdString(file));
+            QFile xmlFile(QString::fromStdString(file));
             std::vector<char> xmlContent;
             if(!xmlFile.open(QIODevice::ReadOnly))
             {
@@ -1616,7 +1616,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
             }
             xmlContent=xmlFile.readAll();
             xmlFile.close();
-            std::string errorStr;
+            QString errorStr;
             int errorLine,errorColumn;
             if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
             {

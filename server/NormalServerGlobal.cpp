@@ -13,7 +13,7 @@ NormalServerGlobal::NormalServerGlobal()
 {
 }
 
-void NormalServerGlobal::checkSettingsFile(std::unordered_settings * const settings,const std::string &datapack_basePath)
+void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const std::string &datapack_basePath)
 {
     #if defined(Q_CC_GNU)
         qDebug() << std::stringLiteral("GCC %1.%2.%3 build: ").arg(__GNUC__).arg(__GNUC_MINOR__).arg(__GNUC_PATCHLEVEL__)+__DATE__+" "+__TIME__;

@@ -196,7 +196,7 @@ void QtServer::stop_internal_server()
     if(stat!=Up && stat!=InDown)
     {
         if(stat!=Down)
-            DebugClass::debugConsole("Is in wrong stat for stopping: "+std::string::number((int)stat));
+            DebugClass::debugConsole("Is in wrong stat for stopping: "+std::to_string((int)stat));
         return;
     }
     DebugClass::debugConsole("Try stop");

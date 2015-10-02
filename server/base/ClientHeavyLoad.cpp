@@ -1369,12 +1369,12 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
         #endif
         if(std::regex_match(fileName,GlobalServerData::serverPrivateVariables.datapack_rightFileName))
         {
-            QFileInfo fileInfo(std::string::fromStdString(fileName));
+            QFileInfo fileInfo(QString::fromStdString(fileName));
             if(!fileInfo.suffix().toStdString().empty() &&
-                    BaseServerMasterSendDatapack::extensionAllowed.find(QFileInfo(std::string::fromStdString(fileName)).suffix().toStdString())
+                    BaseServerMasterSendDatapack::extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())
                     !=BaseServerMasterSendDatapack::extensionAllowed.cend())
             {
-                QFile file(std::string::fromStdString(path+returnList.at(index)));
+                QFile file(QString::fromStdString(path+returnList.at(index)));
                 if(file.size()<=8*1024*1024)
                 {
                     if(file.open(QIODevice::ReadOnly))
@@ -1554,7 +1554,7 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
                     addDatapackListReply(false);//file found don't need be updated
                 else
                 {
-                    QFile file(std::string::fromStdString(datapackPath+fileName));
+                    QFile file(QString::fromStdString(datapackPath+fileName));
                     if(file.open(QIODevice::ReadOnly))
                     {
                         addDatapackListReply(false);//found but need an update
@@ -1575,7 +1575,7 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
         auto i=filesListForSize.begin();
         while(i!=filesListForSize.cend())
         {
-            QFile file(std::string::fromStdString(datapackPath+i->first));
+            QFile file(QString::fromStdString(datapackPath+i->first));
             if(file.open(QIODevice::ReadOnly))
             {
                 datapckFileNumber++;
@@ -1804,7 +1804,7 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
         return false;
     }
 
-    QFile file(std::string::fromStdString(datapackPath+fileName));
+    QFile file(QString::fromStdString(datapackPath+fileName));
     if(file.open(QIODevice::ReadOnly))
     {
         const std::vector<char> &content=file.readAll();

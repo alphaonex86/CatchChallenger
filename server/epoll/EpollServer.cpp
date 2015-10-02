@@ -190,9 +190,9 @@ bool EpollServer::isReady()
 bool EpollServer::tryListen()
 {
     if(!normalServerSettings.server_ip.empty())
-        return tryListenInternal(normalServerSettings.server_ip.c_str(), std::string::number(normalServerSettings.server_port).toUtf8().constData());
+        return tryListenInternal(normalServerSettings.server_ip.c_str(), std::to_string(normalServerSettings.server_port).toUtf8().constData());
     else
-        return tryListenInternal(NULL, std::string::number(normalServerSettings.server_port).toUtf8().constData());
+        return tryListenInternal(NULL, std::to_string(normalServerSettings.server_port).toUtf8().constData());
 }
 
 void EpollServer::quitForCriticalDatabaseQueryFailed()

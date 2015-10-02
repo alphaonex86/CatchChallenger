@@ -287,7 +287,7 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
             }
         break;
         default:
-            parseNetworkReadError("wrong data before login with mainIdent: "+std::string::number(mainCodeType));
+            parseNetworkReadError("wrong data before login with mainIdent: "+std::to_string(mainCodeType));
         break;
     }
 }
@@ -296,7 +296,7 @@ void EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType, const char
 {
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {
-        parseNetworkReadError("main ident while game server connecting: "+std::string::number(mainCodeType));
+        parseNetworkReadError("main ident while game server connecting: "+std::to_string(mainCodeType));
         return;
     }
     switch(mainCodeType)
@@ -335,7 +335,7 @@ void EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType, const char
         }
         else
         {
-            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::string::number(mainCodeType));
+            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::to_string(mainCodeType));
             return;
         }
     }
@@ -344,7 +344,7 @@ void EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType, const char
     switch(mainCodeType)
     {
         default:
-            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+std::to_string(mainCodeType));
             return;
         break;
     }
@@ -354,7 +354,7 @@ void EpollClientLoginSlave::parseFullMessage(const uint8_t &mainCodeType,const u
 {
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {
-        parseNetworkReadError("main ident while game server connecting: "+std::string::number(mainCodeType));
+        parseNetworkReadError("main ident while game server connecting: "+std::to_string(mainCodeType));
         return;
     }
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
@@ -372,7 +372,7 @@ void EpollClientLoginSlave::parseFullMessage(const uint8_t &mainCodeType,const u
         }
         else
         {
-            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::string::number(mainCodeType));
+            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::to_string(mainCodeType));
             return;
         }
     }
@@ -382,7 +382,7 @@ void EpollClientLoginSlave::parseFullMessage(const uint8_t &mainCodeType,const u
     switch(mainCodeType)
     {
         default:
-            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+std::to_string(mainCodeType));
             return;
         break;
     }
@@ -402,7 +402,7 @@ void EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
     {
         if(stat==EpollClientLoginStat::GameServerConnecting)
         {
-            parseNetworkReadError("main ident while game server connecting: "+std::string::number(mainCodeType));
+            parseNetworkReadError("main ident while game server connecting: "+std::to_string(mainCodeType));
             return;
         }
         if(stat==EpollClientLoginStat::GameServerConnected)
@@ -410,7 +410,7 @@ void EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
             if(Q_LIKELY(linkToGameServer))
                 linkToGameServer->packOutcommingQuery(mainCodeType,queryNumber,data,size);
             else
-                parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::string::number(mainCodeType));
+                parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::to_string(mainCodeType));
             return;
         }
         parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
@@ -419,7 +419,7 @@ void EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
     switch(mainCodeType)
     {
         default:
-            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+std::to_string(mainCodeType));
             return;
         break;
     }
@@ -433,7 +433,7 @@ void EpollClientLoginSlave::parseFullQuery(const uint8_t &mainCodeType,const uin
     (void)size;
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {
-        parseNetworkReadError("main ident while game server connecting: "+std::string::number(mainCodeType));
+        parseNetworkReadError("main ident while game server connecting: "+std::to_string(mainCodeType));
         return;
     }
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
@@ -451,7 +451,7 @@ void EpollClientLoginSlave::parseFullQuery(const uint8_t &mainCodeType,const uin
         }
         else
         {
-            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::string::number(mainCodeType));
+            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::to_string(mainCodeType));
             return;
         }
     }
@@ -462,7 +462,7 @@ void EpollClientLoginSlave::parseFullQuery(const uint8_t &mainCodeType,const uin
     }
     if(stat!=Logged)
     {
-        parseNetworkReadError("client in wrong state main ident: "+std::string::number(mainCodeType)+", with sub ident:"+std::string::number(subCodeType)+", for parseFullQuery");
+        parseNetworkReadError("client in wrong state main ident: "+std::to_string(mainCodeType)+", with sub ident:"+std::to_string(subCodeType)+", for parseFullQuery");
         return;
     }
     //do the work here
@@ -568,7 +568,7 @@ void EpollClientLoginSlave::parseFullQuery(const uint8_t &mainCodeType,const uin
         }
         break;
         default:
-            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+std::to_string(mainCodeType));
             return;
         break;
     }
@@ -579,7 +579,7 @@ void EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
 {
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {
-        parseNetworkReadError("main ident while game server connecting: "+std::string::number(mainCodeType));
+        parseNetworkReadError("main ident while game server connecting: "+std::to_string(mainCodeType));
         return;
     }
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
@@ -597,7 +597,7 @@ void EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
         }
         else
         {
-            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::string::number(mainCodeType));
+            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::to_string(mainCodeType));
             return;
         }
     }
@@ -612,7 +612,7 @@ void EpollClientLoginSlave::parseFullReplyData(const uint8_t &mainCodeType,const
 {
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {
-        parseNetworkReadError("main ident while game server connecting: "+std::string::number(mainCodeType));
+        parseNetworkReadError("main ident while game server connecting: "+std::to_string(mainCodeType));
         return;
     }
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
@@ -630,7 +630,7 @@ void EpollClientLoginSlave::parseFullReplyData(const uint8_t &mainCodeType,const
         }
         else
         {
-            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::string::number(mainCodeType));
+            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::to_string(mainCodeType));
             return;
         }
     }
