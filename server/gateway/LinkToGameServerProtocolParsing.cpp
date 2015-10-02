@@ -244,7 +244,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                             return false;
                         }
                         posOutput+=1;
-                        std::cout << "Transmit the token: " << QString(QByteArray(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT).toHex()).toStdString() << std::endl;
+                        std::cout << "Transmit the token: " << QString(std::vector<char>(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT).toHex()).toStdString() << std::endl;
                         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         posOutput+=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT;
 
@@ -458,7 +458,7 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                     parseNetworkReadError("wrong file data size with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
                     return false;
                 }
-                const QByteArray dataFile(data+pos,fileSize);
+                const std::vector<char> dataFile(data+pos,fileSize);
                 pos+=fileSize;
                 if(mainCodeType==0x76)
                     parseNetworkReadError("Raw file to create: "+fileName);
@@ -466,7 +466,12 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                     parseNetworkReadError("Compressed file to create: "+fileName);
 
                 if(reply04inWait!=NULL)
-                    DatapackDownloaderBase::datapackDownloaderBase->writeNewFileBase(fileName,dataFile);
+                {
+                    std::vector<char> dataFileCpp;
+                    dataFileCpp.resize(dataFile.size());
+                    memcpy(dataFileCpp.data(),dataFile.constData(),dataFile.size());
+                    DatapackDownloaderBase::datapackDownloaderBase->writeNewFileBase(fileName,dataFileCpp);
+                }
                 else if(reply0205inWait!=NULL)
                 {
                     if(DatapackDownloaderMainSub::datapackDownloaderMainSub.find(main)!=DatapackDownloaderMainSub::datapackDownloaderMainSub.cend())
@@ -570,7 +575,10 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 if(DatapackDownloaderBase::datapackDownloaderBase==NULL)
                     DatapackDownloaderBase::datapackDownloaderBase=new DatapackDownloaderBase(LinkToGameServer::mDatapackBase);
             }
-            DatapackDownloaderBase::datapackDownloaderBase->sendedHashBase=QByteArray(data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
+            {
+                DatapackDownloaderBase::datapackDownloaderBase->sendedHashBase.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+                memcpy(DatapackDownloaderBase::datapackDownloaderBase->sendedHashBase.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
+            }
             pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
             if((size-pos)<1)
             {
@@ -595,6 +603,15 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             {
                 DatapackDownloaderBase::httpDatapackMirrorBaseList=stringsplit(httpDatapackMirrorBase,';');
                 vectorRemoveEmpty(DatapackDownloaderBase::httpDatapackMirrorBaseList);
+                {
+                    unsigned int index=0;
+                    while(index<DatapackDownloaderBase::httpDatapackMirrorBaseList.size())
+                    {
+                        if(!stringEndsWith(DatapackDownloaderBase::httpDatapackMirrorBaseList.at(index),'/'))
+                            DatapackDownloaderBase::httpDatapackMirrorBaseList[index]+='/';
+                        index++;
+                    }
+                }
             }
             unsigned int remainingSize=size-pos;
             if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
@@ -610,7 +627,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             memcpy(reply04inWait+startString,LinkToGameServer::httpDatapackMirrorRewriteBase.constData(),LinkToGameServer::httpDatapackMirrorRewriteBase.size());
             memcpy(reply04inWait+startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size(),data+pos,remainingSize);
 
-            if(DatapackDownloaderBase::datapackDownloaderBase->hashBase.isEmpty())//checksum never done
+            if(DatapackDownloaderBase::datapackDownloaderBase->hashBase.empty())//checksum never done
             {
                 reply04inWaitQueryNumber=queryNumber;
                 DatapackDownloaderBase::datapackDownloaderBase->clientInSuspend.push_back(this);
@@ -765,7 +782,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     parseNetworkReadError("need more size");
                     return false;
                 }
-                downloader->sendedHashMain=QByteArray(data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
+                downloader->sendedHashMain=std::vector<char>(data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
                 pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
                 if(!sub.empty())
                 {
@@ -776,7 +793,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                         parseNetworkReadError("need more size");
                         return false;
                     }
-                    downloader->sendedHashSub=QByteArray(data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
+                    downloader->sendedHashSub=std::vector<char>(data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
                     pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
                 }
                 if((size-pos)<1)
@@ -802,6 +819,15 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 {
                     DatapackDownloaderMainSub::httpDatapackMirrorServerList=stringsplit(httpDatapackMirrorServer,';');
                     vectorRemoveEmpty(DatapackDownloaderMainSub::httpDatapackMirrorServerList);
+                    {
+                        unsigned int index=0;
+                        while(index<DatapackDownloaderMainSub::httpDatapackMirrorServerList.size())
+                        {
+                            if(!stringEndsWith(DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index),'/'))
+                                DatapackDownloaderMainSub::httpDatapackMirrorServerList[index]+='/';
+                            index++;
+                        }
+                    }
                 }
                 unsigned int remainingSize=size-pos;
                 reply0205inWaitSize=startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;

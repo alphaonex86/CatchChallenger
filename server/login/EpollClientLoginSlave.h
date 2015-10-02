@@ -69,8 +69,8 @@ public:
     struct AskLoginParam
     {
         uint8_t query_id;
-        QByteArray login;
-        QByteArray pass;
+        std::vector<char> login;
+        std::vector<char> pass;
     };
     struct SelectCharacterParam
     {

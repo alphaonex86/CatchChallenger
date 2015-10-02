@@ -8,7 +8,7 @@
 #include <QTimer>
 #include <QCoreApplication>
 #include <QList>
-#include <QByteArray>
+#include <std::vector<char>>
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QDir>

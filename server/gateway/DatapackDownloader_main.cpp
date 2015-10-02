@@ -16,9 +16,9 @@ using namespace CatchChallenger;
 #include "LinkToGameServer.h"
 #include "EpollServerLoginSlave.h"
 
-void DatapackDownloaderMainSub::writeNewFileMain(const std::string &fileName,const QByteArray &data)
+void DatapackDownloaderMainSub::writeNewFileMain(const std::string &fileName,const std::vector<char> &data)
 {
-    const std::string &fullPath=mDatapackMain+text_slash+fileName;
+    const std::string &fullPath=mDatapackMain+'/'+fileName;
     //to be sure the QFile is destroyed
     {
         QFile file(fullPath);
@@ -59,7 +59,7 @@ bool DatapackDownloaderMainSub::getHttpFileMain(const std::string &url, const st
     if(!httpModeMain)
         httpModeMain=true;
 
-    const std::string &fullPath=mDatapackMain+text_slash+fileName;
+    const std::string &fullPath=mDatapackMain+'/'+fileName;
     {
         QFile file(fullPath);
         QFileInfo fileInfo(file);
@@ -98,7 +98,7 @@ bool DatapackDownloaderMainSub::getHttpFileMain(const std::string &url, const st
     }
 }
 
-void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::string> &datapackFilesList,const QByteArray &hash,const std::vector<uint32_t> &partialHashList)
+void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::string> &datapackFilesList,const std::vector<char> &hash,const std::vector<uint32_t> &partialHashList)
 {
     if(datapackFilesListMain.size()!=partialHashList.size())
     {
@@ -183,7 +183,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
         int index=0;
         while(index<datapackFilesListMain.size())
         {
-            const QByteArray &rawFileName=FacilityLibGeneral::toUTF8WithHeader(datapackFilesListMain.at(index));
+            const std::vector<char> &rawFileName=FacilityLibGeneral::toUTF8WithHeader(datapackFilesListMain.at(index));
             if(rawFileName.size()>255 || rawFileName.empty())
             {
                 DebugClass::debugConsole(std::stringLiteral("rawFileName too big or not compatible with utf8"));
@@ -246,7 +246,9 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
                 httpFinishedForDatapackListMain();
                 return;
             }
-            httpFinishedForDatapackListMain(QByteArray(chunk.memory,chunk.size));
+            std::vector<char> data(chunk.size);
+            memcpy(data.data(),chunk.memory,chunk.size);
+            httpFinishedForDatapackListMain(data);
             free(chunk.memory);
         }
     }
@@ -273,7 +275,9 @@ void DatapackDownloaderMainSub::test_mirror_main()
             httpFinishedForDatapackListMain();
             return;
         }
-        httpFinishedForDatapackListMain(QByteArray(chunk.memory,chunk.size));
+        std::vector<char> data(chunk.size);
+        memcpy(data.data(),chunk.memory,chunk.size);
+        httpFinishedForDatapackListMain(data);
         free(chunk.memory);
     }
     else
@@ -299,7 +303,9 @@ void DatapackDownloaderMainSub::test_mirror_main()
             httpFinishedForDatapackListMain();
             return;
         }
-        httpFinishedForDatapackListMain(QByteArray(chunk.memory,chunk.size));
+        std::vector<char> data(chunk.size);
+        memcpy(data.data(),chunk.memory,chunk.size);
+        httpFinishedForDatapackListMain(data);
         free(chunk.memory);
     }
 }
@@ -310,13 +316,13 @@ void DatapackDownloaderMainSub::decodedIsFinishMain()
         test_mirror_main();
     else
     {
-        const QByteArray &decodedData=xzDecodeThreadMain.decodedData();
+        const std::vector<char> &decodedData=xzDecodeThreadMain.decodedData();
         QTarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
             QDir dir;
             const std::vector<std::string> &fileList=tarDecode.getFileList();
-            const std::vector<QByteArray> &dataList=tarDecode.getDataList();
+            const std::vector<std::vector<char>> &dataList=tarDecode.getDataList();
             int index=0;
             while(index<fileList.size())
             {
@@ -362,7 +368,7 @@ bool DatapackDownloaderMainSub::mirrorTryNextMain()
     {
         datapackTarXzMain=false;
         index_mirror_main++;
-        if(index_mirror_main>=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,std::string::SkipEmptyParts).size())
+        if(index_mirror_main>=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::';',std::string::SkipEmptyParts).size())
         {
             qDebug() << (std::stringLiteral("Get the list failed"));
             return false;
@@ -373,7 +379,7 @@ bool DatapackDownloaderMainSub::mirrorTryNextMain()
     return true;
 }
 
-void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const QByteArray data)
+void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vector<char> data)
 {
     if(data.empty())
     {
@@ -404,7 +410,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const QByteArray
                 abort();
                 return;
             }
-            /*ref crash here*/const std::string selectedMirror=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,std::string::SkipEmptyParts).at(index_mirror_main)+"map/main/"+mainDatapackCode+"/";
+            /*ref crash here*/const std::string selectedMirror=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::';',std::string::SkipEmptyParts).at(index_mirror_main)+"map/main/"+mainDatapackCode+"/";
             int correctContent=0;
             while(index<content.size())
             {
@@ -432,7 +438,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const QByteArray
                                     return;
                                 }
                             }
-                            else if(hashFileOnDisk!=*reinterpret_cast<const uint32_t *>(QByteArray::fromHex(partialHashString.toLatin1()).constData()))
+                            else if(hashFileOnDisk!=*reinterpret_cast<const uint32_t *>(std::vector<char>::fromHex(partialHashString.toLatin1()).constData()))
                             {
                                 if(!getHttpFileMain(selectedMirror+fileString,fileString))
                                 {
@@ -490,7 +496,7 @@ const std::vector<std::string> DatapackDownloaderMainSub::listDatapackMain(std::
     {
         QFileInfo fileInfo=entryList.at(index);
         if(fileInfo.isDir())
-            returnFile << listDatapackMain(suffix+fileInfo.fileName()+text_slash);//put unix separator because it's transformed into that's under windows too
+            returnFile << listDatapackMain(suffix+fileInfo.fileName()+'/');//put unix separator because it's transformed into that's under windows too
         else
         {
             //if match with correct file name, considere as valid
@@ -519,7 +525,7 @@ void DatapackDownloaderMainSub::cleanDatapackMain(std::string suffix)
     {
         QFileInfo fileInfo=entryList.at(index);
         if(fileInfo.isDir())
-            cleanDatapackMain(suffix+fileInfo.fileName()+text_slash);//put unix separator because it's transformed into that's under windows too
+            cleanDatapackMain(suffix+fileInfo.fileName()+'/');//put unix separator because it's transformed into that's under windows too
         else
             return;
     }
@@ -555,7 +561,7 @@ void DatapackDownloaderMainSub::sendDatapackContentMain()
 
     //compute the mirror
     {
-        std::vector<std::string> values=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::text_dotcoma,std::string::SkipEmptyParts);
+        std::vector<std::string> values=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(DatapackDownloaderMainSub::';',std::string::SkipEmptyParts);
         {
             std::string slash(std::stringLiteral("/"));
             int index=0;
@@ -566,7 +572,7 @@ void DatapackDownloaderMainSub::sendDatapackContentMain()
                 index++;
             }
         }
-        CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=values.join(DatapackDownloaderMainSub::text_dotcoma);
+        CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=values.join(DatapackDownloaderMainSub::';');
     }
 
     datapackTarXzMain=false;

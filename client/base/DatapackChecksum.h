@@ -5,10 +5,8 @@
 #include <QThread>
 #endif
 
-#include <QStringList>
-#include <QByteArray>
-#include <QList>
-#include <QString>
+#include <vector>
+#include <string>
 
 namespace CatchChallenger {
 class DatapackChecksum
@@ -27,25 +25,25 @@ public:
     ~DatapackChecksum();
     struct FullDatapackChecksumReturn
     {
-        QStringList datapackFilesList;
-        QByteArray hash;
-        QList<uint32_t> partialHashList;
+        std::vector<std::string> datapackFilesList;
+        std::vector<char> hash;
+        std::vector<uint32_t> partialHashList;
     };
-    static QByteArray doChecksumBase(const QString &datapackPath);
-    static QByteArray doChecksumMain(const QString &datapackPath);
-    static QByteArray doChecksumSub(const QString &datapackPath);
-    static FullDatapackChecksumReturn doFullSyncChecksumBase(const QString &datapackPath);
-    static FullDatapackChecksumReturn doFullSyncChecksumMain(const QString &datapackPath);
-    static FullDatapackChecksumReturn doFullSyncChecksumSub(const QString &datapackPath);
+    static std::vector<char> doChecksumBase(const std::string &datapackPath);
+    static std::vector<char> doChecksumMain(const std::string &datapackPath);
+    static std::vector<char> doChecksumSub(const std::string &datapackPath);
+    static FullDatapackChecksumReturn doFullSyncChecksumBase(const std::string &datapackPath);
+    static FullDatapackChecksumReturn doFullSyncChecksumMain(const std::string &datapackPath);
+    static FullDatapackChecksumReturn doFullSyncChecksumSub(const std::string &datapackPath);
     #ifndef QT_NO_EMIT
 public slots:
-    void doDifferedChecksumBase(const QString &datapackPath);
-    void doDifferedChecksumMain(const QString &datapackPath);
-    void doDifferedChecksumSub(const QString &datapackPath);
+    void doDifferedChecksumBase(const std::string &datapackPath);
+    void doDifferedChecksumMain(const std::string &datapackPath);
+    void doDifferedChecksumSub(const std::string &datapackPath);
 signals:
-    void datapackChecksumDoneBase(const QStringList &datapackFilesList,const QByteArray &hash,const QList<uint32_t> &partialHashList);
-    void datapackChecksumDoneMain(const QStringList &datapackFilesList,const QByteArray &hash,const QList<uint32_t> &partialHashList);
-    void datapackChecksumDoneSub(const QStringList &datapackFilesList,const QByteArray &hash,const QList<uint32_t> &partialHashList);
+    void datapackChecksumDoneBase(const std::vector<std::string> &datapackFilesList,const std::vector<std::string> &hash,const std::vector<uint32_t> &partialHashList);
+    void datapackChecksumDoneMain(const std::vector<std::string> &datapackFilesList,const std::vector<char> &hash,const std::vector<uint32_t> &partialHashList);
+    void datapackChecksumDoneSub(const std::vector<std::string> &datapackFilesList,const std::vector<char> &hash,const std::vector<uint32_t> &partialHashList);
     #endif
 };
 }

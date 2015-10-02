@@ -7,12 +7,12 @@ void Client::sendRawBlock(const char * const data,const unsigned int &size)
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(!isConnected)
     {
-        normalOutput(std::stringLiteral("sendRawSmallPacket("+std::to_string()+") when is not connected").arg(std::string(QByteArray(data,size).toHex())));
+        normalOutput(std::stringLiteral("sendRawSmallPacket("+std::to_string()+") when is not connected").arg(std::string(std::vector<char>(data,size).toHex())));
         return;
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    normalOutput("sendRawSmallPacket("+QString(QByteArray(data,size).toHex()).toStdString()+")");
+    normalOutput("sendRawSmallPacket("+QString(std::vector<char>(data,size).toHex()).toStdString()+")");
     #endif
     if(!ProtocolParsingBase::internalSendRawSmallPacket(data,size))
         return;

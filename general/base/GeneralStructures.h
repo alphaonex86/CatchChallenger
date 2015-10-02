@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <vector>
-#include <QByteArray>
+#include <std::vector<char>>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>

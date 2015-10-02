@@ -44,6 +44,7 @@ int8_t stringtoint8(const std::string &string,bool *ok=NULL);
 int16_t stringtoint16(const std::string &string,bool *ok=NULL);
 int32_t stringtoint32(const std::string &string,bool *ok=NULL);
 int64_t stringtoint64(const std::string &string,bool *ok=NULL);
+std::string binarytoHexa(const std::vector<char> &data);
 
 template <class T, class U>
 int vectorindexOf(const std::vector<T> &list,const U &item)

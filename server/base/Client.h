@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_CLIENT_H
 
 #include <QObject>
-#include <QByteArray>
+#include <std::vector<char>>
 #include <QTimer>
 
 #include "ServerStructures.h"
@@ -151,8 +151,8 @@ protected:
     struct AskLoginParam
     {
         uint8_t query_id;
-        QByteArray login;
-        QByteArray pass;
+        std::vector<char> login;
+        std::vector<char> pass;
         //to store the reply to the char, and do another query
         char * characterOutputData;
         uint32_t characterOutputDataSize;
@@ -298,7 +298,7 @@ private:
     static const std::string text_unknown_send_command_slash;
     static const std::string text_commands_seem_not_right;
     static uint8_t tempDatapackListReplySize;
-    static QByteArray tempDatapackListReplyArray;
+    static std::vector<char> tempDatapackListReplyArray;
     static uint8_t tempDatapackListReply;
     static unsigned int tempDatapackListReplyTestCount;
     struct DatapackCacheFile
@@ -346,7 +346,7 @@ private:
 
     #ifndef EPOLLCATCHCHALLENGERSERVER
     /// \warning it need be complete protocol trame
-    void fake_receive_data(QByteArray data);
+    void fake_receive_data(std::vector<char> data);
     #endif
     //global slot
     void sendPM(const std::string &text,const std::string &pseudo);
@@ -425,7 +425,7 @@ private:
     void selectClan_object();
     void selectClan_return();
 
-    void fake_receive_data(const QByteArray &data);
+    void fake_receive_data(const std::vector<char> &data);
     void purgeReadBuffer();
 
     void sendNewEvent(char * const data, const uint32_t &size);

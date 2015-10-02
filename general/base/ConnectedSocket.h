@@ -8,7 +8,7 @@
 #include <QAbstractSocket>
 #include <QObject>
 #include <QHostAddress>
-#include <QByteArray>
+#include <std::vector<char>>
 
 #include "QFakeSocket.h"
 

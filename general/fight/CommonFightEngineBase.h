@@ -1,7 +1,7 @@
 #ifndef CommonFightEngineBase_BASE_H
 #define CommonFightEngineBase_BASE_H
 
-#include <QByteArray>
+#include <std::vector<char>>
 #include <vector>
 
 #include "../base/GeneralStructures.h"

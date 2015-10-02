@@ -178,7 +178,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
     //send full insert
     if(insert_count>0)
     {
-        QByteArray purgeBuffer;
+        std::vector<char> purgeBuffer;
         //prepare the data
         {
 
@@ -213,7 +213,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
                 //pseudo
                 if(!CommonSettings::commonSettings.dontSendPseudo)
                 {
-                    const QByteArray &rawPseudo=clients.at(index_subindex)->getRawPseudo();
+                    const std::vector<char> &rawPseudo=clients.at(index_subindex)->getRawPseudo();
                     purgeBuffer+=rawPseudo;
                     out.device()->seek(out.device()->pos()+rawPseudo.size());
                 }
@@ -244,7 +244,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
     }
     if(send_reinsert_all)
     {
-        QByteArray purgeBuffer_outputData;
+        std::vector<char> purgeBuffer_outputData;
         //prepare the data
         {
 
@@ -279,7 +279,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
                 //pseudo
                 if(!CommonSettings::commonSettings.dontSendPseudo)
                 {
-                    const QByteArray &rawPseudo=clients.at(index)->getRawPseudo();
+                    const std::vector<char> &rawPseudo=clients.at(index)->getRawPseudo();
                     purgeBuffer_outputData+=rawPseudo;
                     out.device()->seek(out.device()->pos()+rawPseudo.size());
                 }
@@ -308,7 +308,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
         {
             if(clients.at(index)->to_send_insert)
             {
-                QByteArray purgeBuffer_outputData;
+                std::vector<char> purgeBuffer_outputData;
 
                 //////////////////////////// insert //////////////////////////
                 // can be only this map with this algo, then 1 map
@@ -343,7 +343,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
                         //pseudo
                         if(!CommonSettings::commonSettings.dontSendPseudo)
                         {
-                            const QByteArray &rawPseudo=clients.at(index_subindex)->getRawPseudo();
+                            const std::vector<char> &rawPseudo=clients.at(index_subindex)->getRawPseudo();
                             purgeBuffer_outputData+=rawPseudo;
                             out.device()->seek(out.device()->pos()+rawPseudo.size());
                         }
@@ -392,7 +392,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
     //send drop
     if(!to_send_remove.isEmpty())
     {
-        QByteArray purgeBuffer_outputData;
+        std::vector<char> purgeBuffer_outputData;
         if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
             purgeBuffer_outputData.resize(to_send_remove.size()*(to_send_remove.size()*sizeof(uint8_t))+sizeof(uint8_t));
         else
@@ -441,7 +441,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
             }
             if(real_reinsert_count>0)
             {
-                QByteArray purgeBuffer_outputData;
+                std::vector<char> purgeBuffer_outputData;
 
                 //////////////////////////// insert //////////////////////////
                 if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
@@ -489,7 +489,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
                 }
                 if(real_reinsert_count>0)
                 {
-                    QByteArray purgeBuffer_outputData;
+                    std::vector<char> purgeBuffer_outputData;
 
                     //////////////////////////// insert //////////////////////////
                     if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)

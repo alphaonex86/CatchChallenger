@@ -5,7 +5,7 @@
 using namespace CatchChallenger;
 
 #include <QFile>
-#include <QByteArray>
+#include <std::vector<char>>
 #include <QCoreApplication>
 
 #include <stdio.h>      /* printf, scanf, puts, NULL */
@@ -37,7 +37,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         if(!settings.contains(QStringLiteral("ip")))
             settings.setValue(QStringLiteral("ip"),QString());
         const QString &server_ip_string=settings.value(QStringLiteral("ip")).toString();
-        const QByteArray &server_ip_data=server_ip_string.toLocal8Bit();
+        const std::vector<char> &server_ip_data=server_ip_string.toLocal8Bit();
         if(!server_ip_string.isEmpty())
         {
             server_ip=new char[server_ip_data.size()+1];
@@ -45,7 +45,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         }
         if(!settings.contains(QStringLiteral("port")))
             settings.setValue(QStringLiteral("port"),rand()%40000+10000);
-        const QByteArray &server_port_data=settings.value(QStringLiteral("port")).toString().toLocal8Bit();
+        const std::vector<char> &server_port_data=settings.value(QStringLiteral("port")).toString().toLocal8Bit();
         server_port=new char[server_port_data.size()+1];
         strcpy(server_port,server_port_data.constData());
     }
@@ -54,7 +54,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         if(!settings.contains(QStringLiteral("destination_ip")))
             settings.setValue(QStringLiteral("destination_ip"),QString());
         const QString &destination_server_ip_string=settings.value(QStringLiteral("destination_ip")).toString();
-        const QByteArray &destination_server_ip_data=destination_server_ip_string.toLocal8Bit();
+        const std::vector<char> &destination_server_ip_data=destination_server_ip_string.toLocal8Bit();
         if(!destination_server_ip_string.isEmpty())
         {
             destination_server_ip=new char[destination_server_ip_data.size()+1];
@@ -87,7 +87,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
     if(!settings.contains(QStringLiteral("httpDatapackMirrorRewriteBase")))
         settings.setValue(QStringLiteral("httpDatapackMirrorRewriteBase"),QString());
-    LinkToGameServer::httpDatapackMirrorRewriteBase=QByteArray(ProtocolParsingBase::tempBigBufferForOutput,
+    LinkToGameServer::httpDatapackMirrorRewriteBase=std::vector<char>(ProtocolParsingBase::tempBigBufferForOutput,
                                                                FacilityLibGeneral::toUTF8WithHeader(httpMirrorFix(settings.value("httpDatapackMirrorRewriteBase").toString().toStdString()),ProtocolParsingBase::tempBigBufferForOutput));
     if(LinkToGameServer::httpDatapackMirrorRewriteBase.isEmpty())
     {
@@ -97,7 +97,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     }
     if(!settings.contains(QStringLiteral("httpDatapackMirrorRewriteMainAndSub")))
         settings.setValue(QStringLiteral("httpDatapackMirrorRewriteMainAndSub"),QString());
-    LinkToGameServer::httpDatapackMirrorRewriteMainAndSub=QByteArray(ProtocolParsingBase::tempBigBufferForOutput,
+    LinkToGameServer::httpDatapackMirrorRewriteMainAndSub=std::vector<char>(ProtocolParsingBase::tempBigBufferForOutput,
                                                                      FacilityLibGeneral::toUTF8WithHeader(httpMirrorFix(settings.value("httpDatapackMirrorRewriteMainAndSub").toString().toStdString()),ProtocolParsingBase::tempBigBufferForOutput));
     if(LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.isEmpty())
     {

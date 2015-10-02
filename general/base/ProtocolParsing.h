@@ -3,7 +3,7 @@
 
 #include <unordered_set>
 #include <unordered_map>
-#include <QByteArray>
+#include <std::vector<char>>
 #include <QDebug>
 
 #include "GeneralVariable.h"
@@ -117,7 +117,7 @@ protected:
     bool parseData(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
     bool parseDispatch(const char * const data,const int &size);
     inline bool isReply() const;
-    QByteArray header_cut;
+    std::vector<char> header_cut;
     uint8_t flags;
     /* flags & 0x80 = haveData
      * flags & 0x40 = haveData_dataSize
@@ -134,7 +134,7 @@ protected:
 
     virtual void reset();
 private:
-    QByteArray dataToWithoutHeader;
+    std::vector<char> dataToWithoutHeader;
     uint32_t dataSize;
     // function
     void dataClear();
@@ -154,8 +154,8 @@ private:
     // for data
     uint8_t packetCode;
     uint8_t queryNumber;
-    static QByteArray lzmaCompress(QByteArray data);
-    static QByteArray lzmaUncompress(QByteArray data);
+    static std::vector<char> lzmaCompress(std::vector<char> data);
+    static std::vector<char> lzmaUncompress(std::vector<char> data);
 public:
     virtual void storeInputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
     bool internalSendRawSmallPacket(const char * const data,const int &size);

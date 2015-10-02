@@ -87,7 +87,7 @@ std::vector<uint8_t> Client::selectCharacterQueryId;
 std::vector<uint16_t> Client::simplifiedIdList;
 uint8_t Client::tempDatapackListReplySize=0;
 uint8_t Client::tempDatapackListReply=0;
-QByteArray Client::tempDatapackListReplyArray;
+std::vector<char> Client::tempDatapackListReplyArray;
 unsigned int Client::tempDatapackListReplyTestCount;
 uint64_t Client::datapack_list_cache_timestamp_base;
 uint64_t Client::datapack_list_cache_timestamp_main;

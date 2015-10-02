@@ -471,7 +471,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     unsigned int index=0;
     int monster_position=1;
     int tempBufferSize=0;
-    QByteArray numberBuffer;
+    std::vector<char> numberBuffer;
 
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[0],profile.preparedQuerySize[0]);
     tempBufferSize+=profile.preparedQuerySize[0];

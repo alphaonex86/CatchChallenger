@@ -21,7 +21,7 @@
 #include "../../general/base/cpp11addition.h"
 
 #include <QFile>
-#include <QByteArray>
+#include <std::vector<char>>
 #include <QDateTime>
 #include <QTime>
 #include <QCryptographicHash>

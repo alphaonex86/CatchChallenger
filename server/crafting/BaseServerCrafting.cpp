@@ -11,7 +11,7 @@
 #include "../base/GlobalServerData.h"
 
 #include <QFile>
-#include <QByteArray>
+#include <std::vector<char>>
 #include <QDomDocument>
 #include <QDomElement>
 
