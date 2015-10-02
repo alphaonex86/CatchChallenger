@@ -476,14 +476,14 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[0],profile.preparedQuerySize[0]);
     tempBufferSize+=profile.preparedQuerySize[0];
 
-    numberBuffer=std::string::number(characterId).toLatin1();
+    numberBuffer=std::to_string(characterId).toLatin1();
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.constData(),numberBuffer.size());
     tempBufferSize+=numberBuffer.size();
 
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[1],profile.preparedQuerySize[1]);
     tempBufferSize+=profile.preparedQuerySize[1];
 
-    numberBuffer=std::string::number(client->account_id).toLatin1();
+    numberBuffer=std::to_string(client->account_id).toLatin1();
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.constData(),numberBuffer.size());
     tempBufferSize+=numberBuffer.size();
 
@@ -497,14 +497,14 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[3],profile.preparedQuerySize[3]);
     tempBufferSize+=profile.preparedQuerySize[3];
 
-    numberBuffer=std::string::number(DictionaryLogin::dictionary_skin_internal_to_database.at(skinId)).toLatin1();
+    numberBuffer=std::to_string(DictionaryLogin::dictionary_skin_internal_to_database.at(skinId)).toLatin1();
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.constData(),numberBuffer.size());
     tempBufferSize+=numberBuffer.size();
 
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[4],profile.preparedQuerySize[4]);
     tempBufferSize+=profile.preparedQuerySize[4];
 
-    numberBuffer=std::string::number(QDateTime::currentMSecsSinceEpoch()/1000).toLatin1();
+    numberBuffer=std::to_string(QDateTime::currentMSecsSinceEpoch()/1000).toLatin1();
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.constData(),numberBuffer.size());
     tempBufferSize+=numberBuffer.size();
 

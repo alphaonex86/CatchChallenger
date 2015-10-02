@@ -57,9 +57,9 @@ void EpollSslServer::quitForCriticalDatabaseQueryFailed()
 bool EpollSslServer::tryListen()
 {
     if(!normalServerSettings.server_ip.isEmpty())
-        return trySslListen(normalServerSettings.server_ip.toUtf8().constData(), std::string::number(normalServerSettings.server_port).toUtf8().constData(),"server.crt", "server.key");
+        return trySslListen(normalServerSettings.server_ip.toUtf8().constData(), std::to_string(normalServerSettings.server_port).toUtf8().constData(),"server.crt", "server.key");
     else
-        return trySslListen(NULL, std::string::number(normalServerSettings.server_port).toUtf8().constData(),"server.crt", "server.key");
+        return trySslListen(NULL, std::to_string(normalServerSettings.server_port).toUtf8().constData(),"server.crt", "server.key");
 }
 
 void EpollSslServer::preload_the_data()

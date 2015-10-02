@@ -35,7 +35,7 @@ private:
     bool need_be_restarted;
     bool need_be_closed;
     void closeEvent(QCloseEvent *event);
-    std::unordered_settings *settings;
+    QSettings *settings;
     void load_settings();
     void send_settings();
     QList<Player_private_and_public_informations> players;

@@ -21,7 +21,7 @@ private:
     bool need_be_closed;
     std::string sizeToString(double size);
     std::string adaptString(float size);
-    std::unordered_settings *settings;
+    QSettings *settings;
     void send_settings();
     void haveQuitForCriticalDatabaseQueryFailed();
 private slots:

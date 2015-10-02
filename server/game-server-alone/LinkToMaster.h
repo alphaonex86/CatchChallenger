@@ -5,7 +5,7 @@
 #include "TimerReconnectOnTheMaster.h"
 #include <vector>
 #include <random>
-#include <std::unordered_settings>
+#include <QSettings>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -63,7 +63,7 @@ public:
     bool registerGameServer(const std::string &exportedXml,const char * const dynamicToken);
     void generateToken();
     void sendProtocolHeader();
-    bool setSettings(std::unordered_settings * const settings);
+    bool setSettings(QSettings * const settings);
     void characterDisconnected(const uint32_t &characterId);
     void currentPlayerChange(const uint16_t &currentPlayer);
     void askMoreMaxMonsterId();
@@ -90,7 +90,7 @@ protected:
 
     void parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size);
 private:
-    std::unordered_settings * settings;
+    QSettings * settings;
     std::mt19937 rng;
     static sockaddr_in serv_addr;
 };

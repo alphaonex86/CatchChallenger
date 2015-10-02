@@ -270,7 +270,7 @@ void NormalServer::start_internal_server()
     if(normalServerSettings.server_ip.isEmpty())
         DebugClass::debugConsole(std::stringLiteral("Listen *:%1").arg(normalServerSettings.server_port));
     else
-        DebugClass::debugConsole("Listen "+normalServerSettings.server_ip+":"+std::string::number(normalServerSettings.server_port));
+        DebugClass::debugConsole("Listen "+normalServerSettings.server_ip+":"+std::to_string(normalServerSettings.server_port));
 
     if(!initialize_the_database())
     {
@@ -360,7 +360,7 @@ std::string NormalServer::listenIpAndPort(std::string server_ip,uint16_t server_
 {
     if(server_ip.isEmpty())
         server_ip=QLatin1Literal("*");
-    return server_ip+QLatin1Literal(":")+std::string::number(server_port);
+    return server_ip+QLatin1Literal(":")+std::to_string(server_port);
 }
 
 void NormalServer::newConnection()

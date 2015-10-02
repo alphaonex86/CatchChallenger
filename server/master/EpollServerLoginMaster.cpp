@@ -54,7 +54,7 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
         memset(rawServerListForC211,0x00,sizeof(EpollClientLoginMaster::loginSettingsAndCharactersGroup));
     }
 
-    std::unordered_settings settings("master.conf",std::unordered_settings::IniFormat);
+    QSettings settings("master.conf",QSettings::IniFormat);
 
     srand(time(NULL));
 
@@ -169,7 +169,7 @@ EpollServerLoginMaster::~EpollServerLoginMaster()
     CharactersGroup::hash.clear();
 }
 
-void EpollServerLoginMaster::loadLoginSettings(std::unordered_settings &settings)
+void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
 {
     if(!settings.contains(std::stringLiteral("ip")))
         settings.setValue(std::stringLiteral("ip"),std::string());
@@ -282,7 +282,7 @@ void EpollServerLoginMaster::loadLoginSettings(std::unordered_settings &settings
     }
 }
 
-void EpollServerLoginMaster::loadDBLoginSettings(std::unordered_settings &settings)
+void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
 {
     if(CommonSettingsCommon::commonSettingsCommon.automatic_account_creation)
     {
@@ -421,7 +421,7 @@ void EpollServerLoginMaster::loadDBLoginSettings(std::unordered_settings &settin
     }
 }
 
-std::stringList EpollServerLoginMaster::loadCharactersGroup(std::unordered_settings &settings)
+std::stringList EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
 {
     std::string db;
     std::string host;
@@ -435,7 +435,7 @@ std::stringList EpollServerLoginMaster::loadCharactersGroup(std::unordered_setti
     int charactersGroupId=0;
     while(continueCharactersGroupSettings)
     {
-        settings.beginGroup(std::stringLiteral("db-common-")+std::string::number(charactersGroupId));
+        settings.beginGroup(std::stringLiteral("db-common-")+std::to_string(charactersGroupId));
         if(charactersGroupId==0)
         {
             if(!settings.contains(std::stringLiteral("considerDownAfterNumberOfTry")))
@@ -544,7 +544,7 @@ void EpollServerLoginMaster::charactersGroupListReply(std::stringList &character
     }
 }
 
-void EpollServerLoginMaster::doTheLogicalGroup(std::unordered_settings &settings)
+void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
 {
     //do the LogicalGroup
     char rawServerList[sizeof(EpollClientLoginMaster::serverLogicalGroupList)];
@@ -556,7 +556,7 @@ void EpollServerLoginMaster::doTheLogicalGroup(std::unordered_settings &settings
     bool logicalGroupContinue=true;
     while(logicalGroupContinue)
     {
-        settings.beginGroup(std::stringLiteral("logical-group-")+std::string::number(logicalGroup));
+        settings.beginGroup(std::stringLiteral("logical-group-")+std::to_string(logicalGroup));
         logicalGroupContinue=settings.contains(std::stringLiteral("path")) && settings.contains(std::stringLiteral("xml")) && logicalGroup<255;
         if(!logicalGroupContinue && logicalGroup==0)
         {
@@ -804,7 +804,7 @@ bool EpollServerLoginMaster::tryListen()
     return returnedValue;
 }
 
-void EpollServerLoginMaster::generateToken(std::unordered_settings &settings)
+void EpollServerLoginMaster::generateToken(QSettings &settings)
 {
     FILE *fpRandomFile = fopen("/dev/urandom","rb");
     if(fpRandomFile==NULL)

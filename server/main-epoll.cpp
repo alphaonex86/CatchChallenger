@@ -47,7 +47,7 @@ EpollSslServer *server=NULL;
 #else
 EpollServer *server=NULL;
 #endif
-std::unordered_settings *settings=NULL;
+QSettings *settings=NULL;
 
 std::string master_host;
 uint16_t master_port;
@@ -321,13 +321,13 @@ void send_settings()
             while(indexType<tempListType.size())
             {
                 const std::string &type=tempListType.at(indexType).toStdString();
-                settings->beginGroup(std::string::fromStdString(type));
+                settings->beginGroup(QString::fromStdString(type));
                     const std::stringList &tempList=settings->childGroups();
                     int index=0;
                     while(index<tempList.size())
                     {
                         const std::string &groupName=tempList.at(index).toStdString();
-                        settings->beginGroup(std::string::fromStdString(groupName));
+                        settings->beginGroup(QString::fromStdString(groupName));
                         if(settings->contains(QLatin1Literal("value")) && settings->contains(QLatin1Literal("cycle")) && settings->contains(QLatin1Literal("offset")))
                         {
                             GameServerSettings::ProgrammedEvent event;
@@ -438,15 +438,15 @@ int main(int argc, char *argv[])
     }
 
     const std::string &configFile=QCoreApplication::applicationDirPath()+QLatin1Literal("/server.properties");
-    settings=new std::unordered_settings(configFile,std::unordered_settings::IniFormat);
-    if(settings->status()!=std::unordered_settings::NoError)
+    settings=new QSettings(configFile,QSettings::IniFormat);
+    if(settings->status()!=QSettings::NoError)
     {
         qDebug() << "Error settings (1): " << settings->status();
         return EXIT_FAILURE;
     }
     NormalServerGlobal::checkSettingsFile(settings,QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/"));
 
-    if(settings->status()!=std::unordered_settings::NoError)
+    if(settings->status()!=QSettings::NoError)
     {
         qDebug() << "Error settings (2): " << settings->status();
         return EXIT_FAILURE;
@@ -611,7 +611,7 @@ int main(int argc, char *argv[])
         {
             std::stringList newMirrorList;
             std::regex httpMatch("^https?://.+$");
-            const std::stringList &mirrorList=std::string::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(";");
+            const std::stringList &mirrorList=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(";");
             int index=0;
             while(index<mirrorList.size())
             {
