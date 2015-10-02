@@ -76,7 +76,7 @@ void LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char *data
 {
     if(stat!=Stat::Logged)
     {
-        parseNetworkReadError("parseFullMessage() not logged to send: "+std::string::number(mainCodeType));
+        parseNetworkReadError("parseFullMessage() not logged to send: "+std::to_string(mainCodeType));
         return;
     }
     (void)data;
@@ -89,7 +89,7 @@ void LinkToGameServer::parseFullMessage(const uint8_t &mainCodeType,const uint8_
 {
     if(stat!=Stat::Logged)
     {
-        parseNetworkReadError("parseFullMessage() not logged to send: "+std::string::number(mainCodeType)+" "+std::string::number(subCodeType));
+        parseNetworkReadError("parseFullMessage() not logged to send: "+std::to_string(mainCodeType)+" "+std::to_string(subCodeType));
         return;
     }
     (void)rawData;
@@ -180,19 +180,19 @@ void LinkToGameServer::parseFullReplyData(const uint8_t &mainCodeType,const uint
                             }
                             else
                             {
-                                parseNetworkReadError(std::string("invalid code %1 main ident: ").arg(data[0x00])+std::string::number(mainCodeType)+std::string(", sub ident: %1 file:%2:%3").arg(subCodeType).arg(__FILE__).arg(__LINE__));
+                                parseNetworkReadError(std::string("invalid code %1 main ident: ").arg(data[0x00])+std::to_string(mainCodeType)+std::string(", sub ident: %1 file:%2:%3").arg(subCodeType).arg(__FILE__).arg(__LINE__));
                                 return;
                             }
                         }
                         else
                         {
-                            parseNetworkReadError("size==0 main ident: "+std::string::number(mainCodeType)+std::string(", sub ident: %1 file:%2:%3").arg(subCodeType).arg(__FILE__).arg(__LINE__));
+                            parseNetworkReadError("size==0 main ident: "+std::to_string(mainCodeType)+std::string(", sub ident: %1 file:%2:%3").arg(subCodeType).arg(__FILE__).arg(__LINE__));
                             return;
                         }
                     }
                     else
                     {
-                        parseNetworkReadError("stat wrong main ident: "+std::string::number(mainCodeType)+std::string(", sub ident: %1 file:%2:%3").arg(subCodeType).arg(__FILE__).arg(__LINE__));
+                        parseNetworkReadError("stat wrong main ident: "+std::to_string(mainCodeType)+std::string(", sub ident: %1 file:%2:%3").arg(subCodeType).arg(__FILE__).arg(__LINE__));
                         return;
                     }
                 break;

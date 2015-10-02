@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_EVENTDISPATCHER_H
 
 #include <QObject>
-#include <std::unordered_settings>
+#include <QSettings>
 #include <QTcpServer>
 #include <QDebug>
 #include <QTimer>

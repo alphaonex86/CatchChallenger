@@ -497,7 +497,7 @@ ProtocolParsingBase::ProtocolParsingBase(
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     //if(!connect(socket,&ConnectedSocket::readyRead,this,&ProtocolParsingInputOutput::parseIncommingData,Qt::QueuedConnection/*to virtual socket*/))
-    //    messageParsingLayer(std::string::number(isClient)+std::stringLiteral(" ProtocolParsingInputOutput::ProtocolParsingInputOutput(): can't connect the object"));
+    //    messageParsingLayer(std::to_string(isClient)+std::stringLiteral(" ProtocolParsingInputOutput::ProtocolParsingInputOutput(): can't connect the object"));
     #endif
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     flags |= (packetModeTransmission==PacketModeTransmission_Client);

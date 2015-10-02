@@ -30,27 +30,27 @@ void TimerDisplayEventBySeconds::exec()
     if(serverCount>0)
     {
         strcat(tempString," server:");
-        strcat(tempString,std::string::number(serverCount).toLatin1().constData());
+        strcat(tempString,std::to_string(serverCount).toLatin1().constData());
     }
     if(clientCount>0)
     {
         strcat(tempString," client:");
-        strcat(tempString,std::string::number(clientCount).toLatin1().constData());
+        strcat(tempString,std::to_string(clientCount).toLatin1().constData());
     }
     if(dbCount>0)
     {
         strcat(tempString," db:");
-        strcat(tempString,std::string::number(dbCount).toLatin1().constData());
+        strcat(tempString,std::to_string(dbCount).toLatin1().constData());
     }
     if(timerCount>0)
     {
         strcat(tempString," timer:");
-        strcat(tempString,std::string::number(timerCount).toLatin1().constData());
+        strcat(tempString,std::to_string(timerCount).toLatin1().constData());
     }
     if(otherCount>0)
     {
         strcat(tempString," server:");
-        strcat(tempString,std::string::number(serverCount).toLatin1().constData());
+        strcat(tempString,std::to_string(serverCount).toLatin1().constData());
     }
     std::cout << tempString << std::endl;
     serverCount=0;

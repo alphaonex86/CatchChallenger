@@ -7,7 +7,7 @@
 #include "../base/BaseServerLogin.h"
 #include "EpollClientLoginSlave.h"
 
-#include <std::unordered_settings>
+#include <QSettings>
 #include <string>
 #include <vector>
 
@@ -72,7 +72,7 @@ private:
     char * server_port;
 private:
     void preload_profile();
-    void generateToken(std::unordered_settings &settings);
+    void generateToken(QSettings &settings);
     void SQL_common_load_finish();
 };
 }

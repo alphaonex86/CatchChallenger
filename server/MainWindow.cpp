@@ -12,7 +12,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    settings=new std::unordered_settings(QCoreApplication::applicationDirPath()+QLatin1Literal("/server.properties"),std::unordered_settings::IniFormat);
+    settings=new QSettings(QCoreApplication::applicationDirPath()+QLatin1Literal("/server.properties"),QSettings::IniFormat);
     NormalServer::checkSettingsFile(settings);
     ui->setupUi(this);
     updateActionButton();
@@ -131,7 +131,7 @@ void MainWindow::server_is_started(bool is_started)
         ui->displayPort->setText(std::string());
     }
     else
-        ui->displayPort->setText(std::string::number(server.getNormalSettings().server_port));
+        ui->displayPort->setText(std::to_string(server.getNormalSettings().server_port));
 }
 
 void MainWindow::server_need_be_stopped()
@@ -241,7 +241,7 @@ void MainWindow::update_the_info()
 std::string MainWindow::sizeToString(double size)
 {
     if(size<1024)
-        return std::string::number(size)+tr("B");
+        return std::to_string(size)+tr("B");
     if((size=size/1024)<1024)
         return adaptString(size)+tr("KB");
     if((size=size/1024)<1024)
@@ -264,9 +264,9 @@ std::string MainWindow::sizeToString(double size)
 std::string MainWindow::adaptString(float size)
 {
     if(size>=100)
-        return std::string::number(size,'f',0);
+        return std::to_string(size,'f',0);
     else
-        return std::string::number(size,'g',3);
+        return std::to_string(size,'g',3);
 }
 
 

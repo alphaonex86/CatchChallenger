@@ -68,7 +68,7 @@ void DatapackDownloaderBase::haveTheDatapack()
     resetAll();
 
     if(!DatapackDownloaderBase::commandUpdateDatapackBase.empty())
-        if(QProcess::execute(std::string::fromStdString(DatapackDownloaderBase::commandUpdateDatapackBase),std::stringList() << std::string::fromStdString(mDatapackBase))<0)
+        if(QProcess::execute(QString::fromStdString(DatapackDownloaderBase::commandUpdateDatapackBase),std::stringList() << QString::fromStdString(mDatapackBase))<0)
             std::cerr << "Unable to execute " << DatapackDownloaderBase::commandUpdateDatapackBase << " " << mDatapackBase << std::endl;
 }
 
@@ -129,7 +129,7 @@ void DatapackDownloaderBase::datapackFileList(const char * const data,const unsi
         if(boolList.at(index))
         {
             std::cerr << "remove the file: " << mDatapackBase << '/' << datapackFilesListBase.at(index) << std::endl;
-            QFile file(std::string::fromStdString(mDatapackBase+'/'+datapackFilesListBase.at(index)));
+            QFile file(QString::fromStdString(mDatapackBase+'/'+datapackFilesListBase.at(index)));
             if(!file.remove())
                 std::cerr << "unable to remove the file: " << datapackFilesListBase.at(index) << ": " << file.errorString().toStdString() << std::endl;
             //removeFile(datapackFilesListBase.at(index));
@@ -153,7 +153,7 @@ void DatapackDownloaderBase::writeNewFileBase(const std::string &fileName,const 
     const std::string &fullPath=mDatapackBase+'/'+fileName;
     //to be sure the QFile is destroyed
     {
-        QFile file(std::string::fromStdString(fullPath));
+        QFile file(QString::fromStdString(fullPath));
         QFileInfo fileInfo(file);
 
         if(!QDir(fileInfo.absolutePath()).mkpath(fileInfo.absolutePath()))
@@ -193,7 +193,7 @@ bool DatapackDownloaderBase::getHttpFileBase(const std::string &url, const std::
 
     const std::string &fullPath=mDatapackBase+'/'+fileName;
     {
-        QFile file(std::string::fromStdString(fullPath));
+        QFile file(QString::fromStdString(fullPath));
         QFileInfo fileInfo(file);
 
         if(!QDir(fileInfo.absolutePath()).mkpath(fileInfo.absolutePath()))
@@ -258,7 +258,7 @@ void DatapackDownloaderBase::datapackChecksumDoneBase(const std::vector<std::str
     if(DatapackDownloaderBase::httpDatapackMirrorBaseList.empty())
     {
         {
-            QFile file(std::string::fromStdString(mDatapackBase+"/pack/datapack.tar.xz"));
+            QFile file(QString::fromStdString(mDatapackBase+"/pack/datapack.tar.xz"));
             if(file.exists())
                 if(!file.remove())
                 {
@@ -267,7 +267,7 @@ void DatapackDownloaderBase::datapackChecksumDoneBase(const std::vector<std::str
                 }
         }
         {
-            QFile file(std::string::fromStdString(mDatapackBase+"/datapack-list/base.txt"));
+            QFile file(QString::fromStdString(mDatapackBase+"/datapack-list/base.txt"));
             if(file.exists())
                 if(!file.remove())
                 {
@@ -449,7 +449,7 @@ void DatapackDownloaderBase::decodedIsFinishBase()
             unsigned int index=0;
             while(index<fileList.size())
             {
-                QFile file(std::string::fromStdString(mDatapackBase+fileList.at(index)));
+                QFile file(QString::fromStdString(mDatapackBase+fileList.at(index)));
                 QFileInfo fileInfo(file);
                 dir.mkpath(fileInfo.absolutePath());
                 if(extensionAllowed.find(fileInfo.suffix().toStdString())!=extensionAllowed.cend())
@@ -572,7 +572,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
                         if(indexInDatapackList!=-1)
                         {
                             const uint32_t &hashFileOnDisk=partialHashListBase.at(indexInDatapackList);
-                            QFileInfo file(std::string::fromStdString(mDatapackBase+fileString));
+                            QFileInfo file(QString::fromStdString(mDatapackBase+fileString));
                             if(!file.exists())
                             {
                                 if(!getHttpFileBase(selectedMirror+fileString,fileString))
@@ -607,7 +607,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
             index=0;
             while(index<datapackFilesListBase.size())
             {
-                if(!QFile(std::string::fromStdString(mDatapackBase+datapackFilesListBase.at(index))).remove())
+                if(!QFile(QString::fromStdString(mDatapackBase+datapackFilesListBase.at(index))).remove())
                 {
                     std::cerr << "Unable to remove" << datapackFilesListBase.at(index) << std::endl;
                     abort();
@@ -631,7 +631,7 @@ const std::vector<std::string> DatapackDownloaderBase::listDatapackBase(std::str
         return std::vector<std::string>();
 
     std::vector<std::string> returnFile;
-    QDir finalDatapackFolder(std::string::fromStdString(mDatapackBase+suffix));
+    QDir finalDatapackFolder(QString::fromStdString(mDatapackBase+suffix));
     QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
     int sizeEntryList=entryList.size();
     for(int index=0;index<sizeEntryList;++index)
@@ -651,7 +651,7 @@ const std::vector<std::string> DatapackDownloaderBase::listDatapackBase(std::str
             else
             {
                 std::cerr << "listDatapack(): remove invalid file: " << suffix << fileInfo.fileName().toStdString() << std::endl;
-                QFile file(std::string::fromStdString(mDatapackBase+suffix+fileInfo.fileName().toStdString()));
+                QFile file(QString::fromStdString(mDatapackBase+suffix+fileInfo.fileName().toStdString()));
                 if(!file.remove())
                     std::cerr << "listDatapack(): unable remove invalid file: " << suffix << fileInfo.fileName().toStdString() << ": " << file.errorString().toStdString() << std::endl;
             }
@@ -663,7 +663,7 @@ const std::vector<std::string> DatapackDownloaderBase::listDatapackBase(std::str
 
 void DatapackDownloaderBase::cleanDatapackBase(std::string suffix)
 {
-    QDir finalDatapackFolder(std::string::fromStdString(mDatapackBase+suffix));
+    QDir finalDatapackFolder(QString::fromStdString(mDatapackBase+suffix));
     QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
     int sizeEntryList=entryList.size();
     for (int index=0;index<sizeEntryList;++index)
@@ -676,7 +676,7 @@ void DatapackDownloaderBase::cleanDatapackBase(std::string suffix)
     }
     entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
     if(entryList.size()==0)
-        finalDatapackFolder.rmpath(std::string::fromStdString(mDatapackBase+suffix));
+        finalDatapackFolder.rmpath(QString::fromStdString(mDatapackBase+suffix));
 }
 
 void DatapackDownloaderBase::sendDatapackContentBase()
