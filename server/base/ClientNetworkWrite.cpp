@@ -12,7 +12,7 @@ void Client::sendRawBlock(const char * const data,const unsigned int &size)
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    normalOutput("sendRawSmallPacket("+QString(std::vector<char>(data,size).toHex()).toStdString()+")");
+    normalOutput("sendRawSmallPacket("+std::string(std::vector<char>(data,size).toHex()).toStdString()+")");
     #endif
     if(!ProtocolParsingBase::internalSendRawSmallPacket(data,size))
         return;

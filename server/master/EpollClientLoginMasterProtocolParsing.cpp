@@ -91,7 +91,7 @@ void EpollClientLoginMaster::parseInputBeforeLogin(const uint8_t &mainCodeType,c
             }
         break;
         default:
-            parseNetworkReadError("wrong data before login with mainIdent: "+QString::number(mainCodeType));
+            parseNetworkReadError("wrong data before login with mainIdent: "+std::string::number(mainCodeType));
         break;
     }
 }
@@ -103,7 +103,7 @@ void EpollClientLoginMaster::parseMessage(const uint8_t &mainCodeType,const char
     switch(mainCodeType)
     {
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType));
             return;
         break;
     }
@@ -123,12 +123,12 @@ void EpollClientLoginMaster::parseFullMessage(const uint8_t &mainCodeType,const 
             {
                 if(stat!=EpollClientLoginMasterStat::GameServer)
                 {
-                    parseNetworkReadError("stat!=EpollClientLoginMasterStat::GameServer main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
+                    parseNetworkReadError("stat!=EpollClientLoginMasterStat::GameServer main ident: "+std::string::number(mainCodeType)+" sub ident: "+std::string::number(subCodeType));
                     return;
                 }
                 if(charactersGroupForGameServer==NULL)
                 {
-                    parseNetworkReadError("charactersGroupForGameServer==NULL main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
+                    parseNetworkReadError("charactersGroupForGameServer==NULL main ident: "+std::string::number(mainCodeType)+" sub ident: "+std::string::number(subCodeType));
                     return;
                 }
                 const uint32_t &characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData)));
@@ -140,25 +140,25 @@ void EpollClientLoginMaster::parseFullMessage(const uint8_t &mainCodeType,const 
             {
                 if(stat!=EpollClientLoginMasterStat::GameServer)
                 {
-                    parseNetworkReadError("stat!=EpollClientLoginMasterStat::GameServer main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
+                    parseNetworkReadError("stat!=EpollClientLoginMasterStat::GameServer main ident: "+std::string::number(mainCodeType)+" sub ident: "+std::string::number(subCodeType));
                     return;
                 }
                 if(charactersGroupForGameServerInformation==NULL)
                 {
-                    parseNetworkReadError("charactersGroupForGameServerInformation==NULL main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
+                    parseNetworkReadError("charactersGroupForGameServerInformation==NULL main ident: "+std::string::number(mainCodeType)+" sub ident: "+std::string::number(subCodeType));
                     return;
                 }
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(size!=2)
                 {
-                    parseNetworkReadError("size!=2 main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
+                    parseNetworkReadError("size!=2 main ident: "+std::string::number(mainCodeType)+" sub ident: "+std::string::number(subCodeType));
                     return;
                 }
                 #endif
                 charactersGroupForGameServerInformation->currentPlayer=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData)));
                 if(charactersGroupForGameServerInformation->currentPlayer>charactersGroupForGameServerInformation->maxPlayer)
                 {
-                    parseNetworkReadError("charactersGroupForGameServerInformation->currentPlayer > charactersGroupForGameServerInformation->maxPlayer main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
+                    parseNetworkReadError("charactersGroupForGameServerInformation->currentPlayer > charactersGroupForGameServerInformation->maxPlayer main ident: "+std::string::number(mainCodeType)+" sub ident: "+std::string::number(subCodeType));
                     return;
                 }
                 {
@@ -168,7 +168,7 @@ void EpollClientLoginMaster::parseFullMessage(const uint8_t &mainCodeType,const 
                     const int index=gameServers.indexOf(this);
                     if(index==-1)
                     {
-                        parseNetworkReadError("gameServers.indexOf(this)==-1 main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
+                        parseNetworkReadError("gameServers.indexOf(this)==-1 main ident: "+std::string::number(mainCodeType)+" sub ident: "+std::string::number(subCodeType));
                         return;
                     }
                     const int posFromZero=gameServers.size()-1-index;
@@ -180,13 +180,13 @@ void EpollClientLoginMaster::parseFullMessage(const uint8_t &mainCodeType,const 
             }
             break;
             default:
-                parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
+                parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType)+" sub ident: "+std::string::number(subCodeType));
                 return;
             break;
         }
         break;
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType));
             return;
         break;
     }
@@ -232,9 +232,9 @@ void EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 pos+=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE;
             }
 
-            QString charactersGroup;
-            QString host;
-            QString xml;
+            std::string charactersGroup;
+            std::string host;
+            std::string xml;
             uint16_t port=0;
             uint32_t uniqueKey=0;
             uint32_t logicalGroupIndex=0;
@@ -243,7 +243,7 @@ void EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             {
                 if((size-pos)<(int)sizeof(uint8_t))
                 {
-                    parseNetworkReadError("wrong utf8 to QString size for text size");
+                    parseNetworkReadError("wrong utf8 to std::string size for text size");
                     return;
                 }
                 const uint8_t &textSize=data[pos];
@@ -252,10 +252,10 @@ void EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 {
                     if((size-pos)<(int)textSize)
                     {
-                        parseNetworkReadError("wrong utf8 to QString size for text");
+                        parseNetworkReadError("wrong utf8 to std::string size for text");
                         return;
                     }
-                    charactersGroup=QString::fromUtf8(data+pos,textSize);
+                    charactersGroup=std::string::fromUtf8(data+pos,textSize);
                     pos+=textSize;
                 }
             }
@@ -270,7 +270,7 @@ void EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             //uniqueKey
             if((size-pos)<(int)sizeof(uint32_t))
             {
-                parseNetworkReadError(QStringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
+                parseNetworkReadError(std::stringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
                 return;
             }
             uniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
@@ -279,7 +279,7 @@ void EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             {
                 if((size-pos)<(int)sizeof(uint8_t))
                 {
-                    parseNetworkReadError("wrong utf8 to QString size for text size");
+                    parseNetworkReadError("wrong utf8 to std::string size for text size");
                     return;
                 }
                 const uint8_t &textSize=data[pos];
@@ -288,10 +288,10 @@ void EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 {
                     if((size-pos)<(int)textSize)
                     {
-                        parseNetworkReadError("wrong utf8 to QString size for text");
+                        parseNetworkReadError("wrong utf8 to std::string size for text");
                         return;
                     }
-                    host=QString::fromUtf8(data+pos,textSize);
+                    host=std::string::fromUtf8(data+pos,textSize);
                     pos+=textSize;
                 }
                 else
@@ -303,7 +303,7 @@ void EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             //port
             if((size-pos)<(int)sizeof(uint16_t))
             {
-                parseNetworkReadError(QStringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
+                parseNetworkReadError(std::stringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
                 return;
             }
             port=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
@@ -312,7 +312,7 @@ void EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             {
                 if((size-pos)<(int)sizeof(uint16_t))
                 {
-                    parseNetworkReadError("wrong utf8 to QString size for text size");
+                    parseNetworkReadError("wrong utf8 to std::string size for text size");
                     return;
                 }
                 const uint16_t textSize=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
@@ -321,10 +321,10 @@ void EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 {
                     if((size-pos)<(int)textSize)
                     {
-                        parseNetworkReadError("wrong utf8 to QString size for text");
+                        parseNetworkReadError("wrong utf8 to std::string size for text");
                         return;
                     }
-                    xml=QString::fromUtf8(data+pos,textSize);
+                    xml=std::string::fromUtf8(data+pos,textSize);
                     pos+=textSize;
                 }
             }
@@ -332,20 +332,20 @@ void EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             {
                 if((size-pos)<(int)sizeof(uint8_t))
                 {
-                    parseNetworkReadError("wrong utf8 to QString size for text size");
+                    parseNetworkReadError("wrong utf8 to std::string size for text size");
                     return;
                 }
-                QString logicalGroup;
+                std::string logicalGroup;
                 const uint8_t &textSize=data[pos];
                 pos+=sizeof(uint8_t);
                 if(textSize>0)
                 {
                     if((size-pos)<(int)textSize)
                     {
-                        parseNetworkReadError("wrong utf8 to QString size for text");
+                        parseNetworkReadError("wrong utf8 to std::string size for text");
                         return;
                     }
-                    logicalGroup=QString::fromUtf8(data+pos,textSize);
+                    logicalGroup=std::string::fromUtf8(data+pos,textSize);
                     pos+=textSize;
                 }
                 if(EpollClientLoginMaster::logicalGroupHash.contains(logicalGroup))
@@ -353,7 +353,7 @@ void EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 else
                 {
                     logicalGroupIndex=0;
-                    parseNetworkReadError(QStringLiteral("logicalGroup \"%1\" not found for %2:%3 at %4:%5")
+                    parseNetworkReadError(std::stringLiteral("logicalGroup \"%1\" not found for %2:%3 at %4:%5")
                                           .arg(logicalGroup)
                                           .arg(host)
                                           .arg(port)
@@ -366,7 +366,7 @@ void EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             //current player
             if((size-pos)<(int)sizeof(uint16_t))
             {
-                parseNetworkReadError(QStringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
+                parseNetworkReadError(std::stringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
                 return;
             }
             currentPlayer=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
@@ -374,18 +374,18 @@ void EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             //max player
             if((size-pos)<(int)sizeof(uint16_t))
             {
-                parseNetworkReadError(QStringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
+                parseNetworkReadError(std::stringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
                 return;
             }
             maxPlayer=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
             pos+=sizeof(uint16_t);
-            QSet<uint32_t/*characterId*/> connectedPlayer;
+            std::unordered_set<uint32_t/*characterId*/> connectedPlayer;
             //connected player
             {
                 unsigned int index=0;
                 if((size-pos)<(int)sizeof(uint16_t))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
+                    parseNetworkReadError(std::stringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
                     return;
                 }
                 unsigned int disconnectedPlayerNumber=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
@@ -394,7 +394,7 @@ void EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 {
                     if((size-pos)<(int)sizeof(uint32_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
+                        parseNetworkReadError(std::stringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
                         return;
                     }
                     unsigned int characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
@@ -536,7 +536,7 @@ void EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
 
             if(stat!=EpollClientLoginMasterStat::Logged)
             {
-                parseNetworkReadError("stat!=EpollClientLoginMasterStat::Logged: "+QString::number(stat)+" to register as login server");
+                parseNetworkReadError("stat!=EpollClientLoginMasterStat::Logged: "+std::string::number(stat)+" to register as login server");
                 return;
             }
             stat=EpollClientLoginMasterStat::LoginServer;
@@ -603,7 +603,7 @@ void EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
         std::cout << "Online: " << loginServers.size() << " login server and " << gameServers.size() << " game server" << std::endl;
         break;
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType));
             return;
         break;
     }
@@ -617,7 +617,7 @@ void EpollClientLoginMaster::parseFullQuery(const uint8_t &mainCodeType,const ui
     (void)size;
     if(stat==EpollClientLoginMasterStat::None)
     {
-        parseNetworkReadError("stat==EpollClientLoginMasterStat::None: "+QString::number(stat)+" EpollClientLoginMaster::parseFullQuery()");
+        parseNetworkReadError("stat==EpollClientLoginMasterStat::None: "+std::string::number(stat)+" EpollClientLoginMaster::parseFullQuery()");
         return;
     }
     switch(mainCodeType)
@@ -625,7 +625,7 @@ void EpollClientLoginMaster::parseFullQuery(const uint8_t &mainCodeType,const ui
         case 0x02:
             if(stat!=EpollClientLoginMasterStat::LoginServer)
             {
-                parseNetworkReadError("stat!=EpollClientLoginMasterStat::LoginServer: "+QString::number(stat)+" EpollClientLoginMaster::parseFullQuery(): "+QString::number(mainCodeType));
+                parseNetworkReadError("stat!=EpollClientLoginMasterStat::LoginServer: "+std::string::number(stat)+" EpollClientLoginMaster::parseFullQuery(): "+std::string::number(mainCodeType));
                 return;
             }
             switch(subCodeType)
@@ -640,7 +640,7 @@ void EpollClientLoginMaster::parseFullQuery(const uint8_t &mainCodeType,const ui
                 }
                 break;
                 default:
-                    parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
+                    parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType)+" sub ident: "+std::string::number(subCodeType));
                     return;
                 break;
             }
@@ -648,7 +648,7 @@ void EpollClientLoginMaster::parseFullQuery(const uint8_t &mainCodeType,const ui
         case 0x11:
             if(stat!=EpollClientLoginMasterStat::LoginServer)
             {
-                parseNetworkReadError("stat!=EpollClientLoginMasterStat::LoginServer: "+QString::number(stat)+" EpollClientLoginMaster::parseFullQuery(): "+QString::number(mainCodeType));
+                parseNetworkReadError("stat!=EpollClientLoginMasterStat::LoginServer: "+std::string::number(stat)+" EpollClientLoginMaster::parseFullQuery(): "+std::string::number(mainCodeType));
                 return;
             }
             switch(subCodeType)
@@ -657,12 +657,12 @@ void EpollClientLoginMaster::parseFullQuery(const uint8_t &mainCodeType,const ui
                 {
                     if(stat!=EpollClientLoginMasterStat::LoginServer)
                     {
-                        parseNetworkReadError("stat==EpollClientLoginMasterStat::None: "+QString::number(stat)+" EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        parseNetworkReadError("stat==EpollClientLoginMasterStat::None: "+std::string::number(stat)+" EpollClientLoginMaster::parseFullQuery()"+std::string::number(mainCodeType)+" "+std::string::number(subCodeType));
                         return;
                     }
                     if(!CommonSettingsCommon::commonSettingsCommon.automatic_account_creation)
                     {
-                        parseNetworkReadError("!EpollClientLoginMaster::automatic_account_creation then why ask account id? EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        parseNetworkReadError("!EpollClientLoginMaster::automatic_account_creation then why ask account id? EpollClientLoginMaster::parseFullQuery()"+std::string::number(mainCodeType)+" "+std::string::number(subCodeType));
                         return;
                     }
                     EpollClientLoginMaster::replyToIdListBuffer[0x01]=queryNumber;
@@ -684,18 +684,18 @@ void EpollClientLoginMaster::parseFullQuery(const uint8_t &mainCodeType,const ui
                 {
                     if(stat!=EpollClientLoginMasterStat::LoginServer)
                     {
-                        parseNetworkReadError("stat==EpollClientLoginMasterStat::None: "+QString::number(stat)+" EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        parseNetworkReadError("stat==EpollClientLoginMasterStat::None: "+std::string::number(stat)+" EpollClientLoginMaster::parseFullQuery()"+std::string::number(mainCodeType)+" "+std::string::number(subCodeType));
                         return;
                     }
                     if(size!=1)
                     {
-                        parseNetworkReadError("size!=1 EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        parseNetworkReadError("size!=1 EpollClientLoginMaster::parseFullQuery()"+std::string::number(mainCodeType)+" "+std::string::number(subCodeType));
                         return;
                     }
                     const unsigned char &charactersGroupIndex=*rawData;
                     if(charactersGroupIndex>=CharactersGroup::list.size())
                     {
-                        parseNetworkReadError("charactersGroupIndex>=CharactersGroup::charactersGroupList.size() EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        parseNetworkReadError("charactersGroupIndex>=CharactersGroup::charactersGroupList.size() EpollClientLoginMaster::parseFullQuery()"+std::string::number(mainCodeType)+" "+std::string::number(subCodeType));
                         return;
                     }
                     CharactersGroup * const charactersGroup=CharactersGroup::list.at(charactersGroupIndex);
@@ -718,18 +718,18 @@ void EpollClientLoginMaster::parseFullQuery(const uint8_t &mainCodeType,const ui
                 {
                     if(stat!=EpollClientLoginMasterStat::LoginServer)
                     {
-                        parseNetworkReadError("stat==EpollClientLoginMasterStat::None: "+QString::number(stat)+" EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        parseNetworkReadError("stat==EpollClientLoginMasterStat::None: "+std::string::number(stat)+" EpollClientLoginMaster::parseFullQuery()"+std::string::number(mainCodeType)+" "+std::string::number(subCodeType));
                         return;
                     }
                     if(size!=1)
                     {
-                        parseNetworkReadError("size!=1 EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        parseNetworkReadError("size!=1 EpollClientLoginMaster::parseFullQuery()"+std::string::number(mainCodeType)+" "+std::string::number(subCodeType));
                         return;
                     }
                     const unsigned char &charactersGroupIndex=*rawData;
                     if(charactersGroupIndex>=CharactersGroup::list.size())
                     {
-                        parseNetworkReadError("charactersGroupIndex>=CharactersGroup::charactersGroupList.size() EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        parseNetworkReadError("charactersGroupIndex>=CharactersGroup::charactersGroupList.size() EpollClientLoginMaster::parseFullQuery()"+std::string::number(mainCodeType)+" "+std::string::number(subCodeType));
                         return;
                     }
                     CharactersGroup * const charactersGroup=CharactersGroup::list.at(charactersGroupIndex);
@@ -752,18 +752,18 @@ void EpollClientLoginMaster::parseFullQuery(const uint8_t &mainCodeType,const ui
                 {
                     if(stat!=EpollClientLoginMasterStat::GameServer)
                     {
-                        parseNetworkReadError("stat==EpollClientLoginMasterStat::None: "+QString::number(stat)+" EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        parseNetworkReadError("stat==EpollClientLoginMasterStat::None: "+std::string::number(stat)+" EpollClientLoginMaster::parseFullQuery()"+std::string::number(mainCodeType)+" "+std::string::number(subCodeType));
                         return;
                     }
                     if(size!=1)
                     {
-                        parseNetworkReadError("size!=1 EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        parseNetworkReadError("size!=1 EpollClientLoginMaster::parseFullQuery()"+std::string::number(mainCodeType)+" "+std::string::number(subCodeType));
                         return;
                     }
                     const unsigned char &charactersGroupIndex=*rawData;
                     if(charactersGroupIndex>=CharactersGroup::list.size())
                     {
-                        parseNetworkReadError("charactersGroupIndex>=CharactersGroup::charactersGroupList.size() EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        parseNetworkReadError("charactersGroupIndex>=CharactersGroup::charactersGroupList.size() EpollClientLoginMaster::parseFullQuery()"+std::string::number(mainCodeType)+" "+std::string::number(subCodeType));
                         return;
                     }
                     CharactersGroup * const charactersGroup=CharactersGroup::list.at(charactersGroupIndex);
@@ -786,18 +786,18 @@ void EpollClientLoginMaster::parseFullQuery(const uint8_t &mainCodeType,const ui
                 {
                     if(stat!=EpollClientLoginMasterStat::GameServer)
                     {
-                        parseNetworkReadError("stat==EpollClientLoginMasterStat::None: "+QString::number(stat)+" EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        parseNetworkReadError("stat==EpollClientLoginMasterStat::None: "+std::string::number(stat)+" EpollClientLoginMaster::parseFullQuery()"+std::string::number(mainCodeType)+" "+std::string::number(subCodeType));
                         return;
                     }
                     if(size!=1)
                     {
-                        parseNetworkReadError("size!=1 EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        parseNetworkReadError("size!=1 EpollClientLoginMaster::parseFullQuery()"+std::string::number(mainCodeType)+" "+std::string::number(subCodeType));
                         return;
                     }
                     const unsigned char &charactersGroupIndex=*rawData;
                     if(charactersGroupIndex>=CharactersGroup::list.size())
                     {
-                        parseNetworkReadError("charactersGroupIndex>=CharactersGroup::charactersGroupList.size() EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        parseNetworkReadError("charactersGroupIndex>=CharactersGroup::charactersGroupList.size() EpollClientLoginMaster::parseFullQuery()"+std::string::number(mainCodeType)+" "+std::string::number(subCodeType));
                         return;
                     }
                     CharactersGroup * const charactersGroup=CharactersGroup::list.at(charactersGroupIndex);
@@ -817,13 +817,13 @@ void EpollClientLoginMaster::parseFullQuery(const uint8_t &mainCodeType,const ui
                 }
                 break;
                 default:
-                    parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
+                    parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType)+" sub ident: "+std::string::number(subCodeType));
                     return;
                 break;
             }
         break;
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType));
             return;
         break;
     }
@@ -835,7 +835,7 @@ void EpollClientLoginMaster::parseReplyData(const uint8_t &mainCodeType,const ui
     //queryNumberList << queryNumber;
     Q_UNUSED(data);
     Q_UNUSED(size);
-    parseNetworkReadError(QStringLiteral("The server for now not ask anything: %1, %2").arg(mainCodeType).arg(queryNumber));
+    parseNetworkReadError(std::stringLiteral("The server for now not ask anything: %1, %2").arg(mainCodeType).arg(queryNumber));
     return;
 }
 
@@ -854,7 +854,7 @@ void EpollClientLoginMaster::parseFullReplyData(const uint8_t &mainCodeType,cons
                 {
                     if(stat!=EpollClientLoginMasterStat::GameServer)
                     {
-                        parseNetworkReadError("stat!=EpollClientLoginMasterStat::GameServer: "+QString::number(stat)+" EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        parseNetworkReadError("stat!=EpollClientLoginMasterStat::GameServer: "+std::string::number(stat)+" EpollClientLoginMaster::parseFullQuery()"+std::string::number(mainCodeType)+" "+std::string::number(subCodeType));
                         return;
                     }
                     //orderned mode drop: if(loginServerReturnForCharaterSelect.contains(queryNumber)), use first
@@ -884,7 +884,7 @@ void EpollClientLoginMaster::parseFullReplyData(const uint8_t &mainCodeType,cons
                                 dataForSelectedCharacterReturn.loginServer->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,data[0]);
                         }
                         else
-                            parseNetworkReadError("main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+", reply size for 8101 wrong");
+                            parseNetworkReadError("main ident: "+std::string::number(mainCodeType)+", with sub ident:"+std::string::number(subCodeType)+", reply size for 8101 wrong");
                         loginServerReturnForCharaterSelect.removeFirst();
                     }
                     /*orderned mode else
@@ -892,20 +892,20 @@ void EpollClientLoginMaster::parseFullReplyData(const uint8_t &mainCodeType,cons
                 }
                 return;
                 default:
-                    parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType));
+                    parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType)+", with sub ident:"+std::string::number(subCodeType));
                     return;
                 break;
             }
         break;
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType));
             return;
         break;
     }
-    parseNetworkReadError(QStringLiteral("The server for now not ask anything: %1 %2, %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+    parseNetworkReadError(std::stringLiteral("The server for now not ask anything: %1 %2, %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
 }
 
-void EpollClientLoginMaster::parseNetworkReadError(const QString &errorString)
+void EpollClientLoginMaster::parseNetworkReadError(const std::string &errorString)
 {
     errorParsingLayer(errorString);
 }

@@ -244,7 +244,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                             return false;
                         }
                         posOutput+=1;
-                        std::cout << "Transmit the token: " << QString(std::vector<char>(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT).toHex()).toStdString() << std::endl;
+                        std::cout << "Transmit the token: " << std::string(std::vector<char>(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT).toHex()).toStdString() << std::endl;
                         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         posOutput+=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT;
 
@@ -441,9 +441,9 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                     fileName=std::string(data+pos,fileNameSize);
                     pos+=fileNameSize;
                 }
-                if(DatapackDownloaderBase::extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())==DatapackDownloaderBase::extensionAllowed.cend())
+                if(DatapackDownloaderBase::extensionAllowed.find(QFileInfo(std::string::fromStdString(fileName)).suffix().toStdString())==DatapackDownloaderBase::extensionAllowed.cend())
                 {
-                    parseNetworkReadError("extension not allowed: "+QFileInfo(QString::fromStdString(fileName)).suffix().toStdString()+" with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
+                    parseNetworkReadError("extension not allowed: "+QFileInfo(std::string::fromStdString(fileName)).suffix().toStdString()+" with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
                     return false;
                 }
                 if((size-pos)<(int)(sizeof(uint32_t)))

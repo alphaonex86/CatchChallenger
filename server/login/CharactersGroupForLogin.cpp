@@ -4,7 +4,7 @@
 
 using namespace CatchChallenger;
 
-QHash<QString,CharactersGroupForLogin *> CharactersGroupForLogin::hash;
+std::unordered_map<std::string,CharactersGroupForLogin *> CharactersGroupForLogin::hash;
 QList<CharactersGroupForLogin *> CharactersGroupForLogin::list;
 char CharactersGroupForLogin::tempBuffer[4096];
 
@@ -37,7 +37,7 @@ void CharactersGroupForLogin::clearServerPair()
 void CharactersGroupForLogin::setServerUniqueKey(const uint8_t &indexOnFlatList,const uint32_t &serverUniqueKey,const char * const hostData,const uint8_t &hostDataSize,const uint16_t &port)
 {
     InternalGameServer tempServer;
-    tempServer.host=QString::fromUtf8(hostData,hostDataSize);
+    tempServer.host=std::string::fromUtf8(hostData,hostDataSize);
     tempServer.port=port;
     tempServer.indexOnFlatList=indexOnFlatList,
     servers[serverUniqueKey]=tempServer;

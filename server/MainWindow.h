@@ -35,7 +35,7 @@ private:
     bool need_be_restarted;
     bool need_be_closed;
     void closeEvent(QCloseEvent *event);
-    QSettings *settings;
+    std::unordered_settings *settings;
     void load_settings();
     void send_settings();
     QList<Player_private_and_public_informations> players;
@@ -44,9 +44,9 @@ private:
     QTime time_latency;
     uint16_t internal_currentLatency;
     QList<Event> events;
-    QHash<QString,QHash<QString,GameServerSettings::ProgrammedEvent> > programmedEventList;
-    QString sizeToString(double size);
-    QString adaptString(float size);
+    std::unordered_map<std::string,std::unordered_map<std::string,GameServerSettings::ProgrammedEvent> > programmedEventList;
+    std::string sizeToString(double size);
+    std::string adaptString(float size);
 private slots:
     void on_lineEdit_returnPressed();
     void updateActionButton();
@@ -54,9 +54,9 @@ private slots:
     void server_need_be_stopped();
     void server_need_be_restarted();
     void new_player_is_connected(Player_private_and_public_informations player);
-    void player_is_disconnected(QString pseudo);
-    void new_chat_message(QString pseudo,Chat_type type,QString text);
-    void server_error(QString error);
+    void player_is_disconnected(std::string pseudo);
+    void new_chat_message(std::string pseudo,Chat_type type,std::string text);
+    void server_error(std::string error);
     void haveQuitForCriticalDatabaseQueryFailed();
     void update_the_info();
     void start_calculate_latency();

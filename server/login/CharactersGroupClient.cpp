@@ -12,11 +12,11 @@ using namespace CatchChallenger;
 
 void CharactersGroupForLogin::character_list(EpollClientLoginSlave * const client,const uint32_t &account_id)
 {
-    const QString &queryText=QString(PreparedDBQueryCommon::db_query_characters).arg(account_id).arg(CommonSettingsCommon::commonSettingsCommon.max_character*2);
+    const std::string &queryText=std::string(PreparedDBQueryCommon::db_query_characters).arg(account_id).arg(CommonSettingsCommon::commonSettingsCommon.max_character*2);
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroupForLogin::character_list_static);
     if(callback==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
+        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
         client->askLogin_cancel();
         return;
     }
@@ -43,14 +43,14 @@ void CharactersGroupForLogin::character_list_object()
     uint8_t validCharaterCount=0;
     while(databaseBaseCommon->next() && validCharaterCount<CommonSettingsCommon::commonSettingsCommon.max_character)
     {
-        unsigned int character_id=QString(databaseBaseCommon->value(0)).toUInt(&ok);
+        unsigned int character_id=std::string(databaseBaseCommon->value(0)).toUInt(&ok);
         if(ok)
         {
             //delete
-            uint32_t time_to_delete=QString(databaseBaseCommon->value(3)).toUInt(&ok);
+            uint32_t time_to_delete=std::string(databaseBaseCommon->value(3)).toUInt(&ok);
             if(!ok)
             {
-                qDebug() << (QStringLiteral("time_to_delete is not number: %1 for %2 fixed by 0").arg(QString(databaseBaseCommon->value(3))).arg(character_id));
+                qDebug() << (std::stringLiteral("time_to_delete is not number: %1 for %2 fixed by 0").arg(std::string(databaseBaseCommon->value(3))).arg(character_id));
                 time_to_delete=0;
             }
             if(time_to_delete==0 || current_time<time_to_delete)
@@ -71,7 +71,7 @@ void CharactersGroupForLogin::character_list_object()
                     const uint8_t &newSize=FacilityLibGeneral::toUTF8WithHeader(databaseBaseCommon->value(1),tempRawData+tempRawDataSize);
                     if(newSize==0)
                     {
-                        qDebug() << (QStringLiteral("can't be empty or have wrong or too large utf8 data: %1 by hide this char").arg(databaseBaseCommon->value(1)));
+                        qDebug() << (std::stringLiteral("can't be empty or have wrong or too large utf8 data: %1 by hide this char").arg(databaseBaseCommon->value(1)));
                         tempRawDataSize-=sizeof(uint32_t);
                         validCharaterCount--;
                         continue;
@@ -81,10 +81,10 @@ void CharactersGroupForLogin::character_list_object()
 
                 //skin
                 {
-                    const uint32_t databaseSkinId=QString(databaseBaseCommon->value(2)).toUInt(&ok);
+                    const uint32_t databaseSkinId=std::string(databaseBaseCommon->value(2)).toUInt(&ok);
                     if(!ok)//if not number
                     {
-                        qDebug() << (QStringLiteral("character return skin is not number: %1 for %2 fixed by 0").arg(databaseBaseCommon->value(5)).arg(character_id));
+                        qDebug() << (std::stringLiteral("character return skin is not number: %1 for %2 fixed by 0").arg(databaseBaseCommon->value(5)).arg(character_id));
                         tempRawData[tempRawDataSize]=0;
                         ok=true;
                     }
@@ -92,7 +92,7 @@ void CharactersGroupForLogin::character_list_object()
                     {
                         if(databaseSkinId>=(uint32_t)DictionaryLogin::dictionary_skin_database_to_internal.size())//out of range
                         {
-                            qDebug() << (QStringLiteral("character return skin out of range: %1 for %2 fixed by 0").arg(databaseBaseCommon->value(5)).arg(character_id));
+                            qDebug() << (std::stringLiteral("character return skin out of range: %1 for %2 fixed by 0").arg(databaseBaseCommon->value(5)).arg(character_id));
                             tempRawData[tempRawDataSize]=0;
                             ok=true;
                         }
@@ -116,10 +116,10 @@ void CharactersGroupForLogin::character_list_object()
 
                 //played_time
                 {
-                    unsigned int played_time=QString(databaseBaseCommon->value(4)).toUInt(&ok);
+                    unsigned int played_time=std::string(databaseBaseCommon->value(4)).toUInt(&ok);
                     if(!ok)
                     {
-                        qDebug() << (QStringLiteral("played_time is not number: %1 for %2 fixed by 0").arg(databaseBaseCommon->value(4)).arg(character_id));
+                        qDebug() << (std::stringLiteral("played_time is not number: %1 for %2 fixed by 0").arg(databaseBaseCommon->value(4)).arg(character_id));
                         played_time=0;
                     }
                     *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(played_time);
@@ -128,10 +128,10 @@ void CharactersGroupForLogin::character_list_object()
 
                 //last_connect
                 {
-                    unsigned int last_connect=QString(databaseBaseCommon->value(5)).toUInt(&ok);
+                    unsigned int last_connect=std::string(databaseBaseCommon->value(5)).toUInt(&ok);
                     if(!ok)
                     {
-                        qDebug() << (QStringLiteral("last_connect is not number: %1 for %2 fixed by 0").arg(databaseBaseCommon->value(5)).arg(character_id));
+                        qDebug() << (std::stringLiteral("last_connect is not number: %1 for %2 fixed by 0").arg(databaseBaseCommon->value(5)).arg(character_id));
                         last_connect=current_time;
                     }
                     *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(last_connect);
@@ -142,7 +142,7 @@ void CharactersGroupForLogin::character_list_object()
                 deleteCharacterNow(character_id);
         }
         else
-            qDebug() << (QStringLiteral("Server id is not number: %1 for %2").arg(databaseBaseCommon->value(0)).arg(character_id));
+            qDebug() << (std::stringLiteral("Server id is not number: %1 for %2").arg(databaseBaseCommon->value(0)).arg(character_id));
     }
     tempRawData[0]=validCharaterCount;
 
@@ -155,11 +155,11 @@ void CharactersGroupForLogin::character_list_object()
 
 void CharactersGroupForLogin::server_list(EpollClientLoginSlave * const client,const uint32_t &account_id)
 {
-    const QString &queryText=QString(PreparedDBQueryCommon::db_query_select_server_time).arg(account_id);
+    const std::string &queryText=std::string(PreparedDBQueryCommon::db_query_select_server_time).arg(account_id);
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroupForLogin::server_list_static);
     if(callback==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
+        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
         client->askLogin_cancel();
         return;
     }
@@ -186,7 +186,7 @@ void CharactersGroupForLogin::server_list_object()
     uint8_t validServerCount=0;
     while(databaseBaseCommon->next() && validServerCount<CommonSettingsCommon::commonSettingsCommon.max_character)
     {
-        const unsigned int server_id=QString(databaseBaseCommon->value(0)).toUInt(&ok);
+        const unsigned int server_id=std::string(databaseBaseCommon->value(0)).toUInt(&ok);
         if(ok)
         {
             //global over the server group
@@ -197,20 +197,20 @@ void CharactersGroupForLogin::server_list_object()
                 tempRawDataSize+=1;
 
                 //played_time
-                unsigned int played_time=QString(databaseBaseCommon->value(1)).toUInt(&ok);
+                unsigned int played_time=std::string(databaseBaseCommon->value(1)).toUInt(&ok);
                 if(!ok)
                 {
-                    qDebug() << (QStringLiteral("played_time is not number: %1 fixed by 0").arg(databaseBaseCommon->value(4)));
+                    qDebug() << (std::stringLiteral("played_time is not number: %1 fixed by 0").arg(databaseBaseCommon->value(4)));
                     played_time=0;
                 }
                 *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(played_time);
                 tempRawDataSize+=sizeof(uint32_t);
 
                 //last_connect
-                unsigned int last_connect=QString(databaseBaseCommon->value(2)).toUInt(&ok);
+                unsigned int last_connect=std::string(databaseBaseCommon->value(2)).toUInt(&ok);
                 if(!ok)
                 {
-                    qDebug() << (QStringLiteral("last_connect is not number: %1 fixed by 0").arg(databaseBaseCommon->value(5)));
+                    qDebug() << (std::stringLiteral("last_connect is not number: %1 fixed by 0").arg(databaseBaseCommon->value(5)));
                     last_connect=current_time;
                 }
                 *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(last_connect);
@@ -220,7 +220,7 @@ void CharactersGroupForLogin::server_list_object()
             }
         }
         else
-            qDebug() << (QStringLiteral("Character id is not number: %1").arg(databaseBaseCommon->value(0)));
+            qDebug() << (std::stringLiteral("Character id is not number: %1").arg(databaseBaseCommon->value(0)));
     }
 
     client->server_list_return(validServerCount,tempRawData,tempRawDataSize);
@@ -232,51 +232,51 @@ void CharactersGroupForLogin::deleteCharacterNow(const uint32_t &characterId)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryCommon::db_query_monster_by_character_id==0)
     {
-        qDebug() << (QStringLiteral("deleteCharacterNow() Query is empty, bug"));
+        qDebug() << (std::stringLiteral("deleteCharacterNow() Query is empty, bug"));
         return;
     }
     if(PreparedDBQueryCommon::db_query_delete_monster_buff==0)
     {
-        qDebug() << (QStringLiteral("deleteCharacterNow() Query db_query_delete_monster_buff is empty, bug"));
+        qDebug() << (std::stringLiteral("deleteCharacterNow() Query db_query_delete_monster_buff is empty, bug"));
         return;
     }
     if(PreparedDBQueryCommon::db_query_delete_monster_skill==0)
     {
-        qDebug() << (QStringLiteral("deleteCharacterNow() Query db_query_delete_monster_skill is empty, bug"));
+        qDebug() << (std::stringLiteral("deleteCharacterNow() Query db_query_delete_monster_skill is empty, bug"));
         return;
     }
     if(PreparedDBQueryCommon::db_query_delete_character==0)
     {
-        qDebug() << (QStringLiteral("deleteCharacterNow() Query db_query_delete_character is empty, bug"));
+        qDebug() << (std::stringLiteral("deleteCharacterNow() Query db_query_delete_character is empty, bug"));
         return;
     }
     if(PreparedDBQueryCommon::db_query_delete_all_item==0)
     {
-        qDebug() << (QStringLiteral("deleteCharacterNow() Query db_query_delete_item is empty, bug"));
+        qDebug() << (std::stringLiteral("deleteCharacterNow() Query db_query_delete_item is empty, bug"));
         return;
     }
     if(PreparedDBQueryCommon::db_query_delete_monster_by_character==0)
     {
-        qDebug() << (QStringLiteral("deleteCharacterNow() Query db_query_delete_monster is empty, bug"));
+        qDebug() << (std::stringLiteral("deleteCharacterNow() Query db_query_delete_monster is empty, bug"));
         return;
     }
     if(PreparedDBQueryCommon::db_query_delete_recipes==0)
     {
-        qDebug() << (QStringLiteral("deleteCharacterNow() Query db_query_delete_recipes is empty, bug"));
+        qDebug() << (std::stringLiteral("deleteCharacterNow() Query db_query_delete_recipes is empty, bug"));
         return;
     }
     if(PreparedDBQueryCommon::db_query_delete_reputation==0)
     {
-        qDebug() << (QStringLiteral("deleteCharacterNow() Query db_query_delete_reputation is empty, bug"));
+        qDebug() << (std::stringLiteral("deleteCharacterNow() Query db_query_delete_reputation is empty, bug"));
         return;
     }
     #endif
 
-    const QString &queryText=QString(PreparedDBQueryCommon::db_query_monster_by_character_id).arg(characterId);
+    const std::string &queryText=std::string(PreparedDBQueryCommon::db_query_monster_by_character_id).arg(characterId);
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroupForLogin::deleteCharacterNow_static);
     if(callback==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
+        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
         return;
     }
     else
@@ -300,34 +300,34 @@ void CharactersGroupForLogin::deleteCharacterNow_return(const uint32_t &characte
     bool ok;
     while(databaseBaseCommon->next())
     {
-        const uint32_t &monsterId=QString(databaseBaseCommon->value(0)).toUInt(&ok);
+        const uint32_t &monsterId=std::string(databaseBaseCommon->value(0)).toUInt(&ok);
         if(ok)
         {
-            dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_monster_buff).arg(monsterId).toUtf8().constData());
-            dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_monster_skill).arg(monsterId).toUtf8().constData());
+            dbQueryWriteCommon(std::string(PreparedDBQueryCommon::db_query_delete_monster_buff).arg(monsterId).toUtf8().constData());
+            dbQueryWriteCommon(std::string(PreparedDBQueryCommon::db_query_delete_monster_skill).arg(monsterId).toUtf8().constData());
         }
     }
-    dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_character).arg(characterId).toUtf8().constData());
-    dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_all_item).arg(characterId).toUtf8().constData());
-    dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_all_item_warehouse).arg(characterId).toUtf8().constData());
-    dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_monster_by_character).arg(characterId).toUtf8().constData());
-    dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_recipes).arg(characterId).toUtf8().constData());
-    dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_reputation).arg(characterId).toUtf8().constData());
-    dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_allow).arg(characterId).toUtf8().constData());
+    dbQueryWriteCommon(std::string(PreparedDBQueryCommon::db_query_delete_character).arg(characterId).toUtf8().constData());
+    dbQueryWriteCommon(std::string(PreparedDBQueryCommon::db_query_delete_all_item).arg(characterId).toUtf8().constData());
+    dbQueryWriteCommon(std::string(PreparedDBQueryCommon::db_query_delete_all_item_warehouse).arg(characterId).toUtf8().constData());
+    dbQueryWriteCommon(std::string(PreparedDBQueryCommon::db_query_delete_monster_by_character).arg(characterId).toUtf8().constData());
+    dbQueryWriteCommon(std::string(PreparedDBQueryCommon::db_query_delete_recipes).arg(characterId).toUtf8().constData());
+    dbQueryWriteCommon(std::string(PreparedDBQueryCommon::db_query_delete_reputation).arg(characterId).toUtf8().constData());
+    dbQueryWriteCommon(std::string(PreparedDBQueryCommon::db_query_delete_allow).arg(characterId).toUtf8().constData());
 }
 
-int8_t CharactersGroupForLogin::addCharacter(void * const client,const uint8_t &query_id, const uint8_t &profileIndex, const QString &pseudo, const uint8_t &skinId)
+int8_t CharactersGroupForLogin::addCharacter(void * const client,const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &skinId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryCommon::db_query_select_character_by_pseudo==NULL)
     {
-        qDebug() << (QStringLiteral("addCharacter() Query is empty, bug"));
+        qDebug() << (std::stringLiteral("addCharacter() Query is empty, bug"));
         return 0x03;
     }
     #endif
     if(DictionaryLogin::dictionary_skin_internal_to_database.isEmpty())
     {
-        qDebug() << QStringLiteral("Skin list is empty, unable to add charaters");
+        qDebug() << std::stringLiteral("Skin list is empty, unable to add charaters");
         //char tempData[1+4]={0x02,0x00,0x00,0x00,0x00};/* not htole32 because inverted is the same */
         //static_cast<EpollClientLoginSlave *>(client)->postReply(query_id,tempData,sizeof(tempData));
         return 0x03;
@@ -335,33 +335,33 @@ int8_t CharactersGroupForLogin::addCharacter(void * const client,const uint8_t &
     /** \warning Need be checked in real time because can be opened on multiple login server
      * if(static_cast<EpollClientLoginSlave *>(client)->accountCharatersCount>=CommonSettingsCommon::commonSettingsCommon.max_character)
     {
-        qDebug() << (QStringLiteral("You can't create more account, you have already %1 on %2 allowed").arg(static_cast<EpollClientLoginSlave *>(client)->accountCharatersCount).arg(CommonSettingsCommon::commonSettingsCommon.max_character));
+        qDebug() << (std::stringLiteral("You can't create more account, you have already %1 on %2 allowed").arg(static_cast<EpollClientLoginSlave *>(client)->accountCharatersCount).arg(CommonSettingsCommon::commonSettingsCommon.max_character));
         return -1;
     }*/
     if(profileIndex>=EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.size())
     {
-        qDebug() << (QStringLiteral("profile index: %1 out of range (profileList size: %2)").arg(profileIndex).arg(EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.size()));
+        qDebug() << (std::stringLiteral("profile index: %1 out of range (profileList size: %2)").arg(profileIndex).arg(EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.size()));
         return -1;
     }
     if(pseudo.isEmpty())
     {
-        qDebug() << (QStringLiteral("pseudo is empty, not allowed"));
+        qDebug() << (std::stringLiteral("pseudo is empty, not allowed"));
         return -1;
     }
     if((uint32_t)pseudo.size()>CommonSettingsCommon::commonSettingsCommon.max_pseudo_size)
     {
-        qDebug() << (QStringLiteral("pseudo size is too big: %1 because is greater than %2").arg(pseudo.size()).arg(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size));
+        qDebug() << (std::stringLiteral("pseudo size is too big: %1 because is greater than %2").arg(pseudo.size()).arg(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size));
         return -1;
     }
     if(skinId>=DictionaryLogin::dictionary_skin_internal_to_database.size())
     {
-        qDebug() << (QStringLiteral("skin provided: %1 is not into skin listed").arg(skinId));
+        qDebug() << (std::stringLiteral("skin provided: %1 is not into skin listed").arg(skinId));
         return -1;
     }
     const EpollServerLoginSlave::LoginProfile &profile=EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.at(profileIndex);
     if(std::find(profile.forcedskin.begin(),profile.forcedskin.end(),skinId)==profile.forcedskin.end())
     {
-        qDebug() << (QStringLiteral("skin provided: %1 is not into profile %2 forced skin list").arg(skinId).arg(profileIndex));
+        qDebug() << (std::stringLiteral("skin provided: %1 is not into profile %2 forced skin list").arg(skinId).arg(profileIndex));
         return -1;
     }
     AddCharacterParam addCharacterParam;
@@ -371,11 +371,11 @@ int8_t CharactersGroupForLogin::addCharacter(void * const client,const uint8_t &
     addCharacterParam.skinId=skinId;
     addCharacterParam.client=client;
 
-    const QString &queryText=QString(PreparedDBQueryCommon::db_query_get_character_count_by_account).arg(static_cast<EpollClientLoginSlave *>(client)->account_id);
+    const std::string &queryText=std::string(PreparedDBQueryCommon::db_query_get_character_count_by_account).arg(static_cast<EpollClientLoginSlave *>(client)->account_id);
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroupForLogin::addCharacterStep1_static);
     if(callback==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
+        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
         return 0x03;
     }
     else
@@ -398,25 +398,25 @@ void CharactersGroupForLogin::addCharacterStep1_object()
     databaseBaseCommon->clear();
 }
 
-void CharactersGroupForLogin::addCharacterStep1_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const QString &pseudo,const uint8_t &skinId)
+void CharactersGroupForLogin::addCharacterStep1_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo,const uint8_t &skinId)
 {
     if(!databaseBaseCommon->next())
     {
-        qDebug() << QStringLiteral("Character count query return nothing");
+        qDebug() << std::stringLiteral("Character count query return nothing");
         client->addCharacter_ReturnFailed(query_id,0x03);
         return;
     }
     bool ok;
-    uint32_t characterCount=QString(databaseBaseCommon->value(0)).toUInt(&ok);
+    uint32_t characterCount=std::string(databaseBaseCommon->value(0)).toUInt(&ok);
     if(!ok)
     {
-        qDebug() << QStringLiteral("Character count query return not a number");
+        qDebug() << std::stringLiteral("Character count query return not a number");
         client->addCharacter_ReturnFailed(query_id,0x03);
         return;
     }
     if(characterCount>=CommonSettingsCommon::commonSettingsCommon.max_character)
     {
-        qDebug() << (QStringLiteral("You can't create more account, you have already %1 on %2 allowed")
+        qDebug() << (std::stringLiteral("You can't create more account, you have already %1 on %2 allowed")
                      .arg(characterCount)
                      .arg(CommonSettingsCommon::commonSettingsCommon.max_character)
                      );
@@ -424,11 +424,11 @@ void CharactersGroupForLogin::addCharacterStep1_return(EpollClientLoginSlave * c
         return;
     }
 
-    const QString &queryText=QString(PreparedDBQueryCommon::db_query_select_character_by_pseudo).arg(SqlFunction::quoteSqlVariable(pseudo));
+    const std::string &queryText=std::string(PreparedDBQueryCommon::db_query_select_character_by_pseudo).arg(SqlFunction::quoteSqlVariable(pseudo));
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroupForLogin::addCharacterStep2_static);
     if(callback==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
+        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
         return;
     }
     else
@@ -457,7 +457,7 @@ void CharactersGroupForLogin::addCharacterStep2_object()
     databaseBaseCommon->clear();
 }
 
-void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const QString &pseudo,const uint8_t &skinId)
+void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo,const uint8_t &skinId)
 {
     if(databaseBaseCommon->next())
     {
@@ -476,14 +476,14 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[0],profile.preparedQuerySize[0]);
     tempBufferSize+=profile.preparedQuerySize[0];
 
-    numberBuffer=QString::number(characterId).toLatin1();
+    numberBuffer=std::string::number(characterId).toLatin1();
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.constData(),numberBuffer.size());
     tempBufferSize+=numberBuffer.size();
 
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[1],profile.preparedQuerySize[1]);
     tempBufferSize+=profile.preparedQuerySize[1];
 
-    numberBuffer=QString::number(client->account_id).toLatin1();
+    numberBuffer=std::string::number(client->account_id).toLatin1();
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.constData(),numberBuffer.size());
     tempBufferSize+=numberBuffer.size();
 
@@ -497,14 +497,14 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[3],profile.preparedQuerySize[3]);
     tempBufferSize+=profile.preparedQuerySize[3];
 
-    numberBuffer=QString::number(DictionaryLogin::dictionary_skin_internal_to_database.at(skinId)).toLatin1();
+    numberBuffer=std::string::number(DictionaryLogin::dictionary_skin_internal_to_database.at(skinId)).toLatin1();
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.constData(),numberBuffer.size());
     tempBufferSize+=numberBuffer.size();
 
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[4],profile.preparedQuerySize[4]);
     tempBufferSize+=profile.preparedQuerySize[4];
 
-    numberBuffer=QString::number(QDateTime::currentMSecsSinceEpoch()/1000).toLatin1();
+    numberBuffer=std::string::number(QDateTime::currentMSecsSinceEpoch()/1000).toLatin1();
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.constData(),numberBuffer.size());
     tempBufferSize+=numberBuffer.size();
 
@@ -593,7 +593,7 @@ bool CharactersGroupForLogin::removeCharacter(void * const client,const uint8_t 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryCommon::db_query_account_time_to_delete_character_by_id==NULL)
     {
-        qDebug() << (QStringLiteral("removeCharacter() Query is empty, bug"));
+        qDebug() << (std::stringLiteral("removeCharacter() Query is empty, bug"));
         return false;
     }
     #endif
@@ -602,11 +602,11 @@ bool CharactersGroupForLogin::removeCharacter(void * const client,const uint8_t 
     removeCharacterParam.characterId=characterId;
     removeCharacterParam.client=client;
 
-    const QString &queryText=PreparedDBQueryCommon::db_query_account_time_to_delete_character_by_id.arg(characterId);
+    const std::string &queryText=PreparedDBQueryCommon::db_query_account_time_to_delete_character_by_id.arg(characterId);
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroupForLogin::removeCharacter_static);
     if(callback==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
+        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
         return false;
     }
     else
@@ -633,25 +633,25 @@ void CharactersGroupForLogin::removeCharacter_return(EpollClientLoginSlave * con
 {
     if(!databaseBaseCommon->next())
     {
-        client->removeCharacter_ReturnFailed(query_id,0x02,QStringLiteral("Result return query to remove wrong"));
+        client->removeCharacter_ReturnFailed(query_id,0x02,std::stringLiteral("Result return query to remove wrong"));
         return;
     }
     bool ok;
-    const uint32_t &account_id=QString(databaseBaseCommon->value(0)).toUInt(&ok);
+    const uint32_t &account_id=std::string(databaseBaseCommon->value(0)).toUInt(&ok);
     if(!ok)
     {
-        client->removeCharacter_ReturnFailed(query_id,0x02,QStringLiteral("Account for character: %1 is not an id").arg(databaseBaseCommon->value(0)));
+        client->removeCharacter_ReturnFailed(query_id,0x02,std::stringLiteral("Account for character: %1 is not an id").arg(databaseBaseCommon->value(0)));
         return;
     }
     if(client->account_id!=account_id)
     {
-        client->removeCharacter_ReturnFailed(query_id,0x02,QStringLiteral("Character: %1 is not owned by the account: %2").arg(characterId).arg(account_id));
+        client->removeCharacter_ReturnFailed(query_id,0x02,std::stringLiteral("Character: %1 is not owned by the account: %2").arg(characterId).arg(account_id));
         return;
     }
-    const uint32_t &time_to_delete=QString(databaseBaseCommon->value(1)).toUInt(&ok);
+    const uint32_t &time_to_delete=std::string(databaseBaseCommon->value(1)).toUInt(&ok);
     if(ok && time_to_delete>0)
     {
-        client->removeCharacter_ReturnFailed(query_id,0x02,QStringLiteral("Character: %1 is already in deleting for the account: %2").arg(characterId).arg(account_id));
+        client->removeCharacter_ReturnFailed(query_id,0x02,std::stringLiteral("Character: %1 is already in deleting for the account: %2").arg(characterId).arg(account_id));
         return;
     }
     dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_time_to_delete_by_id.arg(characterId).arg(
@@ -668,12 +668,12 @@ void CharactersGroupForLogin::dbQueryWriteCommon(const char * const queryText)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(queryText==NULL || queryText[0]=='\0')
     {
-        qDebug() << (QStringLiteral("dbQuery() Query is empty, bug"));
+        qDebug() << (std::stringLiteral("dbQuery() Query is empty, bug"));
         return;
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    qDebug() << (QStringLiteral("Do common db write: ")+queryText);
+    qDebug() << (std::stringLiteral("Do common db write: ")+queryText);
     #endif
     databaseBaseCommon->asyncWrite(queryText);
 }

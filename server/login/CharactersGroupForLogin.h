@@ -4,8 +4,8 @@
 #include "../epoll/BaseClassSwitch.h"
 #include "../epoll/db/EpollPostgresql.h"
 #include "EpollClientLoginSlave.h"
-#include <QString>
-#include <QHash>
+#include <std::string>
+#include <std::unordered_map>
 #include <vector>
 
 namespace CatchChallenger {
@@ -18,7 +18,7 @@ public:
 
     struct InternalGameServer
     {
-        QString host;
+        std::string host;
         uint16_t port;
         uint8_t indexOnFlatList;
     };
@@ -37,7 +37,7 @@ public:
         void * client;
         uint8_t query_id;
         uint8_t profileIndex;
-        QString pseudo;
+        std::string pseudo;
         uint8_t skinId;
     };
     QList<AddCharacterParam> addCharacterParamList;
@@ -49,20 +49,20 @@ public:
     };
     QList<RemoveCharacterParam> removeCharacterParamList;
 
-    static QHash<QString,CharactersGroupForLogin *> hash;
+    static std::unordered_map<std::string,CharactersGroupForLogin *> hash;
     static QList<CharactersGroupForLogin *> list;
 
     void deleteCharacterNow(const uint32_t &characterId);
     static void deleteCharacterNow_static(void *object);
     void deleteCharacterNow_object();
     void deleteCharacterNow_return(const uint32_t &characterId);
-    int8_t addCharacter(void * const client,const uint8_t &query_id, const uint8_t &profileIndex, const QString &pseudo, const uint8_t &skinId);
+    int8_t addCharacter(void * const client,const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &skinId);
     static void addCharacterStep1_static(void *object);
     void addCharacterStep1_object();
-    void addCharacterStep1_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const QString &pseudo,const uint8_t &skinId);
+    void addCharacterStep1_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo,const uint8_t &skinId);
     static void addCharacterStep2_static(void *object);
     void addCharacterStep2_object();
-    void addCharacterStep2_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const QString &pseudo,const uint8_t &skinId);
+    void addCharacterStep2_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo,const uint8_t &skinId);
     bool removeCharacter(void * const client,const uint8_t &query_id, const uint32_t &characterId);
     static void removeCharacter_static(void *object);
     void removeCharacter_object();
@@ -89,11 +89,11 @@ private:
     void dbQueryWriteCommon(const char * const queryText);
 private:
     EpollPostgresql *databaseBaseCommon;
-    QHash<uint32_t,InternalGameServer> servers;
+    std::unordered_map<uint32_t,InternalGameServer> servers;
     QList<void * const> clientAddReturnList;
     QList<void * const> clientRemoveReturnList;
     QList<uint32_t> deleteCharacterNowCharacterIdList;
-    QHash<uint32_t,uint8_t> uniqueKeyToIndex;
+    std::unordered_map<uint32_t,uint8_t> uniqueKeyToIndex;
 
     static char tempBuffer[4096];
 };

@@ -72,7 +72,7 @@ bool QtDatabase::syncConnectSqlite(const char * file)
     conn->setDatabaseName(file);
     if(!conn->open())
     {
-        lastErrorMessage=(conn->lastError().driverText()+QString(": ")+conn->lastError().databaseText()).toUtf8().data();
+        lastErrorMessage=(conn->lastError().driverText()+std::string(": ")+conn->lastError().databaseText()).toUtf8().data();
         delete conn;
         conn=NULL;
         return false;
@@ -87,15 +87,15 @@ bool QtDatabase::syncConnectPostgresql(const char * host, const char * dbname, c
         syncDisconnect();
     conn = new QSqlDatabase();
     *conn = QSqlDatabase::addDatabase("QPSQL","server");
-    QString tempString(host);
-    if(tempString!=QStringLiteral("localhost"))
+    std::string tempString(host);
+    if(tempString!=std::stringLiteral("localhost"))
         conn->setHostName(host);
     conn->setDatabaseName(dbname);
     conn->setUserName(user);
     conn->setPassword(password);
     if(!conn->open())
     {
-        lastErrorMessage=(conn->lastError().driverText()+QString(": ")+conn->lastError().databaseText()).toUtf8().data();
+        lastErrorMessage=(conn->lastError().driverText()+std::string(": ")+conn->lastError().databaseText()).toUtf8().data();
         delete conn;
         conn=NULL;
         return false;
@@ -135,7 +135,7 @@ DatabaseBase::CallBack *QtDatabase::asyncRead(const char *query,void * returnObj
             return NULL;
         }
         queue << tempCallback;
-        queriesList << QString::fromUtf8(query);
+        queriesList << std::string::fromUtf8(query);
         return &queue.last();
     }
     emit sendQuery(query,*conn);
@@ -178,8 +178,8 @@ bool QtDatabase::asyncWrite(const char *query)
     QSqlQuery writeQuery(*conn);
     if(!writeQuery.exec(query))
     {
-        lastErrorMessage=(conn->lastError().driverText()+QString(": ")+conn->lastError().databaseText()).toUtf8().data();
-        qDebug() << QString(writeQuery.lastQuery()+": "+writeQuery.lastError().text());
+        lastErrorMessage=(conn->lastError().driverText()+std::string(": ")+conn->lastError().databaseText()).toUtf8().data();
+        qDebug() << std::string(writeQuery.lastQuery()+": "+writeQuery.lastError().text());
         return false;
     }
     return true;
@@ -199,7 +199,7 @@ const char *QtDatabase::errorMessage() const
     if(conn==NULL)
         return lastErrorMessage.toLatin1().constData();
     else
-        return (conn->lastError().driverText()+QString(": ")+conn->lastError().databaseText()).toUtf8().data();
+        return (conn->lastError().driverText()+std::string(": ")+conn->lastError().databaseText()).toUtf8().data();
 }
 
 bool QtDatabase::next()
@@ -221,7 +221,7 @@ const char * QtDatabase::value(const int &value) const
 {
     if(sqlQuery==NULL)
         return emptyString;
-    const QString &string(sqlQuery->value(value).toString());
+    const std::string &string(sqlQuery->value(value).toString());
     valueReturnedData=string.toUtf8();
     valueReturnedData[valueReturnedData.size()]='\0';
     return valueReturnedData.constData();
@@ -239,13 +239,13 @@ QtDatabaseThread::QtDatabaseThread()
     start();
 }
 
-void QtDatabaseThread::receiveQuery(const QString &query,const QSqlDatabase &db)
+void QtDatabaseThread::receiveQuery(const std::string &query,const QSqlDatabase &db)
 {
     QSqlQuery queryReturn(db);
     if(!queryReturn.exec(query))
     {
-        //lastErrorMessage=(db.lastError().driverText()+QString(": ")+db.lastError().databaseText()).toUtf8().data();
-        qDebug() << QString(queryReturn.lastQuery()+": "+queryReturn.lastError().text());
+        //lastErrorMessage=(db.lastError().driverText()+std::string(": ")+db.lastError().databaseText()).toUtf8().data();
+        qDebug() << std::string(queryReturn.lastQuery()+": "+queryReturn.lastError().text());
     }
     emit sendReply(queryReturn);
 }

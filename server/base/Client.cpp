@@ -401,7 +401,7 @@ std::string Client::headerOutput() const
         {
             QCryptographicHash hash(QCryptographicHash::Sha224);
             hash.addData(ip.data(),ip.size());
-            return QString(hash.result().toHex()).toStdString()+": ";
+            return std::string(hash.result().toHex()).toStdString()+": ";
         }
         else
             return ip+": ";

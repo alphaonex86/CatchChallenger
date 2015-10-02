@@ -10,7 +10,7 @@
 #include "../base/BaseServerMasterLoadDictionary.h"
 #include "../base/BaseServerMasterSendDatapack.h"
 
-#include <QSettings>
+#include <std::unordered_settings>
 
 namespace CatchChallenger {
 class EpollServerLoginMaster : public EpollGenericServer, public BaseServerMasterLoadDictionary
@@ -33,7 +33,7 @@ private:
 
     BaseServerMasterSendDatapack baseServerMasterSendDatapack;
 private:
-    void generateToken(QSettings &settings);
+    void generateToken(std::unordered_settings &settings);
 
     void load_account_max_id();
     static void load_account_max_id_static(void *object);
@@ -41,11 +41,11 @@ private:
 
     void loadTheDatapack();
     void loadTheDatapackFileList();
-    void loadLoginSettings(QSettings &settings);
-    void loadDBLoginSettings(QSettings &settings);
-    QStringList loadCharactersGroup(QSettings &settings);
-    void charactersGroupListReply(QStringList &charactersGroupList);
-    void doTheLogicalGroup(QSettings &settings);
+    void loadLoginSettings(std::unordered_settings &settings);
+    void loadDBLoginSettings(std::unordered_settings &settings);
+    std::stringList loadCharactersGroup(std::unordered_settings &settings);
+    void charactersGroupListReply(std::stringList &charactersGroupList);
+    void doTheLogicalGroup(std::unordered_settings &settings);
     void loadTheProfile();
     void SQL_common_load_finish();
 };

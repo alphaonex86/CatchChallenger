@@ -18,7 +18,7 @@ void LinkToMaster::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint
     switch(mainCodeType)
     {
         default:
-            parseNetworkReadError("wrong data before login with mainIdent: "+QString::number(mainCodeType));
+            parseNetworkReadError("wrong data before login with mainIdent: "+std::string::number(mainCodeType));
         break;
     }
 }
@@ -30,7 +30,7 @@ void LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *data,con
     switch(mainCodeType)
     {
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+QString(", file:%1:%2").arg(__FILE__).arg(__LINE__));
+            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType)+std::string(", file:%1:%2").arg(__FILE__).arg(__LINE__));
             return;
         break;
     }
@@ -46,7 +46,7 @@ void LinkToMaster::parseFullMessage(const uint8_t &mainCodeType,const uint8_t &s
         {}
         else
         {
-            parseNetworkReadError("parseFullMessage() not logged to send: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+            parseNetworkReadError("parseFullMessage() not logged to send: "+std::string::number(mainCodeType)+" "+std::string::number(subCodeType));
             return;
         }
     }
@@ -412,9 +412,9 @@ void LinkToMaster::parseFullMessage(const uint8_t &mainCodeType,const uint8_t &s
                     {
                         std::cerr << "C210 remaining data (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                         std::cerr << "Data: "
-                                  << QString(std::vector<char>(rawData,pos).toHex()).toStdString()
+                                  << std::string(std::vector<char>(rawData,pos).toHex()).toStdString()
                                   << " "
-                                  << QString(std::vector<char>(rawData+pos,size-pos).toHex()).toStdString()
+                                  << std::string(std::vector<char>(rawData+pos,size-pos).toHex()).toStdString()
                                   << " "
                                   << __FILE__ << ":" <<__LINE__ << std::endl;
                         abort();
@@ -782,7 +782,7 @@ void LinkToMaster::parseFullMessage(const uint8_t &mainCodeType,const uint8_t &s
                 }
                 break;
                 default:
-                    parseNetworkReadError("unknown sub ident: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                    parseNetworkReadError("unknown sub ident: "+std::string::number(mainCodeType)+" "+std::string::number(subCodeType));
                     return;
                 break;
             }
@@ -794,7 +794,7 @@ void LinkToMaster::parseFullMessage(const uint8_t &mainCodeType,const uint8_t &s
                 /// \todo broadcast to client before the logged step
                 if(size!=EpollClientLoginSlave::serverServerListCurrentPlayerSize)
                 {
-                    parseNetworkReadError("size!=EpollClientLoginSlave::serverServerListCurrentPlayerSize main ident: "+QString::number(mainCodeType)+", sub ident: "+QString::number(subCodeType));
+                    parseNetworkReadError("size!=EpollClientLoginSlave::serverServerListCurrentPlayerSize main ident: "+std::string::number(mainCodeType)+", sub ident: "+std::string::number(subCodeType));
                     return;
                 }
                 /// \warning C20E compressed! can't direct alter!
@@ -831,13 +831,13 @@ void LinkToMaster::parseFullMessage(const uint8_t &mainCodeType,const uint8_t &s
                 }
             return;
             default:
-                parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+", sub ident: "+QString::number(subCodeType)+QString(", file:%1:%2").arg(__FILE__).arg(__LINE__));
+                parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType)+", sub ident: "+std::string::number(subCodeType)+std::string(", file:%1:%2").arg(__FILE__).arg(__LINE__));
                 return;
             break;
         }
         break;
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+QString(", file:%1:%2").arg(__FILE__).arg(__LINE__));
+            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType)+std::string(", file:%1:%2").arg(__FILE__).arg(__LINE__));
             return;
         break;
     }
@@ -855,7 +855,7 @@ void LinkToMaster::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNu
     switch(mainCodeType)
     {
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+QString(", file:%1:%2").arg(__FILE__).arg(__LINE__));
+            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType)+std::string(", file:%1:%2").arg(__FILE__).arg(__LINE__));
             return;
         break;
     }
@@ -869,14 +869,14 @@ void LinkToMaster::parseFullQuery(const uint8_t &mainCodeType,const uint8_t &sub
     (void)size;
     if(stat!=Stat::Logged)
     {
-        parseNetworkReadError(QStringLiteral("is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+        parseNetworkReadError(std::stringLiteral("is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
         return;
     }
     //do the work here
     switch(mainCodeType)
     {
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+QString(", file:%1:%2").arg(__FILE__).arg(__LINE__));
+            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType)+std::string(", file:%1:%2").arg(__FILE__).arg(__LINE__));
             return;
         break;
     }
@@ -894,7 +894,7 @@ void LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
         {}
         else
         {
-            parseNetworkReadError(QStringLiteral("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
+            parseNetworkReadError(std::stringLiteral("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
             return;
         }
     }
@@ -1036,11 +1036,11 @@ void LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
         }
         return;
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+QString(", file:%1:%2").arg(__FILE__).arg(__LINE__));
+            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType)+std::string(", file:%1:%2").arg(__FILE__).arg(__LINE__));
             return;
         break;
     }
-    parseNetworkReadError(QStringLiteral("The server for now not ask anything: %1, %2").arg(mainCodeType).arg(queryNumber));
+    parseNetworkReadError(std::stringLiteral("The server for now not ask anything: %1, %2").arg(mainCodeType).arg(queryNumber));
     return;
 }
 
@@ -1049,7 +1049,7 @@ void LinkToMaster::parseFullReplyData(const uint8_t &mainCodeType,const uint8_t 
     queryNumberList.push_back(queryNumber);
     if(stat!=Stat::Logged)
     {
-        parseNetworkReadError(QStringLiteral("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
+        parseNetworkReadError(std::stringLiteral("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
         return;
     }
     (void)data;
@@ -1076,7 +1076,7 @@ void LinkToMaster::parseFullReplyData(const uint8_t &mainCodeType,const uint8_t 
                                         if(static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)->stat!=EpollClientLoginSlave::EpollClientLoginStat::CharacterSelecting)
                                         {
                                             static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
-                                            ->parseNetworkReadError("client in wrong state main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+", reply size for 0207 wrong");
+                                            ->parseNetworkReadError("client in wrong state main ident: "+std::string::number(mainCodeType)+", with sub ident:"+std::string::number(subCodeType)+", reply size for 0207 wrong");
                                             return;
                                         }
                                         //check again if the game server is not disconnected, don't check charactersGroupIndex because previously checked at EpollClientLoginSlave::selectCharacter()
@@ -1085,7 +1085,7 @@ void LinkToMaster::parseFullReplyData(const uint8_t &mainCodeType,const uint8_t 
                                         if(!CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
                                         {
                                             static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
-                                            ->parseNetworkReadError("client server not found to proxy it main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+", reply size for 0207 wrong");
+                                            ->parseNetworkReadError("client server not found to proxy it main ident: "+std::string::number(mainCodeType)+", with sub ident:"+std::string::number(subCodeType)+", reply size for 0207 wrong");
                                             return;
                                         }
                                         const CharactersGroupForLogin::InternalGameServer &server=CharactersGroupForLogin::list.at(charactersGroupIndex)->getServerInformation(serverUniqueKey);
@@ -1114,7 +1114,7 @@ void LinkToMaster::parseFullReplyData(const uint8_t &mainCodeType,const uint8_t 
                                         else
                                         {
                                             static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
-                                            ->parseNetworkReadError(QStringLiteral("not able to connect on the game server as proxy, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
+                                            ->parseNetworkReadError(std::stringLiteral("not able to connect on the game server as proxy, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
                                             return;
                                         }
                                     }
@@ -1140,7 +1140,7 @@ void LinkToMaster::parseFullReplyData(const uint8_t &mainCodeType,const uint8_t 
                                 }
                             }
                             else
-                                parseNetworkReadError("main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+", reply size for 0207 wrong");
+                                parseNetworkReadError("main ident: "+std::string::number(mainCodeType)+", with sub ident:"+std::string::number(subCodeType)+", reply size for 0207 wrong");
                         }
                         selectCharacterClients.remove(queryNumber);
                     }
@@ -1149,20 +1149,20 @@ void LinkToMaster::parseFullReplyData(const uint8_t &mainCodeType,const uint8_t 
                 }
                 return;
                 default:
-                    parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+QString(", file:%1:%2").arg(__FILE__).arg(__LINE__));
+                    parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType)+", with sub ident:"+std::string::number(subCodeType)+std::string(", file:%1:%2").arg(__FILE__).arg(__LINE__));
                     return;
                 break;
             }
         break;
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+QString(", file:%1:%2").arg(__FILE__).arg(__LINE__));
+            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType)+std::string(", file:%1:%2").arg(__FILE__).arg(__LINE__));
             return;
         break;
     }
-    parseNetworkReadError(QStringLiteral("The server for now not ask anything: %1 %2, %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+    parseNetworkReadError(std::stringLiteral("The server for now not ask anything: %1 %2, %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
 }
 
-void LinkToMaster::parseNetworkReadError(const QString &errorString)
+void LinkToMaster::parseNetworkReadError(const std::string &errorString)
 {
     errorParsingLayer(errorString);
 }

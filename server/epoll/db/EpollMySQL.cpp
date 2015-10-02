@@ -172,11 +172,11 @@ CatchChallenger::DatabaseBase::CallBack * EpollMySQL::asyncRead(const char * con
             return NULL;
         }
         queue << tempCallback;
-        queriesList << QString::fromUtf8(query);
+        queriesList << std::string::fromUtf8(query);
         return &queue.last();
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    queriesList << QString::fromUtf8(query);
+    queriesList << std::string::fromUtf8(query);
     #endif
     const int &stringlen=strlen(query);
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -206,11 +206,11 @@ bool EpollMySQL::asyncWrite(const char * const query)
     if(queue.size()>0 || result!=NULL)
     {
         queue << emptyCallback;
-        queriesList << QString::fromUtf8(query);
+        queriesList << std::string::fromUtf8(query);
         return true;
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    queriesList << QString::fromUtf8(query);
+    queriesList << std::string::fromUtf8(query);
     #endif
     const int &query_id=mysql_send_query(conn,query,strlen(query));
     if(query_id==0)
@@ -297,7 +297,7 @@ bool EpollMySQL::epollEvent(const uint32_t &events)
 
 const char * EpollMySQL::errorMessage() const
 {
-    return QString("%1, errno: %2").arg(mysql_error(conn)).arg(mysql_errno(conn)).toUtf8();
+    return std::string("%1, errno: %2").arg(mysql_error(conn)).arg(mysql_errno(conn)).toUtf8();
 }
 
 bool EpollMySQL::next()

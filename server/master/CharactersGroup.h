@@ -3,39 +3,39 @@
 
 #include "../epoll/BaseClassSwitch.h"
 #include "../epoll/db/EpollPostgresql.h"
-#include <QString>
-#include <QHash>
-#include <QSet>
+#include <std::string>
+#include <std::unordered_map>
+#include <std::unordered_set>
 
 namespace CatchChallenger {
 class CharactersGroup : public BaseClassSwitch
 {
 public:
-    explicit CharactersGroup(const char * const db, const char * const host, const char * const login, const char * const pass, const uint8_t &considerDownAfterNumberOfTry, const uint8_t &tryInterval, const QString &name);
+    explicit CharactersGroup(const char * const db, const char * const host, const char * const login, const char * const pass, const uint8_t &considerDownAfterNumberOfTry, const uint8_t &tryInterval, const std::string &name);
     ~CharactersGroup();
 
     struct InternalGameServer
     {
-        QString host;
+        std::string host;
         uint16_t port;
         void * link;
 
         //stored into EpollClientLoginMaster
         //CharactersGroup * charactersGroup;
         uint32_t uniqueKey;
-        QString metaData;
+        std::string metaData;
         uint32_t logicalGroupIndex;
 
         uint16_t currentPlayer;
         uint16_t maxPlayer;
 
-        QSet<uint32_t> lockedAccount;
+        std::unordered_set<uint32_t> lockedAccount;
     };
 
     BaseClassSwitch::EpollObjectType getType() const;
-    InternalGameServer * addGameServerUniqueKey(void * const link, const uint32_t &uniqueKey, const QString &host, const uint16_t &port,
-                                const QString &metaData, const uint32_t &logicalGroupIndex,
-                                const uint16_t &currentPlayer, const uint16_t &maxPlayer, const QSet<uint32_t> &lockedAccount);
+    InternalGameServer * addGameServerUniqueKey(void * const link, const uint32_t &uniqueKey, const std::string &host, const uint16_t &port,
+                                const std::string &metaData, const uint32_t &logicalGroupIndex,
+                                const uint16_t &currentPlayer, const uint16_t &maxPlayer, const std::unordered_set<uint32_t> &lockedAccount);
     void removeGameServerUniqueKey(void * const link);
     bool containsGameServerUniqueKey(const uint32_t &serverUniqueKey) const;
     bool characterIsLocked(const uint32_t &characterId);
@@ -51,13 +51,13 @@ public:
     uint32_t maxCharacterId;
     uint32_t maxMonsterId;
 
-    QHash<uint32_t/*serverUniqueKey*/,InternalGameServer> gameServers;
-    QHash<void * const,uint32_t/*serverUniqueKey*/> gameServersLinkToUniqueKey;
+    std::unordered_map<uint32_t/*serverUniqueKey*/,InternalGameServer> gameServers;
+    std::unordered_map<void * const,uint32_t/*serverUniqueKey*/> gameServersLinkToUniqueKey;
 
     static int serverWaitedToBeReady;
-    static QHash<QString,CharactersGroup *> hash;
+    static std::unordered_map<std::string,CharactersGroup *> hash;
     static QList<CharactersGroup *> list;
-    QString name;
+    std::string name;
     uint8_t index;
 private:
     void load_character_max_id();
@@ -72,8 +72,8 @@ private:
 
 private:
     EpollPostgresql *databaseBaseCommon;
-    QHash<uint32_t/*uniqueKey*/,uint64_t/*can reconnect after this time stamps if !=0, else locked*/> lockedAccount;
-    QHash<uint32_t/*uniqueKey*/,QSet<uint32_t/*lockedAccount*/> > lockedAccountByDisconnectedServer;
+    std::unordered_map<uint32_t/*uniqueKey*/,uint64_t/*can reconnect after this time stamps if !=0, else locked*/> lockedAccount;
+    std::unordered_map<uint32_t/*uniqueKey*/,std::unordered_set<uint32_t/*lockedAccount*/> > lockedAccountByDisconnectedServer;
 };
 }
 

@@ -43,7 +43,7 @@ void EpollClientLoginSlave::doDDOSCompute()
             }
             if(movePacketKick[index]>CATCHCHALLENGER_DDOS_KICKLIMITMOVE*2)
             {
-                parseNetworkReadError(QString("index out of range in array for index %1, movePacketKick").arg(movePacketKick[index]));
+                parseNetworkReadError(std::string("index out of range in array for index %1, movePacketKick").arg(movePacketKick[index]));
                 return;
             }
             #endif
@@ -175,7 +175,7 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                         if(size!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
                         {
                             parseNetworkReadError(
-                                        QStringLiteral("Not correct number of byte to generate the token: size!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT: %1!=%2")
+                                        std::stringLiteral("Not correct number of byte to generate the token: size!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT: %1!=%2")
                                         .arg(size)
                                         .arg(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
                                                   );
@@ -213,7 +213,7 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                 BaseServerLogin::tokenForAuthSize++;
                 stat=EpollClientLoginStat::ProtocolGood;
                 #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-                normalOutput(QStringLiteral("Protocol sended and replied"));
+                normalOutput(std::stringLiteral("Protocol sended and replied"));
                 #endif
             }
             else
@@ -287,7 +287,7 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
             }
         break;
         default:
-            parseNetworkReadError("wrong data before login with mainIdent: "+QString::number(mainCodeType));
+            parseNetworkReadError("wrong data before login with mainIdent: "+std::string::number(mainCodeType));
         break;
     }
 }
@@ -296,7 +296,7 @@ void EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType, const char
 {
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {
-        parseNetworkReadError("main ident while game server connecting: "+QString::number(mainCodeType));
+        parseNetworkReadError("main ident while game server connecting: "+std::string::number(mainCodeType));
         return;
     }
     switch(mainCodeType)
@@ -335,7 +335,7 @@ void EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType, const char
         }
         else
         {
-            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::string::number(mainCodeType));
             return;
         }
     }
@@ -344,7 +344,7 @@ void EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType, const char
     switch(mainCodeType)
     {
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType));
             return;
         break;
     }
@@ -354,7 +354,7 @@ void EpollClientLoginSlave::parseFullMessage(const uint8_t &mainCodeType,const u
 {
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {
-        parseNetworkReadError("main ident while game server connecting: "+QString::number(mainCodeType));
+        parseNetworkReadError("main ident while game server connecting: "+std::string::number(mainCodeType));
         return;
     }
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
@@ -372,7 +372,7 @@ void EpollClientLoginSlave::parseFullMessage(const uint8_t &mainCodeType,const u
         }
         else
         {
-            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::string::number(mainCodeType));
             return;
         }
     }
@@ -382,7 +382,7 @@ void EpollClientLoginSlave::parseFullMessage(const uint8_t &mainCodeType,const u
     switch(mainCodeType)
     {
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType));
             return;
         break;
     }
@@ -402,7 +402,7 @@ void EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
     {
         if(stat==EpollClientLoginStat::GameServerConnecting)
         {
-            parseNetworkReadError("main ident while game server connecting: "+QString::number(mainCodeType));
+            parseNetworkReadError("main ident while game server connecting: "+std::string::number(mainCodeType));
             return;
         }
         if(stat==EpollClientLoginStat::GameServerConnected)
@@ -410,7 +410,7 @@ void EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
             if(Q_LIKELY(linkToGameServer))
                 linkToGameServer->packOutcommingQuery(mainCodeType,queryNumber,data,size);
             else
-                parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+QString::number(mainCodeType));
+                parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::string::number(mainCodeType));
             return;
         }
         parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
@@ -419,7 +419,7 @@ void EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
     switch(mainCodeType)
     {
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType));
             return;
         break;
     }
@@ -433,7 +433,7 @@ void EpollClientLoginSlave::parseFullQuery(const uint8_t &mainCodeType,const uin
     (void)size;
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {
-        parseNetworkReadError("main ident while game server connecting: "+QString::number(mainCodeType));
+        parseNetworkReadError("main ident while game server connecting: "+std::string::number(mainCodeType));
         return;
     }
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
@@ -451,18 +451,18 @@ void EpollClientLoginSlave::parseFullQuery(const uint8_t &mainCodeType,const uin
         }
         else
         {
-            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::string::number(mainCodeType));
             return;
         }
     }
     if(account_id==0)
     {
-        parseNetworkReadError(QStringLiteral("is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+        parseNetworkReadError(std::stringLiteral("is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
         return;
     }
     if(stat!=Logged)
     {
-        parseNetworkReadError("client in wrong state main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+", for parseFullQuery");
+        parseNetworkReadError("client in wrong state main ident: "+std::string::number(mainCodeType)+", with sub ident:"+std::string::number(subCodeType)+", for parseFullQuery");
         return;
     }
     //do the work here
@@ -477,13 +477,13 @@ void EpollClientLoginSlave::parseFullQuery(const uint8_t &mainCodeType,const uin
                 int cursor=0;
                 uint8_t charactersGroupIndex;
                 uint8_t profileIndex;
-                QString pseudo;
+                std::string pseudo;
                 uint8_t skinId;
                 uint8_t pseudoSize;
                 {
                     if((size-cursor)<(int)sizeof(uint8_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(std::vector<char>(rawData,size).toHex())));
+                        parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(std::vector<char>(rawData,size).toHex())));
                         return;
                     }
                     charactersGroupIndex=rawData[cursor];
@@ -492,7 +492,7 @@ void EpollClientLoginSlave::parseFullQuery(const uint8_t &mainCodeType,const uin
                 {
                     if((size-cursor)<(int)sizeof(uint8_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(std::vector<char>(rawData,size).toHex())));
+                        parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(std::vector<char>(rawData,size).toHex())));
                         return;
                     }
                     profileIndex=rawData[cursor];
@@ -501,23 +501,23 @@ void EpollClientLoginSlave::parseFullQuery(const uint8_t &mainCodeType,const uin
                 {
                     if((size-cursor)<(int)sizeof(uint8_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(std::vector<char>(rawData,size).toHex())));
+                        parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(std::vector<char>(rawData,size).toHex())));
                         return;
                     }
                     pseudoSize=rawData[cursor];
                     cursor+=1;
                     if((size-cursor)<(int)pseudoSize)
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(std::vector<char>(rawData,size).toHex())));
+                        parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(std::vector<char>(rawData,size).toHex())));
                         return;
                     }
-                    pseudo=QString::fromUtf8(rawData+cursor,pseudoSize);
+                    pseudo=std::string::fromUtf8(rawData+cursor,pseudoSize);
                     cursor+=pseudoSize;
                 }
                 {
                     if((size-cursor)<(int)sizeof(uint8_t))
                     {
-                        parseNetworkReadError(QStringLiteral("error to get skin with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(std::vector<char>(rawData,size).toHex())));
+                        parseNetworkReadError(std::stringLiteral("error to get skin with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(std::vector<char>(rawData,size).toHex())));
                         return;
                     }
                     skinId=rawData[cursor];
@@ -526,7 +526,7 @@ void EpollClientLoginSlave::parseFullQuery(const uint8_t &mainCodeType,const uin
                 addCharacter(queryNumber,charactersGroupIndex,profileIndex,pseudo,skinId);
                 if((size-cursor)!=0)
                 {
-                    parseNetworkReadError(QStringLiteral("remaining data: parseQuery(%1,%2,%3)")
+                    parseNetworkReadError(std::stringLiteral("remaining data: parseQuery(%1,%2,%3)")
                                .arg(mainCodeType)
                                .arg(subCodeType)
                                .arg(queryNumber)
@@ -542,7 +542,7 @@ void EpollClientLoginSlave::parseFullQuery(const uint8_t &mainCodeType,const uin
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(size!=((int)sizeof(uint32_t)+(int)sizeof(uint8_t)))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(std::vector<char>(rawData,size).toHex())));
+                    parseNetworkReadError(std::stringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(std::string(std::vector<char>(rawData,size).toHex())));
                     return;
                 }
                 #endif
@@ -562,13 +562,13 @@ void EpollClientLoginSlave::parseFullQuery(const uint8_t &mainCodeType,const uin
             }
             break;
             default:
-                parseNetworkReadError(QStringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                parseNetworkReadError(std::stringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                 return;
             break;
         }
         break;
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+std::string::number(mainCodeType));
             return;
         break;
     }
@@ -579,7 +579,7 @@ void EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
 {
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {
-        parseNetworkReadError("main ident while game server connecting: "+QString::number(mainCodeType));
+        parseNetworkReadError("main ident while game server connecting: "+std::string::number(mainCodeType));
         return;
     }
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
@@ -597,14 +597,14 @@ void EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
         }
         else
         {
-            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::string::number(mainCodeType));
             return;
         }
     }
     //queryNumberList << queryNumber;
     Q_UNUSED(data);
     Q_UNUSED(size);
-    parseNetworkReadError(QStringLiteral("The server for now not ask anything: %1, %2").arg(mainCodeType).arg(queryNumber));
+    parseNetworkReadError(std::stringLiteral("The server for now not ask anything: %1, %2").arg(mainCodeType).arg(queryNumber));
     return;
 }
 
@@ -612,7 +612,7 @@ void EpollClientLoginSlave::parseFullReplyData(const uint8_t &mainCodeType,const
 {
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {
-        parseNetworkReadError("main ident while game server connecting: "+QString::number(mainCodeType));
+        parseNetworkReadError("main ident while game server connecting: "+std::string::number(mainCodeType));
         return;
     }
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
@@ -630,7 +630,7 @@ void EpollClientLoginSlave::parseFullReplyData(const uint8_t &mainCodeType,const
         }
         else
         {
-            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::string::number(mainCodeType));
             return;
         }
     }
@@ -638,10 +638,10 @@ void EpollClientLoginSlave::parseFullReplyData(const uint8_t &mainCodeType,const
     (void)size;
     //queryNumberList << queryNumber;
     Q_UNUSED(data);
-    parseNetworkReadError(QStringLiteral("The server for now not ask anything: %1 %2, %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+    parseNetworkReadError(std::stringLiteral("The server for now not ask anything: %1 %2, %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
 }
 
-void EpollClientLoginSlave::parseNetworkReadError(const QString &errorString)
+void EpollClientLoginSlave::parseNetworkReadError(const std::string &errorString)
 {
     errorParsingLayer(errorString);
 }

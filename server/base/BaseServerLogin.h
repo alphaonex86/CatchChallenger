@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_BASESERVERLOGIN_H
 
 #include <QList>
-#include <QRegularExpression>
+#include <std::regex>
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../VariableServer.h"

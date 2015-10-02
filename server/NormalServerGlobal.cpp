@@ -5,7 +5,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QFileInfoList>
-#include <QRegularExpression>
+#include <std::regex>
 
 #include <random>
 
@@ -13,18 +13,18 @@ NormalServerGlobal::NormalServerGlobal()
 {
 }
 
-void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const QString &datapack_basePath)
+void NormalServerGlobal::checkSettingsFile(std::unordered_settings * const settings,const std::string &datapack_basePath)
 {
     #if defined(Q_CC_GNU)
-        qDebug() << QStringLiteral("GCC %1.%2.%3 build: ").arg(__GNUC__).arg(__GNUC_MINOR__).arg(__GNUC_PATCHLEVEL__)+__DATE__+" "+__TIME__;
+        qDebug() << std::stringLiteral("GCC %1.%2.%3 build: ").arg(__GNUC__).arg(__GNUC_MINOR__).arg(__GNUC_PATCHLEVEL__)+__DATE__+" "+__TIME__;
     #else
         #if defined(__DATE__) && defined(__TIME__)
-            qDebug() << QStringLiteral("Unknow compiler: ")+__DATE__+" "+__TIME__;
+            qDebug() << std::stringLiteral("Unknow compiler: ")+__DATE__+" "+__TIME__;
         #else
-            qDebug() << QStringLiteral("Unknow compiler");
+            qDebug() << std::stringLiteral("Unknow compiler");
         #endif
     #endif
-    qDebug() << QStringLiteral("Qt version: %1 (%2)").arg(qVersion()).arg(QT_VERSION);
+    qDebug() << std::stringLiteral("Qt version: %1 (%2)").arg(qVersion()).arg(QT_VERSION);
 
     if(!settings->contains(QLatin1Literal("max-players")))
         settings->setValue(QLatin1Literal("max-players"),200);
@@ -51,7 +51,7 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const QStr
         settings->setValue(QLatin1Literal("maxWarehousePlayerItems"),150);
     #endif
     if(!settings->contains(QLatin1Literal("server-ip")))
-        settings->setValue(QLatin1Literal("server-ip"),QString());
+        settings->setValue(QLatin1Literal("server-ip"),std::string());
     if(!settings->contains(QLatin1Literal("pvp")))
         settings->setValue(QLatin1Literal("pvp"),true);
     if(!settings->contains(QLatin1Literal("useSP")))
@@ -71,9 +71,9 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const QStr
     if(!settings->contains(QLatin1Literal("anonymous")))
         settings->setValue(QLatin1Literal("anonymous"),false);
     if(!settings->contains(QLatin1Literal("server_message")))
-        settings->setValue(QLatin1Literal("server_message"),QString());
+        settings->setValue(QLatin1Literal("server_message"),std::string());
     if(!settings->contains(QLatin1Literal("proxy")))
-        settings->setValue(QLatin1Literal("proxy"),QString());
+        settings->setValue(QLatin1Literal("proxy"),std::string());
     if(!settings->contains(QLatin1Literal("proxy_port")))
         settings->setValue(QLatin1Literal("proxy_port"),9050);
     if(!settings->contains(QLatin1Literal("forcedSpeed")))
@@ -85,7 +85,7 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const QStr
     if(!settings->contains(QLatin1Literal("forceClientToSendAtMapChange")))
         settings->setValue(QLatin1Literal("forceClientToSendAtMapChange"),true);
     if(!settings->contains(QLatin1Literal("httpDatapackMirror")))
-        settings->setValue(QLatin1Literal("httpDatapackMirror"),QString());
+        settings->setValue(QLatin1Literal("httpDatapackMirror"),std::string());
     if(!settings->contains(QLatin1Literal("datapackCache")))
         settings->setValue(QLatin1Literal("datapackCache"),-1);
     if(!settings->contains(QLatin1Literal("plantOnlyVisibleByPlayer")))
@@ -102,24 +102,24 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const QStr
     #endif
     if(!settings->contains(QLatin1Literal("mainDatapackCode")))
     {
-        settings->setValue(QLatin1Literal("mainDatapackCode"),QString());
-        QDir dir(datapack_basePath+QStringLiteral("map/main/"));
-        const QFileInfoList &fileInfoList=dir.entryInfoList(QStringList(),QDir::AllDirs|QDir::NoDot|QDir::NoDotDot);
+        settings->setValue(QLatin1Literal("mainDatapackCode"),std::string());
+        QDir dir(datapack_basePath+std::stringLiteral("map/main/"));
+        const QFileInfoList &fileInfoList=dir.entryInfoList(std::stringList(),QDir::AllDirs|QDir::NoDot|QDir::NoDotDot);
         if(fileInfoList.size()==1)
         {
             QFileInfo folder=fileInfoList.first();
-            const QString &string=folder.fileName();
-            if(string.contains(QRegularExpression("^[a-z0-9\\- _]+$")))
+            const std::string &string=folder.fileName();
+            if(string.contains(std::regex("^[a-z0-9\\- _]+$")))
                 settings->setValue(QLatin1Literal("mainDatapackCode"),string);
         }
     }
     if(!settings->contains(QLatin1Literal("subDatapackCode")))
-        settings->setValue(QLatin1Literal("subDatapackCode"),QString());
+        settings->setValue(QLatin1Literal("subDatapackCode"),std::string());
 
     if(!settings->contains(QLatin1Literal("exportedXml")))
-        settings->setValue(QLatin1Literal("exportedXml"),QString());
+        settings->setValue(QLatin1Literal("exportedXml"),std::string());
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    settings->beginGroup(QStringLiteral("master"));
+    settings->beginGroup(std::stringLiteral("master"));
     if(!settings->contains(QLatin1Literal("external-server-ip")))
         settings->setValue(QLatin1Literal("external-server-ip"),settings->value(QLatin1Literal("server-ip")).toString());
     if(!settings->contains(QLatin1Literal("external-server-port")))
@@ -130,21 +130,21 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const QStr
         if(!settings->contains(QLatin1Literal("uniqueKey")))
             settings->setValue(QLatin1Literal("uniqueKey"),static_cast<unsigned int>(rng()));
         if(!settings->contains(QLatin1Literal("charactersGroup")))
-            settings->setValue(QLatin1Literal("charactersGroup"),QStringLiteral("PutHereTheInfoLike-%1").arg(rng()));
+            settings->setValue(QLatin1Literal("charactersGroup"),std::stringLiteral("PutHereTheInfoLike-%1").arg(rng()));
     }
     if(!settings->contains(QLatin1Literal("logicalGroup")))
-        settings->setValue(QLatin1Literal("logicalGroup"),QString());
+        settings->setValue(QLatin1Literal("logicalGroup"),std::string());
 
-    if(!settings->contains(QStringLiteral("host")))
-        settings->setValue(QStringLiteral("host"),QStringLiteral("localhost"));
-    if(!settings->contains(QStringLiteral("port")))
-        settings->setValue(QStringLiteral("port"),9999);
-    if(!settings->contains(QStringLiteral("considerDownAfterNumberOfTry")))
-        settings->setValue(QStringLiteral("considerDownAfterNumberOfTry"),3);
-    if(!settings->contains(QStringLiteral("tryInterval")))
-        settings->setValue(QStringLiteral("tryInterval"),5);
-    if(!settings->contains(QStringLiteral("token")))
-        settings->setValue(QStringLiteral("token"),QString());
+    if(!settings->contains(std::stringLiteral("host")))
+        settings->setValue(std::stringLiteral("host"),std::stringLiteral("localhost"));
+    if(!settings->contains(std::stringLiteral("port")))
+        settings->setValue(std::stringLiteral("port"),9999);
+    if(!settings->contains(std::stringLiteral("considerDownAfterNumberOfTry")))
+        settings->setValue(std::stringLiteral("considerDownAfterNumberOfTry"),3);
+    if(!settings->contains(std::stringLiteral("tryInterval")))
+        settings->setValue(std::stringLiteral("tryInterval"),5);
+    if(!settings->contains(std::stringLiteral("token")))
+        settings->setValue(std::stringLiteral("token"),std::string());
     settings->endGroup();
     #endif
 

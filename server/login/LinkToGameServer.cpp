@@ -211,13 +211,13 @@ void LinkToGameServer::disconnectClient()
 }
 
 //input/ouput layer
-void LinkToGameServer::errorParsingLayer(const QString &error)
+void LinkToGameServer::errorParsingLayer(const std::string &error)
 {
     std::cerr << error.toLocal8Bit().constData() << std::endl;
     disconnectClient();
 }
 
-void LinkToGameServer::messageParsingLayer(const QString &message) const
+void LinkToGameServer::messageParsingLayer(const std::string &message) const
 {
     std::cout << message.toLocal8Bit().constData() << std::endl;
 }

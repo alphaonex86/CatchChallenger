@@ -76,7 +76,7 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
             {
                 if(!protocolParsingCheck->parseIncommingDataRaw(data,size,cursor))
                 {
-                    std::cerr << "Bug at data-sending: " << QString(std::vector<char>(data,size).toHex()).toStdString() << std::endl;
+                    std::cerr << "Bug at data-sending: " << std::string(std::vector<char>(data,size).toHex()).toStdString() << std::endl;
                     abort();
                 }
                 if(!protocolParsingCheck->valid)

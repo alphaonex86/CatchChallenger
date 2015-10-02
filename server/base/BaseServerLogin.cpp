@@ -7,7 +7,7 @@
 
 #include <QDebug>
 #include <QCryptographicHash>
-#include <QRegularExpression>
+#include <std::regex>
 #include <iostream>
 
 using namespace CatchChallenger;

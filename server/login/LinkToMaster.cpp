@@ -255,13 +255,13 @@ void LinkToMaster::disconnectClient()
 }
 
 //input/ouput layer
-void LinkToMaster::errorParsingLayer(const QString &error)
+void LinkToMaster::errorParsingLayer(const std::string &error)
 {
     std::cerr << error.toLocal8Bit().constData() << std::endl;
     disconnectClient();
 }
 
-void LinkToMaster::messageParsingLayer(const QString &message) const
+void LinkToMaster::messageParsingLayer(const std::string &message) const
 {
     std::cout << message.toLocal8Bit().constData() << std::endl;
 }

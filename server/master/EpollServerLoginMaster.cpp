@@ -10,7 +10,7 @@ using namespace CatchChallenger;
 #include <QFile>
 #include <std::vector<char>>
 #include <QCryptographicHash>
-#include <QRegularExpression>
+#include <std::regex>
 
 #include <stdio.h>      /* printf, scanf, puts, NULL */
 #include <stdlib.h>     /* srand, rand */
@@ -54,13 +54,13 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
         memset(rawServerListForC211,0x00,sizeof(EpollClientLoginMaster::loginSettingsAndCharactersGroup));
     }
 
-    QSettings settings("master.conf",QSettings::IniFormat);
+    std::unordered_settings settings("master.conf",std::unordered_settings::IniFormat);
 
     srand(time(NULL));
 
     loadLoginSettings(settings);
     loadDBLoginSettings(settings);
-    QStringList charactersGroupList=loadCharactersGroup(settings);
+    std::stringList charactersGroupList=loadCharactersGroup(settings);
     charactersGroupListReply(charactersGroupList);
     loadTheDatapack();
     doTheLogicalGroup(settings);
@@ -161,7 +161,7 @@ EpollServerLoginMaster::~EpollServerLoginMaster()
         rawServerListForC211=NULL;
         rawServerListForC211Size=0;
     }
-    QHash<QString,CharactersGroup *>::const_iterator i = CharactersGroup::hash.constBegin();
+    std::unordered_map<std::string,CharactersGroup *>::const_iterator i = CharactersGroup::hash.constBegin();
     while (i != CharactersGroup::hash.constEnd()) {
         delete i.value();
         ++i;
@@ -169,69 +169,69 @@ EpollServerLoginMaster::~EpollServerLoginMaster()
     CharactersGroup::hash.clear();
 }
 
-void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
+void EpollServerLoginMaster::loadLoginSettings(std::unordered_settings &settings)
 {
-    if(!settings.contains(QStringLiteral("ip")))
-        settings.setValue(QStringLiteral("ip"),QString());
-    const QString &server_ip_string=settings.value(QStringLiteral("ip")).toString();
+    if(!settings.contains(std::stringLiteral("ip")))
+        settings.setValue(std::stringLiteral("ip"),std::string());
+    const std::string &server_ip_string=settings.value(std::stringLiteral("ip")).toString();
     const std::vector<char> &server_ip_data=server_ip_string.toLocal8Bit();
     if(!server_ip_string.isEmpty())
     {
         server_ip=new char[server_ip_data.size()+1];
         strcpy(server_ip,server_ip_data.constData());
     }
-    if(!settings.contains(QStringLiteral("port")))
-        settings.setValue(QStringLiteral("port"),rand()%40000+10000);
-    const std::vector<char> &server_port_data=settings.value(QStringLiteral("port")).toString().toLocal8Bit();
+    if(!settings.contains(std::stringLiteral("port")))
+        settings.setValue(std::stringLiteral("port"),rand()%40000+10000);
+    const std::vector<char> &server_port_data=settings.value(std::stringLiteral("port")).toString().toLocal8Bit();
     server_port=new char[server_port_data.size()+1];
     strcpy(server_port,server_port_data.constData());
-    if(!settings.contains(QStringLiteral("token")))
+    if(!settings.contains(std::stringLiteral("token")))
         generateToken(settings);
-    QString token=settings.value(QStringLiteral("token")).toString();
+    std::string token=settings.value(std::stringLiteral("token")).toString();
     if(token.size()!=(TOKEN_SIZE_FOR_MASTERAUTH*2))
         generateToken(settings);
-    token=settings.value(QStringLiteral("token")).toString();
+    token=settings.value(std::stringLiteral("token")).toString();
     memcpy(EpollClientLoginMaster::private_token,std::vector<char>::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
 
     //connection
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    if(!settings.contains(QStringLiteral("compression")))
-        settings.setValue(QStringLiteral("compression"),QStringLiteral("zlib"));
-    if(settings.value(QStringLiteral("compression")).toString()==QStringLiteral("none"))
+    if(!settings.contains(std::stringLiteral("compression")))
+        settings.setValue(std::stringLiteral("compression"),std::stringLiteral("zlib"));
+    if(settings.value(std::stringLiteral("compression")).toString()==std::stringLiteral("none"))
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::None;
-    else if(settings.value(QStringLiteral("compression")).toString()==QStringLiteral("xz"))
+    else if(settings.value(std::stringLiteral("compression")).toString()==std::stringLiteral("xz"))
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Xz;
-    else if(settings.value(QStringLiteral("compression")).toString()==QStringLiteral("lz4"))
+    else if(settings.value(std::stringLiteral("compression")).toString()==std::stringLiteral("lz4"))
             ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Lz4;
     else
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Zlib;
-    ProtocolParsing::compressionLevel          = settings.value(QStringLiteral("compressionLevel")).toUInt();
+    ProtocolParsing::compressionLevel          = settings.value(std::stringLiteral("compressionLevel")).toUInt();
     #endif
-    if(!settings.contains(QStringLiteral("automatic_account_creation")))
-        settings.setValue(QStringLiteral("automatic_account_creation"),false);
-    if(!settings.contains(QStringLiteral("character_delete_time")))
-        settings.setValue(QStringLiteral("character_delete_time"),604800);
-    if(!settings.contains(QStringLiteral("max_pseudo_size")))
-        settings.setValue(QStringLiteral("max_pseudo_size"),20);
-    if(!settings.contains(QStringLiteral("max_character")))
-        settings.setValue(QStringLiteral("max_character"),3);
-    if(!settings.contains(QStringLiteral("min_character")))
-        settings.setValue(QStringLiteral("min_character"),1);
-    CommonSettingsCommon::commonSettingsCommon.automatic_account_creation=settings.value(QStringLiteral("automatic_account_creation")).toBool();
+    if(!settings.contains(std::stringLiteral("automatic_account_creation")))
+        settings.setValue(std::stringLiteral("automatic_account_creation"),false);
+    if(!settings.contains(std::stringLiteral("character_delete_time")))
+        settings.setValue(std::stringLiteral("character_delete_time"),604800);
+    if(!settings.contains(std::stringLiteral("max_pseudo_size")))
+        settings.setValue(std::stringLiteral("max_pseudo_size"),20);
+    if(!settings.contains(std::stringLiteral("max_character")))
+        settings.setValue(std::stringLiteral("max_character"),3);
+    if(!settings.contains(std::stringLiteral("min_character")))
+        settings.setValue(std::stringLiteral("min_character"),1);
+    CommonSettingsCommon::commonSettingsCommon.automatic_account_creation=settings.value(std::stringLiteral("automatic_account_creation")).toBool();
     bool ok;
-    CommonSettingsCommon::commonSettingsCommon.character_delete_time=settings.value(QStringLiteral("character_delete_time")).toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.character_delete_time=settings.value(std::stringLiteral("character_delete_time")).toUInt(&ok);
     if(CommonSettingsCommon::commonSettingsCommon.character_delete_time==0 || !ok)
     {
         std::cerr << "character_delete_time==0 (abort)" << std::endl;
         abort();
     }
-    CommonSettingsCommon::commonSettingsCommon.min_character=settings.value(QStringLiteral("min_character")).toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.min_character=settings.value(std::stringLiteral("min_character")).toUInt(&ok);
     if(!ok)
     {
         std::cerr << "CommonSettingsCommon::commonSettingsCommon.min_character not number (abort)" << std::endl;
         abort();
     }
-    CommonSettingsCommon::commonSettingsCommon.max_character=settings.value(QStringLiteral("max_character")).toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.max_character=settings.value(std::stringLiteral("max_character")).toUInt(&ok);
     if(CommonSettingsCommon::commonSettingsCommon.max_character<=0 || !ok)
     {
         std::cerr << "max_character<=0 (abort)" << std::endl;
@@ -242,39 +242,39 @@ void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
         std::cerr << "max_character<min_character (abort)" << std::endl;
         abort();
     }
-    CommonSettingsCommon::commonSettingsCommon.max_pseudo_size=settings.value(QStringLiteral("max_pseudo_size")).toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.max_pseudo_size=settings.value(std::stringLiteral("max_pseudo_size")).toUInt(&ok);
     if(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size==0 || !ok)
     {
         std::cerr << "max_pseudo_size==0 (abort)" << std::endl;
         abort();
     }
-    if(!settings.contains(QStringLiteral("maxPlayerMonsters")))
-        settings.setValue(QStringLiteral("maxPlayerMonsters"),8);
-    if(!settings.contains(QStringLiteral("maxWarehousePlayerMonsters")))
-        settings.setValue(QStringLiteral("maxWarehousePlayerMonsters"),30);
-    if(!settings.contains(QStringLiteral("maxPlayerItems")))
-        settings.setValue(QStringLiteral("maxPlayerItems"),30);
-    if(!settings.contains(QStringLiteral("maxWarehousePlayerItems")))
-        settings.setValue(QStringLiteral("maxWarehousePlayerItems"),150);
-    CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters=settings.value(QStringLiteral("maxPlayerMonsters")).toUInt(&ok);
+    if(!settings.contains(std::stringLiteral("maxPlayerMonsters")))
+        settings.setValue(std::stringLiteral("maxPlayerMonsters"),8);
+    if(!settings.contains(std::stringLiteral("maxWarehousePlayerMonsters")))
+        settings.setValue(std::stringLiteral("maxWarehousePlayerMonsters"),30);
+    if(!settings.contains(std::stringLiteral("maxPlayerItems")))
+        settings.setValue(std::stringLiteral("maxPlayerItems"),30);
+    if(!settings.contains(std::stringLiteral("maxWarehousePlayerItems")))
+        settings.setValue(std::stringLiteral("maxWarehousePlayerItems"),150);
+    CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters=settings.value(std::stringLiteral("maxPlayerMonsters")).toUInt(&ok);
     if(CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters==0 || !ok)
     {
         std::cerr << "maxPlayerMonsters==0 (abort)" << std::endl;
         abort();
     }
-    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters=settings.value(QStringLiteral("maxWarehousePlayerMonsters")).toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters=settings.value(std::stringLiteral("maxWarehousePlayerMonsters")).toUInt(&ok);
     if(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters==0 || !ok)
     {
         std::cerr << "maxWarehousePlayerMonsters==0 (abort)" << std::endl;
         abort();
     }
-    CommonSettingsCommon::commonSettingsCommon.maxPlayerItems=settings.value(QStringLiteral("maxPlayerItems")).toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.maxPlayerItems=settings.value(std::stringLiteral("maxPlayerItems")).toUInt(&ok);
     if(CommonSettingsCommon::commonSettingsCommon.maxPlayerItems==0 || !ok)
     {
         std::cerr << "maxPlayerItems==0 (abort)" << std::endl;
         abort();
     }
-    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems=settings.value(QStringLiteral("maxWarehousePlayerItems")).toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems=settings.value(std::stringLiteral("maxWarehousePlayerItems")).toUInt(&ok);
     if(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems==0 || !ok)
     {
         std::cerr << "maxWarehousePlayerItems==0 (abort)" << std::endl;
@@ -282,33 +282,33 @@ void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
     }
 }
 
-void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
+void EpollServerLoginMaster::loadDBLoginSettings(std::unordered_settings &settings)
 {
     if(CommonSettingsCommon::commonSettingsCommon.automatic_account_creation)
     {
-        QString db;
-        QString host;
-        QString login;
-        QString pass;
-        QString type;
+        std::string db;
+        std::string host;
+        std::string login;
+        std::string pass;
+        std::string type;
 
-        settings.beginGroup(QStringLiteral("db-login"));
-        if(!settings.contains(QStringLiteral("considerDownAfterNumberOfTry")))
-            settings.setValue(QStringLiteral("considerDownAfterNumberOfTry"),30);
-        if(!settings.contains(QStringLiteral("tryInterval")))
-            settings.setValue(QStringLiteral("tryInterval"),1);
-        if(!settings.contains(QStringLiteral("db")))
-            settings.setValue(QStringLiteral("db"),QStringLiteral("catchchallenger_login"));
-        if(!settings.contains(QStringLiteral("host")))
-            settings.setValue(QStringLiteral("host"),QStringLiteral("localhost"));
-        if(!settings.contains(QStringLiteral("login")))
-            settings.setValue(QStringLiteral("login"),QStringLiteral("root"));
-        if(!settings.contains(QStringLiteral("pass")))
-            settings.setValue(QStringLiteral("pass"),QStringLiteral("root"));
-        if(!settings.contains(QStringLiteral("type")))
-            settings.setValue(QStringLiteral("type"),QStringLiteral("postgresql"));
-        if(!settings.contains(QStringLiteral("comment")))
-            settings.setValue(QStringLiteral("comment"),QStringLiteral("to do maxAccountId"));
+        settings.beginGroup(std::stringLiteral("db-login"));
+        if(!settings.contains(std::stringLiteral("considerDownAfterNumberOfTry")))
+            settings.setValue(std::stringLiteral("considerDownAfterNumberOfTry"),30);
+        if(!settings.contains(std::stringLiteral("tryInterval")))
+            settings.setValue(std::stringLiteral("tryInterval"),1);
+        if(!settings.contains(std::stringLiteral("db")))
+            settings.setValue(std::stringLiteral("db"),std::stringLiteral("catchchallenger_login"));
+        if(!settings.contains(std::stringLiteral("host")))
+            settings.setValue(std::stringLiteral("host"),std::stringLiteral("localhost"));
+        if(!settings.contains(std::stringLiteral("login")))
+            settings.setValue(std::stringLiteral("login"),std::stringLiteral("root"));
+        if(!settings.contains(std::stringLiteral("pass")))
+            settings.setValue(std::stringLiteral("pass"),std::stringLiteral("root"));
+        if(!settings.contains(std::stringLiteral("type")))
+            settings.setValue(std::stringLiteral("type"),std::stringLiteral("postgresql"));
+        if(!settings.contains(std::stringLiteral("comment")))
+            settings.setValue(std::stringLiteral("comment"),std::stringLiteral("to do maxAccountId"));
         settings.sync();
 
         bool ok;
@@ -317,24 +317,24 @@ void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
             databaseBaseLogin=new EpollPostgresql();
             //here to have by login server an auth
 
-            databaseBaseLogin->considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
+            databaseBaseLogin->considerDownAfterNumberOfTry=settings.value(std::stringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
             if(databaseBaseLogin->considerDownAfterNumberOfTry==0 || !ok)
             {
                 std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
                 abort();
             }
-            db=settings.value(QStringLiteral("db")).toString();
-            host=settings.value(QStringLiteral("host")).toString();
-            login=settings.value(QStringLiteral("login")).toString();
-            pass=settings.value(QStringLiteral("pass")).toString();
-            databaseBaseLogin->tryInterval=settings.value(QStringLiteral("tryInterval")).toUInt(&ok);
+            db=settings.value(std::stringLiteral("db")).toString();
+            host=settings.value(std::stringLiteral("host")).toString();
+            login=settings.value(std::stringLiteral("login")).toString();
+            pass=settings.value(std::stringLiteral("pass")).toString();
+            databaseBaseLogin->tryInterval=settings.value(std::stringLiteral("tryInterval")).toUInt(&ok);
             if(databaseBaseLogin->tryInterval==0 || !ok)
             {
                 std::cerr << "tryInterval==0 (abort)" << std::endl;
                 abort();
             }
-            type=settings.value(QStringLiteral("type")).toString();
-            if(type!=QStringLiteral("postgresql"))
+            type=settings.value(std::stringLiteral("type")).toString();
+            if(type!=std::stringLiteral("postgresql"))
             {
                 std::cerr << "only db type postgresql supported (abort)" << std::endl;
                 abort();
@@ -356,29 +356,29 @@ void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
         databaseBaseLogin=NULL;
     }
     {
-        QString db;
-        QString host;
-        QString login;
-        QString pass;
-        QString type;
+        std::string db;
+        std::string host;
+        std::string login;
+        std::string pass;
+        std::string type;
 
-        settings.beginGroup(QStringLiteral("db-base"));
-        if(!settings.contains(QStringLiteral("considerDownAfterNumberOfTry")))
-            settings.setValue(QStringLiteral("considerDownAfterNumberOfTry"),30);
-        if(!settings.contains(QStringLiteral("tryInterval")))
-            settings.setValue(QStringLiteral("tryInterval"),1);
-        if(!settings.contains(QStringLiteral("db")))
-            settings.setValue(QStringLiteral("db"),QStringLiteral("catchchallenger_base"));
-        if(!settings.contains(QStringLiteral("host")))
-            settings.setValue(QStringLiteral("host"),QStringLiteral("localhost"));
-        if(!settings.contains(QStringLiteral("login")))
-            settings.setValue(QStringLiteral("login"),QStringLiteral("root"));
-        if(!settings.contains(QStringLiteral("pass")))
-            settings.setValue(QStringLiteral("pass"),QStringLiteral("root"));
-        if(!settings.contains(QStringLiteral("type")))
-            settings.setValue(QStringLiteral("type"),QStringLiteral("postgresql"));
-        if(!settings.contains(QStringLiteral("comment")))
-            settings.setValue(QStringLiteral("comment"),QStringLiteral("to do maxAccountId"));
+        settings.beginGroup(std::stringLiteral("db-base"));
+        if(!settings.contains(std::stringLiteral("considerDownAfterNumberOfTry")))
+            settings.setValue(std::stringLiteral("considerDownAfterNumberOfTry"),30);
+        if(!settings.contains(std::stringLiteral("tryInterval")))
+            settings.setValue(std::stringLiteral("tryInterval"),1);
+        if(!settings.contains(std::stringLiteral("db")))
+            settings.setValue(std::stringLiteral("db"),std::stringLiteral("catchchallenger_base"));
+        if(!settings.contains(std::stringLiteral("host")))
+            settings.setValue(std::stringLiteral("host"),std::stringLiteral("localhost"));
+        if(!settings.contains(std::stringLiteral("login")))
+            settings.setValue(std::stringLiteral("login"),std::stringLiteral("root"));
+        if(!settings.contains(std::stringLiteral("pass")))
+            settings.setValue(std::stringLiteral("pass"),std::stringLiteral("root"));
+        if(!settings.contains(std::stringLiteral("type")))
+            settings.setValue(std::stringLiteral("type"),std::stringLiteral("postgresql"));
+        if(!settings.contains(std::stringLiteral("comment")))
+            settings.setValue(std::stringLiteral("comment"),std::stringLiteral("to do maxAccountId"));
         settings.sync();
 
         bool ok;
@@ -387,24 +387,24 @@ void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
             databaseBaseBase=new EpollPostgresql();
             //here to have by login server an auth
 
-            databaseBaseBase->considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
+            databaseBaseBase->considerDownAfterNumberOfTry=settings.value(std::stringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
             if(databaseBaseBase->considerDownAfterNumberOfTry==0 || !ok)
             {
                 std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
                 abort();
             }
-            db=settings.value(QStringLiteral("db")).toString();
-            host=settings.value(QStringLiteral("host")).toString();
-            login=settings.value(QStringLiteral("login")).toString();
-            pass=settings.value(QStringLiteral("pass")).toString();
-            databaseBaseBase->tryInterval=settings.value(QStringLiteral("tryInterval")).toUInt(&ok);
+            db=settings.value(std::stringLiteral("db")).toString();
+            host=settings.value(std::stringLiteral("host")).toString();
+            login=settings.value(std::stringLiteral("login")).toString();
+            pass=settings.value(std::stringLiteral("pass")).toString();
+            databaseBaseBase->tryInterval=settings.value(std::stringLiteral("tryInterval")).toUInt(&ok);
             if(databaseBaseBase->tryInterval==0 || !ok)
             {
                 std::cerr << "tryInterval==0 (abort)" << std::endl;
                 abort();
             }
-            type=settings.value(QStringLiteral("type")).toString();
-            if(type!=QStringLiteral("postgresql"))
+            type=settings.value(std::stringLiteral("type")).toString();
+            if(type!=std::stringLiteral("postgresql"))
             {
                 std::cerr << "only db type postgresql supported (abort)" << std::endl;
                 abort();
@@ -421,67 +421,67 @@ void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
     }
 }
 
-QStringList EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
+std::stringList EpollServerLoginMaster::loadCharactersGroup(std::unordered_settings &settings)
 {
-    QString db;
-    QString host;
-    QString login;
-    QString pass;
-    QString type;
+    std::string db;
+    std::string host;
+    std::string login;
+    std::string pass;
+    std::string type;
     bool ok;
 
-    QStringList charactersGroupList;
+    std::stringList charactersGroupList;
     bool continueCharactersGroupSettings=true;
     int charactersGroupId=0;
     while(continueCharactersGroupSettings)
     {
-        settings.beginGroup(QStringLiteral("db-common-")+QString::number(charactersGroupId));
+        settings.beginGroup(std::stringLiteral("db-common-")+std::string::number(charactersGroupId));
         if(charactersGroupId==0)
         {
-            if(!settings.contains(QStringLiteral("considerDownAfterNumberOfTry")))
-                settings.setValue(QStringLiteral("considerDownAfterNumberOfTry"),3);
-            if(!settings.contains(QStringLiteral("tryInterval")))
-                settings.setValue(QStringLiteral("tryInterval"),5);
-            if(!settings.contains(QStringLiteral("db")))
-                settings.setValue(QStringLiteral("db"),QStringLiteral("catchchallenger_common"));
-            if(!settings.contains(QStringLiteral("host")))
-                settings.setValue(QStringLiteral("host"),QStringLiteral("localhost"));
-            if(!settings.contains(QStringLiteral("login")))
-                settings.setValue(QStringLiteral("login"),QStringLiteral("root"));
-            if(!settings.contains(QStringLiteral("pass")))
-                settings.setValue(QStringLiteral("pass"),QStringLiteral("root"));
-            if(!settings.contains(QStringLiteral("type")))
-                settings.setValue(QStringLiteral("type"),QStringLiteral("postgresql"));
-            if(!settings.contains(QStringLiteral("charactersGroup")))
-                settings.setValue(QStringLiteral("charactersGroup"),QString());
-            if(!settings.contains(QStringLiteral("comment")))
-                settings.setValue(QStringLiteral("comment"),QStringLiteral("to do maxClanId, maxCharacterId, maxMonsterId"));
+            if(!settings.contains(std::stringLiteral("considerDownAfterNumberOfTry")))
+                settings.setValue(std::stringLiteral("considerDownAfterNumberOfTry"),3);
+            if(!settings.contains(std::stringLiteral("tryInterval")))
+                settings.setValue(std::stringLiteral("tryInterval"),5);
+            if(!settings.contains(std::stringLiteral("db")))
+                settings.setValue(std::stringLiteral("db"),std::stringLiteral("catchchallenger_common"));
+            if(!settings.contains(std::stringLiteral("host")))
+                settings.setValue(std::stringLiteral("host"),std::stringLiteral("localhost"));
+            if(!settings.contains(std::stringLiteral("login")))
+                settings.setValue(std::stringLiteral("login"),std::stringLiteral("root"));
+            if(!settings.contains(std::stringLiteral("pass")))
+                settings.setValue(std::stringLiteral("pass"),std::stringLiteral("root"));
+            if(!settings.contains(std::stringLiteral("type")))
+                settings.setValue(std::stringLiteral("type"),std::stringLiteral("postgresql"));
+            if(!settings.contains(std::stringLiteral("charactersGroup")))
+                settings.setValue(std::stringLiteral("charactersGroup"),std::string());
+            if(!settings.contains(std::stringLiteral("comment")))
+                settings.setValue(std::stringLiteral("comment"),std::stringLiteral("to do maxClanId, maxCharacterId, maxMonsterId"));
         }
         settings.sync();
-        if(settings.contains(QStringLiteral("login")))
+        if(settings.contains(std::stringLiteral("login")))
         {
-            const QString &charactersGroup=settings.value(QStringLiteral("charactersGroup")).toString();
+            const std::string &charactersGroup=settings.value(std::stringLiteral("charactersGroup")).toString();
             if(!CharactersGroup::hash.contains(charactersGroup))
             {
                 CharactersGroup::serverWaitedToBeReady++;
-                const uint8_t &considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
+                const uint8_t &considerDownAfterNumberOfTry=settings.value(std::stringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
                 if(considerDownAfterNumberOfTry==0 || !ok)
                 {
                     std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
                     abort();
                 }
-                db=settings.value(QStringLiteral("db")).toString();
-                host=settings.value(QStringLiteral("host")).toString();
-                login=settings.value(QStringLiteral("login")).toString();
-                pass=settings.value(QStringLiteral("pass")).toString();
-                const uint8_t &tryInterval=settings.value(QStringLiteral("tryInterval")).toUInt(&ok);
+                db=settings.value(std::stringLiteral("db")).toString();
+                host=settings.value(std::stringLiteral("host")).toString();
+                login=settings.value(std::stringLiteral("login")).toString();
+                pass=settings.value(std::stringLiteral("pass")).toString();
+                const uint8_t &tryInterval=settings.value(std::stringLiteral("tryInterval")).toUInt(&ok);
                 if(tryInterval==0 || !ok)
                 {
                     std::cerr << "tryInterval==0 (abort)" << std::endl;
                     abort();
                 }
-                type=settings.value(QStringLiteral("type")).toString();
-                if(type!=QStringLiteral("postgresql"))
+                type=settings.value(std::stringLiteral("type")).toString();
+                if(type!=std::stringLiteral("postgresql"))
                 {
                     std::cerr << "only db type postgresql supported (abort)" << std::endl;
                     abort();
@@ -504,7 +504,7 @@ QStringList EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
     return charactersGroupList;
 }
 
-void EpollServerLoginMaster::charactersGroupListReply(QStringList &charactersGroupList)
+void EpollServerLoginMaster::charactersGroupListReply(std::stringList &charactersGroupList)
 {
     rawServerListForC211[0x00]=CommonSettingsCommon::commonSettingsCommon.automatic_account_creation;
     *reinterpret_cast<uint32_t *>(rawServerListForC211+0x01)=htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time);
@@ -522,7 +522,7 @@ void EpollServerLoginMaster::charactersGroupListReply(QStringList &charactersGro
     int index=0;
     while(index<charactersGroupList.size())
     {
-        const QString &charactersGroupName=charactersGroupList.at(index);
+        const std::string &charactersGroupName=charactersGroupList.at(index);
         int newSize=0;
         if(!charactersGroupName.isEmpty())
             newSize=FacilityLibGeneral::toUTF8WithHeader(charactersGroupName,rawServerListForC211+rawServerListForC211Size);
@@ -544,33 +544,33 @@ void EpollServerLoginMaster::charactersGroupListReply(QStringList &charactersGro
     }
 }
 
-void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
+void EpollServerLoginMaster::doTheLogicalGroup(std::unordered_settings &settings)
 {
     //do the LogicalGroup
     char rawServerList[sizeof(EpollClientLoginMaster::serverLogicalGroupList)];
     memset(rawServerList,0x00,sizeof(rawServerList));
     int rawServerListSize=0x01;
 
-    QString textToConvert;
+    std::string textToConvert;
     uint8_t logicalGroup=0;
     bool logicalGroupContinue=true;
     while(logicalGroupContinue)
     {
-        settings.beginGroup(QStringLiteral("logical-group-")+QString::number(logicalGroup));
-        logicalGroupContinue=settings.contains(QStringLiteral("path")) && settings.contains(QStringLiteral("xml")) && logicalGroup<255;
+        settings.beginGroup(std::stringLiteral("logical-group-")+std::string::number(logicalGroup));
+        logicalGroupContinue=settings.contains(std::stringLiteral("path")) && settings.contains(std::stringLiteral("xml")) && logicalGroup<255;
         if(!logicalGroupContinue && logicalGroup==0)
         {
-            if(!settings.contains(QStringLiteral("path")))
-                settings.setValue(QStringLiteral("path"),QString());
-            if(!settings.contains(QStringLiteral("xml")))
-                settings.setValue(QStringLiteral("xml"),QStringLiteral("<name>root</name>"));
+            if(!settings.contains(std::stringLiteral("path")))
+                settings.setValue(std::stringLiteral("path"),std::string());
+            if(!settings.contains(std::stringLiteral("xml")))
+                settings.setValue(std::stringLiteral("xml"),std::stringLiteral("<name>root</name>"));
             logicalGroupContinue=true;
         }
         if(logicalGroupContinue)
         {
             //path
             {
-                textToConvert=settings.value(QStringLiteral("path")).toString();
+                textToConvert=settings.value(std::stringLiteral("path")).toString();
                 if(textToConvert.size()>20)
                 {
                     std::cerr << "path too hurge (abort)" << std::endl;
@@ -592,7 +592,7 @@ void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
             }
             //translation
             {
-                textToConvert=settings.value(QStringLiteral("xml")).toString();
+                textToConvert=settings.value(std::stringLiteral("xml")).toString();
                 if(textToConvert.size()>0)
                 {
                     if(textToConvert.size()>4*1024)
@@ -804,7 +804,7 @@ bool EpollServerLoginMaster::tryListen()
     return returnedValue;
 }
 
-void EpollServerLoginMaster::generateToken(QSettings &settings)
+void EpollServerLoginMaster::generateToken(std::unordered_settings &settings)
 {
     FILE *fpRandomFile = fopen("/dev/urandom","rb");
     if(fpRandomFile==NULL)
@@ -818,13 +818,13 @@ void EpollServerLoginMaster::generateToken(QSettings &settings)
         std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from /dev/urandom" << std::endl;
         abort();
     }
-    settings.setValue(QStringLiteral("token"),QString(std::vector<char>(EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH).toHex()));
+    settings.setValue(std::stringLiteral("token"),std::string(std::vector<char>(EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH).toHex()));
     fclose(fpRandomFile);
 }
 
 void EpollServerLoginMaster::load_account_max_id()
 {
-    QString queryText;
+    std::string queryText;
     switch(databaseBaseLogin->databaseType())
     {
         default:
@@ -840,7 +840,7 @@ void EpollServerLoginMaster::load_account_max_id()
     }
     if(databaseBaseLogin->asyncRead(queryText.toLatin1(),this,&EpollServerLoginMaster::load_account_max_id_static)==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseLogin->errorMessage());
+        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseLogin->errorMessage());
         abort();
     }
     EpollClientLoginMaster::maxAccountId=0;
@@ -857,7 +857,7 @@ void EpollServerLoginMaster::load_account_max_id_return()
     {
         bool ok;
         //not +1 because incremented before use
-        EpollClientLoginMaster::maxAccountId=QString(databaseBaseLogin->value(0)).toUInt(&ok);
+        EpollClientLoginMaster::maxAccountId=std::string(databaseBaseLogin->value(0)).toUInt(&ok);
         if(!ok)
         {
             std::cerr << "Max account id is failed to convert to number" << std::endl;
@@ -873,7 +873,7 @@ void EpollServerLoginMaster::loadTheDatapack()
     QTime time;
     time.restart();
     CommonDatapack::commonDatapack.parseDatapack("datapack/");
-    qDebug() << QStringLiteral("Loaded the common datapack into %1ms").arg(time.elapsed());
+    qDebug() << std::stringLiteral("Loaded the common datapack into %1ms").arg(time.elapsed());
 
     if(databaseBaseBase==NULL)
     {

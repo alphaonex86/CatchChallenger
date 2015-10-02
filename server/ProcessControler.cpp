@@ -15,7 +15,7 @@ ProcessControler::ProcessControler()
     need_be_restarted=false;
     need_be_closed=false;
 
-    settings=new QSettings(QCoreApplication::applicationDirPath()+QLatin1Literal("/server.properties"),QSettings::IniFormat);
+    settings=new std::unordered_settings(QCoreApplication::applicationDirPath()+QLatin1Literal("/server.properties"),std::unordered_settings::IniFormat);
     NormalServer::checkSettingsFile(settings);
     send_settings();
     server.start_server();
@@ -36,11 +36,11 @@ void ProcessControler::send_settings()
     CommonSettingsCommon::commonSettingsCommon.max_character					= settings->value(QLatin1Literal("max_character")).toUInt();
     CommonSettingsCommon::commonSettingsCommon.max_pseudo_size					= settings->value(QLatin1Literal("max_pseudo_size")).toUInt();
     CommonSettingsCommon::commonSettingsCommon.character_delete_time            = settings->value(QLatin1Literal("character_delete_time")).toUInt();
-    if(settings->value(QLatin1Literal("compression")).toString()==QStringLiteral("none"))
+    if(settings->value(QLatin1Literal("compression")).toString()==std::stringLiteral("none"))
         formatedServerSettings.compressionType                                = CompressionType_None;
-    else if(settings->value(QLatin1Literal("compression")).toString()==QStringLiteral("xz"))
+    else if(settings->value(QLatin1Literal("compression")).toString()==std::stringLiteral("xz"))
         formatedServerSettings.compressionType                                = CompressionType_Xz;
-    else if(settings->value(QLatin1Literal("compression")).toString()==QStringLiteral("lz4"))
+    else if(settings->value(QLatin1Literal("compression")).toString()==std::stringLiteral("lz4"))
         formatedServerSettings.compressionType                                = CompressionType_Lz4;
     else
         formatedServerSettings.compressionType                                = CompressionType_Zlib;
@@ -105,17 +105,17 @@ void ProcessControler::send_settings()
 
     {
         settings->beginGroup(QLatin1Literal("programmedEvent"));
-            const QStringList &tempListType=settings->childGroups();
+            const std::stringList &tempListType=settings->childGroups();
             int indexType=0;
             while(indexType<tempListType.size())
             {
-                const QString &type=tempListType.at(indexType);
+                const std::string &type=tempListType.at(indexType);
                 settings->beginGroup(type);
-                    const QStringList &tempList=settings->childGroups();
+                    const std::stringList &tempList=settings->childGroups();
                     int index=0;
                     while(index<tempList.size())
                     {
-                        const QString &groupName=tempList.at(index);
+                        const std::string &groupName=tempList.at(index);
                         settings->beginGroup(groupName);
                         if(settings->contains(QLatin1Literal("value")) && settings->contains(QLatin1Literal("cycle")) && settings->contains(QLatin1Literal("offset")))
                         {
@@ -254,7 +254,7 @@ void ProcessControler::send_settings()
         formatedServerSettings.city.capture.day=City::Capture::Monday;
     formatedServerSettings.city.capture.hour=0;
     formatedServerSettings.city.capture.minute=0;
-    const QStringList &capture_time_string_list=settings->value(QLatin1Literal("capture_time")).toString().split(QLatin1Literal(":"));
+    const std::stringList &capture_time_string_list=settings->value(QLatin1Literal("capture_time")).toString().split(QLatin1Literal(":"));
     if(capture_time_string_list.size()==2)
     {
         bool ok;
@@ -291,7 +291,7 @@ void ProcessControler::server_is_started(bool is_started)
     }
 }
 
-void ProcessControler::error(const QString &error)
+void ProcessControler::error(const std::string &error)
 {
     qDebug() << error;
     QCoreApplication::quit();
@@ -308,10 +308,10 @@ void ProcessControler::server_need_be_restarted()
     server.stop_server();
 }
 
-QString ProcessControler::sizeToString(double size)
+std::string ProcessControler::sizeToString(double size)
 {
     if(size<1024)
-        return QString::number(size)+tr("B");
+        return std::string::number(size)+tr("B");
     if((size=size/1024)<1024)
         return adaptString(size)+tr("KB");
     if((size=size/1024)<1024)
@@ -331,12 +331,12 @@ QString ProcessControler::sizeToString(double size)
     return tr("Too big");
 }
 
-QString ProcessControler::adaptString(float size)
+std::string ProcessControler::adaptString(float size)
 {
     if(size>=100)
-        return QString::number(size,'f',0);
+        return std::string::number(size,'f',0);
     else
-        return QString::number(size,'g',3);
+        return std::string::number(size,'g',3);
 }
 
 void ProcessControler::haveQuitForCriticalDatabaseQueryFailed()
