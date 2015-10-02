@@ -15,7 +15,7 @@ EpollSslServer::EpollSslServer()
 {
     ready=false;
 
-    normalServerSettings.server_ip      = QString();
+    normalServerSettings.server_ip      = std::string();
     normalServerSettings.server_port    = 42489;
     normalServerSettings.useSsl         = true;
     #ifdef Q_OS_LINUX
@@ -34,14 +34,14 @@ void EpollSslServer::preload_finish()
     BaseServer::preload_finish();
     if(!ready)
     {
-        qDebug() << QStringLiteral("Waiting connection on port %1").arg(normalServerSettings.server_port);
+        qDebug() << std::stringLiteral("Waiting connection on port %1").arg(normalServerSettings.server_port);
         ready=true;
 
         if(!tryListen())
             abort();
     }
     else
-        qDebug() << QStringLiteral("EpollSslServer::preload_finish() double event dropped");
+        qDebug() << std::stringLiteral("EpollSslServer::preload_finish() double event dropped");
 }
 
 bool EpollSslServer::isReady()
@@ -57,9 +57,9 @@ void EpollSslServer::quitForCriticalDatabaseQueryFailed()
 bool EpollSslServer::tryListen()
 {
     if(!normalServerSettings.server_ip.isEmpty())
-        return trySslListen(normalServerSettings.server_ip.toUtf8().constData(), QString::number(normalServerSettings.server_port).toUtf8().constData(),"server.crt", "server.key");
+        return trySslListen(normalServerSettings.server_ip.toUtf8().constData(), std::string::number(normalServerSettings.server_port).toUtf8().constData(),"server.crt", "server.key");
     else
-        return trySslListen(NULL, QString::number(normalServerSettings.server_port).toUtf8().constData(),"server.crt", "server.key");
+        return trySslListen(NULL, std::string::number(normalServerSettings.server_port).toUtf8().constData(),"server.crt", "server.key");
 }
 
 void EpollSslServer::preload_the_data()
@@ -91,6 +91,6 @@ void EpollSslServer::loadAndFixSettings()
     if(normalServerSettings.server_port<=0)
         normalServerSettings.server_port=42489;
     if(normalServerSettings.proxy_port<=0)
-        normalServerSettings.proxy=QString();
+        normalServerSettings.proxy=std::string();
 }
 #endif

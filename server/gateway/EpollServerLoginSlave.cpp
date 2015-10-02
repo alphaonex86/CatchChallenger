@@ -29,31 +29,31 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     server_ip(NULL),
     server_port(NULL)
 {
-    QSettings settings(QCoreApplication::applicationDirPath()+"/gateway.conf",QSettings::IniFormat);
+    std::unordered_settings settings(QCoreApplication::applicationDirPath()+"/gateway.conf",std::unordered_settings::IniFormat);
 
     srand(time(NULL));
 
     {
-        if(!settings.contains(QStringLiteral("ip")))
-            settings.setValue(QStringLiteral("ip"),QString());
-        const QString &server_ip_string=settings.value(QStringLiteral("ip")).toString();
+        if(!settings.contains(std::stringLiteral("ip")))
+            settings.setValue(std::stringLiteral("ip"),std::string());
+        const std::string &server_ip_string=settings.value(std::stringLiteral("ip")).toString();
         const std::vector<char> &server_ip_data=server_ip_string.toLocal8Bit();
         if(!server_ip_string.isEmpty())
         {
             server_ip=new char[server_ip_data.size()+1];
             strcpy(server_ip,server_ip_data.constData());
         }
-        if(!settings.contains(QStringLiteral("port")))
-            settings.setValue(QStringLiteral("port"),rand()%40000+10000);
-        const std::vector<char> &server_port_data=settings.value(QStringLiteral("port")).toString().toLocal8Bit();
+        if(!settings.contains(std::stringLiteral("port")))
+            settings.setValue(std::stringLiteral("port"),rand()%40000+10000);
+        const std::vector<char> &server_port_data=settings.value(std::stringLiteral("port")).toString().toLocal8Bit();
         server_port=new char[server_port_data.size()+1];
         strcpy(server_port,server_port_data.constData());
     }
 
     {
-        if(!settings.contains(QStringLiteral("destination_ip")))
-            settings.setValue(QStringLiteral("destination_ip"),QString());
-        const QString &destination_server_ip_string=settings.value(QStringLiteral("destination_ip")).toString();
+        if(!settings.contains(std::stringLiteral("destination_ip")))
+            settings.setValue(std::stringLiteral("destination_ip"),std::string());
+        const std::string &destination_server_ip_string=settings.value(std::stringLiteral("destination_ip")).toString();
         const std::vector<char> &destination_server_ip_data=destination_server_ip_string.toLocal8Bit();
         if(!destination_server_ip_string.isEmpty())
         {
@@ -66,14 +66,14 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             std::cerr << "destination_ip is empty (abort)" << std::endl;
             abort();
         }
-        if(!settings.contains(QStringLiteral("destination_port")))
-            settings.setValue(QStringLiteral("destination_port"),rand()%40000+10000);
+        if(!settings.contains(std::stringLiteral("destination_port")))
+            settings.setValue(std::stringLiteral("destination_port"),rand()%40000+10000);
         bool ok;
-        unsigned int tempPort=settings.value(QStringLiteral("destination_port")).toUInt(&ok);
+        unsigned int tempPort=settings.value(std::stringLiteral("destination_port")).toUInt(&ok);
         if(!ok)
         {
             settings.sync();
-            std::cerr << "destination_port not number: " << settings.value(QStringLiteral("destination_port")).toString().toStdString() << std::endl;
+            std::cerr << "destination_port not number: " << settings.value(std::stringLiteral("destination_port")).toString().toStdString() << std::endl;
             abort();
         }
         if(tempPort==0 || tempPort>65535)
@@ -85,8 +85,8 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         destination_server_port=tempPort;
     }
 
-    if(!settings.contains(QStringLiteral("httpDatapackMirrorRewriteBase")))
-        settings.setValue(QStringLiteral("httpDatapackMirrorRewriteBase"),QString());
+    if(!settings.contains(std::stringLiteral("httpDatapackMirrorRewriteBase")))
+        settings.setValue(std::stringLiteral("httpDatapackMirrorRewriteBase"),std::string());
     LinkToGameServer::httpDatapackMirrorRewriteBase=std::vector<char>(ProtocolParsingBase::tempBigBufferForOutput,
                                                                FacilityLibGeneral::toUTF8WithHeader(httpMirrorFix(settings.value("httpDatapackMirrorRewriteBase").toString().toStdString()),ProtocolParsingBase::tempBigBufferForOutput));
     if(LinkToGameServer::httpDatapackMirrorRewriteBase.isEmpty())
@@ -95,8 +95,8 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         std::cerr << "httpDatapackMirrorRewriteBase.isEmpty() abort" << std::endl;
         abort();
     }
-    if(!settings.contains(QStringLiteral("httpDatapackMirrorRewriteMainAndSub")))
-        settings.setValue(QStringLiteral("httpDatapackMirrorRewriteMainAndSub"),QString());
+    if(!settings.contains(std::stringLiteral("httpDatapackMirrorRewriteMainAndSub")))
+        settings.setValue(std::stringLiteral("httpDatapackMirrorRewriteMainAndSub"),std::string());
     LinkToGameServer::httpDatapackMirrorRewriteMainAndSub=std::vector<char>(ProtocolParsingBase::tempBigBufferForOutput,
                                                                      FacilityLibGeneral::toUTF8WithHeader(httpMirrorFix(settings.value("httpDatapackMirrorRewriteMainAndSub").toString().toStdString()),ProtocolParsingBase::tempBigBufferForOutput));
     if(LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.isEmpty())
@@ -108,38 +108,38 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
     //connection
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    if(!settings.contains(QStringLiteral("compression")))
-        settings.setValue(QStringLiteral("compression"),QStringLiteral("zlib"));
-    if(settings.value(QStringLiteral("compression")).toString()==QStringLiteral("none"))
+    if(!settings.contains(std::stringLiteral("compression")))
+        settings.setValue(std::stringLiteral("compression"),std::stringLiteral("zlib"));
+    if(settings.value(std::stringLiteral("compression")).toString()==std::stringLiteral("none"))
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::None;
-    else if(settings.value(QStringLiteral("compression")).toString()==QStringLiteral("xz"))
+    else if(settings.value(std::stringLiteral("compression")).toString()==std::stringLiteral("xz"))
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Xz;
-    else if(settings.value(QStringLiteral("compression")).toString()==QStringLiteral("lz4"))
+    else if(settings.value(std::stringLiteral("compression")).toString()==std::stringLiteral("lz4"))
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Lz4;
     else
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Zlib;
-    ProtocolParsing::compressionLevel          = settings.value(QStringLiteral("compressionLevel")).toUInt();
+    ProtocolParsing::compressionLevel          = settings.value(std::stringLiteral("compressionLevel")).toUInt();
     #endif
 
-    settings.beginGroup(QStringLiteral("Linux"));
-    if(!settings.contains(QStringLiteral("tcpCork")))
-        settings.setValue(QStringLiteral("tcpCork"),true);
-    if(!settings.contains(QStringLiteral("tcpNodelay")))
-        settings.setValue(QStringLiteral("tcpNodelay"),false);
-    tcpCork=settings.value(QStringLiteral("tcpCork")).toBool();
-    tcpNodelay=settings.value(QStringLiteral("tcpNodelay")).toBool();
+    settings.beginGroup(std::stringLiteral("Linux"));
+    if(!settings.contains(std::stringLiteral("tcpCork")))
+        settings.setValue(std::stringLiteral("tcpCork"),true);
+    if(!settings.contains(std::stringLiteral("tcpNodelay")))
+        settings.setValue(std::stringLiteral("tcpNodelay"),false);
+    tcpCork=settings.value(std::stringLiteral("tcpCork")).toBool();
+    tcpNodelay=settings.value(std::stringLiteral("tcpNodelay")).toBool();
     settings.endGroup();
 
-    settings.beginGroup(QStringLiteral("commandUpdateDatapack"));
-    if(!settings.contains(QStringLiteral("base")))
-        settings.setValue(QStringLiteral("base"),QString());
-    if(!settings.contains(QStringLiteral("main")))
-        settings.setValue(QStringLiteral("main"),QString());
-    if(!settings.contains(QStringLiteral("sub")))
-        settings.setValue(QStringLiteral("sub"),QString());
-    DatapackDownloaderBase::commandUpdateDatapackBase=settings.value(QStringLiteral("base")).toString().toStdString();
-    DatapackDownloaderMainSub::commandUpdateDatapackMain=settings.value(QStringLiteral("main")).toString().toStdString();
-    DatapackDownloaderMainSub::commandUpdateDatapackSub=settings.value(QStringLiteral("sub")).toString().toStdString();
+    settings.beginGroup(std::stringLiteral("commandUpdateDatapack"));
+    if(!settings.contains(std::stringLiteral("base")))
+        settings.setValue(std::stringLiteral("base"),std::string());
+    if(!settings.contains(std::stringLiteral("main")))
+        settings.setValue(std::stringLiteral("main"),std::string());
+    if(!settings.contains(std::stringLiteral("sub")))
+        settings.setValue(std::stringLiteral("sub"),std::string());
+    DatapackDownloaderBase::commandUpdateDatapackBase=settings.value(std::stringLiteral("base")).toString().toStdString();
+    DatapackDownloaderMainSub::commandUpdateDatapackMain=settings.value(std::stringLiteral("main")).toString().toStdString();
+    DatapackDownloaderMainSub::commandUpdateDatapackSub=settings.value(std::stringLiteral("sub")).toString().toStdString();
     settings.endGroup();
 
     settings.sync();

@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_EVENTDISPATCHER_H
 
 #include <QObject>
-#include <QSettings>
+#include <std::unordered_settings>
 #include <QTcpServer>
 #include <QDebug>
 #include <QTimer>
@@ -50,15 +50,15 @@ public:
     void stop_server();
     #endif
     //todo
-    /*void send_system_message(QString text);
-    void send_pm_message(QString pseudo,QString text);*/
+    /*void send_system_message(std::string text);
+    void send_pm_message(std::string pseudo,std::string text);*/
 private:
     //to load/unload the content
     void load_settings();
     //init, constructor, destructor
     virtual void initAll();//call before all
     //internal usefull function
-    QString listenIpAndPort(QString server_ip,uint16_t server_port);
+    std::string listenIpAndPort(std::string server_ip,uint16_t server_port);
     //store about the network
     QSslServer *sslServer;
     int number_of_client;
@@ -69,12 +69,12 @@ private:
     static bool oneInstanceRunning;
     QSslCertificate *sslCertificate;
     QSslKey *sslKey;
-    QHash<QHostAddress,QDateTime> kickedHosts;
+    std::unordered_map<QHostAddress,QDateTime> kickedHosts;
     QTimer purgeKickedHostTimer;
     NormalServerSettings normalServerSettings;
 
-    static QString text_restart;
-    static QString text_stop;
+    static std::string text_restart;
+    static std::string text_stop;
 private:
     //new connection
     void newConnection();
@@ -84,7 +84,7 @@ private:
     void removeOneClient();
     //void removeOneBot();
     //parse general order from the client
-    void serverCommand(const QString &command,const QString &extraText);
+    void serverCommand(const std::string &command,const std::string &extraText);
     //starting function
     void stop_internal_server();
     bool check_if_now_stopped();
@@ -98,10 +98,10 @@ signals:
     void need_be_restarted();
     //stat player
     void new_player_is_connected(const Player_private_and_public_informations &player);
-    void player_is_disconnected(const QString &pseudo);
-    void new_chat_message(const QString &pseudo,const Chat_type &type,const QString &text);
+    void player_is_disconnected(const std::string &pseudo);
+    void new_chat_message(const std::string &pseudo,const Chat_type &type,const std::string &text);
 protected:
-    virtual void parseJustLoadedMap(const Map_to_send &map_to_send,const QString &map_file);
+    virtual void parseJustLoadedMap(const Map_to_send &map_to_send,const std::string &map_file);
 };
 }
 

@@ -27,7 +27,7 @@ QtServer::QtServer()
 
 QtServer::~QtServer()
 {
-    QSetIterator<Client *> i(client_list);
+    std::unordered_setIterator<Client *> i(client_list);
     while (i.hasNext())
     {
         Client *client=i.next();
@@ -114,7 +114,7 @@ void QtServer::newConnection()
         QFakeSocket *socket = QFakeServer::server.nextPendingConnection();
         if(socket!=NULL)
         {
-            DebugClass::debugConsole(QStringLiteral("newConnection(): new client connected by fake socket"));
+            DebugClass::debugConsole(std::stringLiteral("newConnection(): new client connected by fake socket"));
             switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
             {
                 default:
@@ -157,28 +157,28 @@ bool QtServer::check_if_now_stopped()
     DebugClass::debugConsole("Fully stopped");
     if(GlobalServerData::serverPrivateVariables.db_login->isConnected())
     {
-        DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2")
+        DebugClass::debugConsole(std::stringLiteral("Disconnected to %1 at %2")
                                  .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_login->databaseType()))
                                  .arg(GlobalServerData::serverSettings.database_login.host));
         GlobalServerData::serverPrivateVariables.db_login->syncDisconnect();
     }
     if(GlobalServerData::serverPrivateVariables.db_base->isConnected())
     {
-        DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2")
+        DebugClass::debugConsole(std::stringLiteral("Disconnected to %1 at %2")
                                  .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_base->databaseType()))
                                  .arg(GlobalServerData::serverSettings.database_base.host));
         GlobalServerData::serverPrivateVariables.db_base->syncDisconnect();
     }
     if(GlobalServerData::serverPrivateVariables.db_common->isConnected())
     {
-        DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2")
+        DebugClass::debugConsole(std::stringLiteral("Disconnected to %1 at %2")
                                  .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_common->databaseType()))
                                  .arg(GlobalServerData::serverSettings.database_common.host));
         GlobalServerData::serverPrivateVariables.db_common->syncDisconnect();
     }
     if(GlobalServerData::serverPrivateVariables.db_server->isConnected())
     {
-        DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2")
+        DebugClass::debugConsole(std::stringLiteral("Disconnected to %1 at %2")
                                  .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_server->databaseType()))
                                  .arg(GlobalServerData::serverSettings.database_server.host));
         GlobalServerData::serverPrivateVariables.db_server->syncDisconnect();
@@ -196,13 +196,13 @@ void QtServer::stop_internal_server()
     if(stat!=Up && stat!=InDown)
     {
         if(stat!=Down)
-            DebugClass::debugConsole("Is in wrong stat for stopping: "+QString::number((int)stat));
+            DebugClass::debugConsole("Is in wrong stat for stopping: "+std::string::number((int)stat));
         return;
     }
     DebugClass::debugConsole("Try stop");
     stat=InDown;
 
-    QSetIterator<Client *> i(client_list);
+    std::unordered_setIterator<Client *> i(client_list);
     while (i.hasNext())
     {
         Client * client=i.next();

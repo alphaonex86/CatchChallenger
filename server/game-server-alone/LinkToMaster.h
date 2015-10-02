@@ -5,7 +5,7 @@
 #include "TimerReconnectOnTheMaster.h"
 #include <vector>
 #include <random>
-#include <QSettings>
+#include <std::unordered_settings>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -40,9 +40,9 @@ public:
         uint8_t charactersGroupIndex;
     };
 
-    QString httpDatapackMirror;
+    std::string httpDatapackMirror;
     //to unordered reply
-    QHash<uint8_t/*queryNumber*/,DataForSelectedCharacterReturn> selectCharacterClients;
+    std::unordered_map<uint8_t/*queryNumber*/,DataForSelectedCharacterReturn> selectCharacterClients;
     static char protocolReplyNoMoreToken[4];
     static char protocolReplyAlreadyConnectedToken[4];
     static char protocolReplyGetToken[3+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
@@ -60,10 +60,10 @@ public:
     static int tryConnect(const char * const host,const uint16_t &port,const uint8_t &tryInterval=1,const uint8_t &considerDownAfterNumberOfTry=30);
     void connectInternal();
     void setConnexionSettings();
-    bool registerGameServer(const QString &exportedXml,const char * const dynamicToken);
+    bool registerGameServer(const std::string &exportedXml,const char * const dynamicToken);
     void generateToken();
     void sendProtocolHeader();
-    bool setSettings(QSettings * const settings);
+    bool setSettings(std::unordered_settings * const settings);
     void characterDisconnected(const uint32_t &characterId);
     void currentPlayerChange(const uint16_t &currentPlayer);
     void askMoreMaxMonsterId();
@@ -72,11 +72,11 @@ public:
     void readTheFirstSslHeader();
 protected:
     void disconnectClient();
-    void errorParsingLayer(const QString &error);
-    void messageParsingLayer(const QString &message) const;
+    void errorParsingLayer(const std::string &error);
+    void messageParsingLayer(const std::string &message) const;
     void errorParsingLayer(const char * const error);
     void messageParsingLayer(const char * const message) const;
-    void parseNetworkReadError(const QString &errorString);
+    void parseNetworkReadError(const std::string &errorString);
 
     //have message without reply
     void parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size);
@@ -90,7 +90,7 @@ protected:
 
     void parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size);
 private:
-    QSettings * settings;
+    std::unordered_settings * settings;
     std::mt19937 rng;
     static sockaddr_in serv_addr;
 };

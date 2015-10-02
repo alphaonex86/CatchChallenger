@@ -47,7 +47,7 @@ EpollSslServer *server=NULL;
 #else
 EpollServer *server=NULL;
 #endif
-QSettings *settings=NULL;
+std::unordered_settings *settings=NULL;
 
 std::string master_host;
 uint16_t master_port;
@@ -79,11 +79,11 @@ void send_settings()
     CommonSettingsCommon::commonSettingsCommon.maxPlayerItems                   = settings->value(QLatin1Literal("maxPlayerItems")).toUInt();
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems          = settings->value(QLatin1Literal("maxWarehousePlayerItems")).toUInt();
     formatedServerSettings.compressionLevel                                     = settings->value(QLatin1Literal("compressionLevel")).toUInt();
-    if(settings->value(QLatin1Literal("compression")).toString()==QStringLiteral("none"))
+    if(settings->value(QLatin1Literal("compression")).toString()==std::stringLiteral("none"))
         formatedServerSettings.compressionType                                = CompressionType_None;
-    else if(settings->value(QLatin1Literal("compression")).toString()==QStringLiteral("xz"))
+    else if(settings->value(QLatin1Literal("compression")).toString()==std::stringLiteral("xz"))
         formatedServerSettings.compressionType                                = CompressionType_Xz;
-    else if(settings->value(QLatin1Literal("compression")).toString()==QStringLiteral("lz4"))
+    else if(settings->value(QLatin1Literal("compression")).toString()==std::stringLiteral("lz4"))
         formatedServerSettings.compressionType                                = CompressionType_Lz4;
     else
         formatedServerSettings.compressionType                                = CompressionType_Zlib;
@@ -316,18 +316,18 @@ void send_settings()
 
     {
         settings->beginGroup(QLatin1Literal("programmedEvent"));
-            const QStringList &tempListType=settings->childGroups();
+            const std::stringList &tempListType=settings->childGroups();
             int indexType=0;
             while(indexType<tempListType.size())
             {
                 const std::string &type=tempListType.at(indexType).toStdString();
-                settings->beginGroup(QString::fromStdString(type));
-                    const QStringList &tempList=settings->childGroups();
+                settings->beginGroup(std::string::fromStdString(type));
+                    const std::stringList &tempList=settings->childGroups();
                     int index=0;
                     while(index<tempList.size())
                     {
                         const std::string &groupName=tempList.at(index).toStdString();
-                        settings->beginGroup(QString::fromStdString(groupName));
+                        settings->beginGroup(std::string::fromStdString(groupName));
                         if(settings->contains(QLatin1Literal("value")) && settings->contains(QLatin1Literal("cycle")) && settings->contains(QLatin1Literal("offset")))
                         {
                             GameServerSettings::ProgrammedEvent event;
@@ -353,21 +353,21 @@ void send_settings()
 
     {
         bool ok;
-        settings->beginGroup(QStringLiteral("master"));
+        settings->beginGroup(std::stringLiteral("master"));
         master_host=settings->value("host").toString().toStdString();
         master_port=settings->value("port").toUInt(&ok);
         if(master_port==0 || !ok)
         {
-            std::cerr << "Master port not a number or 0:" << settings->value(QStringLiteral("port")).toString().toStdString() << std::endl;
+            std::cerr << "Master port not a number or 0:" << settings->value(std::stringLiteral("port")).toString().toStdString() << std::endl;
             abort();
         }
-        master_tryInterval=settings->value(QStringLiteral("tryInterval")).toUInt(&ok);
+        master_tryInterval=settings->value(std::stringLiteral("tryInterval")).toUInt(&ok);
         if(master_tryInterval==0 || !ok)
         {
             std::cerr << "tryInterval==0 (abort)" << std::endl;
             abort();
         }
-        master_considerDownAfterNumberOfTry=settings->value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
+        master_considerDownAfterNumberOfTry=settings->value(std::stringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
         if(master_considerDownAfterNumberOfTry==0 || !ok)
         {
             std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
@@ -400,7 +400,7 @@ void send_settings()
         formatedServerSettings.city.capture.day=City::Capture::Monday;
     formatedServerSettings.city.capture.hour=0;
     formatedServerSettings.city.capture.minute=0;
-    const QStringList &capture_time_string_list=settings->value(QLatin1Literal("capture_time")).toString().split(QLatin1Literal(":"));
+    const std::stringList &capture_time_string_list=settings->value(QLatin1Literal("capture_time")).toString().split(QLatin1Literal(":"));
     if(capture_time_string_list.size()==2)
     {
         bool ok;
@@ -437,16 +437,16 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    const QString &configFile=QCoreApplication::applicationDirPath()+QLatin1Literal("/server.properties");
-    settings=new QSettings(configFile,QSettings::IniFormat);
-    if(settings->status()!=QSettings::NoError)
+    const std::string &configFile=QCoreApplication::applicationDirPath()+QLatin1Literal("/server.properties");
+    settings=new std::unordered_settings(configFile,std::unordered_settings::IniFormat);
+    if(settings->status()!=std::unordered_settings::NoError)
     {
         qDebug() << "Error settings (1): " << settings->status();
         return EXIT_FAILURE;
     }
     NormalServerGlobal::checkSettingsFile(settings,QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/"));
 
-    if(settings->status()!=QSettings::NoError)
+    if(settings->status()!=std::unordered_settings::NoError)
     {
         qDebug() << "Error settings (2): " << settings->status();
         return EXIT_FAILURE;
@@ -609,13 +609,13 @@ int main(int argc, char *argv[])
         }
         else
         {
-            QStringList newMirrorList;
-            QRegularExpression httpMatch("^https?://.+$");
-            const QStringList &mirrorList=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(";");
+            std::stringList newMirrorList;
+            std::regex httpMatch("^https?://.+$");
+            const std::stringList &mirrorList=std::string::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(";");
             int index=0;
             while(index<mirrorList.size())
             {
-                const QString &mirror=mirrorList.at(index);
+                const std::string &mirror=mirrorList.at(index);
                 if(!mirror.contains(httpMatch))
                 {
                     qDebug() << "Mirror wrong: " << mirror.toLocal8Bit();

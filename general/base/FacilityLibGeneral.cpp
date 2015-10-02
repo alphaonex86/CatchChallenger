@@ -34,7 +34,7 @@ unsigned int FacilityLibGeneral::toUTF8With16BitsHeader(const std::string &text,
 std::vector<std::string> FacilityLibGeneral::listFolder(const std::string& folder,const std::string& suffix)
 {
     std::vector<std::string> returnList;
-    QFileInfoList entryList=QDir(QString::fromStdString(folder+suffix)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot);//possible wait time here
+    QFileInfoList entryList=QDir(std::string::fromStdString(folder+suffix)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot);//possible wait time here
     int sizeEntryList=entryList.size();
     for (int index=0;index<sizeEntryList;++index)
     {
@@ -67,7 +67,7 @@ std::string FacilityLibGeneral::randomPassword(const std::string& string,const u
 std::vector<std::string> FacilityLibGeneral::skinIdList(const std::string& skinPath)
 {
     std::vector<std::string> skinFolderList;
-    QFileInfoList entryList=QDir(QString::fromStdString(skinPath)).entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::DirsFirst);//possible wait time here
+    QFileInfoList entryList=QDir(std::string::fromStdString(skinPath)).entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::DirsFirst);//possible wait time here
     int sizeEntryList=entryList.size();
     for (int index=0;index<sizeEntryList;++index)
     {
@@ -116,7 +116,7 @@ bool FacilityLibGeneral::rectTouch(QRect r1,QRect r2)
 
 bool FacilityLibGeneral::rmpath(const std::string &dirPath)
 {
-    const QDir dir(QString::fromStdString(dirPath));
+    const QDir dir(std::string::fromStdString(dirPath));
     if(!dir.exists())
         return true;
     bool allHaveWork=true;
