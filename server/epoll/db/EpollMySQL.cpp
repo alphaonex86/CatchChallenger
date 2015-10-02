@@ -270,7 +270,7 @@ bool EpollMySQL::epollEvent(const uint32_t &events)
                     queriesList.removeFirst();
                 if(!queriesList.isEmpty())
                 {
-                    const QByteArray &query=queriesList.first().toUtf8();
+                    const std::vector<char> &query=queriesList.first().toUtf8();
                     const int &query_id=mysql_send_query(conn,query.constData(),query.size());
                     if(query_id==0)
                     {

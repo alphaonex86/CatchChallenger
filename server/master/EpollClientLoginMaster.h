@@ -59,7 +59,7 @@ public:
     //to ordered reply
     QList<DataForSelectedCharacterReturn> loginServerReturnForCharaterSelect;
     std::vector<uint8_t> queryNumberList;
-    QByteArray tokenForAuth;
+    std::vector<char> tokenForAuth;
 
     static char private_token[TOKEN_SIZE_FOR_MASTERAUTH];
     static const unsigned char protocolHeaderToMatch[BASE_PROTOCOL_MAGIC_SIZE];

@@ -47,8 +47,8 @@ public:
     EpollClientLoginSlave *client;
     bool haveTheFirstSslHeader;
     uint8_t protocolQueryNumber;
-    static QByteArray httpDatapackMirrorRewriteBase;
-    static QByteArray httpDatapackMirrorRewriteMainAndSub;
+    static std::vector<char> httpDatapackMirrorRewriteBase;
+    static std::vector<char> httpDatapackMirrorRewriteMainAndSub;
     static bool compressionSet;
     static std::string mDatapackBase;
     std::string main;

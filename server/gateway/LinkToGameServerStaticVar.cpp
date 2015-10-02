@@ -2,7 +2,7 @@
 
 using namespace CatchChallenger;
 
-QByteArray LinkToGameServer::httpDatapackMirrorRewriteBase;
-QByteArray LinkToGameServer::httpDatapackMirrorRewriteMainAndSub;
+std::vector<char> LinkToGameServer::httpDatapackMirrorRewriteBase;
+std::vector<char> LinkToGameServer::httpDatapackMirrorRewriteMainAndSub;
 bool LinkToGameServer::compressionSet=false;
 std::string LinkToGameServer::mDatapackBase;

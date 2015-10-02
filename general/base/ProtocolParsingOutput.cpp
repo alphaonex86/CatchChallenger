@@ -37,7 +37,7 @@ bool ProtocolParsingBase::internalPackOutcommingData(const char * const data,con
     messageParsingLayer("internalPackOutcommingData(): start");
     #endif
     #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    qDebug() << std::string(std::stringLiteral("Sended packet size: %1: %2").arg(size).arg(std::string(QByteArray(data,size).toHex())));
+    qDebug() << std::string(std::stringLiteral("Sended packet size: %1: %2").arg(size).arg(std::string(std::vector<char>(data,size).toHex())));
     #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
 
     if(size<=CATCHCHALLENGER_MAX_PACKET_SIZE)
@@ -89,7 +89,7 @@ bool ProtocolParsingBase::internalSendRawSmallPacket(const char * const data,con
     messageParsingLayer("internalPackOutcommingData(): start");
     #endif
     #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    messageParsingLayer(std::stringLiteral("Sended packet size: %1: %2").arg(size).arg(std::string(QByteArray(data,size).toHex())));
+    messageParsingLayer(std::stringLiteral("Sended packet size: %1: %2").arg(size).arg(std::string(std::vector<char>(data,size).toHex())));
     #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size>CATCHCHALLENGER_MAX_PACKET_SIZE)

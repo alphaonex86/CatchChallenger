@@ -63,7 +63,8 @@ SOURCES += \
     ../../general/base/CommonSettingsCommon.cpp \
     ../../general/base/CommonSettingsServer.cpp \
     EpollClientLoginSlaveDatapack.cpp \
-    ../../general/base/lz4/lz4.c
+    ../../general/base/lz4/lz4.c \
+    ../../general/base/cpp11addition.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \

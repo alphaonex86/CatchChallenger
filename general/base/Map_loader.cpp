@@ -199,8 +199,8 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
     map_to_send_temp.border.right.y_offset=0;
 
     std::vector<std::string> detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer;
-    QByteArray Walkable,Collisions,Dirt,LedgesRight,LedgesLeft,LedgesBottom,LedgesTop;
-    std::vector<QByteArray> monsterList;
+    std::vector<char> Walkable,Collisions,Dirt,LedgesRight,LedgesLeft,LedgesBottom,LedgesTop;
+    std::vector<std::vector<char>> monsterList;
     std::map<std::string/*layer*/,const char *> mapLayerContentForMonsterCollision;
     bool ok;
     QDomDocument domDocument;
@@ -218,7 +218,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
             error=mapFile.fileName().toStdString()+": "+mapFile.errorString().toStdString();
             return false;
         }
-        const QByteArray &xmlContent=mapFile.readAll();
+        const std::vector<char> &xmlContent=mapFile.readAll();
         mapFile.close();
         QString errorStr;
         int errorLine,errorColumn;
@@ -726,8 +726,8 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
             }
             else
             {
-                const QByteArray compressedData=QByteArray::fromBase64(data.text().toLatin1());
-                QByteArray dataRaw;
+                const std::vector<char> compressedData=std::vector<char>::fromBase64(data.text().toLatin1());
+                std::vector<char> dataRaw;
                 dataRaw.resize(map_to_send_temp.height*map_to_send_temp.width*4);
                 dataRaw.resize(decompressZlib(compressedData.constData(),compressedData.size(),dataRaw.data(),dataRaw.size()));
                 if((uint32_t)dataRaw.size()!=map_to_send_temp.height*map_to_send_temp.width*4)
@@ -873,7 +873,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
         child = child.nextSiblingElement(QString ::fromStdString(Map_loader::text_layer));
     }
 
-    /*QByteArray null_data;
+    /*std::vector<char> null_data;
     null_data.resize(4);
     null_data[0]=0x00;
     null_data[1]=0x00;
@@ -1138,7 +1138,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
 #ifdef DEBUG_MESSAGE_MAP_RAW
     if(Walkable.size()>0 || this->map_to_send.parsed_layer.monstersCollisionMap!=NULL || Collisions.size()>0 || Dirt.size()>0)
     {
-        QByteArray null_data;
+        std::vector<char> null_data;
         null_data.resize(4);
         null_data[0]=0x00;
         null_data[1]=0x00;
@@ -1246,7 +1246,7 @@ bool Map_loader::loadMonsterMap(const std::string &fileName, std::vector<std::st
             std::cerr << mapFile.fileName().toStdString() << ": " << mapFile.errorString().toStdString() << std::endl;
             return false;
         }
-        const QByteArray &xmlContent=mapFile.readAll();
+        const std::vector<char> &xmlContent=mapFile.readAll();
         mapFile.close();
         QString errorStr;
         int errorLine,errorColumn;
@@ -1567,7 +1567,7 @@ QDomElement Map_loader::getXmlCondition(const std::string &fileName,const std::s
             std::cerr << "Into the file " << fileName << ", unable to open the condition file: " << mapFile.fileName().toStdString() << ": " << mapFile.errorString().toStdString() << std::endl;
             return QDomElement();
         }
-        const QByteArray &xmlContent=mapFile.readAll();
+        const std::vector<char> &xmlContent=mapFile.readAll();
         mapFile.close();
         QString errorStr;
         int errorLine,errorColumn;

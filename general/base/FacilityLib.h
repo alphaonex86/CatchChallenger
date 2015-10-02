@@ -1,7 +1,7 @@
 #ifndef CATCHCHALLENGER_FACILITYLIB_H
 #define CATCHCHALLENGER_FACILITYLIB_H
 
-#include <QByteArray>
+#include <std::vector<char>>
 #include <string>
 #include <QRect>
 #include <QDir>
@@ -26,7 +26,7 @@ public:
     static bool factoryProductionStarted(const IndustryStatus &industryStatus,const Industry &industry);
     static void appendReputationPoint(PlayerReputation *playerReputation, const int32_t &point, const Reputation &reputation);
 private:
-    static QByteArray UTF8EmptyData;
+    static std::vector<char> UTF8EmptyData;
     static std::string text_slash;
     static std::string text_male;
     static std::string text_female;

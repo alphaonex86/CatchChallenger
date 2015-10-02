@@ -7,7 +7,6 @@
 #include <QObject>
 #include <string>
 #include <QCoreApplication>
-#include <QByteArray>
 #include <vector>
 #include <QDir>
 #include <unordered_map>
@@ -32,19 +31,19 @@ public:
     void datapackDownloadError();
     void resetAll();
     void datapackFileList(const char * const data,const unsigned int &size);
-    void writeNewFileBase(const std::string &fileName, const QByteArray &data);
+    void writeNewFileBase(const std::string &fileName, const std::vector<char> &data);
 
     //datapack related
     void sendDatapackContentBase();
     void test_mirror_base();
     void decodedIsFinishBase();
     bool mirrorTryNextBase();
-    void httpFinishedForDatapackListBase(const QByteArray data=QByteArray());
+    void httpFinishedForDatapackListBase(const std::vector<char> data=std::vector<char>());
     const std::vector<std::string> listDatapackBase(std::string suffix);
     void cleanDatapackBase(std::string suffix);
 
-    QByteArray hashBase;
-    QByteArray sendedHashBase;
+    std::vector<char> hashBase;
+    std::vector<char> sendedHashBase;
     static std::unordered_set<std::string> extensionAllowed;
     static std::string commandUpdateDatapackBase;
     static std::vector<std::string> httpDatapackMirrorBaseList;
@@ -66,8 +65,6 @@ private:
     bool wait_datapack_content_base;
     std::vector<std::string> datapackFilesListBase;
     std::vector<uint32_t> partialHashListBase;
-    static std::string text_slash;
-    static std::string text_dotcoma;
     bool httpError;
     bool httpModeBase;
     const std::string mDatapackBase;
@@ -80,7 +77,7 @@ private:
     bool getHttpFileBase(const std::string &url, const std::string &fileName);
 private slots:
     void datapackDownloadFinishedBase();
-    void datapackChecksumDoneBase(const std::vector<std::string> &datapackFilesList,const QByteArray &hash, const std::vector<uint32_t> &partialHash);
+    void datapackChecksumDoneBase(const std::vector<std::string> &datapackFilesList,const std::vector<char> &hash, const std::vector<uint32_t> &partialHash);
     void haveTheDatapack();
 };
 }

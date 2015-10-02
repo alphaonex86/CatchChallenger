@@ -8,7 +8,7 @@
 
 using namespace CatchChallenger;
 
-QByteArray FacilityLib::UTF8EmptyData=QByteArray().fill(0x00,1);
+std::vector<char> FacilityLib::UTF8EmptyData=std::vector<char>().fill(0x00,1);
 std::string FacilityLib::text_slash="/";
 std::string FacilityLib::text_male="male";
 std::string FacilityLib::text_female="female";

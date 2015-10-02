@@ -483,7 +483,7 @@ void EpollClientLoginSlave::parseFullQuery(const uint8_t &mainCodeType,const uin
                 {
                     if((size-cursor)<(int)sizeof(uint8_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(std::vector<char>(rawData,size).toHex())));
                         return;
                     }
                     charactersGroupIndex=rawData[cursor];
@@ -492,7 +492,7 @@ void EpollClientLoginSlave::parseFullQuery(const uint8_t &mainCodeType,const uin
                 {
                     if((size-cursor)<(int)sizeof(uint8_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(std::vector<char>(rawData,size).toHex())));
                         return;
                     }
                     profileIndex=rawData[cursor];
@@ -501,14 +501,14 @@ void EpollClientLoginSlave::parseFullQuery(const uint8_t &mainCodeType,const uin
                 {
                     if((size-cursor)<(int)sizeof(uint8_t))
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(std::vector<char>(rawData,size).toHex())));
                         return;
                     }
                     pseudoSize=rawData[cursor];
                     cursor+=1;
                     if((size-cursor)<(int)pseudoSize)
                     {
-                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(std::vector<char>(rawData,size).toHex())));
                         return;
                     }
                     pseudo=QString::fromUtf8(rawData+cursor,pseudoSize);
@@ -517,7 +517,7 @@ void EpollClientLoginSlave::parseFullQuery(const uint8_t &mainCodeType,const uin
                 {
                     if((size-cursor)<(int)sizeof(uint8_t))
                     {
-                        parseNetworkReadError(QStringLiteral("error to get skin with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                        parseNetworkReadError(QStringLiteral("error to get skin with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(std::vector<char>(rawData,size).toHex())));
                         return;
                     }
                     skinId=rawData[cursor];
@@ -542,7 +542,7 @@ void EpollClientLoginSlave::parseFullQuery(const uint8_t &mainCodeType,const uin
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(size!=((int)sizeof(uint32_t)+(int)sizeof(uint8_t)))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(std::vector<char>(rawData,size).toHex())));
                     return;
                 }
                 #endif

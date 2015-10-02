@@ -1,7 +1,7 @@
 #ifndef CATCHCHALLENGER_FACILITYLIB_GENERAL_H
 #define CATCHCHALLENGER_FACILITYLIB_GENERAL_H
 
-#include <QByteArray>
+#include <std::vector<char>>
 #include <string>
 #include <vector>
 #include <QRect>
