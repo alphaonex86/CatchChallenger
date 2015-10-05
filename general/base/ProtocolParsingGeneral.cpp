@@ -153,7 +153,7 @@ std::vector<char> ProtocolParsingBase::lzmaCompress(std::vector<char> data)
         }
 
         out_len = OUT_BUF_MAX - strm.avail_out;
-        arr.append((char*)out_buf, out_len);
+        binaryAppend(arr,(char*)out_buf, out_len);
         out_buf[0] = 0;
     } while (strm.avail_out == 0);
     lzma_end (&strm);
@@ -258,7 +258,7 @@ std::vector<char> ProtocolParsingBase::lzmaUncompress(std::vector<char> data)
 
         out_len = OUT_BUF_MAX - strm.avail_out;
         /// \todo static buffer to prevent memory allocation and desallocation
-        arr.append((char*)out_buf, out_len);
+        binaryAppend(arr,(char*)out_buf, out_len);
         out_buf[0] = 0;
     } while (strm.avail_out == 0);
     lzma_end (&strm);

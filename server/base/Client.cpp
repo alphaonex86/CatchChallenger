@@ -401,7 +401,7 @@ std::string Client::headerOutput() const
         {
             QCryptographicHash hash(QCryptographicHash::Sha224);
             hash.addData(ip.data(),ip.size());
-            return std::string(hash.result().toHex()).toStdString()+": ";
+            return std::string(hash.result().toHex())+": ";
         }
         else
             return ip+": ";
@@ -463,7 +463,7 @@ char *Client::addAuthGetToken(const uint32_t &characterId, const uint32_t &accou
     const int &returnedSize=fread(newEntry.token,1,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER,BaseServerLogin::fpRandomFile);
     if(returnedSize!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
     {
-        qDebug() << std::stringLiteral("sizeof(newEntry.token) don't match with urandom size: %1").arg(returnedSize);
+        qDebug() << std::stringLiteral("sizeof(newEntry.token) don't match with random size: %1").arg(returnedSize);
         delete newEntry.token;
         return NULL;
     }

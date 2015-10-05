@@ -7,6 +7,8 @@
 #include <chrono>
 #include <ctime>
 
+#include <QStringList>
+
 #include "epoll/EpollSocket.h"
 #include "epoll/EpollSslClient.h"
 #include "epoll/EpollSslServer.h"
@@ -79,11 +81,11 @@ void send_settings()
     CommonSettingsCommon::commonSettingsCommon.maxPlayerItems                   = settings->value(QLatin1Literal("maxPlayerItems")).toUInt();
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems          = settings->value(QLatin1Literal("maxWarehousePlayerItems")).toUInt();
     formatedServerSettings.compressionLevel                                     = settings->value(QLatin1Literal("compressionLevel")).toUInt();
-    if(settings->value(QLatin1Literal("compression")).toString()==std::stringLiteral("none"))
+    if(settings->value("compression").toString()=="none")
         formatedServerSettings.compressionType                                = CompressionType_None;
-    else if(settings->value(QLatin1Literal("compression")).toString()==std::stringLiteral("xz"))
+    else if(settings->value("compression").toString()=="xz")
         formatedServerSettings.compressionType                                = CompressionType_Xz;
-    else if(settings->value(QLatin1Literal("compression")).toString()==std::stringLiteral("lz4"))
+    else if(settings->value("compression").toString()=="lz4")
         formatedServerSettings.compressionType                                = CompressionType_Lz4;
     else
         formatedServerSettings.compressionType                                = CompressionType_Zlib;
@@ -315,14 +317,14 @@ void send_settings()
     }
 
     {
-        settings->beginGroup(QLatin1Literal("programmedEvent"));
-            const std::stringList &tempListType=settings->childGroups();
+        settings->beginGroup("programmedEvent");
+            const QStringList &tempListType=settings->childGroups();
             int indexType=0;
             while(indexType<tempListType.size())
             {
                 const std::string &type=tempListType.at(indexType).toStdString();
                 settings->beginGroup(QString::fromStdString(type));
-                    const std::stringList &tempList=settings->childGroups();
+                    const QStringList &tempList=settings->childGroups();
                     int index=0;
                     while(index<tempList.size())
                     {
@@ -353,21 +355,21 @@ void send_settings()
 
     {
         bool ok;
-        settings->beginGroup(std::stringLiteral("master"));
+        settings->beginGroup("master");
         master_host=settings->value("host").toString().toStdString();
         master_port=settings->value("port").toUInt(&ok);
         if(master_port==0 || !ok)
         {
-            std::cerr << "Master port not a number or 0:" << settings->value(std::stringLiteral("port")).toString().toStdString() << std::endl;
+            std::cerr << "Master port not a number or 0:" << settings->value("port").toString().toStdString() << std::endl;
             abort();
         }
-        master_tryInterval=settings->value(std::stringLiteral("tryInterval")).toUInt(&ok);
+        master_tryInterval=settings->value("tryInterval").toUInt(&ok);
         if(master_tryInterval==0 || !ok)
         {
             std::cerr << "tryInterval==0 (abort)" << std::endl;
             abort();
         }
-        master_considerDownAfterNumberOfTry=settings->value(std::stringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
+        master_considerDownAfterNumberOfTry=settings->value("considerDownAfterNumberOfTry").toUInt(&ok);
         if(master_considerDownAfterNumberOfTry==0 || !ok)
         {
             std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
@@ -400,7 +402,7 @@ void send_settings()
         formatedServerSettings.city.capture.day=City::Capture::Monday;
     formatedServerSettings.city.capture.hour=0;
     formatedServerSettings.city.capture.minute=0;
-    const std::stringList &capture_time_string_list=settings->value(QLatin1Literal("capture_time")).toString().split(QLatin1Literal(":"));
+    const QStringList &capture_time_string_list=settings->value("capture_time").toString().split(":");
     if(capture_time_string_list.size()==2)
     {
         bool ok;
@@ -433,22 +435,22 @@ int main(int argc, char *argv[])
     QFileInfo datapackFolder(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/informations.xml"));
     if(!datapackFolder.isFile())
     {
-        qDebug() << "No datapack found into: " << datapackFolder.absoluteFilePath();
+        std::cerr << "No datapack found into: " << datapackFolder.absoluteFilePath().toStdString() << std::endl;
         return EXIT_FAILURE;
     }
 
-    const std::string &configFile=QCoreApplication::applicationDirPath()+QLatin1Literal("/server.properties");
-    settings=new QSettings(configFile,QSettings::IniFormat);
+    const std::string &configFile=QCoreApplication::applicationDirPath().toStdString()+"/server.properties";
+    settings=new QSettings(QString::fromStdString(configFile),QSettings::IniFormat);
     if(settings->status()!=QSettings::NoError)
     {
-        qDebug() << "Error settings (1): " << settings->status();
+        std::cerr << "Error settings (1): " << settings->status() << std::endl;
         return EXIT_FAILURE;
     }
-    NormalServerGlobal::checkSettingsFile(settings,QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/"));
+    NormalServerGlobal::checkSettingsFile(settings,QCoreApplication::applicationDirPath().toStdString()+"/datapack/");
 
     if(settings->status()!=QSettings::NoError)
     {
-        qDebug() << "Error settings (2): " << settings->status();
+        std::cerr << "Error settings (2): " << settings->status() << std::endl;
         return EXIT_FAILURE;
     }
     if(!Epoll::epoll.init())
@@ -499,18 +501,18 @@ int main(int argc, char *argv[])
 
         if(!formatedServerNormalSettings.proxy.empty())
         {
-            qDebug() << "Proxy not supported: " << settings->status();
+            std::cerr << "Proxy not supported: " << settings->status() << std::endl;
             return EXIT_FAILURE;
         }
         if(!formatedServerNormalSettings.proxy.empty())
         {
-            qDebug() << "Proxy not supported";
+            std::cerr << "Proxy not supported" << std::endl;
             return EXIT_FAILURE;
         }
         #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
         if(!CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer)
         {
-            qDebug() << "plantOnlyVisibleByPlayer at false but server compiled with plantOnlyVisibleByPlayer at true, recompil to change this options";
+            std::cerr << "plantOnlyVisibleByPlayer at false but server compiled with plantOnlyVisibleByPlayer at true, recompil to change this options" << std::endl;
             return EXIT_FAILURE;
         }
         #else
@@ -596,7 +598,7 @@ int main(int argc, char *argv[])
         #else
         if(formatedServerNormalSettings.useSsl)
         {
-            qDebug() << "Clear connexion requested but server compiled with ssl support!";
+            std::cerr << "Clear connexion requested but server compiled with ssl support!" << std::endl;
             return EXIT_FAILURE;
         }
         #endif
@@ -609,25 +611,25 @@ int main(int argc, char *argv[])
         }
         else
         {
-            std::stringList newMirrorList;
+            std::vector<std::string> newMirrorList;
             std::regex httpMatch("^https?://.+$");
-            const std::stringList &mirrorList=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(";");
-            int index=0;
+            const std::vector<std::string> &mirrorList=stringsplit(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer,';');
+            unsigned int index=0;
             while(index<mirrorList.size())
             {
                 const std::string &mirror=mirrorList.at(index);
-                if(!mirror.contains(httpMatch))
+                if(!std::regex_match(mirror,httpMatch))
                 {
-                    qDebug() << "Mirror wrong: " << mirror.toLocal8Bit();
+                    std::cerr << "Mirror wrong: " << mirror << std::endl;
                     return EXIT_FAILURE;
                 }
-                if(mirror.endsWith("/"))
-                    newMirrorList << mirror;
+                if(stringEndsWith(mirror,'/'))
+                    newMirrorList.push_back(mirror);
                 else
-                    newMirrorList << mirror+"/";
+                    newMirrorList.push_back(mirror+'/');
                 index++;
             }
-            CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=newMirrorList.join(";").toStdString();
+            CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=stringimplode(newMirrorList,';');
             CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer;
         }
     }

@@ -5,9 +5,8 @@
 #include "../../general/base/GeneralVariable.h"
 #include "../VariableServer.h"
 
-#include <QDebug>
 #include <QCryptographicHash>
-#include <std::regex>
+#include <regex>
 #include <iostream>
 
 using namespace CatchChallenger;

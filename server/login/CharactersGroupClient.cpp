@@ -6,7 +6,6 @@
 #include "../base/DictionaryLogin.h"
 #include "../../general/base/CommonSettingsCommon.h"
 #include <iostream>
-#include <QDebug>
 
 using namespace CatchChallenger;
 

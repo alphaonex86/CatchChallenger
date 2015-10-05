@@ -1,6 +1,7 @@
 #include "ProtocolParsing.h"
 #include "GeneralVariable.h"
 #include "ProtocolParsingCheck.h"
+#include "cpp11addition.h"
 #include <iostream>
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION

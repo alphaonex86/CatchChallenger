@@ -5,9 +5,7 @@
 #include "../VariableServer.h"
 #include "../VariableServer.h"
 
-#include <QDebug>
 #include <QCryptographicHash>
-#include <std::regex>
 #include <iostream>
 
 using namespace CatchChallenger;
@@ -39,12 +37,12 @@ void BaseServerLogin::preload_the_randomData()
     #ifdef Q_OS_LINUX
     if(BaseServerLogin::fpRandomFile!=NULL)
         fclose(BaseServerLogin::fpRandomFile);
-    BaseServerLogin::fpRandomFile = fopen("/dev/urandom","rb");
+    BaseServerLogin::fpRandomFile = fopen("/dev/random","rb");
     if(fpRandomFile==NULL)
     {
-        std::cerr << "Unable to open /dev/urandom to generate random token" << std::endl;
+        std::cerr << "Unable to open /dev/random to generate random token" << std::endl;
         /* allow poor quality number:
-         * 1) more easy to run, allow start include if /dev/urandom can't be read
+         * 1) more easy to run, allow start include if /dev/random can't be read
          * 2) it's for very small server (Lan) or internal communication */
         #if ! defined(CATCHCHALLENGER_CLIENT) && ! defined(CATCHCHALLENGER_SOLO)
         abort();

@@ -1,13 +1,13 @@
 #include "NormalServerGlobal.h"
 #include "VariableServer.h"
 
-#include <QDebug>
 #include <QDir>
 #include <QFileInfo>
 #include <QFileInfoList>
-#include <std::regex>
+#include <regex>
 
 #include <random>
+#include <iostream>
 
 NormalServerGlobal::NormalServerGlobal()
 {
@@ -16,329 +16,329 @@ NormalServerGlobal::NormalServerGlobal()
 void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const std::string &datapack_basePath)
 {
     #if defined(Q_CC_GNU)
-        qDebug() << std::stringLiteral("GCC %1.%2.%3 build: ").arg(__GNUC__).arg(__GNUC_MINOR__).arg(__GNUC_PATCHLEVEL__)+__DATE__+" "+__TIME__;
+        std::cout << "GCC " << __GNUC__ << "." << __GNUC_MINOR__ << "." << __GNUC_PATCHLEVEL__ << " build: " << __DATE__ << " " << __TIME__ << std::endl;
     #else
         #if defined(__DATE__) && defined(__TIME__)
-            qDebug() << std::stringLiteral("Unknow compiler: ")+__DATE__+" "+__TIME__;
+            std::cout << "Unknow compiler: " << __DATE__ << " " << __TIME__ << std::endl;
         #else
-            qDebug() << std::stringLiteral("Unknow compiler");
+            std::cout << "Unknow compiler" << std::endl;
         #endif
     #endif
-    qDebug() << std::stringLiteral("Qt version: %1 (%2)").arg(qVersion()).arg(QT_VERSION);
+    std::cout << "Qt version: " << qVersion() << " (" << QT_VERSION << ")" << std::endl;
 
-    if(!settings->contains(QLatin1Literal("max-players")))
-        settings->setValue(QLatin1Literal("max-players"),200);
+    if(!settings->contains("max-players"))
+        settings->setValue("max-players",200);
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    if(!settings->contains(QLatin1Literal("announce")))
-        settings->setValue(QLatin1Literal("announce"),false);
-    if(!settings->contains(QLatin1Literal("character_delete_time")))
-        settings->setValue(QLatin1Literal("character_delete_time"),604800);
-    if(!settings->contains(QLatin1Literal("max_pseudo_size")))
-        settings->setValue(QLatin1Literal("max_pseudo_size"),20);
-    if(!settings->contains(QLatin1Literal("max_character")))
-        settings->setValue(QLatin1Literal("max_character"),3);
-    if(!settings->contains(QLatin1Literal("min_character")))
-        settings->setValue(QLatin1Literal("min_character"),1);
-    if(!settings->contains(QLatin1Literal("automatic_account_creation")))
-        settings->setValue(QLatin1Literal("automatic_account_creation"),false);
-    if(!settings->contains(QLatin1Literal("maxPlayerMonsters")))
-        settings->setValue(QLatin1Literal("maxPlayerMonsters"),8);
-    if(!settings->contains(QLatin1Literal("maxWarehousePlayerMonsters")))
-        settings->setValue(QLatin1Literal("maxWarehousePlayerMonsters"),30);
-    if(!settings->contains(QLatin1Literal("maxPlayerItems")))
-        settings->setValue(QLatin1Literal("maxPlayerItems"),30);
-    if(!settings->contains(QLatin1Literal("maxWarehousePlayerItems")))
-        settings->setValue(QLatin1Literal("maxWarehousePlayerItems"),150);
+    if(!settings->contains("announce"))
+        settings->setValue("announce",false);
+    if(!settings->contains("character_delete_time"))
+        settings->setValue("character_delete_time",604800);
+    if(!settings->contains("max_pseudo_size"))
+        settings->setValue("max_pseudo_size",20);
+    if(!settings->contains("max_character"))
+        settings->setValue("max_character",3);
+    if(!settings->contains("min_character"))
+        settings->setValue("min_character",1);
+    if(!settings->contains("automatic_account_creation"))
+        settings->setValue("automatic_account_creation",false);
+    if(!settings->contains("maxPlayerMonsters"))
+        settings->setValue("maxPlayerMonsters",8);
+    if(!settings->contains("maxWarehousePlayerMonsters"))
+        settings->setValue("maxWarehousePlayerMonsters",30);
+    if(!settings->contains("maxPlayerItems"))
+        settings->setValue("maxPlayerItems",30);
+    if(!settings->contains("maxWarehousePlayerItems"))
+        settings->setValue("maxWarehousePlayerItems",150);
     #endif
-    if(!settings->contains(QLatin1Literal("server-ip")))
-        settings->setValue(QLatin1Literal("server-ip"),std::string());
-    if(!settings->contains(QLatin1Literal("pvp")))
-        settings->setValue(QLatin1Literal("pvp"),true);
-    if(!settings->contains(QLatin1Literal("useSP")))
-        settings->setValue(QLatin1Literal("useSP"),true);
-    if(!settings->contains(QLatin1Literal("autoLearn")))
-        settings->setValue(QLatin1Literal("autoLearn"),false);
-    if(!settings->contains(QLatin1Literal("server-port")))
-        settings->setValue(QLatin1Literal("server-port"),10000+rand()%(65535-10000));
-    if(!settings->contains(QLatin1Literal("sendPlayerNumber")))
-        settings->setValue(QLatin1Literal("sendPlayerNumber"),false);
-    if(!settings->contains(QLatin1Literal("tolerantMode")))
-        settings->setValue(QLatin1Literal("tolerantMode"),false);
-    if(!settings->contains(QLatin1Literal("compression")))
-        settings->setValue(QLatin1Literal("compression"),QLatin1Literal("zlib"));
-    if(!settings->contains(QLatin1Literal("compressionLevel")))
-        settings->setValue(QLatin1Literal("compressionLevel"),6);
-    if(!settings->contains(QLatin1Literal("anonymous")))
-        settings->setValue(QLatin1Literal("anonymous"),false);
-    if(!settings->contains(QLatin1Literal("server_message")))
-        settings->setValue(QLatin1Literal("server_message"),std::string());
-    if(!settings->contains(QLatin1Literal("proxy")))
-        settings->setValue(QLatin1Literal("proxy"),std::string());
-    if(!settings->contains(QLatin1Literal("proxy_port")))
-        settings->setValue(QLatin1Literal("proxy_port"),9050);
-    if(!settings->contains(QLatin1Literal("forcedSpeed")))
-        settings->setValue(QLatin1Literal("forcedSpeed"),CATCHCHALLENGER_SERVER_NORMAL_SPEED);
-    if(!settings->contains(QLatin1Literal("dontSendPseudo")))
-        settings->setValue(QLatin1Literal("dontSendPseudo"),false);
-    if(!settings->contains(QLatin1Literal("dontSendPlayerType")))
-        settings->setValue(QLatin1Literal("dontSendPlayerType"),false);
-    if(!settings->contains(QLatin1Literal("forceClientToSendAtMapChange")))
-        settings->setValue(QLatin1Literal("forceClientToSendAtMapChange"),true);
-    if(!settings->contains(QLatin1Literal("httpDatapackMirror")))
-        settings->setValue(QLatin1Literal("httpDatapackMirror"),std::string());
-    if(!settings->contains(QLatin1Literal("datapackCache")))
-        settings->setValue(QLatin1Literal("datapackCache"),-1);
-    if(!settings->contains(QLatin1Literal("plantOnlyVisibleByPlayer")))
+    if(!settings->contains("server-ip"))
+        settings->setValue("server-ip","");
+    if(!settings->contains("pvp"))
+        settings->setValue("pvp",true);
+    if(!settings->contains("useSP"))
+        settings->setValue("useSP",true);
+    if(!settings->contains("autoLearn"))
+        settings->setValue("autoLearn",false);
+    if(!settings->contains("server-port"))
+        settings->setValue("server-port",10000+rand()%(65535-10000));
+    if(!settings->contains("sendPlayerNumber"))
+        settings->setValue("sendPlayerNumber",false);
+    if(!settings->contains("tolerantMode"))
+        settings->setValue("tolerantMode",false);
+    if(!settings->contains("compression"))
+        settings->setValue("compression","zlib");
+    if(!settings->contains("compressionLevel"))
+        settings->setValue("compressionLevel",6);
+    if(!settings->contains("anonymous"))
+        settings->setValue("anonymous",false);
+    if(!settings->contains("server_message"))
+        settings->setValue("server_message","");
+    if(!settings->contains("proxy"))
+        settings->setValue("proxy","");
+    if(!settings->contains("proxy_port"))
+        settings->setValue("proxy_port",9050);
+    if(!settings->contains("forcedSpeed"))
+        settings->setValue("forcedSpeed",CATCHCHALLENGER_SERVER_NORMAL_SPEED);
+    if(!settings->contains("dontSendPseudo"))
+        settings->setValue("dontSendPseudo",false);
+    if(!settings->contains("dontSendPlayerType"))
+        settings->setValue("dontSendPlayerType",false);
+    if(!settings->contains("forceClientToSendAtMapChange"))
+        settings->setValue("forceClientToSendAtMapChange",true);
+    if(!settings->contains("httpDatapackMirror"))
+        settings->setValue("httpDatapackMirror","");
+    if(!settings->contains("datapackCache"))
+        settings->setValue("datapackCache",-1);
+    if(!settings->contains("plantOnlyVisibleByPlayer"))
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-        settings->setValue(QLatin1Literal("plantOnlyVisibleByPlayer"),true);
+        settings->setValue("plantOnlyVisibleByPlayer",true);
     #else
-        settings->setValue(QLatin1Literal("plantOnlyVisibleByPlayer"),false);
+        settings->setValue("plantOnlyVisibleByPlayer",false);
     #endif
-    if(!settings->contains(QLatin1Literal("useSsl")))
+    if(!settings->contains("useSsl"))
     #ifdef Q_OS_LINUX
-        settings->setValue(QLatin1Literal("useSsl"),false);
+        settings->setValue("useSsl",false);
     #else
-        settings->setValue(QLatin1Literal("useSsl"),false);
+        settings->setValue("useSsl",false);
     #endif
-    if(!settings->contains(QLatin1Literal("mainDatapackCode")))
+    if(!settings->contains("mainDatapackCode"))
     {
-        settings->setValue(QLatin1Literal("mainDatapackCode"),std::string());
-        QDir dir(datapack_basePath+std::stringLiteral("map/main/"));
-        const QFileInfoList &fileInfoList=dir.entryInfoList(std::stringList(),QDir::AllDirs|QDir::NoDot|QDir::NoDotDot);
+        settings->setValue("mainDatapackCode","");
+        QDir dir(QString::fromStdString(datapack_basePath+"map/main/"));
+        const QFileInfoList &fileInfoList=dir.entryInfoList(QStringList(),QDir::AllDirs|QDir::NoDot|QDir::NoDotDot);
         if(fileInfoList.size()==1)
         {
             QFileInfo folder=fileInfoList.first();
-            const std::string &string=folder.fileName();
-            if(string.contains(std::regex("^[a-z0-9\\- _]+$")))
-                settings->setValue(QLatin1Literal("mainDatapackCode"),string);
+            const std::string &string=folder.fileName().toStdString();
+            if(std::regex_match(string,std::regex("^[a-z0-9\\- _]+$")))
+                settings->setValue("mainDatapackCode",QString::fromStdString(string));
         }
     }
-    if(!settings->contains(QLatin1Literal("subDatapackCode")))
-        settings->setValue(QLatin1Literal("subDatapackCode"),std::string());
+    if(!settings->contains("subDatapackCode"))
+        settings->setValue("subDatapackCode","");
 
-    if(!settings->contains(QLatin1Literal("exportedXml")))
-        settings->setValue(QLatin1Literal("exportedXml"),std::string());
+    if(!settings->contains("exportedXml"))
+        settings->setValue("exportedXml","");
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     settings->beginGroup(std::stringLiteral("master"));
-    if(!settings->contains(QLatin1Literal("external-server-ip")))
-        settings->setValue(QLatin1Literal("external-server-ip"),settings->value(QLatin1Literal("server-ip")).toString());
-    if(!settings->contains(QLatin1Literal("external-server-port")))
-        settings->setValue(QLatin1Literal("external-server-port"),settings->value(QLatin1Literal("server-port")).toString());
+    if(!settings->contains("external-server-ip")
+        settings->setValue("external-server-ip",settings->value("server-ip").toString());
+    if(!settings->contains("external-server-port"))
+        settings->setValue("external-server-port",settings->value("server-port").toString());
     {
         std::mt19937 rng;
         rng.seed(time(0));
-        if(!settings->contains(QLatin1Literal("uniqueKey")))
-            settings->setValue(QLatin1Literal("uniqueKey"),static_cast<unsigned int>(rng()));
-        if(!settings->contains(QLatin1Literal("charactersGroup")))
-            settings->setValue(QLatin1Literal("charactersGroup"),std::stringLiteral("PutHereTheInfoLike-%1").arg(rng()));
+        if(!settings->contains("uniqueKey")
+            settings->setValue("uniqueKey",static_cast<unsigned int>(rng()));
+        if(!settings->contains("charactersGroup"))
+            settings->setValue("charactersGroup","PutHereTheInfoLike-"+std::to_string(rng()));
     }
-    if(!settings->contains(QLatin1Literal("logicalGroup")))
-        settings->setValue(QLatin1Literal("logicalGroup"),std::string());
+    if(!settings->contains("logicalGroup"))
+        settings->setValue("logicalGroup",std::string());
 
-    if(!settings->contains(std::stringLiteral("host")))
-        settings->setValue(std::stringLiteral("host"),std::stringLiteral("localhost"));
-    if(!settings->contains(std::stringLiteral("port")))
-        settings->setValue(std::stringLiteral("port"),9999);
-    if(!settings->contains(std::stringLiteral("considerDownAfterNumberOfTry")))
-        settings->setValue(std::stringLiteral("considerDownAfterNumberOfTry"),3);
-    if(!settings->contains(std::stringLiteral("tryInterval")))
-        settings->setValue(std::stringLiteral("tryInterval"),5);
-    if(!settings->contains(std::stringLiteral("token")))
-        settings->setValue(std::stringLiteral("token"),std::string());
+    if(!settings->contains("host"))
+        settings->setValue("host","localhost");
+    if(!settings->contains("port"))
+        settings->setValue("port",9999);
+    if(!settings->contains("considerDownAfterNumberOfTry"))
+        settings->setValue("considerDownAfterNumberOfTry",3);
+    if(!settings->contains("tryInterval"))
+        settings->setValue("tryInterval",5);
+    if(!settings->contains("token"))
+        settings->setValue("token",std::string());
     settings->endGroup();
     #endif
 
     #ifdef Q_OS_LINUX
-    settings->beginGroup(QLatin1Literal("Linux"));
-    if(!settings->contains(QLatin1Literal("tcpCork")))
-        settings->setValue(QLatin1Literal("tcpCork"),true);
-    if(!settings->contains(QLatin1Literal("tcpNodelay")))
-        settings->setValue(QLatin1Literal("tcpNodelay"),false);
+    settings->beginGroup("Linux");
+    if(!settings->contains("tcpCork"))
+        settings->setValue("tcpCork",true);
+    if(!settings->contains("tcpNodelay"))
+        settings->setValue("tcpNodelay",false);
     settings->endGroup();
     #endif
 
-    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm"));
-    if(!settings->contains(QLatin1Literal("MapVisibilityAlgorithm")))
-        settings->setValue(QLatin1Literal("MapVisibilityAlgorithm"),0);
+    settings->beginGroup("MapVisibilityAlgorithm");
+    if(!settings->contains("MapVisibilityAlgorithm"))
+        settings->setValue("MapVisibilityAlgorithm",0);
     settings->endGroup();
 
-    settings->beginGroup(QLatin1Literal("DDOS"));
-    if(!settings->contains(QLatin1Literal("waitBeforeConnectAfterKick")))
-        settings->setValue(QLatin1Literal("waitBeforeConnectAfterKick"),30);
-    if(!settings->contains(QLatin1Literal("computeAverageValueNumberOfValue")))
-        settings->setValue(QLatin1Literal("computeAverageValueNumberOfValue"),3);
-    if(!settings->contains(QLatin1Literal("computeAverageValueTimeInterval")))
-        settings->setValue(QLatin1Literal("computeAverageValueTimeInterval"),5);
+    settings->beginGroup("DDOS");
+    if(!settings->contains("waitBeforeConnectAfterKick"))
+        settings->setValue("waitBeforeConnectAfterKick",30);
+    if(!settings->contains("computeAverageValueNumberOfValue"))
+        settings->setValue("computeAverageValueNumberOfValue",3);
+    if(!settings->contains("computeAverageValueTimeInterval"))
+        settings->setValue("computeAverageValueTimeInterval",5);
     #ifdef CATCHCHALLENGER_DDOS_FILTER
-    if(!settings->contains(QLatin1Literal("kickLimitMove")))
-        settings->setValue(QLatin1Literal("kickLimitMove"),60);
-    if(!settings->contains(QLatin1Literal("kickLimitChat")))
-        settings->setValue(QLatin1Literal("kickLimitChat"),5);
-    if(!settings->contains(QLatin1Literal("kickLimitOther")))
-        settings->setValue(QLatin1Literal("kickLimitOther"),30);
+    if(!settings->contains("kickLimitMove"))
+        settings->setValue("kickLimitMove",60);
+    if(!settings->contains("kickLimitChat"))
+        settings->setValue("kickLimitChat",5);
+    if(!settings->contains("kickLimitOther"))
+        settings->setValue("kickLimitOther",30);
     #endif
-    if(!settings->contains(QLatin1Literal("dropGlobalChatMessageGeneral")))
-        settings->setValue(QLatin1Literal("dropGlobalChatMessageGeneral"),20);
-    if(!settings->contains(QLatin1Literal("dropGlobalChatMessageLocalClan")))
-        settings->setValue(QLatin1Literal("dropGlobalChatMessageLocalClan"),20);
-    if(!settings->contains(QLatin1Literal("dropGlobalChatMessagePrivate")))
-        settings->setValue(QLatin1Literal("dropGlobalChatMessagePrivate"),20);
+    if(!settings->contains("dropGlobalChatMessageGeneral"))
+        settings->setValue("dropGlobalChatMessageGeneral",20);
+    if(!settings->contains("dropGlobalChatMessageLocalClan"))
+        settings->setValue("dropGlobalChatMessageLocalClan",20);
+    if(!settings->contains("dropGlobalChatMessagePrivate"))
+        settings->setValue("dropGlobalChatMessagePrivate",20);
     settings->endGroup();
 
-    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-Simple"));
-    if(!settings->contains(QLatin1Literal("Max")))
-        settings->setValue(QLatin1Literal("Max"),50);
-    if(!settings->contains(QLatin1Literal("Reshow")))
-        settings->setValue(QLatin1Literal("Reshow"),30);
-    if(!settings->contains(QLatin1Literal("Reemit")))
-        settings->setValue(QLatin1Literal("Reemit"),false);
+    settings->beginGroup("MapVisibilityAlgorithm-Simple");
+    if(!settings->contains("Max"))
+        settings->setValue("Max",50);
+    if(!settings->contains("Reshow"))
+        settings->setValue("Reshow",30);
+    if(!settings->contains("Reemit"))
+        settings->setValue("Reemit",false);
     settings->endGroup();
 
-    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-WithBorder"));
-    if(!settings->contains(QLatin1Literal("MaxWithBorder")))
-        settings->setValue(QLatin1Literal("MaxWithBorder"),20);
-    if(!settings->contains(QLatin1Literal("ReshowWithBorder")))
-        settings->setValue(QLatin1Literal("ReshowWithBorder"),10);
-    if(!settings->contains(QLatin1Literal("Max")))
-        settings->setValue(QLatin1Literal("Max"),50);
-    if(!settings->contains(QLatin1Literal("Reshow")))
-        settings->setValue(QLatin1Literal("Reshow"),30);
+    settings->beginGroup("MapVisibilityAlgorithm-WithBorder");
+    if(!settings->contains("MaxWithBorder"))
+        settings->setValue("MaxWithBorder",20);
+    if(!settings->contains("ReshowWithBorder"))
+        settings->setValue("ReshowWithBorder",10);
+    if(!settings->contains("Max"))
+        settings->setValue("Max",50);
+    if(!settings->contains("Reshow"))
+        settings->setValue("Reshow",30);
     settings->endGroup();
 
-    settings->beginGroup(QLatin1Literal("rates"));
-    if(!settings->contains(QLatin1Literal("xp_normal")))
-        settings->setValue(QLatin1Literal("xp_normal"),1.0);
-    if(!settings->contains(QLatin1Literal("gold_normal")))
-        settings->setValue(QLatin1Literal("gold_normal"),1.0);
-    if(!settings->contains(QLatin1Literal("drop_normal")))
-        settings->setValue(QLatin1Literal("drop_normal"),1.0);
-    if(!settings->contains(QLatin1Literal("xp_pow_normal")))
-        settings->setValue(QLatin1Literal("xp_pow_normal"),1.0);
+    settings->beginGroup("rates");
+    if(!settings->contains("xp_normal"))
+        settings->setValue("xp_normal",1.0);
+    if(!settings->contains("gold_normal"))
+        settings->setValue("gold_normal",1.0);
+    if(!settings->contains("drop_normal"))
+        settings->setValue("drop_normal",1.0);
+    if(!settings->contains("xp_pow_normal"))
+        settings->setValue("xp_pow_normal",1.0);
     settings->endGroup();
 
-    settings->beginGroup(QLatin1Literal("chat"));
-    if(!settings->contains(QLatin1Literal("allow-all")))
-        settings->setValue(QLatin1Literal("allow-all"),true);
-    if(!settings->contains(QLatin1Literal("allow-local")))
-        settings->setValue(QLatin1Literal("allow-local"),true);
-    if(!settings->contains(QLatin1Literal("allow-private")))
-        settings->setValue(QLatin1Literal("allow-private"),true);
-    if(!settings->contains(QLatin1Literal("allow-clan")))
-        settings->setValue(QLatin1Literal("allow-clan"),true);
+    settings->beginGroup("chat");
+    if(!settings->contains("allow-all"))
+        settings->setValue("allow-all",true);
+    if(!settings->contains("allow-local"))
+        settings->setValue("allow-local",true);
+    if(!settings->contains("allow-private"))
+        settings->setValue("allow-private",true);
+    if(!settings->contains("allow-clan"))
+        settings->setValue("allow-clan",true);
     settings->endGroup();
 
-    if(!settings->contains(QLatin1Literal("programmedEventFirstInit")))
+    if(!settings->contains("programmedEventFirstInit"))
     {
-        settings->setValue(QLatin1Literal("programmedEventFirstInit"),true);
-        settings->beginGroup(QLatin1Literal("programmedEvent"));
-            settings->beginGroup(QLatin1Literal("day"));
-                settings->beginGroup(QLatin1Literal("day"));
-                if(!settings->contains(QLatin1Literal("value")))
-                    settings->setValue(QLatin1Literal("value"),"day");
-                if(!settings->contains(QLatin1Literal("cycle")))
-                    settings->setValue(QLatin1Literal("cycle"),"60");
-                if(!settings->contains(QLatin1Literal("offset")))
-                    settings->setValue(QLatin1Literal("offset"),"0");
+        settings->setValue("programmedEventFirstInit",true);
+        settings->beginGroup("programmedEvent");
+            settings->beginGroup("day");
+                settings->beginGroup("day");
+                if(!settings->contains("value"))
+                    settings->setValue("value","day");
+                if(!settings->contains("cycle"))
+                    settings->setValue("cycle","60");
+                if(!settings->contains("offset"))
+                    settings->setValue("offset","0");
                 settings->endGroup();
-                settings->beginGroup(QLatin1Literal("night"));
-                if(!settings->contains(QLatin1Literal("value")))
-                    settings->setValue(QLatin1Literal("value"),"night");
-                if(!settings->contains(QLatin1Literal("cycle")))
-                    settings->setValue(QLatin1Literal("cycle"),"60");
-                if(!settings->contains(QLatin1Literal("offset")))
-                    settings->setValue(QLatin1Literal("offset"),"30");
+                settings->beginGroup("night");
+                if(!settings->contains("value"))
+                    settings->setValue("value","night");
+                if(!settings->contains("cycle"))
+                    settings->setValue("cycle","60");
+                if(!settings->contains("offset"))
+                    settings->setValue("offset","30");
                 settings->endGroup();
             settings->endGroup();
         settings->endGroup();
     }
 
-    settings->beginGroup(QLatin1Literal("db"));
-    if(!settings->contains(QLatin1Literal("db_fight_sync")))
-        settings->setValue(QLatin1Literal("db_fight_sync"),QLatin1Literal("FightSync_AtTheEndOfBattle"));
-    if(!settings->contains(QLatin1Literal("secondToPositionSync")))
-        settings->setValue(QLatin1Literal("secondToPositionSync"),0);
-    if(!settings->contains(QLatin1Literal("positionTeleportSync")))
-        settings->setValue(QLatin1Literal("positionTeleportSync"),true);
+    settings->beginGroup("db");
+    if(!settings->contains("db_fight_sync"))
+        settings->setValue("db_fight_sync","FightSync_AtTheEndOfBattle");
+    if(!settings->contains("secondToPositionSync"))
+        settings->setValue("secondToPositionSync",0);
+    if(!settings->contains("positionTeleportSync"))
+        settings->setValue("positionTeleportSync",true);
     settings->endGroup();
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    settings->beginGroup(QLatin1Literal("db-login"));
-    if(!settings->contains(QLatin1Literal("type")))
-        settings->setValue(QLatin1Literal("type"),QLatin1Literal("sqlite"));
-    if(!settings->contains(QLatin1Literal("host")))
-        settings->setValue(QLatin1Literal("host"),QLatin1Literal("localhost"));
-    if(!settings->contains(QLatin1Literal("login")))
-        settings->setValue(QLatin1Literal("login"),QLatin1Literal("catchchallenger-login"));
-    if(!settings->contains(QLatin1Literal("pass")))
-        settings->setValue(QLatin1Literal("pass"),QLatin1Literal("catchchallenger-pass"));
-    if(!settings->contains(QLatin1Literal("db")))
-        settings->setValue(QLatin1Literal("db"),QLatin1Literal("catchchallenger_login"));
-    if(!settings->contains(QLatin1Literal("considerDownAfterNumberOfTry")))
-        settings->setValue(QLatin1Literal("considerDownAfterNumberOfTry"),3);
-    if(!settings->contains(QLatin1Literal("tryInterval")))
-        settings->setValue(QLatin1Literal("tryInterval"),5);
+    settings->beginGroup("db-login");
+    if(!settings->contains("type"))
+        settings->setValue("type","sqlite");
+    if(!settings->contains("host"))
+        settings->setValue("host","localhost");
+    if(!settings->contains("login"))
+        settings->setValue("login","catchchallenger-login");
+    if(!settings->contains("pass"))
+        settings->setValue("pass","catchchallenger-pass");
+    if(!settings->contains("db"))
+        settings->setValue("db","catchchallenger_login");
+    if(!settings->contains("considerDownAfterNumberOfTry"))
+        settings->setValue("considerDownAfterNumberOfTry",3);
+    if(!settings->contains("tryInterval"))
+        settings->setValue("tryInterval",5);
     settings->endGroup();
     #endif
 
-    settings->beginGroup(QLatin1Literal("db-base"));
-    if(!settings->contains(QLatin1Literal("type")))
-        settings->setValue(QLatin1Literal("type"),QLatin1Literal("sqlite"));
-    if(!settings->contains(QLatin1Literal("host")))
-        settings->setValue(QLatin1Literal("host"),QLatin1Literal("localhost"));
-    if(!settings->contains(QLatin1Literal("login")))
-        settings->setValue(QLatin1Literal("login"),QLatin1Literal("catchchallenger-base"));
-    if(!settings->contains(QLatin1Literal("pass")))
-        settings->setValue(QLatin1Literal("pass"),QLatin1Literal("catchchallenger-pass"));
-    if(!settings->contains(QLatin1Literal("db")))
-        settings->setValue(QLatin1Literal("db"),QLatin1Literal("catchchallenger_base"));
-    if(!settings->contains(QLatin1Literal("considerDownAfterNumberOfTry")))
-        settings->setValue(QLatin1Literal("considerDownAfterNumberOfTry"),3);
-    if(!settings->contains(QLatin1Literal("tryInterval")))
-        settings->setValue(QLatin1Literal("tryInterval"),5);
+    settings->beginGroup("db-base");
+    if(!settings->contains("type"))
+        settings->setValue("type","sqlite");
+    if(!settings->contains("host"))
+        settings->setValue("host","localhost");
+    if(!settings->contains("login"))
+        settings->setValue("login","catchchallenger-base");
+    if(!settings->contains("pass"))
+        settings->setValue("pass","catchchallenger-pass");
+    if(!settings->contains("db"))
+        settings->setValue("db","catchchallenger_base");
+    if(!settings->contains("considerDownAfterNumberOfTry"))
+        settings->setValue("considerDownAfterNumberOfTry",3);
+    if(!settings->contains("tryInterval"))
+        settings->setValue("tryInterval",5);
     settings->endGroup();
 
-    settings->beginGroup(QLatin1Literal("db-common"));
-    if(!settings->contains(QLatin1Literal("type")))
-        settings->setValue(QLatin1Literal("type"),QLatin1Literal("sqlite"));
-    if(!settings->contains(QLatin1Literal("host")))
-        settings->setValue(QLatin1Literal("host"),QLatin1Literal("localhost"));
-    if(!settings->contains(QLatin1Literal("login")))
-        settings->setValue(QLatin1Literal("login"),QLatin1Literal("catchchallenger-login"));
-    if(!settings->contains(QLatin1Literal("pass")))
-        settings->setValue(QLatin1Literal("pass"),QLatin1Literal("catchchallenger-pass"));
-    if(!settings->contains(QLatin1Literal("db")))
-        settings->setValue(QLatin1Literal("db"),QLatin1Literal("catchchallenger_common"));
-    if(!settings->contains(QLatin1Literal("considerDownAfterNumberOfTry")))
-        settings->setValue(QLatin1Literal("considerDownAfterNumberOfTry"),3);
-    if(!settings->contains(QLatin1Literal("tryInterval")))
-        settings->setValue(QLatin1Literal("tryInterval"),5);
+    settings->beginGroup("db-common");
+    if(!settings->contains("type"))
+        settings->setValue("type","sqlite");
+    if(!settings->contains("host"))
+        settings->setValue("host","localhost");
+    if(!settings->contains("login"))
+        settings->setValue("login","catchchallenger-login");
+    if(!settings->contains("pass"))
+        settings->setValue("pass","catchchallenger-pass");
+    if(!settings->contains("db"))
+        settings->setValue("db","catchchallenger_common");
+    if(!settings->contains("considerDownAfterNumberOfTry"))
+        settings->setValue("considerDownAfterNumberOfTry",3);
+    if(!settings->contains("tryInterval"))
+        settings->setValue("tryInterval",5);
     settings->endGroup();
 
-    settings->beginGroup(QLatin1Literal("db-server"));
-    if(!settings->contains(QLatin1Literal("type")))
-        settings->setValue(QLatin1Literal("type"),QLatin1Literal("sqlite"));
-    if(!settings->contains(QLatin1Literal("host")))
-        settings->setValue(QLatin1Literal("host"),QLatin1Literal("localhost"));
-    if(!settings->contains(QLatin1Literal("login")))
-        settings->setValue(QLatin1Literal("login"),QLatin1Literal("catchchallenger-login"));
-    if(!settings->contains(QLatin1Literal("pass")))
-        settings->setValue(QLatin1Literal("pass"),QLatin1Literal("catchchallenger-pass"));
-    if(!settings->contains(QLatin1Literal("db")))
-        settings->setValue(QLatin1Literal("db"),QLatin1Literal("catchchallenger_server"));
-    if(!settings->contains(QLatin1Literal("considerDownAfterNumberOfTry")))
-        settings->setValue(QLatin1Literal("considerDownAfterNumberOfTry"),3);
-    if(!settings->contains(QLatin1Literal("tryInterval")))
-        settings->setValue(QLatin1Literal("tryInterval"),5);
+    settings->beginGroup("db-server");
+    if(!settings->contains("type"))
+        settings->setValue("type","sqlite");
+    if(!settings->contains("host"))
+        settings->setValue("host","localhost");
+    if(!settings->contains("login"))
+        settings->setValue("login","catchchallenger-login");
+    if(!settings->contains("pass"))
+        settings->setValue("pass","catchchallenger-pass");
+    if(!settings->contains("db"))
+        settings->setValue("db","catchchallenger_server");
+    if(!settings->contains("considerDownAfterNumberOfTry"))
+        settings->setValue("considerDownAfterNumberOfTry",3);
+    if(!settings->contains("tryInterval"))
+        settings->setValue("tryInterval",5);
     settings->endGroup();
 
 
-    settings->beginGroup(QLatin1Literal("city"));
-    if(!settings->contains(QLatin1Literal("capture_frequency")))
-        settings->setValue(QLatin1Literal("capture_frequency"),QLatin1Literal("month"));
-    if(!settings->contains(QLatin1Literal("capture_day")))
-        settings->setValue(QLatin1Literal("capture_day"),QLatin1Literal("monday"));
-    if(!settings->contains(QLatin1Literal("capture_time")))
-        settings->setValue(QLatin1Literal("capture_time"),QLatin1Literal("0:0"));
+    settings->beginGroup("city");
+    if(!settings->contains("capture_frequency"))
+        settings->setValue("capture_frequency","month");
+    if(!settings->contains("capture_day"))
+        settings->setValue("capture_day","monday");
+    if(!settings->contains("capture_time"))
+        settings->setValue("capture_time","0:0");
     settings->endGroup();
 
     settings->sync();

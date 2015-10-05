@@ -1,6 +1,5 @@
 #include "CharactersGroupForLogin.h"
 #include <iostream>
-#include <QDebug>
 
 using namespace CatchChallenger;
 

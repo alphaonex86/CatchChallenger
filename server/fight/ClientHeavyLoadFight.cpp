@@ -432,7 +432,7 @@ void Client::loadPlayerMonsterBuffs_object()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.empty())
     {
-        qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
+        std::cerr << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__ << std::endl;
         abort();
     }
     #endif
@@ -657,7 +657,7 @@ void Client::generateRandomNumber()
     if((randomIndex+randomSize)<CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
     {
         //can send the next block
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,GlobalServerData::serverPrivateVariables.randomData.mid(randomIndex+randomSize,CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE),CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE);
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,GlobalServerData::serverPrivateVariables.randomData.data()+randomIndex+randomSize,CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE);
         posOutput+=CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE;
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -665,7 +665,7 @@ void Client::generateRandomNumber()
     else
     {
         //need return to the first block
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,GlobalServerData::serverPrivateVariables.randomData.mid(0,CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE),CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE);
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,GlobalServerData::serverPrivateVariables.randomData.data(),CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE);
         posOutput+=CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE;
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
