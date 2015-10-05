@@ -2,7 +2,6 @@
 #define CATCHCHALLENGER_BASESERVER_H
 
 #include <QObject>
-#include <QDebug>
 #include <QTimer>
 #include <QCoreApplication>
 #include <vector>

@@ -140,7 +140,7 @@ void Client::selectCharacter_object()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.empty())
     {
-        qDebug() << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__;
+        std::cerr << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__ << std::endl;
         abort();
     }
     #endif
@@ -389,7 +389,7 @@ void Client::selectCharacterServer_object()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.empty())
     {
-        qDebug() << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__;
+        std::cerr << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__ << std::endl;
         abort();
     }
     #endif

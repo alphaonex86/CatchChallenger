@@ -45,6 +45,10 @@ int16_t stringtoint16(const std::string &string,bool *ok=NULL);
 int32_t stringtoint32(const std::string &string,bool *ok=NULL);
 int64_t stringtoint64(const std::string &string,bool *ok=NULL);
 std::string binarytoHexa(const std::vector<char> &data);
+std::string binarytoHexa(const char * const data,const uint32_t &size);
+std::vector<char> hexatoBinary(const std::string &data);
+void binaryAppend(std::vector<char> &data,const std::vector<char> &add);
+void binaryAppend(std::vector<char> &data, const char * const add, const uint32_t &addSize);
 
 template <class T, class U>
 int vectorindexOf(const std::vector<T> &list,const U &item)

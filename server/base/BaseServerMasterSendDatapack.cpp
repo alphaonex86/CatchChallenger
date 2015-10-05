@@ -79,16 +79,19 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
                 {
                     if(file.open(QIODevice::ReadOnly))
                     {
-                        const std::vector<char> &data=file.readAll();
+                        std::vector<char> data;
+                        QByteArray d(file.readAll());
+                        data.resize(d.size());
+                        memcpy(data.data(),d.constData(),d.size());
                         {
                             QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                            hashFile.addData(data);
+                            hashFile.addData(QByteArray(data.data(),data.size()));
                             BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
                             cacheFile.mtime=QFileInfo(file).lastModified().toTime_t();
                             cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
                             datapack_file_hash_cache[datapack_file_temp.at(index)]=cacheFile;
                         }
-                        hashBase.addData(data);
+                        hashBase.addData(QByteArray(data.data(),data.size()));
                         file.close();
                     }
                     else

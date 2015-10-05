@@ -1,7 +1,6 @@
 #include "CharactersGroup.h"
 #include "EpollServerLoginMaster.h"
 #include <iostream>
-#include <QDebug>
 #include <QDateTime>
 
 using namespace CatchChallenger;

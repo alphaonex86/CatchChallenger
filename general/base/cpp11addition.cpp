@@ -1,7 +1,9 @@
 #include "cpp11addition.h"
 
-static std::regex isaunsignednumber("^[0-9]+$");
-static std::regex isasignednumber("^-?[0-9]+$");
+static const std::regex isaunsignednumber("^[0-9]+$");
+static const std::regex isasignednumber("^-?[0-9]+$");
+
+static const char* const lut = "0123456789ABCDEF";
 
 std::size_t pairhash::operator()(const std::pair<uint8_t, uint8_t> &x) const
 {
@@ -344,16 +346,68 @@ int64_t stringtoint64(const std::string &string,bool *ok)
 
 std::string binarytoHexa(const std::vector<char> &data)
 {
-    static const char* const lut = "0123456789ABCDEF";
-    const size_t &len = input.data();
-
     std::string output;
-    output.reserve(2*len);
-    for(size_t i=0;i<len;++i)
+    output.reserve(2*data.size());
+    for(size_t i=0;i<data.size();++i)
     {
         const unsigned char c = data[i];
         output.push_back(lut[c >> 4]);
         output.push_back(lut[c & 15]);
     }
     return output;
+}
+
+std::string binarytoHexa(const char * const data,const uint32_t &size)
+{
+    std::string output;
+    output.reserve(2*size);
+    for(size_t i=0;i<size;++i)
+    {
+        const unsigned char c = data[i];
+        output.push_back(lut[c >> 4]);
+        output.push_back(lut[c & 15]);
+    }
+    return output;
+}
+
+std::vector<char> hexatoBinary(const std::string &data)
+{
+    std::vector<char> out;
+    out.resize(data.length()/2);
+    for(size_t i = 0; i < data.length(); i += 2) {
+        std::istringstream strm(data.substr(i, 2));
+        uint8_t x;
+        strm >> std::hex >> x;
+        out.push_back(x);
+    }
+    return out;
+}
+
+void binaryAppend(std::vector<char> &data,const std::vector<char> &add)
+{
+    if(add.empty())
+        return;
+    if(data.empty())
+    {
+        data=add;
+        return;
+    }
+    const int oldsize=data.size();
+    data.resize(oldsize+add.size());
+    memcpy(data.data()+oldsize,add.data(),add.size());
+}
+
+void binaryAppend(std::vector<char> &data,const char * const add,const uint32_t &addSize)
+{
+    if(addSize==0)
+        return;
+    if(data.empty())
+    {
+        data.resize(addSize);
+        memcpy(data.data(),add,addSize);
+        return;
+    }
+    const int oldsize=data.size();
+    data.resize(oldsize+addSize);
+    memcpy(data.data()+oldsize,add,addSize);
 }

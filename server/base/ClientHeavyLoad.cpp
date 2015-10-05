@@ -70,15 +70,17 @@ bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
     {
         QCryptographicHash hash(QCryptographicHash::Sha224);
         hash.addData(rawdata,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
-        login=hash.result();
+        login.resize(hash.result().size());
+        memcpy(login.data(),hash.result().constData(),hash.result().size());
     }
     AskLoginParam *askLoginParam=new AskLoginParam;
     askLoginParam->query_id=query_id;
     askLoginParam->login=login;
-    askLoginParam->pass=std::vector<char>(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+    askLoginParam->pass.resize(CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+    memcpy(askLoginParam->pass.data(),rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
 
     std::string queryText=PreparedDBQueryLogin::db_query_login;
-    stringreplaceOne(queryText,"%1",std::string(login.toHex()).toStdString());
+    stringreplaceOne(queryText,"%1",binarytoHexa(login));
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_login->asyncRead(queryText,this,&Client::askLogin_static);
     if(callback==NULL)
     {
@@ -110,12 +112,12 @@ void Client::askLogin_object()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.empty())
     {
-        qDebug() << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__;
+        std::cerr << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__ << std::endl;
         abort();
     }
     if(paramToPassToCallBack.size()!=1)
     {
-        qDebug() << "paramToPassToCallBack.size()!=1" << __FILE__ << __LINE__;
+        std::cerr << "paramToPassToCallBack.size()!=1" << __FILE__ << __LINE__ << std::endl;
         abort();
     }
     #endif
@@ -163,7 +165,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
             }
             else
             {
-                loginIsWrong(askLoginParam->query_id,0x02,"Bad login for: "+std::string(askLoginParam->login.toHex()).toStdString()+", pass: "+std::string(askLoginParam->pass.toHex()).toStdString());
+                loginIsWrong(askLoginParam->query_id,0x02,"Bad login for: "+binarytoHexa(askLoginParam->login)+", pass: "+binarytoHexa(askLoginParam->pass));
                 delete askLoginParam;
                 return;
             }
@@ -181,15 +183,16 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                     const BaseServerLogin::TokenLink &tokenLink=BaseServerLogin::tokenForAuth[tokenForAuthIndex];
                     if(tokenLink.client==this)
                     {
-                        const std::string &secretToken(GlobalServerData::serverPrivateVariables.db_login->value(1));
-                        const std::vector<char> &secretTokenBinary=std::vector<char>::fromHex(secretToken.c_str());
+                        const std::vector<char> &secretTokenBinary=hexatoBinary(GlobalServerData::serverPrivateVariables.db_login->value(1));
                         QCryptographicHash hash(QCryptographicHash::Sha224);
-                        hash.addData(secretTokenBinary);
+                        hash.addData(secretTokenBinary.data(),secretTokenBinary.size());
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                        tempAddedToken=std::vector<char>(tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        tempAddedToken.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        memcpy(tempAddedToken.data(),tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         #endif
                         hash.addData(tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        hashedToken=hash.result();
+                        hashedToken.resize(hash.result().size());
+                        memcpy(hashedToken.data(),hash.result().constData(),hash.result().size());
                         BaseServerLogin::tokenForAuthSize--;
                         //see to do with SIMD
                         if(BaseServerLogin::tokenForAuthSize>0)
@@ -220,17 +223,17 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 loginIsWrong(askLoginParam->query_id,0x03,"Password wrong: "+
-                             std::string(askLoginParam->pass.toHex()).toStdString()+
+                             binarytoHexa(askLoginParam->pass)+
                              " with token "+
-                             std::string(tempAddedToken.toHex()).toStdString()+
+                             binarytoHexa(tempAddedToken)+
                              " for the login: "+
-                             std::string(askLoginParam->login.toHex()).toStdString()
+                             binarytoHexa(askLoginParam->login)
                              );
                 #else
                 loginIsWrong(askLoginParam->query_id,0x03,"Password wrong: "+
-                             std::string(askLoginParam->pass.toHex()).toStdString()+
+                             binarytoHexa(askLoginParam->pass)+
                              " for the login: "+
-                             std::string(askLoginParam->login.toHex()).toStdString()
+                             binarytoHexa(askLoginParam->login)
                              );
                 #endif
                 delete askLoginParam;
@@ -294,14 +297,17 @@ bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
         return false;
     }
     #endif
-    const std::vector<char> login=std::vector<char>(rawdata,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+    std::vector<char> login;
+    login.resize(CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+    memcpy(login.data(),rawdata,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
     AskLoginParam *askLoginParam=new AskLoginParam;
     askLoginParam->query_id=query_id;
     askLoginParam->login=login;
-    askLoginParam->pass=std::vector<char>(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+    askLoginParam->pass.resize(CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+    memcpy(askLoginParam->pass.data(),rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
 
     std::string queryText=PreparedDBQueryLogin::db_query_login;
-    stringreplaceOne(queryText,"%1",std::string(login.toHex()).toStdString());
+    stringreplaceOne(queryText,"%1",binarytoHexa(login));
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_login->asyncRead(queryText,this,&Client::createAccount_static);
     if(callback==NULL)
     {
@@ -334,12 +340,12 @@ void Client::createAccount_object()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.empty())
     {
-        qDebug() << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__;
+        std::cerr << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__ << std::endl;
         abort();
     }
     if(paramToPassToCallBack.size()!=1)
     {
-        qDebug() << "paramToPassToCallBack.size()!=1" << __FILE__ << __LINE__;
+        std::cerr << "paramToPassToCallBack.size()!=1" << __FILE__ << __LINE__ << std::endl;
         abort();
     }
     #endif
@@ -374,8 +380,8 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         account_id=GlobalServerData::serverPrivateVariables.maxAccountId;
         std::string queryText=PreparedDBQueryLogin::db_query_insert_login;
         stringreplaceOne(queryText,"%1",std::to_string(account_id));
-        stringreplaceOne(queryText,"%2",std::string(askLoginParam->login.toHex()).toStdString());
-        stringreplaceOne(queryText,"%3",std::string(askLoginParam->pass.toHex()).toStdString());
+        stringreplaceOne(queryText,"%2",binarytoHexa(askLoginParam->login));
+        stringreplaceOne(queryText,"%3",binarytoHexa(askLoginParam->pass));
         stringreplaceOne(queryText,"%4",std::to_string(QDateTime::currentDateTime().toTime_t()));
         dbQueryWriteLogin(queryText);
 
@@ -396,7 +402,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         is_logging_in_progess=false;
     }
     else
-        loginIsWrong(askLoginParam->query_id,0x02,"Login already used: "+std::string(askLoginParam->login.toHex()).toStdString());
+        loginIsWrong(askLoginParam->query_id,0x02,"Login already used: "+binarytoHexa(askLoginParam->login));
 }
 
 void Client::character_list_static(void *object)
@@ -410,12 +416,12 @@ void Client::character_list_object()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.empty())
     {
-        qDebug() << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__;
+        std::cerr << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__ << std::endl;
         abort();
     }
     if(paramToPassToCallBack.size()!=1)
     {
-        qDebug() << "paramToPassToCallBack.size()!=1" << __FILE__ << __LINE__;
+        std::cerr << "paramToPassToCallBack.size()!=1" << __FILE__ << __LINE__ << std::endl;
         abort();
     }
     #endif
@@ -592,12 +598,12 @@ void Client::server_list_object()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.empty())
     {
-        qDebug() << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__;
+        std::cerr << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__ << std::endl;
         abort();
     }
     if(paramToPassToCallBack.size()!=1)
     {
-        qDebug() << "paramToPassToCallBack.size()!=1" << __FILE__ << __LINE__;
+        std::cerr << "paramToPassToCallBack.size()!=1" << __FILE__ << __LINE__ << std::endl;
         abort();
     }
     #endif
@@ -787,7 +793,7 @@ void Client::deleteCharacterNow_object()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.empty())
     {
-        qDebug() << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__;
+        std::cerr << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__ << std::endl;
         abort();
     }
     #endif
@@ -1016,7 +1022,7 @@ void Client::addCharacter_object()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.empty())
     {
-        qDebug() << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__;
+        std::cerr << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__ << std::endl;
         abort();
     }
     #endif
@@ -1078,7 +1084,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
             monsterIdList.push_back(getMonsterId(&ok));
             if(!ok)
             {
-                qDebug() << "getMonsterId(&ok) have failed, no more id to get?" << __FILE__ << __LINE__;
+                std::cerr << "getMonsterId(&ok) have failed, no more id to get?" << __FILE__ << __LINE__ << std::endl;
 
                 //send the network reply
                 removeFromQueryReceived(query_id);
@@ -1274,7 +1280,7 @@ void Client::removeCharacterLater_object()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.empty())
     {
-        qDebug() << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__;
+        std::cerr << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__ << std::endl;
         abort();
     }
     #endif
@@ -1716,7 +1722,7 @@ void Client::purgeDatapackListReply(const uint8_t &query_id)
         tempDatapackListReplySize=0;
         tempDatapackListReply=0;
     }
-    if(tempDatapackListReplyArray.isEmpty())
+    if(tempDatapackListReplyArray.empty())
         tempDatapackListReplyArray[0x00]=0x00;
 
     {
@@ -1734,7 +1740,7 @@ void Client::purgeDatapackListReply(const uint8_t &query_id)
             errorOutput("Client::purgeDatapackListReply too big to reply");
             return;
         }
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput,tempDatapackListReplyArray.constData(),tempDatapackListReplyArray.size());
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput,tempDatapackListReplyArray.data(),tempDatapackListReplyArray.size());
         posOutput+=tempDatapackListReplyArray.size();
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -1759,7 +1765,7 @@ void Client::sendFileContent()
             errorOutput("Client::sendFileContent too big to reply");
             return;
         }
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput,BaseServerMasterSendDatapack::rawFilesBuffer.constData(),BaseServerMasterSendDatapack::rawFilesBuffer.size());
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput,BaseServerMasterSendDatapack::rawFilesBuffer.data(),BaseServerMasterSendDatapack::rawFilesBuffer.size());
         posOutput+=BaseServerMasterSendDatapack::rawFilesBuffer.size();
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -1786,7 +1792,7 @@ void Client::sendCompressedFileContent()
             errorOutput("Client::sendFileContent too big to reply");
             return;
         }
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput,BaseServerMasterSendDatapack::rawFilesBuffer.constData(),BaseServerMasterSendDatapack::rawFilesBuffer.size());
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput,BaseServerMasterSendDatapack::rawFilesBuffer.data(),BaseServerMasterSendDatapack::rawFilesBuffer.size());
         posOutput+=BaseServerMasterSendDatapack::rawFilesBuffer.size();
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -1807,7 +1813,12 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
     QFile file(QString::fromStdString(datapackPath+fileName));
     if(file.open(QIODevice::ReadOnly))
     {
-        const std::vector<char> &content=file.readAll();
+        std::vector<char> content;
+        {
+            const QByteArray &mQtData=file.readAll();
+            content.resize(mQtData.size());
+            memcpy(content.data(),mQtData.constData(),mQtData.size());
+        }
         const int &contentsize=content.size();
 
         const std::string &suffix=QFileInfo(file).suffix().toStdString();
@@ -1831,7 +1842,8 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(contentsize);
             posOutput+=4;
 
-            BaseServerMasterSendDatapack::compressedFilesBuffer+=std::vector<char>(ProtocolParsingBase::tempBigBufferForOutput,posOutput)+content;
+            binaryAppend(BaseServerMasterSendDatapack::compressedFilesBuffer,ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+            binaryAppend(BaseServerMasterSendDatapack::compressedFilesBuffer,content);
             BaseServerMasterSendDatapack::compressedFilesBufferCount++;
             switch(ProtocolParsing::compressionTypeServer)
             {
@@ -1883,7 +1895,7 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
                 *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(contentsize);
                 posOutput+=4;
 
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput,content.constData(),contentsize);
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput,content.data(),contentsize);
                 posOutput+=contentsize;
 
                 sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -1901,7 +1913,8 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
                 *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(contentsize);
                 posOutput+=4;
 
-                BaseServerMasterSendDatapack::rawFilesBuffer+=std::vector<char>(ProtocolParsingBase::tempBigBufferForOutput,posOutput)+content;
+                binaryAppend(BaseServerMasterSendDatapack::rawFilesBuffer,ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                binaryAppend(BaseServerMasterSendDatapack::rawFilesBuffer,content);
                 BaseServerMasterSendDatapack::rawFilesBufferCount++;
                 if(BaseServerMasterSendDatapack::rawFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_MAX_FILEPURGE_KB*1024 || BaseServerMasterSendDatapack::rawFilesBufferCount>=255)
                     sendFileContent();

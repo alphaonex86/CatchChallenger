@@ -232,7 +232,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                 }
             }
             else
-                qDebug() << "insert_player count is null!";
+                std::cerr << "insert_player count is null!" << std::endl;
 
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
 
@@ -390,7 +390,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             else
-                qDebug() << "Out of buffer for map management to send remove" << __LINE__;
+                std::cerr << "Out of buffer for map management to send remove" << __LINE__ << std::endl;
             #endif
         }
         else
@@ -417,7 +417,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             else
-                qDebug() << "Out of buffer for map management to send remove on 16bits" << __LINE__;
+                std::cerr << "Out of buffer for map management to send remove on 16bits" << __LINE__ << std::endl;
             #endif
         }
     }
@@ -499,7 +499,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             else
-                qDebug() << "Out of buffer for map management to send reinsert" << __LINE__ << "bufferSizeToHave" << bufferSizeToHave << "CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER" << CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER;
+                std::cerr << "Out of buffer for map management to send reinsert" << __LINE__ << "bufferSizeToHave" << bufferSizeToHave << "CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER" << CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER << std::endl;
             #endif
         }
         else
@@ -596,7 +596,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                 }
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 else
-                    qDebug() << "Out of buffer for map management to send reinsert en 16bits" << __LINE__ << "bufferSizeToHave" << bufferSizeToHave << "CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER" << CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER;
+                    std::cerr << "Out of buffer for map management to send reinsert en 16bits" << __LINE__ << "bufferSizeToHave" << bufferSizeToHave << "CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER" << CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER << std::endl;
                 #endif
             }
         }

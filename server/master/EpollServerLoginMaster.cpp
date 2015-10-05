@@ -119,10 +119,10 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
             abort();
     }
 
-    EpollClientLoginMaster::fpRandomFile = fopen("/dev/urandom","rb");
+    EpollClientLoginMaster::fpRandomFile = fopen("/dev/random","rb");
     if(EpollClientLoginMaster::fpRandomFile==NULL)
     {
-        std::cerr << "Unable to open /dev/urandom to generate random token" << std::endl;
+        std::cerr << "Unable to open /dev/random to generate random token" << std::endl;
         abort();
     }
 }
@@ -806,16 +806,16 @@ bool EpollServerLoginMaster::tryListen()
 
 void EpollServerLoginMaster::generateToken(QSettings &settings)
 {
-    FILE *fpRandomFile = fopen("/dev/urandom","rb");
+    FILE *fpRandomFile = fopen("/dev/random","rb");
     if(fpRandomFile==NULL)
     {
-        std::cerr << "Unable to open /dev/urandom to generate random token" << std::endl;
+        std::cerr << "Unable to open /dev/random to generate random token" << std::endl;
         abort();
     }
     const int &returnedSize=fread(EpollClientLoginMaster::private_token,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
     if(returnedSize!=TOKEN_SIZE_FOR_MASTERAUTH)
     {
-        std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from /dev/urandom" << std::endl;
+        std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from /dev/random" << std::endl;
         abort();
     }
     settings.setValue(std::stringLiteral("token"),std::string(std::vector<char>(EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH).toHex()));

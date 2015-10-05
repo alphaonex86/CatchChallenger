@@ -9,7 +9,6 @@
 #include "../../../general/base/GeneralVariable.h"
 
 #include <iostream>
-#include <QDebug>
 
 TimerDdos::TimerDdos()
 {
@@ -20,7 +19,7 @@ void TimerDdos::exec()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(CatchChallenger::GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue<0 || CatchChallenger::GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue>CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
     {
-        qDebug() << "GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue out of range:" << CatchChallenger::GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
+        std::cerr << "GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue out of range:" << CatchChallenger::GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue << std::endl;
         return;
     }
     #endif

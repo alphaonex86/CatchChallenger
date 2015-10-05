@@ -4,7 +4,6 @@
 #include <QObject>
 #include <QSettings>
 #include <QTcpServer>
-#include <QDebug>
 #include <QTimer>
 #include <QCoreApplication>
 #include <std::vector>
@@ -15,7 +14,6 @@
 #include <QSslKey>
 #include <QSslCertificate>
 
-#include "../general/base/DebugClass.h"
 #include "base/ServerStructures.h"
 #include "base/Client.h"
 #include "../general/base/Map_loader.h"

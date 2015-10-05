@@ -8,7 +8,7 @@
 
 #include <QFile>
 #include <string>
-#include <std::vector<char>>
+#include <vector>
 #include <QDomDocument>
 #include <QDomElement>
 
