@@ -21,7 +21,7 @@
 #include "../../general/base/cpp11addition.h"
 
 #include <QFile>
-#include <std::vector<char>>
+#include <vector>
 #include <QDateTime>
 #include <QTime>
 #include <QCryptographicHash>
@@ -72,12 +72,12 @@ void BaseServer::preload_pointOnMap_sql()
 {
     if(DictionaryServer::dictionary_map_database_to_internal.size()==0)
     {
-        qDebug() << "Need be called after preload_dictionary_map()";
+        std::cerr << "Need be called after preload_dictionary_map()" << std::endl;
         abort();
     }
     if(DictionaryServer::dictionary_pointOnMap_internal_to_database.size()>0)
     {
-        qDebug() << "!DictionaryServer::dictionary_pointOnMap_internal_to_database.isEmpty(), already called?";
+        std::cerr << "!DictionaryServer::dictionary_pointOnMap_internal_to_database.isEmpty(), already called?" << std::endl;
         abort();
     }
     std::string queryText;
@@ -119,7 +119,7 @@ void BaseServer::preload_pointOnMap_return()
 {
     if(DictionaryServer::dictionary_map_database_to_internal.size()==0)
     {
-        qDebug() << "Call preload_dictionary_map() before";
+        std::cerr << "Call preload_dictionary_map() before" << std::endl;
         abort();
     }
     bool ok;
@@ -222,17 +222,17 @@ void BaseServer::preload_dictionary_map()
 {
     if(GlobalServerData::serverPrivateVariables.db_server==NULL)
     {
-        qDebug() << "GlobalServerData::serverPrivateVariables.db_server==NULL";
+        std::cerr << "GlobalServerData::serverPrivateVariables.db_server==NULL" << std::endl;
         abort();
     }
     if(GlobalServerData::serverPrivateVariables.map_list.size()==0)
     {
-        qDebug() << "No map to list";
+        std::cerr << "No map to list" << std::endl;
         abort();
     }
     if(DictionaryServer::dictionary_map_database_to_internal.size()>0)
     {
-        qDebug() << "preload_dictionary_map() already call";
+        std::cerr << "preload_dictionary_map() already call" << std::endl;
         abort();
     }
     std::string queryText;
@@ -265,7 +265,7 @@ void BaseServer::preload_dictionary_map_return()
 {
     if(DictionaryServer::dictionary_map_database_to_internal.size()>0)
     {
-        qDebug() << "preload_dictionary_map_return() already call";
+        std::cerr << "preload_dictionary_map_return() already call" << std::endl;
         abort();
     }
     std::unordered_set<std::string> foundMap;
@@ -297,7 +297,7 @@ void BaseServer::preload_dictionary_map_return()
     GlobalServerData::serverPrivateVariables.db_server->clear();
     if(obsoleteMap>0 && GlobalServerData::serverPrivateVariables.map_list.size()==0)
     {
-        qDebug() << "Only obsolete map!";
+        std::cerr << "Only obsolete map!" << std::endl;
         abort();
     }
     std::vector<std::string> map_list_flat=unordered_map_keys_vector(GlobalServerData::serverPrivateVariables.map_list);
@@ -946,7 +946,7 @@ void BaseServer::loadMonsterBuffs_return()
             }
         }
         if(ok)
-            buffs << buff;
+            buffs.push_back(buff);
     }
     loadMonsterBuffs(entryListIndex+1);
 }

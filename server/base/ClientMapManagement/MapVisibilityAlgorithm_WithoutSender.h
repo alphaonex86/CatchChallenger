@@ -1,8 +1,6 @@
 #ifndef CATCHCHALLENGER_MAPVISIBILITYALGORITHM_WITHOUTSENDER_H
 #define CATCHCHALLENGER_MAPVISIBILITYALGORITHM_WITHOUTSENDER_H
 
-#include <std::vector>
-
 namespace CatchChallenger {
 class MapVisibilityAlgorithm_WithoutSender
 {

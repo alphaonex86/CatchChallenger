@@ -74,7 +74,7 @@ public:
     static void initialiseTheVariable(const InitialiseTheVariableType &initialiseTheVariableType=InitialiseTheVariableType::AllInOne);
     static void setMaxPlayers(const uint16_t &maxPlayers);
 
-    uint32_t computeDecompression(const char* const source, char* const dest, int compressedSize, int maxDecompressedSize, const CompressionType &compressionType);
+    uint32_t computeDecompression(const char* const source, char* const dest, unsigned int compressedSize, unsigned int maxDecompressedSize, const CompressionType &compressionType);
 protected:
     virtual void errorParsingLayer(const std::string &error) = 0;
     virtual void messageParsingLayer(const std::string &message) const = 0;

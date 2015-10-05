@@ -8,7 +8,7 @@
 #include <QFile>
 #include <QDomElement>
 #include <QDomDocument>
-#include <std::vector<char>>
+#include <vector>
 #include <QDir>
 #include <QFileInfoList>
 #include <QMutexLocker>

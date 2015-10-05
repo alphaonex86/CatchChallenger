@@ -5,7 +5,7 @@
 #include "../base/CommonDatapack.h"
 
 #include <QFile>
-#include <std::vector<char>>
+#include <vector>
 #include <QDomDocument>
 #include <QDomElement>
 #include <QtCore/qmath.h>
@@ -963,7 +963,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
 {
     std::unordered_map<uint16_t,BotFight> botFightList;
     QDir dir(QString::fromStdString(folder));
-    QFileInfoList list=dir.entryInfoList(std::stringList(),QDir::NoDotAndDotDot|QDir::Files);
+    QFileInfoList list=dir.entryInfoList(QStringList(),QDir::NoDotAndDotDot|QDir::Files);
     int index_file=0;
     while(index_file<list.size())
     {

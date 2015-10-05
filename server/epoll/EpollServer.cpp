@@ -43,7 +43,7 @@ void EpollServer::initTheDatabase()
         break;
         #endif
         default:
-            qDebug() << std::stringLiteral("database type wrong %1").arg(GlobalServerData::serverSettings.database_login.tryOpenType);
+            std::cerr << "database type wrong " << DatabaseBase::databaseTypeToString(GlobalServerData::serverSettings.database_login.tryOpenType) << std::endl;
         abort();
     }
     #endif
@@ -60,7 +60,7 @@ void EpollServer::initTheDatabase()
         break;
         #endif
         default:
-            qDebug() << std::stringLiteral("database type wrong %1").arg(GlobalServerData::serverSettings.database_base.tryOpenType);
+            std::cerr << "database type wrong " << DatabaseBase::databaseTypeToString(GlobalServerData::serverSettings.database_base.tryOpenType) << std::endl;
         abort();
     }
     switch(GlobalServerData::serverSettings.database_common.tryOpenType)
@@ -76,7 +76,7 @@ void EpollServer::initTheDatabase()
         break;
         #endif
         default:
-            qDebug() << std::stringLiteral("database type wrong %1").arg(GlobalServerData::serverSettings.database_common.tryOpenType);
+            std::cerr << "database type wrong " << DatabaseBase::databaseTypeToString(GlobalServerData::serverSettings.database_common.tryOpenType) << std::endl;
         abort();
     }
     switch(GlobalServerData::serverSettings.database_server.tryOpenType)
@@ -92,7 +92,7 @@ void EpollServer::initTheDatabase()
         break;
         #endif
         default:
-            qDebug() << std::stringLiteral("database type wrong %1").arg(GlobalServerData::serverSettings.database_server.tryOpenType);
+            std::cerr << "database type wrong " << DatabaseBase::databaseTypeToString(GlobalServerData::serverSettings.database_server.tryOpenType) << std::endl;
         abort();
     }
 }
@@ -172,14 +172,14 @@ void EpollServer::preload_finish()
     BaseServer::preload_finish();
     if(!ready)
     {
-        qDebug() << std::stringLiteral("Waiting connection on port %1").arg(normalServerSettings.server_port);
+        std::cerr << "Waiting connection on port " << normalServerSettings.server_port << std::endl;
         ready=true;
 
         if(!tryListen())
             abort();
     }
     else
-        qDebug() << std::stringLiteral("EpollServer::preload_finish() double event dropped");
+        std::cerr << "EpollServer::preload_finish() double event dropped" << std::endl;
 }
 
 bool EpollServer::isReady()
@@ -190,9 +190,9 @@ bool EpollServer::isReady()
 bool EpollServer::tryListen()
 {
     if(!normalServerSettings.server_ip.empty())
-        return tryListenInternal(normalServerSettings.server_ip.c_str(), std::to_string(normalServerSettings.server_port).toUtf8().constData());
+        return tryListenInternal(normalServerSettings.server_ip.c_str(),std::to_string(normalServerSettings.server_port).c_str());
     else
-        return tryListenInternal(NULL, std::to_string(normalServerSettings.server_port).toUtf8().constData());
+        return tryListenInternal(NULL,std::to_string(normalServerSettings.server_port).c_str());
 }
 
 void EpollServer::quitForCriticalDatabaseQueryFailed()

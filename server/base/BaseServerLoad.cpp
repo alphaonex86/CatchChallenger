@@ -273,7 +273,7 @@ void BaseServer::preload_other()
         }
         if(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()!=28)
         {
-            qDebug() << "CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()!=28";
+            std::cerr << "CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()!=28" << std::endl;
             abort();
         }
         if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=28)
@@ -289,7 +289,7 @@ void BaseServer::preload_other()
         {
             if(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()!=28)
             {
-                qDebug() << "CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()!=28";
+                std::cerr << "CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()!=28" << std::endl;
                 abort();
             }
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),28);
@@ -487,7 +487,7 @@ void BaseServer::preload_map_semi_after_db_id()
 {
     if(DictionaryServer::dictionary_map_database_to_internal.size()==0)
     {
-        qDebug() << "Need be called after preload_dictionary_map()";
+        std::cerr << "Need be called after preload_dictionary_map()" << std::endl;
         abort();
     }
     Client::indexOfItemOnMap=0;//index of item on map, ordened by map and x,y ordened into the xml file, less bandwith than send map,x,y
@@ -594,7 +594,7 @@ void BaseServer::preload_map_semi_after_db_id()
 
                 if(Client::indexOfItemOnMap>=254)//255 reserved
                 {
-                    qDebug() << "indexOfItemOnMap will be more than 255, overflow, too many item on map";
+                    std::cerr << "indexOfItemOnMap will be more than 255, overflow, too many item on map" << std::endl;
                     abort();
                 }
                 Client::indexOfItemOnMap++;
@@ -705,7 +705,7 @@ void BaseServer::preload_map_semi_after_db_id()
                 #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
                 if(Client::indexOfDirtOnMap>=254)//255 reserved
                 {
-                    qDebug() << "indexOfDirtOnMap will be more than 255, overflow, too many dirt on map";
+                    std::cerr << "indexOfDirtOnMap will be more than 255, overflow, too many dirt on map" << std::endl;
                     abort();
                 }
                 Client::indexOfDirtOnMap++;
@@ -1488,7 +1488,10 @@ void BaseServer::preload_the_datapack()
                 if(file.open(QIODevice::ReadOnly))
                 {
                     //read and load the file
-                    const std::vector<char> &data=file.readAll();
+                    std::vector<char> data;
+                    QByteArray d(file.readAll());
+                    data.resize(d.size());
+                    memcpy(data.data(),d.constData(),d.size());
 
                     if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
@@ -1513,12 +1516,12 @@ void BaseServer::preload_the_datapack()
                     else
                     {
                         QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                        hashFile.addData(data);
+                        hashFile.addData(QByteArray(data.data(),data.size()));
                         Client::DatapackCacheFile cacheFile;
                         cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
                         Client::datapack_file_hash_cache_base[datapack_file_temp.at(index)]=cacheFile;
 
-                        hashBase.addData(data);
+                        hashBase.addData(QByteArray(data.data(),data.size()));
                     }
 
                     file.close();
@@ -1554,7 +1557,10 @@ void BaseServer::preload_the_datapack()
                 if(file.open(QIODevice::ReadOnly))
                 {
                     //read and load the file
-                    const std::vector<char> &data=file.readAll();
+                    std::vector<char> data;
+                    QByteArray d(file.readAll());
+                    data.resize(d.size());
+                    memcpy(data.data(),d.constData(),d.size());
 
                     if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
@@ -1580,12 +1586,12 @@ void BaseServer::preload_the_datapack()
                     else
                     {
                         QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                        hashFile.addData(data);
+                        hashFile.addData(QByteArray(data.data(),data.size()));
                         Client::DatapackCacheFile cacheFile;
                         cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
                         Client::datapack_file_hash_cache_main[datapack_file_temp.at(index)]=cacheFile;
 
-                        hashMain.addData(data);
+                        hashMain.addData(QByteArray(data.data(),data.size()));
                     }
 
                     file.close();
@@ -1618,7 +1624,10 @@ void BaseServer::preload_the_datapack()
                 if(file.open(QIODevice::ReadOnly))
                 {
                     //read and load the file
-                    const std::vector<char> &data=file.readAll();
+                    std::vector<char> data;
+                    QByteArray d(file.readAll());
+                    data.resize(d.size());
+                    memcpy(data.data(),d.constData(),d.size());
 
                     if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
@@ -1639,12 +1648,12 @@ void BaseServer::preload_the_datapack()
 
                     //switch the data to correct hash or drop it
                     QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                    hashFile.addData(data);
+                    hashFile.addData(QByteArray(data.data(),data.size()));
                     Client::DatapackCacheFile cacheFile;
                     cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
                     Client::datapack_file_hash_cache_sub[datapack_file_temp.at(index)]=cacheFile;
 
-                    hashSub.addData(data);
+                    hashSub.addData(QByteArray(data.data(),data.size()));
 
                     file.close();
                 }
@@ -1668,11 +1677,11 @@ void BaseServer::preload_the_datapack()
               << " file for datapack loaded main, "
               << Client::datapack_file_hash_cache_sub.size()
               << " file for datapack loaded sub" << std::endl;
-    std::cout << std::string(std::vector<char>(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()).toHex()).toStdString()
+    std::cout << binarytoHexa(CommonSettingsCommon::commonSettingsCommon.datapackHashBase)
               << " hash for datapack loaded base, "
-              << std::string(std::vector<char>(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()).toHex()).toStdString()
+              << binarytoHexa(CommonSettingsServer::commonSettingsServer.datapackHashServerMain)
               << " hash for datapack loaded main, "
-              << std::string(std::vector<char>(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()).toHex()).toStdString()
+              << binarytoHexa(CommonSettingsServer::commonSettingsServer.datapackHashServerSub)
               << " hash for datapack loaded sub" << std::endl;
 }
 
@@ -2244,7 +2253,7 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!="bots")
     {
-        qDebug() << std::stringLiteral("\"bots\" root balise not found for the xml file");
+        std::cerr << "\"bots\" root balise not found for the xml file" << std::endl;
         return;
     }
     //load the bots
