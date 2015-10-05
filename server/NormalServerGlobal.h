@@ -2,7 +2,7 @@
 #define NORMALSERVERGLOBAL_H
 
 #include <QSettings>
-#include <std::string>
+#include <string>
 
 class NormalServerGlobal
 {

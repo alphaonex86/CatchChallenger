@@ -4,7 +4,6 @@
 #include "../base/GeneralVariable.h"
 
 #include <QtMath>
-#include <QDebug>
 
 using namespace CatchChallenger;
 

@@ -1,7 +1,10 @@
 #include "ProtocolParsing.h"
 #include "ProtocolParsingCheck.h"
 #include "GeneralVariable.h"
+#include "cpp11addition.h"
 #include <iostream>
+
+#include <QByteArray>
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 #include <lzma.h>
@@ -76,12 +79,12 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
             {
                 if(!protocolParsingCheck->parseIncommingDataRaw(data,size,cursor))
                 {
-                    std::cerr << "Bug at data-sending: " << std::string(std::vector<char>(data,size).toHex()).toStdString() << std::endl;
+                    std::cerr << "Bug at data-sending: " << binarytoHexa(data,size) << std::endl;
                     abort();
                 }
                 if(!protocolParsingCheck->valid)
                 {
-                    qDebug() << "Bug at data-sending not tigger the function";
+                    std::cerr << "Bug at data-sending not tigger the function" << std::endl;
                     abort();
                 }
                 protocolParsingCheck->valid=false;
@@ -112,10 +115,10 @@ void ProtocolParsingInputOutput::closeSocket()
 bool ProtocolParsingBase::forwardTo(ProtocolParsingBase * const destination)
 {
     uint32_t size=0;
-    if(!header_cut.isEmpty())
+    if(!header_cut.empty())
     {
         const unsigned int &size_to_get=CATCHCHALLENGER_COMMONBUFFERSIZE-header_cut.size();
-        memcpy(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,header_cut.constData(),header_cut.size());
+        memcpy(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,header_cut.data(),header_cut.size());
         size=read(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,size_to_get)+header_cut.size();
         if(size>0)
         {
@@ -143,7 +146,7 @@ void ProtocolParsingInputOutput::parseIncommingData()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(parseIncommingDataCount>0)
     {
-        qDebug() << "Multiple client on same section";
+        std::cerr << "Multiple client on same section" << std::endl;
         abort();
     }
     parseIncommingDataCount++;
@@ -162,10 +165,10 @@ void ProtocolParsingInputOutput::parseIncommingData()
     {
         int32_t size;
         uint32_t cursor=0;
-        if(!header_cut.isEmpty())
+        if(!header_cut.empty())
         {
             const unsigned int &size_to_get=CATCHCHALLENGER_COMMONBUFFERSIZE-header_cut.size();
-            memcpy(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,header_cut.constData(),header_cut.size());
+            memcpy(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,header_cut.data(),header_cut.size());
             size=read(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,size_to_get)+header_cut.size();
             if(size>0)
             {
@@ -227,28 +230,28 @@ bool ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer,
     if(!parseHeader(commonBuffer,size,cursor))
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        qDebug() << "Break due to need more in header";
+        std::cerr << "Break due to need more in header" << std::endl;
         #endif
         return false;
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(cursor==0 && !(flags & 0x80))
     {
-        qDebug() << "Critical bug";
+        std::cerr << "Critical bug" << std::endl;
         abort();
     }
     #endif
     if(!parseQueryNumber(commonBuffer,size,cursor))
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        qDebug() << "Break due to need more in query number";
+        std::cerr << "Break due to need more in query number" << std::endl;
         #endif
         return false;
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(cursor==0 && !(flags & 0x80))
     {
-        qDebug() << "Critical bug";
+        std::cerr << "Critical bug" << std::endl;
         abort();
     }
     #endif
@@ -262,7 +265,7 @@ bool ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer,
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(cursor==0 && !(flags & 0x80))
     {
-        qDebug() << "Critical bug";
+        std::cerr << "Critical bug" << std::endl;
         abort();
     }
     #endif
@@ -374,7 +377,7 @@ bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const u
         if((size-cursor)<sizeof(uint32_t))
         {
             if((size-cursor)>0)
-                header_cut.append(commonBuffer+cursor,(size-cursor));
+                binaryAppend(header_cut,commonBuffer+cursor,(size-cursor));
             return false;
         }
         dataSize=le32toh(*reinterpret_cast<const uint32_t *>(commonBuffer+cursor));
@@ -400,7 +403,7 @@ bool ProtocolParsingBase::parseData(const char * const commonBuffer, const uint3
 {
     if(dataSize==0)
         return parseDispatch(NULL,0);
-    if(dataToWithoutHeader.isEmpty())
+    if(dataToWithoutHeader.empty())
     {
         //if have too many data, or just the size
         if(dataSize<=(size-cursor))
@@ -408,7 +411,7 @@ bool ProtocolParsingBase::parseData(const char * const commonBuffer, const uint3
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(cursor==0 && !(flags & 0x80))
             {
-                qDebug() << "Critical bug";
+                std::cerr << "Critical bug" << std::endl;
                 abort();
             }
             #endif
@@ -428,7 +431,7 @@ bool ProtocolParsingBase::parseData(const char * const commonBuffer, const uint3
     if((dataSize-dataToWithoutHeader.size())<=(size-cursor))
     {
         const uint32_t &size_to_append=dataSize-dataToWithoutHeader.size();
-        dataToWithoutHeader.append(commonBuffer+cursor,size_to_append);
+        binaryAppend(dataToWithoutHeader,commonBuffer+cursor,size_to_append);
         cursor+=size_to_append;
         #ifdef PROTOCOLPARSINGDEBUG
         messageParsingLayer(
@@ -444,11 +447,11 @@ bool ProtocolParsingBase::parseData(const char * const commonBuffer, const uint3
             return false;
         }
         #endif
-        return parseDispatch(dataToWithoutHeader.constData(),dataToWithoutHeader.size());
+        return parseDispatch(dataToWithoutHeader.data(),dataToWithoutHeader.size());
     }
     else //if need more data
     {
-        dataToWithoutHeader.append(commonBuffer+cursor,(size-cursor));
+        binaryAppend(dataToWithoutHeader,commonBuffer+cursor,(size-cursor));
         #ifdef PROTOCOLPARSINGDEBUG
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -461,7 +464,7 @@ bool ProtocolParsingBase::parseData(const char * const commonBuffer, const uint3
     }
 }
 
-uint32_t ProtocolParsing::computeDecompression(const char* const source, char* const dest, int compressedSize, int maxDecompressedSize, const CompressionType &compressionType)
+uint32_t ProtocolParsing::computeDecompression(const char* const source, char* const dest, unsigned int compressedSize, unsigned int maxDecompressedSize, const CompressionType &compressionType)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(maxDecompressedSize<compressedSize)
@@ -482,8 +485,8 @@ uint32_t ProtocolParsing::computeDecompression(const char* const source, char* c
         case CompressionType::Zlib:
         default:
         {
-            const std::vector<char> &newData=qUncompress(std::vector<char>(source,compressedSize));
-            if(newData.size()>maxDecompressedSize)
+            const QByteArray newData=qUncompress(QByteArray(source,compressedSize));
+            if((unsigned int)newData.size()>maxDecompressedSize || newData.size()<=0)
                 return -1;
             memcpy(dest,newData.constData(),newData.size());
             return newData.size();
@@ -491,10 +494,13 @@ uint32_t ProtocolParsing::computeDecompression(const char* const source, char* c
         break;
         case CompressionType::Xz:
         {
-            const std::vector<char> &newData=ProtocolParsingBase::lzmaUncompress(std::vector<char>(source,compressedSize));
+            std::vector<char> input;
+            input.resize(compressedSize);
+            memcpy(input.data(),source,compressedSize);
+            const std::vector<char> &newData=ProtocolParsingBase::lzmaUncompress(input);
             if(newData.size()>maxDecompressedSize)
                 return -1;
-            memcpy(dest,newData.constData(),newData.size());
+            memcpy(dest,newData.data(),newData.size());
             return newData.size();
         }
         break;

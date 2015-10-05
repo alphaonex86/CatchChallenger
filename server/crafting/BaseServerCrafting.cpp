@@ -1,4 +1,6 @@
 #include "../base/BaseServer.h"
+
+#ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
 #include "MapServerCrafting.h"
 #include "../VariableServer.h"
 #include "../base/MapServer.h"
@@ -11,9 +13,10 @@
 #include "../base/GlobalServerData.h"
 
 #include <QFile>
-#include <std::vector<char>>
+#include <vector>
 #include <QDomDocument>
 #include <QDomElement>
+#endif
 
 using namespace CatchChallenger;
 

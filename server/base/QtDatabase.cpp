@@ -3,7 +3,6 @@
 #include <iostream>
 #include <stdio.h>
 #include <string.h>
-#include <QDebug>
 #include <QSqlError>
 
 using namespace CatchChallenger;

@@ -317,7 +317,7 @@ void Client::sendBroadCastCommand(const std::string &command,const std::string &
         Client * client=playerByPseudo.at(list.front());
         if(client==NULL)
         {
-            qDebug() << "Internal bug";
+            std::cerr << "Internal bug for setrights, client is NULL" << std::endl;
             normalOutput(Client::text_unabletofoundtheconnectedplayertokick+extraText);
             return;
         }

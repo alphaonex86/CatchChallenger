@@ -218,7 +218,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
             error=mapFile.fileName().toStdString()+": "+mapFile.errorString().toStdString();
             return false;
         }
-        const std::vector<char> &xmlContent=mapFile.readAll();
+        const QByteArray &xmlContent=mapFile.readAll();
         mapFile.close();
         QString errorStr;
         int errorLine,errorColumn;
@@ -726,10 +726,10 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
             }
             else
             {
-                const std::vector<char> compressedData=std::vector<char>::fromBase64(data.text().toLatin1());
+                const std::vector<char> compressedData=hexatoBinary(data.text().toLatin1().constData());
                 std::vector<char> dataRaw;
                 dataRaw.resize(map_to_send_temp.height*map_to_send_temp.width*4);
-                dataRaw.resize(decompressZlib(compressedData.constData(),compressedData.size(),dataRaw.data(),dataRaw.size()));
+                dataRaw.resize(decompressZlib(compressedData.data(),compressedData.size(),dataRaw.data(),dataRaw.size()));
                 if((uint32_t)dataRaw.size()!=map_to_send_temp.height*map_to_send_temp.width*4)
                 {
                     error="map binary size ("+std::to_string(dataRaw.size())+") != "+std::to_string(map_to_send_temp.height)+"x"+std::to_string(map_to_send_temp.width)+"x4";
@@ -737,7 +737,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 }
                 if(name==Map_loader::text_Walkable)
                 {
-                    if(Walkable.isEmpty())
+                    if(Walkable.empty())
                         Walkable=dataRaw;
                     else
                     {
@@ -752,7 +752,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 }
                 else if(name==Map_loader::text_Collisions)
                 {
-                    if(Collisions.isEmpty())
+                    if(Collisions.empty())
                         Collisions=dataRaw;
                     else
                     {
@@ -767,7 +767,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 }
                 else if(name==Map_loader::text_Dirt)
                 {
-                    if(Dirt.isEmpty())
+                    if(Dirt.empty())
                         Dirt=dataRaw;
                     else
                     {
@@ -782,7 +782,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 }
                 else if(name==Map_loader::text_LedgesRight)
                 {
-                    if(LedgesRight.isEmpty())
+                    if(LedgesRight.empty())
                         LedgesRight=dataRaw;
                     else
                     {
@@ -797,7 +797,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 }
                 else if(name==Map_loader::text_LedgesLeft)
                 {
-                    if(LedgesLeft.isEmpty())
+                    if(LedgesLeft.empty())
                         LedgesLeft=dataRaw;
                     else
                     {
@@ -812,7 +812,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 }
                 else if(name==Map_loader::text_LedgesBottom || name==Map_loader::text_LedgesDown)
                 {
-                    if(LedgesBottom.isEmpty())
+                    if(LedgesBottom.empty())
                         LedgesBottom=dataRaw;
                     else
                     {
@@ -827,7 +827,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 }
                 else if(name==Map_loader::text_LedgesTop || name==Map_loader::text_LedgesUp)
                 {
-                    if(LedgesTop.isEmpty())
+                    if(LedgesTop.empty())
                         LedgesTop=dataRaw;
                     else
                     {
@@ -849,7 +849,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                         {
                             if(CommonDatapack::commonDatapack.monstersCollision.at(index).layer==name)
                             {
-                                mapLayerContentForMonsterCollision[name]=dataRaw.constData();
+                                mapLayerContentForMonsterCollision[name]=dataRaw.data();
                                 {
                                     const std::vector<std::string> &monsterTypeListText=CommonDatapack::commonDatapack.monstersCollision.at(index).monsterTypeList;
                                     unsigned int monsterTypeListIndex=0;
@@ -870,7 +870,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 }
             }
         }
-        child = child.nextSiblingElement(std::string ::fromStdString(Map_loader::text_layer));
+        child = child.nextSiblingElement("layer");
     }
 
     /*std::vector<char> null_data;
@@ -1246,7 +1246,7 @@ bool Map_loader::loadMonsterMap(const std::string &fileName, std::vector<std::st
             std::cerr << mapFile.fileName().toStdString() << ": " << mapFile.errorString().toStdString() << std::endl;
             return false;
         }
-        const std::vector<char> &xmlContent=mapFile.readAll();
+        const QByteArray &xmlContent=mapFile.readAll();
         mapFile.close();
         QString errorStr;
         int errorLine,errorColumn;
@@ -1567,7 +1567,7 @@ QDomElement Map_loader::getXmlCondition(const std::string &fileName,const std::s
             std::cerr << "Into the file " << fileName << ", unable to open the condition file: " << mapFile.fileName().toStdString() << ": " << mapFile.errorString().toStdString() << std::endl;
             return QDomElement();
         }
-        const std::vector<char> &xmlContent=mapFile.readAll();
+        const QByteArray &xmlContent=mapFile.readAll();
         mapFile.close();
         QString errorStr;
         int errorLine,errorColumn;
