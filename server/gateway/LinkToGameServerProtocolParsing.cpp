@@ -244,7 +244,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                             return false;
                         }
                         posOutput+=1;
-                        std::cout << "Transmit the token: " << std::string(std::vector<char>(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT).toHex()).toStdString() << std::endl;
+                        std::cout << "Transmit the token: " << binarytoHexa(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT) << std::endl;
                         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         posOutput+=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT;
 
@@ -458,7 +458,9 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                     parseNetworkReadError("wrong file data size with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
                     return false;
                 }
-                const std::vector<char> dataFile(data+pos,fileSize);
+                std::vector<char> dataFile;
+                dataFile.resize(fileSize);
+                memcpy(dataFile.data(),data+pos,fileSize);
                 pos+=fileSize;
                 if(mainCodeType==0x76)
                     parseNetworkReadError("Raw file to create: "+fileName);
@@ -466,12 +468,7 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                     parseNetworkReadError("Compressed file to create: "+fileName);
 
                 if(reply04inWait!=NULL)
-                {
-                    std::vector<char> dataFileCpp;
-                    dataFileCpp.resize(dataFile.size());
-                    memcpy(dataFileCpp.data(),dataFile.constData(),dataFile.size());
-                    DatapackDownloaderBase::datapackDownloaderBase->writeNewFileBase(fileName,dataFileCpp);
-                }
+                    DatapackDownloaderBase::datapackDownloaderBase->writeNewFileBase(fileName,dataFile);
                 else if(reply0205inWait!=NULL)
                 {
                     if(DatapackDownloaderMainSub::datapackDownloaderMainSub.find(main)!=DatapackDownloaderMainSub::datapackDownloaderMainSub.cend())
@@ -624,7 +621,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             reply04inWaitSize=startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
             reply04inWait=new char[reply04inWaitSize];
             memcpy(reply04inWait+0,data,startString);
-            memcpy(reply04inWait+startString,LinkToGameServer::httpDatapackMirrorRewriteBase.constData(),LinkToGameServer::httpDatapackMirrorRewriteBase.size());
+            memcpy(reply04inWait+startString,LinkToGameServer::httpDatapackMirrorRewriteBase.data(),LinkToGameServer::httpDatapackMirrorRewriteBase.size());
             memcpy(reply04inWait+startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size(),data+pos,remainingSize);
 
             if(DatapackDownloaderBase::datapackDownloaderBase->hashBase.empty())//checksum never done
@@ -782,7 +779,8 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     parseNetworkReadError("need more size");
                     return false;
                 }
-                downloader->sendedHashMain=std::vector<char>(data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
+                downloader->sendedHashMain.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+                memcpy(downloader->sendedHashMain.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
                 pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
                 if(!sub.empty())
                 {
@@ -793,7 +791,8 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                         parseNetworkReadError("need more size");
                         return false;
                     }
-                    downloader->sendedHashSub=std::vector<char>(data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
+                    downloader->sendedHashSub.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+                    memcpy(downloader->sendedHashSub.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
                     pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
                 }
                 if((size-pos)<1)
@@ -833,10 +832,10 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 reply0205inWaitSize=startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
                 reply0205inWait=new char[reply0205inWaitSize];
                 memcpy(reply0205inWait+0,data,startString);
-                memcpy(reply0205inWait+startString,LinkToGameServer::httpDatapackMirrorRewriteBase.constData(),LinkToGameServer::httpDatapackMirrorRewriteBase.size());
+                memcpy(reply0205inWait+startString,LinkToGameServer::httpDatapackMirrorRewriteBase.data(),LinkToGameServer::httpDatapackMirrorRewriteBase.size());
                 memcpy(reply0205inWait+startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size(),data+pos,remainingSize);
 
-                if(downloader->hashMain.isEmpty() || (!sub.empty() && downloader->hashSub.isEmpty()))//checksum never done
+                if(downloader->hashMain.empty() || (!sub.empty() && downloader->hashSub.empty()))//checksum never done
                 {
                     reply0205inWaitQueryNumber=queryNumber;
                     downloader->clientInSuspend.push_back(this);
