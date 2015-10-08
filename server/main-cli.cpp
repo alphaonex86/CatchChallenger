@@ -3,6 +3,8 @@
 
 int main(int argc, char *argv[])
 {
+    NormalServer::displayInfo();
+    
     QCoreApplication a(argc, argv);
 
     QFileInfo datapackFolder(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/informations.xml"));

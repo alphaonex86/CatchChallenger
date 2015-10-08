@@ -68,7 +68,7 @@ void DatapackDownloaderBase::haveTheDatapack()
     resetAll();
 
     if(!DatapackDownloaderBase::commandUpdateDatapackBase.empty())
-        if(QProcess::execute(QString::fromStdString(DatapackDownloaderBase::commandUpdateDatapackBase),std::stringList() << QString::fromStdString(mDatapackBase))<0)
+        if(QProcess::execute(QString::fromStdString(DatapackDownloaderBase::commandUpdateDatapackBase),QStringList() << QString::fromStdString(mDatapackBase))<0)
             std::cerr << "Unable to execute " << DatapackDownloaderBase::commandUpdateDatapackBase << " " << mDatapackBase << std::endl;
 }
 
