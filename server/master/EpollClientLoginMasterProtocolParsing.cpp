@@ -31,7 +31,7 @@ void EpollClientLoginMaster::parseInputBeforeLogin(const uint8_t &mainCodeType,c
                         const int &returnedSize=fread(tokenForAuth.data(),1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,EpollClientLoginMaster::fpRandomFile);
                         if(returnedSize!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
                         {
-                            std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from /dev/random" << std::endl;
+                            std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from " << RANDOMFILEDEVICE << std::endl;
                             abort();
                         }
                     }

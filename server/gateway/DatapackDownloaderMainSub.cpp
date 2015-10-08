@@ -106,19 +106,19 @@ void DatapackDownloaderMainSub::datapackFileList(const char * const data,const u
             }
             if(boolList.size()<datapackFilesListMain.size())
             {
-                qDebug() << (std::stringLiteral("bool list too small with DatapackDownloaderMainSub::datapackFileList"));
+                std::cerr << "bool list too small with DatapackDownloaderMainSub::datapackFileList" << std::endl;
                 return;
             }
-            int index=0;
+            unsigned int index=0;
             while(index<datapackFilesListMain.size())
             {
                 if(boolList.at(index))
                 {
-                    DebugClass::debugConsole(std::stringLiteral("remove the file: %1").arg(mDatapackMain+'/'+datapackFilesListMain.at(index)));
-                    QFile file(mDatapackMain+'/'+datapackFilesListMain.at(index));
+                    std::cerr << "remove the file: " << mDatapackMain << '/' << datapackFilesListMain.at(index) << std::endl;
+                    QFile file(QString::fromStdString(mDatapackMain+'/'+datapackFilesListMain.at(index)));
                     if(!file.remove())
-                        DebugClass::debugConsole(std::stringLiteral("unable to remove the file: %1: %2").arg(datapackFilesListMain.at(index)).arg(file.errorString()));
-                    //removeFile(datapackFilesListMain.at(index));
+                        std::cerr << "unable to remove the file: " << datapackFilesListMain.at(index) << ": " << file.errorString().toStdString() << std::endl;
+                    //removeFile(datapackFilesListBase.at(index));
                 }
                 index++;
             }
@@ -127,7 +127,7 @@ void DatapackDownloaderMainSub::datapackFileList(const char * const data,const u
             cleanDatapackMain(std::string());
             if(boolList.size()>=8)
             {
-                qDebug() << (std::stringLiteral("bool list too big with DatapackDownloaderMainSub::datapackFileList"));
+                std::cerr << "bool list too big with DatapackDownloaderBase::datapackFileList" << std::endl;
                 return;
             }
             if(!httpModeMain)
@@ -161,19 +161,19 @@ void DatapackDownloaderMainSub::datapackFileList(const char * const data,const u
             }
             if(boolList.size()<datapackFilesListSub.size())
             {
-                qDebug() << (std::stringLiteral("bool list too small with DatapackDownloaderMainSub::datapackFileList"));
+                std::cerr << "bool list too small with DatapackDownloaderBase::datapackFileList" << std::endl;
                 return;
             }
-            int index=0;
+            unsigned int index=0;
             while(index<datapackFilesListSub.size())
             {
                 if(boolList.at(index))
                 {
-                    DebugClass::debugConsole(std::stringLiteral("remove the file: %1").arg(mDatapackSub+'/'+datapackFilesListSub.at(index)));
-                    QFile file(mDatapackSub+'/'+datapackFilesListSub.at(index));
+                    std::cerr << "remove the file: " << mDatapackSub << '/' << datapackFilesListSub.at(index) << std::endl;
+                    QFile file(QString::fromStdString(mDatapackSub+'/'+datapackFilesListSub.at(index)));
                     if(!file.remove())
-                        DebugClass::debugConsole(std::stringLiteral("unable to remove the file: %1: %2").arg(datapackFilesListSub.at(index)).arg(file.errorString()));
-                    //removeFile(datapackFilesListSub.at(index));
+                        std::cerr << "unable to remove the file: " << datapackFilesListSub.at(index) << ": " << file.errorString().toStdString() << std::endl;
+                    //removeFile(datapackFilesListBase.at(index));
                 }
                 index++;
             }
@@ -182,7 +182,7 @@ void DatapackDownloaderMainSub::datapackFileList(const char * const data,const u
             cleanDatapackSub(std::string());
             if(boolList.size()>=8)
             {
-                qDebug() << (std::stringLiteral("bool list too big with DatapackDownloaderMainSub::datapackFileList"));
+                std::cerr << "bool list too big with DatapackDownloaderBase::datapackFileList" << std::endl;
                 return;
             }
             if(!httpModeSub)
@@ -210,7 +210,7 @@ void DatapackDownloaderMainSub::sendDatapackContentMainSub()
 
 void DatapackDownloaderMainSub::haveTheDatapackMainSub()
 {
-    if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
+    if(DatapackDownloaderMainSub::httpDatapackMirrorServerList.empty())
     {
         if(curl!=NULL)
         {
@@ -240,13 +240,13 @@ void DatapackDownloaderMainSub::haveTheDatapackMainSub()
 
     if(!DatapackDownloaderMainSub::commandUpdateDatapackMain.empty())
     {
-        if(QProcess::execute(DatapackDownloaderMainSub::commandUpdateDatapackMain,std::vector<std::string>() << mDatapackMain)<0)
-            qDebug() << "Unable to execute " << DatapackDownloaderMainSub::commandUpdateDatapackMain << " " << mDatapackMain;
+        if(QProcess::execute(QString::fromStdString(DatapackDownloaderMainSub::commandUpdateDatapackMain),QStringList() << QString::fromStdString(mDatapackMain))<0)
+            std::cerr << "Unable to execute " << DatapackDownloaderMainSub::commandUpdateDatapackMain << " " << mDatapackMain << std::endl;
     }
     if(!DatapackDownloaderMainSub::commandUpdateDatapackSub.empty() && !mDatapackSub.empty())
     {
-        if(QProcess::execute(DatapackDownloaderMainSub::commandUpdateDatapackSub,std::vector<std::string>() << mDatapackSub)<0)
-            qDebug() << "Unable to execute " << DatapackDownloaderMainSub::commandUpdateDatapackSub << " " << mDatapackSub;
+        if(QProcess::execute(QString::fromStdString(DatapackDownloaderMainSub::commandUpdateDatapackSub),QStringList() << QString::fromStdString(mDatapackSub))<0)
+            std::cerr << "Unable to execute " << DatapackDownloaderMainSub::commandUpdateDatapackSub << " " << mDatapackSub << std::endl;
     }
 }
 

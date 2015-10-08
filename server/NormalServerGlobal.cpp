@@ -1,5 +1,6 @@
 #include "NormalServerGlobal.h"
 #include "VariableServer.h"
+#include "base/Client.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -13,7 +14,7 @@ NormalServerGlobal::NormalServerGlobal()
 {
 }
 
-void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const std::string &datapack_basePath)
+void NormalServerGlobal::displayInfo()
 {
     #if defined(Q_CC_GNU)
         std::cout << "GCC " << __GNUC__ << "." << __GNUC_MINOR__ << "." << __GNUC_PATCHLEVEL__ << " build: " << __DATE__ << " " << __TIME__ << std::endl;
@@ -25,7 +26,11 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const std:
         #endif
     #endif
     std::cout << "Qt version: " << qVersion() << " (" << QT_VERSION << ")" << std::endl;
+    std::cout << "Base client size without string/pointer content: " << sizeof(CatchChallenger::Client) << std::endl;
+}
 
+void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const std::string &datapack_basePath)
+{
     if(!settings->contains("max-players"))
         settings->setValue("max-players",200);
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

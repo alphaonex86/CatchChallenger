@@ -73,8 +73,8 @@ private:
     bool datapackTarXzMain;
     bool datapackTarXzSub;
     CatchChallenger::DatapackChecksum datapackChecksum;
-    int index_mirror_main;
-    int index_mirror_sub;
+    unsigned int index_mirror_main;
+    unsigned int index_mirror_sub;
     static std::regex excludePathMain;
     enum DatapackStatus
     {

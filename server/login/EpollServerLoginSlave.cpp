@@ -500,16 +500,16 @@ bool EpollServerLoginSlave::tryListen()
 
 void EpollServerLoginSlave::generateToken(QSettings &settings)
 {
-    FILE *fpRandomFile = fopen("/dev/random","rb");
+    FILE *fpRandomFile = fopen(RANDOMFILEDEVICE,"rb");
     if(fpRandomFile==NULL)
     {
-        std::cerr << "Unable to open /dev/random to generate random token" << std::endl;
+        std::cerr << "Unable to open " << RANDOMFILEDEVICE << " to generate random token" << std::endl;
         abort();
     }
     const int &returnedSize=fread(LinkToMaster::private_token,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
     if(returnedSize!=TOKEN_SIZE_FOR_MASTERAUTH)
     {
-        std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from /dev/random" << std::endl;
+        std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from " << RANDOMFILEDEVICE << std::endl;
         abort();
     }
     settings.setValue(std::stringLiteral("token"),std::string(
