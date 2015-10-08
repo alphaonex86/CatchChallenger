@@ -5,7 +5,7 @@
 using namespace CatchChallenger;
 
 #include <QFile>
-#include <std::vector<char>>
+#include <vector>
 #include <QCoreApplication>
 
 #include <stdio.h>      /* printf, scanf, puts, NULL */
@@ -34,31 +34,29 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     srand(time(NULL));
 
     {
-        if(!settings.contains(std::stringLiteral("ip")))
-            settings.setValue(std::stringLiteral("ip"),std::string());
-        const std::string &server_ip_string=settings.value(std::stringLiteral("ip")).toString();
-        const std::vector<char> &server_ip_data=server_ip_string.toLocal8Bit();
-        if(!server_ip_string.isEmpty())
+        if(!settings.contains("ip"))
+            settings.setValue("ip","");
+        const std::string &server_ip_stdstring=settings.value("ip").toString().toStdString();
+        if(!server_ip_stdstring.empty())
         {
-            server_ip=new char[server_ip_data.size()+1];
-            strcpy(server_ip,server_ip_data.constData());
+            server_ip=new char[server_ip_stdstring.size()+1];
+            strcpy(server_ip,server_ip_stdstring.data());
         }
-        if(!settings.contains(std::stringLiteral("port")))
-            settings.setValue(std::stringLiteral("port"),rand()%40000+10000);
-        const std::vector<char> &server_port_data=settings.value(std::stringLiteral("port")).toString().toLocal8Bit();
-        server_port=new char[server_port_data.size()+1];
-        strcpy(server_port,server_port_data.constData());
+        if(!settings.contains("port"))
+            settings.setValue("port",rand()%40000+10000);
+        const std::string &server_port_stdstring=settings.value("port").toString().toStdString();
+        server_port=new char[server_port_stdstring.size()+1];
+        strcpy(server_port,server_port_stdstring.data());
     }
 
     {
-        if(!settings.contains(std::stringLiteral("destination_ip")))
-            settings.setValue(std::stringLiteral("destination_ip"),std::string());
-        const std::string &destination_server_ip_string=settings.value(std::stringLiteral("destination_ip")).toString();
-        const std::vector<char> &destination_server_ip_data=destination_server_ip_string.toLocal8Bit();
-        if(!destination_server_ip_string.isEmpty())
+        if(!settings.contains("destination_ip"))
+            settings.setValue("destination_ip","");
+        const std::string &destination_server_ip_stdstring=settings.value("destination_ip").toString().toStdString();
+        if(!destination_server_ip_stdstring.empty())
         {
-            destination_server_ip=new char[destination_server_ip_data.size()+1];
-            strcpy(destination_server_ip,destination_server_ip_data.constData());
+            destination_server_ip=new char[destination_server_ip_stdstring.size()+1];
+            strcpy(destination_server_ip,destination_server_ip_stdstring.data());
         }
         else
         {
@@ -66,14 +64,14 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             std::cerr << "destination_ip is empty (abort)" << std::endl;
             abort();
         }
-        if(!settings.contains(std::stringLiteral("destination_port")))
-            settings.setValue(std::stringLiteral("destination_port"),rand()%40000+10000);
+        if(!settings.contains("destination_port"))
+            settings.setValue("destination_port",rand()%40000+10000);
         bool ok;
-        unsigned int tempPort=settings.value(std::stringLiteral("destination_port")).toUInt(&ok);
+        unsigned int tempPort=settings.value("destination_port").toUInt(&ok);
         if(!ok)
         {
             settings.sync();
-            std::cerr << "destination_port not number: " << settings.value(std::stringLiteral("destination_port")).toString().toStdString() << std::endl;
+            std::cerr << "destination_port not number: " << settings.value("destination_port").toString().toStdString() << std::endl;
             abort();
         }
         if(tempPort==0 || tempPort>65535)
@@ -85,21 +83,31 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         destination_server_port=tempPort;
     }
 
-    if(!settings.contains(std::stringLiteral("httpDatapackMirrorRewriteBase")))
-        settings.setValue(std::stringLiteral("httpDatapackMirrorRewriteBase"),std::string());
-    LinkToGameServer::httpDatapackMirrorRewriteBase=std::vector<char>(ProtocolParsingBase::tempBigBufferForOutput,
-                                                               FacilityLibGeneral::toUTF8WithHeader(httpMirrorFix(settings.value("httpDatapackMirrorRewriteBase").toString().toStdString()),ProtocolParsingBase::tempBigBufferForOutput));
-    if(LinkToGameServer::httpDatapackMirrorRewriteBase.isEmpty())
+    if(!settings.contains("httpDatapackMirrorRewriteBase"))
+        settings.setValue("httpDatapackMirrorRewriteBase","");
+    LinkToGameServer::httpDatapackMirrorRewriteBase.resize(256+1);
+    LinkToGameServer::httpDatapackMirrorRewriteBase.resize(
+                FacilityLibGeneral::toUTF8WithHeader(
+                    httpMirrorFix(settings.value("httpDatapackMirrorRewriteBase").toString().toStdString()),
+                    LinkToGameServer::httpDatapackMirrorRewriteBase.data()
+                    )
+                );
+    if(LinkToGameServer::httpDatapackMirrorRewriteBase.empty())
     {
         settings.sync();
         std::cerr << "httpDatapackMirrorRewriteBase.isEmpty() abort" << std::endl;
         abort();
     }
-    if(!settings.contains(std::stringLiteral("httpDatapackMirrorRewriteMainAndSub")))
-        settings.setValue(std::stringLiteral("httpDatapackMirrorRewriteMainAndSub"),std::string());
-    LinkToGameServer::httpDatapackMirrorRewriteMainAndSub=std::vector<char>(ProtocolParsingBase::tempBigBufferForOutput,
-                                                                     FacilityLibGeneral::toUTF8WithHeader(httpMirrorFix(settings.value("httpDatapackMirrorRewriteMainAndSub").toString().toStdString()),ProtocolParsingBase::tempBigBufferForOutput));
-    if(LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.isEmpty())
+    if(!settings.contains("httpDatapackMirrorRewriteMainAndSub"))
+        settings.setValue("httpDatapackMirrorRewriteMainAndSub","");
+    LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.resize(256+1);
+    LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.resize(
+                FacilityLibGeneral::toUTF8WithHeader(
+                    httpMirrorFix(settings.value("httpDatapackMirrorRewriteMainAndSub").toString().toStdString()),
+                    LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.data()
+                    )
+                );
+    if(LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.empty())
     {
         settings.sync();
         std::cerr << "httpDatapackMirrorRewriteMainAndSub.isEmpty() abort" << std::endl;
@@ -108,38 +116,38 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
     //connection
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    if(!settings.contains(std::stringLiteral("compression")))
-        settings.setValue(std::stringLiteral("compression"),std::stringLiteral("zlib"));
-    if(settings.value(std::stringLiteral("compression")).toString()==std::stringLiteral("none"))
+    if(!settings.contains("compression"))
+        settings.setValue("compression","zlib");
+    if(settings.value("compression").toString()=="none")
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::None;
-    else if(settings.value(std::stringLiteral("compression")).toString()==std::stringLiteral("xz"))
+    else if(settings.value("compression").toString()=="xz")
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Xz;
-    else if(settings.value(std::stringLiteral("compression")).toString()==std::stringLiteral("lz4"))
+    else if(settings.value("compression").toString()=="lz4")
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Lz4;
     else
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Zlib;
-    ProtocolParsing::compressionLevel          = settings.value(std::stringLiteral("compressionLevel")).toUInt();
+    ProtocolParsing::compressionLevel          = settings.value("compressionLevel").toUInt();
     #endif
 
-    settings.beginGroup(std::stringLiteral("Linux"));
-    if(!settings.contains(std::stringLiteral("tcpCork")))
-        settings.setValue(std::stringLiteral("tcpCork"),true);
-    if(!settings.contains(std::stringLiteral("tcpNodelay")))
-        settings.setValue(std::stringLiteral("tcpNodelay"),false);
-    tcpCork=settings.value(std::stringLiteral("tcpCork")).toBool();
-    tcpNodelay=settings.value(std::stringLiteral("tcpNodelay")).toBool();
+    settings.beginGroup("Linux");
+    if(!settings.contains("tcpCork"))
+        settings.setValue("tcpCork",true);
+    if(!settings.contains("tcpNodelay"))
+        settings.setValue("tcpNodelay",false);
+    tcpCork=settings.value("tcpCork").toBool();
+    tcpNodelay=settings.value("tcpNodelay").toBool();
     settings.endGroup();
 
-    settings.beginGroup(std::stringLiteral("commandUpdateDatapack"));
-    if(!settings.contains(std::stringLiteral("base")))
-        settings.setValue(std::stringLiteral("base"),std::string());
-    if(!settings.contains(std::stringLiteral("main")))
-        settings.setValue(std::stringLiteral("main"),std::string());
-    if(!settings.contains(std::stringLiteral("sub")))
-        settings.setValue(std::stringLiteral("sub"),std::string());
-    DatapackDownloaderBase::commandUpdateDatapackBase=settings.value(std::stringLiteral("base")).toString().toStdString();
-    DatapackDownloaderMainSub::commandUpdateDatapackMain=settings.value(std::stringLiteral("main")).toString().toStdString();
-    DatapackDownloaderMainSub::commandUpdateDatapackSub=settings.value(std::stringLiteral("sub")).toString().toStdString();
+    settings.beginGroup("commandUpdateDatapack");
+    if(!settings.contains("base"))
+        settings.setValue("base","");
+    if(!settings.contains("main"))
+        settings.setValue("main","");
+    if(!settings.contains("sub"))
+        settings.setValue("sub","");
+    DatapackDownloaderBase::commandUpdateDatapackBase=settings.value("base").toString().toStdString();
+    DatapackDownloaderMainSub::commandUpdateDatapackMain=settings.value("main").toString().toStdString();
+    DatapackDownloaderMainSub::commandUpdateDatapackSub=settings.value("sub").toString().toStdString();
     settings.endGroup();
 
     settings.sync();

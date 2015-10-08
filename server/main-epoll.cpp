@@ -427,6 +427,7 @@ void send_settings()
 
 int main(int argc, char *argv[])
 {
+    NormalServerGlobal::displayInfo();
     QCoreApplication a(argc, argv);
     Q_UNUSED(a);
 

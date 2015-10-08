@@ -272,7 +272,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                     {
                         //failback
                         /* allow poor quality number:
-                         * 1) more easy to run, allow start include if /dev/random can't be read
+                         * 1) more easy to run, allow start include if RANDOMFILEDEVICE can't be read
                          * 2) it's for very small server (Lan) or internal communication */
                         #if ! defined(CATCHCHALLENGER_CLIENT) && ! defined(CATCHCHALLENGER_SOLO)
                         /// \warning total insecure implementation

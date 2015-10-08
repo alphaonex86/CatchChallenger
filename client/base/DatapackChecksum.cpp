@@ -3,9 +3,9 @@
 #include <QCryptographicHash>
 #include <QFile>
 #include <QFileInfo>
-#include <std::regex>
-#include <std::string>
-#include <std::unordered_set>
+#include <regex>
+#include <string>
+#include <unordered_set>
 
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/FacilityLib.h"

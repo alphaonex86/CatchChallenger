@@ -5,6 +5,8 @@
 
 int main(int argc, char *argv[])
 {
+    NormalServer::displayInfo();
+    
     QApplication a(argc, argv);
 
     QFileInfo datapackFolder(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/informations.xml"));

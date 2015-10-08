@@ -22,7 +22,7 @@ void EpollClientLoginSlave::doDDOSCompute()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE<0 || CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE>CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
     {
-        qDebug() << "CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE out of range:" << CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE;
+        std::cerr << "CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE out of range:" << CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE << std::endl;
         return;
     }
     #endif
@@ -70,11 +70,11 @@ void EpollClientLoginSlave::doDDOSCompute()
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(index<0)
-                qDebug() << "index out of range <0, chatPacketKick";
+                std::cerr << "index out of range <0, chatPacketKick" << std::endl;
             if((index+1)>=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
-                qDebug() << "index out of range >, chatPacketKick";
+                std::cerr << "index out of range >, chatPacketKick" << std::endl;
             if(chatPacketKick[index]>CATCHCHALLENGER_DDOS_KICKLIMITCHAT*2)
-                qDebug() << "index out of range in array for index " << chatPacketKick[index] << ", chatPacketKick";
+                std::cerr << "index out of range in array for index " << chatPacketKick[index] << ", chatPacketKick" << std::endl;
             #endif
             chatPacketKick[index]=chatPacketKick[index+1];
             chatPacketKickTotalCache+=chatPacketKick[index];
@@ -84,7 +84,7 @@ void EpollClientLoginSlave::doDDOSCompute()
         chatPacketKickTotalCache+=chatPacketKickNewValue;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(chatPacketKickTotalCache>CATCHCHALLENGER_DDOS_KICKLIMITCHAT*2)
-            qDebug() << "bug in DDOS calculation count";
+            std::cerr << "bug in DDOS calculation count" << std::endl;
         #endif
         chatPacketKickNewValue=0;
     }
@@ -95,11 +95,11 @@ void EpollClientLoginSlave::doDDOSCompute()
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(index<0)
-                qDebug() << "index out of range <0, otherPacketKick";
+                std::cerr << "index out of range <0, otherPacketKick" << std::endl;
             if((index+1)>=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
-                qDebug() << "index out of range >, otherPacketKick";
+                std::cerr << "index out of range >, otherPacketKick" << std::endl;
             if(otherPacketKick[index]>CATCHCHALLENGER_DDOS_KICKLIMITOTHER*2)
-                qDebug() << "index out of range in array for index " << otherPacketKick[index] << ", chatPacketKick";
+                std::cerr << "index out of range in array for index " << otherPacketKick[index] << ", chatPacketKick" << std::endl;
             #endif
             otherPacketKick[index]=otherPacketKick[index+1];
             otherPacketKickTotalCache+=otherPacketKick[index];
@@ -109,7 +109,7 @@ void EpollClientLoginSlave::doDDOSCompute()
         otherPacketKickTotalCache+=otherPacketKickNewValue;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(otherPacketKickTotalCache>CATCHCHALLENGER_DDOS_KICKLIMITOTHER*2)
-            qDebug() << "bug in DDOS calculation count";
+            std::cerr << "bug in DDOS calculation count" << std::endl;
         #endif
         otherPacketKickNewValue=0;
     }
