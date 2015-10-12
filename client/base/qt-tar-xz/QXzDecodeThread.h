@@ -28,7 +28,7 @@ class QXzDecodeThread
         /// \brief to get the decoded data
         std::vector<char> decodedData();
         /// \brief to send the data
-        void setData(std::vector<char>,uint64_t maxSize=0);
+        void setData(std::vector<char> data, uint64_t maxSize=0);
     #ifndef QT_NO_EMIT
     protected:
         void run();

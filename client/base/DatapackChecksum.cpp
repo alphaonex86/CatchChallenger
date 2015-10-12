@@ -6,6 +6,7 @@
 #include <regex>
 #include <string>
 #include <unordered_set>
+#include <iostream>
 
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/FacilityLib.h"
@@ -34,41 +35,49 @@ DatapackChecksum::~DatapackChecksum()
 std::vector<char> DatapackChecksum::doChecksumBase(const std::string &datapackPath)
 {
     QCryptographicHash hash(QCryptographicHash::Sha224);
-    std::regex excludePath("^map[/\\\\]main[/\\\\]");
-
-    const std::unordered_set<std::string> &extensionAllowed=std::string(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
-    std::regex datapack_rightFileName=std::regex(DATAPACK_FILE_REGEX);
-    std::vector<std::string> returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
-    returnList.sort();
-    int index=0;
-    const int &size=returnList.size();
-    while(index<size)
     {
-        const std::string &fileName=returnList.at(index);
-        if(fileName.contains(datapack_rightFileName) && !fileName.contains(excludePath))
+        std::regex excludePath("^map[/\\\\]main[/\\\\]");
+
+        const std::vector<std::string> &extensionAllowedList=stringsplit(CATCHCHALLENGER_EXTENSION_ALLOWED,';');
+        const std::unordered_set<std::string> extensionAllowed(extensionAllowedList.cbegin(),extensionAllowedList.cend());
+        std::regex datapack_rightFileName=std::regex(DATAPACK_FILE_REGEX);
+        std::vector<std::string> returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
+        std::sort(returnList.begin(),returnList.end());
+        int index=0;
+        const int &size=returnList.size();
+        while(index<size)
         {
-            if(!QFileInfo(fileName).suffix().isEmpty() && extensionAllowed.contains(QFileInfo(fileName).suffix()))
+            const std::string &fileName=returnList.at(index);
+            if(std::regex_match(fileName,datapack_rightFileName) && !std::regex_match(fileName,excludePath))
             {
-                QFile file(datapackPath+returnList.at(index));
-                if(file.size()<=8*1024*1024)
+                if(!QFileInfo(QString::fromStdString(fileName)).suffix().isEmpty() && extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())!=extensionAllowed.cend())
                 {
-                    if(file.open(QIODevice::ReadOnly))
+                    QFile file(QString::fromStdString(datapackPath+returnList.at(index)));
+                    if(file.size()<=8*1024*1024)
                     {
-                        const std::vector<char> &data=file.readAll();
-                        hash.addData(data);
-                        file.close();
-                    }
-                    else
-                    {
-                        qDebug() << std::stringLiteral("Unable to open the file to do the checksum: %1").arg(file.fileName());
-                        return std::vector<char>();
+                        if(file.open(QIODevice::ReadOnly))
+                        {
+                            hash.addData(file.readAll());
+                            file.close();
+                        }
+                        else
+                        {
+                            std::cerr << "Unable to open the file to do the checksum: " << datapackPath << returnList.at(index) << std::endl;
+                            return std::vector<char>();
+                        }
                     }
                 }
             }
+            index++;
         }
-        index++;
     }
-    return hash.result();
+    std::vector<char> hashResult;
+    {
+        const QByteArray &QtData=hash.result();
+        hashResult.resize(QtData.size());
+        memcpy(hashResult.data(),QtData.constData(),QtData.size());
+    }
+    return hashResult;
 }
 
 #ifndef QT_NO_EMIT
@@ -83,37 +92,35 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
 {
     DatapackChecksum::FullDatapackChecksumReturn fullDatapackChecksumReturn;
     std::regex excludePath("^map[/\\\\]main[/\\\\]");
-    const std::unordered_set<std::string> &extensionAllowed=std::string(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
+    const std::vector<std::string> &extensionAllowedList=stringsplit(CATCHCHALLENGER_EXTENSION_ALLOWED,';');
+    const std::unordered_set<std::string> extensionAllowed(extensionAllowedList.cbegin(),extensionAllowedList.cend());
     std::regex datapack_rightFileName=std::regex(DATAPACK_FILE_REGEX);
     std::vector<std::string> returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
-    returnList.sort();
+    std::sort(returnList.begin(),returnList.end());
     int index=0;
     const int &size=returnList.size();
     while(index<size)
     {
         const std::string &fileName=returnList.at(index);
-        if(fileName.contains(datapack_rightFileName) && !fileName.contains(excludePath))
+        if(std::regex_match(fileName,datapack_rightFileName) && !std::regex_match(fileName,excludePath))
         {
-            if(!QFileInfo(fileName).suffix().isEmpty() && extensionAllowed.contains(QFileInfo(fileName).suffix()))
+            if(!QFileInfo(QString::fromStdString(fileName)).suffix().isEmpty() && extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())!=extensionAllowed.cend())
             {
-                QFile file(datapackPath+returnList.at(index));
+                QFile file(QString::fromStdString(datapackPath+returnList.at(index)));
                 if(file.size()<=8*1024*1024)
                 {
-                    fullDatapackChecksumReturn.datapackFilesList << returnList.at(index);
+                    fullDatapackChecksumReturn.datapackFilesList.push_back(returnList.at(index));
                     if(file.open(QIODevice::ReadOnly))
                     {
-                        const std::vector<char> &data=file.readAll();
-                        {
-                            QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                            hashFile.addData(data);
-                            fullDatapackChecksumReturn.partialHashList << *reinterpret_cast<const int *>(hashFile.result().constData());
-                        }
+                        QCryptographicHash hashFile(QCryptographicHash::Sha224);
+                        hashFile.addData(file.readAll());
+                        fullDatapackChecksumReturn.partialHashList.push_back(*reinterpret_cast<const int *>(hashFile.result().constData()));
                         file.close();
                     }
                     else
                     {
-                        fullDatapackChecksumReturn.partialHashList << 0;
-                        qDebug() << std::stringLiteral("Unable to open the file to do the checksum: %1").arg(file.fileName());
+                        fullDatapackChecksumReturn.partialHashList.push_back(0);
+                        std::cerr << "Unable to open the file to do the checksum: " << datapackPath << returnList.at(index) << std::endl;
                     }
                 }
             }
@@ -127,41 +134,49 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
 std::vector<char> DatapackChecksum::doChecksumMain(const std::string &datapackPath)
 {
     QCryptographicHash hash(QCryptographicHash::Sha224);
-    std::regex excludePath("^sub[/\\\\]");
-
-    const std::unordered_set<std::string> &extensionAllowed=std::string(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
-    std::regex datapack_rightFileName=std::regex(DATAPACK_FILE_REGEX);
-    std::vector<std::string> returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
-    returnList.sort();
-    int index=0;
-    const int &size=returnList.size();
-    while(index<size)
     {
-        const std::string &fileName=returnList.at(index);
-        if(fileName.contains(datapack_rightFileName) && !fileName.contains(excludePath))
+        std::regex excludePath("^sub[/\\\\]");
+
+        const std::vector<std::string> &extensionAllowedList=stringsplit(CATCHCHALLENGER_EXTENSION_ALLOWED,';');
+        const std::unordered_set<std::string> extensionAllowed(extensionAllowedList.cbegin(),extensionAllowedList.cend());
+        std::regex datapack_rightFileName=std::regex(DATAPACK_FILE_REGEX);
+        std::vector<std::string> returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
+        std::sort(returnList.begin(),returnList.end());
+        int index=0;
+        const int &size=returnList.size();
+        while(index<size)
         {
-            if(!QFileInfo(fileName).suffix().isEmpty() && extensionAllowed.contains(QFileInfo(fileName).suffix()))
+            const std::string &fileName=returnList.at(index);
+            if(std::regex_match(fileName,datapack_rightFileName) && !std::regex_match(fileName,excludePath))
             {
-                QFile file(datapackPath+returnList.at(index));
-                if(file.size()<=8*1024*1024)
+                if(!QFileInfo(QString::fromStdString(fileName)).suffix().isEmpty() && extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())!=extensionAllowed.cend())
                 {
-                    if(file.open(QIODevice::ReadOnly))
+                    QFile file(QString::fromStdString(datapackPath+returnList.at(index)));
+                    if(file.size()<=8*1024*1024)
                     {
-                        const std::vector<char> &data=file.readAll();
-                        hash.addData(data);
-                        file.close();
-                    }
-                    else
-                    {
-                        qDebug() << std::stringLiteral("Unable to open the file to do the checksum: %1").arg(file.fileName());
-                        return std::vector<char>();
+                        if(file.open(QIODevice::ReadOnly))
+                        {
+                            hash.addData(file.readAll());
+                            file.close();
+                        }
+                        else
+                        {
+                            std::cerr << "Unable to open the file to do the checksum: " << datapackPath << returnList.at(index) << std::endl;
+                            return std::vector<char>();
+                        }
                     }
                 }
             }
+            index++;
         }
-        index++;
     }
-    return hash.result();
+    std::vector<char> hashResult;
+    {
+        const QByteArray &QtData=hash.result();
+        hashResult.resize(QtData.size());
+        memcpy(hashResult.data(),QtData.constData(),QtData.size());
+    }
+    return hashResult;
 }
 
 #ifndef QT_NO_EMIT
@@ -176,37 +191,35 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
 {
     DatapackChecksum::FullDatapackChecksumReturn fullDatapackChecksumReturn;
     std::regex excludePath("^sub[/\\\\]");
-    const std::unordered_set<std::string> &extensionAllowed=std::string(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
+    const std::vector<std::string> &extensionAllowedList=stringsplit(CATCHCHALLENGER_EXTENSION_ALLOWED,';');
+    const std::unordered_set<std::string> extensionAllowed(extensionAllowedList.cbegin(),extensionAllowedList.cend());
     std::regex datapack_rightFileName=std::regex(DATAPACK_FILE_REGEX);
     std::vector<std::string> returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
-    returnList.sort();
+    std::sort(returnList.begin(),returnList.end());
     int index=0;
     const int &size=returnList.size();
     while(index<size)
     {
         const std::string &fileName=returnList.at(index);
-        if(fileName.contains(datapack_rightFileName) && !fileName.contains(excludePath))
+        if(std::regex_match(fileName,datapack_rightFileName) && !std::regex_match(fileName,excludePath))
         {
-            if(!QFileInfo(fileName).suffix().isEmpty() && extensionAllowed.contains(QFileInfo(fileName).suffix()))
+            if(!QFileInfo(QString::fromStdString(fileName)).suffix().isEmpty() && extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())!=extensionAllowed.cend())
             {
-                QFile file(datapackPath+returnList.at(index));
+                QFile file(QString::fromStdString(datapackPath+returnList.at(index)));
                 if(file.size()<=8*1024*1024)
                 {
-                    fullDatapackChecksumReturn.datapackFilesList << returnList.at(index);
+                    fullDatapackChecksumReturn.datapackFilesList.push_back(returnList.at(index));
                     if(file.open(QIODevice::ReadOnly))
                     {
-                        const std::vector<char> &data=file.readAll();
-                        {
-                            QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                            hashFile.addData(data);
-                            fullDatapackChecksumReturn.partialHashList << *reinterpret_cast<const int *>(hashFile.result().constData());
-                        }
+                        QCryptographicHash hashFile(QCryptographicHash::Sha224);
+                        hashFile.addData(file.readAll());
+                        fullDatapackChecksumReturn.partialHashList.push_back(*reinterpret_cast<const int *>(hashFile.result().constData()));
                         file.close();
                     }
                     else
                     {
-                        fullDatapackChecksumReturn.partialHashList << 0;
-                        qDebug() << std::stringLiteral("Unable to open the file to do the checksum: %1").arg(file.fileName());
+                        fullDatapackChecksumReturn.partialHashList.push_back(0);
+                        std::cerr << "Unable to open the file to do the checksum: " << datapackPath << returnList.at(index) << std::endl;
                     }
                 }
             }
@@ -221,40 +234,47 @@ std::vector<char> DatapackChecksum::doChecksumSub(const std::string &datapackPat
 {
     QCryptographicHash hash(QCryptographicHash::Sha224);
 
-    const std::unordered_set<std::string> &extensionAllowed=std::string(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
-    std::regex datapack_rightFileName=std::regex(DATAPACK_FILE_REGEX);
-    std::vector<std::string> returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
-    returnList.sort();
-    int index=0;
-    const int &size=returnList.size();
-    while(index<size)
     {
-        const std::string &fileName=returnList.at(index);
-        if(fileName.contains(datapack_rightFileName))
+        const std::vector<std::string> &extensionAllowedList=stringsplit(CATCHCHALLENGER_EXTENSION_ALLOWED,';');
+        const std::unordered_set<std::string> extensionAllowed(extensionAllowedList.cbegin(),extensionAllowedList.cend());
+        std::regex datapack_rightFileName=std::regex(DATAPACK_FILE_REGEX);
+        std::vector<std::string> returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
+        std::sort(returnList.begin(),returnList.end());
+        int index=0;
+        const int &size=returnList.size();
+        while(index<size)
         {
-            if(!QFileInfo(fileName).suffix().isEmpty() && extensionAllowed.contains(QFileInfo(fileName).suffix()))
+            const std::string &fileName=returnList.at(index);
+            if(std::regex_match(fileName,datapack_rightFileName))
             {
-                QFile file(datapackPath+returnList.at(index));
-                if(file.size()<=8*1024*1024)
+                if(!QFileInfo(QString::fromStdString(fileName)).suffix().isEmpty() && extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())!=extensionAllowed.cend())
                 {
-                    if(file.open(QIODevice::ReadOnly))
+                    QFile file(QString::fromStdString(datapackPath+returnList.at(index)));
+                    if(file.size()<=8*1024*1024)
                     {
-                        const std::vector<char> &data=file.readAll();
-                        hash.addData(data);
-                        file.close();
-                    }
-                    else
-                    {
-                        qDebug() << std::stringLiteral("Unable to open the file to do the checksum: %1").arg(file.fileName());
-                        return std::vector<char>();
+                        if(file.open(QIODevice::ReadOnly))
+                        {
+                            hash.addData(file.readAll());
+                            file.close();
+                        }
+                        else
+                        {
+                            std::cerr << "Unable to open the file to do the checksum: " << datapackPath << returnList.at(index) << std::endl;
+                            return std::vector<char>();
+                        }
                     }
                 }
             }
+            index++;
         }
-        index++;
     }
-    qDebug() << std::stringLiteral("sub hash 1: %1").arg(std::string(hash.result().toHex()));
-    return hash.result();
+    std::vector<char> hashResult;
+    {
+        const QByteArray &QtData=hash.result();
+        hashResult.resize(QtData.size());
+        memcpy(hashResult.data(),QtData.constData(),QtData.size());
+    }
+    return hashResult;
 }
 
 #ifndef QT_NO_EMIT
@@ -268,37 +288,35 @@ void DatapackChecksum::doDifferedChecksumSub(const std::string &datapackPath)
 DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksumSub(const std::string &datapackPath)
 {
     DatapackChecksum::FullDatapackChecksumReturn fullDatapackChecksumReturn;
-    const std::unordered_set<std::string> &extensionAllowed=std::string(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
+    const std::vector<std::string> &extensionAllowedList=stringsplit(CATCHCHALLENGER_EXTENSION_ALLOWED,';');
+    const std::unordered_set<std::string> extensionAllowed(extensionAllowedList.cbegin(),extensionAllowedList.cend());
     std::regex datapack_rightFileName=std::regex(DATAPACK_FILE_REGEX);
     std::vector<std::string> returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
-    returnList.sort();
+    std::sort(returnList.begin(),returnList.end());
     int index=0;
     const int &size=returnList.size();
     while(index<size)
     {
         const std::string &fileName=returnList.at(index);
-        if(fileName.contains(datapack_rightFileName))
+        if(std::regex_match(fileName,datapack_rightFileName))
         {
-            if(!QFileInfo(fileName).suffix().isEmpty() && extensionAllowed.contains(QFileInfo(fileName).suffix()))
+            if(!QFileInfo(QString::fromStdString(fileName)).suffix().isEmpty() && extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())!=extensionAllowed.cend())
             {
-                QFile file(datapackPath+returnList.at(index));
+                QFile file(QString::fromStdString(datapackPath+returnList.at(index)));
                 if(file.size()<=8*1024*1024)
                 {
-                    fullDatapackChecksumReturn.datapackFilesList << returnList.at(index);
+                    fullDatapackChecksumReturn.datapackFilesList.push_back(returnList.at(index));
                     if(file.open(QIODevice::ReadOnly))
                     {
-                        const std::vector<char> &data=file.readAll();
-                        {
-                            QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                            hashFile.addData(data);
-                            fullDatapackChecksumReturn.partialHashList << *reinterpret_cast<const int *>(hashFile.result().constData());
-                        }
+                        QCryptographicHash hashFile(QCryptographicHash::Sha224);
+                        hashFile.addData(file.readAll());
+                        fullDatapackChecksumReturn.partialHashList.push_back(*reinterpret_cast<const int *>(hashFile.result().constData()));
                         file.close();
                     }
                     else
                     {
-                        fullDatapackChecksumReturn.partialHashList << 0;
-                        qDebug() << std::stringLiteral("Unable to open the file to do the checksum: %1").arg(file.fileName());
+                        fullDatapackChecksumReturn.partialHashList.push_back(0);
+                        std::cerr << "Unable to open the file to do the checksum: " << datapackPath << returnList.at(index) << std::endl;
                     }
                 }
             }

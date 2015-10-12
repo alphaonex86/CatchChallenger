@@ -27,7 +27,8 @@ class QTarDecode : public QObject
         std::vector<std::string> fileList;
         std::vector<std::vector<char> > dataList;
         std::string error;
-        void setErrorString(QString error);
+        void setErrorString(const std::string &error);
+        bool stringStartWith(std::string const &fullString, std::string const &starting);
 };
 
 #endif // QTARDECODE_H

@@ -128,7 +128,7 @@ void EpollClientLoginSlave::parseIncommingData()
         ProtocolParsingInputOutput::parseIncommingData();
 }
 
-bool EpollClientLoginSlave::sendRawSmallPacket(const char * const data,const int &size)
+bool EpollClientLoginSlave::sendRawBlock(const char * const data,const int &size)
 {
     return internalSendRawSmallPacket(data,size);
 }

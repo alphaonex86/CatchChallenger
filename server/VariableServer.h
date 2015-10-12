@@ -49,6 +49,7 @@
 #define CATCHCHALLENGER_SERVER_MINCLANIDBLOCK 1
 #define CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK 5
 
+#define RANDOMFILEDEVICE "/dev/urandom"
 
 /** map visibility bandwith optimisation
  Do in define to not drop cpu performance, due to heavy call **/

@@ -115,7 +115,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
     if(!datapackFilesListMain.empty() && hash==sendedHashMain)
     {
         qDebug() << "Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote";
-        datapackDownloadFinishedMain();
+        checkIfContinueOrFinished();
         return;
     }
 
@@ -337,7 +337,7 @@ void DatapackDownloaderMainSub::decodedIsFinishMain()
                 index++;
             }
             wait_datapack_content_main=false;
-            datapackDownloadFinishedMain();
+            checkIfContinueOrFinished();
         }
         else
             test_mirror_main();
@@ -484,7 +484,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
                 std::cerr << "Error, no valid content: correctContent==0\n" << stringimplode(content,'\n') << std::endl;
                 return;
             }
-            datapackDownloadFinishedMain();
+            checkIfContinueOrFinished();
         }
     }
 }

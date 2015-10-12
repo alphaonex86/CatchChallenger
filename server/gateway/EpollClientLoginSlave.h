@@ -81,7 +81,7 @@ public:
     static void doDDOSComputeAll();
 
     void parseNetworkReadError(const std::string &errorString);
-    bool sendRawSmallPacket(const char * const data,const int &size);
+    bool sendRawBlock(const char * const data,const int &size);
     bool removeFromQueryReceived(const uint8_t &queryNumber);
 
     bool fastForward;
@@ -135,7 +135,7 @@ private:
     void sendFileContent();
     void sendCompressedFileContent();
 public:
-    bool sendRawSmallPacket(const char * const data, const unsigned int &size);
+    bool sendRawBlock(const char * const data, const unsigned int &size);
 private:
     static std::vector<EpollClientLoginSlave *> client_list;
 
@@ -155,9 +155,9 @@ private:
     static uint8_t tempDatapackListReplySize;
     static std::vector<char> tempDatapackListReplyArray;
     static uint8_t tempDatapackListReply;
-    static int tempDatapackListReplyTestCount;
+    static unsigned int tempDatapackListReplyTestCount;
     static std::vector<char> rawFilesBuffer,compressedFilesBuffer;
-    static int rawFilesBufferCount,compressedFilesBufferCount;
+    static unsigned int rawFilesBufferCount,compressedFilesBufferCount;
 
     static std::regex fileNameStartStringRegex;
     static std::regex datapack_rightFileName;

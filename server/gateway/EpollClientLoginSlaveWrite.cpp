@@ -3,7 +3,7 @@
 
 using namespace CatchChallenger;
 
-bool EpollClientLoginSlave::sendRawSmallPacket(const char * const data,const unsigned int &size)
+bool EpollClientLoginSlave::sendRawBlock(const char * const data,const unsigned int &size)
 {
     return ProtocolParsingBase::internalSendRawSmallPacket(data,size);
 }

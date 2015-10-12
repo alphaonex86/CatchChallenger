@@ -58,7 +58,8 @@ SOURCES += \
     ../../general/base/CommonSettingsCommon.cpp \
     PlayerUpdaterToLogin.cpp \
     ../epoll/EpollTimer.cpp \
-    PurgeTheLockedAccount.cpp
+    PurgeTheLockedAccount.cpp \
+    ../../general/base/cpp11addition.cpp
 
 HEADERS += \
     EpollClientLoginMaster.h \
@@ -87,4 +88,5 @@ HEADERS += \
     ../../general/base/CommonSettingsCommon.h \
     PlayerUpdaterToLogin.h \
     ../epoll/EpollTimer.h \
-    PurgeTheLockedAccount.h
+    PurgeTheLockedAccount.h \
+    ../../general/base/cpp11addition.h

@@ -3,9 +3,9 @@
 
 #include "../epoll/BaseClassSwitch.h"
 #include "../epoll/db/EpollPostgresql.h"
-#include <std::string>
-#include <std::unordered_map>
-#include <std::unordered_set>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace CatchChallenger {
 class CharactersGroup : public BaseClassSwitch
@@ -33,10 +33,10 @@ public:
     };
 
     BaseClassSwitch::EpollObjectType getType() const;
-    InternalGameServer * addGameServerUniqueKey(void * const link, const uint32_t &uniqueKey, const std::string &host, const uint16_t &port,
+    InternalGameServer * addGameServerUniqueKey(void * const client, const uint32_t &uniqueKey, const std::string &host, const uint16_t &port,
                                 const std::string &metaData, const uint32_t &logicalGroupIndex,
                                 const uint16_t &currentPlayer, const uint16_t &maxPlayer, const std::unordered_set<uint32_t> &lockedAccount);
-    void removeGameServerUniqueKey(void * const link);
+    void removeGameServerUniqueKey(void * const client);
     bool containsGameServerUniqueKey(const uint32_t &serverUniqueKey) const;
     bool characterIsLocked(const uint32_t &characterId);
     //need check if is already locked before this call
@@ -52,7 +52,6 @@ public:
     uint32_t maxMonsterId;
 
     std::unordered_map<uint32_t/*serverUniqueKey*/,InternalGameServer> gameServers;
-    std::unordered_map<void * const,uint32_t/*serverUniqueKey*/> gameServersLinkToUniqueKey;
 
     static int serverWaitedToBeReady;
     static std::unordered_map<std::string,CharactersGroup *> hash;

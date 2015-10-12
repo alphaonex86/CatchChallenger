@@ -74,7 +74,9 @@ public:
     static void initialiseTheVariable(const InitialiseTheVariableType &initialiseTheVariableType=InitialiseTheVariableType::AllInOne);
     static void setMaxPlayers(const uint16_t &maxPlayers);
 
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     uint32_t computeDecompression(const char* const source, char* const dest, unsigned int compressedSize, unsigned int maxDecompressedSize, const CompressionType &compressionType);
+    #endif
 protected:
     virtual void errorParsingLayer(const std::string &error) = 0;
     virtual void messageParsingLayer(const std::string &message) const = 0;
@@ -98,6 +100,7 @@ public:
     virtual ssize_t write(const char * const data, const size_t &size) = 0;
     virtual void registerOutputQuery(const uint8_t &queryNumber);
 public:
+    //this interface allow 0 copy method
     bool parseIncommingDataRaw(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
     #ifndef EPOLLCATCHCHALLENGERSERVER
     std::vector<std::string> getQueryRunningList();
@@ -143,6 +146,7 @@ public:
     char inputQueryNumberToPacketCode[256];//invalidation packet code: 0x00, store the packetCode, store size is useless because the resolution or is do at send or at receive, then no performance gain
 
     static char tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
+    static char tempBigBufferForInput[CATCHCHALLENGER_BIGBUFFERSIZE];
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     static char tempBigBufferForCompressedOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
     static char tempBigBufferForUncompressedInput[CATCHCHALLENGER_BIGBUFFERSIZE];

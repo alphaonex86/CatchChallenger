@@ -113,7 +113,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                         memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
                         posOutput+=size;
 
-                        client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                        client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                     }
                     if(returnCode==0x03)
                         parseNetworkReadError("Server full");
@@ -141,7 +141,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                         memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
                         posOutput+=size;
 
-                        client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                        client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
                         if(data[0x00]==0x03)
                             parseNetworkReadError("Server full");
@@ -248,7 +248,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         posOutput+=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT;
 
-                        return client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                        return client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                     }
                     else
                     {
@@ -395,7 +395,7 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
 
                 *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
 
-                client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                 return true;
             }
         }
@@ -511,7 +511,7 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
     memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
     posOutput+=size;
 
-    return client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    return client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 //have query with reply
@@ -538,7 +538,7 @@ bool LinkToGameServer::parseQuery(const uint8_t &mainCodeType,const uint8_t &que
     posOutput+=size;
 
     client->registerOutputQuery(queryNumber);
-    return client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    return client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 //send reply
@@ -652,7 +652,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 memcpy(ProtocolParsingBase::tempBigBufferForOutput,reply04inWait,reply04inWaitSize);
                 posOutput+=reply04inWaitSize;
 
-                client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
                 delete reply04inWait;
                 reply04inWait=NULL;
@@ -863,7 +863,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     memcpy(ProtocolParsingBase::tempBigBufferForOutput,reply0205inWait,reply0205inWaitSize);
                     posOutput+=reply0205inWaitSize;
 
-                    client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                    client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
                     delete reply0205inWait;
                     reply0205inWait=NULL;
@@ -893,7 +893,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
     memcpy(ProtocolParsingBase::tempBigBufferForOutput,data,size);
     posOutput+=size;
 
-    client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
     return true;
 }
