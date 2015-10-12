@@ -2,15 +2,16 @@
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/CommonSettingsCommon.h"
+#include "../../general/base/cpp11addition.h"
 #include "../VariableServer.h"
 #include "../../general/fight/CommonFightEngineBase.h"
 
 using namespace CatchChallenger;
 
 #include <QFile>
-#include <std::vector<char>>
+#include <vector>
 #include <QCryptographicHash>
-#include <std::regex>
+#include <regex>
 
 #include <stdio.h>      /* printf, scanf, puts, NULL */
 #include <stdlib.h>     /* srand, rand */
@@ -60,64 +61,11 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
 
     loadLoginSettings(settings);
     loadDBLoginSettings(settings);
-    std::stringList charactersGroupList=loadCharactersGroup(settings);
+    std::vector<std::string> charactersGroupList=loadCharactersGroup(settings);
     charactersGroupListReply(charactersGroupList);
     loadTheDatapack();
     doTheLogicalGroup(settings);
     doTheServerList();
-
-    {
-        memset(EpollClientLoginMaster::characterSelectionIsWrongBufferCharacterNotFound,0x00,sizeof(EpollClientLoginMaster::characterSelectionIsWrongBufferCharacterNotFound));
-        memset(EpollClientLoginMaster::characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline,0x00,sizeof(EpollClientLoginMaster::characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline));
-        memset(EpollClientLoginMaster::characterSelectionIsWrongBufferServerInternalProblem,0x00,sizeof(EpollClientLoginMaster::characterSelectionIsWrongBufferServerInternalProblem));
-        memset(EpollClientLoginMaster::characterSelectionIsWrongBufferServerNotFound,0x00,sizeof(EpollClientLoginMaster::characterSelectionIsWrongBufferServerNotFound));
-        char tempBuff;
-
-        tempBuff=2;
-        //size will be the same
-        EpollClientLoginMaster::characterSelectionIsWrongBufferSize=ProtocolParsingBase::computeReplyData(
-                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    false,
-                    #endif
-                    EpollClientLoginMaster::characterSelectionIsWrongBufferCharacterNotFound,0,&tempBuff,1,-1/*not fixed size*/
-                    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                    ,ProtocolParsing::compressionTypeServer
-                    #endif
-                    );
-        tempBuff=3;
-        if(EpollClientLoginMaster::characterSelectionIsWrongBufferSize!=ProtocolParsingBase::computeReplyData(
-                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    false,
-                    #endif
-                    EpollClientLoginMaster::characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline,0,&tempBuff,1,-1/*not fixed size*/
-            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            ,ProtocolParsing::compressionTypeServer
-            #endif
-            ))
-            abort();
-        tempBuff=4;
-        if(EpollClientLoginMaster::characterSelectionIsWrongBufferSize!=ProtocolParsingBase::computeReplyData(
-                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    false,
-                    #endif
-                    EpollClientLoginMaster::characterSelectionIsWrongBufferServerInternalProblem,0,&tempBuff,1,-1/*not fixed size*/
-            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            ,ProtocolParsing::compressionTypeServer
-            #endif
-            ))
-            abort();
-        tempBuff=5;
-        if(EpollClientLoginMaster::characterSelectionIsWrongBufferSize!=ProtocolParsingBase::computeReplyData(
-                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    false,
-                    #endif
-                    EpollClientLoginMaster::characterSelectionIsWrongBufferServerNotFound,0,&tempBuff,1,-1/*not fixed size*/
-            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            ,ProtocolParsing::compressionTypeServer
-            #endif
-            ))
-            abort();
-    }
 
     EpollClientLoginMaster::fpRandomFile = fopen(RANDOMFILEDEVICE,"rb");
     if(EpollClientLoginMaster::fpRandomFile==NULL)
@@ -161,9 +109,9 @@ EpollServerLoginMaster::~EpollServerLoginMaster()
         rawServerListForC211=NULL;
         rawServerListForC211Size=0;
     }
-    std::unordered_map<std::string,CharactersGroup *>::const_iterator i = CharactersGroup::hash.constBegin();
-    while (i != CharactersGroup::hash.constEnd()) {
-        delete i.value();
+    auto i = CharactersGroup::hash.begin();
+    while (i != CharactersGroup::hash.cend()) {
+        delete i->second;
         ++i;
     }
     CharactersGroup::hash.clear();
@@ -171,67 +119,67 @@ EpollServerLoginMaster::~EpollServerLoginMaster()
 
 void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
 {
-    if(!settings.contains(std::stringLiteral("ip")))
-        settings.setValue(std::stringLiteral("ip"),std::string());
-    const std::string &server_ip_string=settings.value(std::stringLiteral("ip")).toString();
-    const std::vector<char> &server_ip_data=server_ip_string.toLocal8Bit();
-    if(!server_ip_string.isEmpty())
+    if(!settings.contains("ip"))
+        settings.setValue("ip","");
+    const std::string &server_ip_string=settings.value("ip").toString().toStdString();
+    if(!server_ip_string.empty())
     {
-        server_ip=new char[server_ip_data.size()+1];
-        strcpy(server_ip,server_ip_data.constData());
+        server_ip=new char[server_ip_string.size()+1];
+        strcpy(server_ip,server_ip_string.data());
     }
-    if(!settings.contains(std::stringLiteral("port")))
-        settings.setValue(std::stringLiteral("port"),rand()%40000+10000);
-    const std::vector<char> &server_port_data=settings.value(std::stringLiteral("port")).toString().toLocal8Bit();
+    if(!settings.contains("port"))
+        settings.setValue("port",rand()%40000+10000);
+    const std::string &server_port_data=settings.value("port").toString().toStdString();
     server_port=new char[server_port_data.size()+1];
-    strcpy(server_port,server_port_data.constData());
-    if(!settings.contains(std::stringLiteral("token")))
+    strcpy(server_port,server_port_data.data());
+    if(!settings.contains("token"))
         generateToken(settings);
-    std::string token=settings.value(std::stringLiteral("token")).toString();
+    std::string token=settings.value("token").toString().toStdString();
     if(token.size()!=(TOKEN_SIZE_FOR_MASTERAUTH*2))
         generateToken(settings);
-    token=settings.value(std::stringLiteral("token")).toString();
-    memcpy(EpollClientLoginMaster::private_token,std::vector<char>::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
+    token=settings.value("token").toString().toStdString();
+    const std::vector<char> &tokenbinary=hexatoBinary(token);
+    memcpy(EpollClientLoginMaster::private_token,tokenbinary.data(),TOKEN_SIZE_FOR_MASTERAUTH);
 
     //connection
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    if(!settings.contains(std::stringLiteral("compression")))
-        settings.setValue(std::stringLiteral("compression"),std::stringLiteral("zlib"));
-    if(settings.value(std::stringLiteral("compression")).toString()==std::stringLiteral("none"))
+    if(!settings.contains("compression"))
+        settings.setValue("compression","zlib");
+    if(settings.value("compression").toString()=="none")
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::None;
-    else if(settings.value(std::stringLiteral("compression")).toString()==std::stringLiteral("xz"))
+    else if(settings.value("compression").toString()=="xz")
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Xz;
-    else if(settings.value(std::stringLiteral("compression")).toString()==std::stringLiteral("lz4"))
+    else if(settings.value("compression").toString()=="lz4")
             ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Lz4;
     else
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Zlib;
-    ProtocolParsing::compressionLevel          = settings.value(std::stringLiteral("compressionLevel")).toUInt();
+    ProtocolParsing::compressionLevel          = settings.value("compressionLevel").toUInt();
     #endif
-    if(!settings.contains(std::stringLiteral("automatic_account_creation")))
-        settings.setValue(std::stringLiteral("automatic_account_creation"),false);
-    if(!settings.contains(std::stringLiteral("character_delete_time")))
-        settings.setValue(std::stringLiteral("character_delete_time"),604800);
-    if(!settings.contains(std::stringLiteral("max_pseudo_size")))
-        settings.setValue(std::stringLiteral("max_pseudo_size"),20);
-    if(!settings.contains(std::stringLiteral("max_character")))
-        settings.setValue(std::stringLiteral("max_character"),3);
-    if(!settings.contains(std::stringLiteral("min_character")))
-        settings.setValue(std::stringLiteral("min_character"),1);
-    CommonSettingsCommon::commonSettingsCommon.automatic_account_creation=settings.value(std::stringLiteral("automatic_account_creation")).toBool();
+    if(!settings.contains("automatic_account_creation"))
+        settings.setValue("automatic_account_creation",false);
+    if(!settings.contains("character_delete_time"))
+        settings.setValue("character_delete_time",604800);
+    if(!settings.contains("max_pseudo_size"))
+        settings.setValue("max_pseudo_size",20);
+    if(!settings.contains("max_character"))
+        settings.setValue("max_character",3);
+    if(!settings.contains("min_character"))
+        settings.setValue("min_character",1);
+    CommonSettingsCommon::commonSettingsCommon.automatic_account_creation=settings.value("automatic_account_creation").toBool();
     bool ok;
-    CommonSettingsCommon::commonSettingsCommon.character_delete_time=settings.value(std::stringLiteral("character_delete_time")).toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.character_delete_time=settings.value("character_delete_time").toUInt(&ok);
     if(CommonSettingsCommon::commonSettingsCommon.character_delete_time==0 || !ok)
     {
         std::cerr << "character_delete_time==0 (abort)" << std::endl;
         abort();
     }
-    CommonSettingsCommon::commonSettingsCommon.min_character=settings.value(std::stringLiteral("min_character")).toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.min_character=settings.value("min_character").toUInt(&ok);
     if(!ok)
     {
         std::cerr << "CommonSettingsCommon::commonSettingsCommon.min_character not number (abort)" << std::endl;
         abort();
     }
-    CommonSettingsCommon::commonSettingsCommon.max_character=settings.value(std::stringLiteral("max_character")).toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.max_character=settings.value("max_character").toUInt(&ok);
     if(CommonSettingsCommon::commonSettingsCommon.max_character<=0 || !ok)
     {
         std::cerr << "max_character<=0 (abort)" << std::endl;
@@ -242,39 +190,39 @@ void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
         std::cerr << "max_character<min_character (abort)" << std::endl;
         abort();
     }
-    CommonSettingsCommon::commonSettingsCommon.max_pseudo_size=settings.value(std::stringLiteral("max_pseudo_size")).toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.max_pseudo_size=settings.value("max_pseudo_size").toUInt(&ok);
     if(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size==0 || !ok)
     {
         std::cerr << "max_pseudo_size==0 (abort)" << std::endl;
         abort();
     }
-    if(!settings.contains(std::stringLiteral("maxPlayerMonsters")))
-        settings.setValue(std::stringLiteral("maxPlayerMonsters"),8);
-    if(!settings.contains(std::stringLiteral("maxWarehousePlayerMonsters")))
-        settings.setValue(std::stringLiteral("maxWarehousePlayerMonsters"),30);
-    if(!settings.contains(std::stringLiteral("maxPlayerItems")))
-        settings.setValue(std::stringLiteral("maxPlayerItems"),30);
-    if(!settings.contains(std::stringLiteral("maxWarehousePlayerItems")))
-        settings.setValue(std::stringLiteral("maxWarehousePlayerItems"),150);
-    CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters=settings.value(std::stringLiteral("maxPlayerMonsters")).toUInt(&ok);
+    if(!settings.contains("maxPlayerMonsters"))
+        settings.setValue("maxPlayerMonsters",8);
+    if(!settings.contains("maxWarehousePlayerMonsters"))
+        settings.setValue("maxWarehousePlayerMonsters",30);
+    if(!settings.contains("maxPlayerItems"))
+        settings.setValue("maxPlayerItems",30);
+    if(!settings.contains("maxWarehousePlayerItems"))
+        settings.setValue("maxWarehousePlayerItems",150);
+    CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters=settings.value("maxPlayerMonsters").toUInt(&ok);
     if(CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters==0 || !ok)
     {
         std::cerr << "maxPlayerMonsters==0 (abort)" << std::endl;
         abort();
     }
-    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters=settings.value(std::stringLiteral("maxWarehousePlayerMonsters")).toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters=settings.value("maxWarehousePlayerMonsters").toUInt(&ok);
     if(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters==0 || !ok)
     {
         std::cerr << "maxWarehousePlayerMonsters==0 (abort)" << std::endl;
         abort();
     }
-    CommonSettingsCommon::commonSettingsCommon.maxPlayerItems=settings.value(std::stringLiteral("maxPlayerItems")).toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.maxPlayerItems=settings.value("maxPlayerItems").toUInt(&ok);
     if(CommonSettingsCommon::commonSettingsCommon.maxPlayerItems==0 || !ok)
     {
         std::cerr << "maxPlayerItems==0 (abort)" << std::endl;
         abort();
     }
-    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems=settings.value(std::stringLiteral("maxWarehousePlayerItems")).toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems=settings.value("maxWarehousePlayerItems").toUInt(&ok);
     if(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems==0 || !ok)
     {
         std::cerr << "maxWarehousePlayerItems==0 (abort)" << std::endl;
@@ -292,23 +240,23 @@ void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
         std::string pass;
         std::string type;
 
-        settings.beginGroup(std::stringLiteral("db-login"));
-        if(!settings.contains(std::stringLiteral("considerDownAfterNumberOfTry")))
-            settings.setValue(std::stringLiteral("considerDownAfterNumberOfTry"),30);
-        if(!settings.contains(std::stringLiteral("tryInterval")))
-            settings.setValue(std::stringLiteral("tryInterval"),1);
-        if(!settings.contains(std::stringLiteral("db")))
-            settings.setValue(std::stringLiteral("db"),std::stringLiteral("catchchallenger_login"));
-        if(!settings.contains(std::stringLiteral("host")))
-            settings.setValue(std::stringLiteral("host"),std::stringLiteral("localhost"));
-        if(!settings.contains(std::stringLiteral("login")))
-            settings.setValue(std::stringLiteral("login"),std::stringLiteral("root"));
-        if(!settings.contains(std::stringLiteral("pass")))
-            settings.setValue(std::stringLiteral("pass"),std::stringLiteral("root"));
-        if(!settings.contains(std::stringLiteral("type")))
-            settings.setValue(std::stringLiteral("type"),std::stringLiteral("postgresql"));
-        if(!settings.contains(std::stringLiteral("comment")))
-            settings.setValue(std::stringLiteral("comment"),std::stringLiteral("to do maxAccountId"));
+        settings.beginGroup("db-login");
+        if(!settings.contains("considerDownAfterNumberOfTry"))
+            settings.setValue("considerDownAfterNumberOfTry",30);
+        if(!settings.contains("tryInterval"))
+            settings.setValue("tryInterval",1);
+        if(!settings.contains("db"))
+            settings.setValue("db","catchchallenger_login");
+        if(!settings.contains("host"))
+            settings.setValue("host","localhost");
+        if(!settings.contains("login"))
+            settings.setValue("login","root");
+        if(!settings.contains("pass"))
+            settings.setValue("pass","root");
+        if(!settings.contains("type"))
+            settings.setValue("type","postgresql");
+        if(!settings.contains("comment"))
+            settings.setValue("comment","to do maxAccountId");
         settings.sync();
 
         bool ok;
@@ -317,29 +265,29 @@ void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
             databaseBaseLogin=new EpollPostgresql();
             //here to have by login server an auth
 
-            databaseBaseLogin->considerDownAfterNumberOfTry=settings.value(std::stringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
+            databaseBaseLogin->considerDownAfterNumberOfTry=settings.value("considerDownAfterNumberOfTry").toUInt(&ok);
             if(databaseBaseLogin->considerDownAfterNumberOfTry==0 || !ok)
             {
                 std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
                 abort();
             }
-            db=settings.value(std::stringLiteral("db")).toString();
-            host=settings.value(std::stringLiteral("host")).toString();
-            login=settings.value(std::stringLiteral("login")).toString();
-            pass=settings.value(std::stringLiteral("pass")).toString();
-            databaseBaseLogin->tryInterval=settings.value(std::stringLiteral("tryInterval")).toUInt(&ok);
+            db=settings.value("db").toString().toStdString();
+            host=settings.value("host").toString().toStdString();
+            login=settings.value("login").toString().toStdString();
+            pass=settings.value("pass").toString().toStdString();
+            databaseBaseLogin->tryInterval=settings.value("tryInterval").toUInt(&ok);
             if(databaseBaseLogin->tryInterval==0 || !ok)
             {
                 std::cerr << "tryInterval==0 (abort)" << std::endl;
                 abort();
             }
-            type=settings.value(std::stringLiteral("type")).toString();
-            if(type!=std::stringLiteral("postgresql"))
+            type=settings.value("type").toString().toStdString();
+            if(type!="postgresql")
             {
                 std::cerr << "only db type postgresql supported (abort)" << std::endl;
                 abort();
             }
-            if(!databaseBaseLogin->syncConnect(host.toUtf8().constData(),db.toUtf8().constData(),login.toUtf8().constData(),pass.toUtf8().constData()))
+            if(!databaseBaseLogin->syncConnect(host.c_str(),db.c_str(),login.c_str(),pass.c_str()))
             {
                 std::cerr << "Connect to login database failed:" << databaseBaseLogin->errorMessage() << std::endl;
                 abort();
@@ -362,23 +310,23 @@ void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
         std::string pass;
         std::string type;
 
-        settings.beginGroup(std::stringLiteral("db-base"));
-        if(!settings.contains(std::stringLiteral("considerDownAfterNumberOfTry")))
-            settings.setValue(std::stringLiteral("considerDownAfterNumberOfTry"),30);
-        if(!settings.contains(std::stringLiteral("tryInterval")))
-            settings.setValue(std::stringLiteral("tryInterval"),1);
-        if(!settings.contains(std::stringLiteral("db")))
-            settings.setValue(std::stringLiteral("db"),std::stringLiteral("catchchallenger_base"));
-        if(!settings.contains(std::stringLiteral("host")))
-            settings.setValue(std::stringLiteral("host"),std::stringLiteral("localhost"));
-        if(!settings.contains(std::stringLiteral("login")))
-            settings.setValue(std::stringLiteral("login"),std::stringLiteral("root"));
-        if(!settings.contains(std::stringLiteral("pass")))
-            settings.setValue(std::stringLiteral("pass"),std::stringLiteral("root"));
-        if(!settings.contains(std::stringLiteral("type")))
-            settings.setValue(std::stringLiteral("type"),std::stringLiteral("postgresql"));
-        if(!settings.contains(std::stringLiteral("comment")))
-            settings.setValue(std::stringLiteral("comment"),std::stringLiteral("to do maxAccountId"));
+        settings.beginGroup("db-base");
+        if(!settings.contains("considerDownAfterNumberOfTry"))
+            settings.setValue("considerDownAfterNumberOfTry",30);
+        if(!settings.contains("tryInterval"))
+            settings.setValue("tryInterval",1);
+        if(!settings.contains("db"))
+            settings.setValue("db","catchchallenger_base");
+        if(!settings.contains("host"))
+            settings.setValue("host","localhost");
+        if(!settings.contains("login"))
+            settings.setValue("login","root");
+        if(!settings.contains("pass"))
+            settings.setValue("pass","root");
+        if(!settings.contains("type"))
+            settings.setValue("type","postgresql");
+        if(!settings.contains("comment"))
+            settings.setValue("comment","to do maxAccountId");
         settings.sync();
 
         bool ok;
@@ -387,29 +335,29 @@ void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
             databaseBaseBase=new EpollPostgresql();
             //here to have by login server an auth
 
-            databaseBaseBase->considerDownAfterNumberOfTry=settings.value(std::stringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
+            databaseBaseBase->considerDownAfterNumberOfTry=settings.value("considerDownAfterNumberOfTry").toUInt(&ok);
             if(databaseBaseBase->considerDownAfterNumberOfTry==0 || !ok)
             {
                 std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
                 abort();
             }
-            db=settings.value(std::stringLiteral("db")).toString();
-            host=settings.value(std::stringLiteral("host")).toString();
-            login=settings.value(std::stringLiteral("login")).toString();
-            pass=settings.value(std::stringLiteral("pass")).toString();
-            databaseBaseBase->tryInterval=settings.value(std::stringLiteral("tryInterval")).toUInt(&ok);
+            db=settings.value("db").toString().toStdString();
+            host=settings.value("host").toString().toStdString();
+            login=settings.value("login").toString().toStdString();
+            pass=settings.value("pass").toString().toStdString();
+            databaseBaseBase->tryInterval=settings.value("tryInterval").toUInt(&ok);
             if(databaseBaseBase->tryInterval==0 || !ok)
             {
                 std::cerr << "tryInterval==0 (abort)" << std::endl;
                 abort();
             }
-            type=settings.value(std::stringLiteral("type")).toString();
-            if(type!=std::stringLiteral("postgresql"))
+            type=settings.value("type").toString().toStdString();
+            if(type!="postgresql")
             {
                 std::cerr << "only db type postgresql supported (abort)" << std::endl;
                 abort();
             }
-            if(!databaseBaseBase->syncConnect(host.toUtf8().constData(),db.toUtf8().constData(),login.toUtf8().constData(),pass.toUtf8().constData()))
+            if(!databaseBaseBase->syncConnect(host.c_str(),db.c_str(),login.c_str(),pass.c_str()))
             {
                 std::cerr << "Connect to login database failed:" << databaseBaseBase->errorMessage() << std::endl;
                 abort();
@@ -421,7 +369,7 @@ void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
     }
 }
 
-std::stringList EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
+std::vector<std::string> EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
 {
     std::string db;
     std::string host;
@@ -430,64 +378,64 @@ std::stringList EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
     std::string type;
     bool ok;
 
-    std::stringList charactersGroupList;
+    std::vector<std::string> charactersGroupList;
     bool continueCharactersGroupSettings=true;
     int charactersGroupId=0;
     while(continueCharactersGroupSettings)
     {
-        settings.beginGroup(std::stringLiteral("db-common-")+std::to_string(charactersGroupId));
+        settings.beginGroup(QString::fromStdString("db-common-"+std::to_string(charactersGroupId)));
         if(charactersGroupId==0)
         {
-            if(!settings.contains(std::stringLiteral("considerDownAfterNumberOfTry")))
-                settings.setValue(std::stringLiteral("considerDownAfterNumberOfTry"),3);
-            if(!settings.contains(std::stringLiteral("tryInterval")))
-                settings.setValue(std::stringLiteral("tryInterval"),5);
-            if(!settings.contains(std::stringLiteral("db")))
-                settings.setValue(std::stringLiteral("db"),std::stringLiteral("catchchallenger_common"));
-            if(!settings.contains(std::stringLiteral("host")))
-                settings.setValue(std::stringLiteral("host"),std::stringLiteral("localhost"));
-            if(!settings.contains(std::stringLiteral("login")))
-                settings.setValue(std::stringLiteral("login"),std::stringLiteral("root"));
-            if(!settings.contains(std::stringLiteral("pass")))
-                settings.setValue(std::stringLiteral("pass"),std::stringLiteral("root"));
-            if(!settings.contains(std::stringLiteral("type")))
-                settings.setValue(std::stringLiteral("type"),std::stringLiteral("postgresql"));
-            if(!settings.contains(std::stringLiteral("charactersGroup")))
-                settings.setValue(std::stringLiteral("charactersGroup"),std::string());
-            if(!settings.contains(std::stringLiteral("comment")))
-                settings.setValue(std::stringLiteral("comment"),std::stringLiteral("to do maxClanId, maxCharacterId, maxMonsterId"));
+            if(!settings.contains("considerDownAfterNumberOfTry"))
+                settings.setValue("considerDownAfterNumberOfTry",3);
+            if(!settings.contains("tryInterval"))
+                settings.setValue("tryInterval",5);
+            if(!settings.contains("db"))
+                settings.setValue("db","catchchallenger_common");
+            if(!settings.contains("host"))
+                settings.setValue("host","localhost");
+            if(!settings.contains("login"))
+                settings.setValue("login","root");
+            if(!settings.contains("pass"))
+                settings.setValue("pass","root");
+            if(!settings.contains("type"))
+                settings.setValue("type","postgresql");
+            if(!settings.contains("charactersGroup"))
+                settings.setValue("charactersGroup","");
+            if(!settings.contains("comment"))
+                settings.setValue("comment","to do maxClanId, maxCharacterId, maxMonsterId");
         }
         settings.sync();
-        if(settings.contains(std::stringLiteral("login")))
+        if(settings.contains("login"))
         {
-            const std::string &charactersGroup=settings.value(std::stringLiteral("charactersGroup")).toString();
-            if(!CharactersGroup::hash.contains(charactersGroup))
+            const std::string &charactersGroup=settings.value("charactersGroup").toString().toStdString();
+            if(CharactersGroup::hash.find(charactersGroup)==CharactersGroup::hash.cend())
             {
                 CharactersGroup::serverWaitedToBeReady++;
-                const uint8_t &considerDownAfterNumberOfTry=settings.value(std::stringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
+                const uint8_t &considerDownAfterNumberOfTry=settings.value("considerDownAfterNumberOfTry").toUInt(&ok);
                 if(considerDownAfterNumberOfTry==0 || !ok)
                 {
                     std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
                     abort();
                 }
-                db=settings.value(std::stringLiteral("db")).toString();
-                host=settings.value(std::stringLiteral("host")).toString();
-                login=settings.value(std::stringLiteral("login")).toString();
-                pass=settings.value(std::stringLiteral("pass")).toString();
-                const uint8_t &tryInterval=settings.value(std::stringLiteral("tryInterval")).toUInt(&ok);
+                db=settings.value("db").toString().toStdString();
+                host=settings.value("host").toString().toStdString();
+                login=settings.value("login").toString().toStdString();
+                pass=settings.value("pass").toString().toStdString();
+                const uint8_t &tryInterval=settings.value("tryInterval").toUInt(&ok);
                 if(tryInterval==0 || !ok)
                 {
                     std::cerr << "tryInterval==0 (abort)" << std::endl;
                     abort();
                 }
-                type=settings.value(std::stringLiteral("type")).toString();
-                if(type!=std::stringLiteral("postgresql"))
+                type=settings.value("type").toString().toStdString();
+                if(type!="postgresql")
                 {
                     std::cerr << "only db type postgresql supported (abort)" << std::endl;
                     abort();
                 }
-                CharactersGroup::hash[charactersGroup]=new CharactersGroup(db.toUtf8().constData(),host.toUtf8().constData(),login.toUtf8().constData(),pass.toUtf8().constData(),considerDownAfterNumberOfTry,tryInterval,charactersGroup);
-                charactersGroupList << charactersGroup;
+                CharactersGroup::hash[charactersGroup]=new CharactersGroup(db.c_str(),host.c_str(),login.c_str(),pass.c_str(),considerDownAfterNumberOfTry,tryInterval,charactersGroup);
+                charactersGroupList.push_back(charactersGroup);
             }
             else
             {
@@ -500,11 +448,11 @@ std::stringList EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
             continueCharactersGroupSettings=false;
         settings.endGroup();
     }
-    charactersGroupList.sort();
+    std::sort(charactersGroupList.begin(),charactersGroupList.end());
     return charactersGroupList;
 }
 
-void EpollServerLoginMaster::charactersGroupListReply(std::stringList &charactersGroupList)
+void EpollServerLoginMaster::charactersGroupListReply(std::vector<std::string> &charactersGroupList)
 {
     rawServerListForC211[0x00]=CommonSettingsCommon::commonSettingsCommon.automatic_account_creation;
     *reinterpret_cast<uint32_t *>(rawServerListForC211+0x01)=htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time);
@@ -519,12 +467,12 @@ void EpollServerLoginMaster::charactersGroupListReply(std::stringList &character
     //do the Characters group
     rawServerListForC211[rawServerListForC211Size]=(unsigned char)charactersGroupList.size();
     rawServerListForC211Size+=sizeof(unsigned char);
-    int index=0;
+    unsigned int index=0;
     while(index<charactersGroupList.size())
     {
         const std::string &charactersGroupName=charactersGroupList.at(index);
         int newSize=0;
-        if(!charactersGroupName.isEmpty())
+        if(!charactersGroupName.empty())
             newSize=FacilityLibGeneral::toUTF8WithHeader(charactersGroupName,rawServerListForC211+rawServerListForC211Size);
         else
         {
@@ -537,8 +485,8 @@ void EpollServerLoginMaster::charactersGroupListReply(std::stringList &character
             abort();
         }
         rawServerListForC211Size+=newSize;
-        CharactersGroup::list << CharactersGroup::hash.value(charactersGroupName);
-        CharactersGroup::list.last()->index=index;
+        CharactersGroup::list.push_back(CharactersGroup::hash.at(charactersGroupName));
+        CharactersGroup::list.back()->index=index;
 
         index++;
     }
@@ -547,30 +495,30 @@ void EpollServerLoginMaster::charactersGroupListReply(std::stringList &character
 void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
 {
     //do the LogicalGroup
-    char rawServerList[sizeof(EpollClientLoginMaster::serverLogicalGroupList)];
-    memset(rawServerList,0x00,sizeof(rawServerList));
-    int rawServerListSize=0x01;
+    memset(EpollClientLoginMaster::serverLogicalGroupList,0x00,sizeof(EpollClientLoginMaster::serverLogicalGroupList));
+    ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x44;
+    EpollClientLoginMaster::serverLogicalGroupListSize=1+4+0x01;
 
     std::string textToConvert;
     uint8_t logicalGroup=0;
     bool logicalGroupContinue=true;
     while(logicalGroupContinue)
     {
-        settings.beginGroup(std::stringLiteral("logical-group-")+std::to_string(logicalGroup));
-        logicalGroupContinue=settings.contains(std::stringLiteral("path")) && settings.contains(std::stringLiteral("xml")) && logicalGroup<255;
+        settings.beginGroup(QString::fromStdString("logical-group-"+std::to_string(logicalGroup)));
+        logicalGroupContinue=settings.contains("path") && settings.contains("xml") && logicalGroup<255;
         if(!logicalGroupContinue && logicalGroup==0)
         {
-            if(!settings.contains(std::stringLiteral("path")))
-                settings.setValue(std::stringLiteral("path"),std::string());
-            if(!settings.contains(std::stringLiteral("xml")))
-                settings.setValue(std::stringLiteral("xml"),std::stringLiteral("<name>root</name>"));
+            if(!settings.contains("path"))
+                settings.setValue("path","");
+            if(!settings.contains("xml"))
+                settings.setValue("xml","<name>root</name>");
             logicalGroupContinue=true;
         }
         if(logicalGroupContinue)
         {
             //path
             {
-                textToConvert=settings.value(std::stringLiteral("path")).toString();
+                textToConvert=settings.value("path").toString().toStdString();
                 if(textToConvert.size()>20)
                 {
                     std::cerr << "path too hurge (abort)" << std::endl;
@@ -579,20 +527,19 @@ void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
 
                 EpollClientLoginMaster::logicalGroupHash[textToConvert]=logicalGroup;
 
-                const std::vector<char> &utf8data=textToConvert.toUtf8();
-                if(utf8data.size()>255)
+                if(textToConvert.size()>255)
                 {
                     std::cerr << "logical group converted too big (abort)" << std::endl;
                     abort();
                 }
-                rawServerList[rawServerListSize]=utf8data.size();
-                rawServerListSize+=1;
-                memcpy(rawServerList+rawServerListSize,utf8data.constData(),utf8data.size());
-                rawServerListSize+=utf8data.size();
+                ProtocolParsingBase::tempBigBufferForOutput[EpollClientLoginMaster::serverLogicalGroupListSize]=textToConvert.size();
+                EpollClientLoginMaster::serverLogicalGroupListSize+=1;
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+EpollClientLoginMaster::serverLogicalGroupListSize,textToConvert.data(),textToConvert.size());
+                EpollClientLoginMaster::serverLogicalGroupListSize+=textToConvert.size();
             }
             //translation
             {
-                textToConvert=settings.value(std::stringLiteral("xml")).toString();
+                textToConvert=settings.value("xml").toString().toStdString();
                 if(textToConvert.size()>0)
                 {
                     if(textToConvert.size()>4*1024)
@@ -600,18 +547,18 @@ void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
                         std::cerr << "translation too hurge (abort)" << std::endl;
                         abort();
                     }
-                    int newSize=FacilityLibGeneral::toUTF8With16BitsHeader(textToConvert,rawServerList+rawServerListSize);
+                    int newSize=FacilityLibGeneral::toUTF8With16BitsHeader(textToConvert,ProtocolParsingBase::tempBigBufferForOutput+EpollClientLoginMaster::serverLogicalGroupListSize);
                     if(newSize==0)
                     {
                         std::cerr << "translation null or unable to translate in utf8 (abort)" << std::endl;
                         abort();
                     }
-                    rawServerListSize+=newSize;
+                    EpollClientLoginMaster::serverLogicalGroupListSize+=newSize;
                 }
                 else
                 {
-                    *reinterpret_cast<uint16_t *>(rawServerList+rawServerListSize)=0;//not convert to le16... 0 remain 0
-                    rawServerListSize+=2;
+                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+EpollClientLoginMaster::serverLogicalGroupListSize)=0;//not convert to le16... 0 remain 0
+                    EpollClientLoginMaster::serverLogicalGroupListSize+=2;
                 }
             }
 
@@ -619,14 +566,10 @@ void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
         }
         settings.endGroup();
     }
-    rawServerList[0x00]=logicalGroup;
+    ProtocolParsingBase::tempBigBufferForOutput[1+4]=logicalGroup;
+    EpollClientLoginMaster::serverLogicalGroupListSize+=1;
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(EpollClientLoginMaster::serverLogicalGroupListSize-1-4);//set the dynamic size
 
-    EpollClientLoginMaster::serverLogicalGroupListSize=ProtocolParsingBase::computeFullOutcommingData(
-            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            false,
-            #endif
-            EpollClientLoginMaster::serverLogicalGroupList,
-            0xC2,0x0F,rawServerList,rawServerListSize);
     if(EpollClientLoginMaster::serverLogicalGroupListSize==0)
     {
         std::cerr << "EpollClientLoginMaster::serverLogicalGroupListSize==0 (abort)" << std::endl;
@@ -639,11 +582,11 @@ void EpollServerLoginMaster::doTheServerList()
     //do the server list
     EpollClientLoginMaster::serverPartialServerListSize=0;
     //memset(EpollClientLoginMaster::serverPartialServerList,0x00,sizeof(EpollClientLoginMaster::serverPartialServerList));//improve the performance
-    int rawServerListSize=0x00;
+    unsigned int pos=0x00;
 
     const int &serverListSize=EpollClientLoginMaster::gameServers.size();
-    EpollClientLoginMaster::serverPartialServerList[rawServerListSize]=serverListSize;
-    rawServerListSize+=1;
+    EpollClientLoginMaster::serverPartialServerList[pos]=serverListSize;
+    pos+=1;
     int serverListIndex=0;
     while(serverListIndex<serverListSize)
     {
@@ -657,28 +600,28 @@ void EpollServerLoginMaster::doTheServerList()
 
         //charactersGroup
         {
-            EpollClientLoginMaster::serverPartialServerList[rawServerListSize]=gameServerOnEpollClientLoginMaster->charactersGroupForGameServer->index;
-            rawServerListSize+=1;
+            EpollClientLoginMaster::serverPartialServerList[pos]=gameServerOnEpollClientLoginMaster->charactersGroupForGameServer->index;
+            pos+=1;
         }
         //key
         {
-            *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=htole32(gameServerOnCharactersGroup->uniqueKey);
-            rawServerListSize+=sizeof(gameServerOnCharactersGroup->uniqueKey);
+            *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::serverPartialServerList+pos)=htole32(gameServerOnCharactersGroup->uniqueKey);
+            pos+=sizeof(gameServerOnCharactersGroup->uniqueKey);
         }
         //host
         {
-            int newSize=FacilityLibGeneral::toUTF8WithHeader(gameServerOnCharactersGroup->host,EpollClientLoginMaster::serverPartialServerList+rawServerListSize);
+            int newSize=FacilityLibGeneral::toUTF8WithHeader(gameServerOnCharactersGroup->host,EpollClientLoginMaster::serverPartialServerList+pos);
             if(newSize==0)
             {
                 std::cerr << "host null or unable to translate in utf8 (abort)" << std::endl;
                 abort();
             }
-            rawServerListSize+=newSize;
+            pos+=newSize;
         }
         //port
         {
-            *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=(unsigned short int)htole16((unsigned short int)gameServerOnCharactersGroup->port);
-            rawServerListSize+=sizeof(unsigned short int);
+            *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+pos)=(unsigned short int)htole16((unsigned short int)gameServerOnCharactersGroup->port);
+            pos+=sizeof(unsigned short int);
         }
         //metaData
         {
@@ -688,33 +631,32 @@ void EpollServerLoginMaster::doTheServerList()
                 abort();
             }
             {
-                const std::vector<char> &utf8data=gameServerOnCharactersGroup->metaData.toUtf8();
-                if(utf8data.size()>65535)
+                if(gameServerOnCharactersGroup->metaData.size()>65535)
                 {
-                    *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=0;
-                    rawServerListSize+=2;
+                    *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::serverPartialServerList+pos)=0;
+                    pos+=2;
                 }
                 else
                 {
-                    *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=htole16(utf8data.size());
-                    rawServerListSize+=2;
-                    memcpy(EpollClientLoginMaster::serverPartialServerList+rawServerListSize,utf8data.constData(),utf8data.size());
-                    rawServerListSize+=utf8data.size();
+                    *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::serverPartialServerList+pos)=htole16(gameServerOnCharactersGroup->metaData.size());
+                    pos+=2;
+                    memcpy(EpollClientLoginMaster::serverPartialServerList+pos,gameServerOnCharactersGroup->metaData.data(),gameServerOnCharactersGroup->metaData.size());
+                    pos+=gameServerOnCharactersGroup->metaData.size();
                 }
             }
         }
         //logicalGroup
         {
-            EpollClientLoginMaster::serverPartialServerList[rawServerListSize]=gameServerOnCharactersGroup->logicalGroupIndex;
-            rawServerListSize+=1;
+            EpollClientLoginMaster::serverPartialServerList[pos]=gameServerOnCharactersGroup->logicalGroupIndex;
+            pos+=1;
         }
         //max player
-        *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=(unsigned short int)htole16(gameServerOnCharactersGroup->maxPlayer);
-        rawServerListSize+=sizeof(unsigned short int);
+        *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+pos)=(unsigned short int)htole16(gameServerOnCharactersGroup->maxPlayer);
+        pos+=sizeof(unsigned short int);
 
         serverListIndex++;
     }
-    EpollClientLoginMaster::serverPartialServerListSize=rawServerListSize;
+    EpollClientLoginMaster::serverPartialServerListSize=pos;
 
     //Second list part with same size
     serverListIndex=0;
@@ -723,18 +665,19 @@ void EpollServerLoginMaster::doTheServerList()
         const EpollClientLoginMaster * const gameServerOnEpollClientLoginMaster=EpollClientLoginMaster::gameServers.at(serverListIndex);
         const CharactersGroup::InternalGameServer * const gameServerOnCharactersGroup=gameServerOnEpollClientLoginMaster->charactersGroupForGameServerInformation;
         //connected player
-        *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=(unsigned short int)htole16(gameServerOnCharactersGroup->currentPlayer);
-        rawServerListSize+=sizeof(unsigned short int);
+        *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+pos)=(unsigned short int)htole16(gameServerOnCharactersGroup->currentPlayer);
+        pos+=sizeof(unsigned short int);
 
         serverListIndex++;
     }
 
-    EpollClientLoginMaster::serverServerListSize=ProtocolParsingBase::computeFullOutcommingData(
-            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            false,
-            #endif
-            EpollClientLoginMaster::serverServerList,
-            0xC2,0x10,EpollClientLoginMaster::serverPartialServerList,rawServerListSize);
+    //send the network message
+    uint32_t posOutput=0;
+    EpollClientLoginMaster::serverServerList[0x00]=0x45;
+    posOutput+=1+4;
+    *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::serverServerList+1)=htole32(pos);//set the dynamic size
+    memcpy(EpollClientLoginMaster::serverServerList+1+4,EpollClientLoginMaster::serverPartialServerList,pos);
+    EpollClientLoginMaster::serverServerListSize=pos+1+4;
     if(EpollClientLoginMaster::serverServerListSize==0)
     {
         std::cerr << "EpollClientLoginMaster::serverServerListSize==0 (abort)" << std::endl;
@@ -818,7 +761,7 @@ void EpollServerLoginMaster::generateToken(QSettings &settings)
         std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from " << RANDOMFILEDEVICE << std::endl;
         abort();
     }
-    settings.setValue(std::stringLiteral("token"),std::string(std::vector<char>(EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH).toHex()));
+    settings.setValue("token",binarytoHexa(EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH).c_str());
     fclose(fpRandomFile);
 }
 
@@ -829,18 +772,18 @@ void EpollServerLoginMaster::load_account_max_id()
     {
         default:
         case DatabaseBase::DatabaseType::Mysql:
-            queryText=QLatin1String("SELECT `id` FROM `account` ORDER BY `id` DESC LIMIT 0,1;");
+            queryText="SELECT `id` FROM `account` ORDER BY `id` DESC LIMIT 0,1;";
         break;
         case DatabaseBase::DatabaseType::SQLite:
-            queryText=QLatin1String("SELECT id FROM account ORDER BY id DESC LIMIT 0,1;");
+            queryText="SELECT id FROM account ORDER BY id DESC LIMIT 0,1;";
         break;
         case DatabaseBase::DatabaseType::PostgreSQL:
-            queryText=QLatin1String("SELECT id FROM account ORDER BY id DESC LIMIT 1;");
+            queryText="SELECT id FROM account ORDER BY id DESC LIMIT 1;";
         break;
     }
-    if(databaseBaseLogin->asyncRead(queryText.toLatin1(),this,&EpollServerLoginMaster::load_account_max_id_static)==NULL)
+    if(databaseBaseLogin->asyncRead(queryText,this,&EpollServerLoginMaster::load_account_max_id_static)==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseLogin->errorMessage());
+        std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseLogin->errorMessage() << std::endl;
         abort();
     }
     EpollClientLoginMaster::maxAccountId=0;
@@ -857,7 +800,7 @@ void EpollServerLoginMaster::load_account_max_id_return()
     {
         bool ok;
         //not +1 because incremented before use
-        EpollClientLoginMaster::maxAccountId=std::string(databaseBaseLogin->value(0)).toUInt(&ok);
+        EpollClientLoginMaster::maxAccountId=stringtouint32(databaseBaseLogin->value(0),&ok);
         if(!ok)
         {
             std::cerr << "Max account id is failed to convert to number" << std::endl;
@@ -873,7 +816,7 @@ void EpollServerLoginMaster::loadTheDatapack()
     QTime time;
     time.restart();
     CommonDatapack::commonDatapack.parseDatapack("datapack/");
-    qDebug() << std::stringLiteral("Loaded the common datapack into %1ms").arg(time.elapsed());
+    std::cerr << "Loaded the common datapack into " << time.elapsed() << "ms" << std::endl;
 
     if(databaseBaseBase==NULL)
     {
@@ -906,10 +849,10 @@ void EpollServerLoginMaster::loadTheProfile()
     //send skin
     rawServerListForC211[rawServerListForC211Size]=CommonDatapack::commonDatapack.skins.size();
     rawServerListForC211Size+=1;
-    int skinId=0;
+    unsigned int skinId=0;
     while(skinId<CommonDatapack::commonDatapack.skins.size())
     {
-        *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(BaseServerMasterLoadDictionary::dictionary_skin_internal_to_database.value(skinId));
+        *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(BaseServerMasterLoadDictionary::dictionary_skin_internal_to_database.at(skinId));
         rawServerListForC211Size+=2;
         skinId++;
     }
@@ -917,7 +860,7 @@ void EpollServerLoginMaster::loadTheProfile()
     //profile list size
     rawServerListForC211[rawServerListForC211Size]=CommonDatapack::commonDatapack.profileList.size();
     rawServerListForC211Size+=1;
-    int index=0;
+    unsigned int index=0;
     while(index<CommonDatapack::commonDatapack.profileList.size())
     {
         const Profile &profile=CommonDatapack::commonDatapack.profileList.at(index);
@@ -929,7 +872,7 @@ void EpollServerLoginMaster::loadTheProfile()
             rawServerListForC211[rawServerListForC211Size]=profile.forcedskin.size();
             rawServerListForC211Size+=1;
             {
-                int skinListIndex=0;
+                unsigned int skinListIndex=0;
                 while(skinListIndex<profile.forcedskin.size())
                 {
                     rawServerListForC211[rawServerListForC211Size]=profile.forcedskin.at(skinListIndex);
@@ -947,7 +890,7 @@ void EpollServerLoginMaster::loadTheProfile()
             rawServerListForC211[rawServerListForC211Size]=profile.monsters.size();
             rawServerListForC211Size+=1;
             {
-                int monsterListIndex=0;
+                unsigned int monsterListIndex=0;
                 while(monsterListIndex<profile.monsters.size())
                 {
                     const Profile::Monster &playerMonster=profile.monsters.at(monsterListIndex);
@@ -962,7 +905,7 @@ void EpollServerLoginMaster::loadTheProfile()
                     *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(playerMonster.captured_with);
                     rawServerListForC211Size+=sizeof(uint16_t);
 
-                    const Monster &monster=CommonDatapack::commonDatapack.monsters.value(playerMonster.id);
+                    const Monster &monster=CommonDatapack::commonDatapack.monsters.at(playerMonster.id);
                     const Monster::Stat &monsterStat=CommonFightEngineBase::getStat(monster,playerMonster.level);
                     const std::vector<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngineBase::generateWildSkill(monster,playerMonster.level);
 
@@ -976,7 +919,7 @@ void EpollServerLoginMaster::loadTheProfile()
                     //skill list
                     rawServerListForC211[rawServerListForC211Size]=skills.size();
                     rawServerListForC211Size+=1;
-                    int skillListIndex=0;
+                    unsigned int skillListIndex=0;
                     while(skillListIndex<skills.size())
                     {
                         const CatchChallenger::PlayerMonster::PlayerSkill &skill=skills.at(skillListIndex);
@@ -1000,7 +943,7 @@ void EpollServerLoginMaster::loadTheProfile()
                 //reputation
                 rawServerListForC211[rawServerListForC211Size]=profile.reputation.size();
                 rawServerListForC211Size+=sizeof(uint8_t);
-                int reputationIndex=0;
+                unsigned int reputationIndex=0;
                 while(reputationIndex<profile.reputation.size())
                 {
                     const Profile::Reputation &reputation=profile.reputation.at(reputationIndex);
@@ -1021,7 +964,7 @@ void EpollServerLoginMaster::loadTheProfile()
                 //item
                 rawServerListForC211[rawServerListForC211Size]=profile.items.size();
                 rawServerListForC211Size+=sizeof(uint8_t);
-                int reputationIndex=0;
+                unsigned int reputationIndex=0;
                 while(reputationIndex<profile.items.size())
                 {
                     const Profile::Item &reputation=profile.items.at(reputationIndex);
@@ -1038,16 +981,16 @@ void EpollServerLoginMaster::loadTheProfile()
         index++;
     }
 
-    memcpy(rawServerListForC211+rawServerListForC211Size,CommonSettingsCommon::commonSettingsCommon.datapackHashBase.constData(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size());
+    memcpy(rawServerListForC211+rawServerListForC211Size,CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size());
     rawServerListForC211Size+=CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size();
     //CommonSettingsCommon::commonSettingsCommon.datapackHashBase.clear();no memory gain
 
-    EpollClientLoginMaster::loginSettingsAndCharactersGroupSize=ProtocolParsingBase::computeFullOutcommingData(
-            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            false,
-            #endif
-            EpollClientLoginMaster::loginSettingsAndCharactersGroup,
-            0xC2,0x11,rawServerListForC211,rawServerListForC211Size);
+    //send the network message
+    EpollClientLoginMaster::loginSettingsAndCharactersGroup[0x00]=0x46;
+    *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::loginSettingsAndCharactersGroup+1)=htole32(rawServerListForC211Size);//set the dynamic size
+    memcpy(EpollClientLoginMaster::loginSettingsAndCharactersGroup+1+4,rawServerListForC211,rawServerListForC211Size);
+    EpollClientLoginMaster::loginSettingsAndCharactersGroupSize=1+4+rawServerListForC211Size;
+
     if(EpollClientLoginMaster::loginSettingsAndCharactersGroupSize==0)
     {
         std::cerr << "EpollClientLoginMaster::serverLogicalGroupListSize==0 (abort)" << std::endl;

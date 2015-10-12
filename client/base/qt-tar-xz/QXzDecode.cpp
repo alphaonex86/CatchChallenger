@@ -14,7 +14,7 @@ extern "C" {
 static uint8_t in[BUFSIZ];
 static uint8_t out[BUFSIZ];
 
-QXzDecode::QXzDecode(QByteArray data,uint64_t maxSize)
+QXzDecode::QXzDecode(std::vector<char> data,uint64_t maxSize)
 {
     error="Unknow error";
     this->data=data;
@@ -25,9 +25,10 @@ QXzDecode::QXzDecode(QByteArray data,uint64_t maxSize)
 bool QXzDecode::decode()
 {
     if(data.size() < 32) // check the minimal size
-        error=tr("The input data is too short");
+        error="The input data is too short";
     QByteArray outputData;
-    QDataStream stream_xz_decode_in(&data,QIODevice::ReadOnly);
+    QByteArray qtData(data.data(),data.size());
+    QDataStream stream_xz_decode_in(&qtData,QIODevice::ReadOnly);
     QDataStream stream_xz_decode_out(&outputData,QIODevice::WriteOnly);
 
     isDecoded=false;
@@ -43,7 +44,7 @@ bool QXzDecode::decode()
      */
     s = xz_dec_init(XZ_DYNALLOC, 1 << 26);
     if (s == NULL) {
-        error=tr("Memory allocation failed");
+        error="Memory allocation failed";
         xz_dec_end(s);
         return isDecoded;
     }
@@ -58,7 +59,7 @@ bool QXzDecode::decode()
     while (true) {
         //input of data
         if (b.in_pos == b.in_size) {
-            b.in_size = stream_xz_decode_in->readRawData((char *)in,sizeof(in));
+            b.in_size = stream_xz_decode_in.readRawData((char *)in,sizeof(in));
             b.in_pos = 0;
         }
 
@@ -67,9 +68,9 @@ bool QXzDecode::decode()
         //output of data
         if (b.out_pos == sizeof(out))
         {
-            if (stream_xz_decode_out->writeRawData((char *)out,b.out_pos) != (int)b.out_pos)
+            if (stream_xz_decode_out.writeRawData((char *)out,b.out_pos) != (int)b.out_pos)
             {
-                error=tr("Write error");
+                error="Write error";
                 xz_dec_end(s);
                 return isDecoded;
             }
@@ -85,9 +86,9 @@ bool QXzDecode::decode()
         }
 #endif
 
-        if (stream_xz_decode_out->writeRawData((char *)out,b.out_pos) != (int)b.out_pos)
+        if (stream_xz_decode_out.writeRawData((char *)out,b.out_pos) != (int)b.out_pos)
         {
-            error=tr("Write error");
+            error="Write error";
             xz_dec_end(s);
             return isDecoded;
         }
@@ -98,47 +99,47 @@ bool QXzDecode::decode()
             isDecoded=true;
             return isDecoded;
         case XZ_MEM_ERROR:
-            error=tr("Memory allocation failed");
+            error="Memory allocation failed";
             xz_dec_end(s);
             return isDecoded;
         case XZ_MEMLIMIT_ERROR:
-            error=tr("Memory usage limit reached");
+            error="Memory usage limit reached";
             xz_dec_end(s);
             return isDecoded;
         case XZ_FORMAT_ERROR:
-            error=tr("Not a .xz file");
+            error="Not a .xz file";
             xz_dec_end(s);
             return isDecoded;
         case XZ_OPTIONS_ERROR:
-            error=tr("Unsupported options in the .xz headers");
+            error="Unsupported options in the .xz headers";
             xz_dec_end(s);
             return isDecoded;
         case XZ_DATA_ERROR:
         case XZ_BUF_ERROR:
-            error=tr("The file is corrupted");
+            error="The file is corrupted";
             xz_dec_end(s);
             return isDecoded;
         default:
-            error=tr("Bug!");
+            error="Bug!";
             xz_dec_end(s);
             return isDecoded;
         }
     }
 
-    int returnVal=decodeStream(&stream_xz_decode_in,&stream_xz_decode_out);
-    data=outputData;
-    return returnVal;
+    data.resize(outputData.size());
+    memcpy(data.data(),outputData.constData(),outputData.size());
+    return isDecoded;
 }
 
-QByteArray QXzDecode::decodedData()
+std::vector<char> QXzDecode::decodedData()
 {
     if(isDecoded)
         return data;
     else
-        return QByteArray();
+        return std::vector<char>();
 }
 
-QString QXzDecode::errorString()
+std::string QXzDecode::errorString()
 {
     return error;
 }

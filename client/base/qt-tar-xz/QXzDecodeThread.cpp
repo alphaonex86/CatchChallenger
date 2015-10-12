@@ -22,7 +22,7 @@ QXzDecodeThread::~QXzDecodeThread()
         delete DataToDecode;
 }
 
-void QXzDecodeThread::setData(std::vector<char>, uint64_t maxSize)
+void QXzDecodeThread::setData(std::vector<char> data, uint64_t maxSize)
 {
     if(DataToDecode!=NULL)
         delete DataToDecode;

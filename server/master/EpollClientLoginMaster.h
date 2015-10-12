@@ -6,8 +6,8 @@
 #include "../VariableServer.h"
 
 #include <random>
-#include <std::string>
-#include <std::regex>
+#include <string>
+#include <regex>
 
 #define BASE_PROTOCOL_MAGIC_SIZE 9
 
@@ -30,7 +30,7 @@ public:
     void selectCharacter_ReturnFailed(const uint8_t &query_id, const uint8_t &errorCode);
     void disconnectForDuplicateConnexionDetected(const uint32_t &characterId);
     static void broadcastGameServerChange();
-    bool sendRawSmallPacket(const char * const data,const int &size);
+    bool sendRawBlock(const char * const data,const int &size);
     enum EpollClientLoginMasterStat
     {
         None,
@@ -42,8 +42,8 @@ public:
     static bool currentPlayerForGameServerToUpdate;
     EpollClientLoginMasterStat stat;
     std::mt19937 rng;
-    char *socketString;
-    int socketStringSize;
+    std::string socketString;
+    uint32_t uniqueKey;
     CharactersGroup *charactersGroupForGameServer;
     CharactersGroup::InternalGameServer *charactersGroupForGameServerInformation;
     struct DataForSelectedCharacterReturn
@@ -68,19 +68,12 @@ public:
     static unsigned char protocolReplyCompressionNone[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     static unsigned char protocolReplyCompresssionZlib[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     static unsigned char protocolReplyCompressionXz[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
-    static char characterSelectionIsWrongBufferCharacterNotFound[64];
-    static char characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline[64];
-    static char characterSelectionIsWrongBufferServerInternalProblem[64];
-    static char characterSelectionIsWrongBufferServerNotFound[64];
-    static uint8_t characterSelectionIsWrongBufferSize;
     static char selectCharaterRequestOnGameServer[3/*header*/+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
     static unsigned char duplicateConnexionDetected[2/*header*/+4];
     static unsigned char getTokenForCharacterSelect[3/*header*/+4+4];
     static unsigned char replyToRegisterLoginServer[sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)
     +sizeof(uint32_t)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(uint32_t)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(uint32_t)*CATCHCHALLENGER_SERVER_MAXIDBLOCK
     +16*1024];
-    static char tempBuffer[16*4096];
-    static char tempBuffer2[16*4096];
     static unsigned char replyToRegisterLoginServerBaseOffset;
     static char loginSettingsAndCharactersGroup[256*1024];
     static unsigned int loginSettingsAndCharactersGroupSize;
@@ -110,14 +103,11 @@ private:
     void errorParsingLayer(const char * const error);
     void messageParsingLayer(const char * const message) const;
     //have message without reply
-    void parseMessage(const uint8_t &mainCodeType,const char *data,const unsigned int &size);
-    void parseFullMessage(const uint8_t &mainCodeType,const uint8_t &subCodeType,const char *data,const unsigned int &size);
+    bool parseMessage(const uint8_t &mainCodeType,const char *data,const unsigned int &size);
     //have query with reply
-    void parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char *data,const unsigned int &size);
-    void parseFullQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char *data,const unsigned int &size);
+    bool parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char *data,const unsigned int &size);
     //send reply
-    void parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char *data,const unsigned int &size);
-    void parseFullReplyData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char *data,const unsigned int &size);
+    bool parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char *data,const unsigned int &size);
 
     void parseInputBeforeLogin(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
     void disconnectClient();

@@ -179,7 +179,7 @@ BaseClassSwitch::EpollObjectType CharactersGroup::getType() const
     return BaseClassSwitch::EpollObjectType::Client;
 }
 
-CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(void * const link, const uint32_t &uniqueKey, const std::string &host,
+CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(void * const client, const uint32_t &uniqueKey, const std::string &host,
                                                                               const uint16_t &port, const std::string &metaData, const uint32_t &logicalGroupIndex,
                                                                               const uint16_t &currentPlayer, const uint16_t &maxPlayer,const std::unordered_set<uint32_t> &lockedAccount)
 {
@@ -201,7 +201,7 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
     InternalGameServer tempServer;
     tempServer.host=host;//std::string::fromUtf8(hostData,hostDataSize)
     tempServer.port=port;
-    tempServer.link=link;
+    tempServer.link=client;
 
     tempServer.logicalGroupIndex=logicalGroupIndex;
     tempServer.metaData=metaData;
@@ -239,12 +239,12 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
                             }
                         }
                         this->lockedAccount[*i]=QDateTime::currentMSecsSinceEpoch()/1000+5*60;//wait 5min before reconnect
-                        static_cast<EpollClientLoginMaster *>(link)->disconnectForDuplicateConnexionDetected(*i);
+                        static_cast<EpollClientLoginMaster *>(client)->disconnectForDuplicateConnexionDetected(*i);
                     }
                     else
                     {
                         //recent normal disconnected, just wait the 5s timeout
-                        static_cast<EpollClientLoginMaster *>(link)->disconnectForDuplicateConnexionDetected(*i);
+                        static_cast<EpollClientLoginMaster *>(client)->disconnectForDuplicateConnexionDetected(*i);
                     }
                 }
             }
@@ -258,18 +258,19 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
     }
 
     gameServers[uniqueKey]=tempServer;
-    gameServersLinkToUniqueKey[link]=uniqueKey;
+    EpollClientLoginMaster * const clientCast=static_cast<EpollClientLoginMaster * const>(client);
+    clientCast->uniqueKey=uniqueKey;
 
     return &gameServers[uniqueKey];
 }
 
-void CharactersGroup::removeGameServerUniqueKey(void * const link)
+void CharactersGroup::removeGameServerUniqueKey(void * const client)
 {
-    const uint32_t &uniqueKey=gameServersLinkToUniqueKey.value(link);
+    EpollClientLoginMaster * const clientCast=static_cast<EpollClientLoginMaster * const>(client);
+    const uint32_t &uniqueKey=clientCast->uniqueKey;
     const InternalGameServer &internalGameServer=gameServers.value(uniqueKey);
     lockedAccountByDisconnectedServer.insert(uniqueKey,internalGameServer.lockedAccount);
     gameServers.remove(uniqueKey);
-    gameServersLinkToUniqueKey.remove(link);
 }
 
 bool CharactersGroup::containsGameServerUniqueKey(const uint32_t &serverUniqueKey) const

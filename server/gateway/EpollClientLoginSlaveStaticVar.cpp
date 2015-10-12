@@ -11,11 +11,11 @@ const unsigned char EpollClientLoginSlave::protocolHeaderToMatch[] = PROTOCOL_HE
 uint8_t EpollClientLoginSlave::tempDatapackListReplySize=0;
 std::vector<char> EpollClientLoginSlave::tempDatapackListReplyArray;
 uint8_t EpollClientLoginSlave::tempDatapackListReply=0;
-int EpollClientLoginSlave::tempDatapackListReplyTestCount=0;
+unsigned int EpollClientLoginSlave::tempDatapackListReplyTestCount=0;
 std::vector<char> EpollClientLoginSlave::rawFilesBuffer;
 std::vector<char> EpollClientLoginSlave::compressedFilesBuffer;
-int EpollClientLoginSlave::rawFilesBufferCount=0;
-int EpollClientLoginSlave::compressedFilesBufferCount=0;
+unsigned int EpollClientLoginSlave::rawFilesBufferCount=0;
+unsigned int EpollClientLoginSlave::compressedFilesBufferCount=0;
 
 std::regex EpollClientLoginSlave::fileNameStartStringRegex=std::regex("^[a-zA-Z]:/");
 std::regex EpollClientLoginSlave::datapack_rightFileName = std::regex(DATAPACK_FILE_REGEX);
