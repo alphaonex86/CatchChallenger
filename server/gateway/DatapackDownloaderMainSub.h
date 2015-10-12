@@ -103,7 +103,6 @@ private slots:
     void writeNewFileSub(const std::string &fileName, const std::vector<char> &data);
     void checkIfContinueOrFinished();
     void haveTheDatapackMainSub();
-    void datapackDownloadFinishedMain();
     void datapackDownloadFinishedSub();
     void datapackChecksumDoneMain(const std::vector<std::string> &datapackFilesList,const std::vector<char> &hash, const std::vector<uint32_t> &partialHash);
     void datapackChecksumDoneSub(const std::vector<std::string> &datapackFilesList,const std::vector<char> &hash, const std::vector<uint32_t> &partialHash);

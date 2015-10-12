@@ -11,6 +11,8 @@
 #include "../base/BaseServerMasterSendDatapack.h"
 
 #include <QSettings>
+#include <string>
+#include <vector>
 
 namespace CatchChallenger {
 class EpollServerLoginMaster : public EpollGenericServer, public BaseServerMasterLoadDictionary
@@ -43,8 +45,8 @@ private:
     void loadTheDatapackFileList();
     void loadLoginSettings(QSettings &settings);
     void loadDBLoginSettings(QSettings &settings);
-    std::stringList loadCharactersGroup(QSettings &settings);
-    void charactersGroupListReply(std::stringList &charactersGroupList);
+    std::vector<std::string> loadCharactersGroup(QSettings &settings);
+    void charactersGroupListReply(std::vector<std::string> &charactersGroupList);
     void doTheLogicalGroup(QSettings &settings);
     void loadTheProfile();
     void SQL_common_load_finish();

@@ -174,12 +174,11 @@ int main(int argc, char *argv[])
                                 if(s == 0)
                                 {
                                     //std::cout << "Accepted connection on descriptor " << infd << "(host=" << hbuf << ", port=" << sbuf << ")" << std::endl;
-                                    client->socketStringSize=strlen(hbuf)+strlen(sbuf)+1+1;
-                                    client->socketString=new char[client->socketStringSize];
-                                    strcpy(client->socketString,hbuf);
-                                    strcat(client->socketString,":");
-                                    strcat(client->socketString,sbuf);
-                                    client->socketString[client->socketStringSize-1]='\0';
+                                    client->socketString=hbuf;
+                                    client->socketString+=":";
+                                    client->socketString+=sbuf;
+                                    //always concat to ": "
+                                    client->socketString+=": ";
                                 }
                             }
                             epoll_event event;

@@ -12,6 +12,11 @@
 
 using namespace CatchChallenger;
 
+static const std::string text_double_slash="//";
+static const std::string text_dotslash="./";
+static const std::string text_antislash="\\";
+static const std::string text_slash="/";
+
 #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
 std::unordered_map<std::string,EpollClientLoginSlave::DatapackCacheFile> EpollClientLoginSlave::datapack_file_list(const std::string &path,const bool withHash)
 {
@@ -28,12 +33,12 @@ std::unordered_map<std::string,EpollClientLoginSlave::DatapackCacheFile> EpollCl
         #else
         const std::string &fileName=returnList.at(index);
         #endif
-        if(fileName.contains(datapack_rightFileName))
+        if(std::regex_match(fileName,datapack_rightFileName))
         {
-            QFileInfo fileInfo(fileName);
-            if(!fileInfo.suffix().empty() && DatapackDownloaderBase::extensionAllowed.contains(QFileInfo(fileName).suffix()))
+            QFileInfo fileInfo(QString::fromStdString(fileName));
+            if(!fileInfo.suffix().isEmpty() && DatapackDownloaderBase::extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())!=DatapackDownloaderBase::extensionAllowed.cend())
             {
-                QFile file(path+returnList.at(index));
+                QFile file(QString::fromStdString(path+returnList.at(index)));
                 if(file.size()<=8*1024*1024)
                 {
                     if(file.open(QIODevice::ReadOnly))
@@ -89,47 +94,47 @@ void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vect
             datapackPath=linkToGameServer->mDatapackBase;
         break;
         case DatapackStatus::Main:
-            if(!datapack_file_main.contains(linkToGameServer->main))
+            if(datapack_file_main.find(linkToGameServer->main)==datapack_file_main.cend())
             {
-                std::cerr << "!datapack_file_main.contains " << linkToGameServer->main.toStdString() << std::endl;
+                std::cerr << "!datapack_file_main.contains " << linkToGameServer->main << std::endl;
                 return;
             }
-            if(!DatapackDownloaderMainSub::datapackDownloaderMainSub.contains(linkToGameServer->main))
+            if(DatapackDownloaderMainSub::datapackDownloaderMainSub.find(linkToGameServer->main)==DatapackDownloaderMainSub::datapackDownloaderMainSub.cend())
             {
-                std::cerr << "!DatapackDownloaderMainSub::datapackDownloaderMainSub " << linkToGameServer->main.toStdString() << std::endl;
+                std::cerr << "!DatapackDownloaderMainSub::datapackDownloaderMainSub " << linkToGameServer->main << std::endl;
                 return;
             }
-            if(!DatapackDownloaderMainSub::datapackDownloaderMainSub.value(linkToGameServer->main).contains(linkToGameServer->sub))
+            if(DatapackDownloaderMainSub::datapackDownloaderMainSub.at(linkToGameServer->main).find(linkToGameServer->sub)==DatapackDownloaderMainSub::datapackDownloaderMainSub.at(linkToGameServer->main).cend())
             {
-                std::cerr << "!DatapackDownloaderMainSub::datapackDownloaderMainSub " << linkToGameServer->main.toStdString() << " " << linkToGameServer->sub.toStdString() << std::endl;
+                std::cerr << "!DatapackDownloaderMainSub::datapackDownloaderMainSub " << linkToGameServer->main << " " << linkToGameServer->sub << std::endl;
                 return;
             }
-            filesList=datapack_file_main.value(linkToGameServer->main).datapack_file_hash_cache;
-            datapackPath=DatapackDownloaderMainSub::datapackDownloaderMainSub.value(linkToGameServer->main).value(linkToGameServer->sub)->mDatapackMain;
+            filesList=datapack_file_main.at(linkToGameServer->main).datapack_file_hash_cache;
+            datapackPath=DatapackDownloaderMainSub::datapackDownloaderMainSub.at(linkToGameServer->main).at(linkToGameServer->sub)->mDatapackMain;
         break;
         case DatapackStatus::Sub:
-            if(!datapack_file_sub.contains(linkToGameServer->main))
+            if(datapack_file_sub.find(linkToGameServer->main)==datapack_file_sub.cend())
             {
-                std::cerr << "!datapack_file_sub.contains " << linkToGameServer->main.toStdString() << std::endl;
+                std::cerr << "!datapack_file_sub.contains " << linkToGameServer->main << std::endl;
                 return;
             }
-            if(!datapack_file_sub.value(linkToGameServer->main).contains(linkToGameServer->sub))
+            if(datapack_file_sub.at(linkToGameServer->main).find(linkToGameServer->sub)==datapack_file_sub.at(linkToGameServer->main).cend())
             {
-                std::cerr << "!datapack_file_sub.contains " << linkToGameServer->main.toStdString() << " " << linkToGameServer->sub.toStdString() << std::endl;
+                std::cerr << "!datapack_file_sub.contains " << linkToGameServer->main << " " << linkToGameServer->sub << std::endl;
                 return;
             }
-            if(!DatapackDownloaderMainSub::datapackDownloaderMainSub.contains(linkToGameServer->main))
+            if(DatapackDownloaderMainSub::datapackDownloaderMainSub.find(linkToGameServer->main)==DatapackDownloaderMainSub::datapackDownloaderMainSub.cend())
             {
-                std::cerr << "!DatapackDownloaderMainSub::datapackDownloaderMainSub " << linkToGameServer->main.toStdString() << std::endl;
+                std::cerr << "!DatapackDownloaderMainSub::datapackDownloaderMainSub " << linkToGameServer->main << std::endl;
                 return;
             }
-            if(!DatapackDownloaderMainSub::datapackDownloaderMainSub.value(linkToGameServer->main).contains(linkToGameServer->sub))
+            if(DatapackDownloaderMainSub::datapackDownloaderMainSub.at(linkToGameServer->main).find(linkToGameServer->sub)==DatapackDownloaderMainSub::datapackDownloaderMainSub.at(linkToGameServer->main).cend())
             {
-                std::cerr << "!DatapackDownloaderMainSub::datapackDownloaderMainSub " << linkToGameServer->main.toStdString() << " " << linkToGameServer->sub.toStdString() << std::endl;
+                std::cerr << "!DatapackDownloaderMainSub::datapackDownloaderMainSub " << linkToGameServer->main << " " << linkToGameServer->sub << std::endl;
                 return;
             }
-            filesList=datapack_file_sub.value(linkToGameServer->main).value(linkToGameServer->sub).datapack_file_hash_cache;
-            datapackPath=DatapackDownloaderMainSub::datapackDownloaderMainSub.value(linkToGameServer->main).value(linkToGameServer->sub)->mDatapackSub;
+            filesList=datapack_file_sub.at(linkToGameServer->main).at(linkToGameServer->sub).datapack_file_hash_cache;
+            datapackPath=DatapackDownloaderMainSub::datapackDownloaderMainSub.at(linkToGameServer->main).at(linkToGameServer->sub)->mDatapackSub;
         break;
         default:
         return;
@@ -148,28 +153,28 @@ void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vect
         {
             const std::string &fileName=files.at(index);
             const uint32_t &clientPartialHash=partialHashList.at(index);
-            if(fileName.contains(EpollClientLoginSlave::text_dotslash) || fileName.contains(EpollClientLoginSlave::text_antislash) || fileName.contains(EpollClientLoginSlave::text_double_slash))
+            if(fileName.find(text_dotslash)!=std::string::npos || fileName.find(text_antislash)!=std::string::npos || fileName.find(text_double_slash)!=std::string::npos)
             {
-                std::cerr << std::stringLiteral("file name contains illegale char: %1").arg(fileName).toStdString() << std::endl;
+                std::cerr << "file name contains illegale char: " << fileName << std::endl;
                 return;
             }
-            if(fileName.contains(fileNameStartStringRegex) || fileName.startsWith(EpollClientLoginSlave::text_slash))
+            if(std::regex_match(fileName,fileNameStartStringRegex) || stringStartWith(fileName,text_slash))
             {
-                std::cerr << std::stringLiteral("start with wrong string: %1").arg(fileName).toStdString() << std::endl;
+                std::cerr << "start with wrong string: " << fileName << std::endl;
                 return;
             }
-            if(!fileName.contains(EpollClientLoginSlave::datapack_rightFileName))
+            if(!std::regex_match(fileName,EpollClientLoginSlave::datapack_rightFileName))
             {
-                std::cerr << std::stringLiteral("file name sended wrong: %1").arg(fileName).toStdString() << std::endl;
+                std::cerr << "file name sended wrong: " << fileName << std::endl;
                 return;
             }
-            if(filesListForSize.contains(fileName))
+            if(filesListForSize.find(fileName)!=filesListForSize.cend())
             {
-                const uint32_t &serverPartialHash=filesListForSize.value(fileName).partialHash;
+                const uint32_t &serverPartialHash=filesListForSize.at(fileName).partialHash;
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(serverPartialHash==0)
                 {
-                    std::cerr << std::stringLiteral("serverPartialHash==0 at %1").arg(__FILE__).arg(__LINE__).toStdString() << std::endl;
+                    std::cerr << "serverPartialHash==0 at " << __FILE__ << ":" << __LINE__ << std::endl;
                     abort();
                 }
                 #endif
@@ -177,7 +182,7 @@ void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vect
                     addDatapackListReply(false);//file found don't need be updated
                 else
                 {
-                    QFile file(datapackPath+fileName);
+                    QFile file(QString::fromStdString(datapackPath+fileName));
                     if(file.open(QIODevice::ReadOnly))
                     {
                         addDatapackListReply(false);//found but need an update
@@ -185,33 +190,44 @@ void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vect
                         datapckFileSize+=file.size();
                         FileToSend fileToSend;
                         fileToSend.file=fileName;
-                        fileToSendList << fileToSend;
+                        fileToSendList.push_back(fileToSend);
                         file.close();
                     }
                 }
-                filesListForSize.remove(fileName);
+                filesListForSize.erase(fileName);
             }
             else
                 addDatapackListReply(true);//to delete
             index++;
         }
-        std::unordered_mapIterator<std::string,DatapackCacheFile> i(filesListForSize);
-        while (i.hasNext()) {
-            i.next();
-            QFile file(datapackPath+i.key());
+        auto i=filesListForSize.begin();
+        while(i!=filesListForSize.cend())
+        {
+            QFile file(QString::fromStdString(datapackPath+i->first));
             if(file.open(QIODevice::ReadOnly))
             {
                 datapckFileNumber++;
                 datapckFileSize+=file.size();
                 FileToSend fileToSend;
-                fileToSend.file=i.key();
-                fileToSendList << fileToSend;
+                fileToSend.file=i->first;
+                fileToSendList.push_back(fileToSend);
                 file.close();
             }
+            ++i;
         }
-        out << (uint32_t)datapckFileNumber;
-        out << (uint32_t)datapckFileSize;
-        sendFullPacket(0xC2,0x0C,outputData.constData(),outputData.size());
+
+        //send the network message
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x75;
+        posOutput+=1+4;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(8);//set the dynamic size
+
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(datapckFileNumber);
+        posOutput+=4;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(datapckFileSize);
+        posOutput+=4;
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     }
     if(fileToSendList.empty())
     {
@@ -227,7 +243,7 @@ void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vect
     }
     //send not in the list
     {
-        int index=0;
+        unsigned int index=0;
         while(index<fileToSendList.size())
         {
             if(!sendFile(datapackPath,fileToSendList.at(index).file))
@@ -337,7 +353,21 @@ void EpollClientLoginSlave::purgeDatapackListReply(const uint8_t &query_id)
     }
     if(tempDatapackListReplyArray.empty())
         tempDatapackListReplyArray[0x00]=0x00;
-    postReply(query_id,tempDatapackListReplyArray.constData(),tempDatapackListReplyArray.size());
+
+    //send the network reply
+    removeFromQueryReceived(query_id);
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput+=1+4;
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(tempDatapackListReplyArray.size());//set the dynamic size
+
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput,tempDatapackListReplyArray.data(),tempDatapackListReplyArray.size());
+    posOutput+=tempDatapackListReplyArray.size();
+
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
     tempDatapackListReplyArray.clear();
 }
 
@@ -345,9 +375,19 @@ void EpollClientLoginSlave::sendFileContent()
 {
     if(EpollClientLoginSlave::rawFilesBuffer.size()>0 && EpollClientLoginSlave::rawFilesBufferCount>0)
     {
-        out << (uint8_t)EpollClientLoginSlave::rawFilesBufferCount;
-        const std::vector<char> newData(outputData+EpollClientLoginSlave::rawFilesBuffer);
-        sendFullPacket(0xC2,0x03,newData.constData(),newData.size());
+        EpollClientLoginSlave::rawFilesBuffer.insert(EpollClientLoginSlave::rawFilesBuffer.begin(),EpollClientLoginSlave::rawFilesBufferCount);
+
+        //send the network message
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x76;
+        posOutput+=1+4;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(EpollClientLoginSlave::rawFilesBuffer.size());//set the dynamic size
+
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput,EpollClientLoginSlave::rawFilesBuffer.data(),EpollClientLoginSlave::rawFilesBuffer.size());
+        posOutput+=EpollClientLoginSlave::rawFilesBuffer.size();
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
         EpollClientLoginSlave::rawFilesBuffer.clear();
         EpollClientLoginSlave::rawFilesBufferCount=0;
     }
@@ -357,9 +397,19 @@ void EpollClientLoginSlave::sendCompressedFileContent()
 {
     if(EpollClientLoginSlave::compressedFilesBuffer.size()>0 && EpollClientLoginSlave::compressedFilesBufferCount>0)
     {
-        out << (uint8_t)EpollClientLoginSlave::compressedFilesBufferCount;
-        const std::vector<char> newData(outputData+EpollClientLoginSlave::compressedFilesBuffer);
-        sendFullPacket(0xC2,0x04,newData.constData(),newData.size());
+        EpollClientLoginSlave::compressedFilesBuffer.insert(EpollClientLoginSlave::compressedFilesBuffer.begin(),EpollClientLoginSlave::compressedFilesBufferCount);
+
+        //send the network message
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x77;
+        posOutput+=1+4;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(EpollClientLoginSlave::compressedFilesBuffer.size());//set the dynamic size
+
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput,EpollClientLoginSlave::compressedFilesBuffer.data(),EpollClientLoginSlave::compressedFilesBuffer.size());
+        posOutput+=EpollClientLoginSlave::compressedFilesBuffer.size();
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
         EpollClientLoginSlave::compressedFilesBuffer.clear();
         EpollClientLoginSlave::compressedFilesBufferCount=0;
     }
@@ -369,23 +419,23 @@ bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::
 {
     if(fileName.size()>255 || fileName.empty())
     {
-        std::cerr << "Unable to open into CatchChallenger::sendFile(): fileName.size()>255 || fileName.empty()" << std::endl;
+        errorParsingLayer("Unable to open into CatchChallenger::sendFile(): fileName.size()>255 || fileName.empty()");
         return false;
     }
-    const std::vector<char> &fileNameRaw=FacilityLibGeneral::toUTF8WithHeader(fileName);
-    if(fileNameRaw.size()>255 || fileNameRaw.empty())
-    {
-        std::cerr << "Unable to open into CatchChallenger::sendFile(): fileNameRaw.size()>255 || fileNameRaw.empty()" << std::endl;
-        return false;
-    }
-    QFile file(datapackPath+fileName);
+
+    QFile file(QString::fromStdString(datapackPath+fileName));
     if(file.open(QIODevice::ReadOnly))
     {
-        const std::vector<char> &content=file.readAll();
+        std::vector<char> content;
+        {
+            const QByteArray &mQtData=file.readAll();
+            content.resize(mQtData.size());
+            memcpy(content.data(),mQtData.constData(),mQtData.size());
+        }
         const int &contentsize=content.size();
-        out << (uint32_t)contentsize;
-        const std::string &suffix=QFileInfo(file).suffix();
-        if(EpollClientLoginSlave::compressedExtension.contains(suffix) &&
+
+        const std::string &suffix=QFileInfo(file).suffix().toStdString();
+        if(EpollClientLoginSlave::compressedExtension.find(suffix)!=EpollClientLoginSlave::compressedExtension.cend() &&
                 ProtocolParsing::compressionTypeServer!=ProtocolParsing::CompressionType::None &&
                 (
                     contentsize<CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB*1024
@@ -394,7 +444,19 @@ bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::
                 )
             )
         {
-            EpollClientLoginSlave::compressedFilesBuffer+=fileNameRaw+outputData+content;
+            uint32_t posOutput=0;
+            {
+                const std::string &text=fileName;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                posOutput+=1;
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+                posOutput+=text.size();
+            }
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(contentsize);
+            posOutput+=4;
+
+            binaryAppend(EpollClientLoginSlave::compressedFilesBuffer,ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+            binaryAppend(EpollClientLoginSlave::compressedFilesBuffer,content);
             EpollClientLoginSlave::compressedFilesBufferCount++;
             switch(ProtocolParsing::compressionTypeServer)
             {
@@ -413,27 +475,59 @@ bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::
         {
             if(contentsize>CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB*1024)
             {
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if((1+fileNameRaw.size()+outputData.size()+contentsize)>=CATCHCHALLENGER_MAX_PACKET_SIZE)
+                if((1+fileName.size()+4+contentsize)>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                 {
-                    std::cerr << "Unable to open into CatchChallenger::sendFile(): " << file.errorString().toStdString() << std::endl;
-                    std::cerr << std::string("Error: outputData2(%1)+fileNameRaw(%2)+outputData(%3)+content(%4)>CATCHCHALLENGER_MAX_PACKET_SIZE for file %5")
-                                 .arg(1)
-                                 .arg(fileNameRaw.size())
-                                 .arg(outputData.size())
-                                 .arg(contentsize)
-                                 .arg(fileName)
-                                 .toStdString() << std::endl;
+                    messageParsingLayer("Error: outputData2(1)+fileNameRaw("+
+                                 std::to_string(fileName.size()+4)+
+                                 ")+content("+
+                                 std::to_string(contentsize)+
+                                 ")>CATCHCHALLENGER_MAX_PACKET_SIZE for file "+
+                                 fileName
+                                 );
+                    return false;
                 }
-                #endif
-                std::vector<char> outputData2;
-                outputData2[0x00]=0x01;
-                const std::vector<char> newData(outputData2+fileNameRaw+outputData+content);
-                sendFullPacket(0xC2,0x03,newData.constData(),newData.size());
+
+                //send the network message
+                uint32_t posOutput=0;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x76;
+                posOutput+=1+4;
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+EpollClientLoginSlave::rawFilesBuffer.size());//set the dynamic size
+
+                //number of file
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=1;
+                posOutput+=1;
+                //filename
+                {
+                    const std::string &text=fileName;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                    posOutput+=1;
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+                    posOutput+=text.size();
+                }
+                //file size
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(contentsize);
+                posOutput+=4;
+
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput,content.data(),contentsize);
+                posOutput+=contentsize;
+
+                sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             }
             else
             {
-                EpollClientLoginSlave::rawFilesBuffer+=fileNameRaw+outputData+content;
+                uint32_t posOutput=0;
+                {
+                    const std::string &text=fileName;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                    posOutput+=1;
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+                    posOutput+=text.size();
+                }
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(contentsize);
+                posOutput+=4;
+
+                binaryAppend(EpollClientLoginSlave::rawFilesBuffer,ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                binaryAppend(EpollClientLoginSlave::rawFilesBuffer,content);
                 EpollClientLoginSlave::rawFilesBufferCount++;
                 if(EpollClientLoginSlave::rawFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_MAX_FILEPURGE_KB*1024 || EpollClientLoginSlave::rawFilesBufferCount>=255)
                     sendFileContent();
@@ -444,7 +538,7 @@ bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::
     }
     else
     {
-        std::cerr << "Unable to open into CatchChallenger::sendFile(): " << file.errorString().toStdString() << std::endl;
+        errorParsingLayer("Unable to open into CatchChallenger::sendFile(): "+file.errorString().toStdString());
         return false;
     }
 }

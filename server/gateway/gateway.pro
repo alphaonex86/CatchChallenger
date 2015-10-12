@@ -59,7 +59,6 @@ SOURCES += \
     ../../client/base/qt-tar-xz/xz_dec_bcj.c \
     ../../client/base/qt-tar-xz/xz_dec_lzma2.c \
     ../../client/base/qt-tar-xz/xz_dec_stream.c \
-    ../../general/base/DebugClass.cpp \
     ../../general/base/CommonSettingsCommon.cpp \
     ../../general/base/CommonSettingsServer.cpp \
     EpollClientLoginSlaveDatapack.cpp \
@@ -97,7 +96,6 @@ HEADERS += \
     ../../client/base/qt-tar-xz/xz_lzma2.h \
     ../../client/base/qt-tar-xz/xz_private.h \
     ../../client/base/qt-tar-xz/xz_stream.h \
-    ../../general/base/DebugClass.h \
     ../../general/base/CommonSettingsCommon.h \
     ../../general/base/CommonSettingsServer.h \
     ../../general/base/lz4/lz4.h

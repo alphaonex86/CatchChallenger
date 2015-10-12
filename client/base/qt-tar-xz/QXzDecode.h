@@ -21,7 +21,7 @@ class QXzDecode : public QObject
          * \param data the compressed data
          * \param maxSize the max size
          * **/
-        QXzDecode(QByteArray data,uint64_t maxSize=0);
+        QXzDecode(std::vector<char> data,uint64_t maxSize=0);
         /// \brief lunch the decode
         bool decode();
         /// \brief the error string

@@ -8,7 +8,7 @@
 
 using namespace CatchChallenger;
 
-void EpollClientLoginMaster::parseInputBeforeLogin(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
+bool EpollClientLoginMaster::parseInputBeforeLogin(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     Q_UNUSED(size);
     switch(mainCodeType)
@@ -830,7 +830,7 @@ void EpollClientLoginMaster::parseFullQuery(const uint8_t &mainCodeType,const ui
 }
 
 //send reply
-void EpollClientLoginMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
+bool EpollClientLoginMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     //queryNumberList << queryNumber;
     Q_UNUSED(data);

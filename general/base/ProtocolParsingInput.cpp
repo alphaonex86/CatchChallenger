@@ -118,8 +118,8 @@ bool ProtocolParsingBase::forwardTo(ProtocolParsingBase * const destination)
     if(!header_cut.empty())
     {
         const unsigned int &size_to_get=CATCHCHALLENGER_COMMONBUFFERSIZE-header_cut.size();
-        memcpy(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,header_cut.data(),header_cut.size());
-        size=read(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,size_to_get)+header_cut.size();
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput,header_cut.data(),header_cut.size());
+        size=read(ProtocolParsingBase::tempBigBufferForOutput,size_to_get)+header_cut.size();
         if(size>0)
         {
             //std::vector<char> tempDataToDebug(ProtocolParsingInputOutput::commonBuffer+header_cut.size(),size-header_cut.size());
@@ -129,7 +129,7 @@ bool ProtocolParsingBase::forwardTo(ProtocolParsingBase * const destination)
     }
     else
     {
-        size=read(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,CATCHCHALLENGER_COMMONBUFFERSIZE);
+        size=read(ProtocolParsingBase::tempBigBufferForOutput,CATCHCHALLENGER_COMMONBUFFERSIZE);
         if(size>0)
         {
             //std::vector<char> tempDataToDebug(ProtocolParsingInputOutput::commonBuffer,size);
@@ -137,7 +137,7 @@ bool ProtocolParsingBase::forwardTo(ProtocolParsingBase * const destination)
         }
     }
     if(size>0)
-        destination->internalSendRawSmallPacket(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,size);
+        destination->internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,size);
     return true;
 }
 
@@ -168,8 +168,8 @@ void ProtocolParsingInputOutput::parseIncommingData()
         if(!header_cut.empty())
         {
             const unsigned int &size_to_get=CATCHCHALLENGER_COMMONBUFFERSIZE-header_cut.size();
-            memcpy(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,header_cut.data(),header_cut.size());
-            size=read(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,size_to_get)+header_cut.size();
+            memcpy(ProtocolParsingInputOutput::tempBigBufferForInput,header_cut.data(),header_cut.size());
+            size=read(ProtocolParsingInputOutput::tempBigBufferForInput,size_to_get)+header_cut.size();
             if(size>0)
             {
                 //std::vector<char> tempDataToDebug(ProtocolParsingInputOutput::commonBuffer+header_cut.size(),size-header_cut.size());
@@ -179,7 +179,7 @@ void ProtocolParsingInputOutput::parseIncommingData()
         }
         else
         {
-            size=read(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,CATCHCHALLENGER_COMMONBUFFERSIZE);
+            size=read(ProtocolParsingInputOutput::tempBigBufferForInput,CATCHCHALLENGER_COMMONBUFFERSIZE);
             if(size>0)
             {
                 //std::vector<char> tempDataToDebug(ProtocolParsingInputOutput::commonBuffer,size);
@@ -201,7 +201,8 @@ std::stringLiteral(" parseIncommingData(): size returned is 0!"));*/
 
         do
         {
-            if(!parseIncommingDataRaw(ProtocolParsingInputOutput::tempBigBufferForUncompressedInput,size,cursor))
+            //this interface allow 0 copy method
+            if(!parseIncommingDataRaw(ProtocolParsingInputOutput::tempBigBufferForInput,size,cursor))
                 break;
         } while(cursor<(uint32_t)size);
 
@@ -225,6 +226,7 @@ std::stringLiteral(" parseIncommingData(): size returned is 0!"));*/
     #endif
 }
 
+//this interface allow 0 copy method
 bool ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer, const uint32_t &size, uint32_t &cursor)
 {
     if(!parseHeader(commonBuffer,size,cursor))
@@ -464,6 +466,7 @@ bool ProtocolParsingBase::parseData(const char * const commonBuffer, const uint3
     }
 }
 
+#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 uint32_t ProtocolParsing::computeDecompression(const char* const source, char* const dest, unsigned int compressedSize, unsigned int maxDecompressedSize, const CompressionType &compressionType)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -509,6 +512,7 @@ uint32_t ProtocolParsing::computeDecompression(const char* const source, char* c
         break;
     }
 }
+#endif
 
 bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size)
 {

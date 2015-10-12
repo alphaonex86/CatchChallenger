@@ -9,7 +9,7 @@
 #include "LinkToMaster.h"
 #include "LinkToGameServer.h"
 
-#include <std::string>
+#include <string>
 #include <vector>
 
 #define BASE_PROTOCOL_MAGIC_SIZE 8
