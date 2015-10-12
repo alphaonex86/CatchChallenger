@@ -283,10 +283,9 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
                 return;
 
             memset(ProtocolParsingBase::tempBigBufferForOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForOutput));
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
             memset(ProtocolParsingBase::tempBigBufferForCompressedOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForCompressedOutput));
             memset(ProtocolParsingBase::tempBigBufferForUncompressedInput,0,sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput));
-            memset(ProtocolParsingBase::tempBigBufferForOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForOutput));
-            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
             ProtocolParsing::compressionTypeServer=CompressionType::Zlib;
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             ProtocolParsing::compressionTypeClient=CompressionType::Zlib;

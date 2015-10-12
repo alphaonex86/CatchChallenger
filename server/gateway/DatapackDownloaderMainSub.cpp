@@ -140,7 +140,7 @@ void DatapackDownloaderMainSub::datapackFileList(const char * const data,const u
             if(datapackFilesListSub.empty() && size==1)
             {
                 if(!httpModeSub)
-                    datapackDownloadFinishedSub();
+                    checkIfContinueOrFinished();
                 return;
             }
             unsigned int pos=0;
@@ -186,7 +186,7 @@ void DatapackDownloaderMainSub::datapackFileList(const char * const data,const u
                 return;
             }
             if(!httpModeSub)
-                datapackDownloadFinishedSub();
+                checkIfContinueOrFinished();
         }
         break;
         default:
@@ -247,6 +247,18 @@ void DatapackDownloaderMainSub::haveTheDatapackMainSub()
     {
         if(QProcess::execute(QString::fromStdString(DatapackDownloaderMainSub::commandUpdateDatapackSub),QStringList() << QString::fromStdString(mDatapackSub))<0)
             std::cerr << "Unable to execute " << DatapackDownloaderMainSub::commandUpdateDatapackSub << " " << mDatapackSub << std::endl;
+    }
+}
+
+void DatapackDownloaderMainSub::checkIfContinueOrFinished()
+{
+    wait_datapack_content_main=false;
+    if(subDatapackCode.empty())
+        haveTheDatapackMainSub();
+    else
+    {
+        datapackStatus=DatapackStatus::Sub;
+        sendDatapackContentSub();
     }
 }
 

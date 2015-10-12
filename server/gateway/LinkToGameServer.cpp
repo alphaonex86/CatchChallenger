@@ -341,7 +341,7 @@ void LinkToGameServer::sendDiffered04Reply()
     memcpy(ProtocolParsingBase::tempBigBufferForOutput,reply04inWait,reply04inWaitSize);
     posOutput+=reply04inWaitSize;
 
-    client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
     delete reply04inWait;
     reply04inWait=NULL;
@@ -374,7 +374,7 @@ void LinkToGameServer::sendDiffered0205Reply()
     memcpy(ProtocolParsingBase::tempBigBufferForOutput,reply0205inWait,reply0205inWaitSize);
     posOutput+=reply0205inWaitSize;
 
-    client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
     delete reply0205inWait;
     reply0205inWait=NULL;
