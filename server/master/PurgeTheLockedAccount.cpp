@@ -10,7 +10,7 @@ PurgeTheLockedAccount::PurgeTheLockedAccount()
 
 void PurgeTheLockedAccount::exec()
 {
-    int index=0;
+    unsigned int index=0;
     while(index<CharactersGroup::list.size())
     {
         CharactersGroup::list.at(index)->purgeTheLockedAccount();
