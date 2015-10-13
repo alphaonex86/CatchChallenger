@@ -11,6 +11,7 @@
 using namespace CatchChallenger;
 
 char ProtocolParsingBase::tempBigBufferForOutput[];
+char ProtocolParsingBase::tempBigBufferForInput[];//to store the input buffer on linux READ() interface or with Qt
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 char ProtocolParsingBase::tempBigBufferForUncompressedInput[];
 char ProtocolParsingBase::tempBigBufferForCompressedOutput[];
