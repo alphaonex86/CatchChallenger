@@ -42,18 +42,18 @@ void CharactersGroup::load_clan_max_id()
     {
         default:
         case DatabaseBase::DatabaseType::Mysql:
-            queryText=QLatin1String("SELECT `id` FROM `clan` ORDER BY `id` DESC LIMIT 0,1;");
+            queryText="SELECT `id` FROM `clan` ORDER BY `id` DESC LIMIT 0,1;";
         break;
         case DatabaseBase::DatabaseType::SQLite:
-            queryText=QLatin1String("SELECT id FROM clan ORDER BY id DESC LIMIT 0,1;");
+            queryText="SELECT id FROM clan ORDER BY id DESC LIMIT 0,1;";
         break;
         case DatabaseBase::DatabaseType::PostgreSQL:
-            queryText=QLatin1String("SELECT id FROM clan ORDER BY id DESC LIMIT 1;");
+            queryText="SELECT id FROM clan ORDER BY id DESC LIMIT 1;";
         break;
     }
-    if(databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroup::load_clan_max_id_static)==NULL)
+    if(databaseBaseCommon->asyncRead(queryText,this,&CharactersGroup::load_clan_max_id_static)==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
+        std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseCommon->errorMessage() << std::endl;
         abort();
     }
 }
@@ -70,7 +70,7 @@ void CharactersGroup::load_clan_max_id_return()
     {
         bool ok;
         //not +1 because incremented before use
-        maxClanId=std::string(databaseBaseCommon->value(0)).toUInt(&ok);
+        maxClanId=stringtouint32(databaseBaseCommon->value(0),&ok);
         if(!ok)
         {
             std::cerr << "Max clan id is failed to convert to number" << std::endl;
@@ -87,18 +87,18 @@ void CharactersGroup::load_character_max_id()
     {
         default:
         case DatabaseBase::DatabaseType::Mysql:
-            queryText=QLatin1String("SELECT `id` FROM `character` ORDER BY `id` DESC LIMIT 0,1;");
+            queryText="SELECT `id` FROM `character` ORDER BY `id` DESC LIMIT 0,1;";
         break;
         case DatabaseBase::DatabaseType::SQLite:
-            queryText=QLatin1String("SELECT id FROM character ORDER BY id DESC LIMIT 0,1;");
+            queryText="SELECT id FROM character ORDER BY id DESC LIMIT 0,1;";
         break;
         case DatabaseBase::DatabaseType::PostgreSQL:
-            queryText=QLatin1String("SELECT id FROM character ORDER BY id DESC LIMIT 1;");
+            queryText="SELECT id FROM character ORDER BY id DESC LIMIT 1;";
         break;
     }
-    if(databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroup::load_character_max_id_static)==NULL)
+    if(databaseBaseCommon->asyncRead(queryText,this,&CharactersGroup::load_character_max_id_static)==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
+        std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseCommon->errorMessage() << std::endl;
         abort();
     }
     maxCharacterId=0;
@@ -115,7 +115,7 @@ void CharactersGroup::load_character_max_id_return()
     {
         bool ok;
         //not +1 because incremented before use
-        maxCharacterId=std::string(databaseBaseCommon->value(0)).toUInt(&ok);
+        maxCharacterId=stringtouint32(databaseBaseCommon->value(0),&ok);
         if(!ok)
         {
             std::cerr << "Max character id is failed to convert to number" << std::endl;
@@ -133,18 +133,18 @@ void CharactersGroup::load_monsters_max_id()
     {
         default:
         case DatabaseBase::DatabaseType::Mysql:
-            queryText=QLatin1String("SELECT `id` FROM `monster` ORDER BY `id` DESC LIMIT 0,1;");
+            queryText="SELECT `id` FROM `monster` ORDER BY `id` DESC LIMIT 0,1;";
         break;
         case DatabaseBase::DatabaseType::SQLite:
-            queryText=QLatin1String("SELECT id FROM monster ORDER BY id DESC LIMIT 0,1;");
+            queryText="SELECT id FROM monster ORDER BY id DESC LIMIT 0,1;";
         break;
         case DatabaseBase::DatabaseType::PostgreSQL:
-            queryText=QLatin1String("SELECT id FROM monster ORDER BY id DESC LIMIT 1;");
+            queryText="SELECT id FROM monster ORDER BY id DESC LIMIT 1;";
         break;
     }
-    if(databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroup::load_monsters_max_id_static)==NULL)
+    if(databaseBaseCommon->asyncRead(queryText,this,&CharactersGroup::load_monsters_max_id_static)==NULL)
     {
-        qDebug() << std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
+        std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseCommon->errorMessage() << std::endl;
         abort();//stop because can't do the first db access
     }
 }
@@ -160,7 +160,7 @@ void CharactersGroup::load_monsters_max_id_return()
     {
         bool ok;
         //not +1 because incremented before use
-        maxMonsterId=std::string(databaseBaseCommon->value(0)).toUInt(&ok);
+        maxMonsterId=stringtouint32(databaseBaseCommon->value(0),&ok);
         if(!ok)
         {
             std::cerr << "Max monster id is failed to convert to number" << std::endl;
@@ -184,19 +184,20 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
                                                                               const uint16_t &currentPlayer, const uint16_t &maxPlayer,const std::unordered_set<uint32_t> &lockedAccount)
 {
     //old locked account
-    if(lockedAccountByDisconnectedServer.contains(uniqueKey))
+    if(lockedAccountByDisconnectedServer.find(uniqueKey)!=lockedAccountByDisconnectedServer.cend())
     {
         //new key found on master server
-        std::unordered_set<uint32_t>::const_iterator i = lockedAccountByDisconnectedServer.value(uniqueKey).constBegin();
-        while (i != lockedAccountByDisconnectedServer.value(uniqueKey).constEnd()) {
-            if(!lockedAccount.contains(*i))
+        auto i = lockedAccountByDisconnectedServer.at(uniqueKey).begin();
+        while (i != lockedAccountByDisconnectedServer.at(uniqueKey).cend())
+        {
+            if(lockedAccount.find(*i)==lockedAccount.cend())
             {
                 //was disconnected from the last game server disconnection
                 this->lockedAccount[*i]=QDateTime::currentMSecsSinceEpoch()/1000+5;//wait 5s before reconnect
             }
             ++i;
         }
-        lockedAccountByDisconnectedServer.remove(uniqueKey);
+        lockedAccountByDisconnectedServer.erase(uniqueKey);
     }
     InternalGameServer tempServer;
     tempServer.host=host;//std::string::fromUtf8(hostData,hostDataSize)
@@ -212,15 +213,17 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
 
     //new key found on game server, mostly when the master server is restarted
     {
-        std::unordered_set<uint32_t>::const_iterator i = lockedAccount.constBegin();
-        while (i != lockedAccount.constEnd()) {
-            if(this->lockedAccount.contains(*i))
+        auto i = lockedAccount.begin();
+        while (i != lockedAccount.end())
+        {
+            const auto thislockAccountIter=this->lockedAccount.find(*i);
+            if(thislockAccountIter!=this->lockedAccount.cend())
             {
-                const uint64_t &timeLock=this->lockedAccount.value(*i);
+                const uint64_t &timeLock=this->lockedAccount.at(*i);
                 //drop the timeouted lock
                 if(timeLock>0 && timeLock<(uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)
                 {
-                    tempServer.lockedAccount << *i;
+                    tempServer.lockedAccount.insert(*i);
                     this->lockedAccount[*i]=0;
                 }
                 /// \todo already locked, diconnect all to be more safe, but bug here! network split? block during 5min this character login
@@ -229,14 +232,15 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
                     //find the other game server and disconnect character on it
                     if(Q_UNLIKELY(timeLock==0))
                     {
-                        std::unordered_mapIterator<uint32_t/*serverUniqueKey*/,InternalGameServer> j(gameServers);
-                        while (j.hasNext()) {
-                            j.next();
-                            if(j.value().lockedAccount.contains(*i))
+                        auto j=gameServers.begin();
+                        while(j!=gameServers.cend())
+                        {
+                            if(j->second.lockedAccount.find(*i)!=j->second.lockedAccount.cend())
                             {
-                                static_cast<EpollClientLoginMaster *>(j.value().link)->disconnectForDuplicateConnexionDetected(*i);
-                                gameServers[j.key()].lockedAccount.remove(*i);
+                                static_cast<EpollClientLoginMaster *>(j->second.link)->disconnectForDuplicateConnexionDetected(*i);
+                                gameServers[j->first].lockedAccount.erase(*i);
                             }
+                            ++j;
                         }
                         this->lockedAccount[*i]=QDateTime::currentMSecsSinceEpoch()/1000+5*60;//wait 5min before reconnect
                         static_cast<EpollClientLoginMaster *>(client)->disconnectForDuplicateConnexionDetected(*i);
@@ -250,7 +254,7 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
             }
             else
             {
-                tempServer.lockedAccount << *i;
+                tempServer.lockedAccount.insert(*i);
                 this->lockedAccount[*i]=0;
             }
             ++i;
@@ -268,25 +272,25 @@ void CharactersGroup::removeGameServerUniqueKey(void * const client)
 {
     EpollClientLoginMaster * const clientCast=static_cast<EpollClientLoginMaster * const>(client);
     const uint32_t &uniqueKey=clientCast->uniqueKey;
-    const InternalGameServer &internalGameServer=gameServers.value(uniqueKey);
-    lockedAccountByDisconnectedServer.insert(uniqueKey,internalGameServer.lockedAccount);
-    gameServers.remove(uniqueKey);
+    const InternalGameServer &internalGameServer=gameServers.at(uniqueKey);
+    lockedAccountByDisconnectedServer[uniqueKey].insert(internalGameServer.lockedAccount.cbegin(),internalGameServer.lockedAccount.cend());
+    gameServers.erase(uniqueKey);
 }
 
 bool CharactersGroup::containsGameServerUniqueKey(const uint32_t &serverUniqueKey) const
 {
-    return gameServers.contains(serverUniqueKey);
+    return gameServers.find(serverUniqueKey)!=gameServers.cend();
 }
 
 bool CharactersGroup::characterIsLocked(const uint32_t &characterId)
 {
-    if(lockedAccount.contains(characterId))
+    if(lockedAccount.find(characterId)!=lockedAccount.cend())
     {
-        if(lockedAccount.value(characterId)==0)
+        if(lockedAccount.at(characterId)==0)
             return true;
-        if(lockedAccount.value(characterId)<(uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)
+        if(lockedAccount.at(characterId)<(uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)
         {
-            lockedAccount.remove(characterId);
+            lockedAccount.erase(characterId);
             return false;
         }
         else
@@ -301,84 +305,86 @@ bool CharactersGroup::characterIsLocked(const uint32_t &characterId)
 void CharactersGroup::lockTheCharacter(const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(lockedAccount.contains(characterId))
+    if(lockedAccount.find(characterId)!=lockedAccount.cend())
     {
-        if(lockedAccount.contains(characterId)==0)
+        if(lockedAccount.at(characterId)==0)
         {
-            qDebug() << std::stringLiteral("lockedAccount already contains: %1").arg(characterId);
+            std::cerr << "lockedAccount already contains: " << std::to_string(characterId) << std::endl;
             return;
         }
-        if(lockedAccount.contains(characterId)>QDateTime::currentMSecsSinceEpoch()/1000)
+        if(lockedAccount.at(characterId)>(uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)
         {
-            qDebug() << std::stringLiteral("lockedAccount already contains not finished timeout: %1").arg(characterId);
+            std::cerr << "lockedAccount already contains not finished timeout: " << std::to_string(characterId) << std::endl;
             return;
         }
     }
-    std::unordered_mapIterator<uint32_t/*serverUniqueKey*/,InternalGameServer> j(gameServers);
-    while (j.hasNext()) {
-        j.next();
-        if(j.value().lockedAccount.contains(characterId))
+    auto j=gameServers.begin();
+    while(j!=gameServers.cend())
+    {
+        if(j->second.lockedAccount.find(characterId)!=j->second.lockedAccount.cend())
         {
-            qDebug() << std::stringLiteral("lockedAccount already contains on a game server: %1").arg(characterId);
+            std::cerr << "lockedAccount already contains on a game server: " << std::to_string(characterId) << std::endl;
             return;
         }
+        ++j;
     }
     #endif
     lockedAccount[characterId]=0;
-    qDebug() << std::stringLiteral("lock the char %1 total locked: %2").arg(characterId).arg(lockedAccount.size());
+    //std::cerr << "lock the char " << std::to_string(characterId) << " total locked: " << std::to_string(lockedAccount.size()) << std::endl;
 }
 
 //don't apply on InternalGameServer
 void CharactersGroup::unlockTheCharacter(const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(!lockedAccount.contains(characterId))
-        qDebug() << std::stringLiteral("try unlonk %1 but already unlocked, relock for 5s").arg(characterId);
-    else if(lockedAccount.value(characterId)!=0)
-        qDebug() << std::stringLiteral("unlock %1 already planned into: %2 (reset for 5s)").arg(characterId).arg(lockedAccount.value(characterId));
+    if(lockedAccount.find(characterId)==lockedAccount.cend())
+        std::cerr << "try unlonk " << characterId << " but already unlocked, relock for 5s" << std::endl;
+    else if(lockedAccount.at(characterId)!=0)
+        std::cerr << "unlock " << characterId << " already planned into: " << lockedAccount.at(characterId) << " (reset for 5s)" << std::endl;
     #endif
     lockedAccount[characterId]=QDateTime::currentMSecsSinceEpoch()/1000+5;
-    qDebug() << std::stringLiteral("unlock the char %1 total locked: %2").arg(characterId).arg(lockedAccount.size());
+    //std::cerr << "unlock the char " << std::to_string(characterId) << " total locked: " << std::to_string(lockedAccount.size()) << std::endl;
 }
 
 void CharactersGroup::waitBeforeReconnect(const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(!lockedAccount.contains(characterId))
-        qDebug() << std::stringLiteral("lockedAccount not contains: %1").arg(characterId);
-    else if(lockedAccount.value(characterId)!=0)
-        qDebug() << std::stringLiteral("lockedAccount contains set timeout: %1").arg(characterId);
+    if(lockedAccount.find(characterId)==lockedAccount.cend())
+        std::cerr << "lockedAccount not contains: " << characterId << std::endl;
+    else if(lockedAccount.at(characterId)!=0)
+        std::cerr << "lockedAccount contains set timeout: " << characterId << std::endl;
     #endif
     lockedAccount[characterId]=QDateTime::currentMSecsSinceEpoch()/1000+5;
-    qDebug() << std::stringLiteral("waitBeforeReconnect the char %1 total locked: %2").arg(characterId).arg(lockedAccount.size());
+    //std::cerr << "waitBeforeReconnect the char " << std::to_string(characterId) << " total locked: " << std::to_string(lockedAccount.size()) << std::endl;
 }
 
 void CharactersGroup::purgeTheLockedAccount()
 {
     bool clockDriftDetected=false;
     std::vector<uint32_t> charactedToUnlock;
-    std::unordered_mapIterator<uint32_t/*uniqueKey*/,uint64_t/*can reconnect after this time stamps if !=0, else locked*/> i(lockedAccount);
-    while (i.hasNext()) {
-        i.next();
-        if(i.value()!=0)
+    auto i=lockedAccount.begin();
+    while(i!=lockedAccount.cbegin())
+    {
+        if(i->second!=0)
         {
-            if(i.value()<(uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)
-                charactedToUnlock << i.key();
-            else if(i.value()>((uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)+3600)
+            if(i->second<(uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)
+                charactedToUnlock.push_back(i->first);
+            else if(i->second>((uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)+3600)
             {
-                charactedToUnlock << i.key();
+                charactedToUnlock.push_back(i->first);
                 clockDriftDetected=true;
             }
         }
+        ++i;
     }
-    int index=0;
+    unsigned int index=0;
     while(index<charactedToUnlock.size())
     {
-        lockedAccount.remove(charactedToUnlock.at(index));
+        lockedAccount.erase(charactedToUnlock.at(index));
         index++;
     }
     if(clockDriftDetected)
-        qDebug() << std::stringLiteral("Some locked account for more than 1h, clock drift?");
-    if(charactedToUnlock.isEmpty())
-        qDebug() << std::stringLiteral("purged char number %1 total locked: %2").arg(charactedToUnlock.size()).arg(lockedAccount.size());
+        std::cerr << "Some locked account for more than 1h, clock drift?" << std::endl;
+    if(charactedToUnlock.empty())
+        std::cerr << "purged char number " << std::to_string(charactedToUnlock.size()) << " total locked: " << std::to_string(lockedAccount.size()) << std::endl;
 }

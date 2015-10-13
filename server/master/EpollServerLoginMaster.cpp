@@ -49,7 +49,6 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems      = 150;
     {
         //empty buffer
-        memset(EpollClientLoginMaster::replyToRegisterLoginServer,0x00,sizeof(EpollClientLoginMaster::replyToRegisterLoginServer));
         memset(EpollClientLoginMaster::serverServerList,0x00,sizeof(EpollClientLoginMaster::serverServerList));
         memset(EpollClientLoginMaster::serverLogicalGroupList,0x00,sizeof(EpollClientLoginMaster::serverLogicalGroupList));
         memset(rawServerListForC211,0x00,sizeof(EpollClientLoginMaster::loginSettingsAndCharactersGroup));

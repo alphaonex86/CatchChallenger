@@ -68,13 +68,9 @@ public:
     static unsigned char protocolReplyCompressionNone[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     static unsigned char protocolReplyCompresssionZlib[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     static unsigned char protocolReplyCompressionXz[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
-    static char selectCharaterRequestOnGameServer[3/*header*/+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
-    static unsigned char duplicateConnexionDetected[2/*header*/+4];
-    static unsigned char getTokenForCharacterSelect[3/*header*/+4+4];
-    static unsigned char replyToRegisterLoginServer[sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)
-    +sizeof(uint32_t)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(uint32_t)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(uint32_t)*CATCHCHALLENGER_SERVER_MAXIDBLOCK
-    +16*1024];
-    static unsigned char replyToRegisterLoginServerBaseOffset;
+    static unsigned char selectCharaterRequestOnGameServer[2/*header*/+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
+    static unsigned char duplicateConnexionDetected[1/*header*/+4];
+    static unsigned char getTokenForCharacterSelect[2/*header*/+4+4];
     static char loginSettingsAndCharactersGroup[256*1024];
     static unsigned int loginSettingsAndCharactersGroupSize;
     static char serverPartialServerList[256*1024];
@@ -85,7 +81,6 @@ public:
     static unsigned int serverLogicalGroupListSize;
     static char loginPreviousToReplyCache[256*1024*3];
     static unsigned int loginPreviousToReplyCacheSize;
-    static unsigned char replyToIdListBuffer[sizeof(uint8_t)+sizeof(uint8_t)+1024];//reply for 07
     static std::unordered_map<std::string,int> logicalGroupHash;
 
     static FILE *fpRandomFile;
@@ -109,7 +104,7 @@ private:
     //send reply
     bool parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char *data,const unsigned int &size);
 
-    void parseInputBeforeLogin(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    bool parseInputBeforeLogin(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
     void disconnectClient();
 };
 }

@@ -146,7 +146,7 @@ public:
     char inputQueryNumberToPacketCode[256];//invalidation packet code: 0x00, store the packetCode, store size is useless because the resolution or is do at send or at receive, then no performance gain
 
     static char tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
-    static char tempBigBufferForInput[CATCHCHALLENGER_BIGBUFFERSIZE];
+    static char tempBigBufferForInput[CATCHCHALLENGER_BIGBUFFERSIZE];//to store the input buffer on linux READ() interface or with Qt
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     static char tempBigBufferForCompressedOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
     static char tempBigBufferForUncompressedInput[CATCHCHALLENGER_BIGBUFFERSIZE];
