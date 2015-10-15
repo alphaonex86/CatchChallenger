@@ -95,9 +95,9 @@ bool EpollClientLoginMaster::parseInputBeforeLogin(const uint8_t &mainCodeType,c
     return true;
 }
 
-bool EpollClientLoginMaster::parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size)
+bool EpollClientLoginMaster::parseMessage(const uint8_t &mainCodeType, const char * const parseMessagedata, const unsigned int &size)
 {
-    (void)data;
+    (void)parseMessagedata;
     (void)size;
     switch(mainCodeType)
     {
@@ -113,7 +113,7 @@ bool EpollClientLoginMaster::parseMessage(const uint8_t &mainCodeType,const char
                 parseNetworkReadError("charactersGroupForGameServer==NULL main ident: "+std::to_string(mainCodeType));
                 return false;
             }
-            const uint32_t &characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data)));
+            const uint32_t &characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(parseMessagedata)));
             charactersGroupForGameServer->unlockTheCharacter(characterId);
             charactersGroupForGameServerInformation->lockedAccount.erase(characterId);
             return true;
@@ -138,7 +138,7 @@ bool EpollClientLoginMaster::parseMessage(const uint8_t &mainCodeType,const char
                 return false;
             }
             #endif
-            charactersGroupForGameServerInformation->currentPlayer=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
+            charactersGroupForGameServerInformation->currentPlayer=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(parseMessagedata)));
             if(charactersGroupForGameServerInformation->currentPlayer>charactersGroupForGameServerInformation->maxPlayer)
             {
                 parseNetworkReadError("charactersGroupForGameServerInformation->currentPlayer > charactersGroupForGameServerInformation->maxPlayer main ident: "+std::to_string(mainCodeType));
@@ -156,8 +156,8 @@ bool EpollClientLoginMaster::parseMessage(const uint8_t &mainCodeType,const char
                 }
                 const int posFromZero=gameServers.size()-1-index;
                 const unsigned int bufferPos=2-2*/*last is zero*/posFromZero;
-                *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::serverServerList+EpollClientLoginMaster::serverServerListSize-bufferPos)=*reinterpret_cast<uint16_t *>(const_cast<char *>(data));
-                *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::loginPreviousToReplyCache+EpollClientLoginMaster::loginPreviousToReplyCacheSize-bufferPos)=*reinterpret_cast<uint16_t *>(const_cast<char *>(data));
+                *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::serverServerList+EpollClientLoginMaster::serverServerListSize-bufferPos)=*reinterpret_cast<uint16_t *>(const_cast<char *>(parseMessagedata));
+                *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::loginPreviousToReplyCache+EpollClientLoginMaster::loginPreviousToReplyCacheSize-bufferPos)=*reinterpret_cast<uint16_t *>(const_cast<char *>(parseMessagedata));
             }
             currentPlayerForGameServerToUpdate=true;
             return true;
