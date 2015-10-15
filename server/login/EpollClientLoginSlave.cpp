@@ -2,7 +2,8 @@
 #include "CharactersGroupForLogin.h"
 
 #include <iostream>
-#include <std::string>
+#include <string>
+#include <cstring>
 
 using namespace CatchChallenger;
 
@@ -75,7 +76,7 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
         delete socketString;
     {
         //SQL
-        int index=0;
+        unsigned int index=0;
         while(index<callbackRegistred.size())
         {
             callbackRegistred.at(index)->object=NULL;
@@ -88,7 +89,7 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
         {
             CharactersGroupForLogin * const charactersGroupForLogin=CharactersGroupForLogin::list.at(index);
 
-            int sub_index=0;
+            unsigned int sub_index=0;
             while(sub_index<charactersGroupForLogin->clientQueryForReadReturn.size())
             {
                 if(charactersGroupForLogin->clientQueryForReadReturn.at(sub_index)==this)
@@ -116,11 +117,12 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
         //selected char
         /// \todo check by crash with ASSERT failure in std::unordered_map: "Iterating beyond end()"
         {
-            std::unordered_mapIterator<uint8_t/*queryNumber*/,LinkToMaster::DataForSelectedCharacterReturn> j(LinkToMaster::linkToMaster->selectCharacterClients);
-            while (j.hasNext()) {
-                j.next();
-                if(j.value().client==this)
-                    LinkToMaster::linkToMaster->selectCharacterClients[j.key()].client=NULL;
+            auto j=LinkToMaster::linkToMaster->selectCharacterClients.begin();
+            while(j!=LinkToMaster::linkToMaster->selectCharacterClients.cend())
+            {
+                if(j->second.client==this)
+                    LinkToMaster::linkToMaster->selectCharacterClients[j->first].client=NULL;
+                ++j;
             }
         }
     }
@@ -149,13 +151,13 @@ void EpollClientLoginSlave::disconnectClient()
 //input/ouput layer
 void EpollClientLoginSlave::errorParsingLayer(const std::string &error)
 {
-    std::cerr << socketString << ": " << error.toLocal8Bit().constData() << std::endl;
+    std::cerr << socketString << ": " << error << std::endl;
     disconnectClient();
 }
 
 void EpollClientLoginSlave::messageParsingLayer(const std::string &message) const
 {
-    std::cout << socketString << ": " << message.toLocal8Bit().constData() << std::endl;
+    std::cout << socketString << ": " << message << std::endl;
 }
 
 void EpollClientLoginSlave::errorParsingLayer(const char * const error)

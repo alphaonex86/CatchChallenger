@@ -98,11 +98,11 @@ private:
     void errorParsingLayer(const char * const error);
     void messageParsingLayer(const char * const message) const;
     //have message without reply
-    bool parseMessage(const uint8_t &mainCodeType,const char *data,const unsigned int &size);
+    bool parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size);
     //have query with reply
-    bool parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char *data,const unsigned int &size);
+    bool parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
     //send reply
-    bool parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char *data,const unsigned int &size);
+    bool parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
 
     bool parseInputBeforeLogin(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
     void disconnectClient();

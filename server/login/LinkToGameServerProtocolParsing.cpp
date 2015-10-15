@@ -7,7 +7,7 @@
 
 using namespace CatchChallenger;
 
-bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char *data, const unsigned int &size)
+bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
 {
     Q_UNUSED(queryNumber);
     Q_UNUSED(size);
@@ -72,7 +72,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
     }
 }
 
-void LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char *data,const unsigned int &size)
+void LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size)
 {
     if(stat!=Stat::Logged)
     {
@@ -99,7 +99,7 @@ void LinkToGameServer::parseFullMessage(const uint8_t &mainCodeType,const uint8_
 }
 
 //have query with reply
-void LinkToGameServer::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char *data,const unsigned int &size)
+void LinkToGameServer::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     Q_UNUSED(data);
     if(stat!=Stat::Logged)
@@ -125,7 +125,7 @@ void LinkToGameServer::parseFullQuery(const uint8_t &mainCodeType,const uint8_t 
 }
 
 //send reply
-void LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char *data,const unsigned int &size)
+void LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     if(stat!=Stat::Logged)
     {

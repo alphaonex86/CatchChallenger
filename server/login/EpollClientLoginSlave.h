@@ -11,6 +11,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #define BASE_PROTOCOL_MAGIC_SIZE 8
 
@@ -148,17 +149,11 @@ public:
     static unsigned int serverLogicalGroupAndServerListSize;
 
     static unsigned char loginIsWrongBufferReply[4];
-
-    static char characterSelectionIsWrongBufferCharacterNotFound[64];
-    static char characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline[64];
-    static char characterSelectionIsWrongBufferServerInternalProblem[64];
-    static char characterSelectionIsWrongBufferServerNotFound[64];
-    static uint8_t characterSelectionIsWrongBufferSize;
 private:
     std::vector<DatabaseBase::CallBack *> callbackRegistred;
     std::vector<void *> paramToPassToCallBack;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    std::stringList paramToPassToCallBackType;
+    std::vector<std::string> paramToPassToCallBackType;
     #endif
 
     static unsigned char protocolReplyProtocolNotSupported[4];
@@ -181,16 +176,13 @@ private:
     void errorParsingLayer(const char * const error);
     void messageParsingLayer(const char * const message) const;
     //have message without reply
-    void parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size);
-    void parseFullMessage(const uint8_t &mainCodeType,const uint8_t &subCodeType,const char * const data,const unsigned int &size);
+    bool parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size);
     //have query with reply
-    void parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
-    void parseFullQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    bool parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
     //send reply
-    void parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
-    void parseFullReplyData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    bool parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
 
-    void parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size);
+    bool parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size);
     void disconnectClient();
 public:
     void askLogin_cancel();
@@ -230,7 +222,7 @@ private:
         int rawDataSize;
     };
     //to be ordered
-    QMap<uint8_t,CharacterListForReply> characterTempListForReply;
+    std::map<uint8_t,CharacterListForReply> characterTempListForReply;
     uint8_t characterListForReplyInSuspend;
     //by client because is where is merged all servers time reply from all catchchallenger_common*
     char *serverListForReplyRawData;
