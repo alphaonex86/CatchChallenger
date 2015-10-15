@@ -22,11 +22,6 @@ unsigned char EpollClientLoginSlave::protocolReplyCompressionNone[]={0xC1/*reply
 unsigned char EpollClientLoginSlave::protocolReplyCompresssionZlib[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT/*reply size*/,0x05/*return code*/};
 unsigned char EpollClientLoginSlave::protocolReplyCompressionXz[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT/*reply size*/,0x06/*return code*/};
 
-char EpollClientLoginSlave::characterSelectionIsWrongBufferCharacterNotFound[];
-char EpollClientLoginSlave::characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline[];
-char EpollClientLoginSlave::characterSelectionIsWrongBufferServerInternalProblem[];
-char EpollClientLoginSlave::characterSelectionIsWrongBufferServerNotFound[];
-uint8_t EpollClientLoginSlave::characterSelectionIsWrongBufferSize=0;
 unsigned char EpollClientLoginSlave::loginIsWrongBufferReply[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x00/*temp return code*/};
 
 unsigned char EpollClientLoginSlave::loginInProgressBuffer[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x06/*return code*/};

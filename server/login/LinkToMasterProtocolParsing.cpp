@@ -10,7 +10,7 @@
 
 using namespace CatchChallenger;
 
-void LinkToMaster::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char *data, const unsigned int &size)
+void LinkToMaster::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
 {
     Q_UNUSED(queryNumber);
     Q_UNUSED(size);
@@ -23,7 +23,7 @@ void LinkToMaster::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint
     }
 }
 
-void LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *data,const unsigned int &size)
+void LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size)
 {
     (void)data;
     (void)size;
@@ -844,7 +844,7 @@ void LinkToMaster::parseFullMessage(const uint8_t &mainCodeType,const uint8_t &s
 }
 
 //have query with reply
-void LinkToMaster::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char *data,const unsigned int &size)
+void LinkToMaster::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     Q_UNUSED(data);
     if(stat!=Stat::Logged)
@@ -883,7 +883,7 @@ void LinkToMaster::parseFullQuery(const uint8_t &mainCodeType,const uint8_t &sub
 }
 
 //send reply
-void LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char *data,const unsigned int &size)
+void LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     queryNumberList.push_back(queryNumber);
     if(stat!=Stat::Logged)

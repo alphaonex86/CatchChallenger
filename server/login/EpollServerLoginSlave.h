@@ -68,8 +68,8 @@ public:
     bool tcpNodelay,tcpCork;
     bool serverReady;
 private:
-    char * server_ip;
-    char * server_port;
+    std::string server_ip;
+    std::string server_port;
 private:
     void preload_profile();
     void generateToken(QSettings &settings);

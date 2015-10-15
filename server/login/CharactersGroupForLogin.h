@@ -4,8 +4,8 @@
 #include "../epoll/BaseClassSwitch.h"
 #include "../epoll/db/EpollPostgresql.h"
 #include "EpollClientLoginSlave.h"
-#include <std::string>
-#include <std::unordered_map>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace CatchChallenger {
@@ -90,8 +90,8 @@ private:
 private:
     EpollPostgresql *databaseBaseCommon;
     std::unordered_map<uint32_t,InternalGameServer> servers;
-    std::vector<void * const> clientAddReturnList;
-    std::vector<void * const> clientRemoveReturnList;
+    std::vector<void *> clientAddReturnList;
+    std::vector<void *> clientRemoveReturnList;
     std::vector<uint32_t> deleteCharacterNowCharacterIdList;
     std::unordered_map<uint32_t,uint8_t> uniqueKeyToIndex;
 
