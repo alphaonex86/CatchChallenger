@@ -12,7 +12,7 @@ using namespace CatchChallenger;
 void EpollClientLoginSlave::askLogin(const uint8_t &query_id,const char *rawdata)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryLogin::db_query_login==NULL)
+    if(PreparedDBQueryLogin::db_query_login.empty())
     {
         errorParsingLayer(std::stringLiteral("askLogin() Query login is empty, bug"));
         return;
