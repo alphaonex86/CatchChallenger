@@ -160,7 +160,7 @@ void BaseServer::preload_other()
             std::cerr << "CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=28 into BaseServer::preload_other()" << std::endl;
             abort();
         }
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput,CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size());
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size());
         posOutput+=CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size();
 
         {

@@ -2,4 +2,4 @@
 
 using namespace CatchChallenger;
 
-const unsigned char LinkToGameServer::protocolHeaderToMatchGameServer[] = PROTOCOL_HEADER_GAMESERVER;
+unsigned char LinkToGameServer::protocolHeaderToMatchGameServer[] = {0xA0,0x01};

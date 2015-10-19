@@ -34,7 +34,7 @@ public:
     char tokenForGameServer[CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
     EpollClientLoginSlave *client;
     bool haveTheFirstSslHeader;
-    static const unsigned char protocolHeaderToMatchGameServer[5];
+    static unsigned char protocolHeaderToMatchGameServer[2+5];
     uint8_t queryIdToReconnect;
 
     void setConnexionSettings();
@@ -44,6 +44,8 @@ public:
     bool trySelectCharacter(void * const client,const uint8_t &client_query_id,const uint32_t &serverUniqueKey,const uint8_t &charactersGroupIndex,const uint32_t &characterId);
     void sendProtocolHeader();
     void readTheFirstSslHeader();
+    bool sendRawBlock(const char * const data,const unsigned int &size);
+    bool removeFromQueryReceived(const uint8_t &queryNumber);
 protected:
     void disconnectClient();
     void errorParsingLayer(const std::string &error);

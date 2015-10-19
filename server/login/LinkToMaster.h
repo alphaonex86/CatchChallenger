@@ -44,7 +44,7 @@ public:
     static LinkToMaster *linkToMaster;
     static int linkToMasterSocketFd;
     static bool haveTheFirstSslHeader;
-    static unsigned char header_magic_number[9];
+    static unsigned char header_magic_number[11];
     static unsigned char private_token[TOKEN_SIZE_FOR_MASTERAUTH];
 
     std::vector<uint8_t> queryNumberList;
@@ -57,6 +57,7 @@ public:
     void setConnexionSettings();
     void connectInternal();
     void readTheFirstSslHeader();
+    bool sendRawBlock(const char * const data,const unsigned int &size);
 protected:
     void disconnectClient();
     void errorParsingLayer(const std::string &error);

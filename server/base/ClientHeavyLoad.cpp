@@ -1145,13 +1145,13 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
             {
                 std::string queryText=PreparedDBQueryCommon::db_query_insert_monster;
                 stringreplaceOne(queryText,"%1",std::to_string(monster_id));
-                stringreplaceOne(queryText,"%1",std::to_string(stat.hp));
-                stringreplaceOne(queryText,"%1",std::to_string(characterId));
-                stringreplaceOne(queryText,"%1",std::to_string(monsterId));
-                stringreplaceOne(queryText,"%1",std::to_string(profile.monsters.at(index).level));
-                stringreplaceOne(queryText,"%1",std::to_string(profile.monsters.at(index).captured_with));
-                stringreplaceOne(queryText,"%1",std::to_string(gender));
-                stringreplaceOne(queryText,"%1",std::to_string(monster_position));
+                stringreplaceOne(queryText,"%2",std::to_string(stat.hp));
+                stringreplaceOne(queryText,"%3",std::to_string(characterId));
+                stringreplaceOne(queryText,"%4",std::to_string(monsterId));
+                stringreplaceOne(queryText,"%5",std::to_string(profile.monsters.at(index).level));
+                stringreplaceOne(queryText,"%6",std::to_string(profile.monsters.at(index).captured_with));
+                stringreplaceOne(queryText,"%7",std::to_string(gender));
+                stringreplaceOne(queryText,"%8",std::to_string(monster_position));
                 dbQueryWriteCommon(queryText);
                 monster_position++;
             }
@@ -1740,7 +1740,7 @@ void Client::purgeDatapackListReply(const uint8_t &query_id)
             errorOutput("Client::purgeDatapackListReply too big to reply");
             return;
         }
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput,tempDatapackListReplyArray.data(),tempDatapackListReplyArray.size());
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,tempDatapackListReplyArray.data(),tempDatapackListReplyArray.size());
         posOutput+=tempDatapackListReplyArray.size();
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -1765,7 +1765,7 @@ void Client::sendFileContent()
             errorOutput("Client::sendFileContent too big to reply");
             return;
         }
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput,BaseServerMasterSendDatapack::rawFilesBuffer.data(),BaseServerMasterSendDatapack::rawFilesBuffer.size());
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,BaseServerMasterSendDatapack::rawFilesBuffer.data(),BaseServerMasterSendDatapack::rawFilesBuffer.size());
         posOutput+=BaseServerMasterSendDatapack::rawFilesBuffer.size();
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -1792,7 +1792,7 @@ void Client::sendCompressedFileContent()
             errorOutput("Client::sendFileContent too big to reply");
             return;
         }
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput,BaseServerMasterSendDatapack::rawFilesBuffer.data(),BaseServerMasterSendDatapack::rawFilesBuffer.size());
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,BaseServerMasterSendDatapack::rawFilesBuffer.data(),BaseServerMasterSendDatapack::rawFilesBuffer.size());
         posOutput+=BaseServerMasterSendDatapack::rawFilesBuffer.size();
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -1895,7 +1895,7 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
                 *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(contentsize);
                 posOutput+=4;
 
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput,content.data(),contentsize);
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,content.data(),contentsize);
                 posOutput+=contentsize;
 
                 sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);

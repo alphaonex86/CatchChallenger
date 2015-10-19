@@ -649,7 +649,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 posOutput+=1+4;
                 *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(reply04inWaitSize);//set the dynamic size
 
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput,reply04inWait,reply04inWaitSize);
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,reply04inWait,reply04inWaitSize);
                 posOutput+=reply04inWaitSize;
 
                 client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -860,7 +860,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     posOutput+=1+4;
                     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(reply0205inWaitSize);//set the dynamic size
 
-                    memcpy(ProtocolParsingBase::tempBigBufferForOutput,reply0205inWait,reply0205inWaitSize);
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,reply0205inWait,reply0205inWaitSize);
                     posOutput+=reply0205inWaitSize;
 
                     client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -890,7 +890,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
     posOutput+=1+4;
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
 
-    memcpy(ProtocolParsingBase::tempBigBufferForOutput,data,size);
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data,size);
     posOutput+=size;
 
     client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);

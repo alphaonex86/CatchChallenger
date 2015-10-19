@@ -75,12 +75,15 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
     if(socketString!=NULL)
         delete socketString;
     {
-        //SQL
         unsigned int index=0;
-        while(index<callbackRegistred.size())
+
+        //SQL
         {
-            callbackRegistred.at(index)->object=NULL;
-            index++;
+            while(!callbackRegistred.empty())
+            {
+                callbackRegistred.front()->object=NULL;
+                callbackRegistred.pop();
+            }
         }
 
         //from master
@@ -180,3 +183,9 @@ void EpollClientLoginSlave::parseIncommingData()
 {
     ProtocolParsingInputOutput::parseIncommingData();
 }
+
+bool EpollClientLoginSlave::removeFromQueryReceived(const uint8_t &queryNumber)
+{
+    return ProtocolParsingBase::removeFromQueryReceived(queryNumber);
+}
+
