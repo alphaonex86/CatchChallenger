@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <queue>
 
 #define BASE_PROTOCOL_MAGIC_SIZE 8
 
@@ -111,6 +112,7 @@ public:
     void addCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode);
     void removeCharacter_ReturnOk(const uint8_t &query_id);
     void removeCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode,const std::string &errorString=std::string());
+    bool removeFromQueryReceived(const uint8_t &queryNumber);
     void parseNetworkReadError(const std::string &errorString);
 
     LinkToGameServer *linkToGameServer;
@@ -128,10 +130,6 @@ public:
     static bool maxAccountIdRequested;
     static bool maxCharacterIdRequested;
     static bool maxMonsterIdRequested;
-    static char maxAccountIdRequest[3];
-    static char maxCharacterIdRequest[3];
-    static char maxMonsterIdRequest[3];
-    static char selectCharaterRequestOnMaster[3/*header*/+1+4+4+4];
     static char replyToRegisterLoginServerCharactersGroup[1024];
     static unsigned int replyToRegisterLoginServerCharactersGroupSize;
     static char baseDatapackSum[28];
@@ -150,10 +148,10 @@ public:
 
     static unsigned char loginIsWrongBufferReply[4];
 private:
-    std::vector<DatabaseBase::CallBack *> callbackRegistred;
-    std::vector<void *> paramToPassToCallBack;
+    std::queue<DatabaseBase::CallBack *> callbackRegistred;
+    std::queue<void *> paramToPassToCallBack;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    std::vector<std::string> paramToPassToCallBackType;
+    std::queue<std::string> paramToPassToCallBackType;
     #endif
 
     static unsigned char protocolReplyProtocolNotSupported[4];
@@ -198,20 +196,12 @@ public:
     void character_list_return(const uint8_t &characterGroupIndex,char * const tempRawData,const int &tempRawDataSize);
     void server_list_return(const uint8_t &serverCount,char * const tempRawData,const int &tempRawDataSize);
 
-    void sendFullPacket(const uint8_t &mainIdent,const uint8_t &subIdent,const char * const data, const unsigned int &size);
-    void sendFullPacket(const uint8_t &mainIdent,const uint8_t &subIdent);
-    void sendPacket(const uint8_t &mainIdent, const char * const data, const unsigned int &size);
-    void sendPacket(const uint8_t &mainIdent);
-    void sendRawSmallPacket(const char * const data, const unsigned int &size);
-    void sendQuery(const uint8_t &mainIdent,const uint8_t &subIdent,const uint8_t &queryNumber,const char * const data, const unsigned int &size);
-    void sendQuery(const uint8_t &mainIdent,const uint8_t &subIdent,const uint8_t &queryNumber);
-    void postReply(const uint8_t &queryNumber,const char * const data, const unsigned int &size);
-    void postReply(const uint8_t &queryNumber);
+    bool sendRawBlock(const char * const data, const unsigned int &size);
 private:
     void deleteCharacterNow(const uint32_t &characterId);
     void addCharacter(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &skinId);
     void removeCharacter(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint32_t &characterId);
-    void dbQueryWriteLogin(const char * const queryText);
+    void dbQueryWriteLogin(const std::string &queryText);
 
     void loginIsWrong(const uint8_t &query_id,const uint8_t &returnCode,const std::string &debugMessage);
     void selectCharacter(const uint8_t &query_id,const uint32_t &serverUniqueKey,const uint8_t &charactersGroupIndex,const uint32_t &characterId);

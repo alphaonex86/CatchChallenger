@@ -213,13 +213,13 @@ void LinkToGameServer::disconnectClient()
 //input/ouput layer
 void LinkToGameServer::errorParsingLayer(const std::string &error)
 {
-    std::cerr << error.toLocal8Bit().constData() << std::endl;
+    std::cerr << error << std::endl;
     disconnectClient();
 }
 
 void LinkToGameServer::messageParsingLayer(const std::string &message) const
 {
-    std::cout << message.toLocal8Bit().constData() << std::endl;
+    std::cout << message << std::endl;
 }
 
 void LinkToGameServer::errorParsingLayer(const char * const error)
@@ -248,5 +248,17 @@ void LinkToGameServer::parseIncommingData()
 
 void LinkToGameServer::sendProtocolHeader()
 {
-    packOutcommingQuery(0x03,0x01/*queryNumber()*/,reinterpret_cast<const char *>(protocolHeaderToMatchGameServer),sizeof(protocolHeaderToMatchGameServer));
+    //send the network query
+    registerOutputQuery(0x01);
+    sendRawBlock(reinterpret_cast<char *>(protocolHeaderToMatchGameServer),sizeof(protocolHeaderToMatchGameServer));
+}
+
+bool LinkToGameServer::sendRawBlock(const char * const data,const unsigned int &size)
+{
+    return internalSendRawSmallPacket(data,size);
+}
+
+bool LinkToGameServer::removeFromQueryReceived(const uint8_t &queryNumber)
+{
+    return ProtocolParsingBase::removeFromQueryReceived(queryNumber);
 }

@@ -19,8 +19,8 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
             //Protocol initialization
             if(size<1)
             {
-                parseNetworkReadError(std::stringLiteral("wrong size with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
-                return;
+                parseNetworkReadError("wrong size with main ident: "+std::to_string(mainCodeType)+" and queryNumber: "+std::to_string(queryNumber)+", type: query_type_protocol");
+                return false;
             }
             uint8_t returnCode=data[0x00];
             if(returnCode>=0x04 && returnCode<=0x06)
@@ -40,168 +40,244 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                         ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Lz4;
                     break;
                     default:
-                        parseNetworkReadError(std::stringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
-                    return;
+                        parseNetworkReadError("compression type wrong with main ident: "+std::to_string(mainCodeType)+" and queryNumber: "+std::to_string(queryNumber)+", type: query_type_protocol");
+                    return false;
                 }
                 if(size!=(sizeof(uint8_t)))
                 {
-                    parseNetworkReadError(std::stringLiteral("compression type wrong size (stage 3) with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
-                    return;
+                    parseNetworkReadError("compression type wrong size (stage 3) with main ident: "+std::to_string(mainCodeType)+" and queryNumber: "+std::to_string(queryNumber)+", type: query_type_protocol");
+                    return false;
                 }
                 //send token to game server
-                packFullOutcommingQuery(0x02,0x06,queryIdToReconnect/*query number*/,tokenForGameServer,sizeof(tokenForGameServer));
+                registerOutputQuery(queryIdToReconnect);
+                uint32_t posOutput=0;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x93;
+                posOutput+=1;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryIdToReconnect;
+                posOutput+=1+4;
+
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,tokenForGameServer,sizeof(tokenForGameServer));
+                posOutput+=sizeof(tokenForGameServer);
+
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+                sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
                 stat=ProtocolGood;
-                return;
+                return true;
             }
             else
             {
                 if(client!=NULL)
-                    client->postReply(queryIdToReconnect,data,size);
+                {
+                    //send the network reply
+                    client->removeFromQueryReceived(queryNumber);
+                    uint32_t posOutput=0;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+                    posOutput+=1;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+                    posOutput+=1+4;
+                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
+
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data,size);
+                    posOutput+=size;
+
+                    client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                }
                 if(returnCode==0x03)
                     parseNetworkReadError("Server full");
                 else
-                    parseNetworkReadError(std::stringLiteral("Unknown error %1").arg(returnCode));
-                return;
+                    parseNetworkReadError("Unknown error "+std::to_string(returnCode));
+                return false;
             }
         }
         break;
         default:
-            parseNetworkReadError(std::stringLiteral("unknown sort ident reply code: %1, line: %2").arg(mainCodeType).arg(std::stringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-            return;
+            parseNetworkReadError("unknown sort ident reply code: "+std::to_string(mainCodeType)+", line: "+__FILE__+":"+std::to_string(__LINE__));
+            return false;
         break;
     }
 }
 
-void LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size)
+bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size)
 {
     if(stat!=Stat::Logged)
     {
         parseNetworkReadError("parseFullMessage() not logged to send: "+std::to_string(mainCodeType));
-        return;
+        return false;
     }
     (void)data;
     (void)size;
     if(client!=NULL)
-        client->packOutcommingData(mainCodeType,data,size);
-}
-
-void LinkToGameServer::parseFullMessage(const uint8_t &mainCodeType,const uint8_t &subCodeType,const char *rawData,const unsigned int &size)
-{
-    if(stat!=Stat::Logged)
     {
-        parseNetworkReadError("parseFullMessage() not logged to send: "+std::to_string(mainCodeType)+" "+std::to_string(subCodeType));
-        return;
+        uint8_t fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType];
+        if(fixedSize!=0xFE)
+        {
+            //fixed size
+            //send the network message
+            uint32_t posOutput=0;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+            posOutput+=1;
+
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,data,size);
+            posOutput+=size;
+
+            return client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+        }
+        else
+        {
+            //dynamic size
+            //send the network message
+            uint32_t posOutput=0;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+            posOutput+=1+4;
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
+            posOutput+=size;
+
+            return client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+        }
     }
-    (void)rawData;
-    (void)size;
-    if(client!=NULL)
-        client->packFullOutcommingData(mainCodeType,subCodeType,rawData,size);
+    else
+        return false;
 }
 
 //have query with reply
-void LinkToGameServer::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
+bool LinkToGameServer::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     Q_UNUSED(data);
     if(stat!=Stat::Logged)
         return parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
     if(client!=NULL)
-        client->packOutcommingQuery(mainCodeType,queryNumber,data,size);
-}
-
-void LinkToGameServer::parseFullQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char *rawData,const unsigned int &size)
-{
-    (void)subCodeType;
-    (void)queryNumber;
-    (void)rawData;
-    (void)size;
-    if(stat!=Stat::Logged)
     {
-        parseNetworkReadError(std::stringLiteral("is not logged, parseFullQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
-        return;
-    }
-    //do the work here
-    if(client!=NULL)
-        client->packFullOutcommingQuery(mainCodeType,subCodeType,queryNumber,rawData,size);
-}
-
-//send reply
-void LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
-{
-    if(stat!=Stat::Logged)
-    {
-        if(mainCodeType==0x03 && queryNumber==0x01 && stat==Stat::Connected)
+        client->registerOutputQuery(queryNumber);
+        uint8_t fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType];
+        if(fixedSize!=0xFE)
         {
-            parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
-            return;
+            //fixed size
+            //send the network message
+            uint32_t posOutput=0;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+            posOutput+=1;
+
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,data,size);
+            posOutput+=size;
+
+            return client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         }
         else
         {
-            parseNetworkReadError(std::stringLiteral("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
-            return;
+            //dynamic size
+            //send the network message
+            uint32_t posOutput=0;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+            posOutput+=1+4;
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
+            posOutput+=size;
+
+            return client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+        }
+        return true;
+    }
+    else
+        return false;
+}
+
+//send reply
+bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
+{
+    if(stat!=Stat::Logged)
+    {
+        if(mainCodeType==0xA0 && queryNumber==0x01 && stat==Stat::Connected)
+            return parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
+        else
+        {
+            parseNetworkReadError("is not logged, parseReplyData("+std::to_string(mainCodeType)+","+std::to_string(queryNumber)+")");
+            return false;
         }
     }
     Q_UNUSED(data);
     Q_UNUSED(size);
     //do the work here
-
-    if(client!=NULL)
-        client->postReply(queryNumber,data,size);
-}
-
-void LinkToGameServer::parseFullReplyData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char *data,const unsigned int &size)
-{
-    if(stat!=Stat::Logged)
-    {
-        if(stat==Stat::ProtocolGood && mainCodeType==0x02 && subCodeType==0x06)
-        {}
-        else
-        {
-            parseNetworkReadError(std::stringLiteral("is not logged, parseFullReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
-            return;
-        }
-    }
-    (void)data;
-    (void)size;
     //do the work here
     switch(mainCodeType)
     {
-        case 0x02:
-            switch(subCodeType)
+        case 0x93:
+            if(stat==Stat::ProtocolGood)
             {
-                case 0x06:
-                    if(stat==Stat::ProtocolGood)
+                if(size>=1)
+                {
+                    if(data[0x00]==0x01)
                     {
-                        if(size>=1)
-                        {
-                            if(data[0x00]==0x01)
-                            {
-                                stat=Stat::Logged;
-                                client->stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnected;
-                            }
-                            else
-                            {
-                                parseNetworkReadError(std::string("invalid code %1 main ident: ").arg(data[0x00])+std::to_string(mainCodeType)+std::string(", sub ident: %1 file:%2:%3").arg(subCodeType).arg(__FILE__).arg(__LINE__));
-                                return;
-                            }
-                        }
-                        else
-                        {
-                            parseNetworkReadError("size==0 main ident: "+std::to_string(mainCodeType)+std::string(", sub ident: %1 file:%2:%3").arg(subCodeType).arg(__FILE__).arg(__LINE__));
-                            return;
-                        }
+                        stat=Stat::Logged;
+                        client->stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnected;
+                        return true;
                     }
                     else
                     {
-                        parseNetworkReadError("stat wrong main ident: "+std::to_string(mainCodeType)+std::string(", sub ident: %1 file:%2:%3").arg(subCodeType).arg(__FILE__).arg(__LINE__));
-                        return;
+                        parseNetworkReadError("invalid code "+std::to_string(data[0x00])+" main ident: "+std::to_string(mainCodeType)+", file:"+__FILE__+":"+std::to_string(__LINE__));
+                        return false;
                     }
-                break;
+                }
+                else
+                {
+                    parseNetworkReadError("size==0 main ident: "+std::to_string(mainCodeType)+", file:"+__FILE__+":"+std::to_string(__LINE__));
+                    return false;
+                }
             }
+            else
+            {
+                parseNetworkReadError("stat wrong main ident: "+std::to_string(mainCodeType)+", file:"+__FILE__+":"+std::to_string(__LINE__));
+                return false;
+            }
+        break;
         default:
             if(client!=NULL)
-                client->postReply(queryNumber,data,size);
-        return;
+            {
+                client->removeFromQueryReceived(queryNumber);
+                uint8_t fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType];
+                if(fixedSize!=0xFE)
+                {
+                    //fixed size
+                    //send the network message
+                    uint32_t posOutput=0;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+                    posOutput+=1;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+                    posOutput+=1;
+
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,data,size);
+                    posOutput+=size;
+
+                    return client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                }
+                else
+                {
+                    //dynamic size
+                    //send the network message
+                    uint32_t posOutput=0;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+                    posOutput+=1;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+                    posOutput+=1+4;
+                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
+                    posOutput+=size;
+
+                    return client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                }
+                return true;
+            }
+        return false;
     }
+    return true;
 }
 
 void LinkToGameServer::parseNetworkReadError(const std::string &errorString)

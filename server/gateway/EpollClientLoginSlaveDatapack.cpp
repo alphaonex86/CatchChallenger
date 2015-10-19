@@ -363,7 +363,7 @@ void EpollClientLoginSlave::purgeDatapackListReply(const uint8_t &query_id)
     posOutput+=1+4;
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(tempDatapackListReplyArray.size());//set the dynamic size
 
-    memcpy(ProtocolParsingBase::tempBigBufferForOutput,tempDatapackListReplyArray.data(),tempDatapackListReplyArray.size());
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,tempDatapackListReplyArray.data(),tempDatapackListReplyArray.size());
     posOutput+=tempDatapackListReplyArray.size();
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -383,7 +383,7 @@ void EpollClientLoginSlave::sendFileContent()
         posOutput+=1+4;
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(EpollClientLoginSlave::rawFilesBuffer.size());//set the dynamic size
 
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput,EpollClientLoginSlave::rawFilesBuffer.data(),EpollClientLoginSlave::rawFilesBuffer.size());
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,EpollClientLoginSlave::rawFilesBuffer.data(),EpollClientLoginSlave::rawFilesBuffer.size());
         posOutput+=EpollClientLoginSlave::rawFilesBuffer.size();
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -405,7 +405,7 @@ void EpollClientLoginSlave::sendCompressedFileContent()
         posOutput+=1+4;
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(EpollClientLoginSlave::compressedFilesBuffer.size());//set the dynamic size
 
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput,EpollClientLoginSlave::compressedFilesBuffer.data(),EpollClientLoginSlave::compressedFilesBuffer.size());
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,EpollClientLoginSlave::compressedFilesBuffer.data(),EpollClientLoginSlave::compressedFilesBuffer.size());
         posOutput+=EpollClientLoginSlave::compressedFilesBuffer.size();
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -508,7 +508,7 @@ bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::
                 *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(contentsize);
                 posOutput+=4;
 
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput,content.data(),contentsize);
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,content.data(),contentsize);
                 posOutput+=contentsize;
 
                 sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);

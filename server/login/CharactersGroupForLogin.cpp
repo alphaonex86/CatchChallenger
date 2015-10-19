@@ -36,7 +36,7 @@ void CharactersGroupForLogin::clearServerPair()
 void CharactersGroupForLogin::setServerUniqueKey(const uint8_t &indexOnFlatList,const uint32_t &serverUniqueKey,const char * const hostData,const uint8_t &hostDataSize,const uint16_t &port)
 {
     InternalGameServer tempServer;
-    tempServer.host=std::string::fromUtf8(hostData,hostDataSize);
+    tempServer.host=std::string(hostData,hostDataSize);
     tempServer.port=port;
     tempServer.indexOnFlatList=indexOnFlatList,
     servers[serverUniqueKey]=tempServer;
@@ -44,12 +44,12 @@ void CharactersGroupForLogin::setServerUniqueKey(const uint8_t &indexOnFlatList,
 
 bool CharactersGroupForLogin::containsServerUniqueKey(const uint32_t &serverUniqueKey) const
 {
-    return servers.contains(serverUniqueKey);
+    return servers.find(serverUniqueKey)!=servers.cend();
 }
 
 CharactersGroupForLogin::InternalGameServer CharactersGroupForLogin::getServerInformation(const uint32_t &serverUniqueKey) const
 {
-    return servers.value(serverUniqueKey);
+    return servers.at(serverUniqueKey);
 }
 
 BaseClassSwitch::EpollObjectType CharactersGroupForLogin::getType() const

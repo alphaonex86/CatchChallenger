@@ -65,7 +65,8 @@ SOURCES += \
     LinkToGameServer.cpp \
     TimerDdos.cpp \
     ../epoll/EpollTimer.cpp \
-    ../../general/base/lz4/lz4.c
+    ../../general/base/lz4/lz4.c \
+    ../../general/base/cpp11addition.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \
@@ -96,4 +97,5 @@ HEADERS += \
     LinkToGameServer.h \
     TimerDdos.h \
     ../epoll/EpollTimer.h \
-    ../../general/base/lz4/lz4.h
+    ../../general/base/lz4/lz4.h \
+    ../../general/base/cpp11addition.h

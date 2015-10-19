@@ -86,7 +86,7 @@ private:
     static void load_clan_max_id_static(void *object);
     void load_clan_max_id_return();
 
-    void dbQueryWriteCommon(const char * const queryText);
+    void dbQueryWriteCommon(const std::string &queryText);
 private:
     EpollPostgresql *databaseBaseCommon;
     std::unordered_map<uint32_t,InternalGameServer> servers;
