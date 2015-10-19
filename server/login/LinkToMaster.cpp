@@ -10,6 +10,7 @@
 #include <thread>         // std::this_thread::sleep_for
 #include <chrono>         // std::chrono::seconds
 #include <unistd.h>
+#include <string.h>
 
 using namespace CatchChallenger;
 
@@ -257,13 +258,13 @@ void LinkToMaster::disconnectClient()
 //input/ouput layer
 void LinkToMaster::errorParsingLayer(const std::string &error)
 {
-    std::cerr << error.toLocal8Bit().constData() << std::endl;
+    std::cerr << error << std::endl;
     disconnectClient();
 }
 
 void LinkToMaster::messageParsingLayer(const std::string &message) const
 {
-    std::cout << message.toLocal8Bit().constData() << std::endl;
+    std::cout << message << std::endl;
 }
 
 void LinkToMaster::errorParsingLayer(const char * const error)
@@ -324,24 +325,27 @@ bool LinkToMaster::trySelectCharacter(void * const client,const uint8_t &client_
     dataForSelectedCharacterReturn.charactersGroupIndex=charactersGroupIndex;
     selectCharacterClients[queryNumberList.back()]=dataForSelectedCharacterReturn;
     //register it
-    newFullOutputQuery(0x02,0x07,queryNumberList.back());
+    registerOutputQuery(queryNumberList.back());
     //the data
-    EpollClientLoginSlave::selectCharaterRequestOnMaster[0x02]=queryNumberList.back();
-    EpollClientLoginSlave::selectCharaterRequestOnMaster[0x03]=charactersGroupIndex;
-    *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::selectCharaterRequestOnMaster+0x04)=serverUniqueKey;
-    *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::selectCharaterRequestOnMaster+0x08)=htole32(characterId);
-    *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::selectCharaterRequestOnMaster+0x0C)=htole32(static_cast<EpollClientLoginSlave *>(client)->account_id);
+    ProtocolParsingBase::tempBigBufferForOutput[0x00]=0xBE;
+    ProtocolParsingBase::tempBigBufferForOutput[0x01]=queryNumberList.back();
+    ProtocolParsingBase::tempBigBufferForOutput[0x02]=charactersGroupIndex;
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+0x03)=serverUniqueKey;
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+0x07)=htole32(characterId);
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+0x0B)=htole32(static_cast<EpollClientLoginSlave *>(client)->account_id);
 
     queryNumberList.pop_back();
-    return internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::selectCharaterRequestOnMaster),sizeof(EpollClientLoginSlave::selectCharaterRequestOnMaster));
+    return internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,0x0C);
 }
 
 void LinkToMaster::sendProtocolHeader()
 {
-    packOutcommingQuery(0x01,
-                        queryNumberList.back(),
-                        reinterpret_cast<char *>(LinkToMaster::header_magic_number),
-                        sizeof(LinkToMaster::header_magic_number)
-                        );
+    LinkToMaster::header_magic_number[0x01]=queryNumberList.back();
+    internalSendRawSmallPacket(reinterpret_cast<char *>(LinkToMaster::header_magic_number),sizeof(LinkToMaster::header_magic_number));
     queryNumberList.pop_back();
+}
+
+bool LinkToMaster::sendRawBlock(const char * const data,const unsigned int &size)
+{
+    return sendRawBlock(data,size);
 }

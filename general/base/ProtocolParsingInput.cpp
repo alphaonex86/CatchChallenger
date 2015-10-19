@@ -112,6 +112,7 @@ void ProtocolParsingInputOutput::closeSocket()
     #endif
 }
 
+/// \todo drop (check login as proxy), reason: bypass the DDOS filter
 bool ProtocolParsingBase::forwardTo(ProtocolParsingBase * const destination)
 {
     uint32_t size=0;

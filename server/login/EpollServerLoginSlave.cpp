@@ -46,6 +46,14 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         memset(EpollClientLoginSlave::serverLogicalGroupList,0x00,sizeof(EpollClientLoginSlave::serverLogicalGroupList));
         memset(EpollClientLoginSlave::serverLogicalGroupAndServerList,0x00,sizeof(EpollClientLoginSlave::serverLogicalGroupAndServerList));
     }
+    {
+        static const unsigned char tocopy[]=PROTOCOL_HEADER_MASTERSERVER;
+        memcpy(LinkToMaster::header_magic_number+2,tocopy,9);
+    }
+    {
+        static const unsigned char tocopy[]=PROTOCOL_HEADER_GAMESERVER;
+        memcpy(LinkToGameServer::protocolHeaderToMatchGameServer+2,tocopy,5);
+    }
 
     srand(time(NULL));
 
@@ -463,17 +471,24 @@ void EpollServerLoginSlave::setProfilePair(const uint8_t &internalId,const uint1
 
 void EpollServerLoginSlave::compose04Reply()
 {
-    EpollClientLoginSlave::loginGood[0x00]=0x01;//good
+    EpollClientLoginSlave::loginGood[0x00]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    EpollClientLoginSlave::loginGood[0x01]=0x00;//reply id, unknow
+    EpollClientLoginSlave::loginGood[0x02]=0x00;//reply size, unknow
+    EpollClientLoginSlave::loginGood[0x03]=0x00;//reply size, unknow
+    EpollClientLoginSlave::loginGood[0x04]=0x00;//reply size, unknow
+    EpollClientLoginSlave::loginGood[0x05]=0x00;//reply size, unknow
 
-    *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::loginGood+0x01)=htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time);
-    EpollClientLoginSlave::loginGood[0x05]=CommonSettingsCommon::commonSettingsCommon.max_character;
-    EpollClientLoginSlave::loginGood[0x06]=CommonSettingsCommon::commonSettingsCommon.min_character;
-    EpollClientLoginSlave::loginGood[0x07]=CommonSettingsCommon::commonSettingsCommon.max_pseudo_size;
-    EpollClientLoginSlave::loginGood[0x08]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
-    *reinterpret_cast<uint16_t *>(EpollClientLoginSlave::loginGood+0x09)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
-    EpollClientLoginSlave::loginGood[0x0B]=CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
-    *reinterpret_cast<uint16_t *>(EpollClientLoginSlave::loginGood+0x0C)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
-    EpollClientLoginSlave::loginGoodSize=0x0E;
+    EpollClientLoginSlave::loginGood[0x06]=0x01;//good
+
+    *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::loginGood+0x07)=htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time);
+    EpollClientLoginSlave::loginGood[0x0B]=CommonSettingsCommon::commonSettingsCommon.max_character;
+    EpollClientLoginSlave::loginGood[0x0C]=CommonSettingsCommon::commonSettingsCommon.min_character;
+    EpollClientLoginSlave::loginGood[0x0D]=CommonSettingsCommon::commonSettingsCommon.max_pseudo_size;
+    EpollClientLoginSlave::loginGood[0x0E]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
+    *reinterpret_cast<uint16_t *>(EpollClientLoginSlave::loginGood+0x0F)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
+    EpollClientLoginSlave::loginGood[0x11]=CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
+    *reinterpret_cast<uint16_t *>(EpollClientLoginSlave::loginGood+0x12)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
+    EpollClientLoginSlave::loginGoodSize=0x14;
 
     memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,EpollClientLoginSlave::baseDatapackSum,sizeof(EpollClientLoginSlave::baseDatapackSum));
     EpollClientLoginSlave::loginGoodSize+=sizeof(EpollClientLoginSlave::baseDatapackSum);
