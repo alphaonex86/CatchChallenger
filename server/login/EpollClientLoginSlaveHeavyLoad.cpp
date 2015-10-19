@@ -14,37 +14,40 @@ void EpollClientLoginSlave::askLogin(const uint8_t &query_id,const char *rawdata
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryLogin::db_query_login.empty())
     {
-        errorParsingLayer(std::stringLiteral("askLogin() Query login is empty, bug"));
+        errorParsingLayer("askLogin() Query login is empty, bug");
         return;
     }
     #endif
     std::vector<char> login;
     {
+        login.resize(CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
         QCryptographicHash hash(QCryptographicHash::Sha224);
         hash.addData(rawdata,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
-        login=hash.result();
+        memcpy(login.data(),hash.result().constData(),CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
     }
     AskLoginParam *askLoginParam=new AskLoginParam;
     askLoginParam->query_id=query_id;
     askLoginParam->login=login;
-    askLoginParam->pass=std::vector<char>(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+    askLoginParam->pass.resize(CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+    memcpy(askLoginParam->pass.data(),rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
 
-    const std::string &queryText=std::string(PreparedDBQueryLogin::db_query_login).arg(std::string(login.toHex()));
-    CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseLogin.asyncRead(queryText.toLatin1(),this,&EpollClientLoginSlave::askLogin_static);
+    std::string queryText=PreparedDBQueryLogin::db_query_login;
+    stringreplaceOne(queryText,"%1",binarytoHexa(login));
+    CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseLogin.asyncRead(queryText,this,&EpollClientLoginSlave::askLogin_static);
     if(callback==NULL)
     {
-        loginIsWrong(askLoginParam->query_id,0x04,std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseLogin.errorMessage()));
+        loginIsWrong(askLoginParam->query_id,0x04,"Sql error for: "+queryText+", error: "+databaseBaseLogin.errorMessage());
         delete askLoginParam;
         askLoginParam=NULL;
         return;
     }
     else
     {
-        paramToPassToCallBack << askLoginParam;
+        paramToPassToCallBack.push(askLoginParam);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        paramToPassToCallBackType << std::stringLiteral("AskLoginParam");
+        paramToPassToCallBackType.push("AskLoginParam");
         #endif
-        callbackRegistred << callback;
+        callbackRegistred.push(callback);
     }
 }
 
@@ -59,13 +62,13 @@ void EpollClientLoginSlave::askLogin_static(void *object)
 void EpollClientLoginSlave::askLogin_object()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBack.isEmpty())
+    if(paramToPassToCallBack.empty())
     {
-        qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
+        std::cerr << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__ << std::endl;
         abort();
     }
     #endif
-    AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.first());//but not delete because will reinster at the end, then not take!
+    AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.front());//but not delete because will reinster at the end, then not take!
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(askLoginParam==NULL)
         abort();
@@ -77,13 +80,13 @@ void EpollClientLoginSlave::askLogin_object()
 void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBackType.first()!=std::stringLiteral("AskLoginParam"))
+    if(paramToPassToCallBackType.front()!="AskLoginParam")
     {
-        qDebug() << "is not AskLoginParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
+        std::cerr << "is not AskLoginParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
         abort();
     }
     #endif
-    callbackRegistred.removeFirst();
+    callbackRegistred.pop();
     {
         bool ok;
         if(!databaseBaseLogin.next())
@@ -97,11 +100,11 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                 #endif
                 *(EpollClientLoginSlave::loginIsWrongBufferReply+1)=(uint8_t)askLoginParam->query_id;
                 *(EpollClientLoginSlave::loginIsWrongBufferReply+3)=(uint8_t)0x07;
-                replyOutputSize.remove(askLoginParam->query_id);
+                removeFromQueryReceived(askLoginParam->query_id);
                 internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBufferReply),sizeof(EpollClientLoginSlave::loginIsWrongBufferReply));
                 stat=EpollClientLoginStat::ProtocolGood;
-                paramToPassToCallBack.clear();
-                paramToPassToCallBackType.clear();
+                paramToPassToCallBack.pop();
+                paramToPassToCallBackType.pop();
                 delete askLoginParam;
                 askLoginParam=NULL;
                 return;
@@ -111,12 +114,9 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
             }
             else
             {
-                loginIsWrong(askLoginParam->query_id,0x02,std::stringLiteral("Bad login for: %1, pass: %2")
-                             .arg(std::string(askLoginParam->login.toHex()))
-                              .arg(std::string(askLoginParam->pass.toHex()))
-                              );
-                paramToPassToCallBack.clear();
-                paramToPassToCallBackType.clear();
+                loginIsWrong(askLoginParam->query_id,0x02,"Bad login for: "+binarytoHexa(askLoginParam->login)+", pass: "+binarytoHexa(askLoginParam->pass));
+                paramToPassToCallBack.pop();
+                paramToPassToCallBackType.pop();
                 delete askLoginParam;
                 askLoginParam=NULL;
                 return;
@@ -136,14 +136,16 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                     if(tokenLink.client==this)
                     {
                         const std::string &secretToken(databaseBaseLogin.value(1));
-                        const std::vector<char> &secretTokenBinary=std::vector<char>::fromHex(secretToken.toLatin1());
+                        const std::vector<char> &secretTokenBinary=hexatoBinary(secretToken);
                         QCryptographicHash hash(QCryptographicHash::Sha224);
-                        hash.addData(secretTokenBinary);
+                        hash.addData(secretTokenBinary.data(),secretTokenBinary.size());
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                        tempAddedToken=std::vector<char>(tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        tempAddedToken.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        memcpy(tempAddedToken.data(),tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         #endif
                         hash.addData(tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        hashedToken=hash.result();
+                        hashedToken.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+                        memcpy(hashedToken.data(),hash.result().constData(),CATCHCHALLENGER_SHA224HASH_SIZE);
                         BaseServerLogin::tokenForAuthSize--;
                         //see to do with SIMD
                         if(BaseServerLogin::tokenForAuthSize>0)
@@ -166,39 +168,32 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                 }
                 if(tokenForAuthIndex>=(int32_t)BaseServerLogin::tokenForAuthSize)
                 {
-                    loginIsWrong(askLoginParam->query_id,0x02,std::stringLiteral("No temp auth token found"));
+                    loginIsWrong(askLoginParam->query_id,0x02,"No temp auth token found");
                     return;
                 }
             }
             if(hashedToken!=askLoginParam->pass)
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                loginIsWrong(askLoginParam->query_id,0x03,std::stringLiteral("Password wrong: %1 with token %3 for the login: %2")
-                             .arg(std::string(askLoginParam->pass.toHex()))
-                             .arg(std::string(askLoginParam->login.toHex()))
-                             .arg(std::string(tempAddedToken.toHex()))
-                             );
+                loginIsWrong(askLoginParam->query_id,0x03,"Password wrong: "+binarytoHexa(askLoginParam->pass)+" with token "+binarytoHexa(tempAddedToken)+" for the login: "+binarytoHexa(askLoginParam->login));
                 #else
-                loginIsWrong(askLoginParam->query_id,0x03,std::stringLiteral("Password wrong: %1 for the login: %2")
-                             .arg(std::string(askLoginParam->pass.toHex()))
-                             .arg(std::string(askLoginParam->login.toHex()))
-                             );
+                loginIsWrong(askLoginParam->query_id,0x03,"Password wrong: "+binarytoHexa(askLoginParam->pass)+" for the login: "+binarytoHexa(askLoginParam->login));
                 #endif
-                paramToPassToCallBack.clear();
-                paramToPassToCallBackType.clear();
+                paramToPassToCallBack.pop();
+                paramToPassToCallBackType.pop();
                 delete askLoginParam;
                 askLoginParam=NULL;
                 return;
             }
             else
             {
-                account_id=std::string(databaseBaseLogin.value(0)).toUInt(&ok);
+                account_id=stringtouint32(databaseBaseLogin.value(0),&ok);
                 if(!ok)
                 {
                     account_id=0;
                     loginIsWrong(askLoginParam->query_id,0x03,"Account id is not a number");
-                    paramToPassToCallBack.clear();
-                    paramToPassToCallBackType.clear();
+                    paramToPassToCallBack.pop();
+                    paramToPassToCallBackType.pop();
                     delete askLoginParam;
                     askLoginParam=NULL;
                     return;
@@ -209,7 +204,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
 
     {
         serverListForReplyInSuspend+=CharactersGroupForLogin::list.size();
-        int index=0;
+        unsigned int index=0;
         while(index<CharactersGroupForLogin::list.size())
         {
             CharactersGroupForLogin::list.at(index)->character_list(this,account_id);
@@ -221,14 +216,15 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
 void EpollClientLoginSlave::askLogin_cancel()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBack.isEmpty())
+    if(paramToPassToCallBack.empty())
     {
-        qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
+        std::cerr << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__ << std::endl;
         abort();
     }
     #endif
-    AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.takeFirst());
-    loginIsWrong(askLoginParam->query_id,0x04,std::stringLiteral("Canceled by the Charaters group"));
+    AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.front());
+    paramToPassToCallBack.pop();
+    loginIsWrong(askLoginParam->query_id,0x04,"Canceled by the Charaters group");
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(askLoginParam==NULL)
         abort();
@@ -251,7 +247,7 @@ void EpollClientLoginSlave::character_list_return(const uint8_t &characterGroupI
             (characterTempListForReply.size()!=CharactersGroupForLogin::list.size())
              )
     {
-        qDebug() << "serverListForReplyInSuspend==0 && characterTempListForReply.size()!=CharactersGroupForLogin::list.size()" << __FILE__ << __LINE__;
+        std::cerr << "serverListForReplyInSuspend==0 && characterTempListForReply.size()!=CharactersGroupForLogin::list.size()" << __FILE__ << __LINE__ << std::endl;
         abort();
     }
     #endif
@@ -283,7 +279,7 @@ void EpollClientLoginSlave::server_list_return(const uint8_t &serverCount,char *
                 (characterTempListForReply.size()!=CharactersGroupForLogin::list.size())
                  )
         {
-            qDebug() << "serverListForReplyInSuspend==0 && characterTempListForReply.size()!=CharactersGroupForLogin::list.size()" << __FILE__ << __LINE__;
+            std::cerr << "serverListForReplyInSuspend==0 && characterTempListForReply.size()!=CharactersGroupForLogin::list.size()" << __FILE__ << __LINE__ << std::endl;
             abort();
         }
         #endif
@@ -294,14 +290,17 @@ void EpollClientLoginSlave::server_list_return(const uint8_t &serverCount,char *
         EpollClientLoginSlave::loginGood[tempSize]=characterTempListForReply.size();
         tempSize+=sizeof(uint8_t);
 
-        QMapIterator<uint8_t,CharacterListForReply> i(characterTempListForReply);
-        while (i.hasNext()) {
-            i.next();
-            //copy buffer
-            memcpy(EpollClientLoginSlave::loginGood+tempSize,i.value().rawData,i.value().rawDataSize);
-            tempSize+=i.value().rawDataSize;
-            //remove the old buffer
-            delete i.value().rawData;
+        {
+            auto i=characterTempListForReply.begin();
+            while(i!=characterTempListForReply.cend())
+            {
+                //copy buffer
+                memcpy(EpollClientLoginSlave::loginGood+tempSize,i->second.rawData,i->second.rawDataSize);
+                tempSize+=i->second.rawDataSize;
+                //remove the old buffer
+                delete i->second.rawData;
+                ++i;
+            }
         }
         characterTempListForReply.clear();
         //Server list
@@ -318,13 +317,14 @@ void EpollClientLoginSlave::server_list_return(const uint8_t &serverCount,char *
         }
 
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(paramToPassToCallBackType.first()!=std::stringLiteral("AskLoginParam"))
+        if(paramToPassToCallBackType.front()!="AskLoginParam")
         {
-            qDebug() << "is not AskLoginParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
+            std::cerr << "is not AskLoginParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
             abort();
         }
         #endif
-        AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.takeFirst());
+        AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.front());
+        paramToPassToCallBack.pop();
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(askLoginParam==NULL)
             abort();
@@ -332,9 +332,11 @@ void EpollClientLoginSlave::server_list_return(const uint8_t &serverCount,char *
         //send C20F and C20E
         internalSendRawSmallPacket(EpollClientLoginSlave::serverLogicalGroupAndServerList,EpollClientLoginSlave::serverLogicalGroupAndServerListSize);
         //send the reply
-        postReply(askLoginParam->query_id,EpollClientLoginSlave::loginGood,tempSize);
-        paramToPassToCallBack.clear();
-        paramToPassToCallBackType.clear();
+        removeFromQueryReceived(askLoginParam->query_id);
+        EpollClientLoginSlave::loginGood[0x01]=askLoginParam->query_id;
+        internalSendRawSmallPacket(EpollClientLoginSlave::loginGood,tempSize);
+        paramToPassToCallBack.pop();
+        paramToPassToCallBackType.pop();
         delete askLoginParam;
         askLoginParam=NULL;
         stat=EpollClientLoginStat::Logged;
@@ -344,60 +346,63 @@ void EpollClientLoginSlave::server_list_return(const uint8_t &serverCount,char *
 void EpollClientLoginSlave::createAccount(const uint8_t &query_id, const char *rawdata)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryLogin::db_query_login==0 || PreparedDBQueryLogin::db_query_login[0]=='\0')
+    if(PreparedDBQueryLogin::db_query_login.empty())
     {
-        errorParsingLayer(std::stringLiteral("createAccount() Query login is empty, bug"));
+        errorParsingLayer("createAccount() Query login is empty, bug");
         return;
     }
-    if(PreparedDBQueryLogin::db_query_insert_login==0 || PreparedDBQueryLogin::db_query_insert_login[0]=='\0')
+    if(PreparedDBQueryLogin::db_query_insert_login.empty())
     {
-        errorParsingLayer(std::stringLiteral("createAccount() Query inset login is empty, bug"));
+        errorParsingLayer("createAccount() Query inset login is empty, bug");
         return;
     }
-    if(PreparedDBQueryCommon::db_query_characters==0 || PreparedDBQueryCommon::db_query_characters[0]=='\0')
+    if(PreparedDBQueryCommon::db_query_characters.empty())
     {
-        errorParsingLayer(std::stringLiteral("createAccount() Query characters is empty, bug"));
+        errorParsingLayer("createAccount() Query characters is empty, bug");
         return;
     }
     if(!CommonSettingsCommon::commonSettingsCommon.automatic_account_creation)
     {
-        errorParsingLayer(std::stringLiteral("createAccount() Creation account not premited"));
+        errorParsingLayer("createAccount() Creation account not premited");
         return;
     }
     #endif
-    if(maxAccountIdList.isEmpty())
+    if(maxAccountIdList.empty())
     {
-        loginIsWrong(query_id,0x04,std::stringLiteral("maxAccountIdList is empty"));
+        loginIsWrong(query_id,0x04,"maxAccountIdList is empty");
         return;
     }
     std::vector<char> login;
     {
         QCryptographicHash hash(QCryptographicHash::Sha224);
         hash.addData(rawdata,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
-        login=hash.result();
+        login.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+        memcpy(login.data(),hash.result().constData(),CATCHCHALLENGER_SHA224HASH_SIZE);
     }
     AskLoginParam *askLoginParam=new AskLoginParam;
     askLoginParam->query_id=query_id;
     askLoginParam->login=login;
-    askLoginParam->pass=std::vector<char>(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+    askLoginParam->pass.resize(CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+    memcpy(askLoginParam->pass.data(),rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
 
-    const std::string &queryText=std::string(PreparedDBQueryLogin::db_query_login).arg(std::string(login.toHex()));
-    CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseLogin.asyncRead(queryText.toLatin1(),this,&EpollClientLoginSlave::createAccount_static);
+    std::string queryText=PreparedDBQueryLogin::db_query_login;
+    stringreplaceOne(queryText,"%1",binarytoHexa(login));
+    CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseLogin.asyncRead(queryText,this,&EpollClientLoginSlave::createAccount_static);
     if(callback==NULL)
     {
         stat=EpollClientLoginStat::ProtocolGood;
-        loginIsWrong(askLoginParam->query_id,0x03,std::stringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseLogin.errorMessage()));
+        loginIsWrong(askLoginParam->query_id,0x03,"Sql error for: "+queryText+", error: "+databaseBaseLogin.errorMessage());
         delete askLoginParam;
         askLoginParam=NULL;
         return;
     }
     else
     {
-        paramToPassToCallBack << askLoginParam;
+        paramToPassToCallBack.push(askLoginParam);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        paramToPassToCallBackType << std::stringLiteral("AskLoginParam");
+        paramToPassToCallBackType.push("AskLoginParam");
         #endif
-        callbackRegistred << callback;
+        callbackRegistred.push(callback);
     }
 }
 
@@ -411,13 +416,14 @@ void EpollClientLoginSlave::createAccount_static(void *object)
 void EpollClientLoginSlave::createAccount_object()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBack.isEmpty())
+    if(paramToPassToCallBack.empty())
     {
-        qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
+        std::cerr << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__ << std::endl;
         abort();
     }
     #endif
-    AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.takeFirst());
+    AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.front());
+    paramToPassToCallBack.pop();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(askLoginParam==NULL)
         abort();
@@ -430,22 +436,22 @@ void EpollClientLoginSlave::createAccount_object()
 void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBackType.takeFirst()!=std::stringLiteral("AskLoginParam"))
+    if(paramToPassToCallBackType.front()!="AskLoginParam")
     {
-        qDebug() << "is not AskLoginParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
+        std::cerr << "is not AskLoginParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
         abort();
     }
     #endif
-    callbackRegistred.removeFirst();
+    callbackRegistred.pop();
     if(!databaseBaseLogin.next())
     {
         //network send
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         //removeFromQueryReceived(askLoginParam->query_id);//->only if use fast path
         #endif
-        if(maxAccountIdList.isEmpty())
+        if(maxAccountIdList.empty())
         {
-            loginIsWrong(askLoginParam->query_id,0x04,std::stringLiteral("maxAccountIdList is empty"));
+            loginIsWrong(askLoginParam->query_id,0x04,"maxAccountIdList is empty");
             return;
         }
         if(maxAccountIdList.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK && !EpollClientLoginSlave::maxAccountIdRequested)
@@ -458,36 +464,61 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
             }
             const uint8_t &queryNumber=LinkToMaster::linkToMaster->queryNumberList.back();
             LinkToMaster::linkToMaster->queryNumberList.pop_back();
-            EpollClientLoginSlave::maxAccountIdRequest[0x03]=queryNumber;
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            queryReceived.remove(queryNumber);
-            #endif
-            replyOutputSize.remove(queryNumber);
-            if(!internalSendRawSmallPacket(EpollClientLoginSlave::maxAccountIdRequest,sizeof(EpollClientLoginSlave::maxAccountIdRequest)))
+            ProtocolParsingBase::tempBigBufferForOutput[0x00]=0xBF;
+            ProtocolParsingBase::tempBigBufferForOutput[0x01]=queryNumber;
+            if(!internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,2))
             {
                 errorParsingLayer("Unable to send at createAccount_return");
                 return;
             }
-            LinkToMaster::linkToMaster->newFullOutputQuery(0x11,0x01,queryNumber);
+
+            //send the network reply
+            removeFromQueryReceived(queryNumber);
+            uint32_t posOutput=0;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xBF;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+            posOutput+=1;
+
+            LinkToMaster::linkToMaster->registerOutputQuery(queryNumber);
+            LinkToMaster::linkToMaster->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         }
-        account_id=maxAccountIdList.takeFirst();
-        dbQueryWriteLogin(std::string(PreparedDBQueryLogin::db_query_insert_login).arg(account_id).arg(std::string(askLoginParam->login.toHex())).arg(std::string(askLoginParam->pass.toHex())).arg(QDateTime::currentDateTime().toTime_t()).toUtf8().constData());
+        account_id=maxAccountIdList.front();
+        maxAccountIdList.erase(maxAccountIdList.begin());
+        {
+            std::string queryText=PreparedDBQueryLogin::db_query_insert_login;
+            stringreplaceOne(queryText,"%1",std::to_string(account_id));
+            stringreplaceOne(queryText,"%2",binarytoHexa(askLoginParam->login));
+            stringreplaceOne(queryText,"%3",binarytoHexa(askLoginParam->pass));
+            stringreplaceOne(queryText,"%4",std::to_string(QDateTime::currentDateTime().toTime_t()));
+            dbQueryWriteLogin(queryText);
+        }
         //send the network reply
-        std::vector<char> outputData;
-        outputData[0x00]=0x01;
-        postReply(askLoginParam->query_id,outputData.constData(),outputData.size());
+        removeFromQueryReceived(askLoginParam->query_id);
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=askLoginParam->query_id;
+        posOutput+=1+4;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+        posOutput+=1;
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
         stat=EpollClientLoginStat::ProtocolGood;
     }
     else
-        loginIsWrong(askLoginParam->query_id,0x02,std::stringLiteral("Login already used: %1").arg(std::string(askLoginParam->login.toHex())));
+        loginIsWrong(askLoginParam->query_id,0x02,"Login already used: "+binarytoHexa(askLoginParam->login));
 }
 
-void EpollClientLoginSlave::dbQueryWriteLogin(const char * const queryText)
+void EpollClientLoginSlave::dbQueryWriteLogin(const std::string &queryText)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(queryText==NULL || queryText[0]=='\0')
+    if(queryText.empty())
     {
-        errorParsingLayer(std::stringLiteral("dbQuery() Query is empty, bug"));
+        errorParsingLayer("dbQuery() Query is empty, bug");
         return;
     }
     #endif
@@ -502,10 +533,7 @@ void EpollClientLoginSlave::loginIsWrong(const uint8_t &query_id, const uint8_t 
     //network send
     EpollClientLoginSlave::loginIsWrongBufferReply[1]=query_id;
     EpollClientLoginSlave::loginIsWrongBufferReply[3]=returnCode;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     removeFromQueryReceived(query_id);
-    #endif
-    replyOutputSize.remove(query_id);
     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBufferReply),sizeof(EpollClientLoginSlave::loginIsWrongBufferReply));
 
     //send to server to stop the connection
@@ -520,29 +548,38 @@ void EpollClientLoginSlave::selectCharacter(const uint8_t &query_id,const uint32
         return;
     }
     //account id verified on game server when loading the character
-    if(!CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
+    if(!LinkToMaster::linkToMaster->trySelectCharacter(this,query_id,serverUniqueKey,charactersGroupIndex,characterId))
     {
-        EpollClientLoginSlave::characterSelectionIsWrongBufferServerNotFound[1]=query_id;
-
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        //send the network reply
         removeFromQueryReceived(query_id);
-        #endif
-        #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-        replyOutputCompression.remove(query_id);
-        #endif
-        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::characterSelectionIsWrongBufferServerNotFound),EpollClientLoginSlave::characterSelectionIsWrongBufferSize);
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+        posOutput+=1+4;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)0x05;
+        posOutput+=1;
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
     }
     if(!LinkToMaster::linkToMaster->trySelectCharacter(this,query_id,serverUniqueKey,charactersGroupIndex,characterId))
     {
-        EpollClientLoginSlave::characterSelectionIsWrongBufferServerInternalProblem[1]=query_id;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        //send the network reply
         removeFromQueryReceived(query_id);
-        #endif
-        #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-        replyOutputCompression.remove(query_id);
-        #endif
-        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::characterSelectionIsWrongBufferServerInternalProblem),EpollClientLoginSlave::characterSelectionIsWrongBufferSize);
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+        posOutput+=1+4;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)0x04;
+        posOutput+=1;
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         errorParsingLayer("EpollClientLoginSlave::selectCharacter() out of query for request the master server");
         return;
     }
@@ -554,7 +591,21 @@ void EpollClientLoginSlave::selectCharacter(const uint8_t &query_id,const uint32
 void EpollClientLoginSlave::selectCharacter_ReturnToken(const uint8_t &query_id,const char * const token)
 {
     if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Reconnect)
-        postReplyData(query_id,token,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+    {
+        //send the network reply
+        removeFromQueryReceived(query_id);
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+        posOutput+=1+4;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);//set the dynamic size
+
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,token,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+        posOutput+=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER;
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    }
     else
     {
         //connect on the game server and pass in proxy mode
@@ -564,33 +615,22 @@ void EpollClientLoginSlave::selectCharacter_ReturnToken(const uint8_t &query_id,
 
 void EpollClientLoginSlave::selectCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    //send the network reply
     removeFromQueryReceived(query_id);
-    #endif
-    replyOutputCompression.remove(query_id);
-    switch(errorCode)
-    {
-        case 0x02:
-        EpollClientLoginSlave::characterSelectionIsWrongBufferCharacterNotFound[1]=query_id;
-        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::characterSelectionIsWrongBufferCharacterNotFound),EpollClientLoginSlave::characterSelectionIsWrongBufferSize);
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+    posOutput+=1+4;
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=errorCode;
+    posOutput+=1;
+
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
+    if(errorCode!=0x05)
         errorParsingLayer("EpollClientLoginSlave::selectCharacter_ReturnFailed() errorCode:"+std::to_string(errorCode));
-        break;
-        default:
-        case 0x03:
-        EpollClientLoginSlave::characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline[1]=query_id;
-        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline),EpollClientLoginSlave::characterSelectionIsWrongBufferSize);
-        errorParsingLayer("EpollClientLoginSlave::selectCharacter_ReturnFailed() errorCode:"+std::to_string(errorCode));
-        break;
-        case 0x04:
-        EpollClientLoginSlave::characterSelectionIsWrongBufferServerInternalProblem[1]=query_id;
-        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::characterSelectionIsWrongBufferServerInternalProblem),EpollClientLoginSlave::characterSelectionIsWrongBufferSize);
-        errorParsingLayer("EpollClientLoginSlave::selectCharacter_ReturnFailed() errorCode:"+std::to_string(errorCode));
-        break;
-        case 0x05:
-        EpollClientLoginSlave::characterSelectionIsWrongBufferServerNotFound[1]=query_id;
-        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::characterSelectionIsWrongBufferServerNotFound),EpollClientLoginSlave::characterSelectionIsWrongBufferSize);
-        break;
-    }
 }
 
 void EpollClientLoginSlave::addCharacter(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &skinId)
@@ -608,10 +648,8 @@ void EpollClientLoginSlave::addCharacter(const uint8_t &query_id, const uint8_t 
         {
             EpollClientLoginSlave::addCharacterIsWrongBuffer[1]=query_id;
             EpollClientLoginSlave::addCharacterIsWrongBuffer[3]=0x03;
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
             removeFromQueryReceived(query_id);
-            #endif
-            replyOutputSize.remove(query_id);
+
             internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::addCharacterIsWrongBuffer),sizeof(EpollClientLoginSlave::addCharacterIsWrongBuffer));
         }
         if(addCharacter<0)
@@ -631,10 +669,7 @@ void EpollClientLoginSlave::removeCharacter(const uint8_t &query_id, const uint8
     {
         EpollClientLoginSlave::loginIsWrongBufferReply[1]=query_id;
         EpollClientLoginSlave::loginIsWrongBufferReply[3]=0x02;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
         removeFromQueryReceived(query_id);
-        #endif
-        replyOutputSize.remove(query_id);
         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBufferReply),sizeof(EpollClientLoginSlave::loginIsWrongBufferReply));
         errorParsingLayer("EpollClientLoginSlave::selectCharacter() out of query for request the master server");
         return;
@@ -645,10 +680,7 @@ void EpollClientLoginSlave::addCharacter_ReturnOk(const uint8_t &query_id,const 
 {
     EpollClientLoginSlave::addCharacterReply[1]=query_id;
     EpollClientLoginSlave::addCharacterReply[3]=0x00;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     removeFromQueryReceived(query_id);
-    #endif
-    replyOutputSize.remove(query_id);
     *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::addCharacterReply+0x04)=htole32(characterId);
     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::addCharacterReply),sizeof(EpollClientLoginSlave::addCharacterReply));
 }
@@ -657,24 +689,18 @@ void EpollClientLoginSlave::addCharacter_ReturnFailed(const uint8_t &query_id,co
 {
     EpollClientLoginSlave::addCharacterReply[1]=query_id;
     EpollClientLoginSlave::addCharacterReply[3]=errorCode;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     removeFromQueryReceived(query_id);
-    #endif
-    replyOutputSize.remove(query_id);
     *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::addCharacterReply+0x04)=(uint32_t)0;
     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::addCharacterReply),sizeof(EpollClientLoginSlave::addCharacterReply));
     if(errorCode!=0x01)
-        errorParsingLayer(std::stringLiteral("EpollClientLoginSlave::addCharacter() out of query for request the master server: %1").arg(errorCode));
+        errorParsingLayer("EpollClientLoginSlave::addCharacter() out of query for request the master server: "+std::to_string(errorCode));
 }
 
 void EpollClientLoginSlave::removeCharacter_ReturnOk(const uint8_t &query_id)
 {
     EpollClientLoginSlave::removeCharacterReply[1]=query_id;
     EpollClientLoginSlave::removeCharacterReply[3]=0x01;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     removeFromQueryReceived(query_id);
-    #endif
-    replyOutputSize.remove(query_id);
     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::removeCharacterReply),sizeof(EpollClientLoginSlave::removeCharacterReply));
 }
 
@@ -682,13 +708,10 @@ void EpollClientLoginSlave::removeCharacter_ReturnFailed(const uint8_t &query_id
 {
     EpollClientLoginSlave::removeCharacterReply[1]=query_id;
     EpollClientLoginSlave::removeCharacterReply[3]=errorCode;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     removeFromQueryReceived(query_id);
-    #endif
-    replyOutputSize.remove(query_id);
     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::removeCharacterReply),sizeof(EpollClientLoginSlave::removeCharacterReply));
-    if(errorString.isEmpty())
-        errorParsingLayer(std::stringLiteral("EpollClientLoginSlave::removeCharacter() out of query for request the master server: %1").arg(errorCode));
+    if(errorString.empty())
+        errorParsingLayer("EpollClientLoginSlave::removeCharacter() out of query for request the master server: "+std::to_string(errorCode));
     else
-        errorParsingLayer(std::stringLiteral("%1: %2").arg(errorString).arg(errorCode));
+        errorParsingLayer(errorString+": "+std::to_string(errorCode));
 }

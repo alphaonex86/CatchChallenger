@@ -1034,7 +1034,7 @@ void Client::characterIsRightFinalStep()
     removeFromQueryReceived(query_id);
 
     uint32_t posOutput=Client::characterIsRightFinalStepHeaderSize;
-    memcpy(ProtocolParsingBase::tempBigBufferForOutput,Client::characterIsRightFinalStepHeader,Client::characterIsRightFinalStepHeaderSize);
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,Client::characterIsRightFinalStepHeader,Client::characterIsRightFinalStepHeaderSize);
     ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
 
     //temporary character id
