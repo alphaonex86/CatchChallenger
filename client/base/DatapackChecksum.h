@@ -41,7 +41,7 @@ public slots:
     void doDifferedChecksumMain(const std::string &datapackPath);
     void doDifferedChecksumSub(const std::string &datapackPath);
 signals:
-    void datapackChecksumDoneBase(const std::vector<std::string> &datapackFilesList,const std::vector<std::string> &hash,const std::vector<uint32_t> &partialHashList);
+    void datapackChecksumDoneBase(const std::vector<std::string> &datapackFilesList,const std::vector<char> &hash,const std::vector<uint32_t> &partialHashList);
     void datapackChecksumDoneMain(const std::vector<std::string> &datapackFilesList,const std::vector<char> &hash,const std::vector<uint32_t> &partialHashList);
     void datapackChecksumDoneSub(const std::vector<std::string> &datapackFilesList,const std::vector<char> &hash,const std::vector<uint32_t> &partialHashList);
     #endif

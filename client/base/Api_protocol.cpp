@@ -10,6 +10,7 @@ const unsigned char protocolHeaderToMatchGameServer[] = PROTOCOL_HEADER_GAMESERV
 #include <utime.h>
 #include <sys/stat.h>
 #endif
+#include <iostream>
 
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/GeneralVariable.h"
@@ -136,20 +137,20 @@ void Api_protocol::parseIncommingData()
     ProtocolParsingInputOutput::parseIncommingData();
 }
 
-void Api_protocol::errorParsingLayer(const QString &error)
+void Api_protocol::errorParsingLayer(const std::string &error)
 {
-    emit newError(tr("Internal error"),error);
+    emit newError(tr("Internal error"),QString::fromStdString(error));
 }
 
-void Api_protocol::messageParsingLayer(const QString &message) const
+void Api_protocol::messageParsingLayer(const std::string &message) const
 {
-    qDebug() << message;
+    qDebug() << QString::fromStdString(message);
 }
 
 void Api_protocol::parseError(const QString &userMessage,const QString &errorString)
 {
     if(tolerantMode)
-        DebugClass::debugConsole(QStringLiteral("packet ignored due to: %1").arg(errorString));
+        std::cerr << "packet ignored due to: " << errorString.toStdString() << std::endl;
     else
         newError(userMessage,errorString);
 }
@@ -161,7 +162,7 @@ Player_private_and_public_informations Api_protocol::get_player_informations()
 
 QString Api_protocol::getPseudo()
 {
-    return player_informations.public_informations.pseudo;
+    return QString::fromUtf8(player_informations.public_informations.pseudo.data(),player_informations.public_informations.pseudo.size());
 }
 
 uint16_t Api_protocol::getId()
@@ -225,7 +226,7 @@ void Api_protocol::socketDisconnectedForReconnect()
         return;
     }
     haveFirstHeader=false;
-    socket->connectToHost(serverFromPoolForDisplay.host,serverFromPoolForDisplay.port);
+    socket->connectToHost(serverFromPoolForDisplay.host.toStdString(),serverFromPoolForDisplay.port);
 }
 
 bool Api_protocol::protocolWrong() const
@@ -333,18 +334,18 @@ void Api_protocol::send_player_move(const uint8_t &moved_unit,const Direction &d
     #endif
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     uint8_t directionInt=static_cast<uint8_t>(direction);
     if(directionInt<1 || directionInt>8)
     {
-        DebugClass::debugConsole(QStringLiteral("direction given wrong: %1").arg(directionInt));
+        std::cerr << "direction given wrong: " << directionInt << std::endl;
         return;
     }
     QByteArray outputData;
@@ -352,19 +353,19 @@ void Api_protocol::send_player_move(const uint8_t &moved_unit,const Direction &d
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << moved_unit;
     out << directionInt;
-    is_logged=character_selected=packOutcommingData(0x40,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x02,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::send_player_direction(const Direction &the_direction)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     newDirection(the_direction);
@@ -374,17 +375,17 @@ void Api_protocol::sendChatText(const Chat_type &chatType, const QString &text)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(chatType!=Chat_type_local && chatType!=Chat_type_all && chatType!=Chat_type_clan && chatType!=Chat_type_aliance && chatType!=Chat_type_system && chatType!=Chat_type_system_important)
     {
-        DebugClass::debugConsole("chatType wrong: "+QString::number(chatType));
+        std::cerr << "chatType wrong: " << chatType << std::endl;
         return;
     }
     QByteArray outputData;
@@ -395,29 +396,29 @@ void Api_protocol::sendChatText(const Chat_type &chatType, const QString &text)
         const QByteArray &tempText=text.toUtf8();
         if(tempText.size()>255)
         {
-            DebugClass::debugConsole(QStringLiteral("text in Utf8 too big, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            std::cerr << "text in Utf8 too big, line: " << __FILE__ << __LINE__ << std::endl;
             return;
         }
         out << (uint8_t)tempText.size();
         outputData+=tempText;
         out.device()->seek(out.device()->pos()+tempText.size());
     }
-    is_logged=character_selected=packOutcommingData(0x43,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x03,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::sendPM(const QString &text,const QString &pseudo)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
-    if(this->player_informations.public_informations.pseudo==pseudo)
+    if(this->player_informations.public_informations.pseudo==pseudo.toStdString())
         return;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -427,7 +428,7 @@ void Api_protocol::sendPM(const QString &text,const QString &pseudo)
         const QByteArray &tempText=text.toUtf8();
         if(tempText.size()>255)
         {
-            DebugClass::debugConsole(QStringLiteral("text in Utf8 too big, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            std::cerr << "text in Utf8 too big, line: " << __FILE__ << __LINE__ << std::endl;
             return;
         }
         out << (uint8_t)tempText.size();
@@ -438,26 +439,26 @@ void Api_protocol::sendPM(const QString &text,const QString &pseudo)
         const QByteArray &tempText=pseudo.toUtf8();
         if(tempText.size()>255)
         {
-            DebugClass::debugConsole(QStringLiteral("text in Utf8 too big, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            std::cerr << "text in Utf8 too big, line: " << __FILE__ << __LINE__ << std::endl;
             return;
         }
         out << (uint8_t)tempText.size();
         outputData+=tempText;
         out.device()->seek(out.device()->pos()+tempText.size());
     }
-    is_logged=character_selected=packOutcommingData(0x43,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x03,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::teleportDone()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     is_logged=character_selected=postReplyData(teleportList.first(),NULL,0);
@@ -468,7 +469,7 @@ bool Api_protocol::addCharacter(const uint8_t &charactersGroupIndex,const uint8_
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return false;
     }
     if(skinId>=CommonDatapack::commonDatapack.skins.size())
@@ -477,7 +478,7 @@ bool Api_protocol::addCharacter(const uint8_t &charactersGroupIndex,const uint8_
         return false;
     }
     const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
-    if(!profile.forcedskin.isEmpty() && !profile.forcedskin.contains(skinId))
+    if(!profile.forcedskin.empty() && !vectorcontainsAtLeastOne(profile.forcedskin,skinId))
     {
         newError(QStringLiteral("Internal problem"),QStringLiteral("skin provided: %1 is not into profile %2 forced skin list").arg(skinId).arg(profileIndex));
         return false;
@@ -488,17 +489,17 @@ bool Api_protocol::addCharacter(const uint8_t &charactersGroupIndex,const uint8_
     out << (uint8_t)charactersGroupIndex;
     out << (uint8_t)profileIndex;
     {
-        const QByteArray &rawPseudo=FacilityLibGeneral::toUTF8WithHeader(pseudo);
+        const QByteArray &rawPseudo=toUTF8WithHeader(pseudo);
         if(rawPseudo.size()>255 || rawPseudo.isEmpty())
         {
-            DebugClass::debugConsole(QStringLiteral("rawPseudo too big or not compatible with utf8"));
+            std::cerr << "rawPseudo too big or not compatible with utf8" << std::endl;
             return false;
         }
         outputData+=rawPseudo;
         out.device()->seek(out.device()->size());
     }
     out << (uint8_t)skinId;
-    is_logged=packFullOutcommingQuery(0x02,0x03,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=packOutcommingQuery(0xAA,queryNumber(),outputData.constData(),outputData.size());
     return true;
 }
 
@@ -506,7 +507,7 @@ bool Api_protocol::removeCharacter(const uint8_t &charactersGroupIndex,const uin
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return false;
     }
     QByteArray outputData;
@@ -514,7 +515,7 @@ bool Api_protocol::removeCharacter(const uint8_t &charactersGroupIndex,const uin
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)charactersGroupIndex;
     out << characterId;
-    is_logged=packFullOutcommingQuery(0x02,0x04,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=packOutcommingQuery(0xAB,queryNumber(),outputData.constData(),outputData.size());
     return true;
 }
 
@@ -522,7 +523,7 @@ bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex,const uin
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return false;
     }
     QByteArray outputData;
@@ -531,7 +532,7 @@ bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex,const uin
     out << (uint8_t)charactersGroupIndex;
     out << (uint32_t)serverUniqueKey;
     out << characterId;
-    is_logged=packFullOutcommingQuery(0x02,0x05,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=packOutcommingQuery(0xAC,queryNumber(),outputData.constData(),outputData.size());
     this->selectedServerIndex=selectedServerIndex;
     return true;
 }
@@ -540,32 +541,32 @@ void Api_protocol::useSeed(const uint8_t &plant_id)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
     outputData[0]=plant_id;
     if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
-        is_logged=character_selected=packFullOutcommingQuery(0x10,0x06,queryNumber(),outputData.constData(),outputData.size());
+        is_logged=character_selected=packOutcommingQuery(0x83,queryNumber(),outputData.constData(),outputData.size());
     else
-        is_logged=character_selected=packFullOutcommingData(0x50,0x08,outputData.constData(),outputData.size());
+        is_logged=character_selected=packOutcommingData(0x19,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::monsterMoveUp(const uint8_t &number)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -573,38 +574,38 @@ void Api_protocol::monsterMoveUp(const uint8_t &number)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x01;
     out << number;
-    is_logged=character_selected=packFullOutcommingData(0x60,0x08,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x0D,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::confirmEvolution(const uint32_t &monterId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint32_t)monterId;
-    is_logged=character_selected=packFullOutcommingData(0x60,0x000A,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x0F,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::monsterMoveDown(const uint8_t &number)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -612,7 +613,7 @@ void Api_protocol::monsterMoveDown(const uint8_t &number)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x02;
     out << number;
-    is_logged=character_selected=packFullOutcommingData(0x60,0x08,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x0D,outputData.constData(),outputData.size());
 }
 
 //inventory
@@ -620,12 +621,12 @@ void Api_protocol::destroyObject(const uint16_t &object, const uint32_t &quantit
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -633,26 +634,26 @@ void Api_protocol::destroyObject(const uint16_t &object, const uint32_t &quantit
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << object;
     out << quantity;
-    is_logged=character_selected=packFullOutcommingData(0x50,0x02,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x13,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::useObject(const uint16_t &object)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << object;
-    is_logged=character_selected=packFullOutcommingQuery(0x10,0x09,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingQuery(0x89,queryNumber(),outputData.constData(),outputData.size());
     lastObjectUsed << object;
 }
 
@@ -660,12 +661,12 @@ void Api_protocol::useObjectOnMonster(const uint16_t &object,const uint32_t &mon
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -673,20 +674,20 @@ void Api_protocol::useObjectOnMonster(const uint16_t &object,const uint32_t &mon
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << object;
     out << monster;
-    is_logged=character_selected=packFullOutcommingData(0x60,0x000B,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x10,outputData.constData(),outputData.size());
 }
 
 
-void Api_protocol::wareHouseStore(const int64_t &cash, const QList<QPair<uint16_t,int32_t> > &items, const QList<uint32_t> &withdrawMonsters, const QList<uint32_t> &depositeMonsters)
+void Api_protocol::wareHouseStore(const qint64 &cash, const QList<QPair<uint16_t,int32_t> > &items, const QList<uint32_t> &withdrawMonsters, const QList<uint32_t> &depositeMonsters)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -718,43 +719,43 @@ void Api_protocol::wareHouseStore(const int64_t &cash, const QList<QPair<uint16_
         index++;
     }
 
-    is_logged=character_selected=packFullOutcommingData(0x50,0x06,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x17,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::takeAnObjectOnMap()
 {
-    packFullOutcommingData(0x50,0x07,NULL,0);
+    packOutcommingData(0x18,NULL,0);
 }
 
 void Api_protocol::getShopList(const uint32_t &shopId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint16_t)shopId;
-    is_logged=character_selected=packFullOutcommingQuery(0x10,0x000A,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingQuery(0x87,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::buyObject(const uint32_t &shopId,const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -764,19 +765,19 @@ void Api_protocol::buyObject(const uint32_t &shopId,const uint32_t &objectId,con
     out << (uint16_t)objectId;
     out << (uint32_t)quantity;
     out << (uint32_t)price;
-    is_logged=character_selected=packFullOutcommingQuery(0x10,0x000B,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingQuery(0x88,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::sellObject(const uint32_t &shopId,const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -786,38 +787,38 @@ void Api_protocol::sellObject(const uint32_t &shopId,const uint32_t &objectId,co
     out << (uint16_t)objectId;
     out << (uint32_t)quantity;
     out << (uint32_t)price;
-    is_logged=character_selected=packFullOutcommingQuery(0x10,0x000C,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingQuery(0x89,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::getFactoryList(const uint16_t &factoryId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint16_t)factoryId;
-    is_logged=character_selected=packFullOutcommingQuery(0x10,0x0D,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingQuery(0x8A,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::buyFactoryProduct(const uint16_t &factoryId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -827,19 +828,19 @@ void Api_protocol::buyFactoryProduct(const uint16_t &factoryId,const uint16_t &o
     out << (uint16_t)objectId;
     out << (uint32_t)quantity;
     out << (uint32_t)price;
-    is_logged=character_selected=packFullOutcommingQuery(0x10,0x000E,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingQuery(0x8B,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::sellFactoryResource(const uint16_t &factoryId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -849,106 +850,106 @@ void Api_protocol::sellFactoryResource(const uint16_t &factoryId,const uint16_t 
     out << (uint16_t)objectId;
     out << (uint32_t)quantity;
     out << (uint32_t)price;
-    is_logged=character_selected=packFullOutcommingQuery(0x10,0x000F,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingQuery(0x8C,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::tryEscape()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
-    is_logged=character_selected=packFullOutcommingData(0x60,0x02,NULL,0);
+    is_logged=character_selected=packOutcommingData(0x07,NULL,0);
 }
 
 void Api_protocol::heal()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
-    is_logged=character_selected=packFullOutcommingData(0x60,0x06,NULL,0);
+    is_logged=character_selected=packOutcommingData(0x0B,NULL,0);
 }
 
 void Api_protocol::requestFight(const uint32_t &fightId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint16_t)fightId;
-    is_logged=character_selected=packFullOutcommingData(0x60,0x07,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x0C,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::changeOfMonsterInFight(const uint32_t &monsterId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint32_t)monsterId;
-    is_logged=character_selected=packFullOutcommingData(0x60,0x09,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x0E,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::useSkill(const uint16_t &skill)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint16_t)skill;
-    is_logged=character_selected=packOutcommingData(0x61,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x11,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::learnSkill(const uint32_t &monsterId,const uint16_t &skill)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -956,95 +957,95 @@ void Api_protocol::learnSkill(const uint32_t &monsterId,const uint16_t &skill)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint32_t)monsterId;
     out << (uint16_t)skill;
-    is_logged=character_selected=packFullOutcommingData(0x60,0x04,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x09,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::startQuest(const uint16_t &questId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint16_t)questId;
-    is_logged=character_selected=packFullOutcommingData(0x6a,0x01,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x1B,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::finishQuest(const uint16_t &questId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint16_t)questId;
-    is_logged=character_selected=packFullOutcommingData(0x6a,0x02,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x1C,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::cancelQuest(const uint16_t &questId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint16_t)questId;
-    is_logged=character_selected=packFullOutcommingData(0x6a,0x03,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x1D,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::nextQuestStep(const uint16_t &questId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint16_t)questId;
-    is_logged=character_selected=packFullOutcommingData(0x6a,0x04,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x1E,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::createClan(const QString &name)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1052,66 +1053,66 @@ void Api_protocol::createClan(const QString &name)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x01;
     {
-        const QByteArray &rawText=FacilityLibGeneral::toUTF8WithHeader(name.toStdString());
+        const QByteArray &rawText=toUTF8WithHeader(name);
         if(rawText.size()>255 || rawText.isEmpty())
         {
-            DebugClass::debugConsole(QStringLiteral("rawText too big or not compatible with utf8"));
-            return false;
+            std::cerr << "rawText too big or not compatible with utf8" << std::endl;
+            return;
         }
         outputData+=rawText;
         out.device()->seek(out.device()->size());
     }
-    is_logged=character_selected=packFullOutcommingQuery(0x02,0x0D,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::leaveClan()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x02;
-    is_logged=character_selected=packFullOutcommingQuery(0x02,0x0D,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::dissolveClan()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x03;
-    is_logged=character_selected=packFullOutcommingQuery(0x02,0x0D,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::inviteClan(const QString &pseudo)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1119,28 +1120,28 @@ void Api_protocol::inviteClan(const QString &pseudo)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x04;
     {
-        const QByteArray &rawText=FacilityLibGeneral::toUTF8WithHeader(pseudo.toStdString());
+        const QByteArray &rawText=toUTF8WithHeader(pseudo);
         if(rawText.size()>255 || rawText.isEmpty())
         {
-            DebugClass::debugConsole(QStringLiteral("rawText too big or not compatible with utf8"));
-            return false;
+            std::cerr << "rawText too big or not compatible with utf8" << std::endl;
+            return;
         }
         outputData+=rawText;
         out.device()->seek(out.device()->size());
     }
-    is_logged=character_selected=packFullOutcommingQuery(0x02,0x0D,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::ejectClan(const QString &pseudo)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1148,28 +1149,28 @@ void Api_protocol::ejectClan(const QString &pseudo)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x05;
     {
-        const QByteArray &rawText=FacilityLibGeneral::toUTF8WithHeader(pseudo.toStdString());
+        const QByteArray &rawText=toUTF8WithHeader(pseudo);
         if(rawText.size()>255 || rawText.isEmpty())
         {
-            DebugClass::debugConsole(QStringLiteral("rawText too big or not compatible with utf8"));
-            return false;
+            std::cerr << "rawText too big or not compatible with utf8" << std::endl;
+            return;
         }
         outputData+=rawText;
         out.device()->seek(out.device()->size());
     }
-    is_logged=character_selected=packFullOutcommingQuery(0x02,0x0D,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::inviteAccept(const bool &accept)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1179,19 +1180,19 @@ void Api_protocol::inviteAccept(const bool &accept)
         out << (uint8_t)0x01;
     else
         out << (uint8_t)0x02;
-    is_logged=character_selected=packFullOutcommingData(0x42,0x04,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x04,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::waitingForCityCapture(const bool &cancel)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1201,7 +1202,7 @@ void Api_protocol::waitingForCityCapture(const bool &cancel)
         out << (uint8_t)0x00;
     else
         out << (uint8_t)0x01;
-    is_logged=character_selected=packFullOutcommingData(0x6a,0x05,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x1F,outputData.constData(),outputData.size());
 }
 
 //market
@@ -1209,27 +1210,27 @@ void Api_protocol::getMarketList()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
-    is_logged=character_selected=packFullOutcommingQuery(0x10,0x10,queryNumber(),NULL,0);
+    is_logged=character_selected=packOutcommingQuery(0x8D,queryNumber(),NULL,0);
 }
 
 void Api_protocol::buyMarketObject(const uint32_t &marketObjectId, const uint32_t &quantity)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1238,19 +1239,19 @@ void Api_protocol::buyMarketObject(const uint32_t &marketObjectId, const uint32_
     out << (uint8_t)0x01;
     out << marketObjectId;
     out << quantity;
-    is_logged=character_selected=packFullOutcommingQuery(0x10,0x11,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingQuery(0x8E,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::buyMarketMonster(const uint32_t &monsterId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1258,19 +1259,19 @@ void Api_protocol::buyMarketMonster(const uint32_t &monsterId)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x02;
     out << monsterId;
-    is_logged=character_selected=packFullOutcommingQuery(0x10,0x11,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingQuery(0x8E,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::putMarketObject(const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1280,19 +1281,19 @@ void Api_protocol::putMarketObject(const uint32_t &objectId,const uint32_t &quan
     out << objectId;
     out << quantity;
     out << price;
-    is_logged=character_selected=packFullOutcommingQuery(0x10,0x12,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingQuery(0x8F,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::putMarketMonster(const uint32_t &monsterId,const uint32_t &price)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1301,34 +1302,34 @@ void Api_protocol::putMarketMonster(const uint32_t &monsterId,const uint32_t &pr
     out << (uint8_t)0x02;
     out << monsterId;
     out << price;
-    is_logged=character_selected=packFullOutcommingQuery(0x10,0x12,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingQuery(0x8F,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::recoverMarketCash()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
-    is_logged=character_selected=packFullOutcommingQuery(0x10,0x13,queryNumber(),NULL,0);
+    is_logged=character_selected=packOutcommingQuery(0x90,queryNumber(),NULL,0);
 }
 
 void Api_protocol::withdrawMarketObject(const uint32_t &objectId,const uint32_t &quantity)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1337,19 +1338,19 @@ void Api_protocol::withdrawMarketObject(const uint32_t &objectId,const uint32_t 
     out << (uint8_t)0x01;
     out << objectId;
     out << quantity;
-    is_logged=character_selected=packFullOutcommingQuery(0x10,0x14,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingQuery(0x91,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::withdrawMarketMonster(const uint32_t &monsterId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1357,25 +1358,25 @@ void Api_protocol::withdrawMarketMonster(const uint32_t &monsterId)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x02;
     out << monsterId;
-    is_logged=character_selected=packFullOutcommingQuery(0x10,0x14,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingQuery(0x91,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::collectMaturePlant()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
-        is_logged=character_selected=packFullOutcommingQuery(0x10,0x07,queryNumber(),NULL,0);
+        is_logged=character_selected=packOutcommingQuery(0x84,queryNumber(),NULL,0);
     else
-        is_logged=character_selected=packFullOutcommingData(0x50,0x09,NULL,0);
+        is_logged=character_selected=packOutcommingData(0x1A,NULL,0);
 }
 
 //crafting
@@ -1383,36 +1384,36 @@ void Api_protocol::useRecipe(const uint16_t &recipeId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint16_t)recipeId;
-    is_logged=character_selected=packFullOutcommingQuery(0x10,0x08,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingQuery(0x85,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::addRecipe(const uint16_t &recipeId)
 {
-    player_informations.recipes << recipeId;
+    player_informations.recipes.insert(recipeId);
 }
 
 void Api_protocol::battleRefused()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(battleRequestId.isEmpty())
@@ -1432,12 +1433,12 @@ void Api_protocol::battleAccepted()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(battleRequestId.isEmpty())
@@ -1458,12 +1459,12 @@ void Api_protocol::tradeRefused()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(tradeRequestId.isEmpty())
@@ -1483,12 +1484,12 @@ void Api_protocol::tradeAccepted()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(tradeRequestId.isEmpty())
@@ -1509,12 +1510,12 @@ void Api_protocol::tradeCanceled()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!isInTrade)
@@ -1523,19 +1524,19 @@ void Api_protocol::tradeCanceled()
         return;
     }
     isInTrade=false;
-    is_logged=character_selected=packFullOutcommingData(0x50,0x05,NULL,0);
+    is_logged=character_selected=packOutcommingData(0x16,NULL,0);
 }
 
 void Api_protocol::tradeFinish()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!isInTrade)
@@ -1543,19 +1544,19 @@ void Api_protocol::tradeFinish()
         newError(QStringLiteral("Internal problem"),QStringLiteral("in not in trade"));
         return;
     }
-    is_logged=character_selected=packFullOutcommingData(0x50,0x04,NULL,0);
+    is_logged=character_selected=packOutcommingData(0x15,NULL,0);
 }
 
-void Api_protocol::addTradeCash(const uint64_t &cash)
+void Api_protocol::addTradeCash(const quint64 &cash)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(cash==0)
@@ -1573,19 +1574,19 @@ void Api_protocol::addTradeCash(const uint64_t &cash)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x01;
     out << cash;
-    is_logged=character_selected=packFullOutcommingData(0x50,0x03,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x14,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::addObject(const uint16_t &item, const uint32_t &quantity)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(quantity==0)
@@ -1604,19 +1605,19 @@ void Api_protocol::addObject(const uint16_t &item, const uint32_t &quantity)
     out << (uint8_t)0x02;
     out << item;
     out << quantity;
-    is_logged=character_selected=packFullOutcommingData(0x50,0x03,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x14,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::addMonster(const uint32_t &monsterId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
         return;
     }
     if(!isInTrade)
@@ -1629,7 +1630,7 @@ void Api_protocol::addMonster(const uint32_t &monsterId)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x03;
     out << monsterId;
-    is_logged=character_selected=packFullOutcommingData(0x50,0x03,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x14,outputData.constData(),outputData.size());
 }
 
 Api_protocol::StageConnexion Api_protocol::stage() const
@@ -1726,12 +1727,12 @@ QString Api_protocol::datapackPathSub() const
 
 QString Api_protocol::mainDatapackCode() const
 {
-    return CommonSettingsServer::commonSettingsServer.mainDatapackCode;
+    return QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode);
 }
 
 QString Api_protocol::subDatapackCode() const
 {
-    return CommonSettingsServer::commonSettingsServer.subDatapackCode;
+    return QString::fromStdString(CommonSettingsServer::commonSettingsServer.subDatapackCode);
 }
 
 void Api_protocol::setDatapackPath(const QString &datapack_path)
@@ -2024,7 +2025,7 @@ void Api_protocol::connectTheExternalSocketInternal()
         datapackCert.mkpath(datapackCert.absolutePath());
         QFile certFile;
         if(stageConnexion==StageConnexion::Stage1)
-            certFile.setFileName(datapackCert.absolutePath()+QStringLiteral("/")+socket->peerName()+QStringLiteral("-")+socket->peerPort());
+            certFile.setFileName(datapackCert.absolutePath()+"/"+QString::fromStdString(socket->peerName())+"-"+QString::number(socket->peerPort()));
         else if(stageConnexion==StageConnexion::Stage3)
         {
             if(selectedServerIndex==-1)
@@ -2120,1390 +2121,123 @@ void Api_protocol::saveCert(const QString &file)
     }
 }
 
-bool ProtocolParsingBase::postReplyData(const uint8_t &queryNumber, const char * const data,const int &size)
+bool Api_protocol::postReplyData(const uint8_t &queryNumber, const char * const data,const int &size)
 {
-    const uint8_t packetCode=inputQueryNumberToPacketCode[queryNumber];
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    //check if reply to a query
-    if(packetCode==0x00)
+    const quint8 packetCode=inputQueryNumberToPacketCode[queryNumber];
+    removeFromQueryReceived(queryNumber);
+    const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[packetCode+128];
+    if(fixedSize!=0xFE)
     {
-        std::cerr <<
-                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    std::to_string(flags & 0x10) <<
-                    #endif
-                    " postReplyData("
-                    << std::to_string(queryNumber)
-                    << ",{}) not a reply to actual query"
-                    << std::endl;
-        abort();
-    }
-    #endif
-    //check if have forced size
-    const uint8_t forcedSize=packetFixedSize[queryNumber];
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    //check if the forced size same as real
-    if(forcedSize==0xFF)
-    {
-        std::cerr <<
-                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    std::to_string(flags & 0x10) <<
-                    #endif
-                    " postReplyData("
-                    << std::to_string(queryNumber)
-                    << ",{}) queryNumber not found"
-                    << std::endl;
-        abort();
-    }
-    if(forcedSize<0xFE && size!=forcedSize)
-    {
-        std::cerr <<
-                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    std::to_string(flags & 0x10) <<
-                    #endif
-                    " postReplyData("
-                    << std::to_string(queryNumber)
-                    << ",{}) forcedSize<0xFE && size!=forcedSize"
-                    << std::endl;
-        abort();
-    }
-    #endif
+        //fixed size
+        //send the network message
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=packetCode;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+        posOutput+=1;
 
-    //set into the reverse order
-    //Packet size (for packet without fixed size)
-    if(forcedSize==0xFE)
-    {
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,data,size);
+        posOutput+=size;
 
-    }
-    //Query number (8Bits, optional)
-    //Packet code (8Bits, first byte is true if query, else is message without need of reply)
-
-    inputQueryNumberToPacketCode[queryNumber]=0;
-
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    CompressionType compressionType=CompressionType::None;
-    if(replyOutputSizeInt==-1)
-    {
-        if(replyOutputCompression.find(queryNumber)!=replyOutputCompression.cend())
-        {
-            compressionType=getCompressType();
-            replyOutputCompression.erase(queryNumber);
-        }
+        return internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     }
     else
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(replyOutputCompression.find(queryNumber)!=replyOutputCompression.cend())
-        {
-            std::cerr <<
-                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        std::to_string(flags & 0x10) <<
-                        #endif
-                        " postReplyData("
-                        << std::to_string(queryNumber)
-                        << ",{}) compression disabled because have fixed size"
-                        << std::endl;
-            abort();
-        }
-        #endif
-    }
-    #endif
+        //dynamic size
+        //send the network message
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=packetCode;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+        posOutput+=1+4;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
 
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
-    {
-        errorParsingLayer("Buffer in input is too big and will do buffer overflow, size: "+std::to_string(size)+", line "+std::to_string(__LINE__));
-        abort();
-    }
-    #endif
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
+        posOutput+=size;
 
-    const int &newSize=ProtocolParsingBase::computeReplyData(
-                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                flags & 0x10,
-                #endif
-                ProtocolParsingBase::tempBigBufferForOutput,queryNumber,data,size
-                #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                ,compressionType
-                #endif
-                );
-    if(newSize==0)
-        return false;
-    return internalPackOutcommingData(ProtocolParsingBase::tempBigBufferForOutput,newSize);
-}
-
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-QByteArray ProtocolParsingBase::computeCompression(const QByteArray &data,const CompressionType &compressionType)
-{
-    switch(compressionType)
-    {
-        case CompressionType::None:
-            return data;
-        break;
-        case CompressionType::Zlib:
-        default:
-            return qCompress(data,ProtocolParsing::compressionLevel);
-        break;
-        case CompressionType::Xz:
-            return lzmaCompress(data);
-        break;
-        case CompressionType::Lz4:
-            QByteArray dest;
-            dest.resize(LZ4_compressBound(data.size()));
-            dest.resize(LZ4_compress_default(data.constData(),dest.data(),data.size(),dest.size()));
-            return dest;
-        break;
+        return internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     }
 }
-#endif
 
-bool ProtocolParsingBase::packFullOutcommingData(const uint8_t &packetCode,const uint8_t &subCodeType,const char * const data,const int &size)
+bool Api_protocol::packOutcommingData(const uint8_t &packetCode,const char * const data,const int &size)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
+    const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[packetCode];
+    if(fixedSize!=0xFE)
     {
-        errorParsingLayer("Buffer in input is too big and will do buffer overflow, size: "+std::to_string(size)+", line "+std::to_string(__LINE__));
-        abort();
-    }
-    #endif
+        //fixed size
+        //send the network message
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=packetCode;
+        posOutput+=1;
 
-    const int &newSize=computeFullOutcommingData(
-                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                flags & 0x10,
-                #endif
-                ProtocolParsingBase::tempBigBufferForOutput,
-                packetCode,subCodeType,data,size);
-    if(newSize==0)
-        return false;
-    return internalPackOutcommingData(ProtocolParsingBase::tempBigBufferForOutput,newSize);
-}
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,data,size);
+        posOutput+=size;
 
-bool ProtocolParsingBase::packOutcommingData(const uint8_t &packetCode,const char * const data,const int &size)
-{
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
-    {
-        errorParsingLayer("Buffer in input is too big and will do buffer overflow, size: "+std::to_string(size)+", line "+std::to_string(__LINE__));
-        abort();
-    }
-    #endif
-
-    const int &newSize=computeOutcommingData(
-            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            flags & 0x10,
-            #endif
-            ProtocolParsingBase::tempBigBufferForOutput,
-            packetCode,data,size);
-    if(newSize==0)
-        return false;
-    return internalPackOutcommingData(ProtocolParsingBase::tempBigBufferForOutput,newSize);
-}
-
-bool ProtocolParsingBase::packOutcommingQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const int &size)
-{
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
-    {
-        errorParsingLayer("Buffer in input is too big and will do buffer overflow, size: "+std::to_string(size)+", line "+std::to_string(__LINE__));
-        abort();
-    }
-    #endif
-
-    const int &newSize=computeOutcommingQuery(
-            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            flags & 0x10,
-            #endif
-            ProtocolParsingBase::tempBigBufferForOutput,
-            packetCode,queryNumber,data,size);
-    if(newSize==0)
-        return false;
-    registerOutputQuery(packetCode,queryNumber);
-    return internalPackOutcommingData(ProtocolParsingBase::tempBigBufferForOutput,newSize);
-}
-
-bool ProtocolParsingBase::packFullOutcommingQuery(const uint8_t &packetCode,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const int &size)
-{
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
-    {
-        errorParsingLayer("Buffer in input is too big and will do buffer overflow, size: "+std::to_string(size)+", line "+std::to_string(__LINE__));
-        abort();
-    }
-    #endif
-
-    const int &newSize=computeFullOutcommingQuery(
-            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            flags & 0x10,
-            #endif
-            ProtocolParsingBase::tempBigBufferForOutput,
-            packetCode,subCodeType,queryNumber,data,size);
-    if(newSize==0)
-        return false;
-    newFullOutputQuery(packetCode,subCodeType,queryNumber);
-    return internalPackOutcommingData(ProtocolParsingBase::tempBigBufferForOutput,newSize);
-}
-
-uint8_t ProtocolParsingBase::addHeaderForReplyData(
-    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-    const bool &isClient,
-    #endif
-    const uint8_t &queryNumber, const char * const data, const int &size
-    )
-{
-
-    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-    if(flags & 0x10)
-        dataBuffer[0x00]=replyCodeClientToServer;
-    else
-    #endif
-        dataBuffer[0x00]=replyCodeServerToClient;
-    dataBuffer[0x01]=queryNumber;
-
-    if(replyOutputSizeInt==-1)
-    {
-        #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-        if(compressionType!=CompressionType::None)
-        {
-            #ifdef PROTOCOLPARSINGDEBUG
-            std::cerr <<
-                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        isClient <<
-                        #endif
-            std::stringLiteral(" postReplyData(%1) is now compressed").arg(queryNumber));
-            #endif
-            switch(compressionType)
-            {
-                case CompressionType::Xz:
-                case CompressionType::Zlib:
-                default:
-                {
-                    const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionType));
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(compressedData.size()==0)
-                    {
-                        std::cerr <<
-                                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                    isClient <<
-                                    #endif
-                        std::stringLiteral(" postReplyData(%1,{}) dropped because can be size==0 if not fixed size").arg(queryNumber));
-                        return 0;
-                    }
-                    #endif
-                    const uint8_t &fullSize=sizeof(uint8_t)*2+encodeSize(dataBuffer+sizeof(uint8_t)*2,compressedData.size());
-                    if(compressedData.size()>0)
-                    {
-                        memcpy(dataBuffer+fullSize,compressedData.constData(),compressedData.size());
-                        return fullSize+compressedData.size();
-                    }
-                    else
-                        return fullSize;
-                }
-                break;
-            }
-        }
-        #endif
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(size==0)
-        {
-            std::cerr <<
-                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        isClient <<
-                        #endif
-            std::stringLiteral(" postReplyData(%1,{}) dropped because can be size==0 if not fixed size").arg(queryNumber));
-            return 0;
-        }
-        #endif
-        const uint8_t &fullSize=sizeof(uint8_t)*2+encodeSize(dataBuffer+sizeof(uint8_t)*2,size);
-        if(size>0)
-        {
-            memcpy(dataBuffer+fullSize,data,size);
-            return fullSize+size;
-        }
-        else
-            return fullSize;
+        return internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     }
     else
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-        if(compressionType!=CompressionType::None)
-        {
-            std::cerr <<
-                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        isClient <<
-                        #endif
-            std::stringLiteral(" postReplyData(%1,{}) compression disabled because have fixed size").arg(queryNumber));
-            abort();
-        }
-        #endif
-        if(size!=replyOutputSizeInt)
-        {
-            std::cerr <<
-                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        isClient <<
-                        #endif
-            std::stringLiteral(" postReplyData(%1,{}) dropped because can be size!=fixed size").arg(queryNumber));
-            return 0;
-        }
-        #endif
-        if(size>0)
-        {
-            memcpy(dataBuffer+sizeof(uint8_t)*2,data,size);
-            return sizeof(uint8_t)*2+size;
-        }
-        else
-            return sizeof(uint8_t)*2;
+        //dynamic size
+        //send the network message
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=packetCode;
+        posOutput+=1+4;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
+        posOutput+=size;
+
+        return internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     }
 }
 
-int ProtocolParsingBase::computeOutcommingQueryWithSpaceForHeader(
-        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-        const bool &isClient,
-        #endif
-        char *buffer,
-        const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const int &size)
-{
-    buffer[0]=packetCode;
-    buffer[1]=queryNumber;
 
-    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-    if(flags & 0x10)
+bool Api_protocol::packOutcommingQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const int &size)
+{
+    ProtocolParsingBase::registerOutputQuery(queryNumber);
+    const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[packetCode];
+    if(fixedSize!=0xFE)
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(mainCode_IsQueryClientToServer.find(packetCode)==mainCode_IsQueryClientToServer.cend())
-        {
-            std::cerr <<
-                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        isClient <<
-                        #endif
-                        " ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: "
-                        << queryNumber
-                        << ", packetCode: "
-                        << packetCode
-                        << ", try send as query, but not registred as is"
-                        << std::endl;
-            return 0;
-        }
-        #endif
-        if(sizeOnlyMainCodePacketClientToServer.find(packetCode)==sizeOnlyMainCodePacketClientToServer.cend())
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size==0)
-            {
-                std::cerr <<
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            isClient <<
-                            #endif
-                            " packOutcommingQuery("
-                            << packetCode
-                            << ",{}) dropped because can be size==0 if not fixed size"
-                            << std::endl;
-                return 0;
-            }
-            #endif
-            const int &newSize=encodeSize(buffer+2,size);
-            if(size>0)
-            {
-                memcpy(buffer+2+newSize,data,size);
-                return 2+newSize+size;
-            }
-            else
-                return 2+newSize;
-        }
-        else
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size!=sizeOnlyMainCodePacketClientToServer.at(packetCode))
-            {
-                std::cerr <<
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            isClient <<
-                            #endif
-                            " packOutcommingQuery("
-                            << packetCode
-                            << ",{}) dropped because can be size!=fixed size"
-                            << std::endl;
-                return 0;
-            }
-            #endif
-            if(size>0)
-            {
-                memcpy(buffer+2,data,size);
-                return 2+size;
-            }
-            else
-                return 2;
-        }
+        //fixed size
+        //send the network message
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=packetCode;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+        posOutput+=1;
+
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,data,size);
+        posOutput+=size;
+
+        return internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     }
     else
-    #endif
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(mainCode_IsQueryServerToClient.find(packetCode)==mainCode_IsQueryServerToClient.cend())
-        {
-            std::cerr <<
-                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        isClient <<
-                        #endif
-                        " ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: "
-                        << queryNumber
-                        << ", packetCode: "
-                        << packetCode
-                        << ", try send as query, but not registred as is"
-                        << std::endl;
-            return 0;
-        }
-        #endif
-        if(sizeOnlyMainCodePacketServerToClient.find(packetCode)==sizeOnlyMainCodePacketServerToClient.cend())
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size==0)
-            {
-                std::cerr <<
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            isClient <<
-                            #endif
-                            " packOutcommingQuery("
-                            << packetCode
-                            << ",{}) dropped because can be size==0 if not fixed size"
-                            << std::endl;
-                return 0;
-            }
-            #endif
-            const int &newSize=encodeSize(buffer+2,size);
-            if(size>0)
-            {
-                memcpy(buffer+2+newSize,data,size);
-                return 2+newSize+size;
-            }
-            else
-                return 2+newSize;
-        }
-        else
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size!=sizeOnlyMainCodePacketServerToClient.at(packetCode))
-            {
-                std::cerr <<
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            isClient <<
-                            #endif
-                            " packOutcommingQuery("
-                            << packetCode
-                            << ",{}) dropped because can be size!=fixed size"
-                            << std::endl;
-                return 0;
-            }
-            #endif
-            if(size>0)
-            {
-                memcpy(buffer+2,data,size);
-                return 2+size;
-            }
-            else
-                return 2;
-        }
+        //dynamic size
+        //send the network message
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=packetCode;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+        posOutput+=1+4;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
+        posOutput+=size;
+
+        return internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     }
 }
 
-int ProtocolParsingBase::computeFullOutcommingQuery(
-        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-        const bool &isClient,
-        #endif
-        char *buffer,
-        const uint8_t &packetCode,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const int &size)
+QByteArray Api_protocol::toUTF8WithHeader(const QString &text)
 {
-    buffer[0]=packetCode;
-    buffer[1]=subCodeType;
-    buffer[2]=queryNumber;
-
-    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-    if(flags & 0x10)
-    {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(mainCode_IsQueryClientToServer.find(packetCode)==mainCode_IsQueryClientToServer.cend())
-        {
-            std::cerr <<
-                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        isClient <<
-                        #endif
-                        " ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: "
-                        << queryNumber
-                        << ", packetCode: "
-                        << packetCode
-                        << ", subCodeType: "
-                        << subCodeType
-                        << ", try send as query, but not registred as is"
-                        << std::endl;
-            return 0;
-        }
-        #endif
-        if(sizeMultipleCodePacketClientToServer.find(packetCode)==sizeMultipleCodePacketClientToServer.cend())
-        {
-            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            if(compressionMultipleCodePacketClientToServer.find(packetCode)!=compressionMultipleCodePacketClientToServer.cend())
-                if(compressionMultipleCodePacketClientToServer.at(packetCode).find(subCodeType)!=compressionMultipleCodePacketClientToServer.at(packetCode).cend())
-                {
-                    #ifdef PROTOCOLPARSINGDEBUG
-                    std::cerr <<
-                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                isClient <<
-                                #endif
-                    std::stringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(packetCode).arg(subCodeType).arg(queryNumber));
-                    #endif
-                    switch(compressionTypeClient)
-                    {
-                        case CompressionType::Xz:
-                        case CompressionType::Zlib:
-                        default:
-                        {
-                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeClient));
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                            if(size==0)
-                            {
-                                std::cerr <<
-                                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                            isClient <<
-                                            #endif
-                                            " packOutcommingQuery("
-                                            << packetCode
-                                            << ","
-                                            << subCodeType
-                                            << ",{}) dropped because can be size==0 if not fixed size"
-                                            << std::endl;
-                                return 0;
-                            }
-                            #endif
-                            const int &newSize=encodeSize(buffer+3,compressedData.size());
-                            if(compressedData.size()>0)
-                            {
-                                memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
-                                return 3+newSize+compressedData.size();
-                            }
-                            else
-                                return 3+newSize;
-                        }
-                        break;
-                        case CompressionType::None:
-                        break;
-                    }
-                }
-            #endif
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size==0)
-            {
-                std::cerr <<
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            isClient <<
-                            #endif
-                            " packOutcommingQuery("
-                            << packetCode
-                            << ","
-                            << subCodeType
-                            << ",{}) dropped because can be size==0 if not fixed size"
-                            << std::endl;
-                return 0;
-            }
-            #endif
-            const int &newSize=encodeSize(buffer+3,size);
-            if(size>0)
-            {
-                memcpy(buffer+3+newSize,data,size);
-                return 3+newSize+size;
-            }
-            else
-                return 3+newSize;
-        }
-        else if(sizeMultipleCodePacketClientToServer.at(packetCode).find(subCodeType)==sizeMultipleCodePacketClientToServer.at(packetCode).cend())
-        {
-            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            if(compressionMultipleCodePacketClientToServer.find(packetCode)!=compressionMultipleCodePacketClientToServer.cend())
-                if(compressionMultipleCodePacketClientToServer.at(packetCode).find(subCodeType)!=compressionMultipleCodePacketClientToServer.at(packetCode).cend())
-                {
-                    #ifdef PROTOCOLPARSINGDEBUG
-                    std::cerr <<
-                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                isClient <<
-                                #endif
-                    std::stringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(packetCode).arg(subCodeType).arg(queryNumber));
-                    #endif
-                    switch(compressionTypeClient)
-                    {
-                        case CompressionType::Xz:
-                        case CompressionType::Zlib:
-                        default:
-                        {
-                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeClient));
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                            if(size==0)
-                            {
-                                std::cerr <<
-                                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                            isClient <<
-                                            #endif
-                                            " packOutcommingQuery("
-                                            << packetCode
-                                            << ","
-                                            << subCodeType
-                                            << ",{}) dropped because can be size==0 if not fixed size"
-                                            << std::endl;
-                                return 0;
-                            }
-                            #endif
-                            const int &newSize=encodeSize(buffer+3,compressedData.size());
-                            if(compressedData.size()>0)
-                            {
-                                memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
-                                return 3+newSize+compressedData.size();
-                            }
-                            else
-                                return 3+newSize;
-                        }
-                        break;
-                        case CompressionType::None:
-                        break;
-                    }
-                }
-            #endif
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size==0)
-            {
-                std::cerr <<
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            isClient <<
-                            #endif
-                            " packOutcommingQuery("
-                            << packetCode
-                            << ","
-                            << subCodeType
-                            << ",{}) dropped because can be size==0 if not fixed size"
-                            << std::endl;
-                return 0;
-            }
-            #endif
-            const int &newSize=encodeSize(buffer+3,size);
-            if(size>0)
-            {
-                memcpy(buffer+3+newSize,data,size);
-                return 3+newSize+size;
-            }
-            else
-                return 3+newSize;
-        }
-        else
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            if(compressionMultipleCodePacketClientToServer.contains(packetCode))
-                if(compressionMultipleCodePacketClientToServer.value(packetCode).contains(subCodeType))
-                    std::cerr <<
-                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                isClient <<
-                                #endif
-                    std::stringLiteral(" packOutcommingQuery(%1,%2,%3) compression can't be enabled due to fixed size").arg(packetCode).arg(subCodeType).arg(queryNumber));
-            #endif
-            if(size!=sizeMultipleCodePacketClientToServer.value(packetCode).value(subCodeType))
-            {
-                std::cerr <<
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            isClient <<
-                            #endif
-                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(packetCode).arg(subCodeType));
-                return 0;
-            }
-            #endif
-            if(size>0)
-            {
-                memcpy(buffer+3,data,size);
-                return 3+size;
-            }
-            else
-                return 3;
-        }
-    }
-    else
-    #endif
-    {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(!packetCode>=0x80)
-        {
-            std::cerr <<
-                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        isClient <<
-                        #endif
-            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, packetCode: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(packetCode).arg(subCodeType));
-            return 0;
-        }
-        #endif
-        if(!sizeMultipleCodePacketServerToClient.contains(packetCode))
-        {
-            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            if(compressionMultipleCodePacketServerToClient.contains(packetCode))
-                if(compressionMultipleCodePacketServerToClient.value(packetCode).contains(subCodeType))
-                {
-                    #ifdef PROTOCOLPARSINGDEBUG
-                    std::cerr <<
-                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                isClient <<
-                                #endif
-                    std::stringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(packetCode).arg(subCodeType).arg(queryNumber));
-                    #endif
-                    switch(compressionTypeServer)
-                    {
-                        case CompressionType::Xz:
-                        case CompressionType::Zlib:
-                        default:
-                        {
-                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeServer));
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                            if(size==0)
-                            {
-                                std::cerr <<
-                                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                            isClient <<
-                                            #endif
-                                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
-                                return 0;
-                            }
-                            #endif
-                            const int &newSize=encodeSize(buffer+3,compressedData.size());
-                            if(compressedData.size()>0)
-                            {
-                                memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
-                                return 3+newSize+compressedData.size();
-                            }
-                            else
-                                return 3+newSize;
-                        }
-                        break;
-                        case CompressionType::None:
-                        break;
-                    }
-                }
-            #endif
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size==0)
-            {
-                std::cerr <<
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            isClient <<
-                            #endif
-                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
-                return 0;
-            }
-            #endif
-            const int &newSize=encodeSize(buffer+3,size);
-            if(size>0)
-            {
-                memcpy(buffer+3+newSize,data,size);
-                return 3+newSize+size;
-            }
-            else
-                return 3+newSize;
-        }
-        else if(!sizeMultipleCodePacketServerToClient.value(packetCode).contains(subCodeType))
-        {
-            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            if(compressionMultipleCodePacketServerToClient.contains(packetCode))
-                if(compressionMultipleCodePacketServerToClient.value(packetCode).contains(subCodeType))
-                {
-                    #ifdef PROTOCOLPARSINGDEBUG
-                    std::cerr <<
-                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                isClient <<
-                                #endif
-                    std::stringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(packetCode).arg(subCodeType).arg(queryNumber));
-                    #endif
-                    switch(compressionTypeServer)
-                    {
-                        case CompressionType::Xz:
-                        case CompressionType::Zlib:
-                        default:
-                        {
-                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeServer));
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                            if(size==0)
-                            {
-                                std::cerr <<
-                                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                            isClient <<
-                                            #endif
-                                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
-                                return 0;
-                            }
-                            #endif
-                            const int &newSize=encodeSize(buffer+3,compressedData.size());
-                            if(compressedData.size()>0)
-                            {
-                                memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
-                                return 3+newSize+compressedData.size();
-                            }
-                            else
-                                return 3+newSize;
-                        }
-                        break;
-                        case CompressionType::None:
-                        break;
-                    }
-                }
-            #endif
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size==0)
-            {
-                std::cerr <<
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            isClient <<
-                            #endif
-                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
-                return 0;
-            }
-            #endif
-            const int &newSize=encodeSize(buffer+3,size);
-            if(size>0)
-            {
-                memcpy(buffer+3+newSize,data,size);
-                return 3+newSize+size;
-            }
-            else
-                return 3+newSize;
-        }
-        else
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            if(compressionMultipleCodePacketServerToClient.contains(packetCode))
-                if(compressionMultipleCodePacketServerToClient.value(packetCode).contains(subCodeType))
-                    std::cerr <<
-                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                isClient <<
-                                #endif
-                    std::stringLiteral(" packOutcommingQuery(%1,%2,%3) compression can't be enabled due to fixed size").arg(packetCode).arg(subCodeType).arg(queryNumber));
-            #endif
-            if(size!=sizeMultipleCodePacketServerToClient.value(packetCode).value(subCodeType))
-            {
-                std::cerr <<
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            isClient <<
-                            #endif
-                std::stringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(packetCode).arg(subCodeType));
-                return 0;
-            }
-            #endif
-            if(size>0)
-            {
-                memcpy(buffer+3,data,size);
-                return 3+size;
-            }
-            else
-                return 3;
-        }
-    }
-}
-
-int ProtocolParsingBase::computeFullOutcommingData(
-        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-        const bool &isClient,
-        #endif
-        char *buffer,
-        const uint8_t &packetCode,const uint8_t &subCodeType,const char * const data,const int &size)
-{
-    buffer[0]=packetCode;
-    buffer[1]=subCodeType;
-
-    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-    if(flags & 0x10)
-    {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(packetCode>=0x80)
-        {
-            std::cerr <<
-                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        isClient <<
-                        #endif
-            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): packetCode: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(packetCode).arg(subCodeType));
-            return 0;
-        }
-        #endif
-        if(!sizeMultipleCodePacketClientToServer.contains(packetCode))
-        {
-            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            if(compressionMultipleCodePacketClientToServer.contains(packetCode))
-                if(compressionMultipleCodePacketClientToServer.value(packetCode).contains(subCodeType))
-                {
-                    #ifdef PROTOCOLPARSINGDEBUG
-                    std::cerr <<
-                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                isClient <<
-                                #endif
-                    std::stringLiteral(" packOutcommingData(%1,%2) compression enabled").arg(packetCode).arg(subCodeType));
-                    #endif
-                    switch(compressionTypeClient)
-                    {
-                        case CompressionType::Xz:
-                        case CompressionType::Zlib:
-                        default:
-                        {
-                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeClient));
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                            if(compressedData.size()==0)
-                            {
-                                std::cerr <<
-                                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                            isClient <<
-                                            #endif
-                                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
-                                return 0;
-                            }
-                            #endif
-                            const int &newSize=encodeSize(buffer+2,compressedData.size());
-                            if(compressedData.size()>0)
-                            {
-                                memcpy(buffer+2+newSize,compressedData.constData(),compressedData.size());
-                                return 2+newSize+compressedData.size();
-                            }
-                            else
-                                return 2+newSize;
-                        }
-                        break;
-                        case CompressionType::None:
-                        break;
-                    }
-                }
-            #endif
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size==0)
-            {
-                std::cerr <<
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            isClient <<
-                            #endif
-                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
-                return 0;
-            }
-            #endif
-            const int &newSize=encodeSize(buffer+2,size);
-            if(size>0)
-            {
-                memcpy(buffer+2+newSize,data,size);
-                return 2+newSize+size;
-            }
-            else
-                return 2+newSize+size;
-        }
-        else if(!sizeMultipleCodePacketClientToServer.value(packetCode).contains(subCodeType))
-        {
-            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            if(compressionMultipleCodePacketClientToServer.contains(packetCode))
-                if(compressionMultipleCodePacketClientToServer.value(packetCode).contains(subCodeType))
-                {
-                    #ifdef PROTOCOLPARSINGDEBUG
-                    std::cerr <<
-                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                isClient <<
-                                #endif
-                    std::stringLiteral(" packOutcommingData(%1,%2) compression enabled").arg(packetCode).arg(subCodeType));
-                    #endif
-                    switch(compressionTypeClient)
-                    {
-                        case CompressionType::Xz:
-                        case CompressionType::Zlib:
-                        default:
-                        {
-                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeClient));
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                            if(compressedData.size()==0)
-                            {
-                                std::cerr <<
-                                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                            isClient <<
-                                            #endif
-                                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
-                                return 0;
-                            }
-                            #endif
-                            const int &newSize=encodeSize(buffer+2,compressedData.size());
-                            if(compressedData.size()>0)
-                            {
-                                memcpy(buffer+2+newSize,compressedData.constData(),compressedData.size());
-                                return 2+newSize+compressedData.size();
-                            }
-                            else
-                                return 2+newSize;
-                        }
-                        break;
-                        case CompressionType::None:
-                        break;
-                    }
-                }
-            #endif
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size==0)
-            {
-                std::cerr <<
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            isClient <<
-                            #endif
-                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
-                return 0;
-            }
-            #endif
-            const int &newSize=encodeSize(buffer+2,size);
-            if(size>0)
-            {
-                memcpy(buffer+2+newSize,data,size);
-                return 2+newSize+size;
-            }
-            else
-                return 2+newSize;
-        }
-        else
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            if(compressionMultipleCodePacketClientToServer.contains(packetCode))
-                if(compressionMultipleCodePacketClientToServer.value(packetCode).contains(subCodeType))
-                    std::cerr <<
-                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                isClient <<
-                                #endif
-                    std::stringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(packetCode).arg(subCodeType));
-            #endif
-            if(size!=sizeMultipleCodePacketClientToServer.value(packetCode).value(subCodeType))
-            {
-                std::cerr <<
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            isClient <<
-                            #endif
-                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(packetCode).arg(subCodeType));
-                return 0;
-            }
-            #endif
-            if(size>0)
-            {
-                memcpy(buffer+2,data,size);
-                return 2+size;
-            }
-            else
-                return 2;
-        }
-    }
-    else
-    #endif
-    {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(packetCode>=0x80)
-        {
-            std::cerr <<
-                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        isClient <<
-                        #endif
-            std::stringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): packetCode: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(packetCode).arg(subCodeType));
-            return 0;
-        }
-        #endif
-        if(!sizeMultipleCodePacketServerToClient.contains(packetCode))
-        {
-            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            if(compressionMultipleCodePacketServerToClient.contains(packetCode))
-                if(compressionMultipleCodePacketServerToClient.value(packetCode).contains(subCodeType))
-                {
-                    #ifdef PROTOCOLPARSINGDEBUG
-                    std::cerr <<
-                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                isClient <<
-                                #endif
-                    std::stringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(packetCode).arg(subCodeType));
-                    #endif
-                    switch(compressionTypeServer)
-                    {
-                        case CompressionType::Xz:
-                        case CompressionType::Zlib:
-                        default:
-                        {
-                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeServer));
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                            if(compressedData.size()==0)
-                            {
-                                std::cerr <<
-                                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                            isClient <<
-                                            #endif
-                                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
-                                return 0;
-                            }
-                            #endif
-                            const int &newSize=encodeSize(buffer+2,compressedData.size());
-                            if(compressedData.size()>0)
-                            {
-                                memcpy(buffer+2+newSize,compressedData.constData(),compressedData.size());
-                                return 2+newSize+compressedData.size();
-                            }
-                            else
-                                return 2+newSize;
-                        }
-                        break;
-                        case CompressionType::None:
-                        break;
-                    }
-                }
-            #endif
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size==0)
-            {
-                std::cerr <<
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            isClient <<
-                            #endif
-                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
-                return 0;
-            }
-            #endif
-            const int &newSize=encodeSize(buffer+2,size);
-            if(size>0)
-            {
-                memcpy(buffer+2+newSize,data,size);
-                return 2+newSize+size;
-            }
-            else
-                return 2+newSize;
-        }
-        else if(!sizeMultipleCodePacketServerToClient.value(packetCode).contains(subCodeType))
-        {
-            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            if(compressionMultipleCodePacketServerToClient.contains(packetCode))
-                if(compressionMultipleCodePacketServerToClient.value(packetCode).contains(subCodeType))
-                {
-                    #ifdef PROTOCOLPARSINGDEBUG
-                    std::cerr <<
-                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                isClient <<
-                                #endif
-                    std::stringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(packetCode).arg(subCodeType));
-                    #endif
-                    switch(compressionTypeServer)
-                    {
-                        case CompressionType::Xz:
-                        case CompressionType::Zlib:
-                        default:
-                        {
-                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeServer));
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                            if(compressedData.size()==0)
-                            {
-                                std::cerr <<
-                                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                            isClient <<
-                                            #endif
-                                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
-                                return 0;
-                            }
-                            #endif
-                            const int &newSize=encodeSize(buffer+2,compressedData.size());
-                            if(compressedData.size()>0)
-                            {
-                                memcpy(buffer+2+newSize,compressedData.constData(),compressedData.size());
-                                return 2+newSize+compressedData.size();
-                            }
-                            else
-                                return 2+newSize;
-                        }
-                        break;
-                        case CompressionType::None:
-                        break;
-                    }
-                }
-            #endif
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size==0)
-            {
-                std::cerr <<
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            isClient <<
-                            #endif
-                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(packetCode).arg(subCodeType));
-                return 0;
-            }
-            #endif
-            const int &newSize=encodeSize(buffer+2,size);
-            if(size>0)
-            {
-                memcpy(buffer+2+newSize,data,size);
-                return 2+newSize+size;
-            }
-            else
-                return 2+newSize;
-        }
-        else
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            if(compressionMultipleCodePacketClientToServer.contains(packetCode))
-                if(compressionMultipleCodePacketClientToServer.value(packetCode).contains(subCodeType))
-                    std::cerr <<
-                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                isClient <<
-                                #endif
-                    std::stringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(packetCode).arg(subCodeType));
-            #endif
-            if(size!=sizeMultipleCodePacketServerToClient.value(packetCode).value(subCodeType))
-            {
-                std::cerr <<
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            isClient <<
-                            #endif
-                std::stringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(packetCode).arg(subCodeType));
-                return 0;
-            }
-            #endif
-            if(size>0)
-            {
-                memcpy(buffer+2,data,size);
-                return 2+size;
-            }
-            else
-                return 2;
-        }
-    }
-}
-
-int ProtocolParsingBase::computeOutcommingDataWithSpaceForHeader(
-        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-        const bool &isClient,
-        #endif
-        char *buffer,
-        const uint8_t &packetCode,const char * const data,const int &size)
-{
-    buffer[0]=packetCode;
-
-    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-    if(flags & 0x10)
-    {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(mainCode_IsQueryClientToServer.find(packetCode)!=mainCode_IsQueryClientToServer.cend())
-        {
-            std::cerr <<
-                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        isClient <<
-                        #endif
-                        " ProtocolParsingInputOutput::packOutcommingQuery(): packetCode: "
-                        << packetCode
-                        << ", try send as normal data, but not registred as is" << std::endl;
-            return 0;
-        }
-        #endif
-        if(sizeOnlyMainCodePacketClientToServer.find(packetCode)==sizeOnlyMainCodePacketClientToServer.cend())
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size==0)
-            {
-                std::cerr <<
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            isClient <<
-                            #endif
-                            " packOutcommingData("
-                            << packetCode
-                            << ",{}) dropped because can be size==0 if not fixed size"
-                            << std::endl;
-                return 0;
-            }
-            #endif
-            const int &newSize=encodeSize(buffer+1,size);
-            if(size>0)
-            {
-                memcpy(buffer+1+newSize,data,size);
-                return 1+newSize+size;
-            }
-            else
-                return 1+newSize;
-        }
-        else
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size!=sizeOnlyMainCodePacketClientToServer.at(packetCode))
-            {
-                std::cerr <<
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            isClient <<
-                            #endif
-                            " packOutcommingData("
-                            << packetCode
-                            << ",{}) dropped because can be size!=fixed size"
-                            << std::endl;
-                return 0;
-            }
-            #endif
-            if(size>0)
-            {
-                memcpy(buffer+1,data,size);
-                return 1+size;
-            }
-            else
-                return 1;
-        }
-    }
-    else
-    #endif
-    {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(mainCode_IsQueryServerToClient.find(packetCode)!=mainCode_IsQueryServerToClient.cend())
-        {
-            std::cerr <<
-                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                        isClient <<
-                        #endif
-                        " ProtocolParsingInputOutput::packOutcommingQuery(): packetCode: "
-                        << packetCode
-                        << ", try send as normal data, but not registred as is"
-                        << std::endl;
-            return 0;
-        }
-        #endif
-        if(sizeOnlyMainCodePacketServerToClient.find(packetCode)==sizeOnlyMainCodePacketServerToClient.cend())
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size==0)
-            {
-                std::cerr <<
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            isClient <<
-                            #endif
-                            " packOutcommingData("
-                            << packetCode
-                            << ",{}) dropped because can be size==0 if not fixed size"
-                            << std::endl;
-                return 0;
-            }
-            #endif
-            const int &newSize=encodeSize(buffer+1,size);
-            if(size>0)
-            {
-                memcpy(buffer+1+newSize,data,size);
-                return 1+newSize+size;
-            }
-            else
-                return 1+newSize;
-        }
-        else
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size!=sizeOnlyMainCodePacketServerToClient.at(packetCode))
-            {
-                std::cerr <<
-                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                            isClient <<
-                            #endif
-                            " packOutcommingData("
-                            << packetCode
-                            << ",{}) dropped because can be size!=fixed size"
-                            << std::endl;
-                return 0;
-            }
-            #endif
-            if(size>0)
-            {
-                memcpy(buffer+1,data,size);
-                return 1+size;
-            }
-            else
-                return 1;
-        }
-    }
+    if(text.isEmpty())
+        return QByteArray();
+    QByteArray data;
+    data.resize(1);
+    data+=text.toUtf8();
+    if(data.size()>255)
+        return QByteArray();
+    data[0]=data.size()-1;
+    return data;
 }
