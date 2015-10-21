@@ -318,7 +318,7 @@ bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType, const char
     {
         if(Q_LIKELY(linkToGameServer))
         {
-            uint8_t fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType];
+            const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType];
             if(fixedSize!=0xFE)
             {
                 //fixed size
@@ -386,7 +386,7 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
             if(Q_LIKELY(linkToGameServer))
             {
                 linkToGameServer->registerOutputQuery(queryNumber);
-                uint8_t fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType];
+                const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType];
                 if(fixedSize!=0xFE)
                 {
                     //fixed size
@@ -544,7 +544,7 @@ bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
         if(Q_LIKELY(linkToGameServer))
         {
             linkToGameServer->removeFromQueryReceived(queryNumber);
-            uint8_t fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType];
+            const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType+128];
             if(fixedSize!=0xFE)
             {
                 //fixed size
