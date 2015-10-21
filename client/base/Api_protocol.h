@@ -15,7 +15,6 @@
 #include <vector>
 
 #include "ClientStructures.h"
-#include "../../general/base/DebugClass.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/ProtocolParsing.h"
@@ -55,6 +54,7 @@ public:
     virtual QString mainDatapackCode() const;
     virtual QString subDatapackCode() const;
     void setDatapackPath(const QString &datapackPath);
+    QByteArray toUTF8WithHeader(const QString &text);
 
     enum StageConnexion
     {
@@ -119,10 +119,10 @@ protected:
     void connectTheExternalSocketInternal();
     void saveCert(const QString &file);
 
-    void errorParsingLayer(const QString &error);
-    void messageParsingLayer(const QString &message) const;
+    void errorParsingLayer(const std::string &error);
+    void messageParsingLayer(const std::string &message) const;
 
-    void parseCharacterBlock(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const QByteArray &data);
+    bool parseCharacterBlock(const uint8_t &packetCode,const uint8_t &queryNumber,const QByteArray &data);
 
     inline void registerOutputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
     //send message without reply
@@ -133,18 +133,18 @@ protected:
     bool postReplyData(const uint8_t &queryNumber, const char * const data,const int &size);
 protected:
     //have message without reply
-    virtual void parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size);
+    virtual bool parseMessage(const uint8_t &packetCode,const char * const data,const unsigned int &size);
     //have query with reply
-    virtual void parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    virtual bool parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
     //send reply
-    virtual void parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    virtual bool parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
 
     //have message without reply
-    virtual void parseMessage(const uint8_t &mainCodeType,const QByteArray &data);
+    virtual bool parseMessage(const uint8_t &packetCode,const QByteArray &data);
     //have query with reply
-    virtual void parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const QByteArray &data);
+    virtual bool parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const QByteArray &data);
     //send reply
-    virtual void parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const QByteArray &data);
+    virtual bool parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const QByteArray &data);
 
     //servers list
     LogicialGroup * addLogicalGroup(const QString &path, const QString &xml, const QString &language);
@@ -282,7 +282,7 @@ signals:
     void tradeCanceledByOther() const;
     void tradeFinishedByOther() const;
     void tradeValidatedByTheServer() const;
-    void tradeAddTradeCash(const uint64_t &cash) const;
+    void tradeAddTradeCash(const quint64 &cash) const;
     void tradeAddTradeObject(const uint32_t &item,const uint32_t &quantity) const;
     void tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster) const;
 
@@ -310,11 +310,11 @@ signals:
     void captureCityWin();
 
     //market
-    void marketList(const uint64_t &price,const QList<MarketObject> &marketObjectList,const QList<MarketMonster> &marketMonsterList,const QList<MarketObject> &marketOwnObjectList,const QList<MarketMonster> &marketOwnMonsterList) const;
+    void marketList(const quint64 &price,const QList<MarketObject> &marketObjectList,const QList<MarketMonster> &marketMonsterList,const QList<MarketObject> &marketOwnObjectList,const QList<MarketMonster> &marketOwnMonsterList) const;
     void marketBuy(const bool &success) const;
     void marketBuyMonster(const PlayerMonster &playerMonster) const;
     void marketPut(const bool &success) const;
-    void marketGetCash(const uint64_t &cash) const;
+    void marketGetCash(const quint64 &cash) const;
     void marketWithdrawCanceled() const;
     void marketWithdrawObject(const uint32_t &objectId,const uint32_t &quantity) const;
     void marketWithdrawMonster(const PlayerMonster &playerMonster) const;
@@ -343,7 +343,7 @@ public:
     void tradeAccepted();
     void tradeCanceled();
     void tradeFinish();
-    void addTradeCash(const uint64_t &cash);
+    void addTradeCash(const quint64 &cash);
     void addObject(const uint16_t &item,const uint32_t &quantity);
     void addMonster(const uint32_t &monsterId);
 
@@ -355,7 +355,7 @@ public:
     void destroyObject(const uint16_t &object,const uint32_t &quantity=1);
     void useObject(const uint16_t &object);
     void useObjectOnMonster(const uint16_t &object,const uint32_t &monster);
-    void wareHouseStore(const int64_t &cash, const QList<QPair<uint16_t, int32_t> > &items, const QList<uint32_t> &withdrawMonsters, const QList<uint32_t> &depositeMonsters);
+    void wareHouseStore(const qint64 &cash, const QList<QPair<uint16_t, int32_t> > &items, const QList<uint32_t> &withdrawMonsters, const QList<uint32_t> &depositeMonsters);
     void takeAnObjectOnMap();
 
     //shop

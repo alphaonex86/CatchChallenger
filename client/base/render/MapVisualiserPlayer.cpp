@@ -11,6 +11,7 @@
 #include <qmath.h>
 #include <QFileInfo>
 #include <QMessageBox>
+#include <QDebug>
 
 QString MapVisualiserPlayer::text_DATAPACK_BASE_PATH_SKIN=QLatin1Literal(DATAPACK_BASE_PATH_SKIN);
 QString MapVisualiserPlayer::text_DATAPACK_BASE_PATH_MAPBASE=QLatin1Literal(DATAPACK_BASE_PATH_MAPBASE);

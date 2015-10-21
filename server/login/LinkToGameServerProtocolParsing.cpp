@@ -241,7 +241,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             if(client!=NULL)
             {
                 client->removeFromQueryReceived(queryNumber);
-                uint8_t fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType];
+                const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType+128];
                 if(fixedSize!=0xFE)
                 {
                     //fixed size

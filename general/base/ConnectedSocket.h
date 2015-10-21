@@ -8,7 +8,7 @@
 #include <QAbstractSocket>
 #include <QObject>
 #include <QHostAddress>
-#include <std::vector<char>>
+#include <QByteArray>
 
 #include "QFakeSocket.h"
 
@@ -23,26 +23,26 @@ public:
     explicit ConnectedSocket(QTcpSocket *socket);
     ~ConnectedSocket();
     void	abort();
-    void	connectToHost(const std::string & hostName,uint16_t port);
-    void	connectToHost(const QHostAddress & address,uint16_t port);
+    void	connectToHost(const std::string & hostName,quint16 port);
+    void	connectToHost(const QHostAddress & address,quint16 port);
     void	disconnectFromHost();
     QAbstractSocket::SocketError error() const;
     bool	flush();
     bool	isValid() const;
     void    setTcpCork(const bool &cork);
     QHostAddress localAddress() const;
-    uint16_t	localPort() const;
+    quint16	localPort() const;
     QHostAddress peerAddress() const;
     std::string	peerName() const;
-    uint16_t	peerPort() const;
+    quint16	peerPort() const;
     QAbstractSocket::SocketState state() const;
     bool	waitForConnected(int msecs = 30000);
     bool	waitForDisconnected(int msecs = 30000);
-    int64_t	bytesAvailable() const;
+    qint64	bytesAvailable() const;
     OpenMode openMode() const;
     std::string errorString() const;
-    int64_t	readData(char * data, int64_t maxSize);
-    int64_t	writeData(const char * data, int64_t maxSize);
+    qint64	readData(char * data, qint64 maxSize);
+    qint64	writeData(const char * data, qint64 maxSize);
     void	close();
     QFakeSocket *fakeSocket;
     QSslSocket *sslSocket;
