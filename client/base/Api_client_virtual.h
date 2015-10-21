@@ -15,7 +15,6 @@
 #include <QCryptographicHash>
 
 #include "../../general/base/QFakeSocket.h"
-#include "../../general/base/DebugClass.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/ConnectedSocket.h"

@@ -107,7 +107,7 @@ void ConnectedSocket::abort()
         tcpSocket->abort();
 }
 
-void ConnectedSocket::connectToHost(const std::string & hostName, uint16_t port)
+void ConnectedSocket::connectToHost(const std::string & hostName, quint16 port)
 {
     if(state()!=QAbstractSocket::UnconnectedState)
         return;
@@ -119,7 +119,7 @@ void ConnectedSocket::connectToHost(const std::string & hostName, uint16_t port)
         tcpSocket->connectToHost(hostName,port);
 }
 
-void ConnectedSocket::connectToHost(const QHostAddress & address, uint16_t port)
+void ConnectedSocket::connectToHost(const QHostAddress & address, quint16 port)
 {
     if(state()!=QAbstractSocket::UnconnectedState)
         return;
@@ -213,7 +213,7 @@ QHostAddress ConnectedSocket::localAddress() const
     return QHostAddress::Null;
 }
 
-uint16_t	ConnectedSocket::localPort() const
+quint16	ConnectedSocket::localPort() const
 {
     if(fakeSocket!=NULL)
         return 9999;
@@ -240,7 +240,7 @@ std::string	ConnectedSocket::peerName() const
     return peerAddress().toString();
 }
 
-uint16_t	ConnectedSocket::peerPort() const
+quint16	ConnectedSocket::peerPort() const
 {
     if(fakeSocket!=NULL)
         return 15000;
@@ -284,7 +284,7 @@ bool ConnectedSocket::waitForDisconnected(int msecs)
     return false;
 }
 
-int64_t ConnectedSocket::bytesAvailable() const
+qint64 ConnectedSocket::bytesAvailable() const
 {
     if(fakeSocket!=NULL)
         return fakeSocket->bytesAvailable();
@@ -323,7 +323,7 @@ void ConnectedSocket::close()
     disconnectFromHost();
 }
 
-int64_t ConnectedSocket::readData(char * data, int64_t maxSize)
+qint64 ConnectedSocket::readData(char * data, qint64 maxSize)
 {
     if(fakeSocket!=NULL)
         return fakeSocket->read(data,maxSize);
@@ -334,7 +334,7 @@ int64_t ConnectedSocket::readData(char * data, int64_t maxSize)
     return -1;
 }
 
-int64_t ConnectedSocket::writeData(const char * data, int64_t maxSize)
+qint64 ConnectedSocket::writeData(const char * data, qint64 maxSize)
 {
     if(fakeSocket!=NULL)
         return fakeSocket->write(data,maxSize);
