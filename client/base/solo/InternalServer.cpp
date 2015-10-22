@@ -23,7 +23,7 @@ void InternalServer::start_internal_server()
 {
     if(stat!=Down)
     {
-        DebugClass::debugConsole("In wrong stat");
+        qDebug() << ("In wrong stat");
         return;
     }
     stat=InUp;
@@ -31,7 +31,7 @@ void InternalServer::start_internal_server()
 
     if(!QFakeServer::server.listen())
     {
-        DebugClass::debugConsole(QStringLiteral("Unable to listen the internal server"));
+        qDebug() << (QStringLiteral("Unable to listen the internal server"));
         stat=Down;
         emit error(QStringLiteral("Unable to listen the internal server"));
         emit is_started(false);

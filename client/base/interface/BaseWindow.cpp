@@ -6,6 +6,7 @@
 #include "../../../general/base/CommonDatapack.h"
 #include "../../../general/base/CommonDatapackServerSpec.h"
 #include "../../../general/base/CommonSettingsServer.h"
+#include "../../../general/base/CommonSettingsCommon.h"
 #include "DatapackClientLoader.h"
 #include "MapController.h"
 #include "Chat.h"
@@ -177,7 +178,7 @@ BaseWindow::BaseWindow() :
 
     connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::newError,  this,&BaseWindow::newError);
     connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::error,     this,&BaseWindow::error);
-    connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::errorFightEngine,     this,&BaseWindow::error);
+    connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::errorFightEngine,     this,&BaseWindow::stderror);
 
     connect(&updateRXTXTimer,&QTimer::timeout,          this,&BaseWindow::updateRXTX);
 
@@ -548,6 +549,11 @@ void BaseWindow::message(QString message) const
     qDebug() << message;
 }
 
+void BaseWindow::stdmessage(std::string message) const
+{
+    qDebug() << QString::fromStdString(message);
+}
+
 void BaseWindow::number_of_player(uint16_t number,uint16_t max)
 {
     ui->frame_main_display_interface_player->show();
@@ -646,19 +652,19 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             {
                 ui->stackedWidget->setCurrentWidget(ui->page_inventory);
                 ui->inventoryUse->setText(tr("Select"));
-                if(CatchChallenger::CommonDatapack::commonDatapack.items.item.contains(item))
+                if(CatchChallenger::CommonDatapack::commonDatapack.items.item.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.item.cend())
                     if(CatchChallenger::CommonDatapack::commonDatapack.items.item[item].consumeAtUse)
                         add_to_inventory(item,1,false);
                 break;
             }
             const PlayerMonster &monster=*ClientFightEngine::fightEngine.monsterById(monsterUniqueId);
-            const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.value(monster.monster);
+            const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.at(monster.monster);
             const DatapackClientLoader::MonsterExtra &monsterInformationsExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster);
-            if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.contains(item))
+            if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.cend())
             {
                 idMonsterEvolution=0;
-                const Monster &monsterInformationsEvolution=CommonDatapack::commonDatapack.monsters.value(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.value(item).value(monster.monster));
-                const DatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.value(item).value(monster.monster));
+                const Monster &monsterInformationsEvolution=CommonDatapack::commonDatapack.monsters.at(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.at(item).at(monster.monster));
+                const DatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.at(item).at(monster.monster));
                 //create animation widget
                 if(animationWidget!=NULL)
                     delete animationWidget;
@@ -712,7 +718,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 else
                 {
                     showTip(tr("Failed to use <b>%1</b> on <b>%2</b>").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(item).name).arg(monsterInformationsExtra.name));
-                    if(CatchChallenger::CommonDatapack::commonDatapack.items.item.contains(item))
+                    if(CatchChallenger::CommonDatapack::commonDatapack.items.item.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.item.cend())
                         if(CatchChallenger::CommonDatapack::commonDatapack.items.item[item].consumeAtUse)
                             add_to_inventory(item,1,false);
                 }
@@ -739,7 +745,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             ItemToSellOrBuy tempItem;
             tempItem.object=itemId;
             tempItem.quantity=quantity;
-            tempItem.price=CatchChallenger::CommonDatapack::commonDatapack.items.item.value(itemId).price/2;
+            tempItem.price=CatchChallenger::CommonDatapack::commonDatapack.items.item.at(itemId).price/2;
             itemsToSell << tempItem;
             CatchChallenger::Api_client_real::client->sellObject(shopId,tempItem.object,tempItem.quantity,tempItem.price);
             load_inventory();
@@ -763,8 +769,8 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 break;
             }
             uint32_t suggestedPrice=50;
-            if(CommonDatapack::commonDatapack.items.item.contains(itemId))
-                suggestedPrice=CommonDatapack::commonDatapack.items.item.value(itemId).price;
+            if(CommonDatapack::commonDatapack.items.item.find(itemId)!=CommonDatapack::commonDatapack.items.item.cend())
+                suggestedPrice=CommonDatapack::commonDatapack.items.item.at(itemId).price;
             GetPrice getPrice(this,suggestedPrice);
             getPrice.exec();
             if(!getPrice.isOK())
@@ -870,7 +876,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             load_monsters();
             if(!ok)
                 break;
-            QList<PlayerMonster> playerMonster=ClientFightEngine::fightEngine.getPlayerMonster();
+            std::vector<PlayerMonster> playerMonster=ClientFightEngine::fightEngine.getPlayerMonster();
             if(playerMonster.size()<=1)
             {
                 QMessageBox::warning(this,tr("Warning"),tr("You can't trade your last monster"));
@@ -882,7 +888,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 break;
             }
             //get the right monster
-            int index=0;
+            unsigned int index=0;
             while(index<playerMonster.size())
             {
                 if(playerMonster.at(index).id==itemId)
@@ -915,7 +921,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             ui->stackedWidget->setCurrentWidget(ui->page_trade);
             if(!ok)
                 break;
-            QList<PlayerMonster> playerMonster=ClientFightEngine::fightEngine.getPlayerMonster();
+            std::vector<PlayerMonster> playerMonster=ClientFightEngine::fightEngine.getPlayerMonster();
             if(playerMonster.size()<=1)
             {
                 QMessageBox::warning(this,tr("Warning"),tr("You can't trade your last monster"));
@@ -927,7 +933,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 break;
             }
             //get the right monster
-            int index=0;
+            unsigned int index=0;
             while(index<playerMonster.size())
             {
                 if(playerMonster.at(index).id==itemId)
@@ -965,7 +971,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 return;
             }
             const uint8_t &plantId=DatapackClientLoader::datapackLoader.itemToPlants.value(itemId);
-            if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.plants.value(plantId).requirements.reputation))
+            if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.plants.at(plantId).requirements.reputation))
             {
                 qDebug() << "You don't have the requirements to plant the seed";
                 QMessageBox::critical(this,tr("Error"),tr("You don't have the requirements to plant the seed"));
@@ -989,7 +995,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
 
             const SeedInWaiting seedInWaiting=seed_in_waiting.last();
             seed_in_waiting.last().seedItemId=itemId;
-            insert_plant(MapController::mapController->getMap(seedInWaiting.map)->logicalMap.id,seedInWaiting.x,seedInWaiting.y,plantId,CommonDatapack::commonDatapack.plants.value(plantId).fruits_seconds);
+            insert_plant(MapController::mapController->getMap(seedInWaiting.map)->logicalMap.id,seedInWaiting.x,seedInWaiting.y,plantId,CommonDatapack::commonDatapack.plants.at(plantId).fruits_seconds);
             addQuery(QueryType_Seed);
             load_plant_inventory();
             load_inventory();
@@ -998,7 +1004,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true)
             {
                 CatchChallenger::Api_client_real::client->seed_planted(true);
-                CatchChallenger::Api_client_real::client->insert_plant(MapController::mapController->getMap(seedInWaiting.map)->logicalMap.id,seedInWaiting.x,seedInWaiting.y,plantId,CommonDatapack::commonDatapack.plants.value(plantId).fruits_seconds);
+                CatchChallenger::Api_client_real::client->insert_plant(MapController::mapController->getMap(seedInWaiting.map)->logicalMap.id,seedInWaiting.x,seedInWaiting.y,plantId,CommonDatapack::commonDatapack.plants.at(plantId).fruits_seconds);
             }
         }
         break;
@@ -1025,7 +1031,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 break;
             }
             //it's trap
-            if(CommonDatapack::commonDatapack.items.trap.contains(itemId) && CatchChallenger::ClientFightEngine::fightEngine.isInFightWithWild())
+            if(CommonDatapack::commonDatapack.items.trap.find(itemId)!=CommonDatapack::commonDatapack.items.trap.cend() && CatchChallenger::ClientFightEngine::fightEngine.isInFightWithWild())
             {
                 remove_to_inventory(itemId);
                 useTrap(itemId);
@@ -1036,7 +1042,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 if(ClientFightEngine::fightEngine.useObjectOnMonster(itemId,monsterUniqueId))
                 {
                     remove_to_inventory(itemId);
-                    if(CommonDatapack::commonDatapack.items.monsterItemEffect.contains(itemId))
+                    if(CommonDatapack::commonDatapack.items.monsterItemEffect.find(itemId)!=CommonDatapack::commonDatapack.items.monsterItemEffect.cend())
                     {
                         CatchChallenger::Api_client_real::client->useObjectOnMonster(itemId,monsterUniqueId);
                         updateAttackList();
@@ -1194,6 +1200,11 @@ void BaseWindow::error(QString error)
     emit newError(tr("Error with the protocol"),error);
 }
 
+void BaseWindow::stderror(std::string error)
+{
+    emit newError(tr("Error with the protocol"),QString::fromStdString(error));
+}
+
 void BaseWindow::errorWithTheCurrentMap()
 {
     if(socketState!=QAbstractSocket::ConnectedState)
@@ -1270,10 +1281,10 @@ void BaseWindow::on_inventory_itemSelectionChanged()
     bool isRecipe=false;
     {
         /* is a recipe */
-        isRecipe=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.contains(items_graphical.value(item));
+        isRecipe=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.find(items_graphical.value(item))!=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.cend();
         if(isRecipe)
         {
-            if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.value(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.value(items_graphical.value(item))).requirements.reputation))
+            if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.at(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.at(items_graphical.value(item))).requirements.reputation))
             {
                 ui->inventory_description->setText(ui->inventory_description->text()+"<br />"+tr("Don't meet the requirements"));
                 isRecipe=false;
@@ -1284,19 +1295,19 @@ void BaseWindow::on_inventory_itemSelectionChanged()
                                  isRecipe
                                  ||
                                  /* is a repel */
-                                 CatchChallenger::CommonDatapack::commonDatapack.items.repel.contains(items_graphical.value(item))
+                                 CatchChallenger::CommonDatapack::commonDatapack.items.repel.find(items_graphical.value(item))!=CatchChallenger::CommonDatapack::commonDatapack.items.repel.cend()
                                  ||
                                  /* is a item with monster effect */
-                                 CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffect.contains(items_graphical.value(item))
+                                 CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffect.find(items_graphical.value(item))!=CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffect.cend()
                                  ||
                                  /* is a item with monster effect out of fight */
-                                 (CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.contains(items_graphical.value(item)) && !ClientFightEngine::fightEngine.isInFight())
+                                 (CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.find(items_graphical.value(item))!=CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.cend() && !ClientFightEngine::fightEngine.isInFight())
                                  ||
                                  /* is a evolution item */
-                                 CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.contains(items_graphical.value(item))
+                                 CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.find(items_graphical.value(item))!=CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.cend()
                                  ||
                                  /* is a evolution item */
-                                 (CatchChallenger::CommonDatapack::commonDatapack.items.itemToLearn.contains(items_graphical.value(item)) && !ClientFightEngine::fightEngine.isInFight())
+                                 (CatchChallenger::CommonDatapack::commonDatapack.items.itemToLearn.find(items_graphical.value(item))!=CatchChallenger::CommonDatapack::commonDatapack.items.itemToLearn.cend() && !ClientFightEngine::fightEngine.isInFight())
                                          );
 }
 
@@ -1502,9 +1513,9 @@ int32_t BaseWindow::havePlant(CatchChallenger::Map_client *map, uint8_t x, uint8
     }
     else
     {
-        if(!DatapackClientLoader::datapackLoader.plantOnMap.contains(map->map_file))
+        if(!DatapackClientLoader::datapackLoader.plantOnMap.contains(QString::fromStdString(map->map_file)))
             return -1;
-        if(!DatapackClientLoader::datapackLoader.plantOnMap.value(map->map_file).contains(QPair<uint8_t,uint8_t>(x,y)))
+        if(!DatapackClientLoader::datapackLoader.plantOnMap.value(QString::fromStdString(map->map_file)).contains(QPair<uint8_t,uint8_t>(x,y)))
             return -1;
         int index=0;
         while(index<map->plantList.size())
@@ -1539,7 +1550,7 @@ void BaseWindow::actionOn(Map_client *map, uint8_t x, uint8_t y)
                 if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
                 {
                     ClientPlantInCollecting clientPlantInCollecting;
-                    clientPlantInCollecting.map=map->map_file;
+                    clientPlantInCollecting.map=QString::fromStdString(map->map_file);
                     clientPlantInCollecting.plant_id=map->plantList.at(index)->plant_id;
                     clientPlantInCollecting.seconds_to_mature=0;
                     clientPlantInCollecting.x=x;
@@ -1550,13 +1561,13 @@ void BaseWindow::actionOn(Map_client *map, uint8_t x, uint8_t y)
                 }
                 else
                 {
-                    if(!DatapackClientLoader::datapackLoader.plantOnMap.contains(map->map_file))
+                    if(!DatapackClientLoader::datapackLoader.plantOnMap.contains(QString::fromStdString(map->map_file)))
                         return;
-                    if(!DatapackClientLoader::datapackLoader.plantOnMap.value(map->map_file).contains(QPair<uint8_t,uint8_t>(x,y)))
+                    if(!DatapackClientLoader::datapackLoader.plantOnMap.value(QString::fromStdString(map->map_file)).contains(QPair<uint8_t,uint8_t>(x,y)))
                         return;
                     emit collectMaturePlant();
 
-                    CatchChallenger::Api_client_real::client->remove_plant(MapController::mapController->getMap(map->map_file)->logicalMap.id,x,y);
+                    CatchChallenger::Api_client_real::client->remove_plant(MapController::mapController->getMap(QString::fromStdString(map->map_file))->logicalMap.id,x,y);
                     CatchChallenger::Api_client_real::client->plant_collected(Plant_collect::Plant_collect_correctly_collected);
                 }
             }
@@ -1566,7 +1577,7 @@ void BaseWindow::actionOn(Map_client *map, uint8_t x, uint8_t y)
         else
         {
             SeedInWaiting seedInWaiting;
-            seedInWaiting.map=map->map_file;
+            seedInWaiting.map=QString::fromStdString(map->map_file);
             seedInWaiting.x=x;
             seedInWaiting.y=y;
             seed_in_waiting << seedInWaiting;
@@ -1638,20 +1649,20 @@ void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, uint8_t x, 
     uint8_t step=1;
     actualBot=map->bots.value(QPair<uint8_t,uint8_t>(x,y));
     isInQuest=false;
-    if(!actualBot.step.contains(step))
+    if(actualBot.step.find(step)==actualBot.step.cend())
     {
         newError(tr("Internal error"),"Bot trigged but no step found");
         return;
     }
-    if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("fight"))
+    if(actualBot.step.at(step).attribute(BaseWindow::text_type)=="fight")
     {
-        if(!actualBot.step.value(step).hasAttribute("fightid"))
+        if(!actualBot.step.at(step).hasAttribute("fightid"))
         {
             showTip(tr("Bot step missing data error, repport this error please"));
             return;
         }
         bool ok;
-        uint32_t fightId=actualBot.step.value(step).attribute("fightid").toUInt(&ok);
+        uint32_t fightId=actualBot.step.at(step).attribute("fightid").toUInt(&ok);
         if(!ok)
         {
             showTip(tr("Bot step wrong data type error, repport this error please"));
@@ -1910,7 +1921,7 @@ bool BaseWindow::haveNextStepQuestRequirements(const CatchChallenger::Quest &que
     qDebug() << QStringLiteral("haveNextStepQuestRequirements for quest: %1, step: %2").arg(questId).arg(step);
     #endif
     const CatchChallenger::Quest::StepRequirements &requirements=quest.steps.at(step-1).requirements;
-    int index=0;
+    unsigned int index=0;
     while(index<requirements.items.size())
     {
         const CatchChallenger::Quest::Item &item=requirements.items.at(index);
@@ -1947,14 +1958,14 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest) 
     Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
     if(quests.contains(quest.id))
     {
-        if(informations.quests.value(quest.id).step!=0)
+        if(informations.quests.at(quest.id).step!=0)
         {
             #ifdef DEBUG_CLIENT_QUEST
             qDebug() << "can start the quest because is already running: " << questId;
             #endif
             return false;
         }
-        if(informations.quests.value(quest.id).finish_one_time && !quest.repeatable)
+        if(informations.quests.at(quest.id).finish_one_time && !quest.repeatable)
         {
             #ifdef DEBUG_CLIENT_QUEST
             qDebug() << "done one time and no repeatable: " << questId;
@@ -1962,7 +1973,7 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest) 
             return false;
         }
     }
-    int index=0;
+    unsigned int index=0;
     while(index<quest.requirements.quests.size())
     {
         const uint16_t &questId=quest.requirements.quests.at(index).quest;
@@ -1977,7 +1988,7 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest) 
             #endif
             return false;
         }
-        if(!informations.quests.value(questId).finish_one_time)
+        if(!informations.quests.at(questId).finish_one_time)
         {
             #ifdef DEBUG_CLIENT_QUEST
             qDebug() << "quest never finished: " << questId;
@@ -1989,16 +2000,40 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest) 
     return haveReputationRequirements(quest.requirements.reputation);
 }
 
+void BaseWindow::appendReputationRewards(const std::vector<ReputationRewards> &reputationList)
+{
+    QList<ReputationRewards> reputationListTemp;
+    unsigned int index=0;
+    while(index<reputationList.size())
+    {
+        reputationListTemp << reputationList.at(index);
+        index++;
+    }
+    appendReputationRewards(reputationListTemp);
+}
+
 void BaseWindow::appendReputationRewards(const QList<ReputationRewards> &reputationList)
 {
     int index=0;
     while(index<reputationList.size())
     {
         const ReputationRewards &reputationRewards=reputationList.at(index);
-        appendReputationPoint(CommonDatapack::commonDatapack.reputation.at(reputationRewards.reputationId).name,reputationRewards.point);
+        appendReputationPoint(QString::fromStdString(CommonDatapack::commonDatapack.reputation.at(reputationRewards.reputationId).name),reputationRewards.point);
         index++;
     }
     show_reputation();
+}
+
+bool BaseWindow::haveReputationRequirements(const std::vector<ReputationRequirements> &reputationList) const
+{
+    QList<ReputationRequirements> reputationListTemp;
+    unsigned int index=0;
+    while(index<reputationList.size())
+    {
+        reputationListTemp << reputationList.at(index);
+        index++;
+    }
+    return haveReputationRequirements(reputationListTemp);
 }
 
 bool BaseWindow::haveReputationRequirements(const QList<ReputationRequirements> &reputationList) const
@@ -2007,9 +2042,9 @@ bool BaseWindow::haveReputationRequirements(const QList<ReputationRequirements> 
     while(index<reputationList.size())
     {
         const CatchChallenger::ReputationRequirements &reputation=reputationList.at(index);
-        if(CatchChallenger::Api_client_real::client->player_informations.reputation.contains(reputation.reputationId))
+        if(CatchChallenger::Api_client_real::client->player_informations.reputation.find(reputation.reputationId)!=CatchChallenger::Api_client_real::client->player_informations.reputation.cend())
         {
-            const PlayerReputation &playerReputation=CatchChallenger::Api_client_real::client->player_informations.reputation.value(reputation.reputationId);
+            const PlayerReputation &playerReputation=CatchChallenger::Api_client_real::client->player_informations.reputation.at(reputation.reputationId);
             if(!reputation.positif)
             {
                 if(-reputation.level<playerReputation.level)
@@ -2030,7 +2065,9 @@ bool BaseWindow::haveReputationRequirements(const QList<ReputationRequirements> 
         else
             if(!reputation.positif)//default level is 0, but required level is negative
             {
-                emit message(QStringLiteral("reputation.level(%1)<0 and no reputation.type=%2").arg(reputation.level).arg(CommonDatapack::commonDatapack.reputation.at(reputation.reputationId).name));
+                emit message(QStringLiteral("reputation.level(%1)<0 and no reputation.type=%2").arg(reputation.level).arg(
+                                 QString::fromStdString(CommonDatapack::commonDatapack.reputation.at(reputation.reputationId).name)
+                                 ));
                 return false;
             }
         index++;
@@ -2055,7 +2092,7 @@ bool BaseWindow::nextStepQuest(const Quest &quest)
         return false;
     }
     const CatchChallenger::Quest::StepRequirements &requirements=quest.steps.at(step-1).requirements;
-    int index=0;
+    unsigned int index=0;
     while(index<requirements.items.size())
     {
         const CatchChallenger::Quest::Item &item=requirements.items.at(index);
@@ -2075,14 +2112,14 @@ bool BaseWindow::nextStepQuest(const Quest &quest)
         index=0;
         while(index<quest.rewards.reputation.size())
         {
-            appendReputationPoint(CommonDatapack::commonDatapack.reputation.at(quest.rewards.reputation.value(index).reputationId).name,quest.rewards.reputation.value(index).point);
+            appendReputationPoint(QString::fromStdString(CommonDatapack::commonDatapack.reputation.at(quest.rewards.reputation.at(index).reputationId).name),quest.rewards.reputation.at(index).point);
             index++;
         }
         show_reputation();
         index=0;
         while(index<quest.rewards.allow.size())
         {
-            allow << quest.rewards.allow.value(index);
+            allow.insert(quest.rewards.allow.at(index));
             index++;
         }
     }
@@ -2101,8 +2138,8 @@ void BaseWindow::appendReputationPoint(const QString &type,const int32_t &point)
     }
     const uint16_t &reputatioId=DatapackClientLoader::datapackLoader.reputationNameToId.value(type);
     PlayerReputation playerReputation;
-    if(CatchChallenger::Api_client_real::client->player_informations.reputation.contains(reputatioId))
-        playerReputation=CatchChallenger::Api_client_real::client->player_informations.reputation.value(reputatioId);
+    if(CatchChallenger::Api_client_real::client->player_informations.reputation.find(reputatioId)!=CatchChallenger::Api_client_real::client->player_informations.reputation.cend())
+        playerReputation=CatchChallenger::Api_client_real::client->player_informations.reputation.at(reputatioId);
     else
     {
         playerReputation.point=0;
@@ -2116,11 +2153,11 @@ void BaseWindow::appendReputationPoint(const QString &type,const int32_t &point)
     FacilityLib::appendReputationPoint(&playerReputation,point,CommonDatapack::commonDatapack.reputation.at(reputatioId));
     if(oldPlayerReputation.level==playerReputation.level && oldPlayerReputation.point==playerReputation.point)
         return;
-    if(CatchChallenger::Api_client_real::client->player_informations.reputation.contains(reputatioId))
+    if(CatchChallenger::Api_client_real::client->player_informations.reputation.find(reputatioId)!=CatchChallenger::Api_client_real::client->player_informations.reputation.cend())
         CatchChallenger::Api_client_real::client->player_informations.reputation[reputatioId]=playerReputation;
     else
-        CatchChallenger::Api_client_real::client->player_informations.reputation.insert(reputatioId,playerReputation);
-    const QString &reputationCodeName=CommonDatapack::commonDatapack.reputation.at(reputatioId).name;
+        CatchChallenger::Api_client_real::client->player_informations.reputation[reputatioId]=playerReputation;
+    const QString &reputationCodeName=QString::fromStdString(CommonDatapack::commonDatapack.reputation.at(reputatioId).name);
     if(old_level<playerReputation.level)
     {
         if(DatapackClientLoader::datapackLoader.reputationExtra.contains(reputationCodeName))
@@ -2167,7 +2204,7 @@ bool BaseWindow::botHaveQuest(const uint32_t &botId)
         if(questId!=botQuests.at(index))
             qDebug() << "cast error for questId at BaseWindow::getQuestList()";
         #endif
-        const CatchChallenger::Quest &currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId);
+        const CatchChallenger::Quest &currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId);
         if(!quests.contains(botQuests.at(index)))
         {
             //quest not started
@@ -2178,7 +2215,7 @@ bool BaseWindow::botHaveQuest(const uint32_t &botId)
         }
         else
         {
-            if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.contains(botQuests.at(index)))
+            if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(botQuests.at(index))==CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
                 qDebug() << "internal bug: have quest registred, but no quest found with this id";
             else
             {
@@ -2202,8 +2239,8 @@ bool BaseWindow::botHaveQuest(const uint32_t &botId)
                 }
                 else
                 {
-                    QList<uint16_t> bots=currentQuest.steps.at(quests.value(questId).step-1).bots;
-                    if(bots.contains(botId))
+                    auto bots=currentQuest.steps.at(quests.value(questId).step-1).bots;
+                    if(vectorcontainsAtLeastOne(bots,botId))
                         return true;//in progress
                     else
                         {}//Need got to another bot to progress, this it's just the starting bot
@@ -2218,9 +2255,9 @@ bool BaseWindow::botHaveQuest(const uint32_t &botId)
         i.next();
         if(!botQuests.contains(i.key()) && i.value().step>0)
         {
-            CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(i.key());
-            QList<uint16_t> bots=currentQuest.steps.at(i.value().step-1).bots;
-            if(bots.contains(botId))
+            CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(i.key());
+            auto bots=currentQuest.steps.at(i.value().step-1).bots;
+            if(vectorcontainsAtLeastOne(bots,botId))
                 return true;//in progress, but not the starting bot
             else
                 {}//it's another bot
@@ -2243,7 +2280,7 @@ QList<QPair<uint32_t,QString> > BaseWindow::getQuestList(const uint32_t &botId)
         if(questId!=botQuests.at(index))
             qDebug() << "cast error for questId at BaseWindow::getQuestList()";
         #endif
-        const CatchChallenger::Quest &currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId);
+        const CatchChallenger::Quest &currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId);
         if(!quests.contains(botQuests.at(index)))
         {
             //quest not started
@@ -2264,7 +2301,7 @@ QList<QPair<uint32_t,QString> > BaseWindow::getQuestList(const uint32_t &botId)
         }
         else
         {
-            if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.contains(botQuests.at(index)))
+            if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(botQuests.at(index))==CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
                 qDebug() << "internal bug: have quest registred, but no quest found with this id";
             else
             {
@@ -2298,8 +2335,8 @@ QList<QPair<uint32_t,QString> > BaseWindow::getQuestList(const uint32_t &botId)
                 }
                 else
                 {
-                    QList<uint16_t> bots=currentQuest.steps.at(quests.value(questId).step-1).bots;
-                    if(bots.contains(botId))
+                    auto bots=currentQuest.steps.at(quests.value(questId).step-1).bots;
+                    if(vectorcontainsAtLeastOne(bots,botId))
                     {
                         oneEntry.first=questId;
                         if(DatapackClientLoader::datapackLoader.questsExtra.contains(questId))
@@ -2324,9 +2361,9 @@ QList<QPair<uint32_t,QString> > BaseWindow::getQuestList(const uint32_t &botId)
         i.next();
         if(!botQuests.contains(i.key()) && i.value().step>0)
         {
-            CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(i.key());
-            QList<uint16_t> bots=currentQuest.steps.at(i.value().step-1).bots;
-            if(bots.contains(botId))
+            CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(i.key());
+            auto bots=currentQuest.steps.at(i.value().step-1).bots;
+            if(vectorcontainsAtLeastOne(bots,botId))
             {
                 //in progress, but not the starting bot
                 oneEntry.first=i.key();
@@ -2345,15 +2382,15 @@ void BaseWindow::goToBotStep(const uint8_t &step)
 {
     lastStepUsed=step;
     isInQuest=false;
-    if(!actualBot.step.contains(step))
+    if(actualBot.step.find(step)==actualBot.step.cend())
     {
         showTip(tr("Error into the bot, repport this error please"));
         return;
     }
-    if(actualBot.step.value(step).attribute(BaseWindow::text_type)==BaseWindow::text_text)
+    if(actualBot.step.at(step).attribute(BaseWindow::text_type)=="text")
     {
         const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
-        QDomElement text = actualBot.step.value(step).firstChildElement(BaseWindow::text_text);
+        QDomElement text = actualBot.step.at(step).firstChildElement(BaseWindow::text_text);
         if(!language.isEmpty() && language!=BaseWindow::text_en)
             while(!text.isNull())
             {
@@ -2362,13 +2399,13 @@ void BaseWindow::goToBotStep(const uint8_t &step)
                     QString textToShow=text.text();
                     textToShow=parseHtmlToDisplay(textToShow);
                     ui->IG_dialog_text->setText(textToShow);
-                    ui->IG_dialog_name->setText(actualBot.name);
+                    ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
                     ui->IG_dialog->setVisible(true);
                     return;
                 }
                 text = text.nextSiblingElement(BaseWindow::text_text);
             }
-        text = actualBot.step.value(step).firstChildElement(BaseWindow::text_text);
+        text = actualBot.step.at(step).firstChildElement(BaseWindow::text_text);
         while(!text.isNull())
         {
             if(!text.hasAttribute(BaseWindow::text_lang) || text.attribute(BaseWindow::text_lang)==BaseWindow::text_en)
@@ -2376,7 +2413,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
                 QString textToShow=text.text();
                 textToShow=parseHtmlToDisplay(textToShow);
                 ui->IG_dialog_text->setText(textToShow);
-                ui->IG_dialog_name->setText(actualBot.name);
+                ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
                 ui->IG_dialog->setVisible(true);
                 return;
             }
@@ -2385,28 +2422,28 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         showTip(tr("Bot text not found, repport this error please"));
         return;
     }
-    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("shop"))
+    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("shop"))
     {
-        if(!actualBot.step.value(step).hasAttribute(QStringLiteral("shop")))
+        if(!actualBot.step.at(step).hasAttribute(QStringLiteral("shop")))
         {
             showTip(tr("Shop called but missing informations"));
             return;
         }
         bool ok;
-        shopId=actualBot.step.value(step).attribute("shop").toUInt(&ok);
+        shopId=actualBot.step.at(step).attribute("shop").toUInt(&ok);
         if(!ok)
         {
             showTip(tr("Shop called but wrong id"));
             return;
         }
-        if(!CommonDatapackServerSpec::commonDatapackServerSpec.shops.contains(shopId))
+        if(CommonDatapackServerSpec::commonDatapackServerSpec.shops.find(shopId)==CommonDatapackServerSpec::commonDatapackServerSpec.shops.cend())
         {
             showTip(tr("Shop not found"));
             return;
         }
-        if(actualBot.properties.contains(QStringLiteral("skin")))
+        if(actualBot.properties.find("skin")!=actualBot.properties.cend())
         {
-            QPixmap skin=getFrontSkinPath(actualBot.properties.value(QStringLiteral("skin")));
+            QPixmap skin=getFrontSkinPath(QString::fromStdString(actualBot.properties.at("skin")));
             if(!skin.isNull())
             {
                 ui->shopSellerImage->setPixmap(skin.scaled(160,160));
@@ -2428,8 +2465,8 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         #else
         {
             QList<ItemToSellOrBuy> items;
-            const Shop &shop=CommonDatapackServerSpec::commonDatapackServerSpec.shops.value(shopId);
-            int index=0;
+            const Shop &shop=CommonDatapackServerSpec::commonDatapackServerSpec.shops.at(shopId);
+            unsigned int index=0;
             while(index<shop.items.size())
             {
                 if(shop.prices.at(index)>0)
@@ -2447,23 +2484,23 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         #endif
         return;
     }
-    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("sell"))
+    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("sell"))
     {
-        if(!actualBot.step.value(step).hasAttribute(QStringLiteral("shop")))
+        if(!actualBot.step.at(step).hasAttribute(QStringLiteral("shop")))
         {
             showTip(tr("Shop called but missing informations"));
             return;
         }
         bool ok;
-        shopId=actualBot.step.value(step).attribute(QStringLiteral("shop")).toUInt(&ok);
+        shopId=actualBot.step.at(step).attribute(QStringLiteral("shop")).toUInt(&ok);
         if(!ok)
         {
             showTip(tr("Shop called but wrong id"));
             return;
         }
-        if(actualBot.properties.contains(QStringLiteral("skin")))
+        if(actualBot.properties.find("skin")!=actualBot.properties.cend())
         {
-            QPixmap skin=getFrontSkinPath(actualBot.properties.value(QStringLiteral("skin")));
+            QPixmap skin=getFrontSkinPath(QString::fromStdString(actualBot.properties.at("skin")));
             if(!skin.isNull())
             {
                 ui->shopSellerImage->setPixmap(skin.scaled(160,160));
@@ -2478,12 +2515,12 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         selectObject(ObjectType_Sell);
         return;
     }
-    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("learn"))
+    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("learn"))
     {
         selectObject(ObjectType_MonsterToLearn);
         return;
     }
-    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("heal"))
+    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("heal"))
     {
         ClientFightEngine::fightEngine.healAllMonsters();
         CatchChallenger::Api_client_real::client->heal();
@@ -2491,7 +2528,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         showTip(tr("You are healed"));
         return;
     }
-    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("quests"))
+    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("quests"))
     {
         QString textToShow;
         const QList<QPair<uint32_t,QString> > &quests=BaseWindow::getQuestList(actualBot.botId);
@@ -2509,7 +2546,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         }
         if(quests.isEmpty())
         {
-            if(actualBot.step.contains(step+1))
+            if(actualBot.step.find(step+1)!=actualBot.step.cend())
                 on_IG_dialog_text_linkActivated("next");
             else
                 textToShow+=tr("No quests at the moment or you don't meat the requirements");
@@ -2529,16 +2566,16 @@ void BaseWindow::goToBotStep(const uint8_t &step)
             textToShow+=QStringLiteral("</ul>");
         }
         ui->IG_dialog_text->setText(textToShow);
-        ui->IG_dialog_name->setText(actualBot.name);
+        ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
         ui->IG_dialog->setVisible(true);
         return;
     }
-    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("clan"))
+    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("clan"))
     {
         QString textToShow;
         if(clan==0)
         {
-            if(allow.contains(ActionAllow_Clan))
+            if(allow.find(ActionAllow_Clan)!=allow.cend())
                 textToShow=QStringLiteral("<center><a href=\"clan_create\">%1</a></center>").arg(tr("Clan create"));
             else
                 textToShow=QStringLiteral("<center>You can't create your clan</center>");
@@ -2546,24 +2583,24 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         else
             textToShow=QStringLiteral("<center>%1</center>").arg(tr("You are already into a clan. Use the clan dongle into the player information."));
         ui->IG_dialog_text->setText(textToShow);
-        ui->IG_dialog_name->setText(actualBot.name);
+        ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
         ui->IG_dialog->setVisible(true);
         return;
     }
-    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("warehouse"))
+    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("warehouse"))
     {
         monster_to_withdraw.clear();
         monster_to_deposit.clear();
         change_warehouse_items.clear();
         temp_warehouse_cash=0;
         QPixmap pixmap;
-        if(actualBot.properties.contains(QStringLiteral("skin")))
+        if(actualBot.properties.find("skin")!=actualBot.properties.cend())
         {
             ui->warehousePlayerImage->setVisible(true);
             ui->warehousePlayerPseudo->setVisible(true);
             ui->warehouseBotImage->setVisible(true);
             ui->warehouseBotPseudo->setVisible(true);
-            pixmap=getFrontSkinPath(actualBot.properties.value(QStringLiteral("skin")));
+            pixmap=getFrontSkinPath(QString::fromStdString(actualBot.properties.at("skin")));
             if(pixmap.isNull())
             {
                 ui->warehousePlayerImage->setVisible(false);
@@ -2586,7 +2623,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         updateTheWareHouseContent();
         return;
     }
-    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("market"))
+    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("market"))
     {
         ui->marketMonster->clear();
         ui->marketObject->clear();
@@ -2598,22 +2635,22 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         ui->stackedWidget->setCurrentWidget(ui->page_market);
         return;
     }
-    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("industry"))
+    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("industry"))
     {
-        if(!actualBot.step.value(step).hasAttribute(QStringLiteral("industry")))
+        if(!actualBot.step.at(step).hasAttribute(QStringLiteral("industry")))
         {
             showTip(tr("Industry called but missing informations"));
             return;
         }
 
         bool ok;
-        factoryId=actualBot.step.value(step).attribute(QStringLiteral("industry")).toUInt(&ok);
+        factoryId=actualBot.step.at(step).attribute(QStringLiteral("industry")).toUInt(&ok);
         if(!ok)
         {
             showTip(tr("Industry called but wrong id"));
             return;
         }
-        if(!CommonDatapack::commonDatapack.industriesLink.contains(factoryId))
+        if(CommonDatapack::commonDatapack.industriesLink.find(factoryId)==CommonDatapack::commonDatapack.industriesLink.cend())
         {
             showTip(tr("The factory is not found"));
             return;
@@ -2621,9 +2658,9 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         ui->factoryResources->clear();
         ui->factoryProducts->clear();
         ui->factoryStatus->setText(tr("Waiting of status"));
-        if(actualBot.properties.contains(QStringLiteral("skin")))
+        if(actualBot.properties.find("skin")!=actualBot.properties.cend())
         {
-            QPixmap skin=getFrontSkinPath(actualBot.properties.value(QStringLiteral("skin")));
+            QPixmap skin=getFrontSkinPath(QString::fromStdString(actualBot.properties.at("skin")));
             if(!skin.isNull())
             {
                 ui->factoryBotImage->setPixmap(skin.scaled(80,80));
@@ -2638,9 +2675,9 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         CatchChallenger::Api_client_real::client->getFactoryList(factoryId);
         return;
     }
-    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("zonecapture"))
+    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("zonecapture"))
     {
-        if(!actualBot.step.value(step).hasAttribute(QStringLiteral("zone")))
+        if(!actualBot.step.at(step).hasAttribute(QStringLiteral("zone")))
         {
             showTip(tr("Missing attribute for the step"));
             return;
@@ -2650,7 +2687,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
             showTip(tr("You can't try capture if you are not in a clan"));
             return;
         }
-        QString zone=actualBot.step.value(step).attribute(QStringLiteral("zone"));
+        QString zone=actualBot.step.at(step).attribute(QStringLiteral("zone"));
         if(DatapackClientLoader::datapackLoader.zonesExtra.contains(zone))
         {
             zonecatchName=DatapackClientLoader::datapackLoader.zonesExtra.value(zone).name;
@@ -2669,10 +2706,10 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         updatePageZoneCatch();
         return;
     }
-    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("script"))
+    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("script"))
     {
         QScriptEngine engine;
-        QString contents = actualBot.step.value(step).text();
+        QString contents = actualBot.step.at(step).text();
         contents=QStringLiteral("function getTextEntryPoint()\n{\n")+contents+QStringLiteral("\n}");
         QScriptValue result = engine.evaluate(contents);
         if (result.isError()) {
@@ -2711,28 +2748,28 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         qDebug() << QStringLiteral("textEntryPoint:") << textEntryPoint;
         return;
     }
-    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("fight"))
+    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("fight"))
     {
-        if(!actualBot.step.value(step).hasAttribute(QStringLiteral("fightid")))
+        if(!actualBot.step.at(step).hasAttribute(QStringLiteral("fightid")))
         {
             showTip(tr("Bot step missing data error, repport this error please"));
             return;
         }
         bool ok;
-        uint32_t fightId=actualBot.step.value(step).attribute(QStringLiteral("fightid")).toUInt(&ok);
+        uint32_t fightId=actualBot.step.at(step).attribute(QStringLiteral("fightid")).toUInt(&ok);
         if(!ok)
         {
             showTip(tr("Bot step wrong data type error, repport this error please"));
             return;
         }
-        if(!CommonDatapackServerSpec::commonDatapackServerSpec.botFights.contains(fightId))
+        if(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightId)==CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
         {
             showTip(tr("Bot fight not found"));
             return;
         }
         if(MapController::mapController->haveBeatBot(fightId))
         {
-            if(actualBot.step.contains(step+1))
+            if(actualBot.step.find(step+1)!=actualBot.step.cend())
                 goToBotStep(step+1);
             else
                 showTip(tr("Already beaten!"));
@@ -2815,55 +2852,55 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
     }
 
     //is crafting recipe
-    if(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.contains(itemId))
+    if(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.find(itemId)!=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.cend())
     {
         Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
-        if(informations.recipes.contains(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.value(itemId)))
+        if(informations.recipes.find(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.at(itemId))!=informations.recipes.cend())
         {
             QMessageBox::information(this,tr("Information"),tr("You already know this recipe"));
             return;
         }
         objectInUsing << itemId;
-        if(CommonDatapack::commonDatapack.items.item.value(objectInUsing.last()).consumeAtUse)
+        if(CommonDatapack::commonDatapack.items.item.at(objectInUsing.last()).consumeAtUse)
             remove_to_inventory(objectInUsing.last());
         CatchChallenger::Api_client_real::client->useObject(objectInUsing.last());
     }
     //it's repel
-    else if(CatchChallenger::CommonDatapack::commonDatapack.items.repel.contains(itemId))
+    else if(CatchChallenger::CommonDatapack::commonDatapack.items.repel.find(itemId)!=CatchChallenger::CommonDatapack::commonDatapack.items.repel.cend())
     {
-        MapController::mapController->addRepelStep(CatchChallenger::CommonDatapack::commonDatapack.items.repel.value(itemId));
+        MapController::mapController->addRepelStep(CatchChallenger::CommonDatapack::commonDatapack.items.repel.at(itemId));
         objectInUsing << itemId;
-        if(CommonDatapack::commonDatapack.items.item.value(objectInUsing.last()).consumeAtUse)
+        if(CommonDatapack::commonDatapack.items.item.at(objectInUsing.last()).consumeAtUse)
             remove_to_inventory(objectInUsing.last());
         CatchChallenger::Api_client_real::client->useObject(objectInUsing.last());
     }
     //it's object with monster effect
-    else if(CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffect.contains(itemId))
+    else if(CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffect.find(itemId)!=CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffect.cend())
     {
         objectInUsing << itemId;
-        if(CommonDatapack::commonDatapack.items.item.value(objectInUsing.last()).consumeAtUse)
+        if(CommonDatapack::commonDatapack.items.item.at(objectInUsing.last()).consumeAtUse)
             remove_to_inventory(objectInUsing.last());
         selectObject(ObjectType_ItemOnMonster);
     }
     //it's object with monster effect but offline
-    else if(CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.contains(itemId))
+    else if(CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.find(itemId)!=CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.cend())
     {
         objectInUsing << itemId;
-        if(CommonDatapack::commonDatapack.items.item.value(objectInUsing.last()).consumeAtUse)
+        if(CommonDatapack::commonDatapack.items.item.at(objectInUsing.last()).consumeAtUse)
             remove_to_inventory(objectInUsing.last());
         selectObject(ObjectType_ItemOnMonster);
     }
-    else if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.contains(itemId))
+    else if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.find(itemId)!=CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.cend())
     {
         objectInUsing << itemId;
-        if(CommonDatapack::commonDatapack.items.item.value(objectInUsing.last()).consumeAtUse)
+        if(CommonDatapack::commonDatapack.items.item.at(objectInUsing.last()).consumeAtUse)
             remove_to_inventory(objectInUsing.last());
         selectObject(ObjectType_ItemEvolutionOnMonster);
     }
-    else if(CatchChallenger::CommonDatapack::commonDatapack.items.itemToLearn.contains(itemId))
+    else if(CatchChallenger::CommonDatapack::commonDatapack.items.itemToLearn.find(itemId)!=CatchChallenger::CommonDatapack::commonDatapack.items.itemToLearn.cend())
     {
         objectInUsing << itemId;
-        if(CommonDatapack::commonDatapack.items.item.value(objectInUsing.last()).consumeAtUse)
+        if(CommonDatapack::commonDatapack.items.item.at(objectInUsing.last()).consumeAtUse)
             remove_to_inventory(objectInUsing.last());
         selectObject(ObjectType_ItemLearnOnMonster);
     }
@@ -2882,15 +2919,15 @@ void BaseWindow::objectUsed(const ObjectUsage &objectUsage)
     {
         case ObjectUsage_correctlyUsed:
         //is crafting recipe
-        if(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.contains(objectInUsing.first()))
+        if(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.find(objectInUsing.first())!=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.cend())
         {
-            CatchChallenger::Api_client_real::client->addRecipe(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.value(objectInUsing.first()));
+            CatchChallenger::Api_client_real::client->addRecipe(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.at(objectInUsing.first()));
             load_crafting_inventory();
         }
-        else if(CommonDatapack::commonDatapack.items.trap.contains(objectInUsing.first()))
+        else if(CommonDatapack::commonDatapack.items.trap.find(objectInUsing.first())!=CommonDatapack::commonDatapack.items.trap.cend())
         {
         }
-        else if(CatchChallenger::CommonDatapack::commonDatapack.items.repel.contains(objectInUsing.first()))
+        else if(CatchChallenger::CommonDatapack::commonDatapack.items.repel.find(objectInUsing.first())!=CatchChallenger::CommonDatapack::commonDatapack.items.repel.cend())
         {
         }
         else
@@ -3024,7 +3061,7 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
                 index++;
                 continue;
             }
-            if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.contains(questId))
+            if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(questId)==CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
             {
                 showTip(tr("Quest not found"));
                 index++;
@@ -3098,7 +3135,7 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
 
 bool BaseWindow::tryValidateQuestStep(bool silent)
 {
-    if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.contains(questId))
+    if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(questId)==CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
     {
         if(!silent)
             showTip(tr("Quest not found"));
@@ -3107,10 +3144,11 @@ bool BaseWindow::tryValidateQuestStep(bool silent)
 
     if(!quests.contains(questId))
     {
-        if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId).steps.at(0).bots.contains(actualBot.botId) && haveStartQuestRequirement(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId)))
+        if(vectorcontainsAtLeastOne(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).steps.at(0).bots,actualBot.botId)
+                && haveStartQuestRequirement(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId)))
         {
             CatchChallenger::Api_client_real::client->startQuest(questId);
-            startQuest(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId));
+            startQuest(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId));
             updateDisplayedQuests();
             return true;
         }
@@ -3123,10 +3161,11 @@ bool BaseWindow::tryValidateQuestStep(bool silent)
     }
     else if(quests.value(questId).step==0)
     {
-        if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId).steps.at(0).bots.contains(actualBot.botId) && haveStartQuestRequirement(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId)))
+        if(vectorcontainsAtLeastOne(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).steps.at(0).bots,actualBot.botId)
+                && haveStartQuestRequirement(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId)))
         {
             CatchChallenger::Api_client_real::client->startQuest(questId);
-            startQuest(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId));
+            startQuest(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId));
             updateDisplayedQuests();
             return true;
         }
@@ -3137,29 +3176,29 @@ bool BaseWindow::tryValidateQuestStep(bool silent)
             return false;
         }
     }
-    if(!haveNextStepQuestRequirements(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId)))
+    if(!haveNextStepQuestRequirements(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId)))
     {
         if(!silent)
             showTip(tr("You don't have the requirement to continue this quest"));
         return false;
     }
-    if(quests.value(questId).step>=(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId).steps.size()))
+    if(quests.value(questId).step>=(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).steps.size()))
     {
         if(!silent)
             showTip(tr("You have finish the quest <b>%1</b>").arg(DatapackClientLoader::datapackLoader.questsExtra.value(questId).name));
         CatchChallenger::Api_client_real::client->finishQuest(questId);
-        nextStepQuest(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId));
+        nextStepQuest(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId));
         updateDisplayedQuests();
         return true;
     }
-    if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId).steps.at(quests.value(questId).step).bots.contains(actualBot.botId))
+    if(vectorcontainsAtLeastOne(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).steps.at(quests.value(questId).step).bots,actualBot.botId))
     {
         if(!silent)
             showTip(tr("You need talk to another bot"));
         return false;
     }
     CatchChallenger::Api_client_real::client->nextQuestStep(questId);
-    nextStepQuest(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId));
+    nextStepQuest(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId));
     updateDisplayedQuests();
     return true;
 }
@@ -3173,7 +3212,7 @@ void BaseWindow::getTextEntryPoint()
     }
     QScriptEngine engine;
 
-    const QString &client_logic=CatchChallenger::Api_client_real::client->datapackPathMain()+"/"+DATAPACK_BASE_PATH_QUESTS+"/"+QString::number(questId)+"/client_logic.js";
+    const QString &client_logic=CatchChallenger::Api_client_real::client->datapackPathMain()+DATAPACK_BASE_PATH_QUESTS2+"/"+QString::number(questId)+"/client_logic.js";
     if(!QFile(client_logic).exists())
     {
         showTip(tr("Client file missing"));
@@ -3214,7 +3253,7 @@ void BaseWindow::getTextEntryPoint()
             contents.replace("haveQuestStepRequirements()","false");
             haveNextStepQuestRequirementsVar=false;
         }
-        else if(haveNextStepQuestRequirements(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId)))
+        else if(haveNextStepQuestRequirements(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId)))
         {
             contents.replace("haveQuestStepRequirements()","true");
             haveNextStepQuestRequirementsVar=true;
@@ -3296,7 +3335,7 @@ void BaseWindow::showQuestText(const uint32_t &textId)
 
     QString textToShow=parseHtmlToDisplay(DatapackClientLoader::datapackLoader.questsText.value(questId).text.value(textId));
     ui->IG_dialog_text->setText(textToShow);
-    ui->IG_dialog_name->setText(actualBot.name);
+    ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
     ui->IG_dialog->setVisible(true);
 }
 
@@ -3473,14 +3512,14 @@ void BaseWindow::on_monsterList_itemSelectionChanged()
         ui->monsterListMoveDown->setEnabled(false);
         return;
     }
-    const QList<PlayerMonster> &playerMonster=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster();
+    const std::vector<PlayerMonster> &playerMonster=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster();
     if(playerMonster.size()<=1)
     {
         ui->monsterListMoveUp->setEnabled(false);
         ui->monsterListMoveDown->setEnabled(false);
         return;
     }
-    int row=ui->monsterList->row(selectedMonsters.first());
+    unsigned int row=ui->monsterList->row(selectedMonsters.first());
     ui->monsterListMoveUp->setEnabled(row>0);
     ui->monsterListMoveDown->setEnabled(row<(playerMonster.size()-1));
 }
@@ -3543,7 +3582,7 @@ void BaseWindow::detectSlowDown()
                     tr("Running query: %1 (%3 and %4), query with worse time: %2ms")
                     .arg(queryCount)
                     .arg(worseQueryTime)
-                    .arg(CatchChallenger::Api_client_real::client->getQueryRunningList().join(QStringLiteral(";")))
+                    .arg(QString::fromStdString(stringimplode(CatchChallenger::Api_client_real::client->getQueryRunningList(),';')))
                     .arg(middleQueryList.join(QStringLiteral(";")))
                     );
     else

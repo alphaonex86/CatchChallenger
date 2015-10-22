@@ -25,8 +25,11 @@ public:
     virtual void resetAll();
     virtual bool isInFight() const;
     bool useObjectOnMonster(const uint32_t &object,const uint32_t &monster);
-    void errorFightEngine(const QString &error);
-    void messageFightEngine(const QString &message) const;
+    void errorFightEngine(const std::string &error);
+    void messageFightEngine(const std::string &message) const;
+    void addPlayerMonster(const QList<PlayerMonster> &playerMonster);
+    void addPlayerMonster(const std::vector<PlayerMonster> &playerMonster);
+    void addPlayerMonster(const PlayerMonster &playerMonster);
     //current fight
     QList<PublicPlayerMonster> battleCurrentMonster;
     QList<uint8_t> battleStat,botMonstersStat;

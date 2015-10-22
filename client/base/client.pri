@@ -66,7 +66,8 @@ SOURCES += $$PWD/Api_client_virtual.cpp \
     $$PWD/interface/TemporaryTile.cpp \
     $$PWD/render/PreparedLayer.cpp \
     $$PWD/render/MapMark.cpp \
-    $$PWD/interface/PathFinding.cpp
+    $$PWD/interface/PathFinding.cpp \
+    $$PWD/FacilityLibClient.cpp
 
 HEADERS  += $$PWD/ClientStructures.h \
     $$PWD/DatapackChecksum.h \
@@ -112,7 +113,8 @@ HEADERS  += $$PWD/ClientStructures.h \
     $$PWD/interface/TemporaryTile.h \
     $$PWD/render/PreparedLayer.h \
     $$PWD/render/MapMark.h \
-    $$PWD/interface/PathFinding.h
+    $$PWD/interface/PathFinding.h \
+    $$PWD/FacilityLibClient.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \

@@ -75,7 +75,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &
     haveGrassCurrentObject=false;
     haveNextCurrentObject=false;
 
-    defaultTileset=QLatin1Literal("trainer");
+    defaultTileset="trainer";
     playerMapObject = new Tiled::MapObject();
     grassCurrentObject->setName("playerMapObject");
 
@@ -462,10 +462,10 @@ void MapVisualiserPlayer::moveStepSlot()
         {
             unloadPlayerFromCurrentMap();
             passMapIntoOld();
-            current_map=map->map_file;
-            if(!old_all_map.contains(map->map_file))
+            current_map=QString::fromStdString(map->map_file);
+            if(old_all_map.find(current_map)==old_all_map.cend())
                 emit inWaitingOfMap();
-            loadOtherMap(map->map_file);
+            loadOtherMap(current_map);
             hideNotloadedMap();
             return;
         }
@@ -516,11 +516,12 @@ bool MapVisualiserPlayer::asyncMapLoaded(const QString &fileName,MapVisualiserTh
                                     }
                                     else
                                     {
-                                        if(DatapackClientLoader::datapackLoader.itemOnMap.contains(tempMapObject->logicalMap.map_file))
+                                        const QString tempMap=QString::fromStdString(tempMapObject->logicalMap.map_file);
+                                        if(DatapackClientLoader::datapackLoader.itemOnMap.contains(tempMap))
                                         {
-                                            if(DatapackClientLoader::datapackLoader.itemOnMap.value(tempMapObject->logicalMap.map_file).contains(QPair<uint8_t,uint8_t>(x,y)))
+                                            if(DatapackClientLoader::datapackLoader.itemOnMap.value(tempMap).contains(QPair<uint8_t,uint8_t>(x,y)))
                                             {
-                                                const uint8_t &itemIndex=DatapackClientLoader::datapackLoader.itemOnMap.value(tempMapObject->logicalMap.map_file).value(QPair<uint8_t,uint8_t>(x,y));
+                                                const uint8_t &itemIndex=DatapackClientLoader::datapackLoader.itemOnMap.value(tempMap).value(QPair<uint8_t,uint8_t>(x,y));
                                                 if(itemOnMap->contains(itemIndex))
                                                 {
                                                     ObjectGroupItem::objectGroupLink.value(objectGroup)->removeObject(object);
@@ -608,15 +609,15 @@ void MapVisualiserPlayer::finalPlayerStep()
 
     {
         const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(current_map_pointer->logicalMap,x,y);
-        int index=0;
+        unsigned int index=0;
         while(index<monstersCollisionValue.walkOn.size())
         {
             const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
             if(monstersCollision.item==0 || items->contains(monstersCollision.item))
             {
-                if(monstersCollision.tile!=lastTileset)
+                if(monstersCollision.tile!=lastTileset.toStdString())
                 {
-                    lastTileset=monstersCollision.tile;
+                    lastTileset=QString::fromStdString(monstersCollision.tile);
                     if(playerTilesetCache.contains(lastTileset))
                         playerTileset=playerTilesetCache.value(lastTileset);
                     else
@@ -833,7 +834,7 @@ void MapVisualiserPlayer::parseStop()
         if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_left,*map,x,y,false))
         {
             if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_left,&map,&x,&y,false))
-                qDebug() << QStringLiteral("can't go at left at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+                qDebug() << QStringLiteral("can't go at left at map %1 (%2,%3) when move have been checked").arg(QString::fromStdString(map->map_file)).arg(x).arg(y);
             else
                 emit stopped_in_front_of(static_cast<CatchChallenger::Map_client *>(map),x,y);
         }
@@ -842,7 +843,7 @@ void MapVisualiserPlayer::parseStop()
         if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_right,*map,x,y,false))
         {
             if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_right,&map,&x,&y,false))
-                qDebug() << QStringLiteral("can't go at right at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+                qDebug() << QStringLiteral("can't go at right at map %1 (%2,%3) when move have been checked").arg(QString::fromStdString(map->map_file)).arg(x).arg(y);
             else
                 emit stopped_in_front_of(static_cast<CatchChallenger::Map_client *>(map),x,y);
         }
@@ -851,7 +852,7 @@ void MapVisualiserPlayer::parseStop()
         if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_top,*map,x,y,false))
         {
             if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_top,&map,&x,&y,false))
-                qDebug() << QStringLiteral("can't go at top at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+                qDebug() << QStringLiteral("can't go at top at map %1 (%2,%3) when move have been checked").arg(QString::fromStdString(map->map_file)).arg(x).arg(y);
             else
                 emit stopped_in_front_of(static_cast<CatchChallenger::Map_client *>(map),x,y);
         }
@@ -860,7 +861,7 @@ void MapVisualiserPlayer::parseStop()
         if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_bottom,*map,x,y,false))
         {
             if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_bottom,&map,&x,&y,false))
-                qDebug() << QStringLiteral("can't go at bottom at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+                qDebug() << QStringLiteral("can't go at bottom at map %1 (%2,%3) when move have been checked").arg(QString::fromStdString(map->map_file)).arg(x).arg(y);
             else
                 emit stopped_in_front_of(static_cast<CatchChallenger::Map_client *>(map),x,y);
         }
@@ -881,7 +882,7 @@ void MapVisualiserPlayer::parseAction()
         if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_left,*map,x,y,false))
         {
             if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_left,&map,&x,&y,false))
-                qDebug() << QStringLiteral("can't go at left at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+                qDebug() << QStringLiteral("can't go at left at map %1 (%2,%3) when move have been checked").arg(QString::fromStdString(map->map_file)).arg(x).arg(y);
             else
             {
                 CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(map);
@@ -909,7 +910,7 @@ void MapVisualiserPlayer::parseAction()
         if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_right,*map,x,y,false))
         {
             if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_right,&map,&x,&y,false))
-                qDebug() << QStringLiteral("can't go at right at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+                qDebug() << QStringLiteral("can't go at right at map %1 (%2,%3) when move have been checked").arg(QString::fromStdString(map->map_file)).arg(x).arg(y);
             else
             {
                 CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(map);
@@ -937,7 +938,7 @@ void MapVisualiserPlayer::parseAction()
         if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_top,*map,x,y,false))
         {
             if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_top,&map,&x,&y,false))
-                qDebug() << QStringLiteral("can't go at bottom at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+                qDebug() << QStringLiteral("can't go at bottom at map %1 (%2,%3) when move have been checked").arg(QString::fromStdString(map->map_file)).arg(x).arg(y);
             else
             {
                 CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(map);
@@ -965,7 +966,7 @@ void MapVisualiserPlayer::parseAction()
         if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_bottom,*map,x,y,false))
         {
             if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_bottom,&map,&x,&y,false))
-                qDebug() << QStringLiteral("can't go at top at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+                qDebug() << QStringLiteral("can't go at top at map %1 (%2,%3) when move have been checked").arg(QString::fromStdString(map->map_file)).arg(x).arg(y);
             else
             {
                 CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(map);
@@ -1198,7 +1199,7 @@ bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, C
             return false;
         if(!CatchChallenger::MoveOnTheMap::move(direction,&mapPointer,&x,&y,checkCollision))
             return false;
-        CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(&all_map.value(map.map_file)->logicalMap);
+        CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(&all_map.value(QString::fromStdString(map.map_file))->logicalMap);
         if(map_client->itemsOnMap.contains(QPair<uint8_t,uint8_t>(x,y)))
         {
             const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.value(QPair<uint8_t,uint8_t>(x,y));
@@ -1254,7 +1255,7 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
         ObjectGroupItem::objectGroupLink.value(all_map.value(current_map)->objectGroup)->addObject(playerMapObject);
     else
         qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
-    mLastLocation=all_map.value(current_map)->logicalMap.map_file;
+    mLastLocation=QString::fromStdString(all_map.value(current_map)->logicalMap.map_file);
 
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     playerMapObject->setPosition(QPoint(x,y+1));

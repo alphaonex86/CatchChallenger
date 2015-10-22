@@ -130,10 +130,10 @@ void Api_client_real::parseFullReplyData(const uint8_t &mainCodeType,const uint8
                                 {
                                     if(boolList.first())
                                     {
-                                        DebugClass::debugConsole(QStringLiteral("remove the file: %1").arg(mDatapackBase+text_slash+datapackFilesListBase.at(index)));
+                                        qDebug() << (QStringLiteral("remove the file: %1").arg(mDatapackBase+text_slash+datapackFilesListBase.at(index)));
                                         QFile file(mDatapackBase+text_slash+datapackFilesListBase.at(index));
                                         if(!file.remove())
-                                            DebugClass::debugConsole(QStringLiteral("unable to remove the file: %1: %2").arg(datapackFilesListBase.at(index)).arg(file.errorString()));
+                                            qDebug() << (QStringLiteral("unable to remove the file: %1: %2").arg(datapackFilesListBase.at(index)).arg(file.errorString()));
                                         //removeFile(datapackFilesListBase.at(index));
                                     }
                                     boolList.removeFirst();
@@ -183,10 +183,10 @@ void Api_client_real::parseFullReplyData(const uint8_t &mainCodeType,const uint8
                                 {
                                     if(boolList.first())
                                     {
-                                        DebugClass::debugConsole(QStringLiteral("remove the file: %1").arg(mDatapackMain+text_slash+datapackFilesListMain.at(index)));
+                                        qDebug() << (QStringLiteral("remove the file: %1").arg(mDatapackMain+text_slash+datapackFilesListMain.at(index)));
                                         QFile file(mDatapackMain+text_slash+datapackFilesListMain.at(index));
                                         if(!file.remove())
-                                            DebugClass::debugConsole(QStringLiteral("unable to remove the file: %1: %2").arg(datapackFilesListMain.at(index)).arg(file.errorString()));
+                                            qDebug() << (QStringLiteral("unable to remove the file: %1: %2").arg(datapackFilesListMain.at(index)).arg(file.errorString()));
                                         //removeFile(datapackFilesListMain.at(index));
                                     }
                                     boolList.removeFirst();
@@ -236,10 +236,10 @@ void Api_client_real::parseFullReplyData(const uint8_t &mainCodeType,const uint8
                                 {
                                     if(boolList.first())
                                     {
-                                        DebugClass::debugConsole(QStringLiteral("remove the file: %1").arg(mDatapackSub+text_slash+datapackFilesListSub.at(index)));
+                                        qDebug() << (QStringLiteral("remove the file: %1").arg(mDatapackSub+text_slash+datapackFilesListSub.at(index)));
                                         QFile file(mDatapackSub+text_slash+datapackFilesListSub.at(index));
                                         if(!file.remove())
-                                            DebugClass::debugConsole(QStringLiteral("unable to remove the file: %1: %2").arg(datapackFilesListSub.at(index)).arg(file.errorString()));
+                                            qDebug() << (QStringLiteral("unable to remove the file: %1: %2").arg(datapackFilesListSub.at(index)).arg(file.errorString()));
                                         //removeFile(datapackFilesListSub.at(index));
                                     }
                                     boolList.removeFirst();
@@ -314,7 +314,7 @@ void Api_client_real::tryConnect(QString host,uint16_t port)
 {
     if(socket==NULL)
         return;
-    DebugClass::debugConsole(QStringLiteral("Try connect on: %1:%2").arg(host).arg(port));
+    qDebug() << (QStringLiteral("Try connect on: %1:%2").arg(host).arg(port));
     this->host=host;
     this->port=port;
     socket->connectToHost(host,port);

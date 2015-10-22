@@ -466,7 +466,7 @@ QString SoloWindow::getMapName(const QString &file)
     QByteArray xmlContent;
     if(!xmlFile.open(QIODevice::ReadOnly))
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file to get map name: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
+        qDebug() << (QStringLiteral("Unable to open the xml file to get map name: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
         return QString();
     }
     xmlContent=xmlFile.readAll();
@@ -476,13 +476,13 @@ QString SoloWindow::getMapName(const QString &file)
     int errorLine,errorColumn;
     if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(xmlFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
+        qDebug() << (QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(xmlFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
         return QString();
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=SoloWindow::text_map)
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
+        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
         return QString();
     }
     const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
@@ -513,7 +513,7 @@ QString SoloWindow::getMapZone(const QString &file)
     QByteArray xmlContent;
     if(!xmlFile.open(QIODevice::ReadOnly))
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file to get map zone: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
+        qDebug() << (QStringLiteral("Unable to open the xml file to get map zone: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
         return QString();
     }
     xmlContent=xmlFile.readAll();
@@ -523,13 +523,13 @@ QString SoloWindow::getMapZone(const QString &file)
     int errorLine,errorColumn;
     if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(xmlFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
+        qDebug() << (QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(xmlFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
         return QString();
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=SoloWindow::text_map)
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
+        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
         return QString();
     }
     QDomElement properties = root.firstChildElement(SoloWindow::text_properties);
@@ -559,7 +559,7 @@ QString SoloWindow::getZoneName(const QString &zone)
     QByteArray xmlContent;
     if(!xmlFile.open(QIODevice::ReadOnly))
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file to get zone name: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
+        qDebug() << (QStringLiteral("Unable to open the xml file to get zone name: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
         return QString();
     }
     xmlContent=xmlFile.readAll();
@@ -569,13 +569,13 @@ QString SoloWindow::getZoneName(const QString &zone)
     int errorLine,errorColumn;
     if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(xmlFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
+        qDebug() << (QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(xmlFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
         return QString();
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=SoloWindow::text_zone)
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
+        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
         return QString();
     }
 
