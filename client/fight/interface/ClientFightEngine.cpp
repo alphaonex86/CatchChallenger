@@ -215,6 +215,28 @@ void ClientFightEngine::resetAll()
     CommonFightEngine::resetAll();
 }
 
+void ClientFightEngine::addPlayerMonster(const QList<PlayerMonster> &playerMonster)
+{
+    std::vector<PlayerMonster> monsterList;
+    unsigned int index=0;
+    while(index<playerMonster.size())
+    {
+        monsterList.push_back(playerMonster.at(index));
+        index++;
+    }
+    CommonFightEngine::addPlayerMonster(monsterList);
+}
+
+void ClientFightEngine::addPlayerMonster(const std::vector<PlayerMonster> &playerMonster)
+{
+    CommonFightEngine::addPlayerMonster(playerMonster);
+}
+
+void ClientFightEngine::addPlayerMonster(const PlayerMonster &playerMonster)
+{
+    CommonFightEngine::addPlayerMonster(playerMonster);
+}
+
 bool ClientFightEngine::internalTryEscape()
 {
     emit message("BaseWindow::on_toolButtonFightQuit_clicked(): emit tryEscape()");

@@ -43,18 +43,18 @@ void RssNews::httpFinished()
     QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
     if (!reply->isFinished())
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("get the new update failed: not finished"));
+        qDebug() << (QStringLiteral("get the new update failed: not finished"));
         reply->deleteLater();
         return;
     }
     else if (reply->error())
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
+        qDebug() << (QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
         reply->deleteLater();
         return;
     }
     else if (!redirectionTarget.isNull()) {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()));
+        qDebug() << (QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()));
         reply->deleteLater();
         return;
     }

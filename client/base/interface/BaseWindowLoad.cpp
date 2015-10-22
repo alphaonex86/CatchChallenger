@@ -4,9 +4,11 @@
 #include "../../../general/base/CommonDatapack.h"
 #include "../../../general/base/CommonDatapackServerSpec.h"
 #include "../../../general/base/CommonSettingsServer.h"
+#include "../../../general/base/CommonSettingsCommon.h"
 #include "../ClientVariable.h"
 #include "DatapackClientLoader.h"
 #include "Chat.h"
+#include "../FacilityLibClient.h"
 #include "../../fight/interface/ClientFightEngine.h"
 #include "../Options.h"
 #include "../Audio.h"
@@ -262,17 +264,21 @@ void BaseWindow::have_main_and_sub_datapack_loaded()
     clan_leader=informations.clan_leader;
     cash=informations.cash;
     warehouse_cash=informations.warehouse_cash;
-    quests=informations.quests;
-    ui->player_informations_pseudo->setText(informations.public_informations.pseudo);
-    ui->tradePlayerPseudo->setText(informations.public_informations.pseudo);
-    ui->warehousePlayerPseudo->setText(informations.public_informations.pseudo);
+    quests=stdmapToQHash(informations.quests);
+    ui->player_informations_pseudo->setText(QString::fromStdString(informations.public_informations.pseudo));
+    ui->tradePlayerPseudo->setText(QString::fromStdString(informations.public_informations.pseudo));
+    ui->warehousePlayerPseudo->setText(QString::fromStdString(informations.public_informations.pseudo));
     ui->player_informations_cash->setText(QStringLiteral("%1$").arg(informations.cash));
     ui->shopCash->setText(tr("Cash: %1$").arg(informations.cash));
 
     //always after monster load on CatchChallenger::ClientFightEngine::fightEngine
     MapController::mapController->have_current_player_info(informations);
 
-    DebugClass::debugConsole(QStringLiteral("%1 is logged with id: %2, cash: %3").arg(informations.public_informations.pseudo).arg(informations.public_informations.simplifiedId).arg(informations.cash));
+    qDebug() << (QStringLiteral("%1 is logged with id: %2, cash: %3")
+                 .arg(QString::fromStdString(informations.public_informations.pseudo))
+                 .arg(informations.public_informations.simplifiedId)
+                 .arg(informations.cash)
+                 );
     updateConnectingStatus();
     updateClanDisplay();
 }
@@ -374,9 +380,9 @@ void BaseWindow::load_inventory()
                         show=true;
                 break;
                 case ObjectType_UseInFight:
-                    if(CatchChallenger::ClientFightEngine::fightEngine.isInFightWithWild() && CommonDatapack::commonDatapack.items.trap.contains(i.key()))
+                    if(CatchChallenger::ClientFightEngine::fightEngine.isInFightWithWild() && CommonDatapack::commonDatapack.items.trap.find(i.key())!=CommonDatapack::commonDatapack.items.trap.cend())
                         show=true;
-                    else if(CommonDatapack::commonDatapack.items.monsterItemEffect.contains(i.key()))
+                    else if(CommonDatapack::commonDatapack.items.monsterItemEffect.find(i.key())!=CommonDatapack::commonDatapack.items.monsterItemEffect.cend())
                         show=true;
                     else
                         show=false;
@@ -507,12 +513,12 @@ void BaseWindow::load_event()
 {
     if(isLogged && datapackIsParsed && haveCharacterPosition)
     {
-        while(events.size()<CatchChallenger::CommonDatapack::commonDatapack.events.size())
+        while((uint32_t)events.size()<CatchChallenger::CommonDatapack::commonDatapack.events.size())
             events << 0;
     }
-    if(events.size()>CatchChallenger::CommonDatapack::commonDatapack.events.size())
+    if((uint32_t)events.size()>CatchChallenger::CommonDatapack::commonDatapack.events.size())
     {
-        while(events.size()>CatchChallenger::CommonDatapack::commonDatapack.events.size())
+        while((uint32_t)events.size()>CatchChallenger::CommonDatapack::commonDatapack.events.size())
             events.removeLast();
         emit error("BaseWindow::load_event() event list biger than it should");
     }
@@ -597,10 +603,10 @@ void BaseWindow::updateConnectingStatus()
     if(waitedData.isEmpty())
     {
         Player_private_and_public_informations player_private_and_public_informations=CatchChallenger::Api_client_real::client->get_player_informations();
-        itemOnMap=player_private_and_public_informations.itemOnMap;
-        plantOnMap=player_private_and_public_informations.plantOnMap;
-        warehouse_playerMonster=player_private_and_public_informations.warehouse_playerMonster;
-        MapController::mapController->setBotsAlreadyBeaten(player_private_and_public_informations.bot_already_beaten);
+        itemOnMap=stdunorderedsetToQSet(player_private_and_public_informations.itemOnMap);
+        plantOnMap=stdmapToQHash(player_private_and_public_informations.plantOnMap);
+        warehouse_playerMonster=stdvectorToQList(player_private_and_public_informations.warehouse_playerMonster);
+        MapController::mapController->setBotsAlreadyBeaten(stdunorderedsetToQSet(player_private_and_public_informations.bot_already_beaten));
         MapController::mapController->setInformations(&items,&quests,&events,&itemOnMap,&plantOnMap);
         Api_client_real::client->unloadSelection();
         load_inventory();
@@ -627,62 +633,62 @@ bool BaseWindow::check_senddata()
     if(!check_monsters())
         return false;
     //check the reputation here
-    QMapIterator<uint8_t,PlayerReputation> i(CatchChallenger::Api_client_real::client->player_informations.reputation);
-    while(i.hasNext())
+    auto i=CatchChallenger::Api_client_real::client->player_informations.reputation.begin();
+    while(i!=CatchChallenger::Api_client_real::client->player_informations.reputation.cend())
     {
-        i.next();
-        if(i.value().level<-100 || i.value().level>100)
+        if(i->second.level<-100 || i->second.level>100)
         {
             error(QStringLiteral("level is <100 or >100, skip"));
             return false;
         }
-        if(i.key()>=CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
+        if(i->first>=CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
         {
-            error(QStringLiteral("The reputation: %1 don't exist").arg(i.key()));
+            error(QStringLiteral("The reputation: %1 don't exist").arg(i->first));
             return false;
         }
-        if(i.value().level>=0)
+        if(i->second.level>=0)
         {
-            if(i.value().level>=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).reputation_positive.size())
+            if(i->second.level>=(int32_t)CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i->first).reputation_positive.size())
             {
-                error(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 > max level: %3)").arg(i.key()).arg(i.value().level).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).reputation_positive.size()));
+                error(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 > max level: %3)").arg(i->first).arg(i->second.level).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i->first).reputation_positive.size()));
                 return false;
             }
         }
         else
         {
-            if((-i.value().level)>CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).reputation_negative.size())
+            if((-i->second.level)>(int32_t)CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i->first).reputation_negative.size())
             {
-                error(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 < max level: %3)").arg(i.key()).arg(i.value().level).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).reputation_negative.size()));
+                error(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 < max level: %3)").arg(i->first).arg(i->second.level).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i->first).reputation_negative.size()));
                 return false;
             }
         }
-        if(i.value().point>0)
+        if(i->second.point>0)
         {
-            if(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).reputation_positive.size()==i.value().level)//start at level 0 in positive
+            if((int32_t)CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i->first).reputation_positive.size()==i->second.level)//start at level 0 in positive
             {
                 emit message(QStringLiteral("The reputation level is already at max, drop point"));
                 return false;
             }
-            if(i.value().point>=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).reputation_positive.at(i.value().level+1))//start at level 0 in positive
+            if(i->second.point>=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i->first).reputation_positive.at(i->second.level+1))//start at level 0 in positive
             {
-                error(QStringLiteral("The reputation point %1 is greater than max %2").arg(i.value().point).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).reputation_positive.at(i.value().level)));
+                error(QStringLiteral("The reputation point %1 is greater than max %2").arg(i->second.point).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i->first).reputation_positive.at(i->second.level)));
                 return false;
             }
         }
-        else if(i.value().point<0)
+        else if(i->second.point<0)
         {
-            if(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).reputation_negative.size()==-i.value().level)//start at level -1 in negative
+            if((int32_t)CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i->first).reputation_negative.size()==-i->second.level)//start at level -1 in negative
             {
                 error(QStringLiteral("The reputation level is already at min, drop point"));
                 return false;
             }
-            if(i.value().point<CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).reputation_negative.at(-i.value().level))//start at level -1 in negative
+            if(i->second.point<CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i->first).reputation_negative.at(-i->second.level))//start at level -1 in negative
             {
-                error(QStringLiteral("The reputation point %1 is greater than max %2").arg(i.value().point).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).reputation_negative.at(i.value().level)));
+                error(QStringLiteral("The reputation point %1 is greater than max %2").arg(i->second.point).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i->first).reputation_negative.at(i->second.level)));
                 return false;
             }
         }
+        ++i;
     }
     return true;
 }
@@ -690,46 +696,54 @@ bool BaseWindow::check_senddata()
 void BaseWindow::show_reputation()
 {
     QString html="<ul>";
-    QMapIterator<uint8_t,PlayerReputation> i(CatchChallenger::Api_client_real::client->player_informations.reputation);
-    while(i.hasNext())
+    auto i=CatchChallenger::Api_client_real::client->player_informations.reputation.begin();
+    while(i!=CatchChallenger::Api_client_real::client->player_informations.reputation.cend())
     {
-        i.next();
-        if(i.value().level>=0)
+        if(i->second.level>=0)
         {
-            if((i.value().level+1)==CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).reputation_positive.size())
+            if((i->second.level+1)==(int32_t)CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i->first).reputation_positive.size())
                 html+=QStringLiteral("<li>100% %1</li>")
-                    .arg(DatapackClientLoader::datapackLoader.reputationExtra.value(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).name).reputation_positive.last());
+                    .arg(DatapackClientLoader::datapackLoader.reputationExtra.value(
+                             QString::fromStdString(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i->first).name)
+                             ).reputation_positive.last());
             else
             {
-                int32_t next_level_xp=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).reputation_positive.at(i.value().level+1);
+                int32_t next_level_xp=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i->first).reputation_positive.at(i->second.level+1);
                 if(next_level_xp==0)
                 {
                     error("Next level can't be need 0 xp");
                     return;
                 }
-                QString text=DatapackClientLoader::datapackLoader.reputationExtra.value(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).name).reputation_positive.at(i.value().level);
-                html+=QStringLiteral("<li>%1% %2</li>").arg((i.value().point*100)/next_level_xp).arg(text);
+                QString text=DatapackClientLoader::datapackLoader.reputationExtra.value(
+                            QString::fromStdString(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i->first).name)
+                            ).reputation_positive.at(i->second.level);
+                html+=QStringLiteral("<li>%1% %2</li>").arg((i->second.point*100)/next_level_xp).arg(text);
             }
         }
         else
         {
-            if((-i.value().level)==CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).reputation_negative.size())
+            if((-i->second.level)==(int32_t)CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i->first).reputation_negative.size())
                 html+=QStringLiteral("<li>100% %1</li>")
-                    .arg(DatapackClientLoader::datapackLoader.reputationExtra.value(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).name).reputation_negative.last());
+                    .arg(DatapackClientLoader::datapackLoader.reputationExtra.value(
+                             QString::fromStdString(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i->first).name)
+                             ).reputation_negative.last());
             else
             {
-                int32_t next_level_xp=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).reputation_negative.at(-i.value().level);
+                int32_t next_level_xp=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i->first).reputation_negative.at(-i->second.level);
                 if(next_level_xp==0)
                 {
                     error("Next level can't be need 0 xp");
                     return;
                 }
-                QString text=DatapackClientLoader::datapackLoader.reputationExtra.value(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i.key()).name).reputation_negative.at(-i.value().level-1);
+                QString text=DatapackClientLoader::datapackLoader.reputationExtra.value(
+                            QString::fromStdString(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i->first).name)
+                            ).reputation_negative.at(-i->second.level-1);
                 html+=QStringLiteral("<li>%1% %2</li>")
-                    .arg((i.value().point*100)/next_level_xp)
+                    .arg((i->second.point*100)/next_level_xp)
                     .arg(text);
             }
         }
+        ++i;
     }
     html+="</ul>";
     ui->labelReputation->setText(html);
@@ -855,7 +869,7 @@ void BaseWindow::updateDisplayedQuests()
             {
                 #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
                 html+=QStringLiteral("<li>");
-                if(CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(i.key()).repeatable)
+                if(CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(i.key()).repeatable)
                     html+=imagesInterfaceRepeatableString;
                 if(i.value().step>0)
                     html+=imagesInterfaceInProgressString;
@@ -903,9 +917,9 @@ void BaseWindow::on_questsList_itemSelectionChanged()
     const QString &stepDescription=DatapackClientLoader::datapackLoader.questsExtra.value(questId).steps.value(quests.value(questId).step-1)+"<br />";
     QString stepRequirements;
     {
-        QList<Quest::Item> items=CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId).steps.value(quests.value(questId).step-1).requirements.items;
+        std::vector<Quest::Item> items=CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).steps.at(quests.value(questId).step-1).requirements.items;
         QStringList objects;
-        int index=0;
+        unsigned int index=0;
         while(index<items.size())
         {
             QPixmap image;
@@ -947,9 +961,9 @@ void BaseWindow::on_questsList_itemSelectionChanged()
     {
         finalRewards+=tr("Final rewards: ");
         {
-            QList<Quest::Item> items=CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId).rewards.items;
+            std::vector<Quest::Item> items=CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).rewards.items;
             QStringList objects;
-            int index=0;
+            unsigned int index=0;
             while(index<items.size())
             {
                 QPixmap image;
@@ -982,17 +996,23 @@ void BaseWindow::on_questsList_itemSelectionChanged()
             finalRewards+=objects.join(", ")+"<br />";
         }
         {
-            QList<ReputationRewards> reputationRewards=CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId).rewards.reputation;
+            std::vector<ReputationRewards> reputationRewards=CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).rewards.reputation;
             QStringList reputations;
-            int index=0;
+            unsigned int index=0;
             while(index<reputationRewards.size())
             {
-                if(DatapackClientLoader::datapackLoader.reputationExtra.contains(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRewards.at(index).reputationId).name))
+                if(DatapackClientLoader::datapackLoader.reputationExtra.contains(
+                            QString::fromStdString(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRewards.at(index).reputationId).name)
+                            ))
                 {
                     if(reputationRewards.at(index).point<0)
-                        reputations << tr("Less reputation for %1").arg(DatapackClientLoader::datapackLoader.reputationExtra.value(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRewards.at(index).reputationId).name).name);
+                        reputations << tr("Less reputation for %1").arg(DatapackClientLoader::datapackLoader.reputationExtra.value(
+                                                                            QString::fromStdString(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRewards.at(index).reputationId).name)
+                                                                            ).name);
                     if(reputationRewards.at(index).point>0)
-                        reputations << tr("More reputation for %1").arg(DatapackClientLoader::datapackLoader.reputationExtra.value(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRewards.at(index).reputationId).name).name);
+                        reputations << tr("More reputation for %1").arg(DatapackClientLoader::datapackLoader.reputationExtra.value(
+                                                                            QString::fromStdString(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRewards.at(index).reputationId).name)
+                                                                            ).name);
                 }
                 index++;
             }
@@ -1005,12 +1025,12 @@ void BaseWindow::on_questsList_itemSelectionChanged()
             finalRewards+=reputations.join(", ")+"<br />";
         }
         {
-            QList<ActionAllow> allowRewards=CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId).rewards.allow;
+            std::vector<ActionAllow> allowRewards=CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).rewards.allow;
             QStringList allows;
-            int index=0;
+            unsigned int index=0;
             while(index<allowRewards.size())
             {
-                if(allowRewards.contains(ActionAllow_Clan))
+                if(vectorcontainsAtLeastOne(allowRewards,ActionAllow_Clan))
                     allows << tr("Add permission to create clan");
                 index++;
             }
@@ -1106,13 +1126,13 @@ void BaseWindow::updateTheWareHouseContent()
 
     //monster
     {
-        const QList<PlayerMonster> &playerMonster=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster();
+        const std::vector<PlayerMonster> &playerMonster=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster();
         int index=0;
         int size=playerMonster.size();
         while(index<size)
         {
             const PlayerMonster &monster=playerMonster.at(index);
-            if(CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(monster.monster))
+            if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monster.monster)!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
             {
                 QListWidgetItem *item=new QListWidgetItem();
                 item->setText(tr("%1, level: %2")
@@ -1138,7 +1158,7 @@ void BaseWindow::updateTheWareHouseContent()
         while(index<size)
         {
             const PlayerMonster &monster=warehouse_playerMonster.at(index);
-            if(CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(monster.monster))
+            if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monster.monster)!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
             {
                 QListWidgetItem *item=new QListWidgetItem();
                 item->setText(tr("%1, level: %2")

@@ -3,6 +3,8 @@
 #include "../../../general/base/FacilityLib.h"
 #include "../../../general/base/FacilityLibGeneral.h"
 #include "../../../general/base/CommonDatapack.h"
+#include "../../../general/base/CommonSettingsCommon.h"
+#include "../FacilityLibClient.h"
 #include "NewGame.h"
 
 using namespace CatchChallenger;
@@ -31,7 +33,7 @@ void BaseWindow::newProfileFinished()
                 Api_client_real::client->tryDisconnect();
             return;
         }
-    int profileIndex=0;
+    unsigned int profileIndex=0;
     if(CatchChallenger::CommonDatapack::commonDatapack.profileList.size()>1)
         profileIndex=newProfile->getProfileIndex();
     if(profileIndex>=CatchChallenger::CommonDatapack::commonDatapack.profileList.size())
@@ -60,9 +62,9 @@ void BaseWindow::newProfileFinished()
     characterEntry.last_connect=QDateTime::currentMSecsSinceEpoch()/1000;
     //characterEntry.mapId=DatapackClientLoader::datapackLoader.mapToId.value(profile.map);
     characterEntry.played_time=0;
-    characterEntry.pseudo=nameGame.pseudo();
+    characterEntry.pseudo=nameGame.pseudo().toStdString();
     characterEntry.skinId=nameGame.skinId();
-    Api_client_real::client->addCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,profileIndex,characterEntry.pseudo,characterEntry.skinId);
+    Api_client_real::client->addCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,profileIndex,QString::fromStdString(characterEntry.pseudo),characterEntry.skinId);
     characterEntryListInWaiting << characterEntry;
     if((characterEntryListInWaiting.size()+characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).size())>=CommonSettingsCommon::commonSettingsCommon.max_character)
         ui->character_add->setEnabled(false);
@@ -104,13 +106,13 @@ void BaseWindow::updateCharacterList()
         item->setData(99,characterEntry.character_id);
         item->setData(98,characterEntry.delete_time_left);
         //item->setData(97,characterEntry.mapId);
-        QString text=characterEntry.pseudo+"\n";
+        QString text=QString::fromStdString(characterEntry.pseudo+"\n");
         if(characterEntry.played_time>0)
-            text+=tr("%1 played").arg(FacilityLibGeneral::timeToString(characterEntry.played_time));
+            text+=tr("%1 played").arg(FacilityLibClient::timeToString(characterEntry.played_time));
         else
             text+=tr("Never played");
         if(characterEntry.delete_time_left>0)
-            text+="\n"+tr("%1 to be deleted").arg(FacilityLibGeneral::timeToString(characterEntry.delete_time_left));
+            text+="\n"+tr("%1 to be deleted").arg(FacilityLibClient::timeToString(characterEntry.delete_time_left));
         /*if(characterEntry.mapId==-1)
             text+="\n"+tr("Map missing, can't play");*/
         item->setText(text);
@@ -162,7 +164,7 @@ void BaseWindow::on_character_remove_clicked()
     }
     updateCharacterList();
     QMessageBox::information(this,tr("Information"),tr("Your charater will be deleted into %1")
-                             .arg(FacilityLibGeneral::timeToString(CommonSettingsCommon::commonSettingsCommon.character_delete_time))
+                             .arg(FacilityLibClient::timeToString(CommonSettingsCommon::commonSettingsCommon.character_delete_time))
                              );
 }
 
@@ -296,9 +298,9 @@ void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *
                 if(server.playedTime>0)
                 {
                     if(!server.description.isEmpty())
-                        text+=" "+tr("%1 played").arg(FacilityLibGeneral::timeToString(server.playedTime));
+                        text+=" "+tr("%1 played").arg(FacilityLibClient::timeToString(server.playedTime));
                     else
-                        text+="\n"+tr("%1 played").arg(FacilityLibGeneral::timeToString(server.playedTime));
+                        text+="\n"+tr("%1 played").arg(FacilityLibClient::timeToString(server.playedTime));
                 }
                 if(!server.description.isEmpty())
                     text+="\n"+server.description;
