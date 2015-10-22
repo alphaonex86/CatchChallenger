@@ -13,7 +13,6 @@
 #include "../../../general/base/FacilityLib.h"
 #include "../../../general/base/FacilityLibGeneral.h"
 #include "../../../general/base/MoveOnTheMap.h"
-#include "../../../general/base/DebugClass.h"
 #include "../../tiled/tiled_tile.h"
 #include "../../../general/base/CommonMap.h"
 #include "../ClientVariable.h"
@@ -33,8 +32,8 @@ void MapVisualiser::destroyMap(MapVisualiserThread::Map_full *map)
     map->doors.clear();
     if(map->tiledMap!=NULL)
         mapItem->removeMap(map->tiledMap);
-    all_map.remove(map->logicalMap.map_file);
-    old_all_map.remove(map->logicalMap.map_file);
+    all_map.remove(QString::fromStdString(map->logicalMap.map_file));
+    old_all_map.remove(QString::fromStdString(map->logicalMap.map_file));
     //delete common variables
     CatchChallenger::CommonMap::removeParsedLayer(map->logicalMap.parsed_layer);
     map->logicalMap.parsed_layer.dirt=NULL;
@@ -91,14 +90,15 @@ void MapVisualiser::loadOtherMap(const QString &resolvedFileName)
         tempMapObject->logicalMap.border.top.map=NULL;
         tempMapObject->logicalMap.border.left.map=NULL;
         tempMapObject->logicalMap.border.right.map=NULL;
-        tempMapObject->logicalMap.teleporter.clear();
+        tempMapObject->logicalMap.teleporter=NULL;
+        tempMapObject->logicalMap.teleporter_list_size=0;
         asyncMap << resolvedFileName;
         asyncMapLoaded(resolvedFileName,tempMapObject);
         return;
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(!QFileInfo(resolvedFileName).exists())
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("file not found to async: %1").arg(resolvedFileName));
+        qDebug() << (QStringLiteral("file not found to async: %1").arg(resolvedFileName));
     #endif
     asyncMap << resolvedFileName;
     emit loadOtherMapAsync(resolvedFileName);
@@ -127,39 +127,37 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
         if(!mapItem->haveMap(tempMapObject->tiledMap))
             mapItem->addMap(tempMapObject,tempMapObject->tiledMap,tempMapObject->tiledRender,tempMapObject->objectGroupIndex);
         mapItem->setMapPosition(tempMapObject->tiledMap,tempMapObject->relative_x_pixel,tempMapObject->relative_y_pixel);
-        emit mapDisplayed(tempMapObject->logicalMap.map_file);
+        emit mapDisplayed(QString::fromStdString(tempMapObject->logicalMap.map_file));
         //display the bot
         QHashIterator<QPair<uint8_t,uint8_t>,CatchChallenger::Bot> i(tempMapObject->logicalMap.bots);
         while (i.hasNext()) {
             i.next();
             QString skin;
-            if(i.value().properties.contains(QStringLiteral("skin")))
-                skin=i.value().properties.value(QStringLiteral("skin"));
-            else
-                skin=QString();
+            if(i.value().properties.find("skin")!=i.value().properties.cend())
+                skin=QString::fromStdString(i.value().properties.at("skin"));
             QString direction;
-            if(i.value().properties.contains(QStringLiteral("lookAt")))
-                direction=i.value().properties.value(QStringLiteral("lookAt"));
+            if(i.value().properties.find("lookAt")!=i.value().properties.cend())
+                direction=QString::fromStdString(i.value().properties.at("lookAt"));
             else
             {
                 if(!skin.isEmpty())
-                    qDebug() << QStringLiteral("asyncDetectBorder(): lookAt: missing, fixed to bottom: %1").arg(tempMapObject->logicalMap.map_file);
-                direction=QStringLiteral("bottom");
+                    qDebug() << QStringLiteral("asyncDetectBorder(): lookAt: missing, fixed to bottom: %1").arg(QString::fromStdString(tempMapObject->logicalMap.map_file));
+                direction="bottom";
             }
             loadBotOnTheMap(tempMapObject,i.value().botId,i.key().first,i.key().second,direction,skin);
         }
-        if(!tempMapObject->logicalMap.border_semi.bottom.fileName.isEmpty())
-            if(!asyncMap.contains(tempMapObject->logicalMap.border_semi.bottom.fileName) && !all_map.contains(tempMapObject->logicalMap.border_semi.bottom.fileName))
-                loadOtherMap(tempMapObject->logicalMap.border_semi.bottom.fileName);
-        if(!tempMapObject->logicalMap.border_semi.top.fileName.isEmpty())
-            if(!asyncMap.contains(tempMapObject->logicalMap.border_semi.top.fileName) && !all_map.contains(tempMapObject->logicalMap.border_semi.top.fileName))
-                loadOtherMap(tempMapObject->logicalMap.border_semi.top.fileName);
-        if(!tempMapObject->logicalMap.border_semi.left.fileName.isEmpty())
-            if(!asyncMap.contains(tempMapObject->logicalMap.border_semi.left.fileName) && !all_map.contains(tempMapObject->logicalMap.border_semi.left.fileName))
-                loadOtherMap(tempMapObject->logicalMap.border_semi.left.fileName);
-        if(!tempMapObject->logicalMap.border_semi.right.fileName.isEmpty())
-            if(!asyncMap.contains(tempMapObject->logicalMap.border_semi.right.fileName) && !all_map.contains(tempMapObject->logicalMap.border_semi.right.fileName))
-                loadOtherMap(tempMapObject->logicalMap.border_semi.right.fileName);
+        if(!tempMapObject->logicalMap.border_semi.bottom.fileName.empty())
+            if(!asyncMap.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.bottom.fileName)) && !all_map.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.bottom.fileName)))
+                loadOtherMap(QString::fromStdString(tempMapObject->logicalMap.border_semi.bottom.fileName));
+        if(!tempMapObject->logicalMap.border_semi.top.fileName.empty())
+            if(!asyncMap.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.top.fileName)) && !all_map.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.top.fileName)))
+                loadOtherMap(QString::fromStdString(tempMapObject->logicalMap.border_semi.top.fileName));
+        if(!tempMapObject->logicalMap.border_semi.left.fileName.empty())
+            if(!asyncMap.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.left.fileName)) && !all_map.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.left.fileName)))
+                loadOtherMap(QString::fromStdString(tempMapObject->logicalMap.border_semi.left.fileName));
+        if(!tempMapObject->logicalMap.border_semi.right.fileName.empty())
+            if(!asyncMap.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.right.fileName)) && !all_map.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.right.fileName)))
+                loadOtherMap(QString::fromStdString(tempMapObject->logicalMap.border_semi.right.fileName));
     }
 }
 
@@ -170,13 +168,13 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
     if(all_map.contains(fileName))
     {
         asyncMap.removeOne(fileName);
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("seam already loaded by sync call, internal bug on: %1").arg(fileName));
+        qDebug() << (QStringLiteral("seam already loaded by sync call, internal bug on: %1").arg(fileName));
         return false;
     }
     if(tempMapObject!=NULL)
     {
         tempMapObject->displayed=false;
-        all_map[tempMapObject->logicalMap.map_file]=tempMapObject;
+        all_map[QString::fromStdString(tempMapObject->logicalMap.map_file)]=tempMapObject;
         QHash<uint16_t,MapVisualiserThread::Map_animation>::const_iterator i = tempMapObject->animatedObject.constBegin();
         while (i != tempMapObject->animatedObject.constEnd()) {
             if(!animationTimer.contains(i.key()))
@@ -241,7 +239,7 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
             ++i;
         }
         //try locate and place it
-        if(tempMapObject->logicalMap.map_file==current_map)
+        if(tempMapObject->logicalMap.map_file==current_map.toStdString())
         {
             tempMapObject->displayed=true;
             tempMapObject->relative_x=0;
@@ -257,11 +255,11 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
             if(!current_map.isEmpty() && all_map.contains(current_map))
             {
                 current_map_rect=QRect(0,0,all_map.value(current_map)->logicalMap.width,all_map.value(current_map)->logicalMap.height);
-                if(all_map.contains(tempMapObject->logicalMap.border_semi.top.fileName))
+                if(all_map.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.top.fileName)))
                 {
-                    if(all_map.value(tempMapObject->logicalMap.border_semi.top.fileName)->displayed)
+                    if(all_map.value(QString::fromStdString(tempMapObject->logicalMap.border_semi.top.fileName))->displayed)
                     {
-                        MapVisualiserThread::Map_full *border_map=all_map.value(tempMapObject->logicalMap.border_semi.top.fileName);
+                        MapVisualiserThread::Map_full *border_map=all_map.value(QString::fromStdString(tempMapObject->logicalMap.border_semi.top.fileName));
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.bottom.fileName)
                         {
@@ -283,14 +281,14 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                             }
                         }
                         else
-                            qDebug() << QStringLiteral("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
+                            qDebug() << QStringLiteral("loadNearMap(): bottom: have not mutual border %1").arg(QString::fromStdString(tempMapObject->logicalMap.map_file));
                     }
                 }
-                if(all_map.contains(tempMapObject->logicalMap.border_semi.bottom.fileName))
+                if(all_map.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.bottom.fileName)))
                 {
-                    if(all_map.value(tempMapObject->logicalMap.border_semi.bottom.fileName)->displayed)
+                    if(all_map.value(QString::fromStdString(tempMapObject->logicalMap.border_semi.bottom.fileName))->displayed)
                     {
-                        MapVisualiserThread::Map_full *border_map=all_map.value(tempMapObject->logicalMap.border_semi.bottom.fileName);
+                        MapVisualiserThread::Map_full *border_map=all_map.value(QString::fromStdString(tempMapObject->logicalMap.border_semi.bottom.fileName));
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.top.fileName)
                         {
@@ -312,14 +310,14 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                             }
                         }
                         else
-                            qDebug() << QStringLiteral("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
+                            qDebug() << QStringLiteral("loadNearMap(): bottom: have not mutual border %1").arg(QString::fromStdString(tempMapObject->logicalMap.map_file));
                     }
                 }
-                if(all_map.contains(tempMapObject->logicalMap.border_semi.right.fileName))
+                if(all_map.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.right.fileName)))
                 {
-                    if(all_map.value(tempMapObject->logicalMap.border_semi.right.fileName)->displayed)
+                    if(all_map.value(QString::fromStdString(tempMapObject->logicalMap.border_semi.right.fileName))->displayed)
                     {
-                        MapVisualiserThread::Map_full *border_map=all_map.value(tempMapObject->logicalMap.border_semi.right.fileName);
+                        MapVisualiserThread::Map_full *border_map=all_map.value(QString::fromStdString(tempMapObject->logicalMap.border_semi.right.fileName));
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.left.fileName)
                         {
@@ -341,14 +339,14 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                             }
                         }
                         else
-                            qDebug() << QStringLiteral("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
+                            qDebug() << QStringLiteral("loadNearMap(): bottom: have not mutual border %1").arg(QString::fromStdString(tempMapObject->logicalMap.map_file));
                     }
                 }
-                if(all_map.contains(tempMapObject->logicalMap.border_semi.left.fileName))
+                if(all_map.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.left.fileName)))
                 {
-                    if(all_map.value(tempMapObject->logicalMap.border_semi.left.fileName)->displayed)
+                    if(all_map.value(QString::fromStdString(tempMapObject->logicalMap.border_semi.left.fileName))->displayed)
                     {
-                        MapVisualiserThread::Map_full *border_map=all_map.value(tempMapObject->logicalMap.border_semi.left.fileName);
+                        MapVisualiserThread::Map_full *border_map=all_map.value(QString::fromStdString(tempMapObject->logicalMap.border_semi.left.fileName));
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.right.fileName)
                         {
@@ -370,7 +368,7 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                             }
                         }
                         else
-                            qDebug() << QStringLiteral("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
+                            qDebug() << QStringLiteral("loadNearMap(): bottom: have not mutual border %1").arg(QString::fromStdString(tempMapObject->logicalMap.map_file));
                     }
                 }
             }
@@ -494,7 +492,7 @@ void MapVisualiser::hideNotloadedMap()
     //undisplay the map not in dirrect contact with the current_map
     QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
     while (i != all_map.constEnd()) {
-        if(i.value()->logicalMap.map_file!=current_map)
+        if(i.value()->logicalMap.map_file!=current_map.toStdString())
             if(!i.value()->displayed)
                 mapItem->removeMap(i.value()->tiledMap);
         ++i;
@@ -529,7 +527,7 @@ void MapVisualiser::loadTeleporter(MapVisualiserThread::Map_full *map)
     int index=0;
     while(index<map->logicalMap.teleport_semi.size())
     {
-        loadOtherMap(map->logicalMap.teleport_semi.value(index).map);
+        loadOtherMap(QString::fromStdString(map->logicalMap.teleport_semi.value(index).map));
         index++;
     }
 }

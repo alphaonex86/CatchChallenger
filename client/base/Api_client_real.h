@@ -21,7 +21,6 @@
 #include <QNetworkProxy>
 #include <QRegularExpression>
 
-#include "../../general/base/DebugClass.h"
 #include "../../general/base/GeneralStructures.h"
 #include "ClientStructures.h"
 #include "Api_protocol.h"
@@ -70,8 +69,8 @@ public:
     void cleanDatapackSub(QString suffix);
     void setProxy(const QNetworkProxy &proxy);
 protected:
-    void parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const QByteArray &data);
-    void parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    bool parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const QByteArray &data);
+    bool parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
 
     //general data
     void defineMaxPlayers(const uint16_t &maxPlayers);

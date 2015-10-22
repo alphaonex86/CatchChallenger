@@ -206,13 +206,13 @@ QList<PlayerMonster> BaseWindow::warehouseMonsterOnPlayer() const
 {
     QList<PlayerMonster> warehouseMonsterOnPlayerList;
     {
-        const QList<PlayerMonster> &playerMonster=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster();
+        const std::vector<PlayerMonster> &playerMonster=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster();
         int index=0;
         int size=playerMonster.size();
         while(index<size)
         {
             const PlayerMonster &monster=playerMonster.at(index);
-            if(CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(monster.monster) && !monster_to_deposit.contains(monster.id))
+            if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monster.monster)!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend() && !monster_to_deposit.contains(monster.id))
                 warehouseMonsterOnPlayerList << monster;
             index++;
         }
@@ -223,7 +223,7 @@ QList<PlayerMonster> BaseWindow::warehouseMonsterOnPlayer() const
         while(index<size)
         {
             const PlayerMonster &monster=warehouse_playerMonster.at(index);
-            if(CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(monster.monster) && monster_to_withdraw.contains(monster.id))
+            if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monster.monster)!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend() && monster_to_withdraw.contains(monster.id))
                 warehouseMonsterOnPlayerList << monster;
             index++;
         }
@@ -309,8 +309,8 @@ void BaseWindow::on_warehouseValidate_clicked()
         int index=0;
         while(index<monster_to_deposit.size())
         {
-            const QList<PlayerMonster> &playerMonster=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster();
-            int sub_index=0;
+            const std::vector<PlayerMonster> &playerMonster=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster();
+            unsigned int sub_index=0;
             while(sub_index<playerMonster.size())
             {
                 if(playerMonster.at(sub_index).id==monster_to_deposit.at(index))

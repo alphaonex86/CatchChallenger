@@ -189,7 +189,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
     else
     {
         if(lookAt!=MapController::text_bottom)
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Wrong direction for the bot at %1 (%2,%3)").arg(parsedMap->logicalMap.map_file).arg(x).arg(y));
+            qDebug() << (QStringLiteral("Wrong direction for the bot at %1 (%2,%3)").arg(parsedMap->logicalMap.map_file).arg(x).arg(y));
         baseTile=7;
         direction=CatchChallenger::Direction_move_at_bottom;
     }
@@ -372,7 +372,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
                 if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.contains(fightid))
                 {
                     #ifdef DEBUG_CLIENT_BOT
-                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(parsedMap->logicalMap.map_file).arg(x).arg(y).arg(direction));
+                    qDebug() << (QStringLiteral("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(parsedMap->logicalMap.map_file).arg(x).arg(y).arg(direction));
                     #endif
 
                     uint32_t fightRange=5;
@@ -381,7 +381,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
                         fightRange=parsedMap->logicalMap.bots.value(QPair<uint8_t,uint8_t>(x,y)).properties.value(MapController::text_fightRange).toUInt(&ok);
                         if(!ok)
                         {
-                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("fightRange is not a number at %1 (%2,%3): %4")
+                            qDebug() << (QStringLiteral("fightRange is not a number at %1 (%2,%3): %4")
                                 .arg(parsedMap->logicalMap.map_file).arg(x).arg(y)
                                 .arg(parsedMap->logicalMap.bots.value(QPair<uint8_t,uint8_t>(x,y)).properties.value(MapController::text_fightRange)));
                             fightRange=5;
@@ -390,7 +390,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
                         {
                             if(fightRange>10)
                             {
-                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("fightRange is greater than 10 at %1 (%2,%3): %4")
+                                qDebug() << (QStringLiteral("fightRange is greater than 10 at %1 (%2,%3): %4")
                                     .arg(parsedMap->logicalMap.map_file).arg(x).arg(y)
                                     .arg(fightRange)
                                     );
@@ -417,7 +417,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
                     }
                 }
                 else
-                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("No fightid %1 at MapController::loadBotOnTheMap").arg(fightid));
+                    qDebug() << (QStringLiteral("No fightid %1 at MapController::loadBotOnTheMap").arg(fightid));
             }
         }
     }

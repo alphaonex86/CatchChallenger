@@ -31,18 +31,18 @@ void Api_client_real::writeNewFileMain(const QString &fileName,const QByteArray 
         if(file.exists())
             if(!file.remove())
             {
-                DebugClass::debugConsole(QStringLiteral("Can't remove: %1: %2").arg(fileName).arg(file.errorString()));
+                qDebug() << (QStringLiteral("Can't remove: %1: %2").arg(fileName).arg(file.errorString()));
                 return;
             }
         if(!file.open(QIODevice::WriteOnly))
         {
-            DebugClass::debugConsole(QStringLiteral("Can't open: %1: %2").arg(fileName).arg(file.errorString()));
+            qDebug() << (QStringLiteral("Can't open: %1: %2").arg(fileName).arg(file.errorString()));
             return;
         }
         if(file.write(data)!=data.size())
         {
             file.close();
-            DebugClass::debugConsole(QStringLiteral("Can't write: %1: %2").arg(fileName).arg(file.errorString()));
+            qDebug() << (QStringLiteral("Can't write: %1: %2").arg(fileName).arg(file.errorString()));
             return;
         }
         file.flush();
@@ -160,7 +160,7 @@ void Api_client_real::httpFinishedMain()
     writeNewFileMain(urlInWaiting.fileName,reply->readAll());
 
     if(urlInWaitingListMain.remove(reply)!=1)
-        DebugClass::debugConsole(QStringLiteral("[Bug] Remain %1 file to download").arg(urlInWaitingListMain.size()));
+        qDebug() << (QStringLiteral("[Bug] Remain %1 file to download").arg(urlInWaitingListMain.size()));
     reply->deleteLater();
     if(urlInWaitingListMain.isEmpty())
         checkIfContinueOrFinished();
@@ -223,7 +223,7 @@ void Api_client_real::datapackChecksumDoneMain(const QStringList &datapackFilesL
             const QByteArray &rawFileName=FacilityLibGeneral::toUTF8WithHeader(datapackFilesListMain.at(index));
             if(rawFileName.size()>255 || rawFileName.isEmpty())
             {
-                DebugClass::debugConsole(QStringLiteral("rawFileName too big or not compatible with utf8"));
+                qDebug() << (QStringLiteral("rawFileName too big or not compatible with utf8"));
                 return;
             }
             outputData+=rawFileName;
@@ -398,12 +398,12 @@ void Api_client_real::httpFinishedForDatapackListMain()
     {
         const QNetworkProxy &proxy=qnam.proxy();
         if(proxy==QNetworkProxy::NoProxy)
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Main Problem with the datapack list reply:%1 %2 (try next)")
+            qDebug() << (QStringLiteral("Main Problem with the datapack list reply:%1 %2 (try next)")
                                                   .arg(reply->url().toString())
                                                   .arg(reply->errorString())
                                                   );
         else
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Main Problem with the datapack list reply:%1 %2 with proxy: %3 %4 type %5 (try next)")
+            qDebug() << (QStringLiteral("Main Problem with the datapack list reply:%1 %2 with proxy: %3 %4 type %5 (try next)")
                                                   .arg(reply->url().toString())
                                                   .arg(reply->errorString())
                                                   .arg(proxy.hostName())
@@ -531,10 +531,10 @@ const QStringList Api_client_real::listDatapackMain(QString suffix)
             //is invalid
             else
             {
-                DebugClass::debugConsole(QStringLiteral("listDatapack(): remove invalid file: %1").arg(suffix+fileInfo.fileName()));
+                qDebug() << (QStringLiteral("listDatapack(): remove invalid file: %1").arg(suffix+fileInfo.fileName()));
                 QFile file(mDatapackMain+suffix+fileInfo.fileName());
                 if(!file.remove())
-                    DebugClass::debugConsole(QStringLiteral("listDatapack(): unable remove invalid file: %1: %2").arg(suffix+fileInfo.fileName()).arg(file.errorString()));
+                    qDebug() << (QStringLiteral("listDatapack(): unable remove invalid file: %1: %2").arg(suffix+fileInfo.fileName()).arg(file.errorString()));
             }
         }
     }
@@ -611,7 +611,7 @@ void Api_client_real::sendDatapackContentMain()
     }
     if(wait_datapack_content_main || wait_datapack_content_sub)
     {
-        DebugClass::debugConsole(QStringLiteral("already in wait of datapack content"));
+        qDebug() << (QStringLiteral("already in wait of datapack content"));
         return;
     }
 

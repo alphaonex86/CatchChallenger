@@ -269,7 +269,7 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
         }
         {
             QPixmap pix;
-            if(!player.pseudo.isEmpty())
+            if(!player.pseudo.empty())
             {
                 QRectF destRect;
                 {
@@ -277,7 +277,7 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
                     QPainter painter(&pix);
                     painter.setFont(playerpseudofont);
                     QRectF sourceRec(0.0,0.0,50.0,10.0);
-                    destRect=painter.boundingRect(sourceRec,Qt::TextSingleLine,player.pseudo);
+                    destRect=painter.boundingRect(sourceRec,Qt::TextSingleLine,QString::fromStdString(player.pseudo));
                 }
                 int more=0;
                 if(player.type!=CatchChallenger::Player_type_normal)
@@ -288,7 +288,7 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
                     pix.fill(Qt::transparent);
                     QPainter painter(&pix);
                     painter.setFont(playerpseudofont);
-                    painter.drawText(QRectF(0.0,0.0,destRect.width(),destRect.height()),Qt::TextSingleLine,player.pseudo);
+                    painter.drawText(QRectF(0.0,0.0,destRect.width(),destRect.height()),Qt::TextSingleLine,QString::fromStdString(player.pseudo));
                     if(player.type==CatchChallenger::Player_type_gm)
                     {
                         if(imgForPseudoAdmin==NULL)
@@ -565,7 +565,7 @@ void MapControllerMP::move_player(const uint16_t &id, const QList<QPair<uint8_t,
     otherPlayerList.value(id).oneStepMore->stop();
     otherPlayerList[id].inMove=false;
     otherPlayerList[id].moveStep=0;
-    if(otherPlayerList.value(id).current_map!=otherPlayerList.value(id).presumed_map->logicalMap.map_file)
+    if(otherPlayerList.value(id).current_map!=QString::fromStdString(otherPlayerList.value(id).presumed_map->logicalMap.map_file))
     {
         unloadOtherPlayerFromMap(otherPlayerList.value(id));
         QString mapPath=otherPlayerList.value(id).current_map;
@@ -613,7 +613,7 @@ void MapControllerMP::move_player(const uint16_t &id, const QList<QPair<uint8_t,
                     CatchChallenger::MoveOnTheMap::move(otherPlayerList.value(id).presumed_direction,&map,&x,&y);
                 else
                 {
-                    qDebug() << QStringLiteral("move_player(): at %1(%2,%3) can't go to %4").arg(map->map_file).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(otherPlayerList.value(id).presumed_direction));
+                    qDebug() << QStringLiteral("move_player(): at %1(%2,%3) can't go to %4").arg(QString::fromStdString(map->map_file)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(otherPlayerList.value(id).presumed_direction));
                     return;
                 }
                 break;
@@ -626,7 +626,7 @@ void MapControllerMP::move_player(const uint16_t &id, const QList<QPair<uint8_t,
             {
                 loadOtherMap(map->map_file);
                 if(!all_map.contains(map->map_file))
-                    qDebug() << QStringLiteral("map changed not located: %1").arg(map->map_file);
+                    qDebug() << QStringLiteral("map changed not located: %1").arg(QString::fromStdString(map->map_file));
                 else
                 {
                     unloadOtherPlayerFromMap(otherPlayerList.value(id));
@@ -1385,7 +1385,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         {
             loadOtherMap(map->map_file);
             if(!all_map.contains(map->map_file))
-                qDebug() << QStringLiteral("map changed not located: %1").arg(map->map_file);
+                qDebug() << QStringLiteral("map changed not located: %1").arg(QString::fromStdString(map->map_file));
             else
             {
                 unloadOtherPlayerFromMap(otherPlayer);

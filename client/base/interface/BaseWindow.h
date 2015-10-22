@@ -15,6 +15,7 @@
 #include <QMovie>
 #include <QQuickView>
 #include <QTreeWidgetItem>
+#include <unordered_set>
 
 #include "../../crafting/interface/QmlInterface/CraftingAnimation.h"
 #include "../../../general/base/ChatParsing.h"
@@ -127,10 +128,12 @@ public slots:
     void connectAllSignals();
 private slots:
     void message(QString message) const;
+    void stdmessage(std::string message) const;
     void disconnected(QString reason);
     void notLogged(QString reason);
     void protocol_is_good();
     void error(QString error);
+    void stderror(std::string error);
     void errorWithTheCurrentMap();
     void repelEffectIsOver();
     void send_player_direction(const CatchChallenger::Direction &the_direction);
@@ -311,7 +314,9 @@ private slots:
 
     //quest
     bool haveReputationRequirements(const QList<ReputationRequirements> &reputationList) const;
+    bool haveReputationRequirements(const std::vector<ReputationRequirements> &reputationList) const;
     void appendReputationRewards(const QList<ReputationRewards> &reputationList);
+    void appendReputationRewards(const std::vector<ReputationRewards> &reputationList);
     void getTextEntryPoint();
     void showQuestText(const uint32_t &textId);
     bool tryValidateQuestStep(bool silent=false);
@@ -474,7 +479,7 @@ private:
     QString playerFrontImagePath,playerBackImagePath;
     uint32_t clan;
     bool clan_leader;
-    QSet<ActionAllow> allow;
+    std::unordered_set<ActionAllow,std::hash<uint8_t> > allow;
     QList<ActionClan> actionClan;
     QString clanName;
     bool haveClanInformations;

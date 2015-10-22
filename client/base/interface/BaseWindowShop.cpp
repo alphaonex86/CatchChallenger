@@ -155,7 +155,7 @@ void BaseWindow::displaySellList()
     QHashIterator<uint16_t,uint32_t> i(items);
     while (i.hasNext()) {
         i.next();
-        if(DatapackClientLoader::datapackLoader.itemsExtra.contains(i.key()) && CatchChallenger::CommonDatapack::commonDatapack.items.item.value(i.key()).price>0)
+        if(DatapackClientLoader::datapackLoader.itemsExtra.contains(i.key()) && CatchChallenger::CommonDatapack::commonDatapack.items.item.at(i.key()).price>0)
         {
             QListWidgetItem *item=new QListWidgetItem();
             shop_items_to_graphical[i.key()]=item;
@@ -164,13 +164,13 @@ void BaseWindow::displaySellList()
             if(i.value()>1)
                 item->setText(tr("%1\nPrice: %2$, quantity: %3")
                         .arg(DatapackClientLoader::datapackLoader.itemsExtra.value(i.key()).name)
-                        .arg(CatchChallenger::CommonDatapack::commonDatapack.items.item.value(i.key()).price/2)
+                        .arg(CatchChallenger::CommonDatapack::commonDatapack.items.item.at(i.key()).price/2)
                         .arg(i.value())
                         );
             else
                 item->setText(tr("%1\nPrice: %2$")
                         .arg(DatapackClientLoader::datapackLoader.itemsExtra.value(i.key()).name)
-                        .arg(CatchChallenger::CommonDatapack::commonDatapack.items.item.value(i.key()).price/2)
+                        .arg(CatchChallenger::CommonDatapack::commonDatapack.items.item.at(i.key()).price/2)
                         );
             ui->shopItemList->addItem(item);
         }

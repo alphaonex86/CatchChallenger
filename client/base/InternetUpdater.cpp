@@ -70,30 +70,30 @@ void InternetUpdater::httpFinished()
     QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
     if (!reply->isFinished())
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("get the new update failed: not finished"));
+        qDebug() << (QStringLiteral("get the new update failed: not finished"));
         reply->deleteLater();
         return;
     }
     else if(reply->error())
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
+        qDebug() << (QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
         reply->deleteLater();
         return;
     } else if (!redirectionTarget.isNull()) {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()));
+        qDebug() << (QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()));
         reply->deleteLater();
         return;
     }
     const QString &newVersion=QString::fromUtf8(reply->readAll());
     if(newVersion.isEmpty())
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("version string is empty"));
+        qDebug() << (QStringLiteral("version string is empty"));
         reply->deleteLater();
         return;
     }
     if(!newVersion.contains(QRegularExpression(QLatin1Literal("^[0-9]+(\\.[0-9]+)+$"))))
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("version string don't match: %1").arg(newVersion));
+        qDebug() << (QStringLiteral("version string don't match: %1").arg(newVersion));
         reply->deleteLater();
         return;
     }
