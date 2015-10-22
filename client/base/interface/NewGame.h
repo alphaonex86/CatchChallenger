@@ -12,7 +12,7 @@ class NewGame : public QDialog
     Q_OBJECT
 
 public:
-    explicit NewGame(const QString &skinPath, const QList<uint8_t> &forcedSkin, QWidget *parent = 0);
+    explicit NewGame(const QString &skinPath, const std::vector<uint8_t> &forcedSkin, QWidget *parent = 0);
     ~NewGame();
     bool haveTheInformation();
     QString pseudo();

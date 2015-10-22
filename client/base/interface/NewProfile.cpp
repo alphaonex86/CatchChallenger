@@ -93,7 +93,7 @@ void NewProfile::loadProfileText()
         }
         if(profile.name.isEmpty())
         {
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, name empty or not found: child.tagName(): %2 (at line: %3)").arg(xmlFile).arg(startItem.tagName()).arg(startItem.lineNumber()));
+            qDebug() << (QStringLiteral("Unable to open the xml file: %1, name empty or not found: child.tagName(): %2 (at line: %3)").arg(xmlFile).arg(startItem.tagName()).arg(startItem.lineNumber()));
             startItem = startItem.nextSiblingElement("start");
             continue;
         }
@@ -131,7 +131,7 @@ void NewProfile::loadProfileText()
         }
         if(profile.description.isEmpty())
         {
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, description empty or not found: child.tagName(): %2 (at line: %3)").arg(xmlFile).arg(startItem.tagName()).arg(startItem.lineNumber()));
+            qDebug() << (QStringLiteral("Unable to open the xml file: %1, description empty or not found: child.tagName(): %2 (at line: %3)").arg(xmlFile).arg(startItem.tagName()).arg(startItem.lineNumber()));
             startItem = startItem.nextSiblingElement("start");
             continue;
         }
@@ -179,7 +179,7 @@ void NewProfile::datapackParsed()
     if(CatchChallenger::CommonDatapack::commonDatapack.profileList.size()==1)//do into the next screen:  && CatchChallenger::CommonDatapack::commonDatapack.profileList.first().forcedskin.size()==1
     {
         emit finished(0);
-        CatchChallenger::DebugClass::debugConsole("Default profile selected");
+        qDebug() << ("Default profile selected");
         mOk=true;
         close();//only one, then select it
         return;

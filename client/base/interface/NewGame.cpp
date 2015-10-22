@@ -9,7 +9,7 @@
 #include <QMessageBox>
 #include <QDebug>
 
-NewGame::NewGame(const QString &skinPath,const QList<uint8_t> &forcedSkin,QWidget *parent) :
+NewGame::NewGame(const QString &skinPath, const std::vector<uint8_t> &forcedSkin, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::NewGame)
 {
