@@ -2,7 +2,6 @@
 #include "../../base/LanguagesSelect.h"
 #include "../../../general/base/GeneralVariable.h"
 #include "../../../general/base/FacilityLib.h"
-#include "../../../general/base/DebugClass.h"
 #include "../../../general/fight/FightLoader.h"
 #include "../../../general/base/CommonDatapack.h"
 #include "../../../general/base/CommonDatapackServerSpec.h"
@@ -41,8 +40,8 @@ void DatapackClientLoader::parseMonstersExtra()
         }
         QDomDocument domDocument;
         //open and quick check the file
-        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
-            domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+            domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file.toStdString());
         else
         {
             QFile xmlFile(file);
@@ -87,7 +86,7 @@ void DatapackClientLoader::parseMonstersExtra()
                         qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     else
                     {
-                        if(!CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(id))
+                        if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(id)==CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
                             qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not into monster list into monster extra: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                         else
                         {
@@ -293,13 +292,12 @@ void DatapackClientLoader::parseMonstersExtra()
             item = item.nextSiblingElement(DatapackClientLoader::text_monster);
         }
 
-        QHashIterator<uint16_t,CatchChallenger::Monster> i(CatchChallenger::CommonDatapack::commonDatapack.monsters);
-        while(i.hasNext())
+        auto i=CatchChallenger::CommonDatapack::commonDatapack.monsters.begin();
+        while(i!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
         {
-            i.next();
-            if(!DatapackClientLoader::datapackLoader.monsterExtra.contains(i.key()))
+            if(!DatapackClientLoader::datapackLoader.monsterExtra.contains(i->first))
             {
-                qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i.key()));
+                qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i->first));
                 DatapackClientLoader::MonsterExtra monsterExtraEntry;
                 monsterExtraEntry.name=tr("Unknown");
                 monsterExtraEntry.description=tr("Unknown");
@@ -307,8 +305,9 @@ void DatapackClientLoader::parseMonstersExtra()
                 monsterExtraEntry.back=QPixmap(QStringLiteral(":/images/monsters/default/back.png"));
                 monsterExtraEntry.thumb=QPixmap(QStringLiteral(":/images/monsters/default/small.png"));
                 monsterExtraEntry.thumb=monsterExtraEntry.thumb.scaled(64,64);
-                DatapackClientLoader::datapackLoader.monsterExtra[i.key()]=monsterExtraEntry;
+                DatapackClientLoader::datapackLoader.monsterExtra[i->first]=monsterExtraEntry;
             }
+            ++i;
         }
         file_index++;
     }
@@ -321,8 +320,8 @@ void DatapackClientLoader::parseTypesExtra()
     const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("type.xml");
     QDomDocument domDocument;
     //open and quick check the file
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
-        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file.toStdString());
     else
     {
         QFile itemsFile(file);
@@ -440,8 +439,8 @@ void DatapackClientLoader::parseBuffExtra()
         const QString &dotgif=QLatin1Literal(".gif");
         QDomDocument domDocument;
         //open and quick check the file
-        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
-            domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+            domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file.toStdString());
         else
         {
             QFile xmlFile(file);
@@ -486,7 +485,7 @@ void DatapackClientLoader::parseBuffExtra()
                         qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     else
                     {
-                        if(!CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.contains(id))
+                        if(CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.find(id)==CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.cend())
                             qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not into monster buff list into buff extra: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                         else
                         {
@@ -592,19 +591,19 @@ void DatapackClientLoader::parseBuffExtra()
             item = item.nextSiblingElement(DatapackClientLoader::text_buff);
         }
 
-        QHashIterator<uint8_t,CatchChallenger::Buff> i(CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs);
-        while(i.hasNext())
+        auto i=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.begin();
+        while(i!=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.cend())
         {
-            i.next();
-            if(!DatapackClientLoader::datapackLoader.monsterBuffsExtra.contains(i.key()))
+            if(!DatapackClientLoader::datapackLoader.monsterBuffsExtra.contains(i->first))
             {
-                qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster buffer extra for id: %1").arg(i.key()));
+                qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster buffer extra for id: %1").arg(i->first));
                 DatapackClientLoader::MonsterExtra::Buff monsterBuffExtraEntry;
                 monsterBuffExtraEntry.name=tr("Unknown");
                 monsterBuffExtraEntry.description=tr("Unknown");
                 monsterBuffExtraEntry.icon=QIcon(QStringLiteral(":/images/interface/buff.png"));
-                DatapackClientLoader::datapackLoader.monsterBuffsExtra[i.key()]=monsterBuffExtraEntry;
+                DatapackClientLoader::datapackLoader.monsterBuffsExtra[i->first]=monsterBuffExtraEntry;
             }
+            ++i;
         }
         file_index++;
     }
@@ -632,8 +631,8 @@ void DatapackClientLoader::parseSkillsExtra()
         }
         //open and quick check the file
         QDomDocument domDocument;
-        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
-            domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+            domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file.toStdString());
         else
         {
             QFile xmlFile(file);
@@ -679,7 +678,7 @@ void DatapackClientLoader::parseSkillsExtra()
                         qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     else
                     {
-                        if(!CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.contains(id))
+                        if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.find(id)==CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
                         {}//qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not into monster skill list into skill extra: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                         else
                         {
@@ -775,18 +774,18 @@ void DatapackClientLoader::parseSkillsExtra()
             item = item.nextSiblingElement(DatapackClientLoader::text_skill);
         }
 
-        QHashIterator<uint16_t,CatchChallenger::Skill> i(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills);
-        while(i.hasNext())
+        auto i=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.begin();
+        while(i!=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
         {
-            i.next();
-            if(!monsterSkillsExtra.contains(i.key()))
+            if(!monsterSkillsExtra.contains(i->first))
             {
-                qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster skill extra for id: %1").arg(i.key()));
+                qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster skill extra for id: %1").arg(i->first));
                 DatapackClientLoader::MonsterExtra::Skill monsterSkillExtraEntry;
                 monsterSkillExtraEntry.name=tr("Unknown");
                 monsterSkillExtraEntry.description=tr("Unknown");
-                monsterSkillsExtra[i.key()]=monsterSkillExtraEntry;
+                monsterSkillsExtra[i->first]=monsterSkillExtraEntry;
             }
+            ++i;
         }
         file_index++;
     }
@@ -798,7 +797,7 @@ void DatapackClientLoader::parseBotFightsExtra()
 {
     const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     bool found;
-    QDir dir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_FIGHT).arg(mainDatapackCode));
+    QDir dir(datapackPath+DATAPACK_BASE_PATH_FIGHT1+mainDatapackCode+DATAPACK_BASE_PATH_FIGHT2);
     QFileInfoList list=dir.entryInfoList(QStringList(),QDir::NoDotAndDotDot|QDir::Files);
     int index_file=0;
     while(index_file<list.size())
@@ -808,8 +807,8 @@ void DatapackClientLoader::parseBotFightsExtra()
             const QString &file=list.at(index_file).absoluteFilePath();
             QDomDocument domDocument;
             //open and quick check the file
-            if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
-                domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+            if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+                domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file.toStdString());
             else
             {
                 QFile xmlFile(file);
@@ -851,7 +850,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                         uint32_t id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
                         if(ok)
                         {
-                            if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.contains(id))
+                            if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(id)!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
                             {
                                 if(!botFightsExtra.contains(id))
                                 {
@@ -952,18 +951,18 @@ void DatapackClientLoader::parseBotFightsExtra()
         }
     }
 
-    QHashIterator<uint16_t,CatchChallenger::BotFight> i(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights);
-    while(i.hasNext())
+    auto i=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.begin();
+    while(i!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
     {
-        i.next();
-        if(!botFightsExtra.contains(i.key()))
+        if(!botFightsExtra.contains(i->first))
         {
-            qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into bot fight extra for id: %1").arg(i.key()));
+            qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into bot fight extra for id: %1").arg(i->first));
             BotFightExtra botFightExtra;
             botFightExtra.start=tr("Ready for the fight?");
             botFightExtra.win=tr("You are so strong for me!");
-            botFightsExtra[i.key()]=botFightExtra;
+            botFightsExtra[i->first]=botFightExtra;
         }
+        ++i;
     }
 
     qDebug() << QStringLiteral("%1 fight extra(s) loaded").arg(botFightsExtra.size());
