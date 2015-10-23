@@ -6,6 +6,7 @@
 #include "../../../general/base/GeneralStructures.h"
 #include "../../../general/base/CommonDatapack.h"
 #include "ui_BaseWindow.h"
+#include "../../base/FacilityLibClient.h"
 
 #include <QListWidgetItem>
 #include <QBuffer>
@@ -86,7 +87,7 @@ void BaseWindow::seed_planted(const bool &ok)
                 return;
             }
             const uint8_t &plant=DatapackClientLoader::datapackLoader.itemToPlants.value(itemId);
-            appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.plants.value(plant).rewards.reputation);
+            appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.plants.at(plant).rewards.reputation);
         }
     }
     else
@@ -161,7 +162,7 @@ void BaseWindow::load_plant_inventory()
                 item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
                 item->setText(QStringLiteral("item id: %1").arg(i.key())+"\n"+tr("Quantity: %1").arg(i.value()));
             }
-            if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.plants.value(plantId).requirements.reputation))
+            if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.plants.at(plantId).requirements.reputation))
             {
                 item->setText(item->text()+"\n"+tr("You don't have the requirements"));
                 item->setFont(disableIntoListFont);
@@ -181,12 +182,12 @@ void BaseWindow::load_crafting_inventory()
     crafting_recipes_items_to_graphical.clear();
     crafting_recipes_items_graphical.clear();
     Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
-    QSetIterator<uint16_t> i(informations.recipes);
-    while (i.hasNext())
+    auto i=informations.recipes.begin();
+    while (i!=informations.recipes.cend())
     {
-        uint32_t recipe=i.next();
+        uint32_t recipe=*i;
         //load the material item
-        if(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.contains(recipe))
+        if(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.find(recipe)!=CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.cend())
         {
             QListWidgetItem *item=new QListWidgetItem();
             if(DatapackClientLoader::datapackLoader.itemsExtra.contains(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe].doItemId))
@@ -205,6 +206,7 @@ void BaseWindow::load_crafting_inventory()
         }
         else
             qDebug() << QStringLiteral("BaseWindow::load_crafting_inventory(), crafting id not found into crafting recipe").arg(recipe);
+        ++i;
     }
     on_listCraftingList_itemSelectionChanged();
 }
@@ -214,9 +216,9 @@ QString BaseWindow::reputationRequirementsToText(const ReputationRequirements &r
     if(reputationRequirements.reputationId>=CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
         return QStringLiteral("???");
     const Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRequirements.reputationId);
-    if(!DatapackClientLoader::datapackLoader.reputationExtra.contains(reputation.name))
+    if(DatapackClientLoader::datapackLoader.reputationExtra.contains(QString::fromStdString(reputation.name)))
         return QStringLiteral("???");
-    const DatapackClientLoader::ReputationExtra &reputationExtra=DatapackClientLoader::datapackLoader.reputationExtra.value(reputation.name);
+    const DatapackClientLoader::ReputationExtra &reputationExtra=DatapackClientLoader::datapackLoader.reputationExtra.value(QString::fromStdString(reputation.name));
     if(reputationRequirements.positif)
     {
         if(reputationRequirements.level>=reputationExtra.reputation_positive.size())
@@ -278,7 +280,7 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
         {
             QStringList requirements;
             {
-                int index=0;
+                unsigned int index=0;
                 while(index<plant.requirements.reputation.size())
                 {
                     requirements << reputationRequirementsToText(plant.requirements.reputation.at(index));
@@ -292,7 +294,7 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
             #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
             QStringList rewards_less_reputation,rewards_more_reputation;
             {
-                int index=0;
+                unsigned int index=0;
                 while(index<plant.rewards.reputation.size())
                 {
                     QString name=QStringLiteral("???");
@@ -300,8 +302,8 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
                     if(reputationRewards.reputationId<CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
                     {
                         const Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRewards.reputationId);
-                        if(DatapackClientLoader::datapackLoader.reputationExtra.contains(reputation.name))
-                            name=DatapackClientLoader::datapackLoader.reputationExtra.value(reputation.name).name;
+                        if(DatapackClientLoader::datapackLoader.reputationExtra.contains(QString::fromStdString(reputation.name)))
+                            name=DatapackClientLoader::datapackLoader.reputationExtra.value(QString::fromStdString(reputation.name)).name;
                     }
                     if(reputationRewards.point<0)
                         rewards_less_reputation << name;
@@ -327,7 +329,7 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
         {
             double quantity=(double)plant.fix_quantity+(double)plant.random_quantity/(double)RANDOM_FLOAT_PART_DIVIDER-1;
             double quantityByDay=quantity*(double)86400/(double)plant.fruits_seconds;
-            if(CommonDatapack::commonDatapack.items.item.contains(plant.itemUsed))
+            if(CommonDatapack::commonDatapack.items.item.find(plant.itemUsed)!=CommonDatapack::commonDatapack.items.item.cend())
                 ui->labelPlantByDay->setText(tr("Plant by day: %1").arg(QString::number(quantityByDay,'f',0))+", "+tr("income by day: %1").arg(QString::number(quantityByDay*CommonDatapack::commonDatapack.items.item[plant.itemUsed].price,'f',0)));
             else
                 ui->labelPlantByDay->setText(tr("Plant by day: %1").arg(QString::number(quantityByDay,'f',0)));
@@ -357,11 +359,11 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
     ui->labelFloweringImage->setPixmap(contentExtra.tileset->tileAt(3)->image().scaled(32,64));
     ui->labelFruitsImage->setPixmap(contentExtra.tileset->tileAt(4)->image().scaled(32,64));
 
-    ui->labelPlantedText->setText(FacilityLibGeneral::secondsToString(0));
-    ui->labelSproutedText->setText(FacilityLibGeneral::secondsToString(plant.sprouted_seconds));
-    ui->labelTallerText->setText(FacilityLibGeneral::secondsToString(plant.taller_seconds));
-    ui->labelFloweringText->setText(FacilityLibGeneral::secondsToString(plant.flowering_seconds));
-    ui->labelFruitsText->setText(FacilityLibGeneral::secondsToString(plant.fruits_seconds));
+    ui->labelPlantedText->setText(FacilityLibClient::timeToString(0));
+    ui->labelSproutedText->setText(FacilityLibClient::timeToString(plant.sprouted_seconds));
+    ui->labelTallerText->setText(FacilityLibClient::timeToString(plant.taller_seconds));
+    ui->labelFloweringText->setText(FacilityLibClient::timeToString(plant.flowering_seconds));
+    ui->labelFruitsText->setText(FacilityLibClient::timeToString(plant.fruits_seconds));
     ui->labelPlantFruitText->setText(tr("Quantity: %1").arg((float)plant.fix_quantity+((float)plant.random_quantity)/RANDOM_FLOAT_PART_DIVIDER));
 
     ui->plantUse->setVisible(inSelection);
@@ -446,7 +448,7 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
 
     //load the materials
     bool haveMaterials=true;
-    int index=0;
+    unsigned int index=0;
     QString nameMaterials;
     QListWidgetItem *item;
     uint32_t quantity;
@@ -500,7 +502,7 @@ void BaseWindow::on_craftingUse_clicked()
     QString mRecipe;
     QString mProduct;
     //load the materials
-    int index=0;
+    unsigned int index=0;
     while(index<content.materials.size())
     {
         if(!items.contains(content.materials.at(index).item))
@@ -540,7 +542,7 @@ void BaseWindow::on_craftingUse_clicked()
     on_listCraftingList_itemSelectionChanged();
     //send to the network
     CatchChallenger::Api_client_real::client->useRecipe(crafting_recipes_items_graphical.value(selectedItem));
-    appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.value(crafting_recipes_items_graphical.value(selectedItem)).rewards.reputation);
+    appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.at(crafting_recipes_items_graphical.value(selectedItem)).rewards.reputation);
     //create animation widget
     if(animationWidget!=NULL)
         delete animationWidget;

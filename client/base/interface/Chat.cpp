@@ -125,7 +125,7 @@ void Chat::lineEdit_chat_text_returnPressed()
         }
         CatchChallenger::Api_client_real::client->sendChatText(chat_type,text);
         if(!text.startsWith('/'))
-            new_chat_text(chat_type,text,CatchChallenger::Api_client_real::client->player_informations.public_informations.pseudo,CatchChallenger::Api_client_real::client->player_informations.public_informations.type);
+            new_chat_text(chat_type,text,QString::fromStdString(CatchChallenger::Api_client_real::client->player_informations.public_informations.pseudo),CatchChallenger::Api_client_real::client->player_informations.public_informations.type);
     }
     else if(text.contains(QRegularExpression("^/pm [^ ]+ .+$")))
     {
@@ -197,9 +197,9 @@ void Chat::update_chat()
         if(chat_list_type.at(index)==Chat_type_system || chat_list_type.at(index)==Chat_type_system_important)
             addPlayerInfo=false;
         if(!addPlayerInfo)
-            nameHtml+=ChatParsing::new_chat_message(QString(),Player_type_normal,chat_list_type.at(index),chat_list_text.at(index));
+            nameHtml+=QString::fromStdString(ChatParsing::new_chat_message(std::string(),Player_type_normal,chat_list_type.at(index),chat_list_text.at(index).toStdString()));
         else
-            nameHtml+=ChatParsing::new_chat_message(chat_list_player_pseudo.at(index),chat_list_player_type.at(index),chat_list_type.at(index),chat_list_text.at(index));
+            nameHtml+=QString::fromStdString(ChatParsing::new_chat_message(chat_list_player_pseudo.at(index).toStdString(),chat_list_player_type.at(index),chat_list_type.at(index),chat_list_text.at(index).toStdString()));
         index++;
     }
     ui->textBrowser_chat->setHtml(nameHtml);
