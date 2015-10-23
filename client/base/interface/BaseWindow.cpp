@@ -522,7 +522,7 @@ QString BaseWindow::lastLocation() const
     return MapController::mapController->lastLocation();
 }
 
-QHash<uint16_t, PlayerQuest> BaseWindow::getQuests() const
+std::unordered_map<uint16_t, PlayerQuest> BaseWindow::getQuests() const
 {
     return quests;
 }
@@ -731,12 +731,12 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             ui->inventoryUse->setText(tr("Select"));
             if(!ok)
                 break;
-            if(!items.contains(itemId))
+            if(items.find(itemId)==items.cend())
             {
                 qDebug() << "item id is not into the inventory";
                 break;
             }
-            if(items.value(itemId)<quantity)
+            if(items.at(itemId)<quantity)
             {
                 qDebug() << "item id have not the quantity";
                 break;
@@ -758,12 +758,12 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             ui->stackedWidget->setCurrentWidget(ui->page_market);
             if(!ok)
                 break;
-            if(!items.contains(itemId))
+            if(items.find(itemId)==items.cend())
             {
                 qDebug() << "item id is not into the inventory";
                 break;
             }
-            if(items.value(itemId)<quantity)
+            if(items.at(itemId)<quantity)
             {
                 qDebug() << "item id have not the quantity";
                 break;
@@ -791,20 +791,20 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             ui->stackedWidget->setCurrentWidget(ui->page_trade);
             if(!ok)
                 break;
-            if(!items.contains(itemId))
+            if(items.find(itemId)==items.cend())
             {
                 qDebug() << "item id is not into the inventory";
                 break;
             }
-            if(items.value(itemId)<quantity)
+            if(items.at(itemId)<quantity)
             {
                 qDebug() << "item id have not the quantity";
                 break;
             }
             CatchChallenger::Api_client_real::client->addObject(itemId,quantity);
             items[itemId]-=quantity;
-            if(items.value(itemId)==0)
-                items.remove(itemId);
+            if(items.at(itemId)==0)
+                items.erase(itemId);
             if(tradeCurrentObjects.contains(itemId))
                 tradeCurrentObjects[itemId]+=quantity;
             else
@@ -985,7 +985,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 seed_in_waiting.removeLast();
                 return;
             }
-            if(!items.contains(itemId))
+            if(items.find(itemId)==items.cend())
             {
                 qDebug() << "item id is not into the inventory";
                 seed_in_waiting.removeLast();
@@ -1020,12 +1020,12 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 QMessageBox::warning(this,tr("Error"),tr("You have already the maximum number of monster into you warehouse"));
                 break;
             }
-            if(!items.contains(itemId))
+            if(items.find(itemId)==items.cend())
             {
                 qDebug() << "item id is not into the inventory";
                 break;
             }
-            if(items.value(itemId)<quantity)
+            if(items.at(itemId)<quantity)
             {
                 qDebug() << "item id have not the quantity";
                 break;
@@ -1109,7 +1109,7 @@ void BaseWindow::add_to_inventory(const QHash<uint16_t,uint32_t> &items,const bo
             i.next();
 
             //add really to the list
-            if(this->items.contains(i.key()))
+            if(this->items.find(i.key())!=this->items.cend())
                 this->items[i.key()]+=i.value();
             else
                 this->items[i.key()]=i.value();
@@ -1152,7 +1152,7 @@ void BaseWindow::add_to_inventory(const QHash<uint16_t,uint32_t> &items,const bo
         while (i.hasNext()) {
             i.next();
             //add really to the list
-            if(this->items.contains(i.key()))
+            if(this->items.find(i.key())!=this->items.cend())
                 this->items[i.key()]+=i.value();
             else
                 this->items[i.key()]=i.value();
@@ -1183,10 +1183,10 @@ void BaseWindow::remove_to_inventory(const QHash<uint16_t,uint32_t> &items)
         i.next();
 
         //add really to the list
-        if(this->items.contains(i.key()))
+        if(this->items.find(i.key())!=this->items.cend())
         {
-            if(this->items.value(i.key())<=i.value())
-                this->items.remove(i.key());
+            if(this->items.at(i.key())<=i.value())
+                this->items.erase(i.key());
             else
                 this->items[i.key()]-=i.value();
         }
@@ -1589,10 +1589,10 @@ void BaseWindow::actionOn(Map_client *map, uint8_t x, uint8_t y)
     else if(map->itemsOnMap.contains(QPair<uint8_t,uint8_t>(x,y)))
     {
         const Map_client::ItemOnMapForClient &item=map->itemsOnMap.value(QPair<uint8_t,uint8_t>(x,y));
-        if(!itemOnMap.contains(item.indexOfItemOnMap))
+        if(itemOnMap.find(item.indexOfItemOnMap)==itemOnMap.cend())
         {
             if(!item.infinite)
-                itemOnMap << item.indexOfItemOnMap;
+                itemOnMap.insert(item.indexOfItemOnMap);
             add_to_inventory(item.item);
             CatchChallenger::Api_client_real::client->takeAnObjectOnMap();
         }
@@ -1906,12 +1906,12 @@ bool BaseWindow::haveNextStepQuestRequirements(const CatchChallenger::Quest &que
     #ifdef DEBUG_CLIENT_QUEST
     qDebug() << QStringLiteral("haveNextStepQuestRequirements for quest: %1").arg(questId);
     #endif
-    if(!quests.contains(quest.id))
+    if(quests.find(quest.id)==quests.cend())
     {
         qDebug() << "step out of range for: " << quest.id;
         return false;
     }
-    uint8_t step=quests.value(quest.id).step;
+    uint8_t step=quests.at(quest.id).step;
     if(step<=0 || step>quest.steps.size())
     {
         qDebug() << "step out of range for: " << quest.id;
@@ -1956,7 +1956,7 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest) 
     qDebug() << "check quest requirement for: " << quest.id;
     #endif
     Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
-    if(quests.contains(quest.id))
+    if(quests.find(quest.id)!=quests.cend())
     {
         if(informations.quests.at(quest.id).step!=0)
         {
@@ -1978,9 +1978,9 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest) 
     {
         const uint16_t &questId=quest.requirements.quests.at(index).quest;
         if(
-                (!quests.contains(questId) && !quest.requirements.quests.at(index).inverse)
+                (quests.find(questId)==quests.cend() && !quest.requirements.quests.at(index).inverse)
                 ||
-                (quests.contains(questId) && quest.requirements.quests.at(index).inverse)
+                (quests.find(questId)!=quests.cend() && quest.requirements.quests.at(index).inverse)
                 )
         {
             #ifdef DEBUG_CLIENT_QUEST
@@ -2080,12 +2080,12 @@ bool BaseWindow::nextStepQuest(const Quest &quest)
     #ifdef DEBUG_CLIENT_QUEST
     qDebug() << "drop quest step requirement for: " << quest.id;
     #endif
-    if(!quests.contains(quest.id))
+    if(quests.find(quest.id)==quests.cend())
     {
         qDebug() << "step out of range for: " << quest.id;
         return false;
     }
-    uint8_t step=quests.value(quest.id).step;
+    uint8_t step=quests.at(quest.id).step;
     if(step<=0 || step>quest.steps.size())
     {
         qDebug() << "step out of range for: " << quest.id;
@@ -2102,7 +2102,7 @@ bool BaseWindow::nextStepQuest(const Quest &quest)
         index++;
     }
     quests[quest.id].step++;
-    if(quests.value(quest.id).step>quest.steps.size())
+    if(quests.at(quest.id).step>quest.steps.size())
     {
         #ifdef DEBUG_CLIENT_QUEST
         qDebug() << "finish the quest: " << quest.id;
@@ -2179,7 +2179,7 @@ void BaseWindow::appendReputationPoint(const QString &type,const int32_t &point)
 
 bool BaseWindow::startQuest(const Quest &quest)
 {
-    if(!quests.contains(quest.id))
+    if(quests.find(quest.id)==quests.cend())
     {
         quests[quest.id].step=1;
         quests[quest.id].finish_one_time=false;
@@ -2205,7 +2205,7 @@ bool BaseWindow::botHaveQuest(const uint32_t &botId)
             qDebug() << "cast error for questId at BaseWindow::getQuestList()";
         #endif
         const CatchChallenger::Quest &currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId);
-        if(!quests.contains(botQuests.at(index)))
+        if(quests.find(botQuests.at(index))==quests.cend())
         {
             //quest not started
             if(haveStartQuestRequirement(currentQuest))
@@ -2219,11 +2219,11 @@ bool BaseWindow::botHaveQuest(const uint32_t &botId)
                 qDebug() << "internal bug: have quest registred, but no quest found with this id";
             else
             {
-                if(quests.value(botQuests.at(index)).step==0)
+                if(quests.at(botQuests.at(index)).step==0)
                 {
                     if(currentQuest.repeatable)
                     {
-                        if(quests.value(botQuests.at(index)).finish_one_time)
+                        if(quests.at(botQuests.at(index)).finish_one_time)
                         {
                             //quest already done but repeatable
                             if(haveStartQuestRequirement(currentQuest))
@@ -2239,7 +2239,7 @@ bool BaseWindow::botHaveQuest(const uint32_t &botId)
                 }
                 else
                 {
-                    auto bots=currentQuest.steps.at(quests.value(questId).step-1).bots;
+                    auto bots=currentQuest.steps.at(quests.at(questId).step-1).bots;
                     if(vectorcontainsAtLeastOne(bots,botId))
                         return true;//in progress
                     else
@@ -2250,18 +2250,19 @@ bool BaseWindow::botHaveQuest(const uint32_t &botId)
         index++;
     }
     //do the started quest here
-    QHashIterator<uint16_t, PlayerQuest> i(quests);
-    while (i.hasNext()) {
-        i.next();
-        if(!botQuests.contains(i.key()) && i.value().step>0)
+    auto i=quests.begin();
+    while(i!=quests.cend())
+    {
+        if(!botQuests.contains(i->first) && i->second.step>0)
         {
-            CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(i.key());
-            auto bots=currentQuest.steps.at(i.value().step-1).bots;
+            CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(i->first);
+            auto bots=currentQuest.steps.at(i->second.step-1).bots;
             if(vectorcontainsAtLeastOne(bots,botId))
                 return true;//in progress, but not the starting bot
             else
                 {}//it's another bot
         }
+        ++i;
     }
     return false;
 }
@@ -2281,7 +2282,7 @@ QList<QPair<uint32_t,QString> > BaseWindow::getQuestList(const uint32_t &botId)
             qDebug() << "cast error for questId at BaseWindow::getQuestList()";
         #endif
         const CatchChallenger::Quest &currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId);
-        if(!quests.contains(botQuests.at(index)))
+        if(quests.find(botQuests.at(index))==quests.cend())
         {
             //quest not started
             if(haveStartQuestRequirement(currentQuest))
@@ -2305,11 +2306,11 @@ QList<QPair<uint32_t,QString> > BaseWindow::getQuestList(const uint32_t &botId)
                 qDebug() << "internal bug: have quest registred, but no quest found with this id";
             else
             {
-                if(quests.value(botQuests.at(index)).step==0)
+                if(quests.at(botQuests.at(index)).step==0)
                 {
                     if(currentQuest.repeatable)
                     {
-                        if(quests.value(botQuests.at(index)).finish_one_time)
+                        if(quests.at(botQuests.at(index)).finish_one_time)
                         {
                             //quest already done but repeatable
                             if(haveStartQuestRequirement(currentQuest))
@@ -2335,7 +2336,7 @@ QList<QPair<uint32_t,QString> > BaseWindow::getQuestList(const uint32_t &botId)
                 }
                 else
                 {
-                    auto bots=currentQuest.steps.at(quests.value(questId).step-1).bots;
+                    auto bots=currentQuest.steps.at(quests.at(questId).step-1).bots;
                     if(vectorcontainsAtLeastOne(bots,botId))
                     {
                         oneEntry.first=questId;
@@ -2356,22 +2357,23 @@ QList<QPair<uint32_t,QString> > BaseWindow::getQuestList(const uint32_t &botId)
         index++;
     }
     //do the started quest here
-    QHashIterator<uint16_t, PlayerQuest> i(quests);
-    while (i.hasNext()) {
-        i.next();
-        if(!botQuests.contains(i.key()) && i.value().step>0)
+    auto i=quests.begin();
+    while(i!=quests.cend())
+    {
+        if(!botQuests.contains(i->first) && i->second.step>0)
         {
-            CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(i.key());
-            auto bots=currentQuest.steps.at(i.value().step-1).bots;
+            CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(i->first);
+            auto bots=currentQuest.steps.at(i->second.step-1).bots;
             if(vectorcontainsAtLeastOne(bots,botId))
             {
                 //in progress, but not the starting bot
-                oneEntry.first=i.key();
-                oneEntry.second=tr("%1 (in progress)").arg(DatapackClientLoader::datapackLoader.questsExtra.value(i.key()).name);
+                oneEntry.first=i->first;
+                oneEntry.second=tr("%1 (in progress)").arg(DatapackClientLoader::datapackLoader.questsExtra.value(i->first).name);
                 entryList << oneEntry;
             }
             else
                 {}//it's another bot
+            ++i;
         }
     }
     return entryList;
@@ -2822,8 +2824,8 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
             case ObjectType_Sell:
             case ObjectType_Trade:
             case ObjectType_SellToMarket:
-                if(items.value(itemId)>1)
-                    tempQuantitySelected=QInputDialog::getInt(this,tr("Quantity"),tr("Select a quantity"),1,1,items.value(itemId),1,&ok);
+                if(items.at(itemId)>1)
+                    tempQuantitySelected=QInputDialog::getInt(this,tr("Quantity"),tr("Select a quantity"),1,1,items.at(itemId),1,&ok);
                 else
                     tempQuantitySelected=1;
             break;
@@ -2836,12 +2838,12 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
             objectSelection(false);
             return;
         }
-        if(!items.contains(itemId))
+        if(items.find(itemId)==items.cend())
         {
             objectSelection(false);
             return;
         }
-        if(items.value(itemId)<tempQuantitySelected)
+        if(items.at(itemId)<tempQuantitySelected)
         {
             objectSelection(false);
             return;
@@ -2952,9 +2954,9 @@ void BaseWindow::on_inventoryDestroy_clicked()
     if(items.size()!=1)
         return;
     uint32_t itemId=items_graphical.value(items.first());
-    if(!this->items.contains(itemId))
+    if(this->items.find(itemId)==this->items.cend())
         return;
-    uint32_t quantity=this->items.value(itemId);
+    uint32_t quantity=this->items.at(itemId);
     if(quantity>1)
     {
         bool ok;
@@ -2970,10 +2972,10 @@ void BaseWindow::on_inventoryDestroy_clicked()
         button=QMessageBox::question(this,tr("Destroy"),tr("Are you sure you want to destroy %1 unknow item (id: %2)?").arg(quantity).arg(itemId),QMessageBox::Yes|QMessageBox::No,QMessageBox::Yes);
     if(button!=QMessageBox::Yes)
         return;
-    if(!this->items.contains(itemId))
+    if(this->items.find(itemId)==this->items.cend())
         return;
-    if(this->items.value(itemId)<quantity)
-        quantity=this->items.value(itemId);
+    if(this->items.at(itemId)<quantity)
+        quantity=this->items.at(itemId);
     emit destroyObject(itemId,quantity);
     remove_to_inventory(itemId,quantity);
     load_inventory();
@@ -2982,8 +2984,8 @@ void BaseWindow::on_inventoryDestroy_clicked()
 
 uint32_t BaseWindow::itemQuantity(const uint32_t &itemId) const
 {
-    if(items.contains(itemId))
-        return items.value(itemId);
+    if(items.find(itemId)!=items.cend())
+        return items.at(itemId);
     return 0;
 }
 
@@ -3142,7 +3144,7 @@ bool BaseWindow::tryValidateQuestStep(bool silent)
         return false;
     }
 
-    if(!quests.contains(questId))
+    if(quests.find(questId)!=quests.cend())
     {
         if(vectorcontainsAtLeastOne(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).steps.at(0).bots,actualBot.botId)
                 && haveStartQuestRequirement(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId)))
@@ -3159,7 +3161,7 @@ bool BaseWindow::tryValidateQuestStep(bool silent)
             return false;
         }
     }
-    else if(quests.value(questId).step==0)
+    else if(quests.at(questId).step==0)
     {
         if(vectorcontainsAtLeastOne(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).steps.at(0).bots,actualBot.botId)
                 && haveStartQuestRequirement(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId)))
@@ -3182,7 +3184,7 @@ bool BaseWindow::tryValidateQuestStep(bool silent)
             showTip(tr("You don't have the requirement to continue this quest"));
         return false;
     }
-    if(quests.value(questId).step>=(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).steps.size()))
+    if(quests.at(questId).step>=(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).steps.size()))
     {
         if(!silent)
             showTip(tr("You have finish the quest <b>%1</b>").arg(DatapackClientLoader::datapackLoader.questsExtra.value(questId).name));
@@ -3191,7 +3193,7 @@ bool BaseWindow::tryValidateQuestStep(bool silent)
         updateDisplayedQuests();
         return true;
     }
-    if(vectorcontainsAtLeastOne(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).steps.at(quests.value(questId).step).bots,actualBot.botId))
+    if(vectorcontainsAtLeastOne(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).steps.at(quests.at(questId).step).bots,actualBot.botId))
     {
         if(!silent)
             showTip(tr("You need talk to another bot"));
@@ -3229,7 +3231,7 @@ void BaseWindow::getTextEntryPoint()
     bool haveNextStepQuestRequirementsVar;
     bool finishOneTimeVar;
     scriptFile.close();
-    if(!quests.contains(questId))
+    if(quests.find(questId)==quests.cend())
     {
         contents.replace("currentQuestStep()","0");
         contents.replace("currentBot()","0");
@@ -3241,7 +3243,7 @@ void BaseWindow::getTextEntryPoint()
     }
     else
     {
-        PlayerQuest quest=quests.value(questId);
+        PlayerQuest quest=quests.at(questId);
         contents.replace("currentQuestStep()",QString::number(quest.step));
         contents.replace("currentBot()",QString::number(actualBot.botId));
         if(quest.finish_one_time)

@@ -82,7 +82,7 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
     uint32_t id=item->data(99).toUInt();
     uint32_t price=item->data(98).toUInt();
     uint32_t quantity=item->data(97).toUInt();
-    if(!items.contains(id))
+    if(items.find(id)==items.cend())
     {
         QMessageBox::warning(this,tr("No item"),tr("You have not the item to sell"));
         return;
@@ -93,11 +93,11 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
         return;
     }
     int i=1;
-    if(items.value(id)>1 && quantity>1)
+    if(items.at(id)>1 && quantity>1)
     {
         uint32_t quantityToSell=quantity;
-        if(items.value(id)<quantityToSell)
-            quantityToSell=items.value(id);
+        if(items.at(id)<quantityToSell)
+            quantityToSell=items.at(id);
         bool ok;
         i = QInputDialog::getInt(this, tr("Sell"),tr("Amount %1 to sell:").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(id).name), 0, 0, quantityToSell, 1, &ok);
         if(!ok || i<=0)
@@ -363,7 +363,7 @@ void BaseWindow::factoryToResourceItem(QListWidgetItem *item)
         else
             item->setToolTip(tr("Item %1 at %2$\nQuantity: %3").arg(item->data(99).toUInt()).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
     }
-    if(!items.contains(item->data(99).toUInt()) || !haveReputationRequirements(CommonDatapack::commonDatapack.industriesLink.at(factoryId).requirements.reputation))
+    if(items.find(item->data(99).toUInt())==items.cend() || !haveReputationRequirements(CommonDatapack::commonDatapack.industriesLink.at(factoryId).requirements.reputation))
     {
         item->setFont(MissingQuantity);
         item->setForeground(QBrush(QColor(200,20,20)));

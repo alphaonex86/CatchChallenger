@@ -49,7 +49,7 @@ public:
     void serverIsLoading();
     void serverIsReady();
     QString lastLocation() const;
-    QHash<uint16_t, PlayerQuest> getQuests() const;
+    std::unordered_map<uint16_t, PlayerQuest> getQuests() const;
     uint8_t getActualBotId() const;
     bool haveNextStepQuestRequirements(const Quest &quest) const;
     bool haveStartQuestRequirement(const Quest &quest) const;
@@ -507,7 +507,7 @@ private:
     uint32_t currentMonsterLevel;
     QSet<QString> supportedImageFormats;
     QString lastPlaceDisplayed;
-    QList<uint8_t> events;
+    std::vector<uint8_t> events;
     QString visualCategory;
     QTimer botFightTimer;
     QStringList add_to_inventoryGainList;
@@ -575,10 +575,10 @@ private:
     QList<MarketMonster> marketWithdrawMonsterList;
 
     //player items
-    QSet<uint8_t> itemOnMap;
-    QHash<uint8_t/*dirtOnMap*/,PlayerPlant> plantOnMap;
+    std::unordered_set<uint8_t> itemOnMap;
+    std::unordered_map<uint8_t/*dirtOnMap*/,PlayerPlant> plantOnMap;
     QHash<uint16_t,int32_t> change_warehouse_items;//negative = deposite, positive = withdraw
-    QHash<uint16_t,uint32_t> items,warehouse_items;
+    std::unordered_map<uint16_t,uint32_t> items,warehouse_items;
     QHash<QListWidgetItem *,uint32_t> items_graphical;
     QHash<uint32_t,QListWidgetItem *> items_to_graphical;
     QHash<QListWidgetItem *,uint32_t> shop_items_graphical;
@@ -660,7 +660,7 @@ private:
     //quest
     bool isInQuest;
     uint16_t questId;
-    QHash<uint16_t, PlayerQuest> quests;
+    std::unordered_map<uint16_t, PlayerQuest> quests;
 
     //battle
     BattleStep battleStep;

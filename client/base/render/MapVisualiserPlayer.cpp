@@ -522,7 +522,7 @@ bool MapVisualiserPlayer::asyncMapLoaded(const QString &fileName,MapVisualiserTh
                                             if(DatapackClientLoader::datapackLoader.itemOnMap.value(tempMap).contains(QPair<uint8_t,uint8_t>(x,y)))
                                             {
                                                 const uint8_t &itemIndex=DatapackClientLoader::datapackLoader.itemOnMap.value(tempMap).value(QPair<uint8_t,uint8_t>(x,y));
-                                                if(itemOnMap->contains(itemIndex))
+                                                if(itemOnMap->find(itemIndex)!=itemOnMap->cend())
                                                 {
                                                     ObjectGroupItem::objectGroupLink.value(objectGroup)->removeObject(object);
                                                     objects.removeAt(index2);
@@ -579,7 +579,7 @@ bool MapVisualiserPlayer::asyncMapLoaded(const QString &fileName,MapVisualiserTh
         return false;
 }
 
-void MapVisualiserPlayer::setInformations(QHash<uint16_t,uint32_t> *items,QHash<uint16_t, CatchChallenger::PlayerQuest> *quests,QList<uint8_t> *events, QSet<uint8_t> *itemOnMap, QHash<uint8_t/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap)
+void MapVisualiserPlayer::setInformations(std::unordered_map<uint16_t, uint32_t> *items, std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> *quests, std::vector<uint8_t> *events, std::unordered_set<uint8_t> *itemOnMap, std::unordered_map<uint8_t, CatchChallenger::PlayerPlant> *plantOnMap)
 {
     this->events=events;
     this->items=items;
@@ -613,7 +613,7 @@ void MapVisualiserPlayer::finalPlayerStep()
         while(index<monstersCollisionValue.walkOn.size())
         {
             const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
-            if(monstersCollision.item==0 || items->contains(monstersCollision.item))
+            if(monstersCollision.item==0 || items->find(monstersCollision.item)!=items->cend())
             {
                 if(monstersCollision.tile!=lastTileset.toStdString())
                 {

@@ -48,7 +48,7 @@ public:
     virtual void datapackParsed();
     virtual void datapackParsedMainSub();
 
-    void setInformations(QHash<uint16_t,uint32_t> *items, QHash<uint16_t, CatchChallenger::PlayerQuest> *quests, QList<uint8_t> *events, QSet<uint8_t> *itemOnMap, QHash<uint8_t/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap);
+    void setInformations(std::unordered_map<uint16_t,uint32_t> *items, std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> *quests, std::vector<uint8_t> *events, std::unordered_set<uint8_t> *itemOnMap, std::unordered_map<uint8_t/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap);
     void unblock();
 protected:
     //datapack
@@ -94,11 +94,11 @@ protected:
     uint32_t currentPlayerSpeed;
     bool animationDisplayed;
 
-    QList<uint8_t> *events;
-    QHash<uint16_t,uint32_t> *items;
-    QHash<uint16_t, CatchChallenger::PlayerQuest> *quests;
-    QSet<uint8_t> *itemOnMap;
-    QHash<uint8_t/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap;
+    std::vector<uint8_t> *events;
+    std::unordered_map<uint16_t,uint32_t> *items;
+    std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> *quests;
+    std::unordered_set<uint8_t> *itemOnMap;
+    std::unordered_map<uint8_t/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap;
 protected:
     static QString text_DATAPACK_BASE_PATH_SKIN;
     static QString text_DATAPACK_BASE_PATH_MAPBASE;

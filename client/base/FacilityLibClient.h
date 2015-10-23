@@ -2,6 +2,8 @@
 #define CATCHCHALLENGER_FACILITYLIBClient_H
 
 #include <QString>
+#include <QList>
+#include <QStringList>
 #include <QHash>
 #include <unordered_map>
 
@@ -39,6 +41,19 @@ QSet<T> stdunorderedsetToQSet(const std::unordered_set<T> &oldset)
 }
 
 template <class T>
+std::vector<T> QListToStdVector(const QList<T> &vector)
+{
+    std::vector<T> list;
+    int index=0;
+    while(index<vector.size())
+    {
+        list.push_back(vector.at(index));
+        ++index;
+    }
+    return list;
+}
+
+template <class T>
 QList<T> stdvectorToQList(const std::vector<T> &vector)
 {
     QList<T> list;
@@ -46,6 +61,18 @@ QList<T> stdvectorToQList(const std::vector<T> &vector)
     while(index<vector.size())
     {
         list << vector.at(index);
+        ++index;
+    }
+    return list;
+}
+
+QStringList stdvectorstringToQStringList(const std::vector<std::string> &vector)
+{
+    QStringList list;
+    unsigned int index=0;
+    while(index<vector.size())
+    {
+        list << QString::fromStdString(vector.at(index));
         ++index;
     }
     return list;
