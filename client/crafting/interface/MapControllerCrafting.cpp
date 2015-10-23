@@ -50,7 +50,7 @@ void MapController::insert_plant(const uint32_t &mapId, const uint8_t &x, const 
 
 void MapController::insert_plant_full(const QString &map,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature)
 {
-    if(!CatchChallenger::CommonDatapack::commonDatapack.plants.contains(plant_id))
+    if(CatchChallenger::CommonDatapack::commonDatapack.plants.find(plant_id)==CatchChallenger::CommonDatapack::commonDatapack.plants.cend())
     {
         qDebug() << "plant_id don't exists";
         return;

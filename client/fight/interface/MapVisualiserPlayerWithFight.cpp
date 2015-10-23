@@ -84,9 +84,9 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         fightMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
     if(fightMonster!=NULL)
     {
-        QList<uint32_t> botFightList=all_map.value(current_map)->logicalMap.botsFightTrigger.values(QPair<uint8_t,uint8_t>(x,y));
+        std::vector<uint32_t> botFightList=all_map.value(current_map)->logicalMap.botsFightTrigger.at(std::pair<uint8_t,uint8_t>(x,y));
         QList<QPair<uint8_t,uint8_t> > botFightRemotePointList=all_map.value(current_map)->logicalMap.botsFightTriggerExtra.values(QPair<uint8_t,uint8_t>(x,y));
-        int index=0;
+        unsigned int index=0;
         while(index<botFightList.size())
         {
             if(!botAlreadyBeaten.contains(botFightList.at(index)))

@@ -13,6 +13,7 @@
 #include "../LanguagesSelect.h"
 #include "../../tiled/tiled_tileset.h"
 #include "../../tiled/tiled_mapreader.h"
+#include "../FacilityLibClient.h"
 
 #include <QDebug>
 #include <QFile>
@@ -86,9 +87,9 @@ const QString DatapackClientLoader::text_objectgroup=QLatin1Literal("objectgroup
 const QString DatapackClientLoader::text_Object=QLatin1Literal("Object");
 const QString DatapackClientLoader::text_layer=QLatin1Literal("layer");
 const QString DatapackClientLoader::text_Dirt=QLatin1Literal("Dirt");
-const QString DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPBASE=QLatin1Literal(DATAPACK_BASE_PATH_MAPBASE);
-QString DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=QLatin1Literal(DATAPACK_BASE_PATH_MAPMAIN);
-QString DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=QLatin1Literal(DATAPACK_BASE_PATH_MAPSUB);
+const QString DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPBASE=DATAPACK_BASE_PATH_MAPBASE;
+QString DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN;
+QString DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=DATAPACK_BASE_PATH_MAPSUB1 "na" DATAPACK_BASE_PATH_MAPSUB2;
 
 DatapackClientLoader::DatapackClientLoader()
 {
@@ -130,10 +131,10 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     }
     inProgress=true;
 
-    if(!CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.isEmpty())
+    if(!CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.empty())
     {
-        const QByteArray &hash=CatchChallenger::DatapackChecksum::doChecksumBase(datapackPath);
-        if(hash.isEmpty())
+        const std::vector<char> &hash=CatchChallenger::DatapackChecksum::doChecksumBase(datapackPath.toStdString());
+        if(hash.empty())
         {
             emit datapackChecksumError();
             inProgress=false;
@@ -143,8 +144,8 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
         if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase!=hash)
         {
             qDebug() << QStringLiteral("DatapackClientLoader::parseDatapack() CommonSettings::commonSettings.datapackHash!=hash.result(): %1!=%2")
-                        .arg(QString(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.toHex()))
-                        .arg(QString(hash.toHex()));
+                        .arg(QString::fromStdString(binarytoHexa(CommonSettingsCommon::commonSettingsCommon.datapackHashBase)))
+                        .arg(QString::fromStdString(binarytoHexa(hash)));
             emit datapackChecksumError();
             inProgress=false;
             return;
@@ -152,10 +153,10 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     }
 
     this->datapackPath=datapackPath;
-    DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=QStringLiteral(DATAPACK_BASE_PATH_MAPMAIN).arg("na");
+    DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN "na/";
     if(mDefaultInventoryImage==NULL)
         mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknown-object.png"));
-    CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath);
+    CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath.toStdString());
     language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     parseVisualCategory();
     parseTypesExtra();
@@ -173,8 +174,8 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
 
 void DatapackClientLoader::parseDatapackMainSub(const QString &mainDatapackCode, const QString &subDatapackCode)
 {
-    DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=QStringLiteral(DATAPACK_BASE_PATH_MAPMAIN).arg(mainDatapackCode);
-    DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=QStringLiteral(DATAPACK_BASE_PATH_MAPSUB).arg(mainDatapackCode).arg(subDatapackCode);
+    DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN+mainDatapackCode+"/";
+    DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=DATAPACK_BASE_PATH_MAPSUB1+mainDatapackCode+DATAPACK_BASE_PATH_MAPSUB2+subDatapackCode+"/";
 
     if(inProgress)
     {
@@ -185,11 +186,11 @@ void DatapackClientLoader::parseDatapackMainSub(const QString &mainDatapackCode,
     this->mainDatapackCode=mainDatapackCode;
     this->subDatapackCode=mainDatapackCode;
 
-    if(!CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.isEmpty())
+    if(!CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
     {
         {
-            const QByteArray &hash=CatchChallenger::DatapackChecksum::doChecksumMain(datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN);
-            if(hash.isEmpty())
+            const std::vector<char> &hash=CatchChallenger::DatapackChecksum::doChecksumMain((datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN).toStdString());
+            if(hash.empty())
             {
                 emit datapackChecksumError();
                 inProgress=false;
@@ -199,17 +200,17 @@ void DatapackClientLoader::parseDatapackMainSub(const QString &mainDatapackCode,
             if(CommonSettingsServer::commonSettingsServer.datapackHashServerMain!=hash)
             {
                 qDebug() << QStringLiteral("DatapackClientLoader::parseDatapack() Main CommonSettingsServer::commonSettingsServer.datapackHashServerMain!=hash.result(): %1!=%2")
-                            .arg(QString(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.toHex()))
-                            .arg(QString(hash.toHex()));
+                            .arg(QString::fromStdString(binarytoHexa(CommonSettingsServer::commonSettingsServer.datapackHashServerMain)))
+                            .arg(QString::fromStdString(binarytoHexa(hash)));
                 emit datapackChecksumError();
                 inProgress=false;
                 return;
             }
         }
-        if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+        if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
         {
-            const QByteArray &hash=CatchChallenger::DatapackChecksum::doChecksumSub(datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB);
-            if(hash.isEmpty())
+            const std::vector<char> &hash=CatchChallenger::DatapackChecksum::doChecksumSub((datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB).toStdString());
+            if(hash.empty())
             {
                 emit datapackChecksumError();
                 inProgress=false;
@@ -219,8 +220,8 @@ void DatapackClientLoader::parseDatapackMainSub(const QString &mainDatapackCode,
             if(CommonSettingsServer::commonSettingsServer.datapackHashServerSub!=hash)
             {
                 qDebug() << QStringLiteral("DatapackClientLoader::parseDatapack() Sub CommonSettingsServer::commonSettingsServer.datapackHashServerSub!=hash.result(): %1!=%2")
-                            .arg(QString(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.toHex()))
-                            .arg(QString(hash.toHex()));
+                            .arg(QString::fromStdString(binarytoHexa(CommonSettingsServer::commonSettingsServer.datapackHashServerSub)))
+                            .arg(QString::fromStdString(binarytoHexa(hash)));
                 emit datapackChecksumError();
                 inProgress=false;
                 return;
@@ -229,7 +230,7 @@ void DatapackClientLoader::parseDatapackMainSub(const QString &mainDatapackCode,
     }
     if(mDefaultInventoryImage==NULL)
         mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknown-object.png"));
-    CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(datapackPath,mainDatapackCode);
+    CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(datapackPath.toStdString(),mainDatapackCode.toStdString());
 
     parseMaps();
     parseQuestsLink();
@@ -254,8 +255,8 @@ void DatapackClientLoader::parseVisualCategory()
     QDomDocument domDocument;
     //open and quick check the file
     const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPBASE)+QStringLiteral("visualcategory.xml");
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
-        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file.toStdString());
     else
     {
         QFile itemsFile(file);
@@ -274,7 +275,7 @@ void DatapackClientLoader::parseVisualCategory()
             return;
         }
         //qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
-        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
+        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file.toStdString()]=domDocument;
     }
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackClientLoader::text_visual)
@@ -326,15 +327,15 @@ void DatapackClientLoader::parseVisualCategory()
                             {
                                 if(event.hasAttribute(DatapackClientLoader::text_id) && event.hasAttribute(DatapackClientLoader::text_value))
                                 {
-                                    int index=0;
+                                    unsigned int index=0;
                                     while(index<CatchChallenger::CommonDatapack::commonDatapack.events.size())
                                     {
-                                        if(CatchChallenger::CommonDatapack::commonDatapack.events.at(index).name==event.attribute(DatapackClientLoader::text_id))
+                                        if(CatchChallenger::CommonDatapack::commonDatapack.events.at(index).name==event.attribute(DatapackClientLoader::text_id).toStdString())
                                         {
-                                            int sub_index=0;
+                                            unsigned int sub_index=0;
                                             while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.events.at(index).values.size())
                                             {
-                                                if(CatchChallenger::CommonDatapack::commonDatapack.events.at(index).values.at(sub_index)==event.attribute(DatapackClientLoader::text_value))
+                                                if(CatchChallenger::CommonDatapack::commonDatapack.events.at(index).values.at(sub_index)==event.attribute(DatapackClientLoader::text_value).toStdString())
                                                 {
                                                     VisualCategory::VisualCategoryCondition visualCategoryCondition;
                                                     visualCategoryCondition.event=index;
@@ -400,18 +401,18 @@ void DatapackClientLoader::parseVisualCategory()
 void DatapackClientLoader::parseReputationExtra()
 {
     {
-        int index=0;
+        unsigned int index=0;
         while(index<CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
         {
-            reputationNameToId[CatchChallenger::CommonDatapack::commonDatapack.reputation.at(index).name]=index;
+            reputationNameToId[QString::fromStdString(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(index).name)]=index;
             index++;
         }
     }
     QDomDocument domDocument;
     //open and quick check the file
     const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYERBASE)+QStringLiteral("reputation.xml");
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
-        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file.toStdString());
     else
     {
         QFile itemsFile(file);
@@ -430,7 +431,7 @@ void DatapackClientLoader::parseReputationExtra()
             return;
         }
         //qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
-        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
+        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file.toStdString()]=domDocument;
     }
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackClientLoader::text_list)
@@ -663,16 +664,16 @@ void DatapackClientLoader::parseReputationExtra()
         item = item.nextSiblingElement(DatapackClientLoader::text_reputation);
     }
     {
-        int index=0;
+        unsigned int index=0;
         while(index<CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
         {
             const CatchChallenger::Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(index);
-            if(!reputationExtra.contains(reputation.name))
-                reputationExtra[reputation.name].name=tr("Unknown");
-            while(reputationExtra[reputation.name].reputation_negative.size()<reputation.reputation_negative.size())
-                reputationExtra[reputation.name].reputation_negative << tr("Unknown");
-            while(reputationExtra[reputation.name].reputation_positive.size()<reputation.reputation_positive.size())
-                reputationExtra[reputation.name].reputation_positive << tr("Unknown");
+            if(!reputationExtra.contains(QString::fromStdString(reputation.name)))
+                reputationExtra[QString::fromStdString(reputation.name)].name=tr("Unknown");
+            while((uint32_t)reputationExtra[QString::fromStdString(reputation.name)].reputation_negative.size()<reputation.reputation_negative.size())
+                reputationExtra[QString::fromStdString(reputation.name)].reputation_negative << tr("Unknown");
+            while((uint32_t)reputationExtra[QString::fromStdString(reputation.name)].reputation_positive.size()<reputation.reputation_positive.size())
+                reputationExtra[QString::fromStdString(reputation.name)].reputation_positive << tr("Unknown");
             index++;
         }
     }
@@ -683,7 +684,7 @@ void DatapackClientLoader::parseReputationExtra()
 void DatapackClientLoader::parseItemsExtra()
 {
     QDir dir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM));
-    const QStringList &fileList=CatchChallenger::FacilityLibGeneral::listFolder(dir.absolutePath()+DatapackClientLoader::text_slash);
+    const QStringList &fileList=CatchChallenger::stdvectorstringToQStringList(CatchChallenger::FacilityLibGeneral::listFolder((dir.absolutePath()+DatapackClientLoader::text_slash).toStdString()));
     int file_index=0;
     while(file_index<fileList.size())
     {
@@ -705,8 +706,8 @@ void DatapackClientLoader::parseItemsExtra()
             continue;
         }
         //open and quick check the file
-        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
-            domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+            domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file.toStdString());
         else
         {
             QFile itemsFile(file);
@@ -727,7 +728,7 @@ void DatapackClientLoader::parseItemsExtra()
                 continue;
             }
             //qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
-            CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
+            CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file.toStdString()]=domDocument;
         }
         const QDomElement &root = domDocument.documentElement();
         if(root.tagName()!=DatapackClientLoader::text_items)
@@ -886,7 +887,7 @@ void DatapackClientLoader::parseItemsExtra()
 void DatapackClientLoader::parseMaps()
 {
     /// \todo do a sub overlay
-    const QStringList &returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN);
+    const QStringList &returnList=CatchChallenger::stdvectorstringToQStringList(CatchChallenger::FacilityLibGeneral::listFolder((datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN).toStdString()));
 
     //load the map
     unsigned int plantOnMapIndex=0;
@@ -986,9 +987,9 @@ void DatapackClientLoader::parseMaps()
             if(haveDirtLayer)
             {
                 CatchChallenger::Map_loader mapLoader;
-                if(mapLoader.tryLoadMap(basePath+fileName))
+                if(mapLoader.tryLoadMap((basePath+fileName).toStdString()))
                 {
-                    int index=0;
+                    unsigned int index=0;
                     while(index<mapLoader.map_to_send.dirts.size())
                     {
                         const CatchChallenger::Map_to_send::DirtOnMap_Semi &dirt=mapLoader.map_to_send.dirts.at(index);
@@ -1058,7 +1059,7 @@ void DatapackClientLoader::parseMaps()
 
 void DatapackClientLoader::parseSkins()
 {
-    skins=CatchChallenger::FacilityLibGeneral::skinIdList(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SKIN));
+    skins=CatchChallenger::stdvectorstringToQStringList(CatchChallenger::FacilityLibGeneral::skinIdList((datapackPath+DATAPACK_BASE_PATH_SKIN).toStdString()));
 
     qDebug() << QStringLiteral("%1 skin(s) loaded").arg(skins.size());
 }
@@ -1118,7 +1119,7 @@ void DatapackClientLoader::resetAll()
 void DatapackClientLoader::parseQuestsExtra()
 {
     //open and quick check the file
-    const QFileInfoList &entryList=QDir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_QUESTS).arg(CommonSettingsServer::commonSettingsServer.mainDatapackCode)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
+    const QFileInfoList &entryList=QDir(datapackPath+DATAPACK_BASE_PATH_QUESTS1+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+DATAPACK_BASE_PATH_QUESTS2).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
     int index=0;
     while(index<entryList.size())
     {
@@ -1139,8 +1140,8 @@ void DatapackClientLoader::parseQuestsExtra()
         }
         QDomDocument domDocument;
         const QString &file=entryList.at(index).absoluteFilePath()+DatapackClientLoader::text_slashdefinitiondotxml;
-        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
-            domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+            domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file.toStdString());
         else
         {
             QFile itemsFile(file);
@@ -1161,7 +1162,7 @@ void DatapackClientLoader::parseQuestsExtra()
                 continue;
             }
             //qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
-            CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
+            CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file.toStdString()]=domDocument;
         }
         const QDomElement &root = domDocument.documentElement();
         if(root.tagName()!=DatapackClientLoader::text_quest)
@@ -1252,7 +1253,7 @@ void DatapackClientLoader::parseQuestsExtra()
                                 {
                                     uint32_t tempInt=tempStringList.at(index).toUInt(&ok);
                                     if(ok)
-                                        stepObject.bots << tempInt;
+                                        stepObject.bots.push_back(tempInt);
                                     index++;
                                 }
                             }
@@ -1334,7 +1335,7 @@ void DatapackClientLoader::parseQuestsExtra()
 void DatapackClientLoader::parseQuestsText()
 {
     //open and quick check the file
-    const QFileInfoList &entryList=QDir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_QUESTS).arg(CommonSettingsServer::commonSettingsServer.mainDatapackCode)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
+    const QFileInfoList &entryList=QDir(datapackPath+DATAPACK_BASE_PATH_QUESTS1+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+DATAPACK_BASE_PATH_QUESTS2).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
     int index=0;
     while(index<entryList.size())
     {
@@ -1446,8 +1447,8 @@ void DatapackClientLoader::parseAudioAmbiance()
     const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPBASE)+QStringLiteral("music.xml");
     QDomDocument domDocument;
     //open and quick check the file
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
-        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file.toStdString());
     else
     {
         QFile itemsFile(file);
@@ -1467,7 +1468,7 @@ void DatapackClientLoader::parseAudioAmbiance()
             return;
         }
         //qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
-        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
+        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file.toStdString()]=domDocument;
     }
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackClientLoader::text_list)
@@ -1503,19 +1504,20 @@ void DatapackClientLoader::parseAudioAmbiance()
 
 void DatapackClientLoader::parseQuestsLink()
 {
-    QHashIterator<uint16_t,CatchChallenger::Quest> i(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests);
-    while(i.hasNext()) {
-        i.next();
-        if(!i.value().steps.isEmpty())
+    auto i=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.begin();
+    while(i!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
+    {
+        if(!i->second.steps.empty())
         {
-            QList<uint16_t> bots=i.value().steps.first().bots;
-            int index=0;
+            std::vector<uint16_t> bots=i->second.steps.front().bots;
+            unsigned int index=0;
             while(index<bots.size())
             {
-                botToQuestStart.insert(bots.at(index),i.key());
+                botToQuestStart.insert(bots.at(index),i->first);
                 index++;
             }
         }
+        ++i;
     }
     qDebug() << QStringLiteral("%1 bot linked with quest(s) loaded").arg(botToQuestStart.size());
 }
@@ -1523,7 +1525,7 @@ void DatapackClientLoader::parseQuestsLink()
 void DatapackClientLoader::parseZoneExtra()
 {
     //open and quick check the file
-    QFileInfoList entryList=QDir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ZONE).arg(CommonSettingsServer::commonSettingsServer.mainDatapackCode)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
+    QFileInfoList entryList=QDir(datapackPath+DATAPACK_BASE_PATH_ZONE1+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+DATAPACK_BASE_PATH_ZONE2).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
     int index=0;
     QRegularExpression xmlFilter(QStringLiteral("^[a-zA-Z0-9\\- _]+\\.xml$"));
     QRegularExpression removeXml(QStringLiteral("\\.xml$"));
@@ -1622,7 +1624,7 @@ void DatapackClientLoader::parseZoneExtra()
 
 void DatapackClientLoader::parseTileset()
 {
-    const QStringList &fileList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPBASE));
+    const QStringList &fileList=CatchChallenger::stdvectorstringToQStringList(CatchChallenger::FacilityLibGeneral::listFolder((datapackPath+DATAPACK_BASE_PATH_MAPBASE).toStdString()));
     int index=0;
     while(index<fileList.size())
     {

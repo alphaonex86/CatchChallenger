@@ -5,6 +5,7 @@
 #include "../../../general/base/CommonSettingsServer.h"
 #include "DatapackClientLoader.h"
 #include "../ClientVariable.h"
+#include "../FacilityLibClient.h"
 #include "../Api_client_real.h"
 
 #include <QMessageBox>
@@ -613,24 +614,24 @@ void MapControllerMP::move_player(const uint16_t &id, const QList<QPair<uint8_t,
                     CatchChallenger::MoveOnTheMap::move(otherPlayerList.value(id).presumed_direction,&map,&x,&y);
                 else
                 {
-                    qDebug() << QStringLiteral("move_player(): at %1(%2,%3) can't go to %4").arg(QString::fromStdString(map->map_file)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(otherPlayerList.value(id).presumed_direction));
+                    qDebug() << QStringLiteral("move_player(): at %1(%2,%3) can't go to %4").arg(QString::fromStdString(map->map_file)).arg(x).arg(y).arg(QString::fromStdString(CatchChallenger::MoveOnTheMap::directionToString(otherPlayerList.value(id).presumed_direction)));
                     return;
                 }
                 break;
                 default:
-                qDebug() << QStringLiteral("move_player(): moveStep: %1, wrong direction: %2").arg(move.first).arg(CatchChallenger::MoveOnTheMap::directionToString(otherPlayerList.value(id).presumed_direction));
+                qDebug() << QStringLiteral("move_player(): moveStep: %1, wrong direction: %2").arg(move.first).arg(QString::fromStdString(CatchChallenger::MoveOnTheMap::directionToString(otherPlayerList.value(id).presumed_direction)));
                 return;
             }
             //if the map have changed
             if(old_map!=map)
             {
-                loadOtherMap(map->map_file);
-                if(!all_map.contains(map->map_file))
+                loadOtherMap(QString::fromStdString(map->map_file));
+                if(!all_map.contains(QString::fromStdString(map->map_file)))
                     qDebug() << QStringLiteral("map changed not located: %1").arg(QString::fromStdString(map->map_file));
                 else
                 {
                     unloadOtherPlayerFromMap(otherPlayerList.value(id));
-                    otherPlayerList[id].presumed_map=all_map.value(map->map_file);
+                    otherPlayerList[id].presumed_map=all_map.value(QString::fromStdString(map->map_file));
                     loadOtherPlayerFromMap(otherPlayerList.value(id));
                 }
             }
@@ -642,7 +643,7 @@ void MapControllerMP::move_player(const uint16_t &id, const QList<QPair<uint8_t,
 
 
     //set the new variables
-    otherPlayerList[id].current_map=map->map_file;
+    otherPlayerList[id].current_map=QString::fromStdString(map->map_file);
     otherPlayerList[id].x=x;
     otherPlayerList[id].y=y;
 
@@ -696,7 +697,7 @@ void MapControllerMP::move_player(const uint16_t &id, const QList<QPair<uint8_t,
         }
         break;
         default:
-            qDebug() << QStringLiteral("move_player(): player: %1 (%2), wrong direction: %3").arg(otherPlayerList.value(id).informations.pseudo).arg(id).arg(otherPlayerList.value(id).presumed_direction);
+            qDebug() << QStringLiteral("move_player(): player: %1 (%2), wrong direction: %3").arg(QString::fromStdString(otherPlayerList.value(id).informations.pseudo)).arg(id).arg(otherPlayerList.value(id).presumed_direction);
         return;
     }
     switch(otherPlayerList.value(id).presumed_direction)
@@ -1030,7 +1031,7 @@ void MapControllerMP::finalPlayerStep()
                 isTeleported=true;
                 unloadPlayerFromCurrentMap();
                 passMapIntoOld();
-                current_map=current_teleport.map;
+                current_map=QString::fromStdString(current_teleport.map);
                 x=current_teleport.destination_x;
                 y=current_teleport.destination_y;
                 if(!haveMapInMemory(current_map))
@@ -1075,7 +1076,7 @@ void MapControllerMP::datapackParsedMainSub()
 {
     MapVisualiserPlayer::datapackParsedMainSub();
 
-    skinFolderList=CatchChallenger::FacilityLibGeneral::skinIdList(datapackPath+MapControllerMP::text_DATAPACK_BASE_PATH_SKIN);
+    skinFolderList=CatchChallenger::stdvectorstringToQStringList(CatchChallenger::FacilityLibGeneral::skinIdList((datapackPath+MapControllerMP::text_DATAPACK_BASE_PATH_SKIN).toStdString()));
 
     if(player_informations_is_set)
         reinject_signals();
@@ -1244,10 +1245,10 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
             default:
             break;
         }
-        if(all_map.contains(map->map_file))
-            if(all_map.value(map->map_file)->doors.contains(QPair<uint8_t,uint8_t>(x,y)))
+        if(all_map.contains(QString::fromStdString(map->map_file)))
+            if(all_map.value(QString::fromStdString(map->map_file))->doors.contains(QPair<uint8_t,uint8_t>(x,y)))
             {
-                MapDoor* door=all_map.value(map->map_file)->doors.value(QPair<uint8_t,uint8_t>(x,y));
+                MapDoor* door=all_map.value(QString::fromStdString(map->map_file))->doors.value(QPair<uint8_t,uint8_t>(x,y));
                 door->startOpen(otherPlayer.playerSpeed);
                 otherPlayer.moveAnimationTimer->start(door->timeToOpen());
                 return;
@@ -1383,13 +1384,13 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         //if the map have changed
         if(old_map!=map)
         {
-            loadOtherMap(map->map_file);
-            if(!all_map.contains(map->map_file))
+            loadOtherMap(QString::fromStdString(map->map_file));
+            if(!all_map.contains(QString::fromStdString(map->map_file)))
                 qDebug() << QStringLiteral("map changed not located: %1").arg(QString::fromStdString(map->map_file));
             else
             {
                 unloadOtherPlayerFromMap(otherPlayer);
-                otherPlayer.presumed_map=all_map.value(map->map_file);
+                otherPlayer.presumed_map=all_map.value(QString::fromStdString(map->map_file));
                 loadOtherPlayerFromMap(otherPlayer);
             }
         }
@@ -1535,7 +1536,7 @@ void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserTh
         if(keyAccepted.isEmpty() || (keyAccepted.contains(Qt::Key_Return) && keyAccepted.size()))
         {
             MapVisualiser::eventOnMap(event,tempMapObject,x,y);
-            pathFinding.searchPath(all_map,tempMapObject->logicalMap.map_file,x,y,current_map,this->x,this->y,*items);
+            pathFinding.searchPath(all_map,QString::fromStdString(tempMapObject->logicalMap.map_file),x,y,current_map,this->x,this->y,*items);
             path.clear();
         }
     }

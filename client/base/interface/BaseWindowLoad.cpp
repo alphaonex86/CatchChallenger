@@ -264,7 +264,7 @@ void BaseWindow::have_main_and_sub_datapack_loaded()
     clan_leader=informations.clan_leader;
     cash=informations.cash;
     warehouse_cash=informations.warehouse_cash;
-    quests=stdmapToQHash(informations.quests);
+    quests=informations.quests;
     ui->player_informations_pseudo->setText(QString::fromStdString(informations.public_informations.pseudo));
     ui->tradePlayerPseudo->setText(QString::fromStdString(informations.public_informations.pseudo));
     ui->warehousePlayerPseudo->setText(QString::fromStdString(informations.public_informations.pseudo));
