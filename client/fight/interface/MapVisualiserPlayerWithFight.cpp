@@ -163,9 +163,9 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
         qDebug() << "Strange, can go but move failed";
         return false;
     }
-    if(!all_map.contains(new_map->map_file))
+    if(!all_map.contains(QString::fromStdString(new_map->map_file)))
         return false;
-    const CatchChallenger::Map_client &map_client=all_map.value(new_map->map_file)->logicalMap;
+    const CatchChallenger::Map_client &map_client=all_map.value(QString::fromStdString(new_map->map_file))->logicalMap;
 
     {
         int list_size=map_client.teleport_semi.size();
@@ -191,7 +191,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
                     case CatchChallenger::MapConditionType_Item:
                         if(items==NULL)
                             break;
-                        if(!items->contains(teleporter.condition.value))
+                        if(items->find(teleporter.condition.value)==items->cend())
                         {
                             if(!map_client.teleport_condition_texts.at(index).isEmpty())
                                 emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
@@ -201,13 +201,13 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
                     case CatchChallenger::MapConditionType_Quest:
                         if(quests==NULL)
                             break;
-                        if(!quests->contains(teleporter.condition.value))
+                        if(quests->find(teleporter.condition.value)==quests->cend())
                         {
                             if(!map_client.teleport_condition_texts.at(index).isEmpty())
                                 emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
                             return false;
                         }
-                        if(!quests->value(teleporter.condition.value).finish_one_time)
+                        if(!quests->at(teleporter.condition.value).finish_one_time)
                         {
                             if(!map_client.teleport_condition_texts.at(index).isEmpty())
                                 emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
@@ -222,8 +222,8 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
         }
     }
 
-    QList<uint32_t> botFightList=map_client.botsFightTrigger.values(QPair<uint8_t,uint8_t>(x,y));
-    int index=0;
+    std::vector<uint32_t> botFightList=map_client.botsFightTrigger.at(std::pair<uint8_t,uint8_t>(x,y));
+    unsigned int index=0;
     while(index<botFightList.size())
     {
         if(!botAlreadyBeaten.contains(botFightList.at(index)))
@@ -237,15 +237,15 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
         index++;
     }
     const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(*new_map,x,y);
-    if(!monstersCollisionValue.walkOn.isEmpty())
+    if(!monstersCollisionValue.walkOn.empty())
     {
-        int index=0;
+        unsigned int index=0;
         while(index<monstersCollisionValue.walkOn.size())
         {
             const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
-            if(monstersCollision.item==0 || items->contains(monstersCollision.item))
+            if(monstersCollision.item==0 || items->find(monstersCollision.item)!=items->cend())
             {
-                if(!monstersCollisionValue.walkOnMonsters.at(index).defaultMonsters.isEmpty())
+                if(!monstersCollisionValue.walkOnMonsters.at(index).defaultMonsters.empty())
                 {
                     if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
                     {

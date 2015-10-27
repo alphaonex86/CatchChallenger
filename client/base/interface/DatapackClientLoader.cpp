@@ -684,7 +684,7 @@ void DatapackClientLoader::parseReputationExtra()
 void DatapackClientLoader::parseItemsExtra()
 {
     QDir dir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM));
-    const QStringList &fileList=CatchChallenger::stdvectorstringToQStringList(CatchChallenger::FacilityLibGeneral::listFolder((dir.absolutePath()+DatapackClientLoader::text_slash).toStdString()));
+    const QStringList &fileList=CatchChallenger::FacilityLibClient::stdvectorstringToQStringList(CatchChallenger::FacilityLibGeneral::listFolder((dir.absolutePath()+DatapackClientLoader::text_slash).toStdString()));
     int file_index=0;
     while(file_index<fileList.size())
     {
@@ -887,7 +887,7 @@ void DatapackClientLoader::parseItemsExtra()
 void DatapackClientLoader::parseMaps()
 {
     /// \todo do a sub overlay
-    const QStringList &returnList=CatchChallenger::stdvectorstringToQStringList(CatchChallenger::FacilityLibGeneral::listFolder((datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN).toStdString()));
+    const QStringList &returnList=CatchChallenger::FacilityLibClient::stdvectorstringToQStringList(CatchChallenger::FacilityLibGeneral::listFolder((datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN).toStdString()));
 
     //load the map
     unsigned int plantOnMapIndex=0;
@@ -1059,7 +1059,7 @@ void DatapackClientLoader::parseMaps()
 
 void DatapackClientLoader::parseSkins()
 {
-    skins=CatchChallenger::stdvectorstringToQStringList(CatchChallenger::FacilityLibGeneral::skinIdList((datapackPath+DATAPACK_BASE_PATH_SKIN).toStdString()));
+    skins=CatchChallenger::FacilityLibClient::stdvectorstringToQStringList(CatchChallenger::FacilityLibGeneral::skinIdList((datapackPath+DATAPACK_BASE_PATH_SKIN).toStdString()));
 
     qDebug() << QStringLiteral("%1 skin(s) loaded").arg(skins.size());
 }
@@ -1624,7 +1624,7 @@ void DatapackClientLoader::parseZoneExtra()
 
 void DatapackClientLoader::parseTileset()
 {
-    const QStringList &fileList=CatchChallenger::stdvectorstringToQStringList(CatchChallenger::FacilityLibGeneral::listFolder((datapackPath+DATAPACK_BASE_PATH_MAPBASE).toStdString()));
+    const QStringList &fileList=CatchChallenger::FacilityLibClient::stdvectorstringToQStringList(CatchChallenger::FacilityLibGeneral::listFolder((datapackPath+DATAPACK_BASE_PATH_MAPBASE).toStdString()));
     int index=0;
     while(index<fileList.size())
     {

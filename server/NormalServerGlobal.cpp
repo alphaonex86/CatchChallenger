@@ -124,21 +124,21 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const std:
     if(!settings->contains("exportedXml"))
         settings->setValue("exportedXml","");
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    settings->beginGroup(std::stringLiteral("master"));
-    if(!settings->contains("external-server-ip")
+    settings->beginGroup("master");
+    if(!settings->contains("external-server-ip"))
         settings->setValue("external-server-ip",settings->value("server-ip").toString());
     if(!settings->contains("external-server-port"))
         settings->setValue("external-server-port",settings->value("server-port").toString());
     {
         std::mt19937 rng;
         rng.seed(time(0));
-        if(!settings->contains("uniqueKey")
+        if(!settings->contains("uniqueKey"))
             settings->setValue("uniqueKey",static_cast<unsigned int>(rng()));
         if(!settings->contains("charactersGroup"))
-            settings->setValue("charactersGroup","PutHereTheInfoLike-"+std::to_string(rng()));
+            settings->setValue("charactersGroup","PutHereTheInfoLike-"+QString::number(rng()));
     }
     if(!settings->contains("logicalGroup"))
-        settings->setValue("logicalGroup",std::string());
+        settings->setValue("logicalGroup","");
 
     if(!settings->contains("host"))
         settings->setValue("host","localhost");
@@ -149,7 +149,7 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const std:
     if(!settings->contains("tryInterval"))
         settings->setValue("tryInterval",5);
     if(!settings->contains("token"))
-        settings->setValue("token",std::string());
+        settings->setValue("token","");
     settings->endGroup();
     #endif
 

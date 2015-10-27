@@ -74,6 +74,17 @@ BaseWindow::BaseWindow() :
     qRegisterMetaType<Skill::AttackReturn>("Skill::AttackReturn");
     qRegisterMetaType<QList<uint32_t> >("QList<uint32_t>");
     qRegisterMetaType<QList<QList<CharacterEntry> > >("QList<QList<CharacterEntry> >");
+
+    qRegisterMetaType<std::unordered_map<uint16_t,uint16_t> >("std::unordered_map<uint16_t,uint16_t>");
+    qRegisterMetaType<std::unordered_map<uint16_t,uint32_t> >("std::unordered_map<uint16_t,uint32_t>");
+    qRegisterMetaType<std::unordered_map<uint8_t,uint32_t> >("std::unordered_map<uint8_t,uint32_t>");
+    qRegisterMetaType<std::unordered_map<uint8_t,uint16_t> >("std::unordered_map<uint8_t,uint16_t>");
+    qRegisterMetaType<std::unordered_map<uint8_t,uint32_t> >("std::unordered_map<uint8_t,uint32_t>");
+    qRegisterMetaType<std::string>("std::string");
+    qRegisterMetaType<std::vector<std::string> >("std::vector<std::string>");
+    qRegisterMetaType<std::vector<char> >("std::vector<char>");
+    qRegisterMetaType<std::vector<uint32_t> >("std::vector<uint32_t>");
+
     qmlRegisterUncreatableType<EvolutionControl>("EvolutionControl", 1, 0, "EvolutionControl","");
     qmlRegisterUncreatableType<AnimationControl>("AnimationControl", 2, 0, "AnimationControl","");
 

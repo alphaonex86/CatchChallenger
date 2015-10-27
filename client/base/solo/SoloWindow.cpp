@@ -10,9 +10,9 @@
 #include "../base/interface/DatapackClientLoader.h"
 #include "../base/LanguagesSelect.h"
 #include "../fight/interface/ClientFightEngine.h"
-#include "../../general/base/DebugClass.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../InternetUpdater.h"
+#include "../FacilityLibClient.h"
 
 const QString SoloWindow::text_savegame_version=QStringLiteral("savegame_version");
 const QString SoloWindow::text_QSQLITE=QStringLiteral("QSQLITE");
@@ -108,14 +108,14 @@ void SoloWindow::on_SaveGame_New_clicked()
         if(!dbSource.open(QIODevice::ReadOnly))
         {
             QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to open the db model: %1").arg(savegamesPath));
-            CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath);
+            CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath.toStdString());
             return;
         }
         dbData=dbSource.readAll();
         if(dbData.isEmpty())
         {
             QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to read the db model: %1").arg(savegamesPath));
-            CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath);
+            CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath.toStdString());
             return;
         }
         dbSource.close();
@@ -125,21 +125,21 @@ void SoloWindow::on_SaveGame_New_clicked()
         if(!dbDestination.open(QIODevice::WriteOnly))
         {
             QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to write savegame into: %1").arg(savegamesPath));
-            CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath);
+            CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath.toStdString());
             return;
         }
         if(dbDestination.write(dbData)<0)
         {
             dbDestination.close();
             QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to write savegame into: %1").arg(savegamesPath));
-            CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath);
+            CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath.toStdString());
             return;
         }
         dbDestination.close();
     }
 
     //initialise the pass
-    QString pass=CatchChallenger::FacilityLibGeneral::randomPassword(QStringLiteral("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"),32);
+    QString pass=QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",32));
 
     //initialise the meta data
     bool settingOk=false;
@@ -165,7 +165,7 @@ void SoloWindow::on_SaveGame_New_clicked()
     if(!settingOk)
     {
         QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to write savegame into: %1").arg(savegamesPath));
-        CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath);
+        CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath.toStdString());
         return;
     }
 
@@ -385,7 +385,7 @@ void SoloWindow::updateSavegameList()
                         if(!ok || time_played_number>3600*24*365*50)
                             time_played=QStringLiteral("Time player: bug");
                         else
-                            time_played=QStringLiteral("%1 played").arg(CatchChallenger::FacilityLibGeneral::timeToString(time_played_number));
+                            time_played=QStringLiteral("%1 played").arg(CatchChallenger::FacilityLibClient::timeToString(time_played_number));
                         //load the map name
                         QString mapName;
                         QString map=metaData.value(SoloWindow::text_location).toString();
@@ -555,7 +555,7 @@ QString SoloWindow::getMapZone(const QString &file)
 QString SoloWindow::getZoneName(const QString &zone)
 {
     //open and quick check the file
-    QFile xmlFile(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ZONE)+zone+QStringLiteral(".xml"));
+    QFile xmlFile(datapackPath+DATAPACK_BASE_PATH_ZONE1+CatchChallenger::Api_client_real::client->mainDatapackCode()+DATAPACK_BASE_PATH_ZONE2+zone+".xml");
     QByteArray xmlContent;
     if(!xmlFile.open(QIODevice::ReadOnly))
     {
@@ -608,7 +608,7 @@ void SoloWindow::on_SaveGame_Delete_clicked()
     if(selectedSavegame==NULL)
         return;
 
-    if(!CatchChallenger::FacilityLibGeneral::rmpath(savegamePathList.value(selectedSavegame)))
+    if(!CatchChallenger::FacilityLibGeneral::rmpath(savegamePathList.value(selectedSavegame).toStdString()))
     {
         QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to remove the savegame"));
         return;
@@ -658,14 +658,14 @@ void SoloWindow::on_SaveGame_Copy_clicked()
     }
     if(!QFile::copy(savegamesPath+SoloWindow::text_metadatadotconf,destinationPath+SoloWindow::text_metadatadotconf))
     {
-        CatchChallenger::FacilityLibGeneral::rmpath(destinationPath);
+        CatchChallenger::FacilityLibGeneral::rmpath(destinationPath.toStdString());
         QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to write another savegame (Error: metadata.conf)"));
         updateSavegameList();
         return;
     }
     if(!QFile::copy(savegamesPath+SoloWindow::text_catchchallenger_db_sqlite,destinationPath+SoloWindow::text_catchchallenger_db_sqlite))
     {
-        CatchChallenger::FacilityLibGeneral::rmpath(destinationPath);
+        CatchChallenger::FacilityLibGeneral::rmpath(destinationPath.toStdString());
         QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to write another savegame (Error: catchchallenger.db.sqlite)"));
         updateSavegameList();
         return;

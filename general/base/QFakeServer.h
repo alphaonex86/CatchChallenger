@@ -3,6 +3,8 @@
 #define CATCHCHALLENGER_QFAKESERVER_H
 
 #include <QObject>
+#include <QPair>
+#include <QList>
 #include <QMutex>
 #include <QMutexLocker>
 #include <vector>
@@ -29,8 +31,8 @@ signals:
 private:
     QMutex mutex;
     bool m_isListening;
-    std::vector<std::pair<QFakeSocket *,QFakeSocket *> > m_listOfConnexion;
-    std::vector<std::pair<QFakeSocket *,QFakeSocket *> > m_pendingConnection;
+    QList<QPair<QFakeSocket *,QFakeSocket *> > m_listOfConnexion;
+    QList<QPair<QFakeSocket *,QFakeSocket *> > m_pendingConnection;
 protected:
     //from the server
     void addPendingConnection(QFakeSocket * socket);

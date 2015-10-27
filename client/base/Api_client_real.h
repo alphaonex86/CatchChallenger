@@ -61,12 +61,12 @@ public:
     void httpFinishedForDatapackListBase();
     void httpFinishedForDatapackListMain();
     void httpFinishedForDatapackListSub();
-    const QStringList listDatapackBase(QString suffix);
-    const QStringList listDatapackMain(QString suffix);
-    const QStringList listDatapackSub(QString suffix);
-    void cleanDatapackBase(QString suffix);
-    void cleanDatapackMain(QString suffix);
-    void cleanDatapackSub(QString suffix);
+    const std::vector<std::string> listDatapackBase(std::string suffix="");
+    const std::vector<std::string> listDatapackMain(std::string suffix="");
+    const std::vector<std::string> listDatapackSub(std::string suffix="");
+    void cleanDatapackBase(std::string suffix="");
+    void cleanDatapackMain(std::string suffix="");
+    void cleanDatapackSub(std::string suffix="");
     void setProxy(const QNetworkProxy &proxy);
 protected:
     bool parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const QByteArray &data);
@@ -91,8 +91,8 @@ private:
     int index_mirror_main;
     int index_mirror_sub;
     QNetworkProxy proxy;
-    static QRegularExpression excludePathBase;
-    static QRegularExpression excludePathMain;
+    static std::regex excludePathBase;
+    static std::regex excludePathMain;
     enum DatapackStatus
     {
         Base=0x01,
@@ -114,12 +114,12 @@ private:
     bool wait_datapack_content_base;
     bool wait_datapack_content_main;
     bool wait_datapack_content_sub;
-    QStringList datapackFilesListBase;
-    QStringList datapackFilesListMain;
-    QStringList datapackFilesListSub;
-    QList<uint32_t> partialHashListBase;
-    QList<uint32_t> partialHashListMain;
-    QList<uint32_t> partialHashListSub;
+    std::vector<std::string> datapackFilesListBase;
+    std::vector<std::string> datapackFilesListMain;
+    std::vector<std::string> datapackFilesListSub;
+    std::vector<uint32_t> partialHashListBase;
+    std::vector<uint32_t> partialHashListMain;
+    std::vector<uint32_t> partialHashListSub;
     static QString text_slash;
     static QString text_dotcoma;
     bool httpError;
@@ -151,9 +151,9 @@ private slots:
     void datapackDownloadFinishedBase();
     void datapackDownloadFinishedMain();
     void datapackDownloadFinishedSub();
-    void datapackChecksumDoneBase(const QStringList &datapackFilesList,const QByteArray &hash, const QList<uint32_t> &partialHash);
-    void datapackChecksumDoneMain(const QStringList &datapackFilesList,const QByteArray &hash, const QList<uint32_t> &partialHash);
-    void datapackChecksumDoneSub(const QStringList &datapackFilesList,const QByteArray &hash, const QList<uint32_t> &partialHash);
+    void datapackChecksumDoneBase(const std::vector<std::string> &datapackFilesList, const std::vector<char> &hash, const std::vector<uint32_t> &partialHash);
+    void datapackChecksumDoneMain(const std::vector<std::string> &datapackFilesList,const std::vector<char> &hash,const std::vector<uint32_t> &partialHashList);
+    void datapackChecksumDoneSub(const std::vector<std::string> &datapackFilesList,const std::vector<char> &hash,const std::vector<uint32_t> &partialHashList);
     void downloadProgressDatapackBase(int64_t bytesReceived, int64_t bytesTotal);
     void downloadProgressDatapackMain(int64_t bytesReceived, int64_t bytesTotal);
     void downloadProgressDatapackSub(int64_t bytesReceived, int64_t bytesTotal);
@@ -161,9 +161,9 @@ signals:
     void newDatapackFileBase(const uint32_t &size) const;
     void newDatapackFileMain(const uint32_t &size) const;
     void newDatapackFileSub(const uint32_t &size) const;
-    void doDifferedChecksumBase(const QString &datapackPath);
-    void doDifferedChecksumMain(const QString &datapackPath);
-    void doDifferedChecksumSub(const QString &datapackPath);
+    void doDifferedChecksumBase(const std::string &datapackPath);
+    void doDifferedChecksumMain(const std::string &datapackPath);
+    void doDifferedChecksumSub(const std::string &datapackPath);
     void progressingDatapackFileBase(const uint32_t &size);
     void progressingDatapackFileMain(const uint32_t &size);
     void progressingDatapackFileSub(const uint32_t &size);
