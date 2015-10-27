@@ -20,7 +20,7 @@ ssize_t ProtocolParsingInputOutput::read(char * data, const size_t &size)
     {}
     else
     {
-        messageParsingLayer(std::stringLiteral("Socket open in read only!"));
+        messageParsingLayer("Socket open in read only!");
         disconnectClient();
         return false;
     }
@@ -49,7 +49,7 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
     {}
     else
     {
-        messageParsingLayer(std::stringLiteral("Socket open in write only!"));
+        messageParsingLayer("Socket open in write only!");
         disconnectClient();
         return false;
     }
@@ -67,7 +67,7 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
         #ifdef EPOLLCATCHCHALLENGERSERVER
         messageParsingLayer("All the bytes have not be written byteWriten: "+std::to_string(byteWriten)+", size: "+std::to_string(size));
         #else
-        messageParsingLayer("All the bytes have not be written: "+socket->errorString()+", byteWriten: "+std::to_string(byteWriten));
+        messageParsingLayer("All the bytes have not be written: "+socket->errorString().toStdString()+", byteWriten: "+std::to_string(byteWriten));
         #endif
     }
     else
@@ -593,13 +593,12 @@ void ProtocolParsingBase::dataClear()
 std::vector<std::string> ProtocolParsingBase::getQueryRunningList()
 {
     std::vector<std::string> returnedList;
-    std::unordered_mapIterator<uint8_t,uint8_t> i(waitedReply_packetCode);
-    while (i.hasNext()) {
-        i.next();
-        if(waitedReply_subCodeType.contains(i.key()))
-            returnedList << std::stringLiteral("%1 %2").arg(i.value()).arg(waitedReply_subCodeType.value(i.key()));
-        else
-            returnedList << std::to_string(i.value());
+    unsigned int index=0;
+    while(index<sizeof(outputQueryNumberToPacketCode))
+    {
+        if(outputQueryNumberToPacketCode[index]!=0x00)
+            returnedList.push_back(std::to_string(outputQueryNumberToPacketCode[index]));
+        index++;
     }
     return returnedList;
 }

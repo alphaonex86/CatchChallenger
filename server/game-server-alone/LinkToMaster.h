@@ -70,6 +70,7 @@ public:
     void askMoreMaxClanId();
     void tryReconnect();
     void readTheFirstSslHeader();
+    void moveClientFastPath(const uint8_t &, const uint8_t &);
 protected:
     void disconnectClient();
     void errorParsingLayer(const std::string &error);
@@ -79,16 +80,13 @@ protected:
     void parseNetworkReadError(const std::string &errorString);
 
     //have message without reply
-    void parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size);
-    void parseFullMessage(const uint8_t &mainCodeType,const uint8_t &subCodeType,const char * const data,const unsigned int &size);
+    bool parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size);
     //have query with reply
-    void parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
-    void parseFullQuery(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    bool parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
     //send reply
-    void parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
-    void parseFullReplyData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    bool parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
 
-    void parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size);
+    bool parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size);
 private:
     QSettings * settings;
     std::mt19937 rng;

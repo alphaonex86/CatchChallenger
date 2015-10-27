@@ -1,6 +1,5 @@
 #include "InternetUpdater.h"
 #include "PlatformMacro.h"
-#include "../../general/base/DebugClass.h"
 #include "../../general/base/GeneralVariable.h"
 
 #include <QNetworkRequest>

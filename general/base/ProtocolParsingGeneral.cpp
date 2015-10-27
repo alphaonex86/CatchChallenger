@@ -16,7 +16,7 @@ char ProtocolParsingBase::tempBigBufferForInput[];//to store the input buffer on
 char ProtocolParsingBase::tempBigBufferForUncompressedInput[];
 char ProtocolParsingBase::tempBigBufferForCompressedOutput[];
 #endif
-const uint8_t ProtocolParsing::packetFixedSize[]={0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+uint8_t ProtocolParsing::packetFixedSize[];
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT

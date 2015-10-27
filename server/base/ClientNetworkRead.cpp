@@ -1688,13 +1688,13 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         {
             if(character_loaded)
             {
-                errorOutput(std::stringLiteral("charaters is logged, deny charaters add/select/delete, parseQuery(%1,%2,%3)").arg(packetCode).arg(subCodeType).arg(queryNumber));
+                errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+")");
                 return false;
             }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(size!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
             {
-                errorOutput(std::stringLiteral("wrong size with the main ident: %1, subCodeType: %2, data: %3").arg(packetCode).arg(subCodeType).arg(std::string(std::vector<char>(data,size).toHex())));
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
                 return false;
             }
             #endif

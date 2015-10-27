@@ -1,9 +1,9 @@
 #include "Audio.h"
 #include "PlatformMacro.h"
-#include "../../general/base/DebugClass.h"
 #include "../../general/base/GeneralVariable.h"
 #include <QCoreApplication>
 #include <QSettings>
+#include <QDebug>
 
 Audio Audio::audio;
 

@@ -6,11 +6,11 @@
 #include <QDomDocument>
 #include <QDomElement>
 #include <QMessageBox>
+#include <QDebug>
 
 #include "../../../general/base/CommonDatapack.h"
 #include "../../../general/base/DatapackGeneralLoader.h"
 #include "../../../general/base/GeneralVariable.h"
-#include "../../../general/base/DebugClass.h"
 #include "../../base/interface/DatapackClientLoader.h"
 #include "../../base/LanguagesSelect.h"
 
@@ -23,7 +23,7 @@ NewProfile::NewProfile(const QString &datapackPath, QWidget *parent) :
     this->mOk=false;
     ui->description->setText(tr("Profile loading..."));
 
-    if(CatchChallenger::CommonDatapack::commonDatapack.profileList.isEmpty())
+    if(CatchChallenger::CommonDatapack::commonDatapack.profileList.empty())
     {
         QMessageBox::critical(this,tr("Error"),tr("No profile selected to start a new game"));
         close();
@@ -52,8 +52,13 @@ NewProfile::~NewProfile()
 void NewProfile::loadProfileText()
 {
     const QString &xmlFile=datapackPath+DATAPACK_BASE_PATH_PLAYERBASE+"start.xml";
-    QList<QDomElement> xmlList=CatchChallenger::DatapackGeneralLoader::loadProfileList(datapackPath,xmlFile,CatchChallenger::CommonDatapack::commonDatapack.items.item,CatchChallenger::CommonDatapack::commonDatapack.monsters,CatchChallenger::CommonDatapack::commonDatapack.reputation).first;
-    int index=0;
+    std::vector<QDomElement> xmlList=CatchChallenger::DatapackGeneralLoader::loadProfileList(
+                datapackPath.toStdString(),xmlFile.toStdString(),
+                CatchChallenger::CommonDatapack::commonDatapack.items.item,
+                CatchChallenger::CommonDatapack::commonDatapack.monsters,
+                CatchChallenger::CommonDatapack::commonDatapack.reputation
+                ).first;
+    unsigned int index=0;
     while(index<xmlList.size())
     {
         ProfileText profile;

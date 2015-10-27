@@ -240,7 +240,7 @@ void LinkToMaster::disconnectClient()
 //input/ouput layer
 void LinkToMaster::errorParsingLayer(const std::string &error)
 {
-    std::cerr << error.toLocal8Bit().constData() << std::endl;
+    std::cerr << error << std::endl;
     //critical error, prefer restart from 0
     abort();
 
@@ -249,7 +249,7 @@ void LinkToMaster::errorParsingLayer(const std::string &error)
 
 void LinkToMaster::messageParsingLayer(const std::string &message) const
 {
-    std::cout << message.toLocal8Bit().constData() << std::endl;
+    std::cout << message << std::endl;
 }
 
 void LinkToMaster::errorParsingLayer(const char * const error)
@@ -278,14 +278,14 @@ bool LinkToMaster::setSettings(QSettings * const settings)
     this->settings=settings;
 
     //token
-    settings->beginGroup(std::stringLiteral("master"));
-    if(!settings->contains(std::stringLiteral("token")))
+    settings->beginGroup("master");
+    if(!settings->contains("token"))
         generateToken();
-    std::string token=settings->value(std::stringLiteral("token")).toString();
+    std::string token=settings->value("token").toString().toStdString();
     if(token.size()!=TOKEN_SIZE_FOR_MASTERAUTH*2/*String Hexa, not binary*/)
         generateToken();
-    token=settings->value(std::stringLiteral("token")).toString();
-    memcpy(LinkToMaster::private_token,std::vector<char>::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
+    token=settings->value("token").toString().toStdString();
+    memcpy(LinkToMaster::private_token,hexatoBinary(token).data(),TOKEN_SIZE_FOR_MASTERAUTH);
     settings->endGroup();
 
     return true;
@@ -305,11 +305,7 @@ void LinkToMaster::generateToken()
         std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token" << std::endl;
         abort();
     }
-    settings->setValue(std::stringLiteral("token"),std::string(
-                          std::vector<char>(
-                              reinterpret_cast<char *>(LinkToMaster::private_token)
-                              ,TOKEN_SIZE_FOR_MASTERAUTH)
-                          .toHex()));
+    settings->setValue("token",QString::fromStdString(binarytoHexa(reinterpret_cast<char *>(LinkToMaster::private_token),TOKEN_SIZE_FOR_MASTERAUTH)));
     fclose(fpRandomFile);
     settings->sync();
 }
@@ -319,34 +315,40 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
     if(queryNumberList.empty())
         return false;
 
-    int pos=0;
     int newSizeCharactersGroup;
-    char tempBuffer[65536*4+1024];
+    //send the network query
+    registerOutputQuery(queryNumberList.back());
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x82;
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumberList.back();
+    queryNumberList.pop_back();
+    posOutput+=1+4;
 
     {
         QCryptographicHash hash(QCryptographicHash::Sha224);
         hash.addData(reinterpret_cast<const char *>(LinkToMaster::private_token),TOKEN_SIZE_FOR_MASTERAUTH);
         hash.addData(dynamicToken,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-        const std::vector<char> &hashedToken=hash.result();
-        memcpy(tempBuffer,hashedToken.constData(),hashedToken.size());
-        pos+=hashedToken.size();
+        const QByteArray &hashedToken=hash.result();
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput,hashedToken.constData(),hashedToken.size());
+        posOutput+=hashedToken.size();
         memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));
     }
 
-    std::string server_ip=settings->value(QLatin1Literal("server-ip")).toString();
-    std::string server_port=settings->value(QLatin1Literal("server-port")).toString();
+    std::string server_ip=settings->value("server-ip").toString().toStdString();
+    std::string server_port=settings->value("server-port").toString().toStdString();
 
-    settings->beginGroup(std::stringLiteral("master"));
+    settings->beginGroup("master");
     //group to find the catchchallenger_common database
     {
-        if(!settings->value(QLatin1Literal("charactersGroup")).toString().isEmpty())
-            newSizeCharactersGroup=FacilityLibGeneral::toUTF8WithHeader(settings->value(QLatin1Literal("charactersGroup")).toString(),tempBuffer+pos);
+        if(!settings->value("charactersGroup").toString().isEmpty())
+            newSizeCharactersGroup=FacilityLibGeneral::toUTF8WithHeader(settings->value("charactersGroup").toString().toStdString(),ProtocolParsingBase::tempBigBufferForOutput+posOutput);
         else
         {
-            tempBuffer[pos]=0x00;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
             newSizeCharactersGroup=1;
         }
-        pos+=newSizeCharactersGroup;
+        posOutput+=newSizeCharactersGroup;
     }
 
     //the unique key to save the info by server
@@ -367,66 +369,66 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
                 settings->setValue(QLatin1Literal("uniqueKey"),uniqueKey);
             }
         }
-        *reinterpret_cast<uint32_t *>(tempBuffer+pos)=htole32(uniqueKey);
-        pos+=4;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(uniqueKey);
+        posOutput+=4;
     }
 
     //the external information to connect the client or the login server as proxy
     {
-        if(!settings->contains(QLatin1Literal("external-server-ip")))
-            settings->setValue(QLatin1Literal("external-server-ip"),server_ip);
-        std::string externalServerIp=settings->value(QLatin1Literal("external-server-ip")).toString();
-        if(externalServerIp.isEmpty())
+        if(!settings->contains("external-server-ip"))
+            settings->setValue("external-server-ip",QString::fromStdString(server_ip));
+        std::string externalServerIp=settings->value("external-server-ip").toString().toStdString();
+        if(externalServerIp.empty())
         {
-            externalServerIp=std::stringLiteral("localhost");
-            settings->setValue(QLatin1Literal("external-server-ip"),externalServerIp);
+            externalServerIp="localhost";
+            settings->setValue("external-server-ip",QString::fromStdString(externalServerIp));
         }
 
-        unsigned int newSizeText=FacilityLibGeneral::toUTF8WithHeader(externalServerIp,tempBuffer+pos);
-        pos+=newSizeText;
+        unsigned int newSizeText=FacilityLibGeneral::toUTF8WithHeader(externalServerIp,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
+        posOutput+=newSizeText;
     }
     {
         unsigned short int externalServerPort;
-        if(!settings->contains(QLatin1Literal("external-server-port")))
-            settings->setValue(QLatin1Literal("external-server-port"),server_port);
+        if(!settings->contains("external-server-port"))
+            settings->setValue("external-server-port",QString::fromStdString(server_port));
         bool ok;
-        externalServerPort=settings->value(QLatin1Literal("external-server-port")).toUInt(&ok);
+        externalServerPort=settings->value("external-server-port").toUInt(&ok);
         if(!ok)
-            settings->setValue(QLatin1Literal("external-server-port"),server_port);
-        externalServerPort=settings->value(QLatin1Literal("external-server-port")).toUInt(&ok);
+            settings->setValue("external-server-port",QString::fromStdString(server_port));
+        externalServerPort=settings->value("external-server-port").toUInt(&ok);
         if(!ok)
         {
             externalServerPort = rng()%(65535-8192)+8192;
-            settings->setValue(QLatin1Literal("external-server-port"),externalServerPort);
+            settings->setValue("external-server-port",QString::number(externalServerPort));
         }
-        *reinterpret_cast<uint16_t *>(tempBuffer+pos)=htole16(externalServerPort);
-        pos+=2;
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(externalServerPort);
+        posOutput+=2;
     }
     settings->endGroup();
 
     //the xml with name and description
     {
-        if(!exportedXml.isEmpty())
-            newSizeCharactersGroup=FacilityLibGeneral::toUTF8With16BitsHeader(exportedXml,tempBuffer+pos);
+        if(!exportedXml.empty())
+            newSizeCharactersGroup=FacilityLibGeneral::toUTF8With16BitsHeader(exportedXml,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
         else
         {
-            tempBuffer[pos]=0x00;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
             newSizeCharactersGroup=2;
         }
-        pos+=newSizeCharactersGroup;
+        posOutput+=newSizeCharactersGroup;
     }
 
-    settings->beginGroup(std::stringLiteral("master"));
+    settings->beginGroup("master");
     //logical group
     {
-        if(!settings->value(QLatin1Literal("logicalGroup")).toString().isEmpty())
-            newSizeCharactersGroup=FacilityLibGeneral::toUTF8WithHeader(settings->value(QLatin1Literal("logicalGroup")).toString(),tempBuffer+pos);
+        if(!settings->value("logicalGroup").toString().isEmpty())
+            newSizeCharactersGroup=FacilityLibGeneral::toUTF8WithHeader(settings->value("logicalGroup").toString().toStdString(),ProtocolParsingBase::tempBigBufferForOutput+posOutput);
         else
         {
-            tempBuffer[pos]=0x00;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
             newSizeCharactersGroup=1;
         }
-        pos+=newSizeCharactersGroup;
+        posOutput+=newSizeCharactersGroup;
     }
     settings->endGroup();
 
@@ -435,49 +437,50 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
     //current player number and max player
     if(GlobalServerData::serverSettings.sendPlayerNumber)
     {
-        *reinterpret_cast<uint16_t *>(tempBuffer+pos)=htole16(GlobalServerData::serverPrivateVariables.connected_players);
-        pos+=2;
-        *reinterpret_cast<uint16_t *>(tempBuffer+pos)=htole16(GlobalServerData::serverSettings.max_players);
-        pos+=2;
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(GlobalServerData::serverPrivateVariables.connected_players);
+        posOutput+=2;
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(GlobalServerData::serverSettings.max_players);
+        posOutput+=2;
     }
     else
     {
         if(GlobalServerData::serverPrivateVariables.connected_players<=255)
-            *reinterpret_cast<uint16_t *>(tempBuffer+pos)=htole16(255/2);
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(255/2);
         else
-            *reinterpret_cast<uint16_t *>(tempBuffer+pos)=htole16(65535/2);
-        pos+=2;
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65535/2);
+        posOutput+=2;
         if(GlobalServerData::serverSettings.max_players<=255)
-            *reinterpret_cast<uint16_t *>(tempBuffer+pos)=htole16(255);
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(255);
         else
-            *reinterpret_cast<uint16_t *>(tempBuffer+pos)=htole16(65535);
-        pos+=2;
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65535);
+        posOutput+=2;
     }
 
     //send the connected player
     {
         uint32_t character_count=0;
-        unsigned int sizePos=pos;
-        pos+=2;
+        unsigned int sizePos=posOutput;
+        posOutput+=2;
         unsigned short int index=0;
         while(index<Client::clientBroadCastList.size())
         {
             const uint32_t &character_id=Client::clientBroadCastList.at(index)->getPlayerId();
             if(character_id!=0)
             {
-                *reinterpret_cast<uint32_t *>(tempBuffer+pos)=htole32(character_id);
-                pos+=4;
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(character_id);
+                posOutput+=4;
                 character_count++;
             }
             if(index==65535)
                 break;
             index++;
         }
-        *reinterpret_cast<uint16_t *>(tempBuffer+sizePos)=htole16(character_count);
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+sizePos)=htole16(character_count);
     }
 
-    packOutcommingQuery(0x07,queryNumberList.back(),tempBuffer,pos);
-    queryNumberList.pop_back();
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+    internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
     return true;
 }
 
@@ -495,14 +498,30 @@ void LinkToMaster::currentPlayerChange(const uint16_t &currentPlayer)
 
 void LinkToMaster::askMoreMaxMonsterId()
 {
-    newFullOutputQuery(0x11,0x07,queryNumberList.back());
+    //send the network query
+    registerOutputQuery(queryNumberList.back());
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xB0;
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumberList.back();
     queryNumberList.pop_back();
+    posOutput+=1;
+
+    internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void LinkToMaster::askMoreMaxClanId()
 {
-    newFullOutputQuery(0x11,0x08,queryNumberList.back());
+    //send the network query
+    registerOutputQuery(queryNumberList.back());
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xB1;
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumberList.back();
     queryNumberList.pop_back();
+    posOutput+=1;
+
+    internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void LinkToMaster::tryReconnect()
@@ -533,10 +552,21 @@ void LinkToMaster::tryReconnect()
 
 void LinkToMaster::sendProtocolHeader()
 {
-    packOutcommingQuery(0x01,
-                        queryNumberList.back(),
-                        reinterpret_cast<char *>(LinkToMaster::header_magic_number),
-                        sizeof(LinkToMaster::header_magic_number)
-                        );
+    //send the network query
+    registerOutputQuery(queryNumberList.back());
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xB8;
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumberList.back();
     queryNumberList.pop_back();
+    posOutput+=1;
+
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,reinterpret_cast<char *>(LinkToMaster::header_magic_number),sizeof(LinkToMaster::header_magic_number));
+    posOutput+=sizeof(LinkToMaster::header_magic_number);
+
+    internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+}
+
+void LinkToMaster::moveClientFastPath(const uint8_t &,const uint8_t &)
+{
 }

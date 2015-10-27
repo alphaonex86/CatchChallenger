@@ -345,7 +345,7 @@ void BaseServer::preload_the_events()
                             GlobalServerData::serverPrivateVariables.timerEvents.push_back(timer);
                             timer->start(j->second.cycle*1000*60,j->second.offset*1000*60);
                             #else
-                            GlobalServerData::serverPrivateVariables.timerEvents.push_back(new QtTimerEvents(j.at().offset*1000*60,j.at().cycle*1000*60,index,sub_index));
+                            GlobalServerData::serverPrivateVariables.timerEvents.push_back(new QtTimerEvents(j->second.offset*1000*60,j->second.cycle*1000*60,index,sub_index));
                             #endif
                         }
                         else
@@ -404,7 +404,7 @@ bool BaseServer::preload_zone_init()
         QDomDocument domDocument;
         const std::string &file=entryListZone.at(index).absoluteFilePath().toStdString();
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
             domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
         else
         {
@@ -2225,8 +2225,8 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
     botFiles[file];//create the entry
     QDomDocument domDocument;
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
-        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
     else
     {
         #endif

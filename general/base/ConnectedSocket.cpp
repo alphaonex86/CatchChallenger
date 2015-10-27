@@ -41,7 +41,7 @@ ConnectedSocket::ConnectedSocket(QSslSocket *socket) :
     connect(socket,&QSslSocket::disconnected,   this,&ConnectedSocket::disconnected,Qt::QueuedConnection);
     connect(socket,static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),this,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error));
     connect(socket,&QSslSocket::stateChanged,   this,&ConnectedSocket::stateChanged,Qt::QueuedConnection);
-    connect(socket,static_cast<void(QSslSocket::*)(const std::vector<QSslError> &errors)>(&QSslSocket::sslErrors),this,static_cast<void(ConnectedSocket::*)(const std::vector<QSslError> &errors)>(&ConnectedSocket::sslErrors),Qt::QueuedConnection);
+    connect(socket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),this,static_cast<void(ConnectedSocket::*)(const QList<QSslError> &errors)>(&ConnectedSocket::sslErrors),Qt::QueuedConnection);
     purgeBuffer();
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
 }
@@ -72,11 +72,11 @@ ConnectedSocket::~ConnectedSocket()
         fakeSocket->deleteLater();
 }
 
-std::vector<QSslError> ConnectedSocket::sslErrors() const
+QList<QSslError> ConnectedSocket::sslErrors() const
 {
     if(sslSocket!=NULL)
         return sslSocket->sslErrors();
-    return std::vector<QSslError>();
+    return QList<QSslError>();
 }
 
 void ConnectedSocket::purgeBuffer()
@@ -107,7 +107,7 @@ void ConnectedSocket::abort()
         tcpSocket->abort();
 }
 
-void ConnectedSocket::connectToHost(const std::string & hostName, quint16 port)
+void ConnectedSocket::connectToHost(const QString & hostName, quint16 port)
 {
     if(state()!=QAbstractSocket::UnconnectedState)
         return;
@@ -235,7 +235,7 @@ QHostAddress	ConnectedSocket::peerAddress() const
     return QHostAddress::Null;
 }
 
-std::string	ConnectedSocket::peerName() const
+QString ConnectedSocket::peerName() const
 {
     return peerAddress().toString();
 }
@@ -307,7 +307,7 @@ QIODevice::OpenMode ConnectedSocket::openMode() const
     return QIODevice::NotOpen;
 }
 
-std::string ConnectedSocket::errorString() const
+QString ConnectedSocket::errorString() const
 {
     if(fakeSocket!=NULL)
         return fakeSocket->errorString();
@@ -315,7 +315,7 @@ std::string ConnectedSocket::errorString() const
         return sslSocket->errorString();
     if(tcpSocket!=NULL)
         return tcpSocket->errorString();
-    return std::string();
+    return QString();
 }
 
 void ConnectedSocket::close()

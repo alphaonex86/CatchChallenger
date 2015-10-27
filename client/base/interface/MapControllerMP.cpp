@@ -1076,7 +1076,7 @@ void MapControllerMP::datapackParsedMainSub()
 {
     MapVisualiserPlayer::datapackParsedMainSub();
 
-    skinFolderList=CatchChallenger::stdvectorstringToQStringList(CatchChallenger::FacilityLibGeneral::skinIdList((datapackPath+MapControllerMP::text_DATAPACK_BASE_PATH_SKIN).toStdString()));
+    skinFolderList=CatchChallenger::FacilityLibClient::stdvectorstringToQStringList(CatchChallenger::FacilityLibGeneral::skinIdList((datapackPath+MapControllerMP::text_DATAPACK_BASE_PATH_SKIN).toStdString()));
 
     if(player_informations_is_set)
         reinject_signals();
@@ -1536,7 +1536,7 @@ void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserTh
         if(keyAccepted.isEmpty() || (keyAccepted.contains(Qt::Key_Return) && keyAccepted.size()))
         {
             MapVisualiser::eventOnMap(event,tempMapObject,x,y);
-            pathFinding.searchPath(all_map,QString::fromStdString(tempMapObject->logicalMap.map_file),x,y,current_map,this->x,this->y,*items);
+            pathFinding.searchPath(all_map,QString::fromStdString(tempMapObject->logicalMap.map_file),x,y,current_map,this->x,this->y,CatchChallenger::stdmapToQHash(*items));
             path.clear();
         }
     }

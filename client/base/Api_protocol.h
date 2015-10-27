@@ -243,7 +243,7 @@ signals:
 
     //player info
     void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations) const;
-    void have_inventory(const QHash<uint16_t,uint32_t> &items,const QHash<uint16_t,uint32_t> &warehouse_items) const;
+    void have_inventory(const std::unordered_map<uint16_t,uint32_t> &items,const std::unordered_map<uint16_t,uint32_t> &warehouse_items) const;
     void add_to_inventory(const QHash<uint16_t,uint32_t> &items) const;
     void remove_to_inventory(const QHash<uint16_t,uint32_t> &items) const;
 

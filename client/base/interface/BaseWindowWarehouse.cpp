@@ -106,8 +106,8 @@ void BaseWindow::on_warehousePlayerInventory_itemActivated(QListWidgetItem *item
 {
     uint32_t quantity=0;
     uint32_t id=item->data(99).toUInt();
-    if(items.contains(id))
-        quantity+=items.value(id);
+    if(items.find(id)!=items.cend())
+        quantity+=items.at(id);
     if(change_warehouse_items.contains(id))
         quantity+=change_warehouse_items.value(id);
     if(quantity==0)
@@ -136,8 +136,8 @@ void BaseWindow::on_warehousePlayerStoredInventory_itemActivated(QListWidgetItem
 {
     uint32_t quantity=0;
     uint32_t id=item->data(99).toUInt();
-    if(warehouse_items.contains(id))
-        quantity+=warehouse_items.value(id);
+    if(warehouse_items.find(id)!=warehouse_items.cend())
+        quantity+=warehouse_items.at(id);
     if(change_warehouse_items.contains(id))
         quantity-=change_warehouse_items.value(id);
     if(quantity==0)
@@ -262,20 +262,20 @@ void BaseWindow::on_warehouseValidate_clicked()
         while (i != change_warehouse_items.constEnd()) {
             if(i.value()>0)
             {
-                if(items.contains(i.key()))
+                if(items.find(i.key())!=items.cend())
                     items[i.key()]+=i.value();
                 else
                     items[i.key()]=i.value();
                 warehouse_items[i.key()]-=i.value();
-                if(warehouse_items.value(i.key())==0)
-                    warehouse_items.remove(i.key());
+                if(warehouse_items.at(i.key())==0)
+                    warehouse_items.erase(i.key());
             }
             if(i.value()<0)
             {
                 items[i.key()]+=i.value();
-                if(items.value(i.key())==0)
-                    items.remove(i.key());
-                if(warehouse_items.contains(i.key()))
+                if(items.at(i.key())==0)
+                    items.erase(i.key());
+                if(warehouse_items.find(i.key())!=warehouse_items.cend())
                     warehouse_items[i.key()]-=i.value();
                 else
                     warehouse_items[i.key()]=-i.value();

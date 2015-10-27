@@ -16,17 +16,17 @@ NewGame::NewGame(const QString &skinPath, const std::vector<uint8_t> &forcedSkin
     ui->setupUi(this);
     this->forcedSkin=forcedSkin;
     ok=false;
-    this->skinPath=skinPath;
-    int index=0;
+    this->skinPath=skinPath.toStdString();
+    unsigned int index=0;
     while(index<CatchChallenger::CommonDatapack::commonDatapack.skins.size())
     {
-        if(forcedSkin.empty() || forcedSkin.contains(index))
+        if(forcedSkin.empty() || vectorcontainsAtLeastOne(forcedSkin,index))
         {
-            const QString &currentPath=skinPath+CatchChallenger::CommonDatapack::commonDatapack.skins.at(index);
-            if(QFile::exists(currentPath+"/back.png") && QFile::exists(currentPath+"/front.png") && QFile::exists(currentPath+"/trainer.png"))
+            const std::string &currentPath=skinPath.toStdString()+CatchChallenger::CommonDatapack::commonDatapack.skins.at(index);
+            if(QFile::exists(QString::fromStdString(currentPath+"/back.png")) && QFile::exists(QString::fromStdString(currentPath+"/front.png")) && QFile::exists(QString::fromStdString(currentPath+"/trainer.png")))
             {
-                skinList << CatchChallenger::CommonDatapack::commonDatapack.skins.at(index);
-                skinListId << index;
+                skinList.push_back(CatchChallenger::CommonDatapack::commonDatapack.skins.at(index));
+                skinListId.push_back(index);
             }
         }
         index++;
@@ -55,15 +55,15 @@ NewGame::~NewGame()
 void NewGame::updateSkin()
 {
     skinLoaded=false;
-    if(currentSkin>=skinList.size() || currentSkin<-1)
+    if(currentSkin>=skinList.size())
         return;
     ui->previousSkin->setEnabled(currentSkin>0);
     ui->nextSkin->setEnabled(currentSkin<(skinList.size()-1));
-    QString path=skinPath+skinList.at(currentSkin)+"/front.png";
-    QImage skin=QImage(path);
+    std::string path=skinPath+skinList.at(currentSkin)+"/front.png";
+    QImage skin=QImage(QString::fromStdString(path));
     if(skin.isNull())
     {
-        QMessageBox::critical(this,tr("Error"),QStringLiteral("But the skin can't be loaded: %1").arg(path));
+        QMessageBox::critical(this,tr("Error"),QStringLiteral("But the skin can't be loaded: %1").arg(QString::fromStdString(path)));
         return;
     }
     QImage scaledSkin=skin.scaled(160,160,Qt::IgnoreAspectRatio);
@@ -90,7 +90,7 @@ QString NewGame::pseudo()
 
 QString NewGame::skin()
 {
-    return skinList.at(currentSkin);
+    return QString::fromStdString(skinList.at(currentSkin));
 }
 
 uint32_t NewGame::skinId()

@@ -69,11 +69,11 @@ bool MapController::asyncMapLoaded(const QString &fileName,MapVisualiserThread::
                 while (i.hasNext()) {
                     i.next();
                     const uint8_t &indexOfMap=i.value();
-                    if(plantOnMap->contains(indexOfMap))
+                    if(plantOnMap->find(indexOfMap)!=plantOnMap->cend())
                     {
                         const uint8_t &x=i.key().first;
                         const uint8_t &y=i.key().second;
-                        const CatchChallenger::PlayerPlant &playerPlant=plantOnMap->value(indexOfMap);
+                        const CatchChallenger::PlayerPlant &playerPlant=plantOnMap->at(indexOfMap);
                         uint32_t seconds_to_mature=0;
                         if(playerPlant.mature_at>(uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)
                             seconds_to_mature=playerPlant.mature_at-QDateTime::currentMSecsSinceEpoch()/1000;

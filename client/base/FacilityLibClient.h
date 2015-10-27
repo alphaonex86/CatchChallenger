@@ -6,12 +6,14 @@
 #include <QStringList>
 #include <QHash>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace CatchChallenger {
 class FacilityLibClient
 {
 public:
-    static QString timeToString(const uint32_t &playerMonster);
+    static QString timeToString(const uint32_t &sec);
+    static QStringList stdvectorstringToQStringList(const std::vector<std::string> &vector);
 };
 
 template <class T, class U>
@@ -61,18 +63,6 @@ QList<T> stdvectorToQList(const std::vector<T> &vector)
     while(index<vector.size())
     {
         list << vector.at(index);
-        ++index;
-    }
-    return list;
-}
-
-QStringList stdvectorstringToQStringList(const std::vector<std::string> &vector)
-{
-    QStringList list;
-    unsigned int index=0;
-    while(index<vector.size())
-    {
-        list << QString::fromStdString(vector.at(index));
         ++index;
     }
     return list;

@@ -1,7 +1,6 @@
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include "QFakeSocket.h"
 #include "QFakeServer.h"
-#include "DebugClass.h"
 #include "GeneralVariable.h"
 
 #include <QMutexLocker>
@@ -31,7 +30,7 @@ QFakeSocket::~QFakeSocket()
 void QFakeSocket::abort()
 {
     #ifdef FAKESOCKETDEBUG
-    DebugClass::debugConsole(std::stringLiteral("QFakeSocket::abort()"));
+    qDebug() << (std::stringLiteral("QFakeSocket::abort()"));
     #endif
     disconnectFromHost();
 }
@@ -41,7 +40,7 @@ void QFakeSocket::disconnectFromHost()
     if(theOtherSocket==NULL)
         return;
     #ifdef FAKESOCKETDEBUG
-    DebugClass::debugConsole(std::stringLiteral("QFakeSocket::disconnectFromHost()"));
+    qDebug() << (std::stringLiteral("QFakeSocket::disconnectFromHost()"));
     #endif
     QFakeSocket *tempOtherSocket=theOtherSocket;
     theOtherSocket=NULL;
@@ -59,7 +58,7 @@ void QFakeSocket::disconnectFromFakeServer()
     if(theOtherSocket==NULL)
         return;
     #ifdef FAKESOCKETDEBUG
-    DebugClass::debugConsole(std::stringLiteral("QFakeSocket::disconnectFromFakeServer()"));
+    qDebug() << (std::stringLiteral("QFakeSocket::disconnectFromFakeServer()"));
     #endif
     theOtherSocket=NULL;
     {
@@ -73,7 +72,7 @@ void QFakeSocket::disconnectFromFakeServer()
 void QFakeSocket::connectToHost()
 {
     #ifdef FAKESOCKETDEBUG
-    DebugClass::debugConsole(std::stringLiteral("QFakeSocket::connectToHost()"));
+    qDebug() << (std::stringLiteral("QFakeSocket::connectToHost()"));
     #endif
     if(theOtherSocket!=NULL)
         return;
@@ -88,7 +87,7 @@ qint64	QFakeSocket::bytesAvailableWithMutex()
     {
         QMutexLocker lock(&mutex);
         #ifdef FAKESOCKETDEBUG
-        DebugClass::debugConsole(std::stringLiteral("bytesAvailable(): data.size(): %1").arg(data.size()));
+        qDebug() << (std::stringLiteral("bytesAvailable(): data.size(): %1").arg(data.size()));
         #endif
         size=data.size();
     }
@@ -143,9 +142,9 @@ QAbstractSocket::SocketState QFakeSocket::state() const
 qint64 QFakeSocket::readData(char * rawData, qint64 maxSize)
 {
     QMutexLocker lock(&mutex);
-    std::vector<char> extractedData=this->data.mid(0,maxSize);
+    QByteArray extractedData=this->data.mid(0,maxSize);
     #ifdef FAKESOCKETDEBUG
-    DebugClass::debugConsole(std::stringLiteral("readData(): extractedData.size(): %1, data.size(): %2, extractedData: %3").arg(extractedData.size()).arg(data.size()).arg(std::string(extractedData.toHex())));
+    qDebug() << (std::stringLiteral("readData(): extractedData.size(): %1, data.size(): %2, extractedData: %3").arg(extractedData.size()).arg(data.size()).arg(std::string(extractedData.toHex())));
     #endif
     memcpy(rawData,extractedData.data(),extractedData.size());
     this->data.remove(0,extractedData.size());
@@ -156,28 +155,28 @@ qint64	QFakeSocket::writeData(const char * rawData, qint64 size)
 {
     if(theOtherSocket==NULL)
     {
-        DebugClass::debugConsole("writeData(): theOtherSocket==NULL");
+        qDebug() << ("writeData(): theOtherSocket==NULL");
         emit error(QAbstractSocket::NetworkError);
         return size;
     }
-    std::vector<char> dataToSend;
+    QByteArray dataToSend;
     {
         QMutexLocker lock(&mutex);
         #ifdef FAKESOCKETDEBUG
-        DebugClass::debugConsole(std::stringLiteral("writeData(): size: %1").arg(size));
+        qDebug() << (std::stringLiteral("writeData(): size: %1").arg(size));
         #endif
-        dataToSend=std::vector<char>(rawData,size);
+        dataToSend=QByteArray(rawData,size);
     }
     theOtherSocket->internal_writeData(dataToSend);
     return size;
 }
 
-void QFakeSocket::internal_writeData(std::vector<char> rawData)
+void QFakeSocket::internal_writeData(QByteArray rawData)
 {
     {
         QMutexLocker lock(&mutex);
         #ifdef FAKESOCKETDEBUG
-        DebugClass::debugConsole(std::stringLiteral("internal_writeData(): size: %1").arg(rawData.size()));
+        qDebug() << (std::stringLiteral("internal_writeData(): size: %1").arg(rawData.size()));
         #endif
         RX_size+=rawData.size();
         this->data+=rawData;

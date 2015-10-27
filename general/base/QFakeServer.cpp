@@ -20,8 +20,8 @@ void QFakeServer::addPendingConnection(QFakeSocket * socket)
     newEntry.second=new QFakeSocket();
     {
         QMutexLocker locker(&mutex);
-        m_listOfConnexion << newEntry;
-        m_pendingConnection << newEntry;
+        m_listOfConnexion.push_back(newEntry);
+        m_pendingConnection.push_back(newEntry);
     }
     newEntry.first->theOtherSocket=newEntry.second;
     newEntry.second->theOtherSocket=newEntry.first;
