@@ -20,7 +20,7 @@ void PreparedLayer::hoverMoveEvent(QGraphicsSceneMouseEvent * event)
     event->accept();
     const uint8_t &x=qCeil(event->pos().x()/tempMapObject->tiledMap->tileWidth())-1;
     const uint8_t &y=qCeil(event->pos().y()/tempMapObject->tiledMap->tileHeight())-1;
-    qDebug() << "Mouse hover move event on map at " << tempMapObject->name << tempMapObject->logicalMap.map_file << x << y;
+    qDebug() << "Mouse hover move event on map at " << tempMapObject->name << QString::fromStdString(tempMapObject->logicalMap.map_file) << x << y;
 }
 
 void PreparedLayer::hoverEnterEvent(QGraphicsSceneMouseEvent * event)
@@ -28,7 +28,7 @@ void PreparedLayer::hoverEnterEvent(QGraphicsSceneMouseEvent * event)
     event->accept();
     const uint8_t &x=qCeil(event->pos().x()/tempMapObject->tiledMap->tileWidth())-1;
     const uint8_t &y=qCeil(event->pos().y()/tempMapObject->tiledMap->tileHeight())-1;
-    qDebug() << "Mouse hover enter event on map at " << tempMapObject->name << tempMapObject->logicalMap.map_file << x << y;
+    qDebug() << "Mouse hover enter event on map at " << tempMapObject->name << QString::fromStdString(tempMapObject->logicalMap.map_file) << x << y;
 }
 
 void PreparedLayer::hoverLeaveEvent(QGraphicsSceneMouseEvent * event)
@@ -36,7 +36,7 @@ void PreparedLayer::hoverLeaveEvent(QGraphicsSceneMouseEvent * event)
     event->accept();
     const uint8_t &x=qCeil(event->pos().x()/tempMapObject->tiledMap->tileWidth())-1;
     const uint8_t &y=qCeil(event->pos().y()/tempMapObject->tiledMap->tileHeight())-1;
-    qDebug() << "Mouse hover leave event on map at " << tempMapObject->name << tempMapObject->logicalMap.map_file << x << y;
+    qDebug() << "Mouse hover leave event on map at " << tempMapObject->name << QString::fromStdString(tempMapObject->logicalMap.map_file) << x << y;
 }
 
 void PreparedLayer::mouseDoubleClickEvent(QGraphicsSceneMouseEvent * event)
@@ -44,7 +44,7 @@ void PreparedLayer::mouseDoubleClickEvent(QGraphicsSceneMouseEvent * event)
     event->accept();
     const uint8_t &x=qCeil(event->pos().x()/tempMapObject->tiledMap->tileWidth())-1;
     const uint8_t &y=qCeil(event->pos().y()/tempMapObject->tiledMap->tileHeight())-1;
-    qDebug() << "Mouse double click event on map at " << tempMapObject->name << tempMapObject->logicalMap.map_file << x << y;
+    qDebug() << "Mouse double click event on map at " << tempMapObject->name << QString::fromStdString(tempMapObject->logicalMap.map_file) << x << y;
     eventOnMap(CatchChallenger::MapEvent_DoubleClick,tempMapObject,x,y);
 }
 

@@ -27,12 +27,13 @@ QtServer::QtServer()
 
 QtServer::~QtServer()
 {
-    std::unordered_setIterator<Client *> i(client_list);
-    while (i.hasNext())
+    auto i=client_list.begin();
+    while(i!=client_list.cend())
     {
-        Client *client=i.next();
+        Client *client=(*i);
         client->disconnectClient();
         delete client;
+        ++i;
     }
     client_list.clear();
     delete GlobalServerData::serverPrivateVariables.db_server;
@@ -97,10 +98,10 @@ void QtServer::removeOneClient()
     Client *client=qobject_cast<Client *>(QObject::sender());
     if(client==NULL)
     {
-        DebugClass::debugConsole("removeOneClient(): NULL client at disconnection");
+        qDebug() << ("removeOneClient(): NULL client at disconnection");
         return;
     }
-    client_list.remove(client);
+    client_list.erase(client);
     delete client;
 }
 
@@ -114,7 +115,7 @@ void QtServer::newConnection()
         QFakeSocket *socket = QFakeServer::server.nextPendingConnection();
         if(socket!=NULL)
         {
-            DebugClass::debugConsole(std::stringLiteral("newConnection(): new client connected by fake socket"));
+            qDebug() << ("newConnection(): new client connected by fake socket");
             switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
             {
                 default:
@@ -130,7 +131,7 @@ void QtServer::newConnection()
             }
         }
         else
-            DebugClass::debugConsole("NULL client at BaseServer::newConnection()");
+            qDebug() << ("NULL client at BaseServer::newConnection()");
     }
 }
 #endif
@@ -139,7 +140,7 @@ void QtServer::connect_the_last_client(Client * client,QIODevice *socket)
 {
     connect(socket,&QIODevice::readyRead,client,&Client::parseIncommingData,Qt::QueuedConnection);
     connect(client,&QObject::destroyed,this,&QtServer::removeOneClient,Qt::DirectConnection);
-    client_list << client;
+    client_list.insert(client);
 }
 
 void QtServer::load_next_city_capture()
@@ -154,33 +155,33 @@ bool QtServer::check_if_now_stopped()
     if(stat!=InDown)
         return false;
 
-    DebugClass::debugConsole("Fully stopped");
+    qDebug() << ("Fully stopped");
     if(GlobalServerData::serverPrivateVariables.db_login->isConnected())
     {
-        DebugClass::debugConsole(std::stringLiteral("Disconnected to %1 at %2")
-                                 .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_login->databaseType()))
-                                 .arg(GlobalServerData::serverSettings.database_login.host));
+        qDebug() << (QStringLiteral("Disconnected to %1 at %2")
+                                 .arg(QString::fromStdString(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_login->databaseType())))
+                                 .arg(QString::fromStdString(GlobalServerData::serverSettings.database_login.host)));
         GlobalServerData::serverPrivateVariables.db_login->syncDisconnect();
     }
     if(GlobalServerData::serverPrivateVariables.db_base->isConnected())
     {
-        DebugClass::debugConsole(std::stringLiteral("Disconnected to %1 at %2")
-                                 .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_base->databaseType()))
-                                 .arg(GlobalServerData::serverSettings.database_base.host));
+        qDebug() << (QStringLiteral("Disconnected to %1 at %2")
+                                 .arg(QString::fromStdString(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_base->databaseType())))
+                                 .arg(QString::fromStdString(GlobalServerData::serverSettings.database_base.host)));
         GlobalServerData::serverPrivateVariables.db_base->syncDisconnect();
     }
     if(GlobalServerData::serverPrivateVariables.db_common->isConnected())
     {
-        DebugClass::debugConsole(std::stringLiteral("Disconnected to %1 at %2")
-                                 .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_common->databaseType()))
-                                 .arg(GlobalServerData::serverSettings.database_common.host));
+        qDebug() << (QStringLiteral("Disconnected to %1 at %2")
+                                 .arg(QString::fromStdString(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_common->databaseType())))
+                                 .arg(QString::fromStdString(GlobalServerData::serverSettings.database_common.host)));
         GlobalServerData::serverPrivateVariables.db_common->syncDisconnect();
     }
     if(GlobalServerData::serverPrivateVariables.db_server->isConnected())
     {
-        DebugClass::debugConsole(std::stringLiteral("Disconnected to %1 at %2")
-                                 .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_server->databaseType()))
-                                 .arg(GlobalServerData::serverSettings.database_server.host));
+        qDebug() << (QStringLiteral("Disconnected to %1 at %2")
+                                 .arg(QString::fromStdString(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_server->databaseType())))
+                                 .arg(QString::fromStdString(GlobalServerData::serverSettings.database_server.host)));
         GlobalServerData::serverPrivateVariables.db_server->syncDisconnect();
     }
     stat=Down;
@@ -196,18 +197,19 @@ void QtServer::stop_internal_server()
     if(stat!=Up && stat!=InDown)
     {
         if(stat!=Down)
-            DebugClass::debugConsole("Is in wrong stat for stopping: "+std::to_string((int)stat));
+            qDebug() << ("Is in wrong stat for stopping: "+QString::number((int)stat));
         return;
     }
-    DebugClass::debugConsole("Try stop");
+    qDebug() << ("Try stop");
     stat=InDown;
 
-    std::unordered_setIterator<Client *> i(client_list);
-    while (i.hasNext())
+    auto i=client_list.begin();
+    while(i!=client_list.cend())
     {
-        Client * client=i.next();
+        Client * client=*i;
         client->disconnectClient();
         delete client;
+        ++i;
     }
     client_list.clear();
     QFakeServer::server.disconnectedSocket();

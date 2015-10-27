@@ -226,7 +226,7 @@ void Api_protocol::socketDisconnectedForReconnect()
         return;
     }
     haveFirstHeader=false;
-    socket->connectToHost(serverFromPoolForDisplay.host.toStdString(),serverFromPoolForDisplay.port);
+    socket->connectToHost(serverFromPoolForDisplay.host,serverFromPoolForDisplay.port);
 }
 
 bool Api_protocol::protocolWrong() const
@@ -2025,7 +2025,7 @@ void Api_protocol::connectTheExternalSocketInternal()
         datapackCert.mkpath(datapackCert.absolutePath());
         QFile certFile;
         if(stageConnexion==StageConnexion::Stage1)
-            certFile.setFileName(datapackCert.absolutePath()+"/"+QString::fromStdString(socket->peerName())+"-"+QString::number(socket->peerPort()));
+            certFile.setFileName(datapackCert.absolutePath()+"/"+socket->peerName()+"-"+QString::number(socket->peerPort()));
         else if(stageConnexion==StageConnexion::Stage3)
         {
             if(selectedServerIndex==-1)

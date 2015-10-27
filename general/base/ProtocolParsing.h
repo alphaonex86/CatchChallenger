@@ -70,7 +70,7 @@ public:
     static CompressionType compressionTypeServer;
     static uint8_t compressionLevel;
     #endif
-    static const uint8_t packetFixedSize[256+128];
+    static uint8_t packetFixedSize[256+128];
     ProtocolParsing();
     static void initialiseTheVariable(const InitialiseTheVariableType &initialiseTheVariableType=InitialiseTheVariableType::AllInOne);
     static void setMaxPlayers(const uint16_t &maxPlayers);
@@ -94,7 +94,6 @@ public:
     #endif
     );
     virtual ~ProtocolParsingBase();
-    void setMaxPlayers(const uint16_t &maxPlayers);
     friend class ProtocolParsing;
     friend class ProtocolParsingCheck;
     virtual ssize_t read(char * data, const size_t &size) = 0;

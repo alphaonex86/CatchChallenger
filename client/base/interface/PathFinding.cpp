@@ -1,6 +1,7 @@
 #include "PathFinding.h"
 #include <QMutexLocker>
 #include <QTime>
+#include <QDebug>
 
 PathFinding::PathFinding() :
     tryCancel(false)
@@ -75,9 +76,9 @@ void PathFinding::searchPath(const QHash<QString, MapVisualiserThread::Map_full 
     //resolv the border
     QHash<QString,SimplifiedMapForPathFinding>::const_iterator j = simplifiedMapList.constBegin();
     while (j != simplifiedMapList.constEnd()) {
-        if(all_map.contains(all_map.value(j.key())->logicalMap.border_semi.bottom.fileName))
+        if(all_map.contains(QString::fromStdString(all_map.value(j.key())->logicalMap.border_semi.bottom.fileName)))
         {
-            simplifiedMapList[j.key()].border.bottom.map=&simplifiedMapList[all_map.value(j.key())->logicalMap.border_semi.bottom.fileName];
+            simplifiedMapList[j.key()].border.bottom.map=&simplifiedMapList[QString::fromStdString(all_map.value(j.key())->logicalMap.border_semi.bottom.fileName)];
             simplifiedMapList[j.key()].border.bottom.x_offset=all_map.value(j.key())->logicalMap.border_semi.bottom.x_offset;
         }
         else
@@ -85,9 +86,9 @@ void PathFinding::searchPath(const QHash<QString, MapVisualiserThread::Map_full 
             simplifiedMapList[j.key()].border.bottom.map=NULL;
             simplifiedMapList[j.key()].border.bottom.x_offset=0;
         }
-        if(all_map.contains(all_map.value(j.key())->logicalMap.border_semi.left.fileName))
+        if(all_map.contains(QString::fromStdString(all_map.value(j.key())->logicalMap.border_semi.left.fileName)))
         {
-            simplifiedMapList[j.key()].border.left.map=&simplifiedMapList[all_map.value(j.key())->logicalMap.border_semi.left.fileName];
+            simplifiedMapList[j.key()].border.left.map=&simplifiedMapList[QString::fromStdString(all_map.value(j.key())->logicalMap.border_semi.left.fileName)];
             simplifiedMapList[j.key()].border.left.y_offset=all_map.value(j.key())->logicalMap.border_semi.left.y_offset;
         }
         else
@@ -95,9 +96,9 @@ void PathFinding::searchPath(const QHash<QString, MapVisualiserThread::Map_full 
             simplifiedMapList[j.key()].border.left.map=NULL;
             simplifiedMapList[j.key()].border.left.y_offset=0;
         }
-        if(all_map.contains(all_map.value(j.key())->logicalMap.border_semi.right.fileName))
+        if(all_map.contains(QString::fromStdString(all_map.value(j.key())->logicalMap.border_semi.right.fileName)))
         {
-            simplifiedMapList[j.key()].border.right.map=&simplifiedMapList[all_map.value(j.key())->logicalMap.border_semi.right.fileName];
+            simplifiedMapList[j.key()].border.right.map=&simplifiedMapList[QString::fromStdString(all_map.value(j.key())->logicalMap.border_semi.right.fileName)];
             simplifiedMapList[j.key()].border.right.y_offset=all_map.value(j.key())->logicalMap.border_semi.right.y_offset;
         }
         else
@@ -105,9 +106,9 @@ void PathFinding::searchPath(const QHash<QString, MapVisualiserThread::Map_full 
             simplifiedMapList[j.key()].border.right.map=NULL;
             simplifiedMapList[j.key()].border.right.y_offset=0;
         }
-        if(all_map.contains(all_map.value(j.key())->logicalMap.border_semi.top.fileName))
+        if(all_map.contains(QString::fromStdString(all_map.value(j.key())->logicalMap.border_semi.top.fileName)))
         {
-            simplifiedMapList[j.key()].border.top.map=&simplifiedMapList[all_map.value(j.key())->logicalMap.border_semi.top.fileName];
+            simplifiedMapList[j.key()].border.top.map=&simplifiedMapList[QString::fromStdString(all_map.value(j.key())->logicalMap.border_semi.top.fileName)];
             simplifiedMapList[j.key()].border.top.x_offset=all_map.value(j.key())->logicalMap.border_semi.top.x_offset;
         }
         else

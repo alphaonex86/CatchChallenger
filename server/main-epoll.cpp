@@ -470,7 +470,7 @@ int main(int argc, char *argv[])
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     {
         const int &linkfd=LinkToMaster::tryConnect(
-                    master_host.toLocal8Bit().constData(),
+                    master_host.c_str(),
                     master_port,
                     master_tryInterval,
                     master_considerDownAfterNumberOfTry

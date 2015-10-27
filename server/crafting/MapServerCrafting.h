@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_MAP_SERVER_CRAFTING_H
 
 #include <unordered_map>
-#include "../general/base/GeneralStructures.h"
+#include "../../general/base/GeneralStructures.h"
 
 namespace CatchChallenger {
 

@@ -23,7 +23,7 @@ public:
     explicit ConnectedSocket(QTcpSocket *socket);
     ~ConnectedSocket();
     void	abort();
-    void	connectToHost(const std::string & hostName,quint16 port);
+    void	connectToHost(const QString & hostName,quint16 port);
     void	connectToHost(const QHostAddress & address,quint16 port);
     void	disconnectFromHost();
     QAbstractSocket::SocketError error() const;
@@ -33,14 +33,14 @@ public:
     QHostAddress localAddress() const;
     quint16	localPort() const;
     QHostAddress peerAddress() const;
-    std::string	peerName() const;
+    QString	peerName() const;
     quint16	peerPort() const;
     QAbstractSocket::SocketState state() const;
     bool	waitForConnected(int msecs = 30000);
     bool	waitForDisconnected(int msecs = 30000);
     qint64	bytesAvailable() const;
     OpenMode openMode() const;
-    std::string errorString() const;
+    QString errorString() const;
     qint64	readData(char * data, qint64 maxSize);
     qint64	writeData(const char * data, qint64 maxSize);
     void	close();
@@ -50,13 +50,13 @@ public:
 protected:
     bool	isSequential() const;
     bool canReadLine() const;
-    std::vector<QSslError> sslErrors() const;
+    QList<QSslError> sslErrors() const;
 signals:
     void	connected();
     void	disconnected();
     void	error(QAbstractSocket::SocketError socketError);
     void	stateChanged(QAbstractSocket::SocketState socketState);
-    void    sslErrors(const std::vector<QSslError> &errors);
+    void    sslErrors(const QList<QSslError> &errors);
 private:
     void destroyedSocket();
     void purgeBuffer();

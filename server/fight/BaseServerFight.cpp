@@ -81,8 +81,8 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
     std::unordered_map<uint16_t,std::vector<MonsterDrops> > monsterDrops;
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
-        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
     else
     {
         #endif

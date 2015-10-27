@@ -142,25 +142,25 @@ void BaseWindow::load_plant_inventory()
     ui->listPlantList->clear();
     plants_items_graphical.clear();
     plants_items_to_graphical.clear();
-    QHashIterator<uint16_t,uint32_t> i(items);
-    while (i.hasNext()) {
-        i.next();
-        if(DatapackClientLoader::datapackLoader.itemToPlants.contains(i.key()))
+    auto i=items.begin();
+    while(i!=items.cend())
+    {
+        if(DatapackClientLoader::datapackLoader.itemToPlants.contains(i->first))
         {
-            const uint8_t &plantId=DatapackClientLoader::datapackLoader.itemToPlants.value(i.key());
+            const uint8_t &plantId=DatapackClientLoader::datapackLoader.itemToPlants.value(i->first);
             QListWidgetItem *item;
             item=new QListWidgetItem();
             plants_items_to_graphical[plantId]=item;
             plants_items_graphical[item]=plantId;
-            if(DatapackClientLoader::datapackLoader.itemsExtra.contains(i.key()))
+            if(DatapackClientLoader::datapackLoader.itemsExtra.contains(i->first))
             {
-                item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[i.key()].image);
-                item->setText(DatapackClientLoader::datapackLoader.itemsExtra[i.key()].name+"\n"+tr("Quantity: %1").arg(i.value()));
+                item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[i->first].image);
+                item->setText(DatapackClientLoader::datapackLoader.itemsExtra[i->first].name+"\n"+tr("Quantity: %1").arg(i->second));
             }
             else
             {
                 item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
-                item->setText(QStringLiteral("item id: %1").arg(i.key())+"\n"+tr("Quantity: %1").arg(i.value()));
+                item->setText(QStringLiteral("item id: %1").arg(i->first)+"\n"+tr("Quantity: %1").arg(i->second));
             }
             if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.plants.at(plantId).requirements.reputation))
             {
@@ -170,6 +170,7 @@ void BaseWindow::load_plant_inventory()
             }
             ui->listPlantList->addItem(item);
         }
+        ++i;
     }
 }
 
@@ -469,7 +470,7 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
 
         //load the quantity into the inventory
         quantity=0;
-        if(items.contains(content.materials.at(index).item))
+        if(items.find(content.materials.at(index).item)!=items.cend())
             quantity=items[content.materials.at(index).item];
 
         //load the display
@@ -505,7 +506,7 @@ void BaseWindow::on_craftingUse_clicked()
     unsigned int index=0;
     while(index<content.materials.size())
     {
-        if(!items.contains(content.materials.at(index).item))
+        if(items.find(content.materials.at(index).item)==items.cend())
             return;
         if(items[content.materials.at(index).item]<content.materials.at(index).quantity)
             return;

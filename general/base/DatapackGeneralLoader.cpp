@@ -21,7 +21,7 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
     QDomDocument domDocument;
     std::vector<Reputation> reputation;
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
     else
     {
@@ -255,7 +255,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     quest.id=0;
     QDomDocument domDocument;
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
@@ -645,7 +645,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
     QDomDocument domDocument;
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
     else
     {
@@ -938,7 +938,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
     QDomDocument domDocument;
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
     else
     {
@@ -1243,7 +1243,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
         const std::string &file=fileList.at(file_index).absoluteFilePath().toStdString();
         //open and quick check the file
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
             domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
         else
         {
@@ -1506,7 +1506,7 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
     QDomDocument domDocument;
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
     else
     {
@@ -1676,7 +1676,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
             continue;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
             domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
         else
         {
@@ -1991,7 +1991,7 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
     QDomDocument domDocument;
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
     else
     {
@@ -2276,7 +2276,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
     QDomDocument domDocument;
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
     else
     {
@@ -2469,7 +2469,7 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const std::string &file)
     QDomDocument domDocument;
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
     else
     {
@@ -2529,7 +2529,7 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
     QDomDocument domDocument;
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
     else
     {
@@ -2597,7 +2597,7 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
     QDomDocument domDocument;
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
     else
     {
@@ -2763,7 +2763,7 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(
     QDomDocument domDocument;
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
     else
     {

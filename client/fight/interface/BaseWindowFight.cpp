@@ -545,7 +545,7 @@ void BaseWindow::init_environement_display(Map_client *map, const uint8_t &x, co
     while(index<monstersCollisionValue.walkOn.size())
     {
         const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
-        if(monstersCollision.item==0 || items.contains(monstersCollision.item))
+        if(monstersCollision.item==0 || items.find(monstersCollision.item)!=items.cend())
         {
             if(!monstersCollision.background.empty())
             {

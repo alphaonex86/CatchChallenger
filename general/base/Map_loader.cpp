@@ -207,8 +207,8 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
 
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(fileName))
-        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(fileName);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(fileName)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(fileName);
     else
     {
         #endif
@@ -1235,8 +1235,8 @@ bool Map_loader::loadMonsterMap(const std::string &fileName, std::vector<std::st
 
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(fileName))
-        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(fileName);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(fileName)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(fileName);
     else
     {
         #endif
@@ -1556,8 +1556,8 @@ QDomElement Map_loader::getXmlCondition(const std::string &fileName,const std::s
 
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(conditionFile))
-        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(conditionFile);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(conditionFile)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(conditionFile);
     else
     {
         #endif

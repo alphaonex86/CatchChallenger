@@ -65,7 +65,7 @@ void Client::selectCharacter(const uint8_t &query_id, const char * const token)
         }
     }
     //if never found
-    errorOutput(std::stringLiteral("selectCharacter() Token never found to login, bug"));
+    errorOutput("selectCharacter() Token never found to login, bug");
 }
 
 void Client::purgeTokenAuthList()

@@ -27,14 +27,14 @@ private slots:
     void on_nextSkin_clicked();
     void on_previousSkin_clicked();
 private:
-    QList<uint8_t> forcedSkin;
+    std::vector<uint8_t> forcedSkin;
     Ui::NewGame *ui;
     bool ok;
     bool skinLoaded;
-    QStringList skinList;
-    QList<uint8_t> skinListId;
-    int currentSkin;
-    QString skinPath;
+    std::vector<std::string> skinList;
+    std::vector<uint8_t> skinListId;
+    unsigned int currentSkin;
+    std::string skinPath;
     bool okCanBeEnabled();
 };
 

@@ -158,7 +158,7 @@ void Client::connectionError(QAbstractSocket::SocketError error)
     isConnected=false;
     if(error!=QAbstractSocket::RemoteHostClosedError)
     {
-        normalOutput(std::stringLiteral("error detected for the client: %1 %2").arg(error));
+        normalOutput("error detected for the client: "+std::to_string(error));
         socket->disconnectFromHost();
     }
 }
@@ -463,7 +463,7 @@ char *Client::addAuthGetToken(const uint32_t &characterId, const uint32_t &accou
     const int &returnedSize=fread(newEntry.token,1,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER,BaseServerLogin::fpRandomFile);
     if(returnedSize!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
     {
-        qDebug() << std::stringLiteral("sizeof(newEntry.token) don't match with random size: %1").arg(returnedSize);
+        std::cerr << "sizeof(newEntry.token) don't match with random size: " << returnedSize << std::endl;
         delete newEntry.token;
         return NULL;
     }

@@ -164,7 +164,7 @@ private slots:
     void have_character_position();
     void haveCharacter();
     void have_main_and_sub_datapack_loaded();
-    void have_inventory(const QHash<uint16_t,uint32_t> &items,const QHash<uint16_t,uint32_t> &warehouse_items);
+    void have_inventory(const std::unordered_map<uint16_t, uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items);
     void add_to_inventory(const uint32_t &item,const uint32_t &quantity=1,const bool &showGain=true);
     void add_to_inventory(const QList<QPair<uint16_t,uint32_t> > &items,const bool &showGain=true);
     void add_to_inventory(const QHash<uint16_t,uint32_t> &items, const bool &showGain=true);

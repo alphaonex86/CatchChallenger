@@ -11,7 +11,6 @@
 #include <QSemaphore>
 #include <QString>
 
-#include "../../../general/base/DebugClass.h"
 #include "../../../server/base/ServerStructures.h"
 #include "../../../server/base/Client.h"
 #include "../../../general/base/Map_loader.h"

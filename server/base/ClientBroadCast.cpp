@@ -87,7 +87,7 @@ void Client::sendPM(const std::string &text,const std::string &pseudo)
     if(!GlobalServerData::serverSettings.anonymous)
         normalOutput("[chat PM]: "+this->public_and_private_informations.public_informations.pseudo+" -> "+pseudo+": "+text);
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(this->public_and_private_informations.public_informations.pseudo,Chat_type_pm,std::stringLiteral("to %1: %2").arg(pseudo).arg(text));
+    BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(this->public_and_private_informations.public_informations.pseudo,Chat_type_pm,"to "+pseudo+": "+text);
     #endif
     playerByPseudo.at(pseudo)->receiveChatText(Chat_type_pm,text,this);
 }

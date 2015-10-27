@@ -340,7 +340,7 @@ void BaseWindow::progressingDatapackFile(const uint32_t &size)
     updateConnectingStatus();
 }
 
-void BaseWindow::have_inventory(const QHash<uint16_t,uint32_t> &items, const QHash<uint16_t, uint32_t> &warehouse_items)
+void BaseWindow::have_inventory(const std::unordered_map<uint16_t,uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items)
 {
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::have_inventory()";
@@ -366,23 +366,22 @@ void BaseWindow::load_inventory()
     ui->inventory->clear();
     items_graphical.clear();
     items_to_graphical.clear();
-    QHashIterator<uint16_t,uint32_t> i(items);
-    while (i.hasNext()) {
-        i.next();
-
+    auto i=items.begin();
+    while (i!=items.cend())
+    {
         bool show=!inSelection;
         if(inSelection)
         {
             switch(waitedObjectType)
             {
                 case ObjectType_Seed:
-                    if(DatapackClientLoader::datapackLoader.itemToPlants.contains(i.key()))
+                    if(DatapackClientLoader::datapackLoader.itemToPlants.contains(i->first))
                         show=true;
                 break;
                 case ObjectType_UseInFight:
-                    if(CatchChallenger::ClientFightEngine::fightEngine.isInFightWithWild() && CommonDatapack::commonDatapack.items.trap.find(i.key())!=CommonDatapack::commonDatapack.items.trap.cend())
+                    if(CatchChallenger::ClientFightEngine::fightEngine.isInFightWithWild() && CommonDatapack::commonDatapack.items.trap.find(i->first)!=CommonDatapack::commonDatapack.items.trap.cend())
                         show=true;
-                    else if(CommonDatapack::commonDatapack.items.monsterItemEffect.find(i.key())!=CommonDatapack::commonDatapack.items.monsterItemEffect.cend())
+                    else if(CommonDatapack::commonDatapack.items.monsterItemEffect.find(i->first)!=CommonDatapack::commonDatapack.items.monsterItemEffect.cend())
                         show=true;
                     else
                         show=false;
@@ -395,25 +394,26 @@ void BaseWindow::load_inventory()
         if(show)
         {
             QListWidgetItem *item=new QListWidgetItem();
-            items_to_graphical[i.key()]=item;
-            items_graphical[item]=i.key();
-            if(DatapackClientLoader::datapackLoader.itemsExtra.contains(i.key()))
+            items_to_graphical[i->first]=item;
+            items_graphical[item]=i->first;
+            if(DatapackClientLoader::datapackLoader.itemsExtra.contains(i->first))
             {
-                item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(i.key()).image);
-                if(i.value()>1)
-                    item->setText(QString::number(i.value()));
-                item->setToolTip(DatapackClientLoader::datapackLoader.itemsExtra.value(i.key()).name);
+                item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(i->first).image);
+                if(i->second>1)
+                    item->setText(QString::number(i->second));
+                item->setToolTip(DatapackClientLoader::datapackLoader.itemsExtra.value(i->first).name);
             }
             else
             {
                 item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
-                if(i.value()>1)
-                    item->setText(QStringLiteral("id: %1 (x%2)").arg(i.key()).arg(i.value()));
+                if(i->second>1)
+                    item->setText(QStringLiteral("id: %1 (x%2)").arg(i->first).arg(i->second));
                 else
-                    item->setText(QStringLiteral("id: %1").arg(i.key()));
+                    item->setText(QStringLiteral("id: %1").arg(i->first));
             }
             ui->inventory->addItem(item);
         }
+        ++i;
     }
 }
 
@@ -502,7 +502,7 @@ void BaseWindow::setEvents(const QList<QPair<uint8_t,uint8_t> > &events)
             break;
         }
         while(this->events.size()<=event.first)
-            this->events << 0;
+            this->events.push_back(0);
         this->events[event.first]=event.second;
         index++;
     }
@@ -514,12 +514,12 @@ void BaseWindow::load_event()
     if(isLogged && datapackIsParsed && haveCharacterPosition)
     {
         while((uint32_t)events.size()<CatchChallenger::CommonDatapack::commonDatapack.events.size())
-            events << 0;
+            events.push_back(0);
     }
     if((uint32_t)events.size()>CatchChallenger::CommonDatapack::commonDatapack.events.size())
     {
         while((uint32_t)events.size()>CatchChallenger::CommonDatapack::commonDatapack.events.size())
-            events.removeLast();
+            events.pop_back();
         emit error("BaseWindow::load_event() event list biger than it should");
     }
 }
@@ -603,8 +603,8 @@ void BaseWindow::updateConnectingStatus()
     if(waitedData.isEmpty())
     {
         Player_private_and_public_informations player_private_and_public_informations=CatchChallenger::Api_client_real::client->get_player_informations();
-        itemOnMap=stdunorderedsetToQSet(player_private_and_public_informations.itemOnMap);
-        plantOnMap=stdmapToQHash(player_private_and_public_informations.plantOnMap);
+        itemOnMap=player_private_and_public_informations.itemOnMap;
+        plantOnMap=player_private_and_public_informations.plantOnMap;
         warehouse_playerMonster=stdvectorToQList(player_private_and_public_informations.warehouse_playerMonster);
         MapController::mapController->setBotsAlreadyBeaten(stdunorderedsetToQSet(player_private_and_public_informations.bot_already_beaten));
         MapController::mapController->setInformations(&items,&quests,&events,&itemOnMap,&plantOnMap);
@@ -854,31 +854,32 @@ void BaseWindow::updateDisplayedQuests()
     QString html=QStringLiteral("<ul>");
     ui->questsList->clear();
     quests_to_id_graphical.clear();
-    QHashIterator<uint16_t, PlayerQuest> i(quests);
-    while (i.hasNext()) {
-        i.next();
-        if(DatapackClientLoader::datapackLoader.questsExtra.contains(i.key()))
+    auto i=quests.begin();
+    while(i!=quests.cend())
+    {
+        if(DatapackClientLoader::datapackLoader.questsExtra.contains(i->first))
         {
-            if(i.value().step>0)
+            if(i->second.step>0)
             {
-                QListWidgetItem * item=new QListWidgetItem(DatapackClientLoader::datapackLoader.questsExtra.value(i.key()).name);
-                quests_to_id_graphical[item]=i.key();
+                QListWidgetItem * item=new QListWidgetItem(DatapackClientLoader::datapackLoader.questsExtra.value(i->first).name);
+                quests_to_id_graphical[item]=i->first;
                 ui->questsList->addItem(item);
             }
-            if(i.value().step==0 || i.value().finish_one_time)
+            if(i->second.step==0 || i->second.finish_one_time)
             {
                 #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
                 html+=QStringLiteral("<li>");
-                if(CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(i.key()).repeatable)
+                if(CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(i->first).repeatable)
                     html+=imagesInterfaceRepeatableString;
-                if(i.value().step>0)
+                if(i->second.step>0)
                     html+=imagesInterfaceInProgressString;
-                html+=DatapackClientLoader::datapackLoader.questsExtra.value(i.key()).name+QStringLiteral("</li>");
+                html+=DatapackClientLoader::datapackLoader.questsExtra.value(i->first).name+QStringLiteral("</li>");
                 #else
-                html+=QStringLiteral("<li>")+DatapackClientLoader::datapackLoader.questsExtra.value(i.key()).name+QStringLiteral("</li>");
+                html+=QStringLiteral("<li>")+DatapackClientLoader::datapackLoader.questsExtra.value(i->first).name+QStringLiteral("</li>");
                 #endif
             }
         }
+        ++i;
     }
     html+=QStringLiteral("</ul>");
     if(html==QStringLiteral("<ul></ul>"))
@@ -902,22 +903,22 @@ void BaseWindow::on_questsList_itemSelectionChanged()
         return;
     }
     uint32_t questId=quests_to_id_graphical.value(items.first());
-    if(!quests.contains(questId))
+    if(quests.find(questId)==quests.cend())
     {
         qDebug() << "Selected quest is not into the player list";
         ui->questDetails->setText(tr("Select a quest"));
         return;
     }
-    if(quests.value(questId).step==0 || quests.value(questId).step>DatapackClientLoader::datapackLoader.questsExtra.value(questId).steps.size())
+    if(quests.at(questId).step==0 || quests.at(questId).step>DatapackClientLoader::datapackLoader.questsExtra.value(questId).steps.size())
     {
         qDebug() << "Selected quest step is out of range";
         ui->questDetails->setText(tr("Select a quest"));
         return;
     }
-    const QString &stepDescription=DatapackClientLoader::datapackLoader.questsExtra.value(questId).steps.value(quests.value(questId).step-1)+"<br />";
+    const QString &stepDescription=DatapackClientLoader::datapackLoader.questsExtra.value(questId).steps.value(quests.at(questId).step-1)+"<br />";
     QString stepRequirements;
     {
-        std::vector<Quest::Item> items=CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).steps.at(quests.value(questId).step-1).requirements.items;
+        std::vector<Quest::Item> items=CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).steps.at(quests.at(questId).step-1).requirements.items;
         QStringList objects;
         unsigned int index=0;
         while(index<items.size())
@@ -1077,19 +1078,20 @@ void BaseWindow::updateTheWareHouseContent()
     //inventory
     {
         ui->warehousePlayerInventory->clear();
-        QHashIterator<uint16_t,uint32_t> i(items);
-        while (i.hasNext()) {
-            i.next();
-            int64_t quantity=i.value();
-            if(change_warehouse_items.contains(i.key()))
-                quantity+=change_warehouse_items.value(i.key());
+        auto i=items.begin();
+        while(i!=items.cend())
+        {
+            int64_t quantity=i->second;
+            if(change_warehouse_items.contains(i->first))
+                quantity+=change_warehouse_items.value(i->first);
             if(quantity>0)
-                ui->warehousePlayerInventory->addItem(itemToGraphic(i.key(),quantity));
+                ui->warehousePlayerInventory->addItem(itemToGraphic(i->first,quantity));
+            ++i;
         }
         QHashIterator<uint16_t,int32_t> j(change_warehouse_items);
         while (j.hasNext()) {
             j.next();
-            if(!items.contains(j.key()) && j.value()>0)
+            if(items.find(j.key())==items.cend() && j.value()>0)
                 ui->warehousePlayerInventory->addItem(itemToGraphic(j.key(),j.value()));
         }
     }
@@ -1099,19 +1101,20 @@ void BaseWindow::updateTheWareHouseContent()
     //inventory warehouse
     {
         ui->warehousePlayerStoredInventory->clear();
-        QHashIterator<uint16_t,uint32_t> i(warehouse_items);
-        while (i.hasNext()) {
-            i.next();
-            int64_t quantity=i.value();
-            if(change_warehouse_items.contains(i.key()))
-                quantity-=change_warehouse_items.value(i.key());
+        auto i=warehouse_items.begin();
+        while(i!=warehouse_items.cend())
+        {
+            int64_t quantity=i->second;
+            if(change_warehouse_items.contains(i->first))
+                quantity-=change_warehouse_items.value(i->first);
             if(quantity>0)
-                ui->warehousePlayerStoredInventory->addItem(itemToGraphic(i.key(),quantity));
+                ui->warehousePlayerStoredInventory->addItem(itemToGraphic(i->first,quantity));
+            ++i;
         }
         QHashIterator<uint16_t,int32_t> j(change_warehouse_items);
         while (j.hasNext()) {
             j.next();
-            if(!warehouse_items.contains(j.key()) && j.value()<0)
+            if(warehouse_items.find(j.key())==warehouse_items.cend() && j.value()<0)
                 ui->warehousePlayerStoredInventory->addItem(itemToGraphic(j.key(),-j.value()));
         }
     }

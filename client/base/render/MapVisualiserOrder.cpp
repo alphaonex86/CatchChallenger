@@ -1,4 +1,5 @@
 #include "MapVisualiserOrder.h"
+#include <QDebug>
 
 QString MapVisualiserOrder::text_blockedtext=QLatin1Literal("blockedtext");
 QString MapVisualiserOrder::text_en=QLatin1Literal("en");
@@ -203,7 +204,7 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(MapVisualiserOrder::Map_f
             }
             if(index<0)
             {
-                qDebug() << QStringLiteral("Unable to locate the \"Collisions\" layer on the map: %1").arg(tempMapObject->logicalMap.map_file);
+                qDebug() << QStringLiteral("Unable to locate the \"Collisions\" layer on the map: %1").arg(QString::fromStdString(tempMapObject->logicalMap.map_file));
                 tempMapObject->tiledMap->addLayer(tempMapObject->objectGroup);
             }
         }

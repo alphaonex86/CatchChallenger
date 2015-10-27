@@ -214,7 +214,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
             dictionary_reputation_database_to_internal[lastId]=index;
             CommonDatapack::commonDatapack.reputation[index].reverse_database_id=lastId;
             #else
-            qDebug() << std::stringLiteral("Dictionary reputation mismatch (abort)");
+            std::cerr << "Dictionary reputation mismatch (abort)" << std::endl;
             abort();
             #endif
         }
@@ -318,7 +318,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
             dictionary_skin_database_to_internal.push_back(i->second);
             dictionary_skin_internal_to_database[i->second]=lastId;
             #else
-            qDebug() << std::stringLiteral("Dictionary skin mismatch (abort)");
+            std::cerr << "Dictionary skin mismatch (abort)" << std::endl;
             abort();
             #endif
         }
@@ -432,7 +432,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
             dictionary_starter_database_to_internal.push_back(index);
             dictionary_starter_internal_to_database[index]=lastId;
             #else
-            qDebug() << std::stringLiteral("Dictionary starter mismatch (abort)");
+            std::cerr << "Dictionary starter mismatch (abort)" << std::endl;
             abort();
             #endif
         }

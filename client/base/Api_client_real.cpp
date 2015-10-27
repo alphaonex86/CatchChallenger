@@ -22,8 +22,8 @@ using namespace CatchChallenger;
 QString Api_client_real::text_slash=QLatin1Literal("/");
 QString Api_client_real::text_dotcoma=QLatin1Literal(";");
 QRegularExpression Api_client_real::regex_DATAPACK_FILE_REGEX=QRegularExpression(DATAPACK_FILE_REGEX);
-QRegularExpression Api_client_real::excludePathBase("^map[/\\\\]main[/\\\\]");
-QRegularExpression Api_client_real::excludePathMain("^sub[/\\\\]");
+std::regex Api_client_real::excludePathBase("^map[/\\\\]main[/\\\\]");
+std::regex Api_client_real::excludePathMain("^sub[/\\\\]");
 
 Api_client_real::Api_client_real(ConnectedSocket *socket,bool tolerantMode) :
     Api_protocol(socket,tolerantMode),
@@ -72,12 +72,12 @@ Api_client_real::~Api_client_real()
     }
 }
 
-void Api_client_real::parseFullReplyData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
+bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
-    return parseFullReplyData(mainCodeType,subCodeType,queryNumber,QByteArray(data,size));
+    return Api_client_real::parseReplyData(mainCodeType,queryNumber,QByteArray(data,size));
 }
 
-void Api_client_real::parseFullReplyData(const uint8_t &mainCodeType,const uint8_t &subCodeType,const uint8_t &queryNumber,const QByteArray &data)
+bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const QByteArray &data)
 {
     if(querySendTime.contains(queryNumber))
     {
@@ -88,199 +88,185 @@ void Api_client_real::parseFullReplyData(const uint8_t &mainCodeType,const uint8
     in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
     switch(mainCodeType)
     {
-        case 0x02:
+        case 0xA1:
         {
-            //local the query number to get the type
-            switch(subCodeType)
+            switch(datapackStatus)
             {
-                //Send datapack file list
-                case 0x0C:
+                case DatapackStatus::Base:
+                {
+                    if(datapackFilesListBase.empty() && data.size()==1)
                     {
-                        switch(datapackStatus)
-                        {
-                            case DatapackStatus::Base:
-                            {
-                                if(datapackFilesListBase.isEmpty() && data.size()==1)
-                                {
-                                    if(!httpModeBase)
-                                        haveTheDatapack();
-                                    return;
-                                }
-                                QList<bool> boolList;
-                                while((in.device()->size()-in.device()->pos())>0)
-                                {
-                                    uint8_t returnCode;
-                                    in >> returnCode;
-                                    boolList.append(returnCode&0x01);
-                                    boolList.append(returnCode&0x02);
-                                    boolList.append(returnCode&0x04);
-                                    boolList.append(returnCode&0x08);
-                                    boolList.append(returnCode&0x10);
-                                    boolList.append(returnCode&0x20);
-                                    boolList.append(returnCode&0x40);
-                                    boolList.append(returnCode&0x80);
-                                }
-                                if(boolList.size()<datapackFilesListBase.size())
-                                {
-                                    newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too small with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
-                                    return;
-                                }
-                                int index=0;
-                                while(index<datapackFilesListBase.size())
-                                {
-                                    if(boolList.first())
-                                    {
-                                        qDebug() << (QStringLiteral("remove the file: %1").arg(mDatapackBase+text_slash+datapackFilesListBase.at(index)));
-                                        QFile file(mDatapackBase+text_slash+datapackFilesListBase.at(index));
-                                        if(!file.remove())
-                                            qDebug() << (QStringLiteral("unable to remove the file: %1: %2").arg(datapackFilesListBase.at(index)).arg(file.errorString()));
-                                        //removeFile(datapackFilesListBase.at(index));
-                                    }
-                                    boolList.removeFirst();
-                                    index++;
-                                }
-                                datapackFilesListBase.clear();
-                                cleanDatapackBase(QString());
-                                if(boolList.size()>=8)
-                                {
-                                    newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too big with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
-                                    return;
-                                }
-                                if(!httpModeBase)
-                                    haveTheDatapack();
-                                datapackStatus=DatapackStatus::Main;
-                            }
-                            break;
-                            case DatapackStatus::Main:
-                            {
-                                if(datapackFilesListMain.isEmpty() && data.size()==1)
-                                {
-                                    if(!httpModeMain)
-                                        checkIfContinueOrFinished();
-                                    return;
-                                }
-                                QList<bool> boolList;
-                                while((in.device()->size()-in.device()->pos())>0)
-                                {
-                                    uint8_t returnCode;
-                                    in >> returnCode;
-                                    boolList.append(returnCode&0x01);
-                                    boolList.append(returnCode&0x02);
-                                    boolList.append(returnCode&0x04);
-                                    boolList.append(returnCode&0x08);
-                                    boolList.append(returnCode&0x10);
-                                    boolList.append(returnCode&0x20);
-                                    boolList.append(returnCode&0x40);
-                                    boolList.append(returnCode&0x80);
-                                }
-                                if(boolList.size()<datapackFilesListMain.size())
-                                {
-                                    newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too small with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
-                                    return;
-                                }
-                                int index=0;
-                                while(index<datapackFilesListMain.size())
-                                {
-                                    if(boolList.first())
-                                    {
-                                        qDebug() << (QStringLiteral("remove the file: %1").arg(mDatapackMain+text_slash+datapackFilesListMain.at(index)));
-                                        QFile file(mDatapackMain+text_slash+datapackFilesListMain.at(index));
-                                        if(!file.remove())
-                                            qDebug() << (QStringLiteral("unable to remove the file: %1: %2").arg(datapackFilesListMain.at(index)).arg(file.errorString()));
-                                        //removeFile(datapackFilesListMain.at(index));
-                                    }
-                                    boolList.removeFirst();
-                                    index++;
-                                }
-                                datapackFilesListMain.clear();
-                                cleanDatapackMain(QString());
-                                if(boolList.size()>=8)
-                                {
-                                    newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too big with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
-                                    return;
-                                }
-                                if(!httpModeMain)
-                                    checkIfContinueOrFinished();
-                                datapackStatus=DatapackStatus::Sub;
-                            }
-                            break;
-                            case DatapackStatus::Sub:
-                            {
-                                if(datapackFilesListSub.isEmpty() && data.size()==1)
-                                {
-                                    if(!httpModeSub)
-                                        datapackDownloadFinishedSub();
-                                    return;
-                                }
-                                QList<bool> boolList;
-                                while((in.device()->size()-in.device()->pos())>0)
-                                {
-                                    uint8_t returnCode;
-                                    in >> returnCode;
-                                    boolList.append(returnCode&0x01);
-                                    boolList.append(returnCode&0x02);
-                                    boolList.append(returnCode&0x04);
-                                    boolList.append(returnCode&0x08);
-                                    boolList.append(returnCode&0x10);
-                                    boolList.append(returnCode&0x20);
-                                    boolList.append(returnCode&0x40);
-                                    boolList.append(returnCode&0x80);
-                                }
-                                if(boolList.size()<datapackFilesListSub.size())
-                                {
-                                    newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too small with sub ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
-                                    return;
-                                }
-                                int index=0;
-                                while(index<datapackFilesListSub.size())
-                                {
-                                    if(boolList.first())
-                                    {
-                                        qDebug() << (QStringLiteral("remove the file: %1").arg(mDatapackSub+text_slash+datapackFilesListSub.at(index)));
-                                        QFile file(mDatapackSub+text_slash+datapackFilesListSub.at(index));
-                                        if(!file.remove())
-                                            qDebug() << (QStringLiteral("unable to remove the file: %1: %2").arg(datapackFilesListSub.at(index)).arg(file.errorString()));
-                                        //removeFile(datapackFilesListSub.at(index));
-                                    }
-                                    boolList.removeFirst();
-                                    index++;
-                                }
-                                datapackFilesListSub.clear();
-                                cleanDatapackSub(QString());
-                                if(boolList.size()>=8)
-                                {
-                                    newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too big with sub ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
-                                    return;
-                                }
-                                if(!httpModeSub)
-                                    datapackDownloadFinishedSub();
-                                datapackStatus=DatapackStatus::Finished;
-                            }
-                            break;
-                            default:
-                            return;
-                        }
+                        if(!httpModeBase)
+                            haveTheDatapack();
+                        return true;
                     }
-                    return;
+                    QList<bool> boolList;
+                    while((in.device()->size()-in.device()->pos())>0)
+                    {
+                        uint8_t returnCode;
+                        in >> returnCode;
+                        boolList.append(returnCode&0x01);
+                        boolList.append(returnCode&0x02);
+                        boolList.append(returnCode&0x04);
+                        boolList.append(returnCode&0x08);
+                        boolList.append(returnCode&0x10);
+                        boolList.append(returnCode&0x20);
+                        boolList.append(returnCode&0x40);
+                        boolList.append(returnCode&0x80);
+                    }
+                    if((uint32_t)boolList.size()<datapackFilesListBase.size())
+                    {
+                        newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too small with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg("X").arg(queryNumber));
+                        return false;
+                    }
+                    unsigned int index=0;
+                    while(index<datapackFilesListBase.size())
+                    {
+                        if(boolList.first())
+                        {
+                            qDebug() << (QStringLiteral("remove the file: %1").arg(mDatapackBase+text_slash+QString::fromStdString(datapackFilesListBase.at(index))));
+                            QFile file(mDatapackBase+text_slash+QString::fromStdString(datapackFilesListBase.at(index)));
+                            if(!file.remove())
+                                qDebug() << (QStringLiteral("unable to remove the file: %1: %2").arg(QString::fromStdString(datapackFilesListBase.at(index))).arg(file.errorString()));
+                            //removeFile(datapackFilesListBase.at(index));
+                        }
+                        boolList.removeFirst();
+                        index++;
+                    }
+                    datapackFilesListBase.clear();
+                    cleanDatapackBase();
+                    if(boolList.size()>=8)
+                    {
+                        newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too big with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg("X").arg(queryNumber));
+                        return false;
+                    }
+                    if(!httpModeBase)
+                        haveTheDatapack();
+                    datapackStatus=DatapackStatus::Main;
+                }
+                break;
+                case DatapackStatus::Main:
+                {
+                    if(datapackFilesListMain.empty() && data.size()==1)
+                    {
+                        if(!httpModeMain)
+                            checkIfContinueOrFinished();
+                        return false;
+                    }
+                    QList<bool> boolList;
+                    while((in.device()->size()-in.device()->pos())>0)
+                    {
+                        uint8_t returnCode;
+                        in >> returnCode;
+                        boolList.append(returnCode&0x01);
+                        boolList.append(returnCode&0x02);
+                        boolList.append(returnCode&0x04);
+                        boolList.append(returnCode&0x08);
+                        boolList.append(returnCode&0x10);
+                        boolList.append(returnCode&0x20);
+                        boolList.append(returnCode&0x40);
+                        boolList.append(returnCode&0x80);
+                    }
+                    if((uint32_t)boolList.size()<datapackFilesListMain.size())
+                    {
+                        newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too small with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg("X").arg(queryNumber));
+                        return false;
+                    }
+                    unsigned int index=0;
+                    while(index<datapackFilesListMain.size())
+                    {
+                        if(boolList.first())
+                        {
+                            qDebug() << (QStringLiteral("remove the file: %1").arg(mDatapackMain+text_slash+QString::fromStdString(datapackFilesListMain.at(index))));
+                            QFile file(mDatapackMain+text_slash+QString::fromStdString(datapackFilesListMain.at(index)));
+                            if(!file.remove())
+                                qDebug() << (QStringLiteral("unable to remove the file: %1: %2").arg(QString::fromStdString(datapackFilesListMain.at(index))).arg(file.errorString()));
+                            //removeFile(datapackFilesListMain.at(index));
+                        }
+                        boolList.removeFirst();
+                        index++;
+                    }
+                    datapackFilesListMain.clear();
+                    cleanDatapackMain();
+                    if(boolList.size()>=8)
+                    {
+                        newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too big with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg("X").arg(queryNumber));
+                        return false;
+                    }
+                    if(!httpModeMain)
+                        checkIfContinueOrFinished();
+                    datapackStatus=DatapackStatus::Sub;
+                }
+                break;
+                case DatapackStatus::Sub:
+                {
+                    if(datapackFilesListSub.empty() && data.size()==1)
+                    {
+                        if(!httpModeSub)
+                            datapackDownloadFinishedSub();
+                        return true;
+                    }
+                    QList<bool> boolList;
+                    while((in.device()->size()-in.device()->pos())>0)
+                    {
+                        uint8_t returnCode;
+                        in >> returnCode;
+                        boolList.append(returnCode&0x01);
+                        boolList.append(returnCode&0x02);
+                        boolList.append(returnCode&0x04);
+                        boolList.append(returnCode&0x08);
+                        boolList.append(returnCode&0x10);
+                        boolList.append(returnCode&0x20);
+                        boolList.append(returnCode&0x40);
+                        boolList.append(returnCode&0x80);
+                    }
+                    if((uint32_t)boolList.size()<datapackFilesListSub.size())
+                    {
+                        newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too small with sub ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg("X").arg(queryNumber));
+                        return false;
+                    }
+                    unsigned int index=0;
+                    while(index<datapackFilesListSub.size())
+                    {
+                        if(boolList.first())
+                        {
+                            qDebug() << (QStringLiteral("remove the file: %1").arg(mDatapackSub+text_slash+QString::fromStdString(datapackFilesListSub.at(index))));
+                            QFile file(mDatapackSub+text_slash+QString::fromStdString(datapackFilesListSub.at(index)));
+                            if(!file.remove())
+                                qDebug() << (QStringLiteral("unable to remove the file: %1: %2").arg(QString::fromStdString(datapackFilesListSub.at(index))).arg(file.errorString()));
+                            //removeFile(datapackFilesListSub.at(index));
+                        }
+                        boolList.removeFirst();
+                        index++;
+                    }
+                    datapackFilesListSub.clear();
+                    cleanDatapackSub();
+                    if(boolList.size()>=8)
+                    {
+                        newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too big with sub ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg("X").arg(queryNumber));
+                        return false;
+                    }
+                    if(!httpModeSub)
+                        datapackDownloadFinishedSub();
+                    datapackStatus=DatapackStatus::Finished;
+                }
                 break;
                 default:
-                    Api_protocol::parseFullReplyData(mainCodeType,subCodeType,queryNumber,data);
-                    return;
-                break;
+                return false;
             }
         }
-        break;
+        return true;
         default:
-            Api_protocol::parseFullReplyData(mainCodeType,subCodeType,queryNumber,data);
-            return;
+            return Api_protocol::parseReplyData(mainCodeType,queryNumber,data);
         break;
     }
     if((in.device()->size()-in.device()->pos())!=0)
     {
         QByteArray data_remaining=data.right(data.size()-in.device()->pos());
-        parseError(tr("Procotol wrong or corrupted"),QStringLiteral("error: remaining data: Api_client_real::parseReplyData(%1,%2,%3): %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data_remaining.toHex())));
-        return;
+        parseError(tr("Procotol wrong or corrupted"),QStringLiteral("error: remaining data: Api_client_real::parseReplyData(%1,%2,%3): %4").arg(mainCodeType).arg("X").arg(queryNumber).arg(QString(data_remaining.toHex())));
+        return false;
     }
+    return true;
 }
 
 //general data
@@ -317,7 +303,7 @@ void Api_client_real::tryConnect(QString host,uint16_t port)
     qDebug() << (QStringLiteral("Try connect on: %1:%2").arg(host).arg(port));
     this->host=host;
     this->port=port;
-    socket->connectToHost(host,port);
+    socket->connectToHost(QHostAddress(host),port);
 }
 
 void Api_client_real::disconnected()

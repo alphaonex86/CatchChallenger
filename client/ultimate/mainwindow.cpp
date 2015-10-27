@@ -26,6 +26,7 @@
 #include "../base/render/MapVisualiserPlayer.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/FacilityLibGeneral.h"
+#include "../../general/base/CommonSettingsCommon.h"
 #include "../base/LanguagesSelect.h"
 #include "../base/Api_client_real.h"
 #include "../base/Api_client_virtual.h"
@@ -1358,7 +1359,7 @@ void MainWindow::on_deleteDatapack_clicked()
     QMessageBox::StandardButton button=QMessageBox::question(this,tr("Are you sure?"),tr("Are you sure delete the datapack? This operation is not reversible."),QMessageBox::Yes|QMessageBox::No,QMessageBox::No);
     if(button!=QMessageBox::Yes)
         return;
-    if(!CatchChallenger::FacilityLibGeneral::rmpath(datapackPathList[selectedDatapack]))
+    if(!CatchChallenger::FacilityLibGeneral::rmpath(datapackPathList[selectedDatapack].toStdString()))
         QMessageBox::warning(this,tr("Error"),tr("Remove the datapack path is not completed. Try after restarting the application"));
     on_manageDatapack_clicked();
 }
@@ -1554,14 +1555,14 @@ void MainWindow::saveTime()
             if(metaData.status()==QSettings::NoError)
             {
                 QString locaction=CatchChallenger::BaseWindow::baseWindow->lastLocation();
-                const QString &mapPath=internalServer->getSettings().datapack_basePath+QStringLiteral(DATAPACK_BASE_PATH_MAPMAIN).arg(CommonSettingsServer::commonSettingsServer.mainDatapackCode);//internalServer->getSettings().mainDatapackCode
+                const QString &mapPath=QString::fromStdString(internalServer->getSettings().datapack_basePath)+QStringLiteral(DATAPACK_BASE_PATH_MAPMAIN).arg(QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode));//internalServer->getSettings().mainDatapackCode
                 if(locaction.startsWith(mapPath))
                     locaction.remove(0,mapPath.size());
                 if(!locaction.isEmpty())
                     metaData.setValue(QStringLiteral("location"),locaction);
                 uint64_t current_date_time=QDateTime::currentDateTimeUtc().toTime_t();
                 if(current_date_time>timeLaunched)
-                    metaData.setValue(QStringLiteral("time_played"),metaData.value(QStringLiteral("time_played")).toUInt()+(current_date_time-timeLaunched));
+                    metaData.setValue("time_played",metaData.value("time_played").toUInt()+(uint32_t)(current_date_time-timeLaunched));
                 settingOk=true;
             }
             else
@@ -1587,30 +1588,29 @@ void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
 
     formatedServerSettings.automatic_account_creation=true;
     formatedServerSettings.max_players=1;
-    formatedServerSettings.tolerantMode=false;
     formatedServerSettings.sendPlayerNumber = false;
     formatedServerSettings.compressionType=CatchChallenger::CompressionType_None;
 
     formatedServerSettings.database_login.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
-    formatedServerSettings.database_login.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
+    formatedServerSettings.database_login.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
     formatedServerSettings.database_common.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
-    formatedServerSettings.database_common.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
+    formatedServerSettings.database_common.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
     formatedServerSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
-    formatedServerSettings.database_server.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
+    formatedServerSettings.database_server.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
     formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_None;
-    formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->datapackPathBase();
+    formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->datapackPathBase().toStdString();
 
     {
-        CatchChallenger::GameServerSettings::ProgrammedEvent &event=formatedServerSettings.programmedEventList[QStringLiteral("day")][QStringLiteral("day")];
+        CatchChallenger::GameServerSettings::ProgrammedEvent &event=formatedServerSettings.programmedEventList["day"]["day"];
         event.cycle=60;
         event.offset=0;
-        event.value=QStringLiteral("day");
+        event.value="day";
     }
     {
-        CatchChallenger::GameServerSettings::ProgrammedEvent &event=formatedServerSettings.programmedEventList[QStringLiteral("day")][QStringLiteral("night")];
+        CatchChallenger::GameServerSettings::ProgrammedEvent &event=formatedServerSettings.programmedEventList["day"]["night"];
         event.cycle=60;
         event.offset=30;
-        event.value=QStringLiteral("night");
+        event.value="night";
     }
 
     internalServer->setSettings(formatedServerSettings);
