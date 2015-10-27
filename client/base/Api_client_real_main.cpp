@@ -166,13 +166,13 @@ void Api_client_real::httpFinishedMain()
         checkIfContinueOrFinished();
 }
 
-void Api_client_real::datapackChecksumDoneMain(const QStringList &datapackFilesList,const QByteArray &hash,const QList<uint32_t> &partialHashList)
+void Api_client_real::datapackChecksumDoneMain(const std::vector<std::string> &datapackFilesList,const std::vector<char> &hash,const std::vector<uint32_t> &partialHashList)
 {
-    if(datapackFilesListMain.size()!=partialHashList.size())
+    if((uint32_t)datapackFilesListMain.size()!=partialHashList.size())
     {
         qDebug() << "datapackFilesListMain.size()!=partialHash.size():" << datapackFilesListMain.size() << "!=" << partialHashList.size();
-        qDebug() << "datapackFilesListMain:" << datapackFilesListMain.join("\n");
-        qDebug() << "datapackFilesList:" << datapackFilesList.join("\n");
+        qDebug() << "datapackFilesListMain:" << QString::fromStdString(stringimplode(datapackFilesListMain,'\n'));
+        qDebug() << "datapackFilesList:" << QString::fromStdString(stringimplode(datapackFilesList,'\n'));
         abort();
     }
     {
@@ -195,7 +195,7 @@ void Api_client_real::datapackChecksumDoneMain(const QStringList &datapackFilesL
 
     this->datapackFilesListMain=datapackFilesList;
     this->partialHashListMain=partialHashList;
-    if(!datapackFilesListMain.isEmpty() && hash==CommonSettingsServer::commonSettingsServer.datapackHashServerMain)
+    if(!datapackFilesListMain.empty() && hash==CommonSettingsServer::commonSettingsServer.datapackHashServerMain)
     {
         qDebug() << "Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote";
         wait_datapack_content_main=false;
@@ -203,30 +203,30 @@ void Api_client_real::datapackChecksumDoneMain(const QStringList &datapackFilesL
         return;
     }
 
-    if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.isEmpty())
+    if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
     {
-        if(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.isEmpty())
+        if(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.empty())
         {
             qDebug() << "Datapack checksum done but not send by the server";
             return;//need CommonSettings::commonSettings.datapackHash send by the server
         }
-        qDebug() << "Datapack is empty or hash don't match, get from server, hash local: " << QString(hash.toHex()) << ", hash on server: " << QString(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.toHex());
+        qDebug() << "Datapack is empty or hash don't match, get from server, hash local: " << QString::fromStdString(binarytoHexa(hash)) << ", hash on server: " << QString::fromStdString(binarytoHexa(CommonSettingsServer::commonSettingsServer.datapackHashServerMain));
         uint8_t datapack_content_query_number=queryNumber();
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (uint8_t)DatapackStatus::Main;
         out << (uint32_t)datapackFilesListMain.size();
-        int index=0;
+        unsigned int index=0;
         while(index<datapackFilesListMain.size())
         {
-            const QByteArray &rawFileName=FacilityLibGeneral::toUTF8WithHeader(datapackFilesListMain.at(index));
-            if(rawFileName.size()>255 || rawFileName.isEmpty())
+            if(datapackFilesListBase.at(index).size()>254 || datapackFilesListMain.at(index).empty())
             {
                 qDebug() << (QStringLiteral("rawFileName too big or not compatible with utf8"));
                 return;
             }
-            outputData+=rawFileName;
+            out << (uint8_t)datapackFilesListMain.at(index).size();
+            outputData+=QByteArray(datapackFilesListMain.at(index).c_str(),datapackFilesListMain.at(index).size());
             out.device()->seek(out.device()->size());
 
             index++;
@@ -240,11 +240,11 @@ void Api_client_real::datapackChecksumDoneMain(const QStringList &datapackFilesL
 
             index++;
         }
-        packFullOutcommingQuery(0x02,0x0C,datapack_content_query_number,outputData.constData(),outputData.size());
+        packOutcommingQuery(0x0A1,datapack_content_query_number,outputData.constData(),outputData.size());
     }
     else
     {
-        if(datapackFilesListMain.isEmpty())
+        if(datapackFilesListMain.empty())
         {
             {
                 if(CommonSettingsServer::commonSettingsServer.mainDatapackCode=="[main]")
@@ -270,7 +270,13 @@ void Api_client_real::datapackChecksumDoneMain(const QStringList &datapackFilesL
         else
         {
             qDebug() << "Datapack don't match with server hash, get from mirror";
-            QNetworkRequest networkRequest(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+QStringLiteral("pack/diff/datapack-main-")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("-%1.tar.xz").arg(QString(hash.toHex())));
+            QNetworkRequest networkRequest(
+                        QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer)
+                        .split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+
+                        QStringLiteral("pack/diff/datapack-main-")+
+                        QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+
+                        QStringLiteral("-%1.tar.xz").arg(QString::fromStdString(binarytoHexa(hash)))
+                        );
             QNetworkReply *reply = qnam.get(networkRequest);
             connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListMain);
             connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackMain);
@@ -281,10 +287,11 @@ void Api_client_real::datapackChecksumDoneMain(const QStringList &datapackFilesL
 void Api_client_real::test_mirror_main()
 {
     QNetworkReply *reply;
-    const QStringList &httpDatapackMirrorList=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
+    const QStringList &httpDatapackMirrorList=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
     if(!datapackTarXzMain)
     {
-        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("pack/datapack-main-")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral(".tar.xz"));
+        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("pack/datapack-main-")+
+                                       QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+QStringLiteral(".tar.xz"));
         reply = qnam.get(networkRequest);
         if(reply->error()==QNetworkReply::NoError)
             connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListMain);//fix it, put httpFinished* broke it
@@ -295,7 +302,8 @@ void Api_client_real::test_mirror_main()
             /* here and not above because at last mirror you need try the tar.xz and after the datapack-list/main-XXXX.txt, and only after that's quit */
             return;
 
-        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("datapack-list/main-")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral(".txt"));
+        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("datapack-list/main-")+
+                                       QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+QStringLiteral(".txt"));
         reply = qnam.get(networkRequest);
         if(reply->error()==QNetworkReply::NoError)
             connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListMain);
@@ -319,25 +327,25 @@ void Api_client_real::decodedIsFinishMain()
         test_mirror_main();
     else
     {
-        const QByteArray &decodedData=xzDecodeThreadMain.decodedData();
+        const std::vector<char> &decodedData=xzDecodeThreadMain.decodedData();
         QTarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
             QSet<QString> extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(Api_client_real::text_dotcoma).toSet();
             QDir dir;
-            const QStringList &fileList=tarDecode.getFileList();
-            const QList<QByteArray> &dataList=tarDecode.getDataList();
-            int index=0;
+            const std::vector<std::string> &fileList=tarDecode.getFileList();
+            const std::vector<std::vector<char> > &dataList=tarDecode.getDataList();
+            unsigned int index=0;
             while(index<fileList.size())
             {
-                QFile file(mDatapackMain+fileList.at(index));
+                QFile file(mDatapackMain+QString::fromStdString(fileList.at(index)));
                 QFileInfo fileInfo(file);
                 dir.mkpath(fileInfo.absolutePath());
                 if(extensionAllowed.contains(fileInfo.suffix()))
                 {
                     if(file.open(QIODevice::Truncate|QIODevice::WriteOnly))
                     {
-                        file.write(dataList.at(index));
+                        file.write(dataList.at(index).data(),dataList.at(index).size());
                         file.close();
                     }
                     else
@@ -372,7 +380,7 @@ bool Api_client_real::mirrorTryNextMain()
     {
         datapackTarXzMain=false;
         index_mirror_main++;
-        if(index_mirror_main>=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).size())
+        if(index_mirror_main>=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).size())
         {
             newError(tr("Unable to download the datapack"),QStringLiteral("Get the list failed"));
             return false;
@@ -420,7 +428,11 @@ void Api_client_real::httpFinishedForDatapackListMain()
         {
             qDebug() << "datapack.tar.xz size:" << QString("%1KB").arg(reply->size()/1000);
             datapackTarXzMain=true;
-            xzDecodeThreadMain.setData(reply->readAll(),100*1024*1024);
+            QByteArray olddata=reply->readAll();
+            std::vector<char> newdata;
+            newdata.resize(olddata.size());
+            memcpy(newdata.data(),olddata.constData(),olddata.size());
+            xzDecodeThreadMain.setData(newdata,100*1024*1024);
             xzDecodeThreadMain.start(QThread::LowestPriority);
             return;
         }
@@ -430,7 +442,7 @@ void Api_client_real::httpFinishedForDatapackListMain()
             int fileToGet=0;
             httpError=false;
             const QStringList &content=QString::fromUtf8(reply->readAll()).split(QRegularExpression("[\n\r]+"));
-            int index=0;
+            unsigned int index=0;
             QRegularExpression splitReg("^(.*) (([0-9a-f][0-9a-f])+) ([0-9]+)$");
             QRegularExpression fileMatchReg(DATAPACK_FILE_REGEX);
             if(datapackFilesListMain.size()!=partialHashListMain.size())
@@ -439,9 +451,13 @@ void Api_client_real::httpFinishedForDatapackListMain()
                 abort();
                 return;
             }
-            /*ref crash here*/const QString selectedMirror=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+"map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/";
+            /*ref crash here*/const QString selectedMirror=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer)
+                    .split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+
+                    "map/main/"+
+                    QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)
+                    +"/";
             int correctContent=0;
-            while(index<content.size())
+            while(index<(uint32_t)content.size())
             {
                 if(content.at(index).contains(splitReg))
                 {
@@ -454,7 +470,7 @@ void Api_client_real::httpFinishedForDatapackListMain()
                     sizeString.replace(splitReg,"\\4");
                     if(fileString.contains(fileMatchReg))
                     {
-                        int indexInDatapackList=datapackFilesListMain.indexOf(fileString);
+                        int indexInDatapackList=vectorindexOf(datapackFilesListMain,fileString.toStdString());
                         if(indexInDatapackList!=-1)
                         {
                             const uint32_t &hashFileOnDisk=partialHashListMain.at(indexInDatapackList);
@@ -478,8 +494,8 @@ void Api_client_real::httpFinishedForDatapackListMain()
                             fileToGet++;
                             sizeToGet+=sizeString.toUInt();
                         }
-                        partialHashListMain.removeAt(indexInDatapackList);
-                        datapackFilesListMain.removeAt(indexInDatapackList);
+                        partialHashListMain.erase(partialHashListMain.begin()+indexInDatapackList);
+                        datapackFilesListMain.erase(datapackFilesListMain.begin()+indexInDatapackList);
                     }
                 }
                 index++;
@@ -487,9 +503,9 @@ void Api_client_real::httpFinishedForDatapackListMain()
             index=0;
             while(index<datapackFilesListMain.size())
             {
-                if(!QFile(mDatapackMain+datapackFilesListMain.at(index)).remove())
+                if(!QFile(mDatapackMain+QString::fromStdString(datapackFilesListMain.at(index))).remove())
                 {
-                    qDebug() << "Unable to remove" << datapackFilesListMain.at(index);
+                    qDebug() << "Unable to remove" << QString::fromStdString(datapackFilesListMain.at(index));
                     abort();
                 }
                 index++;
@@ -509,55 +525,58 @@ void Api_client_real::httpFinishedForDatapackListMain()
     }
 }
 
-const QStringList Api_client_real::listDatapackMain(QString suffix)
+const std::vector<std::string> Api_client_real::listDatapackMain(std::string suffix)
 {
-    if(suffix.contains(excludePathMain))
-        return QStringList();
+    if(std::regex_match(suffix,excludePathMain))
+        return std::vector<std::string>();
 
-    QStringList returnFile;
-    QDir finalDatapackFolder(mDatapackMain+suffix);
+    std::vector<std::string> returnFile;
+    QDir finalDatapackFolder(mDatapackMain+QString::fromStdString(suffix));
     QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
     int sizeEntryList=entryList.size();
     for(int index=0;index<sizeEntryList;++index)
     {
         QFileInfo fileInfo=entryList.at(index);
         if(fileInfo.isDir())
-            returnFile << listDatapackMain(suffix+fileInfo.fileName()+text_slash);//put unix separator because it's transformed into that's under windows too
+        {
+            const std::vector<std::string> &listToAdd=listDatapackMain(suffix+fileInfo.fileName().toStdString()+"/");
+            returnFile.insert(returnFile.end(),listToAdd.cbegin(),listToAdd.cend());//put unix separator because it's transformed into that's under windows too
+        }
         else
         {
             //if match with correct file name, considere as valid
-            if((suffix+fileInfo.fileName()).contains(Api_client_real::regex_DATAPACK_FILE_REGEX) && extensionAllowed.contains(fileInfo.suffix()))
-                returnFile << suffix+fileInfo.fileName();
+            if((QString::fromStdString(suffix)+fileInfo.fileName()).contains(Api_client_real::regex_DATAPACK_FILE_REGEX) && extensionAllowed.contains(fileInfo.suffix()))
+                returnFile.push_back(suffix+fileInfo.fileName().toStdString());
             //is invalid
             else
             {
-                qDebug() << (QStringLiteral("listDatapack(): remove invalid file: %1").arg(suffix+fileInfo.fileName()));
-                QFile file(mDatapackMain+suffix+fileInfo.fileName());
+                qDebug() << (QStringLiteral("listDatapack(): remove invalid file: %1").arg(QString::fromStdString(suffix)+fileInfo.fileName()));
+                QFile file(mDatapackMain+QString::fromStdString(suffix)+fileInfo.fileName());
                 if(!file.remove())
-                    qDebug() << (QStringLiteral("listDatapack(): unable remove invalid file: %1: %2").arg(suffix+fileInfo.fileName()).arg(file.errorString()));
+                    qDebug() << (QStringLiteral("listDatapack(): unable remove invalid file: %1: %2").arg(QString::fromStdString(suffix)+fileInfo.fileName()).arg(file.errorString()));
             }
         }
     }
-    returnFile.sort();
+    std::sort(returnFile.begin(),returnFile.end());
     return returnFile;
 }
 
-void Api_client_real::cleanDatapackMain(QString suffix)
+void Api_client_real::cleanDatapackMain(std::string suffix)
 {
-    QDir finalDatapackFolder(mDatapackMain+suffix);
+    QDir finalDatapackFolder(mDatapackMain+QString::fromStdString(suffix));
     QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
     int sizeEntryList=entryList.size();
     for (int index=0;index<sizeEntryList;++index)
     {
         QFileInfo fileInfo=entryList.at(index);
         if(fileInfo.isDir())
-            cleanDatapackMain(suffix+fileInfo.fileName()+text_slash);//put unix separator because it's transformed into that's under windows too
+            cleanDatapackMain(suffix+fileInfo.fileName().toStdString()+"/");//put unix separator because it's transformed into that's under windows too
         else
             return;
     }
     entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
     if(entryList.size()==0)
-        finalDatapackFolder.rmpath(mDatapackMain+suffix);
+        finalDatapackFolder.rmpath(mDatapackMain+QString::fromStdString(suffix));
 }
 
 void Api_client_real::datapackDownloadFinishedMain()
@@ -617,7 +636,7 @@ void Api_client_real::sendDatapackContentMain()
 
     //compute the mirror
     {
-        QStringList values=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
+        QStringList values=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
         {
             QString slash(QStringLiteral("/"));
             int index=0;
@@ -628,20 +647,20 @@ void Api_client_real::sendDatapackContentMain()
                 index++;
             }
         }
-        CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=values.join(Api_client_real::text_dotcoma);
+        CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=values.join(Api_client_real::text_dotcoma).toStdString();
     }
 
     datapackTarXzMain=false;
     wait_datapack_content_main=true;
-    datapackFilesListMain=listDatapackMain(QString());
-    datapackFilesListMain.sort();
-    emit doDifferedChecksumMain(mDatapackMain);
+    datapackFilesListMain=listDatapackMain();
+    std::sort(datapackFilesListMain.begin(),datapackFilesListMain.end());
+    emit doDifferedChecksumMain(mDatapackMain.toStdString());
 }
 
 void Api_client_real::checkIfContinueOrFinished()
 {
     wait_datapack_content_main=false;
-    if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+    if(CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
     {
         datapackStatus=DatapackStatus::Finished;
         haveTheDatapackMainSub();

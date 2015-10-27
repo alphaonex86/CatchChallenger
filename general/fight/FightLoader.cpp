@@ -93,8 +93,8 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
     QDomDocument domDocument;
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
-        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
     else
     {
         #endif
@@ -261,8 +261,8 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
         QDomDocument domDocument;
         //open and quick check the file
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
-            domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+        if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+            domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
         else
         {
             #endif
@@ -973,8 +973,8 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
             QDomDocument domDocument;
             //open and quick check the file
             #ifndef EPOLLCATCHCHALLENGERSERVER
-            if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
-                domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+            if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+                domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
             else
             {
                 #endif
@@ -1235,8 +1235,8 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
         QDomDocument domDocument;
         //open and quick check the file
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
-            domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+        if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+            domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
         else
         {
             #endif
@@ -1601,8 +1601,8 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
         QDomDocument domDocument;
         //open and quick check the file
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
-            domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+        if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+            domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
         else
         {
             #endif

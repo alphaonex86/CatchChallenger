@@ -1540,7 +1540,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                 parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(packetCode).arg("X").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                 return false;
             }
-            QHash<CATCHCHALLENGER_TYPE_ITEM,uint32_t> items;
+            std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> items;
             uint16_t inventorySize,id;
             uint32_t quantity;
             in >> inventorySize;
@@ -1559,7 +1559,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                     return false;
                 }
                 in >> quantity;
-                if(items.contains(id))
+                if(items.find(id)!=items.cend())
                     items[id]+=quantity;
                 else
                     items[id]=quantity;
@@ -1570,7 +1570,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                 parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(packetCode).arg("X").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                 return false;
             }
-            QHash<uint16_t,uint32_t> warehouse_items;
+            std::unordered_map<uint16_t,uint32_t> warehouse_items;
             in >> inventorySize;
             index=0;
             while(index<inventorySize)
@@ -1587,7 +1587,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                     return false;
                 }
                 in >> quantity;
-                if(warehouse_items.contains(id))
+                if(warehouse_items.find(id)!=warehouse_items.cend())
                     warehouse_items[id]+=quantity;
                 else
                     warehouse_items[id]=quantity;

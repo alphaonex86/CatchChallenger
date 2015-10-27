@@ -29,18 +29,18 @@ class QtDatabase : public QObject, public CatchChallenger::DatabaseBase
 public:
     QtDatabase();
     ~QtDatabase();
-    bool syncConnect(const char * host, const char * dbname, const char * user, const char * password);
-    bool syncConnectMysql(const char * host, const char * dbname, const char * user, const char * password);
-    bool syncConnectSqlite(const char * file);
-    bool syncConnectPostgresql(const char * host, const char * dbname, const char * user, const char * password);
+    bool syncConnect(const std::string &host, const std::string &dbname, const std::string &user, const std::string &password);
+    bool syncConnectMysql(const std::string &host, const std::string &dbname, const std::string &user, const std::string &password);
+    bool syncConnectSqlite(const std::string &file);
+    bool syncConnectPostgresql(const std::string &host, const std::string &dbname, const std::string &user, const std::string &password);
     void syncDisconnect();
-    CallBack * asyncRead(const char *query,void * returnObject,CallBackDatabase method);
-    bool asyncWrite(const char *query);
+    CallBack * asyncRead(const std::string &query,void * returnObject,CallBackDatabase method);
+    bool asyncWrite(const std::string &query);
     bool readyToRead();
     void clear();
-    const char * errorMessage() const;
+    const std::string errorMessage() const;
     bool next();
-    const char * value(const int &value) const;
+    const std::string value(const int &value) const;
     bool isConnected() const;
     void receiveReply(const QSqlQuery &queryReturn);
     DatabaseBase::DatabaseType databaseType() const;
@@ -56,7 +56,6 @@ private:
     std::string lastErrorMessage;
     std::vector<CallBack> queue;
     std::vector<std::string> queriesList;
-    static std::vector<char> valueReturnedData;
     DatabaseBase::DatabaseType databaseConnected;
 };
 
