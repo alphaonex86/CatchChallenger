@@ -98,7 +98,7 @@ BaseServer::BaseServer() :
     #endif
 
     GlobalServerData::serverPrivateVariables.botSpawnIndex          = 0;
-    GlobalServerData::serverPrivateVariables.datapack_rightFileName	= std::regex(DATAPACK_FILE_REGEX);
+    GlobalServerData::serverPrivateVariables.datapack_rightFileName	= std::regex(DATAPACK_FILE_REGEX,std::regex_constants::optimize);
     GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove=NULL;
 
     GlobalServerData::serverSettings.automatic_account_creation             = false;
@@ -109,7 +109,7 @@ BaseServer::BaseServer() :
 
     GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm       = CatchChallenger::MapVisibilityAlgorithmSelection_None;
     GlobalServerData::serverSettings.datapackCache                              = -1;
-    GlobalServerData::serverSettings.datapack_basePath                          = (QCoreApplication::applicationDirPath()+QLatin1String("/datapack/")).toStdString();
+    GlobalServerData::serverSettings.datapack_basePath                          = (QCoreApplication::applicationDirPath()+"/datapack/").toStdString();
     GlobalServerData::serverSettings.compressionType                            = CompressionType_Zlib;
     GlobalServerData::serverSettings.dontSendPlayerType                         = false;
     CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange = true;
@@ -179,7 +179,15 @@ BaseServer::BaseServer() :
     GlobalServerData::serverPrivateVariables.maxAccountId=0;
     GlobalServerData::serverPrivateVariables.maxCharacterId=0;
     GlobalServerData::serverPrivateVariables.maxMonsterId=1;
+    GlobalServerData::serverSettings.database_login.tryInterval=5;
+    GlobalServerData::serverSettings.database_login.considerDownAfterNumberOfTry=3;
     #endif
+    GlobalServerData::serverSettings.database_base.tryInterval=5;
+    GlobalServerData::serverSettings.database_base.considerDownAfterNumberOfTry=3;
+    GlobalServerData::serverSettings.database_common.tryInterval=5;
+    GlobalServerData::serverSettings.database_common.considerDownAfterNumberOfTry=3;
+    GlobalServerData::serverSettings.database_server.tryInterval=5;
+    GlobalServerData::serverSettings.database_server.considerDownAfterNumberOfTry=3;
 
 
     initAll();
@@ -716,7 +724,7 @@ void BaseServer::loadAndFixSettings()
         std::cerr << "mainDatapackCode is empty, please put it into the settings" << std::endl;
         abort();
     }
-    if(!std::regex_match(CommonSettingsServer::commonSettingsServer.mainDatapackCode, std::regex(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE)))
+    if(!regex_search(CommonSettingsServer::commonSettingsServer.mainDatapackCode, std::regex(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE)))
     {
         std::cerr << "CommonSettingsServer::commonSettingsServer.mainDatapackCode not match CATCHCHALLENGER_CHECK_MAINDATAPACKCODE "
                   << CommonSettingsServer::commonSettingsServer.mainDatapackCode
@@ -724,11 +732,11 @@ void BaseServer::loadAndFixSettings()
                   << CATCHCHALLENGER_CHECK_MAINDATAPACKCODE << std::endl;
         abort();
     }
-    if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.size()==0)
+    if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
     {
-        if(!std::regex_match(CommonSettingsServer::commonSettingsServer.subDatapackCode,std::regex(CATCHCHALLENGER_CHECK_SUBDATAPACKCODE)))
+        if(!regex_search(CommonSettingsServer::commonSettingsServer.subDatapackCode,std::regex(CATCHCHALLENGER_CHECK_SUBDATAPACKCODE)))
         {
-            std::cerr << "CommonSettingsServer::commonSettingsServer.subDatapackCode not match CATCHCHALLENGER_CHECK_SUBDATAPACKCODE" << std::endl;
+            std::cerr << "CommonSettingsServer::commonSettingsServer.subDatapackCode " << CommonSettingsServer::commonSettingsServer.subDatapackCode << " not match " << CATCHCHALLENGER_CHECK_SUBDATAPACKCODE << std::endl;
             abort();
         }
     }
@@ -738,7 +746,7 @@ void BaseServer::loadAndFixSettings()
         std::cerr << mainDir << " don't exists" << std::endl;
         abort();
     }
-    if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.size()==0)
+    if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
     {
         const std::string &subDatapackFolder=GlobalServerData::serverSettings.datapack_basePath+std::string("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+std::string("/")+
                 std::string("sub/")+CommonSettingsServer::commonSettingsServer.subDatapackCode+std::string("/");
@@ -804,7 +812,7 @@ void BaseServer::loadAndFixSettings()
         while(index<mirrorList.size())
         {
             const std::string &mirror=mirrorList.at(index);
-            if(!std::regex_match(mirror,httpMatch))
+            if(!regex_search(mirror,httpMatch))
             {}//std::cerr << "Mirror wrong: " << mirror.toLocal8Bit() << std::endl; -> single player
             else
             {
@@ -962,7 +970,7 @@ void BaseServer::loadAndFixSettings()
         case CatchChallenger::DatabaseBase::DatabaseType::PostgreSQL:
         break;
         default:
-            std::cerr << "Wrong db type" << std::endl;
+            std::cerr << "Wrong db type, line: " << __LINE__ << std::endl;
             GlobalServerData::serverSettings.database_login.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Mysql;
         break;
     }
@@ -974,7 +982,7 @@ void BaseServer::loadAndFixSettings()
         case CatchChallenger::DatabaseBase::DatabaseType::PostgreSQL:
         break;
         default:
-            std::cerr << "Wrong db type" << std::endl;
+            std::cerr << "Wrong db type, line: " << __LINE__ << std::endl;
             GlobalServerData::serverSettings.database_base.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Mysql;
         break;
     }
@@ -985,7 +993,7 @@ void BaseServer::loadAndFixSettings()
         case CatchChallenger::DatabaseBase::DatabaseType::PostgreSQL:
         break;
         default:
-            std::cerr << "Wrong db type" << std::endl;
+            std::cerr << "Wrong db type, line: " << __LINE__ << std::endl;
             GlobalServerData::serverSettings.database_common.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Mysql;
         break;
     }
@@ -996,7 +1004,7 @@ void BaseServer::loadAndFixSettings()
         case CatchChallenger::DatabaseBase::DatabaseType::PostgreSQL:
         break;
         default:
-            std::cerr << "Wrong db type" << std::endl;
+            std::cerr << "Wrong db type, line: " << __LINE__ << std::endl;
             GlobalServerData::serverSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Mysql;
         break;
     }

@@ -219,7 +219,7 @@ std::string EpollServerLoginSlave::httpMirrorFix(const std::string & mirrors)
     while(index<mirrorList.size())
     {
         const std::string &mirror=mirrorList.at(index);
-        if(!std::regex_match(mirror,httpMatch))
+        if(!regex_search(mirror,httpMatch))
         {
             std::cerr << "Mirror wrong: " << mirror << std::endl;
             //abort();//prevent the server crash/close the gateway

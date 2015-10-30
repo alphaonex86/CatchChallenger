@@ -149,7 +149,7 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
         //the player skin
         if(player.skinId<skinFolderList.size())
         {
-            playerSkinPath=datapackPath+MapControllerMP::text_DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId);
+            playerSkinPath=datapackPath+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId);
             const QString &imagePath=playerSkinPath+MapControllerMP::text_slashtrainerpng;
             QImage image(imagePath);
             if(!image.isNull())
@@ -249,17 +249,17 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
         //the player skin
         if(player.skinId<skinFolderList.size())
         {
-            QImage image(datapackPath+MapControllerMP::text_DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+MapControllerMP::text_slashtrainerpng);
+            QImage image(datapackPath+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+MapControllerMP::text_slashtrainerpng);
             if(!image.isNull())
             {
                 tempPlayer.playerMapObject = new Tiled::MapObject();
                 tempPlayer.playerMapObject->setName("Other player");
                 tempPlayer.playerTileset = new Tiled::Tileset(skinFolderList.at(player.skinId),16,24);
-                tempPlayer.playerTileset->loadFromImage(image,datapackPath+MapControllerMP::text_DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+MapControllerMP::text_slashtrainerpng);
+                tempPlayer.playerTileset->loadFromImage(image,datapackPath+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+MapControllerMP::text_slashtrainerpng);
             }
             else
             {
-                qDebug() << "Unable to load the player tilset: "+datapackPath+MapControllerMP::text_DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+MapControllerMP::text_slashtrainerpng;
+                qDebug() << "Unable to load the player tilset: "+datapackPath+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+MapControllerMP::text_slashtrainerpng;
                 return;
             }
         }
@@ -1076,7 +1076,7 @@ void MapControllerMP::datapackParsedMainSub()
 {
     MapVisualiserPlayer::datapackParsedMainSub();
 
-    skinFolderList=CatchChallenger::FacilityLibClient::stdvectorstringToQStringList(CatchChallenger::FacilityLibGeneral::skinIdList((datapackPath+MapControllerMP::text_DATAPACK_BASE_PATH_SKIN).toStdString()));
+    skinFolderList=CatchChallenger::FacilityLibClient::stdvectorstringToQStringList(CatchChallenger::FacilityLibGeneral::skinIdList((datapackPath+DATAPACK_BASE_PATH_SKIN).toStdString()));
 
     if(player_informations_is_set)
         reinject_signals();

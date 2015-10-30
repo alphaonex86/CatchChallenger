@@ -433,7 +433,7 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                 pos++;
                 if(fileNameSize>0)
                 {
-                    if((size-pos)<(int)fileNameSize)
+                    if((size-pos)<fileNameSize)
                     {
                         parseNetworkReadError("wrong size with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
                         return false;

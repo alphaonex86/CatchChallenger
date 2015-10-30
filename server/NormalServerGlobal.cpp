@@ -114,7 +114,7 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const std:
         {
             QFileInfo folder=fileInfoList.first();
             const std::string &string=folder.fileName().toStdString();
-            if(std::regex_match(string,std::regex("^[a-z0-9\\- _]+$")))
+            if(regex_search(string,std::regex("^[a-z0-9\\- _]+$",std::regex_constants::optimize)))
                 settings->setValue("mainDatapackCode",QString::fromStdString(string));
         }
     }

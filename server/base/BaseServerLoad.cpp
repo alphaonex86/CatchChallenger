@@ -38,6 +38,7 @@ using namespace CatchChallenger;
 void BaseServer::preload_randomBlock()
 {
     //don't use BaseServerLogin::fpRandomFile to prevent lost entropy
+    GlobalServerData::serverPrivateVariables.randomData.resize(CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE);
     int index=0;
     while(index<CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
     {
@@ -393,7 +394,7 @@ bool BaseServer::preload_zone_init()
             index++;
             continue;
         }
-        if(!std::regex_match(entryListZone.at(index).fileName().toStdString(),regexXmlFile))
+        if(!regex_search(entryListZone.at(index).fileName().toStdString(),regexXmlFile))
         {
             std::cerr << entryListZone.at(index).fileName().toStdString() << " the zone file name not match" << std::endl;
             index++;
@@ -469,7 +470,7 @@ bool BaseServer::preload_zone_init()
                     }
                     sub_index++;
                 }
-                if(sub_index==listsize && !fightIdList.size()==0)
+                if(sub_index==listsize && !fightIdList.empty())
                     GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity[zoneCodeName]=fightIdList;
                 break;
             }
@@ -902,7 +903,7 @@ bool BaseServer::preload_the_map()
         std::cerr << "No file map to list" << std::endl;
         abort();
     }
-    if(!semi_loaded_map.size()==0 || GlobalServerData::serverPrivateVariables.flat_map_list!=NULL)
+    if(!semi_loaded_map.empty() || GlobalServerData::serverPrivateVariables.flat_map_list!=NULL)
     {
         std::cerr << "preload_the_map() already call" << std::endl;
         abort();
@@ -919,7 +920,7 @@ bool BaseServer::preload_the_map()
     {
         std::string fileName=returnList.at(index);
         stringreplaceAll(fileName,BaseServer::text_antislash,BaseServer::text_slash);
-        if(std::regex_match(fileName,mapFilter) && !std::regex_match(fileName,mapExclude))
+        if(regex_search(fileName,mapFilter) && !regex_search(fileName,mapExclude))
         {
             #ifdef DEBUG_MESSAGE_MAP_LOAD
             std::cout << "load the map: " << fileName << std::endl;
@@ -997,7 +998,7 @@ bool BaseServer::preload_the_map()
             }
             else
                 std::cout << "error at loading: " << GlobalServerData::serverPrivateVariables.datapack_mapPath << fileName << ", error: " << map_temp.errorString()
-                          << "parsed due: " << "std::regex_match(" << fileName << ",\\.tmx$) && !std::regex_match("
+                          << "parsed due: " << "regex_search(" << fileName << ",\\.tmx$) && !regex_search("
                           << fileName << ",[\"'])"
                           << std::endl;
         }
@@ -1432,7 +1433,7 @@ void BaseServer::preload_the_datapack()
             std::cerr << "CommonSettingsServer::commonSettingsServer.mainDatapackCode.isEmpty" << std::endl;
             abort();
         }
-        if(!std::regex_match(CommonSettingsServer::commonSettingsServer.mainDatapackCode,std::regex(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE)))
+        if(!regex_search(CommonSettingsServer::commonSettingsServer.mainDatapackCode,std::regex(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE)))
         {
             std::cerr << "CommonSettingsServer::commonSettingsServer.mainDatapackCode not match CATCHCHALLENGER_CHECK_MAINDATAPACKCODE "
                       << CommonSettingsServer::commonSettingsServer.mainDatapackCode
@@ -1483,7 +1484,7 @@ void BaseServer::preload_the_datapack()
         unsigned int index=0;
         while(index<datapack_file_temp.size()) {
             QFile file(QString::fromStdString(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index)));
-            if(std::regex_match(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+            if(regex_search(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName))
             {
                 if(file.open(QIODevice::ReadOnly))
                 {
@@ -1495,23 +1496,26 @@ void BaseServer::preload_the_datapack()
 
                     if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
-                        if(BaseServerMasterSendDatapack::compressedExtension.find(QFileInfo(file).suffix().toStdString())!=BaseServerMasterSendDatapack::compressedExtension.end())
+                        if(GlobalServerData::serverSettings.max_players>1)//if not internal
                         {
-                            if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
+                            if(BaseServerMasterSendDatapack::compressedExtension.find(QFileInfo(file).suffix().toStdString())!=BaseServerMasterSendDatapack::compressedExtension.end())
                             {
-                                std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size, but can be compressed, try enable the compression" << std::endl;
+                                if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
+                                {
+                                    std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size, but can be compressed, try enable the compression" << std::endl;
+                                    abort();
+                                }
+                            }
+                            else
+                            {
+                                std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size" << std::endl;
                                 abort();
                             }
-                        }
-                        else
-                        {
-                            std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size" << std::endl;
-                            abort();
                         }
                     }
 
                     //switch the data to correct hash or drop it
-                    if(std::regex_match(datapack_file_temp.at(index),mainDatapackBaseFilter))
+                    if(regex_search(datapack_file_temp.at(index),mainDatapackBaseFilter))
                     {}
                     else
                     {
@@ -1552,7 +1556,7 @@ void BaseServer::preload_the_datapack()
         unsigned int index=0;
         while(index<datapack_file_temp.size()) {
             QFile file(QString::fromStdString(GlobalServerData::serverPrivateVariables.mainDatapackFolder+datapack_file_temp.at(index)));
-            if(std::regex_match(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+            if(regex_search(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName))
             {
                 if(file.open(QIODevice::ReadOnly))
                 {
@@ -1564,23 +1568,26 @@ void BaseServer::preload_the_datapack()
 
                     if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
-                        if(BaseServerMasterSendDatapack::compressedExtension.find(QFileInfo(file).suffix().toStdString())!=BaseServerMasterSendDatapack::compressedExtension.end())
+                        if(GlobalServerData::serverSettings.max_players>1)//if not internal
                         {
-                            if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
+                            if(BaseServerMasterSendDatapack::compressedExtension.find(QFileInfo(file).suffix().toStdString())!=BaseServerMasterSendDatapack::compressedExtension.end())
                             {
-                                std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size, but can be compressed, try enable the compression" << std::endl;
+                                if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
+                                {
+                                    std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size, but can be compressed, try enable the compression" << std::endl;
+                                    abort();
+                                }
+                            }
+                            else
+                            {
+                                std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size" << std::endl;
                                 abort();
                             }
-                        }
-                        else
-                        {
-                            std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size" << std::endl;
-                            abort();
                         }
                     }
 
                     //switch the data to correct hash or drop it
-                    if(std::regex_match(datapack_file_temp.at(index),mainDatapackFolderFilter))
+                    if(regex_search(datapack_file_temp.at(index),mainDatapackFolderFilter))
                     {
                     }
                     else
@@ -1619,7 +1626,7 @@ void BaseServer::preload_the_datapack()
         unsigned int index=0;
         while(index<datapack_file_temp.size()) {
             QFile file(QString::fromStdString(GlobalServerData::serverPrivateVariables.subDatapackFolder+datapack_file_temp.at(index)));
-            if(std::regex_match(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+            if(regex_search(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName))
             {
                 if(file.open(QIODevice::ReadOnly))
                 {
@@ -1631,18 +1638,21 @@ void BaseServer::preload_the_datapack()
 
                     if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
-                        if(BaseServerMasterSendDatapack::compressedExtension.find(QFileInfo(file).suffix().toStdString())!=BaseServerMasterSendDatapack::compressedExtension.end())
+                        if(GlobalServerData::serverSettings.max_players>1)//if not internal
                         {
-                            if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
+                            if(BaseServerMasterSendDatapack::compressedExtension.find(QFileInfo(file).suffix().toStdString())!=BaseServerMasterSendDatapack::compressedExtension.end())
                             {
-                                std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size, but can be compressed, try enable the compression" << std::endl;
+                                if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
+                                {
+                                    std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size, but can be compressed, try enable the compression" << std::endl;
+                                    abort();
+                                }
+                            }
+                            else
+                            {
+                                std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size" << std::endl;
                                 abort();
                             }
-                        }
-                        else
-                        {
-                            std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size" << std::endl;
-                            abort();
                         }
                     }
 

@@ -79,7 +79,7 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
     qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
-    qRegisterMetaType<CatchChallenger::Player_type>("QAbstractSocket::SocketState");
+    //qRegisterMetaType<QAbstractSocket::SocketState>("QAbstractSocket::SocketState");-> bug [Fatal] QMetaType::registerType: Binary compatibility break -- Size mismatch for type 'QAbstractSocket::SocketState' [1062]. Previously registered size 1, now registering size 4.
     qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("CatchChallenger::Player_private_and_public_informations");
     qRegisterMetaType<CatchChallenger::Player_public_informations>("CatchChallenger::Player_public_informations");
     qRegisterMetaType<CatchChallenger::Direction>("CatchChallenger::Direction");
@@ -1487,7 +1487,7 @@ void MainWindow::gameSolo_play(const QString &savegamesPath)
     connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged);
     CatchChallenger::BaseWindow::baseWindow->connectAllSignals();
     CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(false);
-    CatchChallenger::Api_client_real::client->setDatapackPath(QCoreApplication::applicationDirPath()+QStringLiteral("datapack/internal/"));
+    CatchChallenger::Api_client_real::client->setDatapackPath(QCoreApplication::applicationDirPath()+"/datapack/internal/");
     MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPathBase(),CatchChallenger::Api_client_real::client->mainDatapackCode());
     serverMode=ServerMode_Internal;
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
@@ -1504,7 +1504,8 @@ void MainWindow::gameSolo_play(const QString &savegamesPath)
     if(internalServer!=NULL)
         delete internalServer;
     internalServer=new CatchChallenger::InternalServer();
-    sendSettings(internalServer,savegamesPath);
+    if(!sendSettings(internalServer,savegamesPath))
+        return;
     connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&MainWindow::is_started,Qt::QueuedConnection);
     connect(internalServer,&CatchChallenger::InternalServer::error,this,&MainWindow::serverError,Qt::QueuedConnection);
     internalServer->start();
@@ -1555,7 +1556,7 @@ void MainWindow::saveTime()
             if(metaData.status()==QSettings::NoError)
             {
                 QString locaction=CatchChallenger::BaseWindow::baseWindow->lastLocation();
-                const QString &mapPath=QString::fromStdString(internalServer->getSettings().datapack_basePath)+QStringLiteral(DATAPACK_BASE_PATH_MAPMAIN).arg(QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode));//internalServer->getSettings().mainDatapackCode
+                const QString &mapPath=QString::fromStdString(internalServer->getSettings().datapack_basePath)+DATAPACK_BASE_PATH_MAPMAIN+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/";//internalServer->getSettings().mainDatapackCode
                 if(locaction.startsWith(mapPath))
                     locaction.remove(0,mapPath.size());
                 if(!locaction.isEmpty())
@@ -1578,7 +1579,7 @@ void MainWindow::saveTime()
     }
 }
 
-void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,const QString &savegamesPath)
+bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,const QString &savegamesPath)
 {
     CatchChallenger::GameServerSettings formatedServerSettings=internalServer->getSettings();
 
@@ -1593,6 +1594,8 @@ void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
 
     formatedServerSettings.database_login.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
     formatedServerSettings.database_login.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
+    formatedServerSettings.database_base.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
+    formatedServerSettings.database_base.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
     formatedServerSettings.database_common.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
     formatedServerSettings.database_common.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
     formatedServerSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
@@ -1612,8 +1615,35 @@ void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
         event.offset=30;
         event.value="night";
     }
+    if(settings.contains("mainDatapackCode"))
+        CommonSettingsServer::commonSettingsServer.mainDatapackCode=settings.value("mainDatapackCode","[main]").toString().toStdString();
+    else
+    {
+        const QFileInfoList &list=QDir(CatchChallenger::Api_client_real::client->datapackPathBase()+"/map/main/").entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+        if(list.isEmpty())
+        {
+            QMessageBox::critical(this,tr("Error"),tr("No main code detected into the current datapack"));
+            return false;
+        }
+        settings.setValue("mainDatapackCode",list.at(0).fileName());
+        CommonSettingsServer::commonSettingsServer.mainDatapackCode=list.at(0).fileName().toStdString();
+    }
+    if(settings.contains("subDatapackCode"))
+        CommonSettingsServer::commonSettingsServer.subDatapackCode=settings.value("subDatapackCode","").toString().toStdString();
+    else
+    {
+        const QFileInfoList &list=QDir(CatchChallenger::Api_client_real::client->datapackPathBase()+"/map/main/"+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/sub/").entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+        if(!list.isEmpty())
+        {
+            settings.setValue("subDatapackCode",list.at(0).fileName());
+            CommonSettingsServer::commonSettingsServer.subDatapackCode=list.at(0).fileName().toStdString();
+        }
+        else
+            CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
+    }
 
     internalServer->setSettings(formatedServerSettings);
+    return true;
 }
 
 void MainWindow::gameSolo_back()

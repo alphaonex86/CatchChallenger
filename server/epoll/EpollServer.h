@@ -25,7 +25,6 @@ public:
     void quitForCriticalDatabaseQueryFailed();
 private:
     NormalServerSettings normalServerSettings;
-    int yes;
     bool ready;
 };
 }

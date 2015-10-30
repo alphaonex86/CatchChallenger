@@ -78,8 +78,7 @@ EpollServerLoginMaster::~EpollServerLoginMaster()
 {
     fclose(EpollClientLoginMaster::fpRandomFile);
 
-    if(EpollClientLoginMaster::private_token!=NULL)
-        memset(EpollClientLoginMaster::private_token,0x00,sizeof(EpollClientLoginMaster::private_token));
+    memset(EpollClientLoginMaster::private_token,0x00,sizeof(EpollClientLoginMaster::private_token));
     if(server_ip!=NULL)
     {
         delete server_ip;

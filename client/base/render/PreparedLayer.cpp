@@ -15,7 +15,7 @@ PreparedLayer::PreparedLayer(MapVisualiserThread::Map_full * tempMapObject,const
 {
 }
 
-void PreparedLayer::hoverMoveEvent(QGraphicsSceneMouseEvent * event)
+void PreparedLayer::hoverMoveEvent(QGraphicsSceneHoverEvent * event)
 {
     event->accept();
     const uint8_t &x=qCeil(event->pos().x()/tempMapObject->tiledMap->tileWidth())-1;
@@ -23,7 +23,7 @@ void PreparedLayer::hoverMoveEvent(QGraphicsSceneMouseEvent * event)
     qDebug() << "Mouse hover move event on map at " << tempMapObject->name << QString::fromStdString(tempMapObject->logicalMap.map_file) << x << y;
 }
 
-void PreparedLayer::hoverEnterEvent(QGraphicsSceneMouseEvent * event)
+void PreparedLayer::hoverEnterEvent(QGraphicsSceneHoverEvent * event)
 {
     event->accept();
     const uint8_t &x=qCeil(event->pos().x()/tempMapObject->tiledMap->tileWidth())-1;
@@ -31,7 +31,7 @@ void PreparedLayer::hoverEnterEvent(QGraphicsSceneMouseEvent * event)
     qDebug() << "Mouse hover enter event on map at " << tempMapObject->name << QString::fromStdString(tempMapObject->logicalMap.map_file) << x << y;
 }
 
-void PreparedLayer::hoverLeaveEvent(QGraphicsSceneMouseEvent * event)
+void PreparedLayer::hoverLeaveEvent(QGraphicsSceneHoverEvent * event)
 {
     event->accept();
     const uint8_t &x=qCeil(event->pos().x()/tempMapObject->tiledMap->tileWidth())-1;

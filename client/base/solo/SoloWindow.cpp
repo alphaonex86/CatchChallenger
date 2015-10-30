@@ -51,7 +51,7 @@ SoloWindow::SoloWindow(QWidget *parent,const QString &datapackPath,const QString
     selectedSavegame=NULL;
     this->datapackPath=datapackPath;//QCoreApplication::applicationDirPath()+"/datapack/";
     this->savegamePath=savegamePath;//QCoreApplication::applicationDirPath()+"/savegames/";
-    datapackPathExists=QDir(datapackPath).exists();
+    datapackPathExists=QDir(datapackPath).exists();//QCoreApplication::applicationDirPath()+"/datapack/internal/";
 
     /*connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::protocol_is_good,this,&SoloWindow::protocol_is_good,Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_protocol::disconnected,this,&SoloWindow::disconnected,Qt::QueuedConnection);

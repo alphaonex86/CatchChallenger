@@ -430,7 +430,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
                     const std::string &fileString=line.substr(0,found);
                     const uint32_t &partialHashString=*reinterpret_cast<uint32_t *>(partialHashListRaw.data()+index*4);
                     //const std::string &sizeString=line.substr(found+1,line.size()-found-1);
-                    if(std::regex_match(fileString,DatapackDownloaderMainSub::regex_DATAPACK_FILE_REGEX))
+                    if(regex_search(fileString,DatapackDownloaderMainSub::regex_DATAPACK_FILE_REGEX))
                     {
                         int indexInDatapackList=vectorindexOf(datapackFilesListMain,fileString);
                         if(indexInDatapackList!=-1)
@@ -491,7 +491,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
 
 const std::vector<std::string> DatapackDownloaderMainSub::listDatapackMain(std::string suffix)
 {
-    if(std::regex_match(suffix,excludePathMain))
+    if(regex_search(suffix,excludePathMain))
         return std::vector<std::string>();
 
     std::vector<std::string> returnFile;
@@ -509,7 +509,7 @@ const std::vector<std::string> DatapackDownloaderMainSub::listDatapackMain(std::
         else
         {
             //if match with correct file name, considere as valid
-            if(std::regex_match(suffix+fileInfo.fileName().toStdString(),DatapackDownloaderMainSub::regex_DATAPACK_FILE_REGEX) && extensionAllowed.find(fileInfo.suffix().toStdString())!=extensionAllowed.cend())
+            if(regex_search(suffix+fileInfo.fileName().toStdString(),DatapackDownloaderMainSub::regex_DATAPACK_FILE_REGEX) && extensionAllowed.find(fileInfo.suffix().toStdString())!=extensionAllowed.cend())
                 returnFile.push_back(suffix+fileInfo.fileName().toStdString());
             //is invalid
             else

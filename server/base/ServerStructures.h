@@ -127,7 +127,7 @@ struct GameServerSettings
     bool benchmark;
     //fight
     bool pvp;
-    uint16_t max_players;//not common because if null info not send
+    uint16_t max_players;//not common because if null info not send, if == 1 then internal
 
     //the listen, implicit on the client
     std::string datapack_basePath;

@@ -310,7 +310,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 pos+=sizeof(uint8_t);
                 if(textSize>0)
                 {
-                    if((size-pos)<(int)textSize)
+                    if((size-pos)<textSize)
                     {
                         parseNetworkReadError("wrong utf8 to std::string size for text");
                         return false;
@@ -358,7 +358,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 pos+=sizeof(uint8_t);
                 if(textSize>0)
                 {
-                    if((size-pos)<(int)textSize)
+                    if((size-pos)<textSize)
                     {
                         parseNetworkReadError("wrong utf8 to std::string size for text");
                         return false;
@@ -391,7 +391,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 pos+=sizeof(uint16_t);
                 if(textSize>0)
                 {
-                    if((size-pos)<(int)textSize)
+                    if((size-pos)<textSize)
                     {
                         parseNetworkReadError("wrong utf8 to std::string size for text");
                         return false;
@@ -412,7 +412,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 pos+=sizeof(uint8_t);
                 if(textSize>0)
                 {
-                    if((size-pos)<(int)textSize)
+                    if((size-pos)<textSize)
                     {
                         parseNetworkReadError("wrong utf8 to std::string size for text");
                         return false;
