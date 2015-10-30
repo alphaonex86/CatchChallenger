@@ -124,7 +124,6 @@ protected:
 
     bool parseCharacterBlock(const uint8_t &packetCode,const uint8_t &queryNumber,const QByteArray &data);
 
-    inline void registerOutputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
     //send message without reply
     bool packOutcommingData(const uint8_t &packetCode,const char * const data,const int &size);
     //send query with reply

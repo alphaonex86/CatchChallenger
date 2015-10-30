@@ -1737,10 +1737,10 @@ QString Api_protocol::subDatapackCode() const
 
 void Api_protocol::setDatapackPath(const QString &datapack_path)
 {
-    if(datapack_path.endsWith(QLatin1Literal("/")))
+    if(datapack_path.endsWith("/"))
         mDatapackBase=datapack_path;
     else
-        mDatapackBase=datapack_path+QLatin1Literal("/");
+        mDatapackBase=datapack_path+"/";
     mDatapackMain=mDatapackBase+"map/main/[main]/";
     mDatapackSub=mDatapackMain+"sub/[sub]/";
     CommonSettingsServer::commonSettingsServer.mainDatapackCode="[main]";

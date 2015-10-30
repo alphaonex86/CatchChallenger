@@ -508,7 +508,7 @@ void Api_client_real::httpFinishedForDatapackListBase()
 
 const std::vector<std::string> Api_client_real::listDatapackBase(std::string suffix)
 {
-    if(std::regex_match(suffix,excludePathBase))
+    if(regex_search(suffix,excludePathBase))
         return std::vector<std::string>();
 
     std::vector<std::string> returnFile;

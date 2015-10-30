@@ -33,7 +33,7 @@ std::unordered_map<std::string,EpollClientLoginSlave::DatapackCacheFile> EpollCl
         #else
         const std::string &fileName=returnList.at(index);
         #endif
-        if(std::regex_match(fileName,datapack_rightFileName))
+        if(regex_search(fileName,datapack_rightFileName))
         {
             QFileInfo fileInfo(QString::fromStdString(fileName));
             if(!fileInfo.suffix().isEmpty() && DatapackDownloaderBase::extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())!=DatapackDownloaderBase::extensionAllowed.cend())
@@ -158,12 +158,12 @@ void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vect
                 std::cerr << "file name contains illegale char: " << fileName << std::endl;
                 return;
             }
-            if(std::regex_match(fileName,fileNameStartStringRegex) || stringStartWith(fileName,text_slash))
+            if(regex_search(fileName,fileNameStartStringRegex) || stringStartWith(fileName,text_slash))
             {
                 std::cerr << "start with wrong string: " << fileName << std::endl;
                 return;
             }
-            if(!std::regex_match(fileName,EpollClientLoginSlave::datapack_rightFileName))
+            if(!regex_search(fileName,EpollClientLoginSlave::datapack_rightFileName))
             {
                 std::cerr << "file name sended wrong: " << fileName << std::endl;
                 return;

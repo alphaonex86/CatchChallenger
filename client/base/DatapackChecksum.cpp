@@ -48,7 +48,7 @@ std::vector<char> DatapackChecksum::doChecksumBase(const std::string &datapackPa
         while(index<size)
         {
             const std::string &fileName=returnList.at(index);
-            if(std::regex_match(fileName,datapack_rightFileName) && !std::regex_match(fileName,excludePath))
+            if(regex_search(fileName,datapack_rightFileName) && !regex_search(fileName,excludePath))
             {
                 if(!QFileInfo(QString::fromStdString(fileName)).suffix().isEmpty() && extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())!=extensionAllowed.cend())
                 {
@@ -102,7 +102,7 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
     while(index<size)
     {
         const std::string &fileName=returnList.at(index);
-        if(std::regex_match(fileName,datapack_rightFileName) && !std::regex_match(fileName,excludePath))
+        if(regex_search(fileName,datapack_rightFileName) && !regex_search(fileName,excludePath))
         {
             if(!QFileInfo(QString::fromStdString(fileName)).suffix().isEmpty() && extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())!=extensionAllowed.cend())
             {
@@ -147,7 +147,7 @@ std::vector<char> DatapackChecksum::doChecksumMain(const std::string &datapackPa
         while(index<size)
         {
             const std::string &fileName=returnList.at(index);
-            if(std::regex_match(fileName,datapack_rightFileName) && !std::regex_match(fileName,excludePath))
+            if(regex_search(fileName,datapack_rightFileName) && !regex_search(fileName,excludePath))
             {
                 if(!QFileInfo(QString::fromStdString(fileName)).suffix().isEmpty() && extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())!=extensionAllowed.cend())
                 {
@@ -201,7 +201,7 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
     while(index<size)
     {
         const std::string &fileName=returnList.at(index);
-        if(std::regex_match(fileName,datapack_rightFileName) && !std::regex_match(fileName,excludePath))
+        if(regex_search(fileName,datapack_rightFileName) && !regex_search(fileName,excludePath))
         {
             if(!QFileInfo(QString::fromStdString(fileName)).suffix().isEmpty() && extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())!=extensionAllowed.cend())
             {
@@ -245,7 +245,7 @@ std::vector<char> DatapackChecksum::doChecksumSub(const std::string &datapackPat
         while(index<size)
         {
             const std::string &fileName=returnList.at(index);
-            if(std::regex_match(fileName,datapack_rightFileName))
+            if(regex_search(fileName,datapack_rightFileName))
             {
                 if(!QFileInfo(QString::fromStdString(fileName)).suffix().isEmpty() && extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())!=extensionAllowed.cend())
                 {
@@ -298,7 +298,7 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
     while(index<size)
     {
         const std::string &fileName=returnList.at(index);
-        if(std::regex_match(fileName,datapack_rightFileName))
+        if(regex_search(fileName,datapack_rightFileName))
         {
             if(!QFileInfo(QString::fromStdString(fileName)).suffix().isEmpty() && extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())!=extensionAllowed.cend())
             {

@@ -145,7 +145,7 @@ void CommonFightEngine::healAllMonsters()
         updateCanDoFight();
 }
 
-bool CommonFightEngine::learnSkill(const uint32_t &monsterId, const uint32_t &skill)
+bool CommonFightEngine::learnSkill(const uint32_t &monsterId,const uint16_t &skill)
 {
     unsigned int index=0;
     unsigned int sub_index2,sub_index;
@@ -916,7 +916,7 @@ void CommonFightEngine::confirmEvolutionTo(PlayerMonster * playerMonster,const u
 }
 
 /// \note Object quantity verified in LocalClientHandler::useObjectOnMonster()
-bool CommonFightEngine::useObjectOnMonster(const uint32_t &object,const uint32_t &monster)
+bool CommonFightEngine::useObjectOnMonster(const uint16_t &object, const uint32_t &monster)
 {
     if(!haveThisMonster(monster))
     {
@@ -1205,7 +1205,7 @@ bool CommonFightEngine::internalTryCapture(const Trap &trap)
     return true;
 }
 
-uint32_t CommonFightEngine::tryCapture(const uint32_t &item)
+uint32_t CommonFightEngine::tryCapture(const uint16_t &item)
 {
     doTurnIfChangeOfMonster=true;
     if(internalTryCapture(CommonDatapack::commonDatapack.items.trap.at(item)))

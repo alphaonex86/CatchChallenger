@@ -56,7 +56,7 @@
 
 #define CATCHCHALLENGER_CHECK_MAINDATAPACKCODE "^[a-z0-9]+$" //can't be "-" because the separator is used for http download
 #define CATCHCHALLENGER_CHECK_SUBDATAPACKCODE "^[a-z0-9]+$" //can't be "-" because the separator is used for http download
-#define DATAPACK_FILE_REGEX "^[0-9/a-z\\.\\- _]*[0-9a-z]\\.[a-z]{2,4}$"
+#define DATAPACK_FILE_REGEX "^[-0-9/a-z\\._]*[0-9a-z]\\.[a-z]{2,4}$"
 #define DATAPACK_BASE_PATH_MAPBASE "map/"
 #define DATAPACK_BASE_PATH_MAPMAIN "map/main/"
 #define DATAPACK_BASE_PATH_MAPSUB1 "map/main/"

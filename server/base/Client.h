@@ -626,8 +626,8 @@ private:
     uint32_t getCurrentSkill() const;
     bool haveMonsterChange() const;
     bool addSkill(PlayerMonster * currentMonster,const PlayerMonster::PlayerSkill &skill);
-    bool setSkillLevel(PlayerMonster * currentMonster,const int &index,const uint8_t &level);
-    bool removeSkill(PlayerMonster * currentMonster,const int &index);
+    bool setSkillLevel(PlayerMonster * currentMonster,const unsigned int &index,const uint8_t &level);
+    bool removeSkill(PlayerMonster * currentMonster,const unsigned int &index);
 
     //trade
     Client * otherPlayerTrade;

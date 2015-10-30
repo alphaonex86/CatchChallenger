@@ -39,7 +39,7 @@ public:
     bool dropKOCurrentMonster();
     virtual bool dropKOOtherMonster();
     virtual void healAllMonsters();
-    virtual bool learnSkill(const uint32_t &monsterId,const uint32_t &skill);
+    virtual bool learnSkill(const uint32_t &monsterId,const uint16_t &skill);
     virtual bool learnSkillByItem(PlayerMonster *playerMonster, const uint32_t &itemId);
     virtual void addPlayerMonster(const std::vector<PlayerMonster> &playerMonster);
     virtual void addPlayerMonster(const PlayerMonster &playerMonster);
@@ -65,11 +65,11 @@ public:
     virtual bool doTheOtherMonsterTurn();
     virtual void doTheTurn(const uint32_t &skill,const uint8_t &skillLevel,const bool currentMonsterStatIsFirstToAttack);
     virtual bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const;
-    virtual uint32_t tryCapture(const uint32_t &item);
+    virtual uint32_t tryCapture(const uint16_t &item);
     virtual bool changeOfMonsterInFight(const uint32_t &monsterId);
     virtual int addBuffEffectFull(const Skill::BuffEffect &effect,PublicPlayerMonster * currentMonster,PublicPlayerMonster * otherMonster);
     virtual void removeBuffEffectFull(const Skill::BuffEffect &effect);
-    virtual bool useObjectOnMonster(const uint32_t &object,const uint32_t &monster);
+    virtual bool useObjectOnMonster(const uint16_t &object, const uint32_t &monster);
     virtual void confirmEvolutionTo(PlayerMonster * playerMonster,const uint32_t &monster);
     virtual void hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue);
     virtual bool removeBuffOnMonster(PlayerMonster * currentMonster, const uint32_t &buffId);

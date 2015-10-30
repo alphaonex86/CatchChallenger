@@ -527,7 +527,7 @@ void Api_client_real::httpFinishedForDatapackListMain()
 
 const std::vector<std::string> Api_client_real::listDatapackMain(std::string suffix)
 {
-    if(std::regex_match(suffix,excludePathMain))
+    if(regex_search(suffix,excludePathMain))
         return std::vector<std::string>();
 
     std::vector<std::string> returnFile;

@@ -535,7 +535,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                         pos+=1;
                         if(textSize>0)
                         {
-                            if((size-pos)<(int)textSize)
+                            if((size-pos)<textSize)
                             {
                                 errorOutput("wrong utf8 to std::string size in PM for text");
                                 return false;
@@ -555,7 +555,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                         pos+=1;
                         if(pseudoSize>0)
                         {
-                            if((size-pos)<(int)pseudoSize)
+                            if((size-pos)<pseudoSize)
                             {
                                 errorOutput("wrong utf8 to std::string size in PM for pseudo");
                                 return false;
@@ -586,7 +586,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 pos+=1;
                 if(textSize>0)
                 {
-                    if((size-pos)<(int)textSize)
+                    if((size-pos)<textSize)
                     {
                         errorOutput("wrong utf8 to std::string size");
                         return false;
@@ -620,14 +620,14 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 }
                 else
                 {
-                    if(std::regex_match(text,commandRegExp))
+                    if(regex_search(text,commandRegExp))
                     {
                         //isolate the main command (the first word)
                         std::string command=text;
                         std::regex_replace(command,commandRegExp,Client::text_regexresult1);
 
                         //isolate the arguements
-                        if(std::regex_match(text,commandRegExp))
+                        if(regex_search(text,commandRegExp))
                         {
                             std::regex_replace(text,commandRegExp,Client::text_regexresult2);
                             std::regex_replace(text,isolateTheMainCommand,Client::text_regexresult1);
@@ -1647,7 +1647,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                     pos+=1;
                     if(textSize>0)
                     {
-                        if((size-pos)<(int)textSize)
+                        if((size-pos)<textSize)
                         {
                             errorOutput("wrong utf8 to std::string size in clan action for text");
                             return false;
@@ -1812,7 +1812,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                     //control the regex file into Client::datapackList()
                     if(textSize>0)
                     {
-                        if((size-pos)<(int)textSize)
+                        if((size-pos)<textSize)
                         {
                             errorOutput("wrong utf8 to std::string size for file name: parseQuery("+
                                 std::to_string(packetCode)+
@@ -1914,7 +1914,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                         errorOutput("pseudo size is too big: "+std::to_string(pseudo.size())+" because is greater than "+std::to_string(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size));
                         return false;
                     }
-                    if((size-pos)<(int)textSize)
+                    if((size-pos)<textSize)
                     {
                         errorOutput("wrong utf8 to std::string size in PM for text");
                         return false;
