@@ -100,9 +100,6 @@ protected:
     std::unordered_set<uint8_t> *itemOnMap;
     std::unordered_map<uint8_t/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap;
 protected:
-    static QString text_DATAPACK_BASE_PATH_SKIN;
-    static QString text_DATAPACK_BASE_PATH_MAPBASE;
-    static QString text_DATAPACK_BASE_PATH_MAPSPEC;
     static QString text_slashtrainerpng;
     static QString text_slash;
     static QString text_antislash;

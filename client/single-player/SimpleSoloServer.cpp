@@ -124,7 +124,7 @@ void MainWindow::play(const QString &savegamesPath)
     CatchChallenger::BaseWindow::baseWindow->serverIsLoading();
 }
 
-void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,const QString &savegamesPath)
+bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,const QString &savegamesPath)
 {
     CatchChallenger::ServerSettings formatedServerSettings=internalServer->getSettings();
 
@@ -140,6 +140,8 @@ void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
 
     formatedServerSettings.database_login.tryOpenType=CatchChallenger::DatabaseBase::Type::SQLite;
     formatedServerSettings.database_login.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
+    formatedServerSettings.database_base.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
+    formatedServerSettings.database_base.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
     formatedServerSettings.database_common.tryOpenType=CatchChallenger::DatabaseBase::Type::SQLite;
     formatedServerSettings.database_common.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
     formatedServerSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::Type::SQLite;
@@ -159,13 +161,40 @@ void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
         event.offset=30;
         event.value="night";
     }
+    if(settings.contains("mainDatapackCode"))
+        CommonSettingsServer::commonSettingsServer.mainDatapackCode=settings.value("mainDatapackCode","[main]").toString().toStdString();
+    else
+    {
+        const QFileInfoList &list=QDir(CatchChallenger::Api_client_real::client->datapackPathBase()+"/map/main/").entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+        if(list.isEmpty())
+        {
+            QMessageBox::critical(this,tr("Error"),tr("No main code detected into the current datapack"));
+            return false;
+        }
+        settings.setValue("mainDatapackCode",list.at(0).fileName());
+        CommonSettingsServer::commonSettingsServer.mainDatapackCode=list.at(0).fileName().toStdString();
+    }
+    if(settings.contains("subDatapackCode"))
+        CommonSettingsServer::commonSettingsServer.subDatapackCode=settings.value("subDatapackCode","").toString().toStdString();
+    else
+    {
+        const QFileInfoList &list=QDir(CatchChallenger::Api_client_real::client->datapackPathBase()+"/map/main/"+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/sub/").entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+        if(!list.isEmpty())
+        {
+            settings.setValue("subDatapackCode",list.at(0).fileName());
+            CommonSettingsServer::commonSettingsServer.subDatapackCode=list.at(0).fileName().toStdString();
+        }
+        else
+            CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
+    }
 
     internalServer->setSettings(formatedServerSettings);
+    return true;
 }
 
 void MainWindow::protocol_is_good()
 {
-    CatchChallenger::Api_client_real::client->setDatapackPath(QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/"));
+    CatchChallenger::Api_client_real::client->setDatapackPath(QCoreApplication::applicationDirPath()+"/datapack/");
     CatchChallenger::Api_client_real::client->tryLogin(QStringLiteral("admin"),pass);
 }
 

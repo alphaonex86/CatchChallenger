@@ -17,8 +17,8 @@ std::vector<char> EpollClientLoginSlave::compressedFilesBuffer;
 unsigned int EpollClientLoginSlave::rawFilesBufferCount=0;
 unsigned int EpollClientLoginSlave::compressedFilesBufferCount=0;
 
-std::regex EpollClientLoginSlave::fileNameStartStringRegex=std::regex("^[a-zA-Z]:/");
-std::regex EpollClientLoginSlave::datapack_rightFileName = std::regex(DATAPACK_FILE_REGEX);
+std::regex EpollClientLoginSlave::fileNameStartStringRegex=std::regex("^[a-zA-Z]:/",std::regex_constants::optimize);
+std::regex EpollClientLoginSlave::datapack_rightFileName = std::regex(DATAPACK_FILE_REGEX,std::regex_constants::optimize);
 std::unordered_set<std::string> EpollClientLoginSlave::compressedExtension;
 
 EpollClientLoginSlave::DatapackData EpollClientLoginSlave::datapack_file_base;

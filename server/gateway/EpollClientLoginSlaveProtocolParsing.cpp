@@ -52,7 +52,7 @@ void EpollClientLoginSlave::doDDOSCompute()
             movePacketKickTotalCache+=movePacketKick[index];
             index++;
         }
-        movePacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=movePacketKickNewValue;
+        movePacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1]=movePacketKickNewValue;
         movePacketKickTotalCache+=movePacketKickNewValue;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(movePacketKickTotalCache>CATCHCHALLENGER_DDOS_KICKLIMITMOVE*2)
@@ -80,7 +80,7 @@ void EpollClientLoginSlave::doDDOSCompute()
             chatPacketKickTotalCache+=chatPacketKick[index];
             index++;
         }
-        chatPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=chatPacketKickNewValue;
+        chatPacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1]=chatPacketKickNewValue;
         chatPacketKickTotalCache+=chatPacketKickNewValue;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(chatPacketKickTotalCache>CATCHCHALLENGER_DDOS_KICKLIMITCHAT*2)
@@ -105,7 +105,7 @@ void EpollClientLoginSlave::doDDOSCompute()
             otherPacketKickTotalCache+=otherPacketKick[index];
             index++;
         }
-        otherPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=otherPacketKickNewValue;
+        otherPacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1]=otherPacketKickNewValue;
         otherPacketKickTotalCache+=otherPacketKickNewValue;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(otherPacketKickTotalCache>CATCHCHALLENGER_DDOS_KICKLIMITOTHER*2)
@@ -398,7 +398,7 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
                         //control the regex file into Client::datapackList()
                         if(textSize>0)
                         {
-                            if((size-pos)<(int)textSize)
+                            if((size-pos)<textSize)
                             {
                                 parseNetworkReadError("wrong utf8 to std::string size for file name: parseQuery("+
                                                       std::to_string(mainCodeType)+","+

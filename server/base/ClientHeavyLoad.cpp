@@ -1373,7 +1373,7 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
         #else
         const std::string &fileName=returnList.at(index);
         #endif
-        if(std::regex_match(fileName,GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+        if(regex_search(fileName,GlobalServerData::serverPrivateVariables.datapack_rightFileName))
         {
             QFileInfo fileInfo(QString::fromStdString(fileName));
             if(!fileInfo.suffix().toStdString().empty() &&
@@ -1536,12 +1536,12 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
                 errorOutput("file name contains illegale char: "+fileName);
                 return;
             }
-            if(std::regex_match(fileName,fileNameStartStringRegex) || stringStartWith(fileName,Client::text_slash))
+            if(regex_search(fileName,fileNameStartStringRegex) || stringStartWith(fileName,Client::text_slash))
             {
                 errorOutput("start with wrong string: "+fileName);
                 return;
             }
-            if(!std::regex_match(fileName,GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+            if(!regex_search(fileName,GlobalServerData::serverPrivateVariables.datapack_rightFileName))
             {
                 errorOutput("file name sended wrong: "+fileName);
                 return;
