@@ -1492,7 +1492,7 @@ bool Client::addSkill(PlayerMonster * currentMonster,const PlayerMonster::Player
     return true;
 }
 
-bool Client::setSkillLevel(PlayerMonster * currentMonster,const int &index,const uint8_t &level)
+bool Client::setSkillLevel(PlayerMonster * currentMonster,const unsigned int &index,const uint8_t &level)
 {
     if(!CommonFightEngine::setSkillLevel(currentMonster,index,level))
         return false;
@@ -1504,7 +1504,7 @@ bool Client::setSkillLevel(PlayerMonster * currentMonster,const int &index,const
     return true;
 }
 
-bool Client::removeSkill(PlayerMonster * currentMonster,const int &index)
+bool Client::removeSkill(PlayerMonster * currentMonster,const unsigned int &index)
 {
     if(!CommonFightEngine::removeSkill(currentMonster,index))
         return false;

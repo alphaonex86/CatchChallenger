@@ -619,7 +619,7 @@ int main(int argc, char *argv[])
             while(index<mirrorList.size())
             {
                 const std::string &mirror=mirrorList.at(index);
-                if(!std::regex_match(mirror,httpMatch))
+                if(!regex_search(mirror,httpMatch))
                 {
                     std::cerr << "Mirror wrong: " << mirror << std::endl;
                     return EXIT_FAILURE;

@@ -654,7 +654,7 @@ void ClientFightEngine::newRandomNumber(const QByteArray &data)
 }
 
 //duplicate to have a return
-bool ClientFightEngine::useObjectOnMonster(const uint32_t &object,const uint32_t &monster)
+bool ClientFightEngine::useObjectOnMonster(const uint16_t &object,const uint32_t &monster)
 {
     PlayerMonster * playerMonster=monsterById(monster);
     if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.find(object)!=CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.cend())

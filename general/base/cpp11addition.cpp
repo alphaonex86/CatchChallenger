@@ -1,4 +1,5 @@
 #include "cpp11addition.h"
+#include <sstream>
 
 static const std::regex isaunsignednumber("^[0-9]+$");
 static const std::regex isasignednumber("^-?[0-9]+$");
