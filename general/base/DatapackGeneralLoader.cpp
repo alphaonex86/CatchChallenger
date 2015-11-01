@@ -47,9 +47,9 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
     }
     #endif
     const QDomElement &root = domDocument.documentElement();
-    if(root.tagName()!="list")
+    if(root.tagName()!="reputations")
     {
-        std::cerr << "Unable to open the file: " << file << ", \"list\" root balise not found for reputation of the xml file" << std::endl;
+        std::cerr << "Unable to open the file: " << file << ", \"reputations\" root balise not found for reputation of the xml file" << std::endl;
         return reputation;
     }
 

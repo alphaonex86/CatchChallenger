@@ -1,6 +1,7 @@
 #include "Map_loader.h"
 #include "GeneralVariable.h"
 #include "CommonDatapackServerSpec.h"
+#include "ProtocolParsing.h"
 
 #include "CommonDatapack.h"
 
@@ -14,7 +15,6 @@
 #include <QMutexLocker>
 
 #include <iostream>
-#include <zlib.h>
 
 using namespace CatchChallenger;
 
@@ -94,80 +94,6 @@ const std::string Map_loader::text_tilewidth="tilewidth";
 const std::string Map_loader::text_tileheight="tileheight";
 
 /// \todo put at walkable the tp on push
-
-static void logZlibError(int error)
-{
-    switch (error)
-    {
-    case Z_MEM_ERROR:
-        std::cerr << "Out of memory while (de)compressing data!" << std::endl;
-        break;
-    case Z_VERSION_ERROR:
-        std::cerr << "Incompatible zlib version!" << std::endl;
-        break;
-    case Z_NEED_DICT:
-    case Z_DATA_ERROR:
-        std::cerr << "Incorrect zlib compressed data!" << std::endl;
-        break;
-    default:
-        std::cerr << "Unknown error while (de)compressing data!" << std::endl;
-    }
-}
-
-uint32_t Map_loader::decompressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &outputSize)
-{
-    z_stream strm;
-
-    strm.zalloc = Z_NULL;
-    strm.zfree = Z_NULL;
-    strm.opaque = Z_NULL;
-    strm.next_in = (Bytef *) input;
-    strm.avail_in = intputSize;
-    strm.next_out = (Bytef *) output;
-    strm.avail_out = outputSize;
-
-    int ret = inflateInit2(&strm, 15 + 32);
-
-    if (ret != Z_OK) {
-    logZlibError(ret);
-    return 0;
-    }
-
-    do {
-    ret = inflate(&strm, Z_SYNC_FLUSH);
-
-    switch (ret) {
-        case Z_NEED_DICT:
-        case Z_STREAM_ERROR:
-        ret = Z_DATA_ERROR;
-        case Z_DATA_ERROR:
-        case Z_MEM_ERROR:
-        inflateEnd(&strm);
-        logZlibError(ret);
-        return 0;
-    }
-
-    if (ret != Z_OK && ret != Z_STREAM_END) {
-        if((strm.next_out-reinterpret_cast<unsigned char * const>(output))>outputSize)
-        {
-            logZlibError(Z_STREAM_ERROR);
-            return 0;
-        }
-        logZlibError(Z_STREAM_ERROR);
-        return 0;
-    }
-    }
-    while (ret != Z_STREAM_END);
-
-    if (strm.avail_in != 0) {
-    logZlibError(Z_DATA_ERROR);
-    return 0;
-    }
-
-    inflateEnd(&strm);
-
-    return outputSize-strm.avail_out;
-}
 
 Map_loader::Map_loader()
 {
@@ -729,7 +655,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 const std::vector<char> compressedData=hexatoBinary(data.text().toLatin1().constData());
                 std::vector<char> dataRaw;
                 dataRaw.resize(map_to_send_temp.height*map_to_send_temp.width*4);
-                dataRaw.resize(decompressZlib(compressedData.data(),compressedData.size(),dataRaw.data(),dataRaw.size()));
+                dataRaw.resize(ProtocolParsing::decompressZlib(compressedData.data(),compressedData.size(),dataRaw.data(),dataRaw.size()));
                 if((uint32_t)dataRaw.size()!=map_to_send_temp.height*map_to_send_temp.width*4)
                 {
                     error="map binary size ("+std::to_string(dataRaw.size())+") != "+std::to_string(map_to_send_temp.height)+"x"+std::to_string(map_to_send_temp.width)+"x4";
