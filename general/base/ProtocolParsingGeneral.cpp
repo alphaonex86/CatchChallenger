@@ -2,6 +2,8 @@
 #include "GeneralVariable.h"
 #include "GeneralStructures.h"
 #include "ProtocolParsingCheck.h"
+#include <zlib.h>
+#include <iostream>
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 #include <lzma.h>
@@ -27,9 +29,6 @@ uint8_t ProtocolParsing::compressionLevel=6;
 #endif
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-/* read/write buffer sizes */
-#define IN_BUF_MAX  409600
-#define OUT_BUF_MAX 409600
 
 extern "C" void *lz_alloc(void *opaque, size_t nmemb, size_t size)
 {
@@ -52,8 +51,188 @@ extern "C" void lz_free(void *opaque, void *ptr)
     delete [] (char*)ptr;
 }
 
+static void logZlibError(int error)
+{
+    switch (error)
+    {
+    case Z_MEM_ERROR:
+        std::cerr << "Out of memory while (de)compressing data!" << std::endl;
+        break;
+    case Z_VERSION_ERROR:
+        std::cerr << "Incompatible zlib version!" << std::endl;
+        break;
+    case Z_NEED_DICT:
+    case Z_DATA_ERROR:
+        std::cerr << "Incorrect zlib compressed data!" << std::endl;
+        break;
+    default:
+        std::cerr << "Unknown error while (de)compressing data!" << std::endl;
+    }
+}
 
-std::vector<char> ProtocolParsingBase::lzmaCompress(std::vector<char> data)
+uint32_t ProtocolParsing::decompressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
+{
+    z_stream strm;
+
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    strm.next_in = (Bytef *) input;
+    strm.avail_in = intputSize;
+    strm.next_out = (Bytef *) output;
+    strm.avail_out = maxOutputSize;
+
+    int ret = inflateInit2(&strm, 15 + 32);
+
+    if (ret != Z_OK) {
+    logZlibError(ret);
+    return 0;
+    }
+
+    do {
+    ret = inflate(&strm, Z_SYNC_FLUSH);
+
+    switch (ret) {
+        case Z_NEED_DICT:
+        case Z_STREAM_ERROR:
+        ret = Z_DATA_ERROR;
+        case Z_DATA_ERROR:
+        case Z_MEM_ERROR:
+        inflateEnd(&strm);
+        logZlibError(ret);
+        return 0;
+    }
+
+    if (ret != Z_OK && ret != Z_STREAM_END) {
+        if((strm.next_out-reinterpret_cast<unsigned char * const>(output))>maxOutputSize)
+        {
+            logZlibError(Z_STREAM_ERROR);
+            return 0;
+        }
+        logZlibError(Z_STREAM_ERROR);
+        return 0;
+    }
+    }
+    while (ret != Z_STREAM_END);
+
+    if (strm.avail_in != 0) {
+    logZlibError(Z_DATA_ERROR);
+    return 0;
+    }
+
+    inflateEnd(&strm);
+
+    return maxOutputSize-strm.avail_out;
+}
+
+uint32_t ProtocolParsing::compressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
+{
+    z_stream strm;
+
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    strm.next_in = (Bytef *) input;
+    strm.avail_in = intputSize;
+    strm.next_out = (Bytef *) output;
+    strm.avail_out = maxOutputSize;
+
+    int ret = deflateInit(&strm, Z_BEST_COMPRESSION);
+
+    if (ret != Z_OK) {
+    logZlibError(ret);
+    return 0;
+    }
+
+    do {
+    ret = deflate(&strm, Z_SYNC_FLUSH);
+
+    switch (ret) {
+        case Z_NEED_DICT:
+        case Z_STREAM_ERROR:
+        ret = Z_DATA_ERROR;
+        case Z_DATA_ERROR:
+        case Z_MEM_ERROR:
+        deflateEnd(&strm);
+        logZlibError(ret);
+        return 0;
+    }
+
+    if (ret != Z_OK && ret != Z_STREAM_END) {
+        if((strm.next_out-reinterpret_cast<unsigned char * const>(output))>maxOutputSize)
+        {
+            logZlibError(Z_STREAM_ERROR);
+            return 0;
+        }
+        logZlibError(Z_STREAM_ERROR);
+        return 0;
+    }
+    }
+    while (ret != Z_STREAM_END);
+    deflateEnd(&strm);
+
+    return maxOutputSize-strm.avail_out;
+}
+
+uint32_t ProtocolParsing::decompressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
+{
+    lzma_stream strm = LZMA_STREAM_INIT; /* alloc and init lzma_stream struct */
+    const uint32_t flags = LZMA_TELL_UNSUPPORTED_CHECK;
+    const uint64_t memory_limit = UINT64_MAX; /* no memory limit */
+    lzma_ret ret_xz;
+
+    ret_xz = lzma_stream_decoder (&strm, memory_limit, flags);
+    if (ret_xz != LZMA_OK) {
+        return 0;
+    }
+
+    strm.next_in = (Bytef *) input;
+    strm.avail_in = intputSize;
+    strm.next_out = (Bytef *) output;
+    strm.avail_out = maxOutputSize;
+    do {
+        ret_xz = lzma_code (&strm, LZMA_FINISH);
+
+        if (ret_xz != LZMA_OK && ret_xz != LZMA_STREAM_END) {
+            const char *msg;
+            switch (ret_xz) {
+            case LZMA_MEM_ERROR:
+                msg = "Memory allocation failed";
+                break;
+
+            case LZMA_FORMAT_ERROR:
+                msg = "The input is not in the .xz format";
+                break;
+
+            case LZMA_OPTIONS_ERROR:
+                msg = "Unsupported compression options";
+                break;
+
+            case LZMA_DATA_ERROR:
+                msg = "Compressed file is corrupt";
+                break;
+
+            case LZMA_BUF_ERROR:
+                msg = "Compressed file is truncated or "
+                        "otherwise corrupt";
+                break;
+
+            default:
+                msg = "Unknown error, possibly a bug";
+                break;
+            }
+
+            fprintf(stderr, "Decoder error: "
+                    "%s (error code %u)\n",
+                    msg, ret_xz);
+            return 0;
+        }
+    } while (strm.avail_out == 0);
+    lzma_end (&strm);
+    return maxOutputSize-strm.avail_out;
+}
+
+uint32_t ProtocolParsing::compressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
 {
     std::vector<char> arr;
     lzma_check check = LZMA_CHECK_CRC64;
@@ -62,41 +241,22 @@ std::vector<char> ProtocolParsingBase::lzmaCompress(std::vector<char> data)
     al.alloc = lz_alloc;
     al.free = lz_free;
     strm.allocator = &al;
-    uint8_t *in_buf;
-    uint8_t out_buf [OUT_BUF_MAX];
-    size_t in_len;  /* length of useful data in in_buf */
-    size_t out_len; /* length of useful data in out_buf */
+    strm.next_in = (Bytef *) input;
+    strm.avail_in = intputSize;
+    strm.next_out = (Bytef *) output;
+    strm.avail_out = maxOutputSize;
     lzma_ret ret_xz;
 
     /* initialize xz encoder */
     ret_xz = lzma_easy_encoder (&strm, ProtocolParsing::compressionLevel, check);
     if (ret_xz != LZMA_OK) {
-        return std::vector<char>();
+        return 0;
     }
 
-    in_len = data.size();
-    in_buf = (uint8_t*)data.data();
-    strm.next_in = in_buf;
-    strm.avail_in = in_len;
-
     do {
-        strm.next_out = out_buf;
-        strm.avail_out = OUT_BUF_MAX;
         ret_xz = lzma_code (&strm, LZMA_FINISH);
 
         if (ret_xz != LZMA_OK && ret_xz != LZMA_STREAM_END) {
-            // Once everything has been decoded successfully, the
-            // return value of lzma_code() will be LZMA_STREAM_END.
-
-            // It's not LZMA_OK nor LZMA_STREAM_END,
-            // so it must be an error code. See lzma/base.h
-            // (src/liblzma/api/lzma/base.h in the source package
-            // or e.g. /usr/include/lzma/base.h depending on the
-            // install prefix) for the list and documentation of
-            // possible values. Many values listen in lzma_ret
-            // enumeration aren't possible in this example, but
-            // can be made possible by enabling memory usage limit
-            // or adding flags to the decoder initialization.
             const char *msg;
             switch (ret_xz) {
             case LZMA_MEM_ERROR:
@@ -104,25 +264,10 @@ std::vector<char> ProtocolParsingBase::lzmaCompress(std::vector<char> data)
                 break;
 
             case LZMA_FORMAT_ERROR:
-                // .xz magic bytes weren't found.
                 msg = "The input is not in the .xz format";
                 break;
 
             case LZMA_OPTIONS_ERROR:
-                // For example, the headers specify a filter
-                // that isn't supported by this liblzma
-                // version (or it hasn't been enabled when
-                // building liblzma, but no-one sane does
-                // that unless building liblzma for an
-                // embedded system). Upgrading to a newer
-                // liblzma might help.
-                //
-                // Note that it is unlikely that the file has
-                // accidentally became corrupt if you get this
-                // error. The integrity of the .xz headers is
-                // always verified with a CRC32, so
-                // unintentionally corrupt files can be
-                // distinguished from unsupported files.
                 msg = "Unsupported compression options";
                 break;
 
@@ -131,18 +276,10 @@ std::vector<char> ProtocolParsingBase::lzmaCompress(std::vector<char> data)
                 break;
 
             case LZMA_BUF_ERROR:
-                // Typically this error means that a valid
-                // file has got truncated, but it might also
-                // be a damaged part in the file that makes
-                // the decoder think the file is truncated.
-                // If you prefer, you can use the same error
-                // message for this as for LZMA_DATA_ERROR.
                 msg = "Compressed file is truncated or "
                         "otherwise corrupt";
                 break;
-
             default:
-                // This is most likely LZMA_PROG_ERROR.
                 msg = "Unknown error, possibly a bug";
                 break;
             }
@@ -150,121 +287,13 @@ std::vector<char> ProtocolParsingBase::lzmaCompress(std::vector<char> data)
             fprintf(stderr, "Decoder error: "
                     "%s (error code %u)\n",
                     msg, ret_xz);
-            return std::vector<char>();
+            return 0;
         }
-
-        out_len = OUT_BUF_MAX - strm.avail_out;
-        binaryAppend(arr,(char*)out_buf, out_len);
-        out_buf[0] = 0;
     } while (strm.avail_out == 0);
     lzma_end (&strm);
-    return arr;
+    return maxOutputSize-strm.avail_out;
 }
 
-std::vector<char> ProtocolParsingBase::lzmaUncompress(std::vector<char> data)
-{
-    lzma_stream strm = LZMA_STREAM_INIT; /* alloc and init lzma_stream struct */
-    const uint32_t flags = LZMA_TELL_UNSUPPORTED_CHECK;
-    const uint64_t memory_limit = UINT64_MAX; /* no memory limit */
-    uint8_t *in_buf;
-    uint8_t out_buf [OUT_BUF_MAX];
-    size_t in_len;  /* length of useful data in in_buf */
-    size_t out_len; /* length of useful data in out_buf */
-    lzma_ret ret_xz;
-    std::vector<char> arr;
-
-    ret_xz = lzma_stream_decoder (&strm, memory_limit, flags);
-    if (ret_xz != LZMA_OK) {
-        return std::vector<char>();
-    }
-
-    in_len = data.size();
-    in_buf = (uint8_t*)data.data();
-
-    strm.next_in = in_buf;
-    strm.avail_in = in_len;
-    do {
-        strm.next_out = out_buf;
-        strm.avail_out = OUT_BUF_MAX;
-        ret_xz = lzma_code (&strm, LZMA_FINISH);
-
-        if (ret_xz != LZMA_OK && ret_xz != LZMA_STREAM_END) {
-            // Once everything has been decoded successfully, the
-            // return value of lzma_code() will be LZMA_STREAM_END.
-
-            // It's not LZMA_OK nor LZMA_STREAM_END,
-            // so it must be an error code. See lzma/base.h
-            // (src/liblzma/api/lzma/base.h in the source package
-            // or e.g. /usr/include/lzma/base.h depending on the
-            // install prefix) for the list and documentation of
-            // possible values. Many values listen in lzma_ret
-            // enumeration aren't possible in this example, but
-            // can be made possible by enabling memory usage limit
-            // or adding flags to the decoder initialization.
-            const char *msg;
-            switch (ret_xz) {
-            case LZMA_MEM_ERROR:
-                msg = "Memory allocation failed";
-                break;
-
-            case LZMA_FORMAT_ERROR:
-                // .xz magic bytes weren't found.
-                msg = "The input is not in the .xz format";
-                break;
-
-            case LZMA_OPTIONS_ERROR:
-                // For example, the headers specify a filter
-                // that isn't supported by this liblzma
-                // version (or it hasn't been enabled when
-                // building liblzma, but no-one sane does
-                // that unless building liblzma for an
-                // embedded system). Upgrading to a newer
-                // liblzma might help.
-                //
-                // Note that it is unlikely that the file has
-                // accidentally became corrupt if you get this
-                // error. The integrity of the .xz headers is
-                // always verified with a CRC32, so
-                // unintentionally corrupt files can be
-                // distinguished from unsupported files.
-                msg = "Unsupported compression options";
-                break;
-
-            case LZMA_DATA_ERROR:
-                msg = "Compressed file is corrupt";
-                break;
-
-            case LZMA_BUF_ERROR:
-                // Typically this error means that a valid
-                // file has got truncated, but it might also
-                // be a damaged part in the file that makes
-                // the decoder think the file is truncated.
-                // If you prefer, you can use the same error
-                // message for this as for LZMA_DATA_ERROR.
-                msg = "Compressed file is truncated or "
-                        "otherwise corrupt";
-                break;
-
-            default:
-                // This is most likely LZMA_PROG_ERROR.
-                msg = "Unknown error, possibly a bug";
-                break;
-            }
-
-            fprintf(stderr, "Decoder error: "
-                    "%s (error code %u)\n",
-                    msg, ret_xz);
-            return std::vector<char>();
-        }
-
-        out_len = OUT_BUF_MAX - strm.avail_out;
-        /// \todo static buffer to prevent memory allocation and desallocation
-        binaryAppend(arr,(char*)out_buf, out_len);
-        out_buf[0] = 0;
-    } while (strm.avail_out == 0);
-    lzma_end (&strm);
-    return arr;
-}
 #endif
 
 ProtocolParsing::ProtocolParsing()

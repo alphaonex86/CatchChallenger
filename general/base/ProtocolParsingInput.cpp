@@ -483,33 +483,45 @@ uint32_t ProtocolParsing::computeDecompression(const char* const source, char* c
             std::cerr << "CompressionType::None in ProtocolParsingBase::computeDecompression, do direct mapping" << std::endl;
             abort();
             return -1;
-            /* memcpy(dest,source,compressedSize);
-            return compressedSize;*/
         break;
         case CompressionType::Zlib:
         default:
-        {
-            const QByteArray newData=qUncompress(QByteArray(source,compressedSize));
-            if((unsigned int)newData.size()>maxDecompressedSize || newData.size()<=0)
-                return -1;
-            memcpy(dest,newData.constData(),newData.size());
-            return newData.size();
-        }
+            return ProtocolParsing::decompressZlib(source,compressedSize,dest,maxDecompressedSize);
         break;
         case CompressionType::Xz:
-        {
-            std::vector<char> input;
-            input.resize(compressedSize);
-            memcpy(input.data(),source,compressedSize);
-            const std::vector<char> &newData=ProtocolParsingBase::lzmaUncompress(input);
-            if(newData.size()>maxDecompressedSize)
-                return -1;
-            memcpy(dest,newData.data(),newData.size());
-            return newData.size();
-        }
+            return ProtocolParsing::decompressXz(source,compressedSize,dest,maxDecompressedSize);
         break;
         case CompressionType::Lz4:
             return LZ4_decompress_safe(source,dest,compressedSize,maxDecompressedSize);
+        break;
+    }
+}
+
+uint32_t ProtocolParsing::computeCompression(const char* const source, char* const dest, unsigned int compressedSize, unsigned int maxDecompressedSize, const CompressionType &compressionType)
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(maxDecompressedSize<compressedSize)
+    {
+        std::cerr << "maxDecompressedSize<compressedSize in ProtocolParsingBase::computeDecompression" << std::endl;
+        abort();
+    }
+    #endif
+    switch(compressionType)
+    {
+        case CompressionType::None:
+            std::cerr << "CompressionType::None in ProtocolParsingBase::computeDecompression, do direct mapping" << std::endl;
+            abort();
+            return -1;
+        break;
+        case CompressionType::Zlib:
+        default:
+            return ProtocolParsing::compressZlib(source,compressedSize,dest,maxDecompressedSize);
+        break;
+        case CompressionType::Xz:
+            return ProtocolParsing::compressXz(source,compressedSize,dest,maxDecompressedSize);
+        break;
+        case CompressionType::Lz4:
+            return LZ4_compress_default(source,dest,compressedSize,maxDecompressedSize);
         break;
     }
 }

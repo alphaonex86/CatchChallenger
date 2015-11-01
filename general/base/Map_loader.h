@@ -34,7 +34,6 @@ public:
     std::vector<MapMonster> loadSpecificMonster(const std::string &fileName,const std::string &monsterType);
     static std::unordered_map<std::string/*file*/, std::unordered_map<uint32_t/*id*/,QDomElement> > teleportConditionsUnparsed;
 private:
-    static uint32_t decompressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &outputSize);
     std::string error;
     std::unordered_map<std::string,uint8_t> zoneNumber;
 
