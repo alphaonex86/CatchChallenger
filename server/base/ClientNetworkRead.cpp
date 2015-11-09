@@ -119,7 +119,7 @@ void Client::sendNewEvent(char * const data, const uint32_t &size)
 
     //send the network reply
     data[0x01]=queryNumberList.back();
-    registerOutputQuery(queryNumberList.back());
+    registerOutputQuery(queryNumberList.back(),0xE2);
 
     sendRawBlock(data,size);
 
@@ -173,7 +173,7 @@ void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*CO
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,7);
     }
 
-    registerOutputQuery(queryNumberList.back());
+    registerOutputQuery(queryNumberList.back(),0xE1);
     queryNumberList.pop_back();
 }
 
@@ -185,7 +185,7 @@ void Client::sendTradeRequest(char * const data,const uint32_t &size)
         return;
     }
     data[1]=queryNumberList.back();
-    registerOutputQuery(queryNumberList.back());
+    registerOutputQuery(queryNumberList.back(),0xE0);
     sendRawBlock(data,size);
     queryNumberList.pop_back();
 }
@@ -198,7 +198,7 @@ void Client::sendBattleRequest(char * const data, const uint32_t &size)
         return;
     }
     data[1]=queryNumberList.back();
-    registerOutputQuery(queryNumberList.back());
+    registerOutputQuery(queryNumberList.back(),0xDF);
     sendRawBlock(data,size);
     queryNumberList.pop_back();
 }
@@ -319,21 +319,21 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                     case CompressionType_None:
                         *(Client::protocolReplyCompressionNone+1)=queryNumber;
                         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-                        memcpy(Client::protocolReplyCompressionNone+4,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        memcpy(Client::protocolReplyCompressionNone+7,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         #endif
                         internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompressionNone),sizeof(Client::protocolReplyCompressionNone));
                     break;
                     case CompressionType_Zlib:
                         *(Client::protocolReplyCompresssionZlib+1)=queryNumber;
                         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-                        memcpy(Client::protocolReplyCompresssionZlib+4,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        memcpy(Client::protocolReplyCompresssionZlib+7,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         #endif
                         internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompresssionZlib),sizeof(Client::protocolReplyCompresssionZlib));
                     break;
                     case CompressionType_Xz:
                         *(Client::protocolReplyCompressionXz+1)=queryNumber;
                         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-                        memcpy(Client::protocolReplyCompressionXz+4,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        memcpy(Client::protocolReplyCompressionXz+7,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         #endif
                         internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompressionXz),sizeof(Client::protocolReplyCompressionXz));
                     break;

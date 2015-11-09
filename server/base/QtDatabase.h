@@ -47,6 +47,19 @@ public:
     bool epollEvent(const uint32_t &events);
 
     QtDatabaseThread dbThread;
+
+    struct EstablishedConnexion
+    {
+        std::string host;
+        std::string dbname;
+        QSqlDatabase *conn;
+        unsigned int openCount;
+    };
+    static std::vector<EstablishedConnexion> establishedConnexionList;
+    static unsigned int establishedConnexionCount;
+
+    static QSqlDatabase * findConnexionToOpen(const std::string &host, const std::string &dbname);
+    static unsigned int findConnexionToClose(const QSqlDatabase * const conn);
 signals:
     void sendQuery(const std::string &query, const QSqlDatabase &db);
 private:

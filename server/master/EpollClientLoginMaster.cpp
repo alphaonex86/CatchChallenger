@@ -201,7 +201,7 @@ bool EpollClientLoginMaster::trySelectCharacterGameServer(EpollClientLoginMaster
     loginServerReturnForCharaterSelect.push_back(dataForSelectedCharacterReturn);
     //the data
     const uint8_t &queryNumber=queryNumberList.back();
-    registerOutputQuery(queryNumber);
+    registerOutputQuery(queryNumber,0xF8);
     EpollClientLoginMaster::getTokenForCharacterSelect[0x01]=queryNumber;
     *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::getTokenForCharacterSelect+0x02)=htole32(characterId);
     *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::getTokenForCharacterSelect+0x06)=htole32(accountId);

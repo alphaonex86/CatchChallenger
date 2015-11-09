@@ -30,26 +30,35 @@ const std::string Client::text_commaspace=", ";
 const std::string Client::text_unabletofoundtheconnectedplayertokick="unable to found the connected player to kick";
 const std::string Client::text_unabletofoundthisrightslevel="unable to found this rights level: ";
 
-unsigned char Client::protocolReplyProtocolNotSupported[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x02/*return code*/};
-unsigned char Client::protocolReplyServerFull[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x03/*return code*/};
-unsigned char Client::protocolReplyCompressionNone[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01
+unsigned char Client::protocolReplyProtocolNotSupported[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size, little endian*/,0x02/*return code*/};
+unsigned char Client::protocolReplyServerFull[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size, little endian*/,0x03/*return code*/};
+unsigned char Client::protocolReplyCompressionNone[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01
                                                       #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
                                                       +TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT/*reply size*/
                                                       #endif
-                                                      ,0x04/*return code*/};
-unsigned char Client::protocolReplyCompresssionZlib[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01
+                                                      ,0x00,0x00,0x00/*little endian*/
+                                                      ,0x04/*compression: none*/};
+unsigned char Client::protocolReplyCompresssionZlib[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01
                                                        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
                                                        +TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT/*reply size*/
                                                        #endif
-                                                       ,0x05/*return code*/};
-unsigned char Client::protocolReplyCompressionXz[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01
+                                                       ,0x00,0x00,0x00/*little endian*/
+                                                       ,0x05/*compression: zlib*/};
+unsigned char Client::protocolReplyCompressionXz[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01
                                                     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
                                                     +TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT/*reply size*/
                                                     #endif
-                                                    ,0x06/*return code*/};
+                                                    ,0x00,0x00,0x00/*little endian*/
+                                                    ,0x06/*compression: Xz*/};
+unsigned char Client::protocolReplyCompressionLz4[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01
+                                                    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+                                                    +TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT/*reply size*/
+                                                    #endif
+                                                    ,0x00,0x00,0x00/*little endian*/
+                                                    ,0x07/*compression: Lz4*/};
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-unsigned char Client::loginIsWrongBuffer[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x00/*temp return code*/};
+unsigned char Client::loginIsWrongBuffer[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size, little endian*/,0x00/*temp return code*/};
 #endif
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

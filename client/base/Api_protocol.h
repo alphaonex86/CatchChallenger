@@ -124,6 +124,7 @@ protected:
 
     bool parseCharacterBlock(const uint8_t &packetCode,const uint8_t &queryNumber,const QByteArray &data);
 
+    /// \note This is note into server part to force to write manually the serial and improve the performance, this function is more easy but implies lot of memory copy via SIMD
     //send message without reply
     bool packOutcommingData(const uint8_t &packetCode,const char * const data,const int &size);
     //send query with reply
