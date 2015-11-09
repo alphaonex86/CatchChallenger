@@ -17,8 +17,8 @@ SET default_with_oids = false;
 
 CREATE TABLE account (
     id integer NOT NULL,
-    login character varying(56),
-    password character varying(56),
+    login bytea,
+    password bytea,
     date integer,
     email text
 );
@@ -29,9 +29,9 @@ CREATE TABLE account (
 --
 
 CREATE TABLE account_register (
-    login character varying(128),
-    password character varying(128),
-    email character varying(64),
+    login bytea,
+    password bytea,
+    email text
     key text,
     date integer
 );

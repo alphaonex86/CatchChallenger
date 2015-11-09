@@ -20,9 +20,17 @@ QtServer::QtServer()
     connect(&QFakeServer::server,&QFakeServer::newConnection,this,&QtServer::newConnection);
     connect(this,&QtServer::try_stop_server,this,&QtServer::stop_internal_server);
     GlobalServerData::serverPrivateVariables.db_login=new QtDatabase();
+    GlobalServerData::serverPrivateVariables.db_login->setObjectName("db_login");
+    GlobalServerData::serverPrivateVariables.db_login->dbThread.setObjectName("db_login");
     GlobalServerData::serverPrivateVariables.db_base=new QtDatabase();
+    GlobalServerData::serverPrivateVariables.db_base->setObjectName("db_base");
+    GlobalServerData::serverPrivateVariables.db_base->dbThread.setObjectName("db_base");
     GlobalServerData::serverPrivateVariables.db_common=new QtDatabase();
+    GlobalServerData::serverPrivateVariables.db_common->setObjectName("db_common");
+    GlobalServerData::serverPrivateVariables.db_common->dbThread.setObjectName("db_common");
     GlobalServerData::serverPrivateVariables.db_server=new QtDatabase();
+    GlobalServerData::serverPrivateVariables.db_server->setObjectName("db_server");
+    GlobalServerData::serverPrivateVariables.db_server->dbThread.setObjectName("db_server");
 }
 
 QtServer::~QtServer()

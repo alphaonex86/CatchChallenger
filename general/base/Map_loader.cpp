@@ -126,8 +126,8 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
 
     std::vector<std::string> detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer;
     std::vector<char> Walkable,Collisions,Dirt,LedgesRight,LedgesLeft,LedgesBottom,LedgesTop;
-    std::vector<std::vector<char>> monsterList;
-    std::map<std::string/*layer*/,const char *> mapLayerContentForMonsterCollision;
+    std::vector<std::vector<char> > monsterList;
+    std::map<std::string/*layer*/,std::vector<char> > mapLayerContentForMonsterCollision;
     bool ok;
     QDomDocument domDocument;
 
@@ -652,147 +652,160 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
             }
             else
             {
-                const std::vector<char> compressedData=hexatoBinary(data.text().toLatin1().constData());
-                std::vector<char> dataRaw;
-                dataRaw.resize(map_to_send_temp.height*map_to_send_temp.width*4);
-                dataRaw.resize(ProtocolParsing::decompressZlib(compressedData.data(),compressedData.size(),dataRaw.data(),dataRaw.size()));
-                if((uint32_t)dataRaw.size()!=map_to_send_temp.height*map_to_send_temp.width*4)
+                const std::string &base64text=data.text().toStdString();
+                std::regex e("[^A-Za-z0-9+/=]+");
+
+                // using string/c-string (3) version:
+                const std::string &base64textClean=std::regex_replace(base64text,e,"");
+                const std::vector<char> compressedData=base64toBinary(base64textClean);
+                if(!compressedData.empty())
                 {
-                    error="map binary size ("+std::to_string(dataRaw.size())+") != "+std::to_string(map_to_send_temp.height)+"x"+std::to_string(map_to_send_temp.width)+"x4";
-                    return false;
-                }
-                if(name==Map_loader::text_Walkable)
-                {
-                    if(Walkable.empty())
-                        Walkable=dataRaw;
-                    else
+                    std::vector<char> dataRaw;
+                    dataRaw.resize(map_to_send_temp.height*map_to_send_temp.width*4);
+                    dataRaw.resize(ProtocolParsing::decompressZlib(compressedData.data(),compressedData.size(),dataRaw.data(),dataRaw.size()));
+                    if((uint32_t)dataRaw.size()!=map_to_send_temp.height*map_to_send_temp.width*4)
                     {
-                        const int &layersize=Walkable.size();
-                        int index=0;
-                        while(index<layersize)
+                        error="map binary size ("+std::to_string(dataRaw.size())+") != "+std::to_string(map_to_send_temp.height)+"x"+std::to_string(map_to_send_temp.width)+"x4";
+                        return false;
+                    }
+                    if(name==Map_loader::text_Walkable)
+                    {
+                        if(Walkable.empty())
+                            Walkable=dataRaw;
+                        else
                         {
-                            Walkable[index]=Walkable.at(index) || dataRaw.at(index);
-                            index++;
+                            const int &layersize=Walkable.size();
+                            int index=0;
+                            while(index<layersize)
+                            {
+                                Walkable[index]=Walkable.at(index) || dataRaw.at(index);
+                                index++;
+                            }
                         }
                     }
-                }
-                else if(name==Map_loader::text_Collisions)
-                {
-                    if(Collisions.empty())
-                        Collisions=dataRaw;
-                    else
+                    else if(name==Map_loader::text_Collisions)
                     {
-                        int index=0;
-                        const int &layersize=Collisions.size();
-                        while(index<layersize)
+                        if(Collisions.empty())
+                            Collisions=dataRaw;
+                        else
                         {
-                            Collisions[index]=Collisions.at(index) || dataRaw.at(index);
-                            index++;
+                            int index=0;
+                            const int &layersize=Collisions.size();
+                            while(index<layersize)
+                            {
+                                Collisions[index]=Collisions.at(index) || dataRaw.at(index);
+                                index++;
+                            }
                         }
                     }
-                }
-                else if(name==Map_loader::text_Dirt)
-                {
-                    if(Dirt.empty())
-                        Dirt=dataRaw;
-                    else
+                    else if(name==Map_loader::text_Dirt)
                     {
-                        int index=0;
-                        const int &layersize=Dirt.size();
-                        while(index<layersize)
+                        if(Dirt.empty())
+                            Dirt=dataRaw;
+                        else
                         {
-                            Dirt[index]=Dirt.at(index) || dataRaw.at(index);
-                            index++;
+                            int index=0;
+                            const int &layersize=Dirt.size();
+                            while(index<layersize)
+                            {
+                                Dirt[index]=Dirt.at(index) || dataRaw.at(index);
+                                index++;
+                            }
                         }
                     }
-                }
-                else if(name==Map_loader::text_LedgesRight)
-                {
-                    if(LedgesRight.empty())
-                        LedgesRight=dataRaw;
-                    else
+                    else if(name==Map_loader::text_LedgesRight)
                     {
-                        int index=0;
-                        const int &layersize=LedgesRight.size();
-                        while(index<layersize)
+                        if(LedgesRight.empty())
+                            LedgesRight=dataRaw;
+                        else
                         {
-                            LedgesRight[index]=LedgesRight.at(index) || dataRaw.at(index);
-                            index++;
+                            int index=0;
+                            const int &layersize=LedgesRight.size();
+                            while(index<layersize)
+                            {
+                                LedgesRight[index]=LedgesRight.at(index) || dataRaw.at(index);
+                                index++;
+                            }
                         }
                     }
-                }
-                else if(name==Map_loader::text_LedgesLeft)
-                {
-                    if(LedgesLeft.empty())
-                        LedgesLeft=dataRaw;
-                    else
+                    else if(name==Map_loader::text_LedgesLeft)
                     {
-                        int index=0;
-                        const int &layersize=LedgesLeft.size();
-                        while(index<layersize)
+                        if(LedgesLeft.empty())
+                            LedgesLeft=dataRaw;
+                        else
                         {
-                            LedgesLeft[index]=LedgesLeft.at(index) || dataRaw.at(index);
-                            index++;
+                            int index=0;
+                            const int &layersize=LedgesLeft.size();
+                            while(index<layersize)
+                            {
+                                LedgesLeft[index]=LedgesLeft.at(index) || dataRaw.at(index);
+                                index++;
+                            }
                         }
                     }
-                }
-                else if(name==Map_loader::text_LedgesBottom || name==Map_loader::text_LedgesDown)
-                {
-                    if(LedgesBottom.empty())
-                        LedgesBottom=dataRaw;
-                    else
+                    else if(name==Map_loader::text_LedgesBottom || name==Map_loader::text_LedgesDown)
                     {
-                        int index=0;
-                        const int &layersize=LedgesBottom.size();
-                        while(index<layersize)
+                        if(LedgesBottom.empty())
+                            LedgesBottom=dataRaw;
+                        else
                         {
-                            LedgesBottom[index]=LedgesBottom.at(index) || dataRaw.at(index);
-                            index++;
+                            int index=0;
+                            const int &layersize=LedgesBottom.size();
+                            while(index<layersize)
+                            {
+                                LedgesBottom[index]=LedgesBottom.at(index) || dataRaw.at(index);
+                                index++;
+                            }
                         }
                     }
-                }
-                else if(name==Map_loader::text_LedgesTop || name==Map_loader::text_LedgesUp)
-                {
-                    if(LedgesTop.empty())
-                        LedgesTop=dataRaw;
+                    else if(name==Map_loader::text_LedgesTop || name==Map_loader::text_LedgesUp)
+                    {
+                        if(LedgesTop.empty())
+                            LedgesTop=dataRaw;
+                        else
+                        {
+                            int index=0;
+                            const int &layersize=LedgesTop.size();
+                            while(index<layersize)
+                            {
+                                LedgesTop[index]=LedgesTop.at(index) || dataRaw.at(index);
+                                index++;
+                            }
+                        }
+                    }
                     else
                     {
-                        int index=0;
-                        const int &layersize=LedgesTop.size();
-                        while(index<layersize)
+                        if(!name.empty() && rawSize==(uint32_t)dataRaw.size())
                         {
-                            LedgesTop[index]=LedgesTop.at(index) || dataRaw.at(index);
-                            index++;
+                            unsigned int index=0;
+                            while(index<CommonDatapack::commonDatapack.monstersCollision.size())
+                            {
+                                if(CommonDatapack::commonDatapack.monstersCollision.at(index).layer==name)
+                                {
+                                    mapLayerContentForMonsterCollision[name]=dataRaw;
+                                    {
+                                        const std::vector<std::string> &monsterTypeListText=CommonDatapack::commonDatapack.monstersCollision.at(index).monsterTypeList;
+                                        unsigned int monsterTypeListIndex=0;
+                                        while(monsterTypeListIndex<monsterTypeListText.size())
+                                        {
+                                            if(!vectorcontainsAtLeastOne(detectedMonsterCollisionMonsterType,monsterTypeListText.at(monsterTypeListIndex)))
+                                                detectedMonsterCollisionMonsterType.push_back(monsterTypeListText.at(monsterTypeListIndex));
+                                            monsterTypeListIndex++;
+                                        }
+                                    }
+                                    if(!vectorcontainsAtLeastOne(detectedMonsterCollisionLayer,name))
+                                        detectedMonsterCollisionLayer.push_back(name);
+                                }
+                                index++;
+                            }
+                            monsterList.push_back(dataRaw);
                         }
                     }
                 }
                 else
                 {
-                    if(!name.empty() && rawSize==(uint32_t)dataRaw.size())
-                    {
-                        unsigned int index=0;
-                        while(index<CommonDatapack::commonDatapack.monstersCollision.size())
-                        {
-                            if(CommonDatapack::commonDatapack.monstersCollision.at(index).layer==name)
-                            {
-                                mapLayerContentForMonsterCollision[name]=dataRaw.data();
-                                {
-                                    const std::vector<std::string> &monsterTypeListText=CommonDatapack::commonDatapack.monstersCollision.at(index).monsterTypeList;
-                                    unsigned int monsterTypeListIndex=0;
-                                    while(monsterTypeListIndex<monsterTypeListText.size())
-                                    {
-                                        if(!vectorcontainsAtLeastOne(detectedMonsterCollisionMonsterType,monsterTypeListText.at(monsterTypeListIndex)))
-                                            detectedMonsterCollisionMonsterType.push_back(monsterTypeListText.at(monsterTypeListIndex));
-                                        monsterTypeListIndex++;
-                                    }
-                                }
-                                if(!vectorcontainsAtLeastOne(detectedMonsterCollisionLayer,name))
-                                    detectedMonsterCollisionLayer.push_back(name);
-                            }
-                            index++;
-                        }
-                        monsterList.push_back(dataRaw);
-                    }
+                    error="base64 encoding layer corrupted \""+name+"\": child.tagName(): "+child.tagName().toStdString()+", file: "+fileName;
+                    return false;
                 }
             }
         }
@@ -830,7 +843,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
     char * LedgesLeftBin=NULL;
     char * LedgesBottomBin=NULL;
     char * LedgesTopBin=NULL;
-    std::vector<const char *> MonsterCollisionBin;
+    std::vector<std::vector<char> > MonsterCollisionBin;
     {
         if(rawSize==(uint32_t)Walkable.size())
             WalkableBin=Walkable.data();
@@ -995,7 +1008,8 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
 
     {
         this->map_to_send.parsed_layer.monstersCollisionMap=new uint8_t[this->map_to_send.width*this->map_to_send.height];
-        {
+        memset(this->map_to_send.parsed_layer.monstersCollisionMap,0,this->map_to_send.width*this->map_to_send.height);
+        /*{
             uint8_t x=0;
             while(x<this->map_to_send.width)
             {
@@ -1007,7 +1021,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                 }
                 x++;
             }
-        }
+        }*/
 
         {
             auto i=mapLayerContentForMonsterCollision.begin();
@@ -1015,14 +1029,16 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
             {
                 if(zoneNumber.find(i->first)!=zoneNumber.cend())
                 {
-                    const uint8_t &zoneId=zoneNumber.at(i->first);
+                    const std::string &zoneName=i->first;
+                    const uint8_t &zoneId=zoneNumber.at(zoneName);
                     uint8_t x=0;
                     while(x<this->map_to_send.width)
                     {
                         uint8_t y=0;
                         while(y<this->map_to_send.height)
                         {
-                            if(i->second[x*4+y*map_to_send_temp.width*4+0]!=0x00 || i->second[x*4+y*map_to_send_temp.width*4+1]!=0x00 || i->second[x*4+y*map_to_send_temp.width*4+2]!=0x00 || i->second[x*4+y*map_to_send_temp.width*4+3]!=0x00)
+                            unsigned int value=reinterpret_cast<const unsigned int *>(i->second.data())[x+y*map_to_send_temp.width];
+                            if(value!=0)
                             {
                                 if(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]==0)
                                     this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]=zoneId;
@@ -1033,7 +1049,7 @@ bool Map_loader::tryLoadMap(const std::string &fileName)
                                     std::cerr << "Have already monster at " << std::to_string(x) << "," << std::to_string(y) << " for " << fileName
                                               << ", actual zone: " << std::to_string(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width])
                                               << " (" << CommonDatapack::commonDatapack.monstersCollision.at(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]).layer
-                                              << "), new zone: " << zoneId << " (" << CommonDatapack::commonDatapack.monstersCollision.at(zoneId).layer << ")";
+                                              << "), new zone: " << std::to_string(zoneId) << " (" << CommonDatapack::commonDatapack.monstersCollision.at(zoneId).layer << ")" << std::endl;
                                     this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]=zoneId;//overwrited by above layer
                                 }
                             }

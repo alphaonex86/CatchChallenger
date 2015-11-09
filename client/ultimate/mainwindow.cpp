@@ -1134,7 +1134,7 @@ void MainWindow::error(QAbstractSocket::SocketError socketError)
 
 void MainWindow::newError(QString error,QString detailedError)
 {
-    std::cout << detailedError.toLocal8Bit().constData() << std::endl;
+    std::cout << "MainWindow::newError(): " << error.toStdString() << ": " << detailedError.toStdString() << std::endl;
     if(CatchChallenger::Api_client_real::client!=NULL)
     {
         CatchChallenger::Api_client_real::client->tryDisconnect();

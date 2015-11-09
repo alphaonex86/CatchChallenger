@@ -317,9 +317,9 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
 
     int newSizeCharactersGroup;
     //send the network query
-    registerOutputQuery(queryNumberList.back());
+    registerOutputQuery(queryNumberList.back(),0xB2);
     uint32_t posOutput=0;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x82;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xB2;
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumberList.back();
     queryNumberList.pop_back();
@@ -499,7 +499,7 @@ void LinkToMaster::currentPlayerChange(const uint16_t &currentPlayer)
 void LinkToMaster::askMoreMaxMonsterId()
 {
     //send the network query
-    registerOutputQuery(queryNumberList.back());
+    registerOutputQuery(queryNumberList.back(),0xB0);
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xB0;
     posOutput+=1;
@@ -513,7 +513,7 @@ void LinkToMaster::askMoreMaxMonsterId()
 void LinkToMaster::askMoreMaxClanId()
 {
     //send the network query
-    registerOutputQuery(queryNumberList.back());
+    registerOutputQuery(queryNumberList.back(),0xB1);
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xB1;
     posOutput+=1;
@@ -553,7 +553,7 @@ void LinkToMaster::tryReconnect()
 void LinkToMaster::sendProtocolHeader()
 {
     //send the network query
-    registerOutputQuery(queryNumberList.back());
+    registerOutputQuery(queryNumberList.back(),0xB8);
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xB8;
     posOutput+=1;

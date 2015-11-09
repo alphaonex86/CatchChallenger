@@ -109,7 +109,7 @@ uint32_t ProtocolParsing::decompressZlib(const char * const input, const uint32_
             logZlibError(Z_STREAM_ERROR);
             return 0;
         }
-        logZlibError(Z_STREAM_ERROR);
+        logZlibError(ret);
         return 0;
     }
     }
@@ -422,8 +422,8 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             writePacketFixedSize[0x93]=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER;
             writePacketFixedSize[0xA0]=5;
             writePacketFixedSize[0xA1]=0xFE;
-            writePacketFixedSize[0xA8]=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE*2;
-            writePacketFixedSize[0xA9]=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE*2;
+            writePacketFixedSize[0xA8]=CATCHCHALLENGER_SHA224HASH_SIZE+CATCHCHALLENGER_SHA224HASH_SIZE;
+            writePacketFixedSize[0xA9]=CATCHCHALLENGER_SHA224HASH_SIZE+CATCHCHALLENGER_SHA224HASH_SIZE;
             writePacketFixedSize[0xAA]=0xFE;
             writePacketFixedSize[0xAB]=1+4;
             writePacketFixedSize[0xAC]=1+4+4;
@@ -431,7 +431,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             writePacketFixedSize[0xB1]=0;
             writePacketFixedSize[0xB2]=0xFE;
             writePacketFixedSize[0xB8]=9;
-            writePacketFixedSize[0xBD]=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE;
+            writePacketFixedSize[0xBD]=CATCHCHALLENGER_SHA224HASH_SIZE;
             writePacketFixedSize[0xBE]=1+4+4+4;
             writePacketFixedSize[0xBF]=0;
             writePacketFixedSize[0xC0]=4;

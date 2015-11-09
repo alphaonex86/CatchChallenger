@@ -54,6 +54,7 @@ void Client::selectCharacter(const uint8_t &query_id, const char * const token)
                 account_id=tokenAuth.accountIdRequester;/// \warning need take care of only write if character is selected
                 selectCharacter(query_id,tokenAuth.characterId);
                 tokenAuthList.erase(tokenAuthList.begin()+index);
+                flags|=0x08;
                 return;
             }
             index++;
@@ -1331,7 +1332,7 @@ void Client::loginIsWrong(const uint8_t &query_id, const uint8_t &returnCode, co
 {
     //network send
     *(Client::loginIsWrongBuffer+1)=query_id;
-    *(Client::loginIsWrongBuffer+3)=returnCode;
+    *(Client::loginIsWrongBuffer+1+1+4)=returnCode;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     removeFromQueryReceived(query_id);
     #endif

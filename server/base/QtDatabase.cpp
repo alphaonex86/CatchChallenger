@@ -10,6 +10,9 @@ using namespace CatchChallenger;
 
 char QtDatabase::emptyString[]={'\0'};
 
+std::vector<QtDatabase::EstablishedConnexion> QtDatabase::establishedConnexionList;
+unsigned int QtDatabase::establishedConnexionCount=0;
+
 QtDatabase::QtDatabase() :
     conn(NULL),
     sqlQuery(NULL)
@@ -25,10 +28,49 @@ QtDatabase::~QtDatabase()
         delete sqlQuery;
     if(conn!=NULL)
     {
-        conn->close();
-        delete conn;
+        findConnexionToClose(conn);
         conn=NULL;
     }
+}
+
+QSqlDatabase * QtDatabase::findConnexionToOpen(const std::string &host, const std::string &dbname)
+{
+    unsigned int index=0;
+    while(index<QtDatabase::establishedConnexionList.size())
+    {
+        QtDatabase::EstablishedConnexion &establishedConnexion=QtDatabase::establishedConnexionList.at(index);
+        if(establishedConnexion.host==host && establishedConnexion.dbname==dbname)
+        {
+            establishedConnexion.openCount++;
+            return establishedConnexion.conn;
+        }
+        index++;
+    }
+    return NULL;
+}
+
+unsigned int QtDatabase::findConnexionToClose(const QSqlDatabase * const conn)
+{
+    unsigned int index=0;
+    while(index<QtDatabase::establishedConnexionList.size())
+    {
+        QtDatabase::EstablishedConnexion &establishedConnexion=QtDatabase::establishedConnexionList.at(index);
+        if(establishedConnexion.conn==conn)
+        {
+            if(establishedConnexion.openCount>0)
+                establishedConnexion.openCount--;
+            unsigned int count=establishedConnexion.openCount;
+            if(count==0)
+            {
+                QtDatabase::establishedConnexionList.erase(QtDatabase::establishedConnexionList.begin()+index);
+                establishedConnexion.conn->close();
+                delete establishedConnexion.conn;
+            }
+            return count;
+        }
+        index++;
+    }
+    return 0;
 }
 
 bool QtDatabase::isConnected() const
@@ -40,8 +82,11 @@ bool QtDatabase::syncConnect(const std::string &host, const std::string &dbname,
 {
     if(conn!=NULL)
         syncDisconnect();
+    conn=findConnexionToOpen(host,dbname);
+    if(conn!=NULL)
+        return true;
     conn = new QSqlDatabase();
-    *conn = QSqlDatabase::addDatabase("QMYSQL","server");
+    *conn = QSqlDatabase::addDatabase("QMYSQL","server"+QString::number(QtDatabase::establishedConnexionCount));
     conn->setConnectOptions("MYSQL_OPT_RECONNECT=1");
     conn->setHostName(host.c_str());
     conn->setDatabaseName(dbname.c_str());
@@ -54,6 +99,15 @@ bool QtDatabase::syncConnect(const std::string &host, const std::string &dbname,
         return false;
     }
     databaseConnected=DatabaseBase::DatabaseType::Mysql;
+
+    QtDatabase::EstablishedConnexion establishedConnexion;
+    establishedConnexion.conn=conn;
+    establishedConnexion.dbname=dbname;
+    establishedConnexion.host=host;
+    establishedConnexion.openCount=1;
+    QtDatabase::establishedConnexionList.push_back(establishedConnexion);
+    QtDatabase::establishedConnexionCount++;
+
     return true;
 }
 
@@ -66,8 +120,11 @@ bool QtDatabase::syncConnectSqlite(const std::string &file)
 {
     if(conn!=NULL)
         syncDisconnect();
+    conn=findConnexionToOpen(file,std::string());
+    if(conn!=NULL)
+        return true;
     conn = new QSqlDatabase();
-    *conn = QSqlDatabase::addDatabase("QSQLITE","server");
+    *conn = QSqlDatabase::addDatabase("QSQLITE","server"+QString::number(QtDatabase::establishedConnexionCount));
     conn->setDatabaseName(file.c_str());
     if(!conn->open())
     {
@@ -77,6 +134,14 @@ bool QtDatabase::syncConnectSqlite(const std::string &file)
         return false;
     }
     databaseConnected=DatabaseBase::DatabaseType::SQLite;
+
+    QtDatabase::EstablishedConnexion establishedConnexion;
+    establishedConnexion.conn=conn;
+    establishedConnexion.host=file;
+    establishedConnexion.openCount=1;
+    QtDatabase::establishedConnexionList.push_back(establishedConnexion);
+    QtDatabase::establishedConnexionCount++;
+
     return true;
 }
 
@@ -84,8 +149,11 @@ bool QtDatabase::syncConnectPostgresql(const std::string &host,const std::string
 {
     if(conn!=NULL)
         syncDisconnect();
+    conn=findConnexionToOpen(host,dbname);
+    if(conn!=NULL)
+        return true;
     conn = new QSqlDatabase();
-    *conn = QSqlDatabase::addDatabase("QPSQL","server");
+    *conn = QSqlDatabase::addDatabase("QPSQL","server"+QString::number(QtDatabase::establishedConnexionCount));
     std::string tempString(host);
     if(tempString!="localhost")
         conn->setHostName(host.c_str());
@@ -100,6 +168,15 @@ bool QtDatabase::syncConnectPostgresql(const std::string &host,const std::string
         return false;
     }
     databaseConnected=DatabaseBase::DatabaseType::PostgreSQL;
+
+    QtDatabase::EstablishedConnexion establishedConnexion;
+    establishedConnexion.conn=conn;
+    establishedConnexion.dbname=dbname;
+    establishedConnexion.host=host;
+    establishedConnexion.openCount=1;
+    QtDatabase::establishedConnexionList.push_back(establishedConnexion);
+    QtDatabase::establishedConnexionCount++;
+
     return true;
 }
 
@@ -110,8 +187,7 @@ void QtDatabase::syncDisconnect()
         std::cerr << "db not connected" << std::endl;
         return;
     }
-    conn->close();
-    delete conn;
+    findConnexionToClose(conn);
     conn=NULL;
     databaseConnected=DatabaseBase::DatabaseType::Mysql;
 }
@@ -246,7 +322,8 @@ void QtDatabaseThread::receiveQuery(const std::string &query,const QSqlDatabase 
     if(!queryReturn.exec(query.c_str()))
     {
         //lastErrorMessage=(db.lastError().driverText()+std::string(": ")+db.lastError().databaseText()).toUtf8().data();
-        qDebug() << queryReturn.lastQuery()+": "+queryReturn.lastError().text();
+        qDebug() << db.lastError().driverText() << ": " << db.lastError().databaseText() << " -> " << queryReturn.lastQuery() << ": " << queryReturn.lastError().text();
+        abort();
     }
     emit sendReply(queryReturn);
 }

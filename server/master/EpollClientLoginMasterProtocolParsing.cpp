@@ -269,7 +269,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
 
             //token auth
             {
-                if((size-pos)<(int)CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE)
+                if((size-pos)<(int)CATCHCHALLENGER_SHA224HASH_SIZE)
                 {
                     parseNetworkReadError("wrong size for master auth hash");
                     return false;
@@ -282,15 +282,16 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 QCryptographicHash hash(QCryptographicHash::Sha224);
                 hash.addData(EpollClientLoginMaster::private_token);
                 hash.addData(tokenForAuth.data(),tokenForAuth.size());
-                if(memcmp(hash.result().constData(),data+pos,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE)!=0)
+                if(memcmp(hash.result().constData(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
                 {
                     *(EpollClientLoginMaster::protocolReplyWrongAuth+1)=queryNumber;
                     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyWrongAuth),sizeof(EpollClientLoginMaster::protocolReplyWrongAuth));
                     errorParsingLayer("Wrong protocol token");
                     return false;
                 }
-                pos+=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE;
+                pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
             }
+            flags|=0x08;
 
             std::string charactersGroup;
             std::string host;
@@ -587,7 +588,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
         {
             //token auth
             {
-                if(size<(int)CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE)
+                if(size<(int)CATCHCHALLENGER_SHA224HASH_SIZE)
                 {
                     parseNetworkReadError("wrong size for master auth hash");
                     return false;
@@ -600,7 +601,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 QCryptographicHash hash(QCryptographicHash::Sha224);
                 hash.addData(EpollClientLoginMaster::private_token);
                 hash.addData(tokenForAuth.data(),tokenForAuth.size());
-                if(memcmp(hash.result().constData(),data,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE)!=0)
+                if(memcmp(hash.result().constData(),data,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
                 {
                     *(EpollClientLoginMaster::protocolReplyWrongAuth+1)=queryNumber;
                     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyWrongAuth),sizeof(EpollClientLoginMaster::protocolReplyWrongAuth));
@@ -608,6 +609,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                     return false;
                 }
             }
+            flags|=0x08;
 
             if(stat!=EpollClientLoginMasterStat::Logged)
             {

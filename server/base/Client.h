@@ -99,14 +99,15 @@ public:
     static uint8_t indexOfDirtOnMap;//index of plant on map, ordened by map and x,y ordened into the xml file, less bandwith than send map,x,y
     #endif
 
-    static unsigned char protocolReplyProtocolNotSupported[4];
-    static unsigned char protocolReplyServerFull[4];
+    static unsigned char protocolReplyProtocolNotSupported[7];
+    static unsigned char protocolReplyServerFull[7];
     static unsigned char *characterIsRightFinalStepHeader;
     static uint32_t characterIsRightFinalStepHeaderSize;
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    static unsigned char protocolReplyCompressionNone[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
-    static unsigned char protocolReplyCompresssionZlib[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
-    static unsigned char protocolReplyCompressionXz[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char protocolReplyCompressionNone[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char protocolReplyCompresssionZlib[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char protocolReplyCompressionXz[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char protocolReplyCompressionLz4[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
 
     static unsigned char *protocolReplyCharacterList;
     static uint16_t protocolReplyCharacterListSize;
@@ -114,13 +115,14 @@ public:
     static uint16_t protocolMessageLogicalGroupAndServerListSize;
     static uint16_t protocolMessageLogicalGroupAndServerListPosPlayerNumber;
     #else
-    static unsigned char protocolReplyCompressionNone[4];
-    static unsigned char protocolReplyCompresssionZlib[4];
-    static unsigned char protocolReplyCompressionXz[4];
+    static unsigned char protocolReplyCompressionNone[7];
+    static unsigned char protocolReplyCompresssionZlib[7];
+    static unsigned char protocolReplyCompressionXz[7];
+    static unsigned char protocolReplyCompressionLz4[7];
     #endif
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    static unsigned char loginIsWrongBuffer[4];
+    static unsigned char loginIsWrongBuffer[7];
     #endif
 
     static const unsigned char protocolHeaderToMatch[5];
