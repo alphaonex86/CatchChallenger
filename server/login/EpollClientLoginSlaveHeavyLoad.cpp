@@ -20,16 +20,16 @@ void EpollClientLoginSlave::askLogin(const uint8_t &query_id,const char *rawdata
     #endif
     std::vector<char> login;
     {
-        login.resize(CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+        login.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
         QCryptographicHash hash(QCryptographicHash::Sha224);
-        hash.addData(rawdata,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
-        memcpy(login.data(),hash.result().constData(),CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+        hash.addData(rawdata,CATCHCHALLENGER_SHA224HASH_SIZE);
+        memcpy(login.data(),hash.result().constData(),CATCHCHALLENGER_SHA224HASH_SIZE);
     }
     AskLoginParam *askLoginParam=new AskLoginParam;
     askLoginParam->query_id=query_id;
     askLoginParam->login=login;
-    askLoginParam->pass.resize(CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
-    memcpy(askLoginParam->pass.data(),rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+    askLoginParam->pass.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+    memcpy(askLoginParam->pass.data(),rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
 
     std::string queryText=PreparedDBQueryLogin::db_query_login;
     stringreplaceOne(queryText,"%1",binarytoHexa(login));
@@ -198,6 +198,8 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                     askLoginParam=NULL;
                     return;
                 }
+                else
+                    flags|=0x08;
             }
         }
     }
@@ -375,15 +377,15 @@ void EpollClientLoginSlave::createAccount(const uint8_t &query_id, const char *r
     std::vector<char> login;
     {
         QCryptographicHash hash(QCryptographicHash::Sha224);
-        hash.addData(rawdata,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+        hash.addData(rawdata,CATCHCHALLENGER_SHA224HASH_SIZE);
         login.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
         memcpy(login.data(),hash.result().constData(),CATCHCHALLENGER_SHA224HASH_SIZE);
     }
     AskLoginParam *askLoginParam=new AskLoginParam;
     askLoginParam->query_id=query_id;
     askLoginParam->login=login;
-    askLoginParam->pass.resize(CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
-    memcpy(askLoginParam->pass.data(),rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+    askLoginParam->pass.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+    memcpy(askLoginParam->pass.data(),rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
 
     std::string queryText=PreparedDBQueryLogin::db_query_login;
     stringreplaceOne(queryText,"%1",binarytoHexa(login));
@@ -480,7 +482,7 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
             posOutput+=1;
 
-            LinkToMaster::linkToMaster->registerOutputQuery(queryNumber);
+            LinkToMaster::linkToMaster->registerOutputQuery(queryNumber,0xBF);
             LinkToMaster::linkToMaster->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         }
         account_id=maxAccountIdList.front();

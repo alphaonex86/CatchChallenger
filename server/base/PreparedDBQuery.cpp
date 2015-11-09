@@ -143,8 +143,8 @@ void PreparedDBQueryLogin::initDatabaseQueryLogin(const DatabaseBase::DatabaseTy
         #endif
 
         case DatabaseBase::DatabaseType::PostgreSQL:
-        PreparedDBQueryLogin::db_query_login="SELECT id,password FROM account WHERE login='%1'";
-        PreparedDBQueryLogin::db_query_insert_login="INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4)";
+        PreparedDBQueryLogin::db_query_login="SELECT id,password FROM account WHERE login='\\x%1'";
+        PreparedDBQueryLogin::db_query_insert_login="INSERT INTO account(id,login,password,date) VALUES(%1,'\\x%2','\\x%3',%4)";
         break;
     }
 }

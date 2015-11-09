@@ -17,6 +17,8 @@ class ProtocolParsingCheck : public ProtocolParsingBase
         friend class ProtocolParsingInputOutput;
         bool valid;
         bool parseIncommingDataRaw(const char *commonBuffer, const uint32_t &size,uint32_t &cursor);
+        void storeInputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
+        void registerOutputQuery(const uint8_t &queryNumber, const uint8_t &packetCode);
     private:
         bool parseMessage(const uint8_t &packetCode,const char *data,const unsigned int &size);
         //have query with reply

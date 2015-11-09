@@ -891,7 +891,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));
 
                     //send the network query
-                    registerOutputQuery(queryNumberList.back());
+                    registerOutputQuery(queryNumberList.back(),0xBD);
                     ProtocolParsingBase::tempBigBufferForOutput[0x00]=0xBD;
                     ProtocolParsingBase::tempBigBufferForOutput[0x01]=queryNumberList.back();
 

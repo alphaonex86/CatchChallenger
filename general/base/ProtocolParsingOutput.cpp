@@ -11,7 +11,7 @@
 
 using namespace CatchChallenger;
 
-void ProtocolParsingBase::registerOutputQuery(const uint8_t &queryNumber)
+void ProtocolParsingInputOutput::registerOutputQuery(const uint8_t &queryNumber,const uint8_t &packetCode)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(outputQueryNumberToPacketCode[queryNumber]!=0x00)
@@ -20,6 +20,10 @@ void ProtocolParsingBase::registerOutputQuery(const uint8_t &queryNumber)
         return;
     }
     //if not in query type done into ProtocolParsingCheck
+    #endif
+    //registrer on the check
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    protocolParsingCheck->registerOutputQuery(queryNumber,packetCode);
     #endif
     outputQueryNumberToPacketCode[queryNumber]=packetCode;
 }
@@ -38,7 +42,7 @@ bool ProtocolParsingBase::internalPackOutcommingData(const char * const data,con
     messageParsingLayer("internalPackOutcommingData(): start");
     #endif
     #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    qDebug() << std::string(std::stringLiteral("Sended packet size: %1: %2").arg(size).arg(std::string(std::vector<char>(data,size).toHex())));
+    std::cout << "Sended packet size: " << size << ": " << binarytoHexa(data,size) << std::endl;
     #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
 
     if(size<=CATCHCHALLENGER_MAX_PACKET_SIZE)
@@ -90,7 +94,7 @@ bool ProtocolParsingBase::internalSendRawSmallPacket(const char * const data,con
     messageParsingLayer("internalPackOutcommingData(): start");
     #endif
     #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    messageParsingLayer(std::stringLiteral("Sended packet size: %1: %2").arg(size).arg(std::string(std::vector<char>(data,size).toHex())));
+    std::cout << "Sended packet size: " << size << ": " << binarytoHexa(data,size) << std::endl;
     #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size>CATCHCHALLENGER_MAX_PACKET_SIZE)

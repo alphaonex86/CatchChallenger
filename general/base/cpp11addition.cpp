@@ -3,6 +3,16 @@
 
 static const std::regex isaunsignednumber("^[0-9]+$");
 static const std::regex isasignednumber("^-?[0-9]+$");
+static const std::regex ishexa("^[0-9a-fA-F]+$");
+
+static const std::string base64_chars =
+             "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+             "abcdefghijklmnopqrstuvwxyz"
+             "0123456789+/";
+
+static inline bool is_base64(unsigned char c) {
+  return (isalnum(c) || (c == '+') || (c == '/'));
+}
 
 static const char* const lut = "0123456789ABCDEF";
 
@@ -373,15 +383,20 @@ std::string binarytoHexa(const char * const data,const uint32_t &size)
 
 std::vector<char> hexatoBinary(const std::string &data)
 {
-    std::vector<char> out;
-    out.resize(data.length()/2);
-    for(size_t i = 0; i < data.length(); i += 2) {
-        std::istringstream strm(data.substr(i, 2));
-        uint8_t x;
-        strm >> std::hex >> x;
-        out.push_back(x);
+    if(Q_LIKELY(std::regex_match(data,ishexa)))
+    {
+        std::vector<char> out;
+        out.resize(data.length()/2);
+        for(size_t i = 0; i < data.length(); i += 2) {
+            std::istringstream strm(data.substr(i, 2));
+            uint8_t x;
+            strm >> std::hex >> x;
+            out.push_back(x);
+        }
+        return out;
     }
-    return out;
+    else
+        return std::vector<char>();
 }
 
 void binaryAppend(std::vector<char> &data,const std::vector<char> &add)
@@ -411,4 +426,52 @@ void binaryAppend(std::vector<char> &data,const char * const add,const uint32_t 
     const int oldsize=data.size();
     data.resize(oldsize+addSize);
     memcpy(data.data()+oldsize,add,addSize);
+}
+
+std::vector<char> base64toBinary(const std::string &string)
+{
+    int index=0;
+    int sub_index=0;
+    int encoded_string_remaining=string.size();
+    int encoded_string_pos=0;
+    unsigned char char_array_4[4], char_array_3[3];
+    std::vector<char> ret;
+
+    while(encoded_string_remaining-- && (string[encoded_string_pos]!='=') && is_base64(string[encoded_string_pos]))
+    {
+        char_array_4[index++]=string[encoded_string_pos];
+        encoded_string_pos++;
+        if(index==4)
+        {
+            for(index=0;index<4;index++)
+                char_array_4[index]=base64_chars.find(char_array_4[index]);
+
+            char_array_3[0]=(char_array_4[0]<<2) + ((char_array_4[1]&0x30)>>4);
+            char_array_3[1]=((char_array_4[1]&0xf)<<4) + ((char_array_4[2]&0x3c)>>2);
+            char_array_3[2]=((char_array_4[2]&0x3)<<6) + char_array_4[3];
+
+            for(index=0;(index<3);index++)
+                ret.push_back(char_array_3[index]);
+
+            index=0;
+        }
+    }
+
+    if(index)
+    {
+        for(sub_index=index;sub_index<4;sub_index++)
+            char_array_4[sub_index]=0;
+
+        for(sub_index=0;sub_index<4;sub_index++)
+            char_array_4[sub_index]=base64_chars.find(char_array_4[sub_index]);
+
+        char_array_3[0]=(char_array_4[0]<<2) + ((char_array_4[1]&0x30)>>4);
+        char_array_3[1]=((char_array_4[1]&0xf)<<4) + ((char_array_4[2]&0x3c)>>2);
+        char_array_3[2]=((char_array_4[2]&0x3)<<6) + char_array_4[3];
+
+        for (sub_index=0;(sub_index<index-1);sub_index++)
+            ret.push_back(char_array_3[sub_index]);
+    }
+
+    return ret;
 }

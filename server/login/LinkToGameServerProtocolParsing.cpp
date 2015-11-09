@@ -49,7 +49,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                     return false;
                 }
                 //send token to game server
-                registerOutputQuery(queryIdToReconnect);
+                registerOutputQuery(queryIdToReconnect,0x93);
                 uint32_t posOutput=0;
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x93;
                 posOutput+=1;
@@ -150,7 +150,7 @@ bool LinkToGameServer::parseQuery(const uint8_t &mainCodeType,const uint8_t &que
         return parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
     if(client!=NULL)
     {
-        client->registerOutputQuery(queryNumber);
+        client->registerOutputQuery(queryNumber,mainCodeType);
         uint8_t fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType];
         if(fixedSize!=0xFE)
         {

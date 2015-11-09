@@ -49,6 +49,7 @@ std::string binarytoHexa(const char * const data,const uint32_t &size);
 std::vector<char> hexatoBinary(const std::string &data);
 void binaryAppend(std::vector<char> &data,const std::vector<char> &add);
 void binaryAppend(std::vector<char> &data, const char * const add, const uint32_t &addSize);
+std::vector<char> base64toBinary(const std::string &string);
 
 template <class T, class U>
 int vectorindexOf(const std::vector<T> &list,const U &item)

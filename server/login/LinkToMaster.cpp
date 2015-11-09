@@ -325,7 +325,7 @@ bool LinkToMaster::trySelectCharacter(void * const client,const uint8_t &client_
     dataForSelectedCharacterReturn.charactersGroupIndex=charactersGroupIndex;
     selectCharacterClients[queryNumberList.back()]=dataForSelectedCharacterReturn;
     //register it
-    registerOutputQuery(queryNumberList.back());
+    registerOutputQuery(queryNumberList.back(),0xBE);
     //the data
     ProtocolParsingBase::tempBigBufferForOutput[0x00]=0xBE;
     ProtocolParsingBase::tempBigBufferForOutput[0x01]=queryNumberList.back();

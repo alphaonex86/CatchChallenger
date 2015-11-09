@@ -353,6 +353,7 @@ void send_settings()
         settings->endGroup();
     }
 
+    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     {
         bool ok;
         settings->beginGroup("master");
@@ -377,6 +378,7 @@ void send_settings()
         }
         settings->endGroup();
     }
+    #endif
 
     settings->beginGroup(QLatin1Literal("city"));
     if(settings->value(QLatin1Literal("capture_frequency")).toString()==QLatin1Literal("week"))
