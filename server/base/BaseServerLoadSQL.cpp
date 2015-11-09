@@ -45,18 +45,18 @@ void BaseServer::preload_zone_sql()
         {
             default:
             case DatabaseBase::DatabaseType::Mysql:
-                queryText="SELECT `clan` FROM `city` WHERE `city`='"+zoneCodeName+"' ORDER BY `city`";
+                queryText="SELECT `clan` FROM `city` WHERE `city`='"+zoneCodeName+"'";//ORDER BY city-> drop, unique key
             break;
             case DatabaseBase::DatabaseType::SQLite:
-                queryText="SELECT clan FROM city WHERE city='"+zoneCodeName+"' ORDER BY city";
+                queryText="SELECT clan FROM city WHERE city='"+zoneCodeName+"'";//ORDER BY city-> drop, unique key
             break;
             case DatabaseBase::DatabaseType::PostgreSQL:
-                queryText="SELECT clan FROM city WHERE city='"+zoneCodeName+"' ORDER BY city";
+                queryText="SELECT clan FROM city WHERE city='"+zoneCodeName+"'";//ORDER BY city-> drop, unique key
             break;
         }
-        if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&BaseServer::preload_zone_static)==NULL)
+        if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&BaseServer::preload_zone_static)==NULL)
         {
-            std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
+            std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
             criticalDatabaseQueryFailed();return;//stop because can't do the first db access
             entryListIndex++;
             preload_market_monsters_sql();
@@ -131,6 +131,7 @@ void BaseServer::preload_pointOnMap_return()
             std::cerr << "preload_itemOnMap_return(): Id not found: " << GlobalServerData::serverPrivateVariables.db_server->value(0) << std::endl;
         else
         {
+            dictionary_pointOnMap_maxId=id;//here to prevent later bug create problem with max id
             const uint32_t &map_id=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
             if(!ok)
                 std::cerr << "preload_itemOnMap_return(): map id not number: " << GlobalServerData::serverPrivateVariables.db_server->value(1) << std::endl;
@@ -190,8 +191,6 @@ void BaseServer::preload_pointOnMap_return()
                                         mapAndPoint.x=x;
                                         mapAndPoint.y=y;
                                         DictionaryServer::dictionary_pointOnMap_database_to_internal[id]=mapAndPoint;
-
-                                        dictionary_pointOnMap_maxId=id;
                                     }
                                 }
                             }

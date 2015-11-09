@@ -105,10 +105,10 @@ Client::Client(
                GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue*sizeof(uint8_t));
     }
     #endif
-    queryNumberList.reserve(256);
+    queryNumberList.reserve(16);
     {
         int index=0;
-        while(index<256)
+        while(index<16)
         {
             queryNumberList.push_back(index);
             index++;

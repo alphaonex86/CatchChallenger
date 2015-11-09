@@ -413,6 +413,11 @@ bool BaseServer::initialize_the_database()
                       << " at " << GlobalServerData::serverSettings.database_login.host << std::endl;
         break;
     }
+    if(!GlobalServerData::serverPrivateVariables.db_login->asyncWrite("SELECT * FROM account"))
+    {
+        std::cerr << "Basic test failed: " << GlobalServerData::serverPrivateVariables.db_login->errorMessage() << std::endl;
+        return false;
+    }
     #endif
     switch(GlobalServerData::serverSettings.database_base.tryOpenType)
     {
@@ -473,6 +478,11 @@ bool BaseServer::initialize_the_database()
                       << " at " << GlobalServerData::serverSettings.database_base.host << std::endl;
         break;
     }
+    if(!GlobalServerData::serverPrivateVariables.db_base->asyncWrite("SELECT * FROM dictionary_allow"))
+    {
+        std::cerr << "Basic test failed: " << GlobalServerData::serverPrivateVariables.db_base->errorMessage() << std::endl;
+        return false;
+    }
     switch(GlobalServerData::serverSettings.database_common.tryOpenType)
     {
         default:
@@ -532,6 +542,11 @@ bool BaseServer::initialize_the_database()
                       << " at " << GlobalServerData::serverSettings.database_common.host << std::endl;
         break;
     }
+    if(!GlobalServerData::serverPrivateVariables.db_common->asyncWrite("SELECT * FROM character"))
+    {
+        std::cerr << "Basic test failed: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
+        return false;
+    }
     switch(GlobalServerData::serverSettings.database_server.tryOpenType)
     {
         default:
@@ -590,6 +605,11 @@ bool BaseServer::initialize_the_database()
             std::cout << "Connected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_server->databaseType())
                       << " at " << GlobalServerData::serverSettings.database_server.host << std::endl;
         break;
+    }
+    if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite("SELECT * FROM character_forserver"))
+    {
+        std::cerr << "Basic test failed: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
+        return false;
     }
 
     initialize_the_database_prepared_query();

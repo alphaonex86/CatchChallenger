@@ -69,15 +69,15 @@ bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
     std::vector<char> login;
     {
         QCryptographicHash hash(QCryptographicHash::Sha224);
-        hash.addData(rawdata,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+        hash.addData(rawdata,CATCHCHALLENGER_SHA224HASH_SIZE);
         login.resize(hash.result().size());
         memcpy(login.data(),hash.result().constData(),hash.result().size());
     }
     AskLoginParam *askLoginParam=new AskLoginParam;
     askLoginParam->query_id=query_id;
     askLoginParam->login=login;
-    askLoginParam->pass.resize(CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
-    memcpy(askLoginParam->pass.data(),rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+    askLoginParam->pass.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+    memcpy(askLoginParam->pass.data(),rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
 
     std::string queryText=PreparedDBQueryLogin::db_query_login;
     stringreplaceOne(queryText,"%1",binarytoHexa(login));
@@ -150,7 +150,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
             {
                 //network send
                 *(Client::loginIsWrongBuffer+1)=(uint8_t)askLoginParam->query_id;
-                *(Client::loginIsWrongBuffer+3)=(uint8_t)0x07;
+                *(Client::loginIsWrongBuffer+1+1+4)=(uint8_t)0x07;
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 removeFromQueryReceived(askLoginParam->query_id);
                 #endif
@@ -249,6 +249,10 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                     delete askLoginParam;
                     return;
                 }
+                else
+                {
+                    flags|=0x08;
+                }
             }
         }
     }
@@ -298,13 +302,13 @@ bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
     }
     #endif
     std::vector<char> login;
-    login.resize(CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
-    memcpy(login.data(),rawdata,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+    login.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+    memcpy(login.data(),rawdata,CATCHCHALLENGER_SHA224HASH_SIZE);
     AskLoginParam *askLoginParam=new AskLoginParam;
     askLoginParam->query_id=query_id;
     askLoginParam->login=login;
-    askLoginParam->pass.resize(CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
-    memcpy(askLoginParam->pass.data(),rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+    askLoginParam->pass.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+    memcpy(askLoginParam->pass.data(),rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
 
     std::string queryText=PreparedDBQueryLogin::db_query_login;
     stringreplaceOne(queryText,"%1",binarytoHexa(login));

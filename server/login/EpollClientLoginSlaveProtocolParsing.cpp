@@ -385,7 +385,7 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
         {
             if(Q_LIKELY(linkToGameServer))
             {
-                linkToGameServer->registerOutputQuery(queryNumber);
+                linkToGameServer->registerOutputQuery(queryNumber,mainCodeType);
                 const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType];
                 if(fixedSize!=0xFE)
                 {

@@ -103,7 +103,7 @@ public:
     friend class ProtocolParsingCheck;
     virtual ssize_t read(char * data, const size_t &size) = 0;
     virtual ssize_t write(const char * const data, const size_t &size) = 0;
-    virtual void registerOutputQuery(const uint8_t &queryNumber);
+    virtual void registerOutputQuery(const uint8_t &queryNumber, const uint8_t &packetCode) = 0;
 public:
     //this interface allow 0 copy method
     bool parseIncommingDataRaw(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
@@ -130,6 +130,7 @@ protected:
      * flags & 0x40 = haveData_dataSize
      * flags & 0x20 = have_query_number
      * flags & 0x10 = isClient
+     * flags & 0x08 = allowDynamicSize
     */
 protected:
     //have message without reply
@@ -147,8 +148,8 @@ private:
     void dataClear();
 public:
     //reply to the query
-    char outputQueryNumberToPacketCode[256];//invalidation packet code: 0x00, store the packetCode
-    char inputQueryNumberToPacketCode[256];//invalidation packet code: 0x00, store the packetCode, store size is useless because the resolution or is do at send or at receive, then no performance gain
+    char outputQueryNumberToPacketCode[16];//invalidation packet code: 0x00, store the packetCode
+    char inputQueryNumberToPacketCode[16];//invalidation packet code: 0x00, store the packetCode, store size is useless because the resolution or is do at send or at receive, then no performance gain
 
     static char tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
     static char tempBigBufferForInput[CATCHCHALLENGER_BIGBUFFERSIZE];//to store the input buffer on linux READ() interface or with Qt
@@ -198,6 +199,7 @@ public:
     uint64_t getRXSize() const;
     #endif
     void storeInputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
+    virtual void registerOutputQuery(const uint8_t &queryNumber, const uint8_t &packetCode);
 
     void closeSocket();
 protected:

@@ -29,9 +29,9 @@ CREATE TABLE IF NOT EXISTS `account` (
 
 CREATE TABLE IF NOT EXISTS `account_register` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `login` varchar(128) NOT NULL,
-  `password` varchar(128) NOT NULL,
-  `email` varchar(64) NOT NULL,
+  `login` varbinary(28) NOT NULL,
+  `password` varbinary(28) NOT NULL,
+  `email` text NOT NULL,
   `key` text NOT NULL,
   `date` int(11) unsigned NOT NULL,
   PRIMARY KEY (`id`),

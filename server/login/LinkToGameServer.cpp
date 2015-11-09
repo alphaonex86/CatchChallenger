@@ -249,7 +249,7 @@ void LinkToGameServer::parseIncommingData()
 void LinkToGameServer::sendProtocolHeader()
 {
     //send the network query
-    registerOutputQuery(0x01);
+    registerOutputQuery(0x01,0xA0);
     sendRawBlock(reinterpret_cast<char *>(protocolHeaderToMatchGameServer),sizeof(protocolHeaderToMatchGameServer));
 }
 

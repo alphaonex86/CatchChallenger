@@ -79,6 +79,8 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     }
     else
     {
+        if(socket->fakeSocket!=NULL)
+            haveFirstHeader=true;
         connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::QueuedConnection);//put queued to don't have circular loop Client -> Server -> Client
         if(socket->bytesAvailable())
             parseIncommingData();
@@ -100,8 +102,9 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     }
 
     {
+        lastQueryNumber.reserve(16);
         int index=1;
-        while(index<256)
+        while(index<16)
         {
             lastQueryNumber.push_back(index);
             index++;
@@ -193,9 +196,9 @@ bool Api_protocol::sendProtocol()
 
     have_send_protocol=true;
     if(stageConnexion==StageConnexion::Stage1)
-        packOutcommingQuery(0x03,queryNumber(),reinterpret_cast<const char *>(protocolHeaderToMatchLogin),sizeof(protocolHeaderToMatchLogin));
+        packOutcommingQuery(0xA0,queryNumber(),reinterpret_cast<const char *>(protocolHeaderToMatchLogin),sizeof(protocolHeaderToMatchLogin));
     else if(stageConnexion==StageConnexion::Stage3)
-        packOutcommingQuery(0x03,queryNumber(),reinterpret_cast<const char *>(protocolHeaderToMatchGameServer),sizeof(protocolHeaderToMatchGameServer));
+        packOutcommingQuery(0xA0,queryNumber(),reinterpret_cast<const char *>(protocolHeaderToMatchGameServer),sizeof(protocolHeaderToMatchGameServer));
     else
         newError(QStringLiteral("Internal problem"),QStringLiteral("stageConnexion!=StageConnexion::Stage1/3"));
     return true;
@@ -285,7 +288,7 @@ bool Api_protocol::tryLogin(const QString &login, const QString &pass)
                  .arg(QString(token.toHex()))
                  ;
     #endif
-    packOutcommingQuery(0x04,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0xA8,queryNumber(),outputData.constData(),outputData.size());
     return true;
 }
 
@@ -312,7 +315,18 @@ bool Api_protocol::tryCreate()
     }
     //pass
     outputData+=passHash;
-    packOutcommingQuery(0x05,queryNumber(),outputData.constData(),outputData.size());
+    //Dynamic salt
+    QByteArray salt;
+    salt.resize(4);
+    uint8_t index=0;
+    while(index<4)
+    {
+        salt[index]=rand()%256;
+        index++;
+    }
+    outputData+=salt;
+
+    packOutcommingQuery(0xA9,queryNumber(),outputData.constData(),outputData.size());
     qDebug() << QStringLiteral("Try create account: login: %1 and pass: %2")
              .arg(QString(loginHash.toHex()))
              .arg(QString(passHash.toHex()))
@@ -653,7 +667,7 @@ void Api_protocol::useObject(const uint16_t &object)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << object;
-    is_logged=character_selected=packOutcommingQuery(0x89,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingQuery(0x86,queryNumber(),outputData.constData(),outputData.size());
     lastObjectUsed << object;
 }
 
@@ -1690,6 +1704,7 @@ void Api_protocol::resetAll()
     CommonSettingsServer::commonSettingsServer.subDatapackCode="[sub]";
 
     ProtocolParsingInputOutput::reset();
+    flags|=0x08;
 }
 
 void Api_protocol::unloadSelection()
@@ -2128,6 +2143,11 @@ bool Api_protocol::postReplyData(const uint8_t &queryNumber, const char * const 
     const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[packetCode+128];
     if(fixedSize!=0xFE)
     {
+        if(fixedSize!=size)
+        {
+            std::cout << "Sended packet size: " << size << ": " << binarytoHexa(data,size) << ", but the fixed packet size defined at: " << fixedSize << std::endl;
+            return false;
+        }
         //fixed size
         //send the network message
         uint32_t posOutput=0;
@@ -2136,7 +2156,7 @@ bool Api_protocol::postReplyData(const uint8_t &queryNumber, const char * const 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
         posOutput+=1;
 
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,data,size);
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,data,size);
         posOutput+=size;
 
         return internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -2150,9 +2170,9 @@ bool Api_protocol::postReplyData(const uint8_t &queryNumber, const char * const 
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
         posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
 
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
         posOutput+=size;
 
         return internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -2164,6 +2184,11 @@ bool Api_protocol::packOutcommingData(const uint8_t &packetCode,const char * con
     const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[packetCode];
     if(fixedSize!=0xFE)
     {
+        if(fixedSize!=size)
+        {
+            std::cout << "Sended packet size: " << size << ": " << binarytoHexa(data,size) << ", but the fixed packet size defined at: " << fixedSize << std::endl;
+            return false;
+        }
         //fixed size
         //send the network message
         uint32_t posOutput=0;
@@ -2194,10 +2219,15 @@ bool Api_protocol::packOutcommingData(const uint8_t &packetCode,const char * con
 
 bool Api_protocol::packOutcommingQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const int &size)
 {
-    ProtocolParsingBase::registerOutputQuery(queryNumber);
+    registerOutputQuery(queryNumber,packetCode);
     const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[packetCode];
     if(fixedSize!=0xFE)
     {
+        if(fixedSize!=size)
+        {
+            std::cout << "Sended packet size: " << size << ": " << binarytoHexa(data,size) << ", but the fixed packet size defined at: " << fixedSize << std::endl;
+            return false;
+        }
         //fixed size
         //send the network message
         uint32_t posOutput=0;
@@ -2206,7 +2236,7 @@ bool Api_protocol::packOutcommingQuery(const uint8_t &packetCode,const uint8_t &
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
         posOutput+=1;
 
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,data,size);
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,data,size);
         posOutput+=size;
 
         return internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -2220,9 +2250,9 @@ bool Api_protocol::packOutcommingQuery(const uint8_t &packetCode,const uint8_t &
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
         posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
 
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
         posOutput+=size;
 
         return internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);

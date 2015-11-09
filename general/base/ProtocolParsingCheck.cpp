@@ -9,6 +9,7 @@ ProtocolParsingCheck::ProtocolParsingCheck(const PacketModeTransmission &packetM
     ProtocolParsingBase(packetModeTransmission),
     valid(false)
 {
+    flags|=0x08;
 }
 
 bool ProtocolParsingCheck::parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size)
@@ -103,6 +104,19 @@ bool ProtocolParsingCheck::parseIncommingDataRaw(const char * const commonBuffer
         abort();
     }
     return returnVar;
+}
+
+//to revert input and ouput table
+void ProtocolParsingCheck::storeInputQuery(const uint8_t &packetCode,const uint8_t &queryNumber)
+{
+    //register the size of the reply to send
+    outputQueryNumberToPacketCode[queryNumber]=packetCode;
+}
+
+//to revert input and ouput table
+void ProtocolParsingCheck::registerOutputQuery(const uint8_t &queryNumber, const uint8_t &packetCode)
+{
+    inputQueryNumberToPacketCode[queryNumber]=packetCode;
 }
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION

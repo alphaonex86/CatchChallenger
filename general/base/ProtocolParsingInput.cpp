@@ -77,6 +77,7 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
             uint32_t cursor=0;
             do
             {
+                protocolParsingCheck->flags|=0x08;
                 if(!protocolParsingCheck->parseIncommingDataRaw(data,size,cursor))
                 {
                     std::cerr << "Bug at data-sending: " << binarytoHexa(data,size) << std::endl;
@@ -230,6 +231,9 @@ std::stringLiteral(" parseIncommingData(): size returned is 0!"));*/
 //this interface allow 0 copy method
 bool ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer, const uint32_t &size, uint32_t &cursor)
 {
+    #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
+    std::cout << "ProtocolParsingBase::parseIncommingDataRaw(), flags: " << (int)flags << std::endl;
+    #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
     if(!parseHeader(commonBuffer,size,cursor))
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -286,7 +290,8 @@ bool ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer,
 
 bool ProtocolParsingBase::isReply() const
 {
-    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+    return packetCode==CATCHCHALLENGER_PROTOCOL_REPLY_CLIENT_TO_SERVER || packetCode==CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    /*#ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     if(flags & 0x10)
     {
         if(packetCode==CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT)
@@ -298,7 +303,7 @@ bool ProtocolParsingBase::isReply() const
         if(packetCode==CATCHCHALLENGER_PROTOCOL_REPLY_CLIENT_TO_SERVER)
             return false;
     }
-    return false;
+    return false;*/
 }
 
 bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const uint32_t &size,uint32_t &cursor)
@@ -321,6 +326,14 @@ bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const uint
                 return false;//packetCode code wrong
             else if(dataSize!=0xFE)
                 flags |= 0x40;
+            else
+            {
+                if(!(flags & 0x08))
+                {
+                    errorParsingLayer("dynamic size blocked");
+                    return false;
+                }
+            }
             return true;
         }
     }
@@ -339,6 +352,11 @@ bool ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,const
         }
         queryNumber=*(commonBuffer+cursor);
         cursor+=sizeof(uint8_t);
+        if(queryNumber>15)
+        {
+            errorParsingLayer("query number >15");
+            return false;
+        }
 
         // it's reply
         if(isReply())
@@ -352,6 +370,14 @@ bool ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,const
                 abort();//packetCode code wrong, how the output allow this! filter better the output
             else if(dataSize!=0xFE)
                 flags |= 0x40;
+            else
+            {
+                if(!(flags & 0x08))
+                {
+                    errorParsingLayer("dynamic size blocked");
+                    return false;
+                }
+            }
         }
         else // it's query with reply
         {
@@ -634,6 +660,10 @@ void ProtocolParsingInputOutput::storeInputQuery(const uint8_t &packetCode,const
         " storeInputQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+") query with same id previously say");
         return;
     }
+    #endif
+    //registrer on the check
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    protocolParsingCheck->storeInputQuery(packetCode,queryNumber);
     #endif
     //register the size of the reply to send
     inputQueryNumberToPacketCode[queryNumber]=packetCode;
