@@ -292,7 +292,7 @@ bool Api_protocol::tryLogin(const QString &login, const QString &pass)
     return true;
 }
 
-bool Api_protocol::tryCreate()
+bool Api_protocol::tryCreateAccount()
 {
     if(!have_send_protocol)
     {
@@ -315,16 +315,6 @@ bool Api_protocol::tryCreate()
     }
     //pass
     outputData+=passHash;
-    //Dynamic salt
-    QByteArray salt;
-    salt.resize(4);
-    uint8_t index=0;
-    while(index<4)
-    {
-        salt[index]=rand()%256;
-        index++;
-    }
-    outputData+=salt;
 
     packOutcommingQuery(0xA9,queryNumber(),outputData.constData(),outputData.size());
     qDebug() << QStringLiteral("Try create account: login: %1 and pass: %2")
@@ -2145,7 +2135,7 @@ bool Api_protocol::postReplyData(const uint8_t &queryNumber, const char * const 
     {
         if(fixedSize!=size)
         {
-            std::cout << "Sended packet size: " << size << ": " << binarytoHexa(data,size) << ", but the fixed packet size defined at: " << fixedSize << std::endl;
+            std::cout << "Sended packet size: " << size << ": " << binarytoHexa(data,size) << ", but the fixed packet size defined at: " << std::to_string((int)fixedSize) << std::endl;
             return false;
         }
         //fixed size
@@ -2186,7 +2176,7 @@ bool Api_protocol::packOutcommingData(const uint8_t &packetCode,const char * con
     {
         if(fixedSize!=size)
         {
-            std::cout << "Sended packet size: " << size << ": " << binarytoHexa(data,size) << ", but the fixed packet size defined at: " << fixedSize << std::endl;
+            std::cout << "Sended packet size: " << size << ": " << binarytoHexa(data,size) << ", but the fixed packet size defined at: " << std::to_string((int)fixedSize) << std::endl;
             return false;
         }
         //fixed size
@@ -2225,7 +2215,7 @@ bool Api_protocol::packOutcommingQuery(const uint8_t &packetCode,const uint8_t &
     {
         if(fixedSize!=size)
         {
-            std::cout << "Sended packet size: " << size << ": " << binarytoHexa(data,size) << ", but the fixed packet size defined at: " << fixedSize << std::endl;
+            std::cout << "Sended packet size: " << size << ": " << binarytoHexa(data,size) << ", but the fixed packet size defined at: " << std::to_string((int)fixedSize) << std::endl;
             return false;
         }
         //fixed size
