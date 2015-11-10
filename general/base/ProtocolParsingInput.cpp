@@ -284,7 +284,7 @@ bool ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer,
         return false;
     }
     //parseDispatch(); do into above function
-    dataClear();
+    //dataClear();-> not return if failed or just stop parsing, then do into parseDispatch()
     return true;
 }
 
@@ -453,6 +453,7 @@ bool ProtocolParsingBase::parseData(const char * const commonBuffer, const uint3
                         #endif
             std::stringLiteral(" parseIncommingData(): remaining data: %1").arg((size-cursor)));
             #endif
+            dataClear();
             return returnVal;
         }
     }
@@ -476,7 +477,9 @@ bool ProtocolParsingBase::parseData(const char * const commonBuffer, const uint3
             return false;
         }
         #endif
-        return parseDispatch(dataToWithoutHeader.data(),dataToWithoutHeader.size());
+        const bool &returnVal=parseDispatch(dataToWithoutHeader.data(),dataToWithoutHeader.size());
+        dataClear();
+        return returnVal;
     }
     else //if need more data
     {
@@ -624,7 +627,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
 void ProtocolParsingBase::dataClear()
 {
     dataToWithoutHeader.clear();
-    flags &= 0x10;
+    flags &= 0x18;
 }
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
