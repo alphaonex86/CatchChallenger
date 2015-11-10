@@ -35,7 +35,7 @@ public:
 
     //protocol command
     bool tryLogin(const QString &login,const QString &pass);
-    bool tryCreate();
+    bool tryCreateAccount();
     bool sendProtocol();
     bool protocolWrong() const;
     virtual void socketDisconnectedForReconnect();

@@ -101,7 +101,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     newError(QStringLiteral("Internal problem"),QStringLiteral("stageConnexion!=StageConnexion::Stage1/3"));
                     return false;
                 }
-                return false;
+                return true;
             }
             else
             {
@@ -145,7 +145,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     string=tr("Login already in progress");
                 else if(returnCode==0x07)
                 {
-                    tryCreate();
+                    tryCreateAccount();
                     return false;
                 }
                 else
