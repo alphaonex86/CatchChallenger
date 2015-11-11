@@ -105,8 +105,8 @@ public:
     virtual ssize_t write(const char * const data, const size_t &size) = 0;
     virtual void registerOutputQuery(const uint8_t &queryNumber, const uint8_t &packetCode) = 0;
 public:
-    //this interface allow 0 copy method
-    bool parseIncommingDataRaw(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
+    //this interface allow 0 copy method, return 1 if all is ok, return 0 if need more data, -1 if critical error and need disconnect
+    int8_t parseIncommingDataRaw(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
     #ifndef EPOLLCATCHCHALLENGERSERVER
     std::vector<std::string> getQueryRunningList();
     #endif
@@ -118,17 +118,17 @@ protected:
     virtual void moveClientFastPath(const uint8_t &previousMovedUnit,const uint8_t &direction) = 0;
     #endif
     #endif
-    bool parseHeader(const char * const commonBuffer, const uint32_t &size, uint32_t &cursor);
-    bool parseQueryNumber(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
-    bool parseDataSize(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
-    bool parseData(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
+    int8_t parseHeader(const char * const commonBuffer, const uint32_t &size, uint32_t &cursor);
+    int8_t parseQueryNumber(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
+    int8_t parseDataSize(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
+    int8_t parseData(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
     bool parseDispatch(const char * const data,const int &size);
     inline bool isReply() const;
     std::vector<char> header_cut;
     uint8_t flags;
-    /* flags & 0x80 = haveData
-     * flags & 0x40 = haveData_dataSize
-     * flags & 0x20 = have_query_number
+    /* flags & 0x80 = have header
+     * flags & 0x40 = have data size
+     * flags & 0x20 = have query number
      * flags & 0x10 = isClient
      * flags & 0x08 = allowDynamicSize
     */

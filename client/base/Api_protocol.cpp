@@ -271,20 +271,21 @@ bool Api_protocol::tryLogin(const QString &login, const QString &pass)
         }
         #endif
     }
+    QCryptographicHash hashAndToken(QCryptographicHash::Sha224);
     {
         QCryptographicHash hashPass(QCryptographicHash::Sha224);
         hashPass.addData((pass+/*salt*/"AwjDvPIzfJPTTgHs").toUtf8());
         passHash=hashPass.result();
 
-        QCryptographicHash hashAndToken(QCryptographicHash::Sha224);
         hashAndToken.addData(passHash);
         hashAndToken.addData(token);
         outputData+=hashAndToken.result();
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    qDebug() << QStringLiteral("Try auth: password %1 with token %3 for the login: %2")
+    qDebug() << QStringLiteral("Try auth: password %1, token: %4, password+token %3 for the login: %2")
                  .arg(QString(passHash.toHex()))
                  .arg(QString(tempDoubleHash.toHex()))
+                 .arg(QString(hashAndToken.result().toHex()))
                  .arg(QString(token.toHex()))
                  ;
     #endif

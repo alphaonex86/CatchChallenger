@@ -137,6 +137,11 @@ void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
         generateToken(settings);
     token=settings.value("token").toString().toStdString();
     const std::vector<char> &tokenbinary=hexatoBinary(token);
+    if(tokenbinary.empty())
+    {
+        std::cerr << "convertion to binary for pass failed for: " << token << std::endl;
+        abort();
+    }
     memcpy(EpollClientLoginMaster::private_token,tokenbinary.data(),TOKEN_SIZE_FOR_MASTERAUTH);
 
     //connection

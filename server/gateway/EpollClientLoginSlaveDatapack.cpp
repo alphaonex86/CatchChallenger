@@ -153,9 +153,19 @@ void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vect
         {
             const std::string &fileName=files.at(index);
             const uint32_t &clientPartialHash=partialHashList.at(index);
-            if(fileName.find(text_dotslash)!=std::string::npos || fileName.find(text_antislash)!=std::string::npos || fileName.find(text_double_slash)!=std::string::npos)
+            if(fileName.find(Client::text_dotslash) != std::string::npos)
             {
-                std::cerr << "file name contains illegale char: " << fileName << std::endl;
+                errorOutput("file name contains illegale char (1): "+fileName);
+                return;
+            }
+            if(fileName.find(Client::text_antislash) != std::string::npos)
+            {
+                errorOutput("file name contains illegale char (2): "+fileName);
+                return;
+            }
+            if(fileName.find(Client::text_double_slash) != std::string::npos)
+            {
+                errorOutput("file name contains illegale char (3): "+fileName);
                 return;
             }
             if(regex_search(fileName,fileNameStartStringRegex) || stringStartWith(fileName,text_slash))
@@ -337,7 +347,7 @@ void EpollClientLoginSlave::addDatapackListReply(const bool &fileRemove)
     tempDatapackListReplySize++;
     if(tempDatapackListReplySize>=8)
     {
-        tempDatapackListReplyArray[tempDatapackListReplyArray.size()]=tempDatapackListReply;
+        tempDatapackListReplyArray.push_back(tempDatapackListReply);
         tempDatapackListReplySize=0;
         tempDatapackListReply=0;
     }
@@ -347,12 +357,12 @@ void EpollClientLoginSlave::purgeDatapackListReply(const uint8_t &query_id)
 {
     if(tempDatapackListReplySize>0)
     {
-        tempDatapackListReplyArray[tempDatapackListReplyArray.size()]=tempDatapackListReply;
+        tempDatapackListReplyArray.push_back(tempDatapackListReply);
         tempDatapackListReplySize=0;
         tempDatapackListReply=0;
     }
     if(tempDatapackListReplyArray.empty())
-        tempDatapackListReplyArray[0x00]=0x00;
+        tempDatapackListReplyArray.push_back(0x00);
 
     //send the network reply
     removeFromQueryReceived(query_id);

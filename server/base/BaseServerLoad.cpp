@@ -57,29 +57,30 @@ void BaseServer::preload_other()
             std::cerr << "The server is alonem why do you need more than 900 char for description? Limited to 900 to limit the memory usage" << std::endl;
             abort();
         }
+        char logicalGroup[64];
         Client::protocolMessageLogicalGroupAndServerListSize=0;
         //C20F
         {
             //no logical group
             //send the network message
-            ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x44;
+            logicalGroup[0x00]=0x44;
             //size
-            ProtocolParsingBase::tempBigBufferForOutput[0x01]=0x04;
-            ProtocolParsingBase::tempBigBufferForOutput[0x02]=0x00;
-            ProtocolParsingBase::tempBigBufferForOutput[0x03]=0x00;
-            ProtocolParsingBase::tempBigBufferForOutput[0x04]=0x00;
+            logicalGroup[0x01]=0x04;
+            logicalGroup[0x02]=0x00;
+            logicalGroup[0x03]=0x00;
+            logicalGroup[0x04]=0x00;
             //one logical group
-            ProtocolParsingBase::tempBigBufferForOutput[0x05]=0x01;
+            logicalGroup[0x05]=0x01;
             //empty string
-            ProtocolParsingBase::tempBigBufferForOutput[0x06]=0x00;
-            ProtocolParsingBase::tempBigBufferForOutput[0x07]=0x00;
-            ProtocolParsingBase::tempBigBufferForOutput[0x08]=0x00;
+            logicalGroup[0x06]=0x00;
+            logicalGroup[0x07]=0x00;
+            logicalGroup[0x08]=0x00;
 
             Client::protocolMessageLogicalGroupAndServerListSize+=9;
         }
+        uint32_t posOutput=0;
         //C20E
         {
-            uint32_t posOutput=Client::protocolMessageLogicalGroupAndServerListSize;
             //send the network message
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x40;
             posOutput+=1+4;
@@ -119,13 +120,14 @@ void BaseServer::preload_other()
                 *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(255/2);
                 posOutput+=2;
             }
-            Client::protocolMessageLogicalGroupAndServerListSize=posOutput;
+            Client::protocolMessageLogicalGroupAndServerListSize+=posOutput;
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
         }
         if(Client::protocolMessageLogicalGroupAndServerList!=NULL)
             delete Client::protocolMessageLogicalGroupAndServerList;
         Client::protocolMessageLogicalGroupAndServerList=(unsigned char *)malloc(Client::protocolMessageLogicalGroupAndServerListSize);
-        *reinterpret_cast<uint32_t *>(Client::protocolMessageLogicalGroupAndServerList+1)=htole32(Client::protocolMessageLogicalGroupAndServerListSize-1-4);//set the dynamic size
-        memcpy(Client::protocolMessageLogicalGroupAndServerList,ProtocolParsingBase::tempBigBufferForOutput,Client::protocolMessageLogicalGroupAndServerListSize);
+        memcpy(Client::protocolMessageLogicalGroupAndServerList,logicalGroup,9);
+        memcpy(Client::protocolMessageLogicalGroupAndServerList+9,ProtocolParsingBase::tempBigBufferForOutput,Client::protocolMessageLogicalGroupAndServerListSize);
     }
 
     //charater list reply header
@@ -163,7 +165,6 @@ void BaseServer::preload_other()
         }
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size());
         posOutput+=CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size();
-
         {
             const std::string &text=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
