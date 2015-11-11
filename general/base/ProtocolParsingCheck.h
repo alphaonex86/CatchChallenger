@@ -16,7 +16,7 @@ class ProtocolParsingCheck : public ProtocolParsingBase
         friend class ProtocolParsingBase;
         friend class ProtocolParsingInputOutput;
         bool valid;
-        bool parseIncommingDataRaw(const char *commonBuffer, const uint32_t &size,uint32_t &cursor);
+        int8_t parseIncommingDataRaw(const char *commonBuffer, const uint32_t &size,uint32_t &cursor);
         void storeInputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
         void registerOutputQuery(const uint8_t &queryNumber, const uint8_t &packetCode);
     private:

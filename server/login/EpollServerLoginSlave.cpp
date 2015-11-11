@@ -73,6 +73,11 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         generateToken(settings);
     token=settings.value("token").toString().toStdString();
     const std::vector<char> &tokenBinary=hexatoBinary(token);
+    if(tokenBinary.empty())
+    {
+        std::cerr << "convertion to binary for pass failed for: " << token << std::endl;
+        abort();
+    }
     memcpy(LinkToMaster::private_token,tokenBinary.data(),TOKEN_SIZE_FOR_MASTERAUTH);
     settings.endGroup();
 

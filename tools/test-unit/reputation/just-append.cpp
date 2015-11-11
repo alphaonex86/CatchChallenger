@@ -6,8 +6,8 @@ void TestUnitReputation::reputationJustAppend()
 {
     {
         Reputation reputation;
-        reputation.reputation_positive << 0 << 150 << 10000;
-        reputation.reputation_negative << -1 << -150 << -10000;
+        reputation.reputation_positive={0,150,10000};
+        reputation.reputation_negative={-1,-150,-10000};
         PlayerReputation playerReputation;
         playerReputation.level=0;
         playerReputation.point=0;
@@ -22,8 +22,8 @@ void TestUnitReputation::reputationJustAppend()
     }
     {
         Reputation reputation;
-        reputation.reputation_positive << 0 << 150 << 10000;
-        reputation.reputation_negative << -1 << -150 << -10000;
+        reputation.reputation_positive={0,150,10000};
+        reputation.reputation_negative={-1,-150,-10000};
         PlayerReputation playerReputation;
         playerReputation.level=0;
         playerReputation.point=50;
@@ -38,8 +38,8 @@ void TestUnitReputation::reputationJustAppend()
     }
     {
         Reputation reputation;
-        reputation.reputation_positive << 0 << 150 << 10000;
-        reputation.reputation_negative << -1 << -150 << -10000;
+        reputation.reputation_positive={0,150,10000};
+        reputation.reputation_negative={-1,-150,-10000};
         PlayerReputation playerReputation;
         playerReputation.level=0;
         playerReputation.point=-50;
@@ -54,8 +54,8 @@ void TestUnitReputation::reputationJustAppend()
     }
     {
         Reputation reputation;
-        reputation.reputation_positive << 0 << 150 << 10000;
-        reputation.reputation_negative << -1 << -150 << -10000;
+        reputation.reputation_positive={0,150,10000};
+        reputation.reputation_negative={-1,-150,-10000};
         PlayerReputation playerReputation;
         playerReputation.level=0;
         playerReputation.point=-50;
@@ -68,4 +68,4 @@ void TestUnitReputation::reputationJustAppend()
             finalResult=false;
         }
     }
-} 
+}

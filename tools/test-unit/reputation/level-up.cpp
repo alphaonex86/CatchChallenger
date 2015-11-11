@@ -6,8 +6,8 @@ void TestUnitReputation::reputationLevelUp()
 {
     {
         Reputation reputation;
-        reputation.reputation_positive << 0 << 150 << 10000;
-        reputation.reputation_negative << -1 << -150 << -10000;
+        reputation.reputation_positive={0,150,10000};
+        reputation.reputation_negative={-1,-150,-10000};
         PlayerReputation playerReputation;
         playerReputation.level=-2;
         playerReputation.point=0;
@@ -22,8 +22,8 @@ void TestUnitReputation::reputationLevelUp()
     }
     {
         Reputation reputation;
-        reputation.reputation_positive << 0 << 150 << 10000;
-        reputation.reputation_negative << -1 << -150 << -10000;
+        reputation.reputation_positive={0,150,10000};
+        reputation.reputation_negative={-1,-150,-10000};
         PlayerReputation playerReputation;
         playerReputation.level=-1;
         playerReputation.point=-9950;
@@ -38,8 +38,8 @@ void TestUnitReputation::reputationLevelUp()
     }
     {
         Reputation reputation;
-        reputation.reputation_positive << 0;
-        reputation.reputation_negative << -1 << -150 << -10000;
+        reputation.reputation_positive={0};
+        reputation.reputation_negative={-1,-150,-10000};
         PlayerReputation playerReputation;
         playerReputation.level=0;
         playerReputation.point=-100;
@@ -54,7 +54,7 @@ void TestUnitReputation::reputationLevelUp()
     }
     {
         Reputation reputation;
-        reputation.reputation_negative << -1 << -150 << -10000;
+        reputation.reputation_negative={-1,-150,-10000};
         PlayerReputation playerReputation;
         playerReputation.level=0;
         playerReputation.point=-100;
@@ -69,8 +69,8 @@ void TestUnitReputation::reputationLevelUp()
     }
     {
         Reputation reputation;
-        reputation.reputation_positive << 0 << 150 << 10000;
-        reputation.reputation_negative << -1 << -150 << -10000;
+        reputation.reputation_positive={0,150,10000};
+        reputation.reputation_negative={-1,-150,-10000};
         PlayerReputation playerReputation;
         playerReputation.level=0;
         playerReputation.point=-100;
@@ -85,8 +85,8 @@ void TestUnitReputation::reputationLevelUp()
     }
     {
         Reputation reputation;
-        reputation.reputation_positive << 0 << 150 << 10000;
-        reputation.reputation_negative << -1 << -150 << -10000;
+        reputation.reputation_positive={0,150,10000};
+        reputation.reputation_negative={-1,-150,-10000};
         PlayerReputation playerReputation;
         playerReputation.level=0;
         playerReputation.point=100;
@@ -101,8 +101,8 @@ void TestUnitReputation::reputationLevelUp()
     }
     {
         Reputation reputation;
-        reputation.reputation_positive << 0 << 150 << 10000;
-        reputation.reputation_negative << -1 << -150 << -10000;
+        reputation.reputation_positive={0,150,10000};
+        reputation.reputation_negative={-1,-150,-10000};
         PlayerReputation playerReputation;
         playerReputation.level=1;
         playerReputation.point=9950;
@@ -117,8 +117,8 @@ void TestUnitReputation::reputationLevelUp()
     }
     {
         Reputation reputation;
-        reputation.reputation_positive << 0 << 150 << 10000;
-        reputation.reputation_negative << -1 << -150 << -10000;
+        reputation.reputation_positive={0,150,10000};
+        reputation.reputation_negative={-1,-150,-10000};
         PlayerReputation playerReputation;
         playerReputation.level=1;
         playerReputation.point=9950;

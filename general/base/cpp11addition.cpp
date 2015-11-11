@@ -1,9 +1,10 @@
 #include "cpp11addition.h"
 #include <sstream>
+#include <cassert>
 
 static const std::regex isaunsignednumber("^[0-9]+$");
 static const std::regex isasignednumber("^-?[0-9]+$");
-static const std::regex ishexa("^[0-9a-fA-F]+$");
+static const std::regex ishexa("^([0-9a-fA-F][0-9a-fA-F])+$");
 
 static const std::string base64_chars =
              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -381,16 +382,68 @@ std::string binarytoHexa(const char * const data,const uint32_t &size)
     return output;
 }
 
+uint8_t hexToDecUnit(const std::string& data)
+{
+     auto fromHex = [](char c)
+     {
+        if (isdigit(c)) return c - '0';
+        switch(c)
+        {
+            case '0':
+                return 0;
+            case '1':
+                return 1;
+            case '2':
+                return 2;
+            case '3':
+                return 3;
+            case '4':
+                return 4;
+            case '5':
+                return 5;
+            case '6':
+                return 6;
+            case '7':
+                return 7;
+            case '8':
+                return 8;
+            case '9':
+                return 9;
+
+            case 'a':
+            case 'A':
+                return 10;
+            case 'b':
+            case 'B':
+                return 11;
+            case 'c':
+            case 'C':
+                return 12;
+            case 'd':
+            case 'D':
+                return 13;
+            case 'e':
+            case 'E':
+                return 14;
+            case 'f':
+            case 'F':
+                return 15;
+        }
+        return 0;
+    };
+    return fromHex(data[0]) << 4 | fromHex(data[1]);
+}
+
 std::vector<char> hexatoBinary(const std::string &data)
 {
     if(Q_LIKELY(std::regex_match(data,ishexa)))
     {
         std::vector<char> out;
-        out.resize(data.length()/2);
-        for(size_t i = 0; i < data.length(); i += 2) {
-            std::istringstream strm(data.substr(i, 2));
-            uint8_t x;
-            strm >> std::hex >> x;
+        out.reserve(data.length()/2);
+        for(size_t i=0;i<data.length();i+=2)
+        {
+            const std::string &partpfchain=data.substr(i,2);
+            uint8_t x=hexToDecUnit(partpfchain);
             out.push_back(x);
         }
         return out;
