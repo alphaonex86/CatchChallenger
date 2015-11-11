@@ -137,6 +137,11 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                     {
                         const std::string &secretToken(databaseBaseLogin.value(1));
                         const std::vector<char> &secretTokenBinary=hexatoBinary(secretToken);
+                        if(secretTokenBinary.empty() || secretTokenBinary.size()!=CATCHCHALLENGER_SHA224HASH_SIZE)
+                        {
+                            std::cerr << "convertion to binary for pass failed for: " << databaseBaseLogin.value(1) << std::endl;
+                            abort();
+                        }
                         QCryptographicHash hash(QCryptographicHash::Sha224);
                         hash.addData(secretTokenBinary.data(),secretTokenBinary.size());
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK

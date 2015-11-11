@@ -175,6 +175,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
             std::vector<char> hashedToken;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             std::vector<char> tempAddedToken;
+            std::vector<char> secretTokenBinary;
             #endif
             {
                 int32_t tokenForAuthIndex=0;
@@ -183,7 +184,16 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                     const BaseServerLogin::TokenLink &tokenLink=BaseServerLogin::tokenForAuth[tokenForAuthIndex];
                     if(tokenLink.client==this)
                     {
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        secretTokenBinary=hexatoBinary(GlobalServerData::serverPrivateVariables.db_login->value(1));
+                        #else
                         const std::vector<char> &secretTokenBinary=hexatoBinary(GlobalServerData::serverPrivateVariables.db_login->value(1));
+                        #endif
+                        if(secretTokenBinary.empty() || secretTokenBinary.size()!=CATCHCHALLENGER_SHA224HASH_SIZE)
+                        {
+                            std::cerr << "convertion to binary for pass failed for: " << GlobalServerData::serverPrivateVariables.db_login->value(1) << std::endl;
+                            abort();
+                        }
                         QCryptographicHash hash(QCryptographicHash::Sha224);
                         hash.addData(secretTokenBinary.data(),secretTokenBinary.size());
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -223,11 +233,16 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 loginIsWrong(askLoginParam->query_id,0x03,"Password wrong: "+
-                             binarytoHexa(askLoginParam->pass)+
-                             " with token "+
+                             binarytoHexa(secretTokenBinary)+
+                             " + token "+
                              binarytoHexa(tempAddedToken)+
+                             " = "+
+                             " hashedToken: "+
+                             binarytoHexa(hashedToken)+
                              " for the login: "+
-                             binarytoHexa(askLoginParam->login)
+                             binarytoHexa(askLoginParam->login)+
+                             "sended pass + toekn: "+
+                             binarytoHexa(askLoginParam->pass)
                              );
                 #else
                 loginIsWrong(askLoginParam->query_id,0x03,"Password wrong: "+
@@ -635,7 +650,7 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,Client::protocolReplyCharacterList,Client::protocolReplyCharacterListSize);
     posOutput+=Client::protocolReplyCharacterListSize;
     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,characterOutputData,characterOutputDataSize);
-    posOutput+=Client::protocolReplyCharacterListSize;
+    posOutput+=characterOutputDataSize;
 
     int tempRawDataSizeToSetServerCount=posOutput;
     posOutput+=1;
@@ -1535,9 +1550,19 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
         {
             const std::string &fileName=files.at(index);
             const uint32_t &clientPartialHash=partialHashList.at(index);
-            if(fileName.find(Client::text_dotslash) == std::string::npos || fileName.find(Client::text_antislash) == std::string::npos || fileName.find(Client::text_double_slash) == std::string::npos)
+            if(fileName.find(Client::text_dotslash) != std::string::npos)
             {
-                errorOutput("file name contains illegale char: "+fileName);
+                errorOutput("file name contains illegale char (1): "+fileName);
+                return;
+            }
+            if(fileName.find(Client::text_antislash) != std::string::npos)
+            {
+                errorOutput("file name contains illegale char (2): "+fileName);
+                return;
+            }
+            if(fileName.find(Client::text_double_slash) != std::string::npos)
+            {
+                errorOutput("file name contains illegale char (3): "+fileName);
                 return;
             }
             if(regex_search(fileName,fileNameStartStringRegex) || stringStartWith(fileName,Client::text_slash))
@@ -1712,7 +1737,7 @@ void Client::addDatapackListReply(const bool &fileRemove)
     tempDatapackListReplySize++;
     if(tempDatapackListReplySize>=8)
     {
-        tempDatapackListReplyArray[tempDatapackListReplyArray.size()]=tempDatapackListReply;
+        tempDatapackListReplyArray.push_back(tempDatapackListReply);
         tempDatapackListReplySize=0;
         tempDatapackListReply=0;
     }
@@ -1722,12 +1747,12 @@ void Client::purgeDatapackListReply(const uint8_t &query_id)
 {
     if(tempDatapackListReplySize>0)
     {
-        tempDatapackListReplyArray[tempDatapackListReplyArray.size()]=tempDatapackListReply;
+        tempDatapackListReplyArray.push_back(tempDatapackListReply);
         tempDatapackListReplySize=0;
         tempDatapackListReply=0;
     }
     if(tempDatapackListReplyArray.empty())
-        tempDatapackListReplyArray[0x00]=0x00;
+        tempDatapackListReplyArray.push_back(0x00);
 
     {
         //send the network reply
