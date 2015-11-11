@@ -95,9 +95,9 @@ ssize_t ProtocolParsingCheck::write(const char * const data, const size_t &size)
     abort();
 }
 
-bool ProtocolParsingCheck::parseIncommingDataRaw(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor)
+int8_t ProtocolParsingCheck::parseIncommingDataRaw(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor)
 {
-    const bool &returnVar=ProtocolParsingBase::parseIncommingDataRaw(commonBuffer,size,cursor);
+    const int8_t &returnVar=ProtocolParsingBase::parseIncommingDataRaw(commonBuffer,size,cursor);
     if(!header_cut.empty())
     {
         std::cerr << "Header cut is not empty" << std::endl;

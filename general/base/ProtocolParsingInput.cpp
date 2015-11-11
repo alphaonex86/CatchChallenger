@@ -78,7 +78,7 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
             do
             {
                 protocolParsingCheck->flags|=0x08;
-                if(!protocolParsingCheck->parseIncommingDataRaw(data,size,cursor))
+                if(protocolParsingCheck->parseIncommingDataRaw(data,size,cursor)!=1)
                 {
                     std::cerr << "Bug at data-sending: " << binarytoHexa(data,size) << std::endl;
                     abort();
@@ -201,20 +201,19 @@ std::stringLiteral(" parseIncommingData(): size returned is 0!"));*/
             return;
         }
 
+        int8_t returnVar;
         do
         {
+            returnVar=parseIncommingDataRaw(ProtocolParsingInputOutput::tempBigBufferForInput,size,cursor);
             //this interface allow 0 copy method
-            if(!parseIncommingDataRaw(ProtocolParsingInputOutput::tempBigBufferForInput,size,cursor))
-                break;
-        } while(cursor<(uint32_t)size);
-
-        if(size<CATCHCHALLENGER_COMMONBUFFERSIZE)
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            parseIncommingDataCount--;
-            #endif
-            return;
-        }
+            if(returnVar<0)
+            {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                parseIncommingDataCount--;
+                #endif
+                return;
+            }
+        } while(cursor<(uint32_t)size && returnVar==1);
     }
     #ifdef PROTOCOLPARSINGDEBUG
     messageParsingLayer(
@@ -229,59 +228,68 @@ std::stringLiteral(" parseIncommingData(): size returned is 0!"));*/
 }
 
 //this interface allow 0 copy method
-bool ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer, const uint32_t &size, uint32_t &cursor)
+int8_t ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer, const uint32_t &size, uint32_t &cursor)
 {
-    #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    std::cout << "ProtocolParsingBase::parseIncommingDataRaw(), flags: " << (int)flags << std::endl;
-    #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    if(!parseHeader(commonBuffer,size,cursor))
     {
+        const int8_t &returnVar=parseHeader(commonBuffer,size,cursor);
+        if(returnVar!=1)
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            std::cerr << "Break due to need more in header" << std::endl;
+            #endif
+            return returnVar;
+        }
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        std::cerr << "Break due to need more in header" << std::endl;
+        if(cursor==0 && !(flags & 0x80))
+        {
+            std::cerr << "Critical bug" << std::endl;
+            abort();
+        }
         #endif
-        return false;
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(cursor==0 && !(flags & 0x80))
     {
-        std::cerr << "Critical bug" << std::endl;
-        abort();
-    }
-    #endif
-    if(!parseQueryNumber(commonBuffer,size,cursor))
-    {
+        const int8_t &returnVar=parseQueryNumber(commonBuffer,size,cursor);
+        if(returnVar!=1)
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            std::cerr << "Break due to need more in query number" << std::endl;
+            #endif
+            return returnVar;
+        }
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        std::cerr << "Break due to need more in query number" << std::endl;
+        if(cursor==0 && !(flags & 0x80))
+        {
+            std::cerr << "Critical bug" << std::endl;
+            abort();
+        }
         #endif
-        return false;
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(cursor==0 && !(flags & 0x80))
     {
-        std::cerr << "Critical bug" << std::endl;
-        abort();
-    }
-    #endif
-    if(!parseDataSize(commonBuffer,size,cursor))
-    {
+        const int8_t &returnVar=parseDataSize(commonBuffer,size,cursor);
+        if(returnVar!=1)
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            //qDebug() << "Break due to need more in parse data size";
+            #endif
+            return returnVar;
+        }
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        //qDebug() << "Break due to need more in parse data size";
+        if(cursor==0 && !(flags & 0x80))
+        {
+            std::cerr << "Critical bug" << std::endl;
+            abort();
+        }
         #endif
-        return false;
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(cursor==0 && !(flags & 0x80))
     {
-        std::cerr << "Critical bug" << std::endl;
-        abort();
-    }
-    #endif
-    if(!parseData(commonBuffer,size,cursor))
-    {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        //qDebug() << "Break due to need more in parse data";
-        #endif
-        return false;
+        const int8_t &returnVar=parseData(commonBuffer,size,cursor);
+        if(returnVar!=1)
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            //qDebug() << "Break due to need more in parse data";
+            #endif
+            return returnVar;
+        }
     }
     //parseDispatch(); do into above function
     //dataClear();-> not return if failed or just stop parsing, then do into parseDispatch()
@@ -306,24 +314,25 @@ bool ProtocolParsingBase::isReply() const
     return false;*/
 }
 
-bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const uint32_t &size,uint32_t &cursor)
+int8_t ProtocolParsingBase::parseHeader(const char * const commonBuffer,const uint32_t &size,uint32_t &cursor)
 {
     if(!(flags & 0x80))
     {
         if((size-cursor)<sizeof(uint8_t))//ignore because first int is cuted!
-            return false;
+            return 0;
         packetCode=*(commonBuffer+cursor);
         cursor+=sizeof(uint8_t);
+        flags |= 0x80;
 
         //def query without the sub code
 
         if(isReply())
-            return true;
+            return 1;
         else
         {
             dataSize=ProtocolParsingBase::packetFixedSize[packetCode];
             if(dataSize==0xFF)
-                return false;//packetCode code wrong
+                return -1;//packetCode code wrong
             else if(dataSize!=0xFE)
                 flags |= 0x40;
             else
@@ -331,32 +340,34 @@ bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const uint
                 if(!(flags & 0x08))
                 {
                     errorParsingLayer("dynamic size blocked");
-                    return false;
+                    return -1;
                 }
             }
-            return true;
+            return 1;
         }
     }
     else
-        return true;
+        return 1;
 }
 
-bool ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,const uint32_t &size,uint32_t &cursor)
+int8_t ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,const uint32_t &size,uint32_t &cursor)
 {
     if(!(flags & 0x20) && (isReply() || packetCode>=0x80))
     {
         if((size-cursor)<sizeof(uint8_t))
         {
             //todo, write message: need more bytes
-            return false;
+            return 0;
         }
         queryNumber=*(commonBuffer+cursor);
         cursor+=sizeof(uint8_t);
         if(queryNumber>15)
         {
             errorParsingLayer("query number >15");
-            return false;
+            return -1;
         }
+        //set this parsing step is done
+        flags |= 0x20;
 
         // it's reply
         if(isReply())
@@ -364,7 +375,7 @@ bool ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,const
             const uint8_t &replyTo=outputQueryNumberToPacketCode[queryNumber];
             //not a reply to a query
             if(replyTo==0x00)
-                return false;
+                return -1;
             dataSize=ProtocolParsingBase::packetFixedSize[256+replyTo-128];
             if(dataSize==0xFF)
                 abort();//packetCode code wrong, how the output allow this! filter better the output
@@ -375,7 +386,7 @@ bool ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,const
                 if(!(flags & 0x08))
                 {
                     errorParsingLayer("dynamic size blocked");
-                    return false;
+                    return -1;
                 }
             }
         }
@@ -385,13 +396,10 @@ bool ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,const
         }
     }
 
-    //set this parsing step is done
-    flags |= 0x20;
-
-    return true;
+    return 1;
 }
 
-bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor)
+int8_t ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor)
 {
     if(!(flags & 0x40))
     {
@@ -407,7 +415,7 @@ bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const u
         {
             if((size-cursor)>0)
                 binaryAppend(header_cut,commonBuffer+cursor,(size-cursor));
-            return false;
+            return 0;
         }
         dataSize=le32toh(*reinterpret_cast<const uint32_t *>(commonBuffer+cursor));
         cursor+=sizeof(uint32_t);
@@ -415,20 +423,20 @@ bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const u
         if(dataSize>(CATCHCHALLENGER_BIGBUFFERSIZE-8))
         {
             errorParsingLayer("packet size too big (define)");
-            return false;
+            return -1;
         }
         if(dataSize>16*1024*1024)
         {
             errorParsingLayer("packet size too big (hard)");
-            return false;
+            return -1;
         }
 
         flags |= 0x40;
     }
-    return true;
+    return 1;
 }
 
-bool ProtocolParsingBase::parseData(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor)
+int8_t ProtocolParsingBase::parseData(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor)
 {
     if(dataSize==0)
         return parseDispatch(NULL,0);
@@ -454,7 +462,10 @@ bool ProtocolParsingBase::parseData(const char * const commonBuffer, const uint3
             std::stringLiteral(" parseIncommingData(): remaining data: %1").arg((size-cursor)));
             #endif
             dataClear();
-            return returnVal;
+            if(returnVal)
+                return 1;
+            else
+                return -1;
         }
     }
     //if have too many data, or just the size
@@ -479,7 +490,10 @@ bool ProtocolParsingBase::parseData(const char * const commonBuffer, const uint3
         #endif
         const bool &returnVal=parseDispatch(dataToWithoutHeader.data(),dataToWithoutHeader.size());
         dataClear();
-        return returnVal;
+        if(returnVal)
+            return 1;
+        else
+            return -1;
     }
     else //if need more data
     {
@@ -492,7 +506,7 @@ bool ProtocolParsingBase::parseData(const char * const commonBuffer, const uint3
         std::stringLiteral(" parseIncommingData(): need more to recompose: %1").arg(dataSize-dataToWithoutHeader.size()));
         #endif
         cursor=size;
-        return false;
+        return 0;
     }
 }
 

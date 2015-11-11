@@ -285,7 +285,13 @@ bool LinkToMaster::setSettings(QSettings * const settings)
     if(token.size()!=TOKEN_SIZE_FOR_MASTERAUTH*2/*String Hexa, not binary*/)
         generateToken();
     token=settings->value("token").toString().toStdString();
-    memcpy(LinkToMaster::private_token,hexatoBinary(token).data(),TOKEN_SIZE_FOR_MASTERAUTH);
+    auto binarytoken=hexatoBinary(token);
+    if(binarytoken.empty())
+    {
+        std::cerr << "convertion to binary for pass failed for: " << token << std::endl;
+        abort();
+    }
+    memcpy(LinkToMaster::private_token,binarytoken,TOKEN_SIZE_FOR_MASTERAUTH);
     settings->endGroup();
 
     return true;
