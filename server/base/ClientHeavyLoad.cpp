@@ -1544,6 +1544,7 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
     }
     std::vector<FileToSend> fileToSendList;
 
+    uint32_t fileToDelete=0;
     const int &loop_size=files.size();
     //send the size to download on the client
     {
@@ -1610,7 +1611,10 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
                 filesListForSize.erase(fileName);
             }
             else
+            {
                 addDatapackListReply(true);//to delete
+                fileToDelete++;
+            }
             index++;
         }
         auto i=filesListForSize.begin();
@@ -1642,7 +1646,7 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         }
     }
-    if(fileToSendList.empty())
+    if(fileToSendList.empty() && fileToDelete==0)
     {
         errorOutput("Ask datapack list where the checksum match");
         return;

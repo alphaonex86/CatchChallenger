@@ -977,8 +977,39 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                     std::cout << "Raw file to create: ";
                 else
                     std::cout << "Compressed file to create: ";
+                switch(datapackStatus)
+                {
+                    case DatapackStatus::Base:
+                        std::cout << " on base:";
+                        newFileBase(fileName,dataFile);
+                    break;
+                    case DatapackStatus::Main:
+                        std::cout << " on main:";
+                        newFileMain(fileName,dataFile);
+                    break;
+                    case DatapackStatus::Sub:
+                        std::cout << " on sub:";
+                        newFileSub(fileName,dataFile);
+                    break;
+                    default:
+                        std::cout << " on ??? error, drop:";
+                        std::cerr << "Create file on ??? error, drop it" << std::endl;
+                    break;
+                }
                 std::cout << fileName.toStdString() << std::endl;
-                newFileBase(fileName,dataFile);
+                switch(datapackStatus)
+                {
+                    case DatapackStatus::Base:
+                    break;
+                    case DatapackStatus::Main:
+                    break;
+                    case DatapackStatus::Sub:
+                    break;
+                    default:
+                         std::cerr << "Create file on ??? error, drop it" << std::endl;
+                    break;
+                }
+
                 index++;
             }
             return false;//no remaining data, because all remaing is used as file data
