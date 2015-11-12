@@ -20,6 +20,8 @@ using namespace CatchChallenger;
 
 void Api_client_real::writeNewFileSub(const QString &fileName,const QByteArray &data)
 {
+    if(mDatapackSub.isEmpty())
+        abort();
     const QString &fullPath=mDatapackSub+text_slash+fileName;
     //to be sure the QFile is destroyed
     {
