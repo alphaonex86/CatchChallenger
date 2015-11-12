@@ -1130,17 +1130,17 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     const uint32_t &characterId=GlobalServerData::serverPrivateVariables.maxCharacterId;
     unsigned int index=0;
     unsigned int monster_position=1;
-    dbQueryWriteCommon(serverProfileInternal.preparedQueryAdd.at(0)+
+    dbQueryWriteCommon(serverProfileInternal.preparedQueryAddCharacter.at(0)+
                  std::to_string(characterId)+
-                 serverProfileInternal.preparedQueryAdd.at(1)+
+                 serverProfileInternal.preparedQueryAddCharacter.at(1)+
                  std::to_string(account_id)+
-                 serverProfileInternal.preparedQueryAdd.at(2)+
+                 serverProfileInternal.preparedQueryAddCharacter.at(2)+
                  pseudo+
-                 serverProfileInternal.preparedQueryAdd.at(3)+
+                 serverProfileInternal.preparedQueryAddCharacter.at(3)+
                  std::to_string(DictionaryLogin::dictionary_skin_internal_to_database.at(skinId))+
-                 serverProfileInternal.preparedQueryAdd.at(4)+
+                 serverProfileInternal.preparedQueryAddCharacter.at(4)+
                  std::to_string(QDateTime::currentDateTime().toTime_t())+
-                 serverProfileInternal.preparedQueryAdd.at(5)
+                 serverProfileInternal.preparedQueryAddCharacter.at(5)
                  );
     while(index<profile.monsters.size())
     {
@@ -1165,7 +1165,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
                 std::string queryText=PreparedDBQueryCommon::db_query_insert_monster;
                 stringreplaceOne(queryText,"%1",std::to_string(monster_id));
                 stringreplaceOne(queryText,"%2",std::to_string(stat.hp));
-                stringreplaceOne(queryText,"%3",std::to_string(characterId));
+                stringreplaceAll(queryText,"%3",std::to_string(characterId));
                 stringreplaceOne(queryText,"%4",std::to_string(monsterId));
                 stringreplaceOne(queryText,"%5",std::to_string(profile.monsters.at(index).level));
                 stringreplaceOne(queryText,"%6",std::to_string(profile.monsters.at(index).captured_with));
@@ -1378,11 +1378,15 @@ void Client::loadLinkedData()
     loadPlayerAllow();
 }
 
-std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_list(const std::string &path,const bool withHash)
+std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_list(const std::string &path, const std::string &exclude, const bool withHash)
 {
     std::unordered_map<std::string,DatapackCacheFile> filesList;
 
-    const std::vector<std::string> &returnList=FacilityLibGeneral::listFolder(path);
+    std::vector<std::string> returnList;
+    if(exclude.empty())
+        returnList=FacilityLibGeneral::listFolder(path);
+    else
+        returnList=FacilityLibGeneral::listFolderWithExclude(path,exclude);
     int index=0;
     const int &size=returnList.size();
     while(index<size)
@@ -1431,13 +1435,13 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
 std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file_list_cached_base()
 {
     if(GlobalServerData::serverSettings.datapackCache==-1)
-        return datapack_file_list(GlobalServerData::serverSettings.datapack_basePath);
+        return datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"map/main/");
     else if(GlobalServerData::serverSettings.datapackCache==0)
     {
         if(Client::datapack_list_cache_timestamp_base==0)
         {
             Client::datapack_list_cache_timestamp_base=QDateTime::currentDateTime().toTime_t();
-            Client::datapack_file_hash_cache_base=datapack_file_list(GlobalServerData::serverSettings.datapack_basePath);
+            Client::datapack_file_hash_cache_base=datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"map/main/");
         }
         return Client::datapack_file_hash_cache_base;
     }
@@ -1447,7 +1451,7 @@ std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file
         if(Client::datapack_list_cache_timestamp_base<(currentTime-GlobalServerData::serverSettings.datapackCache))
         {
             Client::datapack_list_cache_timestamp_base=currentTime;
-            Client::datapack_file_hash_cache_base=datapack_file_list(GlobalServerData::serverSettings.datapack_basePath);
+            Client::datapack_file_hash_cache_base=datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"map/main/");
         }
         return Client::datapack_file_hash_cache_base;
     }
@@ -1456,13 +1460,13 @@ std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file
 std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file_list_cached_main()
 {
     if(GlobalServerData::serverSettings.datapackCache==-1)
-        return datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder);
+        return datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,"sub/");
     else if(GlobalServerData::serverSettings.datapackCache==0)
     {
         if(Client::datapack_list_cache_timestamp_main==0)
         {
             Client::datapack_list_cache_timestamp_main=QDateTime::currentDateTime().toTime_t();
-            Client::datapack_file_hash_cache_main=datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder);
+            Client::datapack_file_hash_cache_main=datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,"sub/");
         }
         return Client::datapack_file_hash_cache_main;
     }
@@ -1472,7 +1476,7 @@ std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file
         if(Client::datapack_list_cache_timestamp_main<(currentTime-GlobalServerData::serverSettings.datapackCache))
         {
             Client::datapack_list_cache_timestamp_main=currentTime;
-            Client::datapack_file_hash_cache_main=datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder);
+            Client::datapack_file_hash_cache_main=datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,"sub/");
         }
         return Client::datapack_file_hash_cache_main;
     }
@@ -1481,13 +1485,13 @@ std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file
 std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file_list_cached_sub()
 {
     if(GlobalServerData::serverSettings.datapackCache==-1)
-        return datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder);
+        return datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,"");
     else if(GlobalServerData::serverSettings.datapackCache==0)
     {
         if(Client::datapack_list_cache_timestamp_sub==0)
         {
             Client::datapack_list_cache_timestamp_sub=QDateTime::currentDateTime().toTime_t();
-            Client::datapack_file_hash_cache_sub=datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder);
+            Client::datapack_file_hash_cache_sub=datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,"");
         }
         return Client::datapack_file_hash_cache_sub;
     }
@@ -1497,7 +1501,7 @@ std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file
         if(Client::datapack_list_cache_timestamp_sub<(currentTime-GlobalServerData::serverSettings.datapackCache))
         {
             Client::datapack_list_cache_timestamp_sub=currentTime;
-            Client::datapack_file_hash_cache_sub=datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder);
+            Client::datapack_file_hash_cache_sub=datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,"");
         }
         return Client::datapack_file_hash_cache_sub;
     }
@@ -1521,10 +1525,12 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
     std::unordered_map<std::string,DatapackCacheFile> filesList;
     switch(datapackStatus)
     {
+        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         case DatapackStatus::Base:
             filesList=datapack_file_list_cached_base();
             datapackPath=GlobalServerData::serverSettings.datapack_basePath;
         break;
+        #endif
         case DatapackStatus::Main:
             filesList=datapack_file_list_cached_main();
             datapackPath=GlobalServerData::serverPrivateVariables.mainDatapackFolder;
@@ -1664,9 +1670,11 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
 
     switch(datapackStatus)
     {
+        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         case DatapackStatus::Base:
             datapackStatus=DatapackStatus::Main;
         break;
+        #endif
         case DatapackStatus::Main:
             datapackStatus=DatapackStatus::Sub;
         break;
@@ -1812,17 +1820,17 @@ void Client::sendCompressedFileContent()
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x77;
         posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+BaseServerMasterSendDatapack::rawFilesBuffer.size());//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+BaseServerMasterSendDatapack::compressedFilesBuffer.size());//set the dynamic size
 
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=BaseServerMasterSendDatapack::rawFilesBufferCount;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=BaseServerMasterSendDatapack::compressedFilesBufferCount;
         posOutput+=1;
-        if(BaseServerMasterSendDatapack::rawFilesBuffer.size()>CATCHCHALLENGER_MAX_PACKET_SIZE)
+        if(BaseServerMasterSendDatapack::compressedFilesBuffer.size()>CATCHCHALLENGER_MAX_PACKET_SIZE)
         {
             errorOutput("Client::sendFileContent too big to reply");
             return;
         }
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,BaseServerMasterSendDatapack::rawFilesBuffer.data(),BaseServerMasterSendDatapack::rawFilesBuffer.size());
-        posOutput+=BaseServerMasterSendDatapack::rawFilesBuffer.size();
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,BaseServerMasterSendDatapack::compressedFilesBuffer.data(),BaseServerMasterSendDatapack::compressedFilesBuffer.size());
+        posOutput+=BaseServerMasterSendDatapack::compressedFilesBuffer.size();
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
@@ -1851,8 +1859,8 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
         const int &contentsize=content.size();
 
         const std::string &suffix=QFileInfo(file).suffix().toStdString();
-        if(BaseServerMasterSendDatapack::compressedExtension.find(suffix)!=BaseServerMasterSendDatapack::compressedExtension.cend() &&
-                ProtocolParsing::compressionTypeServer!=ProtocolParsing::CompressionType::None &&
+        if(ProtocolParsing::compressionTypeServer!=ProtocolParsing::CompressionType::None &&
+                BaseServerMasterSendDatapack::compressedExtension.find(suffix)!=BaseServerMasterSendDatapack::compressedExtension.cend() &&
                 (
                     contentsize<CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB*1024
                     ||
@@ -1883,6 +1891,10 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
                 default:
                 case ProtocolParsing::CompressionType::Zlib:
                 if(BaseServerMasterSendDatapack::compressedFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_ZLIB_COMPRESSEDFILEPURGE_KB*1024 || BaseServerMasterSendDatapack::compressedFilesBufferCount>=255)
+                    sendCompressedFileContent();
+                break;
+                case ProtocolParsing::CompressionType::Lz4:
+                if(BaseServerMasterSendDatapack::compressedFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_LZ4_COMPRESSEDFILEPURGE_KB*1024 || BaseServerMasterSendDatapack::compressedFilesBufferCount>=255)
                     sendCompressedFileContent();
                 break;
             }

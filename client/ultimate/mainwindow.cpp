@@ -1223,7 +1223,7 @@ QPair<QString,QString> MainWindow::getDatapackInformations(const QString &filePa
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=QStringLiteral("informations"))
     {
-        qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName());
+        qDebug() << QStringLiteral("Unable to open the file: %1, \"informations\" root balise not found for the xml file").arg(itemsFile.fileName());
         return returnVar;
     }
 

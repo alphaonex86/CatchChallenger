@@ -243,7 +243,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
             }
         }
         break;
-        //Move player on map
+        //Move player on map, used too for the first insert of the current player
         case 0x68:
         #ifndef BENCHMARKMUTIPLECLIENT
         {
@@ -926,6 +926,11 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
             }
             uint8_t fileListSize;
             in >> fileListSize;
+            if(fileListSize==0)
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("fileListSize==0 with main ident: %1, subCodeType: %2, line: %3").arg(packetCode).arg("X").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                return false;
+            }
             int index=0;
             while(index<fileListSize)
             {

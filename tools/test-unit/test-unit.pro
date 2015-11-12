@@ -17,8 +17,10 @@ SOURCES += main.cpp \
     reputation/just-append.cpp \
     reputation/level-down.cpp \
     reputation/level-up.cpp \
-    TestUnitCpp.cpp
+    TestUnitCpp.cpp \
+    TestUnitMessageParsing.cpp
 
 HEADERS += \
     reputation/TestUnitReputation.h \
-    TestUnitCpp.h
+    TestUnitCpp.h \
+    TestUnitMessageParsing.h
