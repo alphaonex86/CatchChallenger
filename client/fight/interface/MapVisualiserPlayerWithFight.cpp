@@ -222,19 +222,25 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
         }
     }
 
-    std::vector<uint32_t> botFightList=map_client.botsFightTrigger.at(std::pair<uint8_t,uint8_t>(x,y));
-    unsigned int index=0;
-    while(index<botFightList.size())
     {
-        if(!botAlreadyBeaten.contains(botFightList.at(index)))
+        std::pair<uint8_t,uint8_t> pos(x,y);
+        if(map_client.botsFightTrigger.find(pos)!=map_client.botsFightTrigger.cend())
         {
-            if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
+            std::vector<uint32_t> botFightList=map_client.botsFightTrigger.at(pos);
+            unsigned int index=0;
+            while(index<botFightList.size())
             {
-                emit blockedOn(MapVisualiserPlayer::BlockedOn_Fight);
-                return false;
+                if(!botAlreadyBeaten.contains(botFightList.at(index)))
+                {
+                    if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
+                    {
+                        emit blockedOn(MapVisualiserPlayer::BlockedOn_Fight);
+                        return false;
+                    }
+                }
+                index++;
             }
         }
-        index++;
     }
     const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(*new_map,x,y);
     if(!monstersCollisionValue.walkOn.empty())

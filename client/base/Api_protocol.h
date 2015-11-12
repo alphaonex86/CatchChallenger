@@ -63,6 +63,14 @@ public:
         Stage3=0x03,//connected on game server
     };
     StageConnexion stage() const;
+    enum DatapackStatus
+    {
+        Base=0x01,
+        Main=0x02,
+        Sub=0x03,
+        Finished=0x04
+    };
+    DatapackStatus datapackStatus;
 
     //to reset all
     void resetAll();

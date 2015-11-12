@@ -20,6 +20,8 @@ using namespace CatchChallenger;
 
 void Api_client_real::writeNewFileMain(const QString &fileName,const QByteArray &data)
 {
+    if(mDatapackMain.isEmpty())
+        abort();
     const QString &fullPath=mDatapackMain+text_slash+fileName;
     //to be sure the QFile is destroyed
     {
@@ -220,7 +222,7 @@ void Api_client_real::datapackChecksumDoneMain(const std::vector<std::string> &d
         unsigned int index=0;
         while(index<datapackFilesListMain.size())
         {
-            if(datapackFilesListBase.at(index).size()>254 || datapackFilesListMain.at(index).empty())
+            if(datapackFilesListMain.at(index).size()>254 || datapackFilesListMain.at(index).empty())
             {
                 qDebug() << (QStringLiteral("rawFileName too big or not compatible with utf8"));
                 return;
