@@ -145,7 +145,7 @@ void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE 
     uint32_t posOutput=0;
 
     //packet code
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x68;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x6B;
     posOutput=1+4;
 
     //map list size, only one because packet only for this player

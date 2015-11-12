@@ -309,8 +309,8 @@ void Client::disconnectClient()
                     const PlayerMonster::PlayerSkill &playerSkill=playerMonster.skills.at(sub_index);
                     std::string queryText=PreparedDBQueryCommon::db_query_monster_skill;
                     stringreplaceOne(queryText,"%1",std::to_string(playerSkill.endurance));
-                    stringreplaceOne(queryText,"%1",std::to_string(playerMonster.id));
-                    stringreplaceOne(queryText,"%1",std::to_string(playerSkill.skill));
+                    stringreplaceOne(queryText,"%2",std::to_string(playerMonster.id));
+                    stringreplaceOne(queryText,"%3",std::to_string(playerSkill.skill));
                     dbQueryWriteCommon(queryText);
                     sub_index++;
                 }

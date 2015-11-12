@@ -2,6 +2,7 @@
 #include <QDebug>
 #include "reputation/TestUnitReputation.h"
 #include "TestUnitCpp.h"
+#include "TestUnitMessageParsing.h"
 
 int main(int argc, char *argv[])
 {
@@ -37,6 +38,20 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
     }
+
+    {
+        TestUnitMessageParsing testUnitParsing;
+
+        testUnitParsing.finalResult=true;
+        testUnitParsing.testDropAllPlayer();
+
+        if(!testUnitParsing.finalResult)
+        {
+            qDebug() << "Final result: Failed: " << __LINE__;
+            return EXIT_FAILURE;
+        }
+    }
+
 
     {
         qDebug() << "Final result: Ok";

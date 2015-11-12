@@ -280,7 +280,7 @@ void DatapackClientLoader::parseVisualCategory()
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackClientLoader::text_visual)
     {
-        qDebug() << (QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file));
+        qDebug() << (QStringLiteral("Unable to open the file: %1, \"visual\" root balise not found for the xml file").arg(file));
         return;
     }
 
@@ -434,9 +434,9 @@ void DatapackClientLoader::parseReputationExtra()
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file.toStdString()]=domDocument;
     }
     const QDomElement &root = domDocument.documentElement();
-    if(root.tagName()!=DatapackClientLoader::text_list)
+    if(root.tagName()!="reputations")
     {
-        qDebug() << (QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file));
+        qDebug() << (QStringLiteral("Unable to open the file: %1, \"reputations\" root balise not found for the xml file").arg(file));
         return;
     }
 
@@ -1471,9 +1471,9 @@ void DatapackClientLoader::parseAudioAmbiance()
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file.toStdString()]=domDocument;
     }
     const QDomElement &root = domDocument.documentElement();
-    if(root.tagName()!=DatapackClientLoader::text_list)
+    if(root.tagName()!="musics")
     {
-        qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file);
+        qDebug() << QStringLiteral("Unable to open the file: %1, \"musics\" root balise not found for the xml file").arg(file);
         return;
     }
 

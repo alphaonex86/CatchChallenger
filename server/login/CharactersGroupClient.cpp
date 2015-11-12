@@ -560,7 +560,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
             std::string queryText=PreparedDBQueryCommon::db_query_insert_monster;
             stringreplaceOne(queryText,"%1",std::to_string(monster_id));
             stringreplaceOne(queryText,"%2",std::to_string(monster.hp));
-            stringreplaceOne(queryText,"%3",std::to_string(characterId));
+            stringreplaceAll(queryText,"%3",std::to_string(characterId));
             stringreplaceOne(queryText,"%4",std::to_string(monster.id));
             stringreplaceOne(queryText,"%5",std::to_string(monster.level));
             stringreplaceOne(queryText,"%6",std::to_string(monster.captured_with));

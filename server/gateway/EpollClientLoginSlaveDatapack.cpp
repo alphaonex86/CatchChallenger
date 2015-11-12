@@ -393,6 +393,13 @@ void EpollClientLoginSlave::sendFileContent()
         posOutput+=1+4;
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(EpollClientLoginSlave::rawFilesBuffer.size());//set the dynamic size
 
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=BaseServerMasterSendDatapack::rawFilesBufferCount;
+        posOutput+=1;
+        if(BaseServerMasterSendDatapack::rawFilesBuffer.size()>CATCHCHALLENGER_MAX_PACKET_SIZE)
+        {
+            errorOutput("Client::sendFileContent too big to reply");
+            return;
+        }
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,EpollClientLoginSlave::rawFilesBuffer.data(),EpollClientLoginSlave::rawFilesBuffer.size());
         posOutput+=EpollClientLoginSlave::rawFilesBuffer.size();
 
@@ -415,6 +422,13 @@ void EpollClientLoginSlave::sendCompressedFileContent()
         posOutput+=1+4;
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(EpollClientLoginSlave::compressedFilesBuffer.size());//set the dynamic size
 
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=BaseServerMasterSendDatapack::compressedFilesBufferCount;
+        posOutput+=1;
+        if(BaseServerMasterSendDatapack::compressedFilesBuffer.size()>CATCHCHALLENGER_MAX_PACKET_SIZE)
+        {
+            errorOutput("Client::sendFileContent too big to reply");
+            return;
+        }
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,EpollClientLoginSlave::compressedFilesBuffer.data(),EpollClientLoginSlave::compressedFilesBuffer.size());
         posOutput+=EpollClientLoginSlave::compressedFilesBuffer.size();
 

@@ -267,9 +267,17 @@ struct ServerProfileInternal
     /*COORD_TYPE*/ uint8_t y;
     Orientation orientation;
 
+    /*struct MonsterProfile
+    {
+        std::vector<std::string > monster;
+        std::vector<std::vector<std::string > > preparedQueryAddMonsterSkill;
+    };*/
     //only to add
-    std::vector<std::string > preparedQueryAdd;
-    std::vector<std::string > preparedQuerySelect;
+    std::vector<std::string > preparedQueryAddCharacter;
+    std::vector<std::string > preparedQueryAddCharacterForServer;
+    /*std::vector<MonsterProfile> preparedQueryAddMonster;
+    std::vector<std::vector<std::string > > preparedQueryAddItem;
+    std::vector<std::vector<std::string > > preparedQueryAddReputation;*/
     bool valid;
 };
 
