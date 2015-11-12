@@ -22,8 +22,10 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max player, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return false;
     }
+    uint16_t max_players;
     in >> max_players;
     setMaxPlayers(max_players);
+    this->max_players=max_players;
 
     uint32_t captureRemainingTime;
     uint8_t captureFrequencyType;

@@ -1708,6 +1708,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         {
             switch(datapackStatus)
             {
+                #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
                 case DatapackStatus::Base:
                     if(!CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.empty())
                     {
@@ -1720,6 +1721,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                             datapackStatus=DatapackStatus::Main;
                     }
                 break;
+                #endif
                 case DatapackStatus::Sub:
                     if(CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
                     {

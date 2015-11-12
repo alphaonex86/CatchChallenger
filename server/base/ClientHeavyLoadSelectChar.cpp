@@ -424,11 +424,11 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     {
         const ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex);
 
-        dbQueryWriteServer(serverProfileInternal.preparedQuerySelect.at(0)+
+        dbQueryWriteServer(serverProfileInternal.preparedQueryAddCharacterForServer.at(0)+
                      std::to_string(characterId)+
-                     serverProfileInternal.preparedQuerySelect.at(1)+
+                     serverProfileInternal.preparedQueryAddCharacterForServer.at(1)+
                      std::to_string(QDateTime::currentDateTime().toTime_t())+
-                     serverProfileInternal.preparedQuerySelect.at(2)
+                     serverProfileInternal.preparedQueryAddCharacterForServer.at(2)
                      );
         std::string queryText=PreparedDBQueryCommon::db_query_update_character_last_connect;
         stringreplaceOne(queryText,"%1",std::to_string(characterId));
@@ -1034,9 +1034,10 @@ void Client::characterIsRightFinalStep()
     //send the network reply
     removeFromQueryReceived(query_id);
 
-    uint32_t posOutput=Client::characterIsRightFinalStepHeaderSize;
+    uint32_t posOutput=0;
     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,Client::characterIsRightFinalStepHeader,Client::characterIsRightFinalStepHeaderSize);
     ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
+    posOutput+=Client::characterIsRightFinalStepHeaderSize;
 
     //temporary character id
     if(GlobalServerData::serverSettings.max_players<=255)

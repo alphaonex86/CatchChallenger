@@ -125,7 +125,7 @@ void BaseServer::preload_other()
         }
         if(Client::protocolMessageLogicalGroupAndServerList!=NULL)
             delete Client::protocolMessageLogicalGroupAndServerList;
-        Client::protocolMessageLogicalGroupAndServerList=(unsigned char *)malloc(Client::protocolMessageLogicalGroupAndServerListSize);
+        Client::protocolMessageLogicalGroupAndServerList=(unsigned char *)malloc(Client::protocolMessageLogicalGroupAndServerListSize+16);
         memcpy(Client::protocolMessageLogicalGroupAndServerList,logicalGroup,9);
         memcpy(Client::protocolMessageLogicalGroupAndServerList+9,ProtocolParsingBase::tempBigBufferForOutput,Client::protocolMessageLogicalGroupAndServerListSize);
     }
@@ -177,7 +177,7 @@ void BaseServer::preload_other()
 
         if(Client::protocolReplyCharacterList!=NULL)
             delete Client::protocolReplyCharacterList;
-        Client::protocolReplyCharacterList=(unsigned char *)malloc(Client::protocolReplyCharacterListSize);
+        Client::protocolReplyCharacterList=(unsigned char *)malloc(Client::protocolReplyCharacterListSize+16);
         memcpy(Client::protocolReplyCharacterList,ProtocolParsingBase::tempBigBufferForOutput,Client::protocolReplyCharacterListSize);
     }
     #endif
@@ -309,7 +309,7 @@ void BaseServer::preload_other()
         if(Client::characterIsRightFinalStepHeader!=NULL)
             delete Client::characterIsRightFinalStepHeader;
         Client::characterIsRightFinalStepHeaderSize=posOutput;
-        Client::characterIsRightFinalStepHeader=(unsigned char *)malloc(Client::characterIsRightFinalStepHeaderSize);
+        Client::characterIsRightFinalStepHeader=(unsigned char *)malloc(Client::characterIsRightFinalStepHeaderSize+16);
         memcpy(Client::characterIsRightFinalStepHeader,ProtocolParsingBase::tempBigBufferForOutput,Client::characterIsRightFinalStepHeaderSize);
     }
 }
@@ -778,33 +778,33 @@ void BaseServer::preload_profile()
             {
                 default:
                 case DatabaseBase::DatabaseType::Mysql:
-                    serverProfileInternal.preparedQueryAdd.push_back("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(");
-                    serverProfileInternal.preparedQueryAdd.push_back(/*id*/ ",");
-                    serverProfileInternal.preparedQueryAdd.push_back(/*account*/ ",'");
-                    serverProfileInternal.preparedQueryAdd.push_back(/*pseudo*/ "',");
-                    serverProfileInternal.preparedQueryAdd.push_back(/*skin*/ ",0,0,"+
+                    serverProfileInternal.preparedQueryAddCharacter.push_back("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(");
+                    serverProfileInternal.preparedQueryAddCharacter.push_back(/*id*/ ",");
+                    serverProfileInternal.preparedQueryAddCharacter.push_back(/*account*/ ",'");
+                    serverProfileInternal.preparedQueryAddCharacter.push_back(/*pseudo*/ "',");
+                    serverProfileInternal.preparedQueryAddCharacter.push_back(/*skin*/ ",0,0,"+
                             std::to_string(profile.cash)+",");
-                    serverProfileInternal.preparedQueryAdd.push_back(/*QDateTime::currentDateTime().toTime_t()*/ ",0,0,0,0,0,"+
+                    serverProfileInternal.preparedQueryAddCharacter.push_back(/*QDateTime::currentDateTime().toTime_t()*/ ",0,0,0,0,0,"+
                             std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+");");
                 break;
                 case DatabaseBase::DatabaseType::SQLite:
-                    serverProfileInternal.preparedQueryAdd.push_back("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
-                    serverProfileInternal.preparedQueryAdd.push_back(/*id*/ ",");
-                    serverProfileInternal.preparedQueryAdd.push_back(/*account*/ ",'");
-                    serverProfileInternal.preparedQueryAdd.push_back(/*pseudo*/ "',");
-                    serverProfileInternal.preparedQueryAdd.push_back(/*skin*/ ",0,0,"+
+                    serverProfileInternal.preparedQueryAddCharacter.push_back("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
+                    serverProfileInternal.preparedQueryAddCharacter.push_back(/*id*/ ",");
+                    serverProfileInternal.preparedQueryAddCharacter.push_back(/*account*/ ",'");
+                    serverProfileInternal.preparedQueryAddCharacter.push_back(/*pseudo*/ "',");
+                    serverProfileInternal.preparedQueryAddCharacter.push_back(/*skin*/ ",0,0,"+
                             std::to_string(profile.cash)+",");
-                    serverProfileInternal.preparedQueryAdd.push_back(/*QDateTime::currentDateTime().toTime_t()*/ ",0,0,0,0,0,"+
+                    serverProfileInternal.preparedQueryAddCharacter.push_back(/*QDateTime::currentDateTime().toTime_t()*/ ",0,0,0,0,0,"+
                             std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+");");
                 break;
                 case DatabaseBase::DatabaseType::PostgreSQL:
-                    serverProfileInternal.preparedQueryAdd.push_back("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
-                    serverProfileInternal.preparedQueryAdd.push_back(/*id*/ ",");
-                    serverProfileInternal.preparedQueryAdd.push_back(/*account*/ ",'");
-                    serverProfileInternal.preparedQueryAdd.push_back(/*pseudo*/ "',");
-                    serverProfileInternal.preparedQueryAdd.push_back(/*skin*/ ",0,0,"+
+                    serverProfileInternal.preparedQueryAddCharacter.push_back("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
+                    serverProfileInternal.preparedQueryAddCharacter.push_back(/*id*/ ",");
+                    serverProfileInternal.preparedQueryAddCharacter.push_back(/*account*/ ",'");
+                    serverProfileInternal.preparedQueryAddCharacter.push_back(/*pseudo*/ "',");
+                    serverProfileInternal.preparedQueryAddCharacter.push_back(/*skin*/ ",0,0,"+
                             std::to_string(profile.cash)+",");
-                    serverProfileInternal.preparedQueryAdd.push_back(/*QDateTime::currentDateTime().toTime_t()*/ ",0,FALSE,0,0,0,"+
+                    serverProfileInternal.preparedQueryAddCharacter.push_back(/*QDateTime::currentDateTime().toTime_t()*/ ",0,FALSE,0,0,0,"+
                             std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+");");
                 break;
             }
@@ -812,19 +812,19 @@ void BaseServer::preload_profile()
             {
                 default:
                 case DatabaseBase::DatabaseType::Mysql:
-                    serverProfileInternal.preparedQuerySelect.push_back("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`) VALUES(");
-                    serverProfileInternal.preparedQuerySelect.push_back(/*id*/ ","+mapQuery+","+mapQuery+","+mapQuery+",");
-                    serverProfileInternal.preparedQuerySelect.push_back(/*QDateTime::currentDateTime().toTime_t()*/ ",0);");
+                    serverProfileInternal.preparedQueryAddCharacterForServer.push_back("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`) VALUES(");
+                    serverProfileInternal.preparedQueryAddCharacterForServer.push_back(/*id*/ ","+mapQuery+","+mapQuery+","+mapQuery+",");
+                    serverProfileInternal.preparedQueryAddCharacterForServer.push_back(/*QDateTime::currentDateTime().toTime_t()*/ ",0);");
                 break;
                 case DatabaseBase::DatabaseType::SQLite:
-                    serverProfileInternal.preparedQuerySelect.push_back("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
-                    serverProfileInternal.preparedQuerySelect.push_back(/*id*/ ","+mapQuery+","+mapQuery+","+mapQuery+",");
-                    serverProfileInternal.preparedQuerySelect.push_back(/*QDateTime::currentDateTime().toTime_t()*/ ",0);");
+                    serverProfileInternal.preparedQueryAddCharacterForServer.push_back("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
+                    serverProfileInternal.preparedQueryAddCharacterForServer.push_back(/*id*/ ","+mapQuery+","+mapQuery+","+mapQuery+",");
+                    serverProfileInternal.preparedQueryAddCharacterForServer.push_back(/*QDateTime::currentDateTime().toTime_t()*/ ",0);");
                 break;
                 case DatabaseBase::DatabaseType::PostgreSQL:
-                    serverProfileInternal.preparedQuerySelect.push_back("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
-                    serverProfileInternal.preparedQuerySelect.push_back(/*id*/ ","+mapQuery+","+mapQuery+","+mapQuery+",");
-                    serverProfileInternal.preparedQuerySelect.push_back(/*QDateTime::currentDateTime().toTime_t()*/ ",0);");
+                    serverProfileInternal.preparedQueryAddCharacterForServer.push_back("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
+                    serverProfileInternal.preparedQueryAddCharacterForServer.push_back(/*id*/ ","+mapQuery+","+mapQuery+","+mapQuery+",");
+                    serverProfileInternal.preparedQueryAddCharacterForServer.push_back(/*QDateTime::currentDateTime().toTime_t()*/ ",0);");
                 break;
             }
             serverProfileInternal.valid=true;
@@ -1481,7 +1481,21 @@ void BaseServer::preload_the_datapack()
     //do the base
     {
         QCryptographicHash hashBase(QCryptographicHash::Sha224);
-        const std::unordered_map<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,false);
+        const std::unordered_map<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"map/main/",false);
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        {
+            auto i=pair.begin();
+            while(i!=pair.cend())
+            {
+                if(i->first.find("map/main/")!=std::string::npos)
+                {
+                    std::cerr << "map/main/ found into: " << i->first << " (abort)" << std::endl;
+                    abort();
+                }
+                ++i;
+            }
+        }
+        #endif
         std::vector<std::string> datapack_file_temp=unordered_map_keys_vector(pair);
         std::sort(datapack_file_temp.begin(), datapack_file_temp.end());
         const std::regex mainDatapackBaseFilter("^map[/\\\\]main[/\\\\]");
@@ -1553,7 +1567,21 @@ void BaseServer::preload_the_datapack()
     //do the main
     {
         QCryptographicHash hashMain(QCryptographicHash::Sha224);
-        const std::unordered_map<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,false);
+        const std::unordered_map<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,"sub/",false);
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        {
+            auto i=pair.begin();
+            while(i!=pair.cend())
+            {
+                if(i->first.find("sub/")!=std::string::npos)
+                {
+                    std::cerr << "sub/ found into: " << i->first << " (abort)" << std::endl;
+                    abort();
+                }
+                ++i;
+            }
+        }
+        #endif
         std::vector<std::string> datapack_file_temp=unordered_map_keys_vector(pair);
         std::sort(datapack_file_temp.begin(), datapack_file_temp.end());
         const std::regex mainDatapackFolderFilter("^sub[/\\\\]");
@@ -1624,7 +1652,7 @@ void BaseServer::preload_the_datapack()
     if(GlobalServerData::serverPrivateVariables.subDatapackFolder.size()>0)
     {
         QCryptographicHash hashSub(QCryptographicHash::Sha224);
-        const std::unordered_map<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,false);
+        const std::unordered_map<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,"",false);
         std::vector<std::string> datapack_file_temp=unordered_map_keys_vector(pair);
         std::sort(datapack_file_temp.begin(), datapack_file_temp.end());
         unsigned int index=0;

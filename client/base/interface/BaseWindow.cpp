@@ -81,6 +81,10 @@ BaseWindow::BaseWindow() :
     qRegisterMetaType<std::unordered_map<uint8_t,uint16_t> >("std::unordered_map<uint8_t,uint16_t>");
     qRegisterMetaType<std::unordered_map<uint8_t,uint32_t> >("std::unordered_map<uint8_t,uint32_t>");
     qRegisterMetaType<std::string>("std::string");
+    qRegisterMetaType<uint8_t>("uint8_t");
+    qRegisterMetaType<uint16_t>("uint16_t");
+    qRegisterMetaType<uint32_t>("uint32_t");
+    qRegisterMetaType<uint64_t>("uint64_t");
     qRegisterMetaType<std::vector<std::string> >("std::vector<std::string>");
     qRegisterMetaType<std::vector<char> >("std::vector<char>");
     qRegisterMetaType<std::vector<uint32_t> >("std::vector<uint32_t>");

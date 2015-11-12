@@ -385,7 +385,7 @@ private:
     void deleteCharacterNow_object();
     void deleteCharacterNow_return(const uint32_t &characterId);
     #endif
-    static std::unordered_map<std::string,DatapackCacheFile> datapack_file_list(const std::string &path,const bool withHash=true);//used into BaseServer to do the hash
+    static std::unordered_map<std::string,DatapackCacheFile> datapack_file_list(const std::string &path,const std::string &exclude,const bool withHash=true);//used into BaseServer to do the hash
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
     void datapackList(const uint8_t &query_id, const std::vector<std::string > &files, const std::vector<uint32_t> &partialHashList);

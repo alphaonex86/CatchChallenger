@@ -276,18 +276,22 @@ bool Client::botFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TY
         errorOutput("error: map: "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+"), is in fight");
         return false;
     }
-    const std::vector<uint32_t> &botList=static_cast<MapServer *>(map)->botsFightTrigger.at(std::pair<uint8_t,uint8_t>(x,y));
-    unsigned int index=0;
-    while(index<botList.size())
+    std::pair<uint8_t,uint8_t> pos(x,y);
+    if(static_cast<MapServer *>(map)->botsFightTrigger.find(pos)!=static_cast<MapServer *>(map)->botsFightTrigger.cend())
     {
-        const uint32_t &botFightId=botList.at(index);
-        if(public_and_private_informations.bot_already_beaten.find(botFightId)==public_and_private_informations.bot_already_beaten.cend())
+        const std::vector<uint32_t> &botList=static_cast<MapServer *>(map)->botsFightTrigger.at(pos);
+        unsigned int index=0;
+        while(index<botList.size())
         {
-            normalOutput("is now in fight on map "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+") with the bot "+std::to_string(botFightId));
-            botFightStart(botFightId);
-            return true;
+            const uint32_t &botFightId=botList.at(index);
+            if(public_and_private_informations.bot_already_beaten.find(botFightId)==public_and_private_informations.bot_already_beaten.cend())
+            {
+                normalOutput("is now in fight on map "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+") with the bot "+std::to_string(botFightId));
+                botFightStart(botFightId);
+                return true;
+            }
+            index++;
         }
-        index++;
     }
 
     /// no fight in this zone

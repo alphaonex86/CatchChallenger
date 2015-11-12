@@ -204,7 +204,17 @@ std::stringLiteral(" parseIncommingData(): size returned is 0!"));*/
         int8_t returnVar;
         do
         {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            const uint32_t oldcursor=cursor;
+            #endif
             returnVar=parseIncommingDataRaw(ProtocolParsingInputOutput::tempBigBufferForInput,size,cursor);
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(oldcursor==cursor && returnVar==1)
+            {
+                std::cerr << "Cursor don't move but the function have returned 1" << std::endl;
+                abort();
+            }
+            #endif
             //this interface allow 0 copy method
             if(returnVar<0)
             {
@@ -439,7 +449,14 @@ int8_t ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const
 int8_t ProtocolParsingBase::parseData(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor)
 {
     if(dataSize==0)
-        return parseDispatch(NULL,0);
+    {
+        const bool &returnVal=parseDispatch(NULL,0);
+        dataClear();
+        if(returnVal)
+            return 1;
+        else
+            return -1;
+    }
     if(dataToWithoutHeader.empty())
     {
         //if have too many data, or just the size
