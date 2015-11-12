@@ -85,6 +85,7 @@ void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vect
     EpollClientLoginSlave::compressedFilesBufferCount=0;
     tempDatapackListReply=0;
     tempDatapackListReplySize=0;
+    uint32_t fileToDelete=0;
     std::string datapackPath;
     std::unordered_map<std::string,DatapackCacheFile> filesList;
     switch(datapackStatus)
@@ -207,7 +208,10 @@ void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vect
                 filesListForSize.erase(fileName);
             }
             else
+            {
                 addDatapackListReply(true);//to delete
+                fileToDelete++;
+            }
             index++;
         }
         auto i=filesListForSize.begin();
@@ -239,7 +243,7 @@ void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vect
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     }
-    if(fileToSendList.empty())
+    if(fileToSendList.empty() && fileToDelete==0)
     {
         std::cerr << "Ask datapack list where the checksum match" << std::endl;
         return;

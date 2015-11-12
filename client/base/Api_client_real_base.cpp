@@ -22,6 +22,8 @@ using namespace CatchChallenger;
 
 void Api_client_real::writeNewFileBase(const QString &fileName,const QByteArray &data)
 {
+    if(mDatapackBase.isEmpty())
+        abort();
     const QString &fullPath=mDatapackBase+text_slash+fileName;
     //to be sure the QFile is destroyed
     {

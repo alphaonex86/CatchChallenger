@@ -93,14 +93,6 @@ private:
     QNetworkProxy proxy;
     static std::regex excludePathBase;
     static std::regex excludePathMain;
-    enum DatapackStatus
-    {
-        Base=0x01,
-        Main=0x02,
-        Sub=0x03,
-        Finished=0x04
-    };
-    DatapackStatus datapackStatus;
 
     //file list
     struct query_files

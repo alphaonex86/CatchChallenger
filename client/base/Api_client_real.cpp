@@ -32,7 +32,6 @@ Api_client_real::Api_client_real(ConnectedSocket *socket,bool tolerantMode) :
     qnamQueueCount3(0),
     qnamQueueCount4(0)
 {
-    datapackStatus=DatapackStatus::Base;
     datapackTarXzBase=false;
     datapackTarXzMain=false;
     datapackTarXzSub=false;

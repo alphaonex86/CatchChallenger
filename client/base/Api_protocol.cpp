@@ -56,6 +56,8 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     ProtocolParsingInputOutput(socket,PacketModeTransmission_Client),
     tolerantMode(tolerantMode)
 {
+    datapackStatus=DatapackStatus::Base;
+
     #ifdef BENCHMARKMUTIPLECLIENT
     if(!Api_protocol::precomputeDone)
     {
