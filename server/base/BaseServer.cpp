@@ -272,8 +272,8 @@ void BaseServer::preload_the_data()
         BaseServerMasterLoadDictionary::load(&GlobalServerData::serverPrivateVariables.db);
 
     load_sql_monsters_max_id();
-    load_sql_monsters_warehouse_max_id();
-    load_sql_monsters_market_max_id();
+    load_clan_max_id();
+    preload_industries();
     */
 }
 

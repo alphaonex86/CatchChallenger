@@ -50,6 +50,27 @@ std::vector<std::string> FacilityLibGeneral::listFolder(const std::string& folde
     return returnList;
 }
 
+std::vector<std::string> FacilityLibGeneral::listFolderWithExclude(const std::string& folder,const std::string &exclude,const std::string& suffix)
+{
+    std::vector<std::string> returnList;
+    if(suffix==exclude)
+        return returnList;
+    QFileInfoList entryList=QDir(QString::fromStdString(folder+suffix)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot);//possible wait time here
+    int sizeEntryList=entryList.size();
+    for (int index=0;index<sizeEntryList;++index)
+    {
+        QFileInfo fileInfo=entryList.at(index);
+        if(fileInfo.isDir())
+        {
+            const std::vector<std::string> &newList=listFolderWithExclude(folder,exclude,suffix+fileInfo.fileName().toStdString()+text_slash);//put unix separator because it's transformed into that's under windows too
+            returnList.insert(returnList.end(),newList.begin(),newList.end());
+        }
+        else if(fileInfo.isFile())
+            returnList.push_back(suffix+fileInfo.fileName().toStdString());
+    }
+    return returnList;
+}
+
 std::string FacilityLibGeneral::randomPassword(const std::string& string,const uint8_t& length)
 {
     if(string.size()<2)
