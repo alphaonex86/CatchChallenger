@@ -3,11 +3,10 @@
 #include "../base/CommonSettingsCommon.h"
 #include "../base/CommonSettingsServer.h"
 #include "../base/CommonDatapack.h"
+#include "../base/tinyXML/tinyxml.h"
 
 #include <QFile>
 #include <vector>
-#include <TiXmlDocument>
-#include <const TiXmlElement *>
 #include <QtCore/qmath.h>
 #include <QDir>
 #include <iostream>
@@ -108,8 +107,8 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     #endif
-    const TiXmlElement * root = domDocument.documentElement();
-    if(root.tagName()!=QLatin1String("types"))
+    const TiXmlElement * root = domDocument.RootElement();
+    if(root->ValueStr()!=QLatin1String("types"))
     {
         std::cerr << "Unable to open the file: " << file << ", \"types\" root balise not found for the xml file" << std::endl;
         return types;
@@ -119,14 +118,14 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
     bool ok;
     {
         std::unordered_set<std::string> duplicate;
-        const TiXmlElement * typeItem = root.firstChildElement(QString::fromStdString("type"));
-        while(!typeItem.isNull())
+        const TiXmlElement * typeItem = root->FirstChildElement("type");
+        while(typeItem!=NULL)
         {
-            if(typeItem.isElement())
+            if(typeItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
             {
-                if(typeItem.hasAttribute(QString::fromStdString(FightLoader::text_name)))
+                if(typeItem->Attribute(FightLoader::text_name)!=NULL)
                 {
-                    std::string name=typeItem.attribute(QString::fromStdString(FightLoader::text_name)).toStdString();
+                    std::string name=typeItem->Attribute(FightLoader::text_name).toStdString();
                     if(duplicate.find(name)==duplicate.cend())
                     {
                         duplicate.insert(name);
@@ -136,38 +135,38 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
                         types.push_back(type);
                     }
                     else
-                        std::cerr << "Unable to open the file: " << file << ", name is already set for type: child.tagName(): " << typeItem.tagName().toStdString() << " (at line: " << typeItem.lineNumber() << ")" << std::endl;
+                        std::cerr << "Unable to open the file: " << file << ", name is already set for type: child.ValueStr(): " << typeItem.ValueStr() << " (at line: " << typeItem->Row() << ")" << std::endl;
                 }
                 else
-                    std::cerr << "Unable to open the file: " << file << ", have not the item id: child.tagName(): " << typeItem.tagName().toStdString() << " (at line: " << typeItem.lineNumber() << ")" << std::endl;
+                    std::cerr << "Unable to open the file: " << file << ", have not the item id: child.ValueStr(): " << typeItem.ValueStr() << " (at line: " << typeItem->Row() << ")" << std::endl;
             }
             else
-                std::cerr << "Unable to open the file: " << file << ", is not an element: child.tagName(): " << typeItem.tagName().toStdString() << " (at line: " << typeItem.lineNumber() << ")" << std::endl;
-            typeItem = typeItem.nextSiblingElement(QString::fromStdString("type"));
+                std::cerr << "Unable to open the file: " << file << ", is not an element: child.ValueStr(): " << typeItem.ValueStr() << " (at line: " << typeItem->Row() << ")" << std::endl;
+            typeItem = typeItem.NextSiblingElement("type");
         }
     }
     {
         std::unordered_set<std::string> duplicate;
-        const TiXmlElement * typeItem = root.firstChildElement(QString::fromStdString("type"));
-        while(!typeItem.isNull())
+        const TiXmlElement * typeItem = root->FirstChildElement("type");
+        while(typeItem!=NULL)
         {
-            if(typeItem.isElement())
+            if(typeItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
             {
-                if(typeItem.hasAttribute(QString::fromStdString(FightLoader::text_name)))
+                if(typeItem->Attribute(FightLoader::text_name)!=NULL)
                 {
-                    std::string name=typeItem.attribute(QString::fromStdString(FightLoader::text_name)).toStdString();
+                    std::string name=typeItem->Attribute(FightLoader::text_name).toStdString();
                     if(duplicate.find(name)==duplicate.cend())
                     {
                         duplicate.insert(name);
-                        const TiXmlElement * multiplicator = typeItem.firstChildElement(QString::fromStdString(FightLoader::text_multiplicator));
-                        while(!multiplicator.isNull())
+                        const TiXmlElement * multiplicator = typeItem.FirstChildElement(FightLoader::text_multiplicator);
+                        while(multiplicator!=NULL)
                         {
-                            if(multiplicator.isElement())
+                            if(multiplicator->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                             {
-                                if(multiplicator.hasAttribute(QString::fromStdString("number")) && multiplicator.hasAttribute(QString::fromStdString(FightLoader::text_to)))
+                                if(multiplicator->Attribute("number")!=NULL && multiplicator->Attribute(FightLoader::text_to)!=NULL)
                                 {
-                                    float number=multiplicator.attribute(QString::fromStdString("number")).toFloat(&ok);
-                                    std::vector<std::string> to=stringsplit(multiplicator.attribute(QString::fromStdString(FightLoader::text_to)).toStdString(),';');
+                                    float number=multiplicator->Attribute("number").toFloat(&ok);
+                                    std::vector<std::string> to=stringsplit(multiplicator->Attribute(FightLoader::text_to),';');
                                     if(ok && (number==2.0 || number==0.5 || number==0.0))
                                     {
                                         unsigned int index=0;
@@ -184,30 +183,30 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
                                                     types[nameToId.at(name)].multiplicator[nameToId.at(typeName)]=-(1.0/number);
                                             }
                                             else
-                                                std::cerr << "Unable to open the file: " << file << ", name is not into list: " << to.at(index) << " is not found: child.tagName(): " << multiplicator.tagName().toStdString() << " (at line: " << multiplicator.lineNumber() << ")" << std::endl;
+                                                std::cerr << "Unable to open the file: " << file << ", name is not into list: " << to.at(index) << " is not found: child.ValueStr(): " << multiplicator.ValueStr() << " (at line: " << multiplicator->Row() << ")" << std::endl;
                                             index++;
                                         }
                                     }
                                     else
-                                        std::cerr << "Unable to open the file: " << file << ", name is already set for type: child.tagName(): " << multiplicator.tagName().toStdString() << " (at line: " << multiplicator.lineNumber() << ")" << std::endl;
+                                        std::cerr << "Unable to open the file: " << file << ", name is already set for type: child.ValueStr(): " << multiplicator.ValueStr() << " (at line: " << multiplicator->Row() << ")" << std::endl;
                                 }
                                 else
-                                    std::cerr << "Unable to open the file: " << file << ", have not the item id: child.tagName(): " << multiplicator.tagName().toStdString() << " (at line: " << multiplicator.lineNumber() << ")" << std::endl;
+                                    std::cerr << "Unable to open the file: " << file << ", have not the item id: child.ValueStr(): " << multiplicator.ValueStr() << " (at line: " << multiplicator->Row() << ")" << std::endl;
                             }
                             else
-                                std::cerr << "Unable to open the file: " << file << ", is not an element: child.tagName(): " << multiplicator.tagName().toStdString() << " (at line: " << multiplicator.lineNumber() << ")" << std::endl;
-                            multiplicator = multiplicator.nextSiblingElement(QString::fromStdString(FightLoader::text_multiplicator));
+                                std::cerr << "Unable to open the file: " << file << ", is not an element: child.ValueStr(): " << multiplicator.ValueStr() << " (at line: " << multiplicator->Row() << ")" << std::endl;
+                            multiplicator = multiplicator.NextSiblingElement(FightLoader::text_multiplicator);
                         }
                     }
                     else
-                        std::cerr << "Unable to open the file: " << file << ", name is already set for type: child.tagName(): " << typeItem.tagName().toStdString() << " (at line: " << typeItem.lineNumber() << ")" << std::endl;
+                        std::cerr << "Unable to open the file: " << file << ", name is already set for type: child.ValueStr(): " << typeItem.ValueStr() << " (at line: " << typeItem->Row() << ")" << std::endl;
                 }
                 else
-                    std::cerr << "Unable to open the file: " << file << ", have not the item id: child.tagName(): " << typeItem.tagName().toStdString() << " (at line: " << typeItem.lineNumber() << ")" << std::endl;
+                    std::cerr << "Unable to open the file: " << file << ", have not the item id: child.ValueStr(): " << typeItem.ValueStr() << " (at line: " << typeItem->Row() << ")" << std::endl;
             }
             else
-                std::cerr << "Unable to open the file: " << file << ", is not an element: child.tagName(): " << typeItem.tagName().toStdString() << " (at line: " << typeItem.lineNumber() << ")" << std::endl;
-            typeItem = typeItem.nextSiblingElement(QString::fromStdString("type"));
+                std::cerr << "Unable to open the file: " << file << ", is not an element: child.ValueStr(): " << typeItem.ValueStr() << " (at line: " << typeItem->Row() << ")" << std::endl;
+            typeItem = typeItem.NextSiblingElement("type");
         }
     }
     return types;
@@ -267,8 +266,8 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
             CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
         #endif
-        const TiXmlElement * root = domDocument.documentElement();
-        if(root.tagName().toStdString()!=FightLoader::text_monsters)
+        const TiXmlElement * root = domDocument.RootElement();
+        if(root->ValueStr()!=FightLoader::text_monsters)
         {
             file_index++;
             continue;
@@ -276,71 +275,71 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
 
         //load the content
         bool ok,ok2;
-        const TiXmlElement * item = root.firstChildElement(QString::fromStdString("monster"));
-        while(!item.isNull())
+        const TiXmlElement * item = root->FirstChildElement("monster");
+        while(item!=NULL)
         {
-            if(item.isElement())
+            if(item->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
             {
                 bool attributeIsOk=true;
-                if(!item.hasAttribute(QString::fromStdString("id")))
+                if(!item->Attribute("id")!=NULL)
                 {
-                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"id\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"id\": child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                     attributeIsOk=false;
                 }
                 #ifndef CATCHCHALLENGER_CLASS_MASTER
-                if(!item.hasAttribute(QString::fromStdString(FightLoader::text_egg_step)))
+                if(!item->Attribute(FightLoader::text_egg_step)!=NULL)
                 {
-                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"egg_step\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"egg_step\": child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(QString::fromStdString(FightLoader::text_xp_for_max_level)) && !item.hasAttribute(QString::fromStdString(FightLoader::text_xp_max)))
+                if(item->Attribute(FightLoader::text_xp_for_max_level)==NULL && item->Attribute(FightLoader::text_xp_max)==NULL)
                 {
-                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"xp_for_max_level\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"xp_for_max_level\": child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                     attributeIsOk=false;
                 }
                 else
                 {
-                    if(!item.hasAttribute(QString::fromStdString(FightLoader::text_xp_for_max_level)))
-                        item.setAttribute(QString::fromStdString(FightLoader::text_xp_for_max_level),item.attribute(QString::fromStdString(FightLoader::text_xp_max)));
+                    if(item->Attribute(FightLoader::text_xp_for_max_level)==NULL)
+                        item.setAttribute(FightLoader::text_xp_for_max_level,item->Attribute(FightLoader::text_xp_max));
                 }
-                if(!item.hasAttribute(QString::fromStdString("hp")))
+                if(item->Attribute("hp")==NULL)
                 {
-                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"hp\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"hp\": child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(QString::fromStdString("attack")))
+                if(item->Attribute("attack")==NULL)
                 {
-                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"attack\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"attack\": child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(QString::fromStdString("defense")))
+                if(item->Attribute("defense")==NULL)
                 {
-                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"defense\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"defense\": child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(QString::fromStdString(FightLoader::text_special_attack)))
+                if(item->Attribute(FightLoader::text_special_attack)==NULL)
                 {
-                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"special_attack\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"special_attack\": child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(QString::fromStdString(FightLoader::text_special_defense)))
+                if(item->Attribute(FightLoader::text_special_defense)==NULL)
                 {
-                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"special_defense\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"special_defense\": child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(QString::fromStdString(FightLoader::text_speed)))
+                if(item->Attribute(FightLoader::text_speed)==NULL)
                 {
-                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"speed\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"speed\": child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(QString::fromStdString(FightLoader::text_give_sp)))
+                if(item->Attribute(FightLoader::text_give_sp)==NULL)
                 {
-                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"give_sp\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"give_sp\": child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                     attributeIsOk=false;
                 }
-                if(!item.hasAttribute(QString::fromStdString(FightLoader::text_give_xp)))
+                if(item->Attribute(FightLoader::text_give_xp)==NULL)
                 {
-                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"give_xp\": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"give_xp\": child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                     attributeIsOk=false;
                 }
                 #endif // CATCHCHALLENGER_CLASS_MASTER
@@ -348,75 +347,75 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                 {
                     Monster monster;
                     monster.catch_rate=100;
-                    uint32_t id=item.attribute(QString::fromStdString("id")).toUInt(&ok);
+                    uint32_t id=item->Attribute("id").toUInt(&ok);
                     if(!ok)
-                        std::cerr << "Unable to open the xml file: " << file << ", id not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                        std::cerr << "Unable to open the xml file: " << file << ", id not a number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                     else if(monsters.find(id)!=monsters.cend())
-                        std::cerr << "Unable to open the xml file: " << file << ", id already found: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                        std::cerr << "Unable to open the xml file: " << file << ", id already found: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                     else
                     {
                         #ifndef CATCHCHALLENGER_CLASS_MASTER
-                        if(item.hasAttribute(QString::fromStdString(FightLoader::text_catch_rate)))
+                        if(item.hasAttribute(FightLoader::text_catch_rate))
                         {
                             bool ok2;
-                            uint32_t catch_rate=item.attribute(QString::fromStdString(FightLoader::text_catch_rate)).toUInt(&ok2);
+                            uint32_t catch_rate=item->Attribute(FightLoader::text_catch_rate).toUInt(&ok2);
                             if(ok2)
                             {
                                 if(catch_rate<=255)
                                     monster.catch_rate=catch_rate;
                                 else
-                                    std::cerr << "Unable to open the xml file: " << file << ", catch_rate is not a number: " << item.attribute("catch_rate").toStdString() << " child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                    std::cerr << "Unable to open the xml file: " << file << ", catch_rate is not a number: " << item->Attribute("catch_rate").toStdString() << " child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                             }
                             else
-                                std::cerr << "Unable to open the xml file: " << file << ", catch_rate is not a number: " << item.attribute("catch_rate").toStdString() << " child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                std::cerr << "Unable to open the xml file: " << file << ", catch_rate is not a number: " << item->Attribute("catch_rate").toStdString() << " child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                         }
-                        if(item.hasAttribute(QString::fromStdString("type")))
+                        if(item.hasAttribute("type"))
                         {
-                            const std::vector<std::string> &typeList=stringsplit(item.attribute(QString::fromStdString("type")).toStdString(),';');
+                            const std::vector<std::string> &typeList=stringsplit(item->Attribute("type"),';');
                             unsigned int index=0;
                             while(index<typeList.size())
                             {
                                 if(typeNameToId.find(typeList.at(index))!=typeNameToId.cend())
                                     monster.type.push_back(typeNameToId.at(typeList.at(index)));
                                 else
-                                    std::cerr << "Unable to open the xml file: " << file << ", type not found into the list: " << item.attribute(QString::fromStdString("type")).toStdString() << " child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                    std::cerr << "Unable to open the xml file: " << file << ", type not found into the list: " << item->Attribute("type") << " child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                 index++;
                             }
                         }
-                        if(item.hasAttribute(QString::fromStdString(FightLoader::text_type2)))
+                        if(item.hasAttribute(FightLoader::text_type2))
                         {
-                            const std::vector<std::string> &typeList=stringsplit(item.attribute(QString::fromStdString(FightLoader::text_type2)).toStdString(),';');
+                            const std::vector<std::string> &typeList=stringsplit(item->Attribute(FightLoader::text_type2),';');
                             unsigned int index=0;
                             while(index<typeList.size())
                             {
                                 if(typeNameToId.find(typeList.at(index))!=typeNameToId.cend())
                                     monster.type.push_back(typeNameToId.at(typeList.at(index)));
                                 else
-                                    std::cerr << "Unable to open the xml file: " << file << ", type not found into the list: " << item.attribute(QString::fromStdString(FightLoader::text_type2)).toStdString() << " child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                    std::cerr << "Unable to open the xml file: " << file << ", type not found into the list: " << item->Attribute(FightLoader::text_type2) << " child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                 index++;
                             }
                         }
                         qreal pow=1.0;
                         if(ok)
                         {
-                            if(item.hasAttribute(QString::fromStdString(FightLoader::text_pow)))
+                            if(item.hasAttribute(FightLoader::text_pow))
                             {
-                                pow=item.attribute(QString::fromStdString(FightLoader::text_pow)).toDouble(&ok);
+                                pow=item->Attribute(FightLoader::text_pow).toDouble(&ok);
                                 if(!ok)
                                 {
                                     pow=1.0;
-                                    std::cerr << "Unable to open the xml file: " << file << ", pow is not a double: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                    std::cerr << "Unable to open the xml file: " << file << ", pow is not a double: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                     ok=true;
                                 }
                                 if(pow<=1.0)
                                 {
                                     pow=1.0;
-                                    std::cerr << "Unable to open the xml file: " << file << ", pow is too low: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                    std::cerr << "Unable to open the xml file: " << file << ", pow is too low: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                 }
                                 if(pow>=10.0)
                                 {
                                     pow=1.0;
-                                    std::cerr << "Unable to open the xml file: " << file << ", pow is too hight: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                    std::cerr << "Unable to open the xml file: " << file << ", pow is too hight: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                 }
                             }
                         }
@@ -425,66 +424,66 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                         #endif
                         if(ok)
                         {
-                            monster.egg_step=item.attribute(QString::fromStdString(FightLoader::text_egg_step)).toUInt(&ok);
+                            monster.egg_step=item->Attribute(FightLoader::text_egg_step).toUInt(&ok);
                             if(!ok)
-                                std::cerr << "Unable to open the xml file: " << file << ", egg_step is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                std::cerr << "Unable to open the xml file: " << file << ", egg_step is not number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.xp_for_max_level=item.attribute(QString::fromStdString(FightLoader::text_xp_for_max_level)).toUInt(&ok);
+                            monster.xp_for_max_level=item->Attribute(FightLoader::text_xp_for_max_level).toUInt(&ok);
                             if(!ok)
-                                std::cerr << "Unable to open the xml file: " << file << ", xp_for_max_level is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                std::cerr << "Unable to open the xml file: " << file << ", xp_for_max_level is not number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                         }
                         #endif
                         if(ok)
                         {
-                            monster.stat.hp=item.attribute(QString::fromStdString("hp")).toUInt(&ok);
+                            monster.stat.hp=item->Attribute("hp").toUInt(&ok);
                             if(!ok)
-                                std::cerr << "Unable to open the xml file: " << file << ", hp is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                std::cerr << "Unable to open the xml file: " << file << ", hp is not number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                         }
                         #ifndef CATCHCHALLENGER_CLASS_MASTER
                         if(ok)
                         {
-                            monster.stat.attack=item.attribute(QString::fromStdString("attack")).toUInt(&ok);
+                            monster.stat.attack=item->Attribute("attack").toUInt(&ok);
                             if(!ok)
-                                std::cerr << "Unable to open the xml file: " << file << ", attack is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                std::cerr << "Unable to open the xml file: " << file << ", attack is not number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.stat.defense=item.attribute(QString::fromStdString("defense")).toUInt(&ok);
+                            monster.stat.defense=item->Attribute("defense").toUInt(&ok);
                             if(!ok)
-                                std::cerr << "Unable to open the xml file: " << file << ", defense is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                std::cerr << "Unable to open the xml file: " << file << ", defense is not number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.stat.special_attack=item.attribute(QString::fromStdString(FightLoader::text_special_attack)).toUInt(&ok);
+                            monster.stat.special_attack=item->Attribute(FightLoader::text_special_attack).toUInt(&ok);
                             if(!ok)
-                                std::cerr << "Unable to open the xml file: " << file << ", special_attack is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                std::cerr << "Unable to open the xml file: " << file << ", special_attack is not number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.stat.special_defense=item.attribute(QString::fromStdString(FightLoader::text_special_defense)).toUInt(&ok);
+                            monster.stat.special_defense=item->Attribute(FightLoader::text_special_defense).toUInt(&ok);
                             if(!ok)
-                                std::cerr << "Unable to open the xml file: " << file << ", special_defense is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                std::cerr << "Unable to open the xml file: " << file << ", special_defense is not number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.stat.speed=item.attribute(QString::fromStdString(FightLoader::text_speed)).toUInt(&ok);
+                            monster.stat.speed=item->Attribute(FightLoader::text_speed).toUInt(&ok);
                             if(!ok)
-                                std::cerr << "Unable to open the xml file: " << file << ", speed is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                std::cerr << "Unable to open the xml file: " << file << ", speed is not number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                         }
                         #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
                         if(ok)
                         {
-                            monster.give_xp=item.attribute(QString::fromStdString(FightLoader::text_give_xp)).toUInt(&ok)*CommonSettingsServer::commonSettingsServer.rates_xp;
+                            monster.give_xp=item->Attribute(FightLoader::text_give_xp).toUInt(&ok)*CommonSettingsServer::commonSettingsServer.rates_xp;
                             if(!ok)
-                                std::cerr << "Unable to open the xml file: " << file << ", give_xp is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                std::cerr << "Unable to open the xml file: " << file << ", give_xp is not number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.give_sp=item.attribute(QString::fromStdString(FightLoader::text_give_sp)).toUInt(&ok)*CommonSettingsServer::commonSettingsServer.rates_xp;
+                            monster.give_sp=item->Attribute(FightLoader::text_give_sp).toUInt(&ok)*CommonSettingsServer::commonSettingsServer.rates_xp;
                             if(!ok)
-                                std::cerr << "Unable to open the xml file: " << file << ", give_sp is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                std::cerr << "Unable to open the xml file: " << file << ", give_sp is not number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                         }
                         #else
                         monster.give_xp=0;
@@ -493,19 +492,19 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                         #endif
                         if(ok)
                         {
-                            if(item.hasAttribute(QString::fromStdString(FightLoader::text_ratio_gender)))
+                            if(item.hasAttribute(FightLoader::text_ratio_gender))
                             {
-                                std::string ratio_gender=item.attribute(QString::fromStdString(FightLoader::text_ratio_gender)).toStdString();
+                                std::string ratio_gender=item->Attribute(FightLoader::text_ratio_gender);
                                 stringreplaceOne(ratio_gender,FightLoader::text_percent,"");
                                 monster.ratio_gender=stringtouint8(ratio_gender,&ok2);
                                 if(!ok2)
                                 {
-                                    std::cerr << "Unable to open the xml file: " << file << ", ratio_gender is not number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                    std::cerr << "Unable to open the xml file: " << file << ", ratio_gender is not number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                     monster.ratio_gender=50;
                                 }
                                 if(monster.ratio_gender<-1 || monster.ratio_gender>100)
                                 {
-                                    std::cerr << "Unable to open the xml file: " << file << ", ratio_gender is not in range of -1, 100: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                    std::cerr << "Unable to open the xml file: " << file << ", ratio_gender is not in range of -1, 100: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                     monster.ratio_gender=50;
                                 }
                             }
@@ -514,43 +513,43 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                         if(ok)
                         {
                             {
-                                const TiXmlElement * attack_list = item.firstChildElement(QString::fromStdString(FightLoader::text_attack_list));
-                                if(!attack_list.isNull())
+                                const TiXmlElement * attack_list = item.FirstChildElement(FightLoader::text_attack_list);
+                                if(attack_list!=NULL)
                                 {
-                                    if(attack_list.isElement())
+                                    if(attack_list->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                     {
-                                        const TiXmlElement * attack = attack_list.firstChildElement(QString::fromStdString("attack"));
-                                        while(!attack.isNull())
+                                        const TiXmlElement * attack = attack_list.FirstChildElement("attack");
+                                        while(attack!=NULL)
                                         {
-                                            if(attack.isElement())
+                                            if(attack->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                             {
-                                                if(attack.hasAttribute(QString::fromStdString("skill")) || attack.hasAttribute(QString::fromStdString("id")))
+                                                if(attack.hasAttribute("skill") || attack.hasAttribute("id"))
                                                 {
                                                     ok=true;
-                                                    if(!attack.hasAttribute(QString::fromStdString("skill")))
-                                                        attack.setAttribute(QString::fromStdString("skill"),attack.attribute(QString::fromStdString("id")));
+                                                    if(!attack.hasAttribute("skill"))
+                                                        attack.setAttribute("skill",attack->Attribute("id"));
                                                     Monster::AttackToLearn attackVar;
-                                                    if(attack.hasAttribute(QString::fromStdString(FightLoader::text_skill_level)) || attack.hasAttribute(QString::fromStdString(FightLoader::text_attack_level)))
+                                                    if(attack.hasAttribute(FightLoader::text_skill_level) || attack.hasAttribute(FightLoader::text_attack_level))
                                                     {
-                                                        if(!attack.hasAttribute(QString::fromStdString(FightLoader::text_skill_level)))
-                                                            attack.setAttribute(QString::fromStdString(FightLoader::text_skill_level),attack.attribute(QString::fromStdString(FightLoader::text_attack_level)));
-                                                        attackVar.learnSkillLevel=attack.attribute(QString::fromStdString(FightLoader::text_skill_level)).toUShort(&ok);
+                                                        if(!attack.hasAttribute(FightLoader::text_skill_level))
+                                                            attack.setAttribute(FightLoader::text_skill_level,attack->Attribute(FightLoader::text_attack_level));
+                                                        attackVar.learnSkillLevel=attack->Attribute(FightLoader::text_skill_level).toUShort(&ok);
                                                         if(!ok)
-                                                            std::cerr << "Unable to open the xml file: " << file << ", skill_level is not a number: child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
+                                                            std::cerr << "Unable to open the xml file: " << file << ", skill_level is not a number: child.ValueStr(): " << attack.ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
                                                     }
                                                     else
                                                         attackVar.learnSkillLevel=1;
                                                     if(ok)
                                                     {
-                                                        attackVar.learnSkill=attack.attribute(QString::fromStdString("skill")).toUShort(&ok);
+                                                        attackVar.learnSkill=attack->Attribute("skill").toUShort(&ok);
                                                         if(!ok)
-                                                            std::cerr << "Unable to open the xml file: " << file << ", skill is not a number: child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
+                                                            std::cerr << "Unable to open the xml file: " << file << ", skill is not a number: child.ValueStr(): " << attack.ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
                                                     }
                                                     if(ok)
                                                     {
                                                         if(monsterSkills.find(attackVar.learnSkill)==monsterSkills.cend())
                                                         {
-                                                            std::cerr << "Unable to open the xml file: " << file << ", attack is not into attack loaded: child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
+                                                            std::cerr << "Unable to open the xml file: " << file << ", attack is not into attack loaded: child.ValueStr(): " << attack.ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
                                                             ok=false;
                                                         }
                                                     }
@@ -558,15 +557,15 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                     {
                                                         if(attackVar.learnSkillLevel<=0 || attackVar.learnSkillLevel>(uint32_t)monsterSkills.at(attackVar.learnSkill).level.size())
                                                         {
-                                                            std::cerr << "Unable to open the xml file: " << file << ", attack level is not in range 1-" << monsterSkills.at(attackVar.learnSkill).level.size() << ": child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
+                                                            std::cerr << "Unable to open the xml file: " << file << ", attack level is not in range 1-" << monsterSkills.at(attackVar.learnSkill).level.size() << ": child.ValueStr(): " << attack.ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
                                                             ok=false;
                                                         }
                                                     }
-                                                    if(attack.hasAttribute(QString::fromStdString("level")))
+                                                    if(attack.hasAttribute("level"))
                                                     {
                                                         if(ok)
                                                         {
-                                                            attackVar.learnAtLevel=attack.attribute(QString::fromStdString("level")).toUShort(&ok);
+                                                            attackVar.learnAtLevel=attack->Attribute("level").toUShort(&ok);
                                                             if(ok)
                                                             {
                                                                 unsigned int index;
@@ -582,7 +581,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                                     }
                                                                     if(index==monster.learn.size())
                                                                     {
-                                                                        std::cerr << "Unable to open the xml file: " << file << ", attack " << attackVar.learnSkill << " with level " << attackVar.learnSkillLevel << " can't be added because not same attack with previous level: child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
+                                                                        std::cerr << "Unable to open the xml file: " << file << ", attack " << attackVar.learnSkill << " with level " << attackVar.learnSkillLevel << " can't be added because not same attack with previous level: child.ValueStr(): " << attack.ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
                                                                         ok=false;
                                                                     }
                                                                 }
@@ -597,13 +596,13 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                                             ok=true;
                                                                         if(monster.learn.at(index).learnSkillLevel==attackVar.learnSkillLevel && monster.learn.at(index).learnSkill==attackVar.learnSkill)
                                                                         {
-                                                                            std::cerr << "Unable to open the xml file: " << file << ", attack already do for this level for skill " << attackVar.learnSkill << " at level " << attackVar.learnSkillLevel << " for monster " << id << ": child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
+                                                                            std::cerr << "Unable to open the xml file: " << file << ", attack already do for this level for skill " << attackVar.learnSkill << " at level " << attackVar.learnSkillLevel << " for monster " << id << ": child.ValueStr(): " << attack.ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
                                                                             ok=false;
                                                                             break;
                                                                         }
                                                                         if(monster.learn.at(index).learnSkill==attackVar.learnSkill && monster.learn.at(index).learnSkillLevel==attackVar.learnSkillLevel)
                                                                         {
-                                                                            std::cerr << "Unable to open the xml file: " << file << ", this attack level is already found " << attackVar.learnSkill << ", level: " << attackVar.learnSkillLevel << " for attack: " << index << ": child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
+                                                                            std::cerr << "Unable to open the xml file: " << file << ", this attack level is already found " << attackVar.learnSkill << ", level: " << attackVar.learnSkillLevel << " for attack: " << index << ": child.ValueStr(): " << attack.ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
                                                                             ok=false;
                                                                             break;
                                                                         }
@@ -613,29 +612,29 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                                         monster.learn.push_back(attackVar);
                                                                 }
                                                                 else
-                                                                    std::cerr << "Unable to open the xml file: " << file << ", no way to learn " << attackVar.learnSkill << ", level: " << attackVar.learnSkillLevel << " for attack: " << index << ": child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
+                                                                    std::cerr << "Unable to open the xml file: " << file << ", no way to learn " << attackVar.learnSkill << ", level: " << attackVar.learnSkillLevel << " for attack: " << index << ": child.ValueStr(): " << attack.ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
                                                             }
                                                             else
-                                                                std::cerr << "Unable to open the xml file: " << file << ", level is not a number: child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
+                                                                std::cerr << "Unable to open the xml file: " << file << ", level is not a number: child.ValueStr(): " << attack.ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
                                                         }
                                                     }
                                                     else
                                                     {
                                                         #ifndef CATCHCHALLENGER_CLASS_MASTER
-                                                        if(attack.hasAttribute(QString::fromStdString(FightLoader::text_byitem)))
+                                                        if(attack.hasAttribute(FightLoader::text_byitem))
                                                         {
                                                             uint32_t itemId;
                                                             if(ok)
                                                             {
-                                                                itemId=attack.attribute(QString::fromStdString(FightLoader::text_byitem)).toUShort(&ok);
+                                                                itemId=attack->Attribute(FightLoader::text_byitem).toUShort(&ok);
                                                                 if(!ok)
-                                                                    std::cerr << "Unable to open the xml file: " << file << ", item to learn is not a number " << attack.attribute("byitem").toStdString() << ": child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
+                                                                    std::cerr << "Unable to open the xml file: " << file << ", item to learn is not a number " << attack->Attribute("byitem").toStdString() << ": child.ValueStr(): " << attack.ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
                                                             }
                                                             if(ok)
                                                             {
                                                                 if(items.find(itemId)==items.cend())
                                                                 {
-                                                                    std::cerr << "Unable to open the xml file: " << file << ", item to learn not found " << itemId << ": child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
+                                                                    std::cerr << "Unable to open the xml file: " << file << ", item to learn not found " << itemId << ": child.ValueStr(): " << attack.ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
                                                                     ok=false;
                                                                 }
                                                             }
@@ -643,7 +642,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                             {
                                                                 if(monster.learnByItem.find(itemId)!=monster.learnByItem.cend())
                                                                 {
-                                                                    std::cerr << "Unable to open the xml file: " << file << ", item to learn is already used " << itemId << ": child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
+                                                                    std::cerr << "Unable to open the xml file: " << file << ", item to learn is already used " << itemId << ": child.ValueStr(): " << attack.ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
                                                                     ok=false;
                                                                 }
                                                             }
@@ -657,65 +656,65 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                         }
                                                         else
                                                         {
-                                                            std::cerr << "Unable to open the xml file: " << file << ", level and byitem is not found: child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
+                                                            std::cerr << "Unable to open the xml file: " << file << ", level and byitem is not found: child.ValueStr(): " << attack.ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
                                                             ok=false;
                                                         }
                                                         #endif // CATCHCHALLENGER_CLASS_MASTER
                                                     }
                                                 }
                                                 else
-                                                    std::cerr << "Unable to open the xml file: " << file << ", missing arguements (level or skill): child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
+                                                    std::cerr << "Unable to open the xml file: " << file << ", missing arguements (level or skill): child.ValueStr(): " << attack.ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
                                             }
                                             else
-                                                std::cerr << "Unable to open the xml file: " << file << ", attack_list balise is not an element: child.tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
-                                            attack = attack.nextSiblingElement(QString::fromStdString("attack"));
+                                                std::cerr << "Unable to open the xml file: " << file << ", attack_list balise is not an element: child.ValueStr(): " << attack.ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
+                                            attack = attack.NextSiblingElement("attack");
                                         }
                                         qSort(monster.learn);
                                     }
                                     else
-                                        std::cerr << "Unable to open the xml file: " << file << ", attack_list balise is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                        std::cerr << "Unable to open the xml file: " << file << ", attack_list balise is not an element: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                 }
                                 else
-                                    std::cerr << "Unable to open the xml file: " << file << ", have not attack_list: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                    std::cerr << "Unable to open the xml file: " << file << ", have not attack_list: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                             }
                             #ifndef CATCHCHALLENGER_CLASS_MASTER
                             {
-                                const TiXmlElement * evolutionsItem = item.firstChildElement(QString::fromStdString(FightLoader::text_evolutions));
-                                if(!evolutionsItem.isNull())
+                                const TiXmlElement * evolutionsItem = item.FirstChildElement(FightLoader::text_evolutions);
+                                if(evolutionsItem!=NULL)
                                 {
-                                    if(evolutionsItem.isElement())
+                                    if(evolutionsItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                     {
-                                        const TiXmlElement * evolutionItem = evolutionsItem.firstChildElement(QString::fromStdString(FightLoader::text_evolution));
-                                        while(!evolutionItem.isNull())
+                                        const TiXmlElement * evolutionItem = evolutionsItem.FirstChildElement(FightLoader::text_evolution);
+                                        while(evolutionItem!=NULL)
                                         {
-                                            if(evolutionItem.isElement())
+                                            if(evolutionItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                             {
-                                                if(evolutionItem.hasAttribute(QString::fromStdString("type")) && (
-                                                       evolutionItem.hasAttribute(QString::fromStdString("level")) ||
-                                                       (evolutionItem.attribute(QString::fromStdString("type"))=="trade" && evolutionItem.hasAttribute(QString::fromStdString(FightLoader::text_evolveTo))) ||
-                                                       (evolutionItem.attribute(QString::fromStdString("type"))=="item" && evolutionItem.hasAttribute(QString::fromStdString("item")))
+                                                if(evolutionItem.hasAttribute("type") && (
+                                                       evolutionItem.hasAttribute("level") ||
+                                                       (evolutionItem->Attribute("type")=="trade" && evolutionItem.hasAttribute(FightLoader::text_evolveTo)) ||
+                                                       (evolutionItem->Attribute("type")=="item" && evolutionItem.hasAttribute("item"))
                                                        )
                                                    )
                                                 {
                                                     ok=true;
                                                     Monster::Evolution evolutionVar;
-                                                    const std::string &typeText=evolutionItem.attribute(QString::fromStdString("type")).toStdString();
+                                                    const std::string &typeText=evolutionItem->Attribute("type").toStdString();
                                                     if(typeText!=FightLoader::text_trade)
                                                     {
                                                         if(typeText==FightLoader::text_item)
-                                                            evolutionVar.level=evolutionItem.attribute(QString::fromStdString("item")).toUInt(&ok);
+                                                            evolutionVar.level=evolutionItem->Attribute("item").toUInt(&ok);
                                                         else
-                                                            evolutionVar.level=evolutionItem.attribute(QString::fromStdString("level")).toInt(&ok);
+                                                            evolutionVar.level=evolutionItem->Attribute("level").toInt(&ok);
                                                         if(!ok)
-                                                            std::cerr << "Unable to open the xml file: " << file << ", level is not a number: child.tagName(): " << evolutionItem.tagName().toStdString() << " (at line: " << evolutionItem.lineNumber() << ")" << std::endl;
+                                                            std::cerr << "Unable to open the xml file: " << file << ", level is not a number: child.ValueStr(): " << evolutionItem.ValueStr() << " (at line: " << evolutionItem->Row() << ")" << std::endl;
                                                     }
                                                     else
                                                         evolutionVar.level=0;
                                                     if(ok)
                                                     {
-                                                        evolutionVar.evolveTo=evolutionItem.attribute(QString::fromStdString(FightLoader::text_evolveTo)).toUInt(&ok);
+                                                        evolutionVar.evolveTo=evolutionItem->Attribute(FightLoader::text_evolveTo).toUInt(&ok);
                                                         if(!ok)
-                                                            std::cerr << "Unable to open the xml file: " << file << ", evolveTo is not a number: child.tagName(): " << evolutionItem.tagName().toStdString() << " (at line: " << evolutionItem.lineNumber() << ")" << std::endl;
+                                                            std::cerr << "Unable to open the xml file: " << file << ", evolveTo is not a number: child.ValueStr(): " << evolutionItem.ValueStr() << " (at line: " << evolutionItem->Row() << ")" << std::endl;
                                                     }
                                                     if(ok)
                                                     {
@@ -728,7 +727,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                         else
                                                         {
                                                             ok=false;
-                                                            std::cerr << "Unable to open the xml file: " << file << ", unknown evolution type: " << typeText << " child.tagName(): " << evolutionItem.tagName().toStdString() << " (at line: " << evolutionItem.lineNumber() << ")" << std::endl;
+                                                            std::cerr << "Unable to open the xml file: " << file << ", unknown evolution type: " << typeText << " child.ValueStr(): " << evolutionItem.ValueStr() << " (at line: " << evolutionItem->Row() << ")" << std::endl;
                                                         }
                                                     }
                                                     if(ok)
@@ -736,7 +735,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                         if(typeText==FightLoader::text_level && (evolutionVar.level<0 || evolutionVar.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX))
                                                         {
                                                             ok=false;
-                                                            std::cerr << "Unable to open the xml file: " << file << ", level out of range: " << evolutionVar.level << " child.tagName(): " << evolutionItem.tagName().toStdString() << " (at line: " << evolutionItem.lineNumber() << ")" << std::endl;
+                                                            std::cerr << "Unable to open the xml file: " << file << ", level out of range: " << evolutionVar.level << " child.ValueStr(): " << evolutionItem.ValueStr() << " (at line: " << evolutionItem->Row() << ")" << std::endl;
                                                         }
                                                     }
                                                     if(ok)
@@ -746,7 +745,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                             if(items.find(evolutionVar.level)==items.cend())
                                                             {
                                                                 ok=false;
-                                                                std::cerr << "Unable to open the xml file: " << file << ", unknown evolution item: " << evolutionVar.level << " child.tagName(): " << evolutionItem.tagName().toStdString() << " (at line: " << evolutionItem.lineNumber() << ")" << std::endl;
+                                                                std::cerr << "Unable to open the xml file: " << file << ", unknown evolution item: " << evolutionVar.level << " child.ValueStr(): " << evolutionItem.ValueStr() << " (at line: " << evolutionItem->Row() << ")" << std::endl;
                                                             }
                                                         }
                                                     }
@@ -754,15 +753,15 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                         monster.evolutions.push_back(evolutionVar);
                                                 }
                                                 else
-                                                    std::cerr << "Unable to open the xml file: " << file << ", missing arguements (level or skill): child.tagName(): " << evolutionItem.tagName().toStdString() << " (at line: " << evolutionItem.lineNumber() << ")" << std::endl;
+                                                    std::cerr << "Unable to open the xml file: " << file << ", missing arguements (level or skill): child.ValueStr(): " << evolutionItem.ValueStr() << " (at line: " << evolutionItem->Row() << ")" << std::endl;
                                             }
                                             else
-                                                std::cerr << "Unable to open the xml file: " << file << ", attack_list balise is not an element: child.tagName(): " << evolutionItem.tagName().toStdString() << " (at line: " << evolutionItem.lineNumber() << ")" << std::endl;
-                                            evolutionItem = evolutionItem.nextSiblingElement(QString::fromStdString(FightLoader::text_evolution));
+                                                std::cerr << "Unable to open the xml file: " << file << ", attack_list balise is not an element: child.ValueStr(): " << evolutionItem.ValueStr() << " (at line: " << evolutionItem->Row() << ")" << std::endl;
+                                            evolutionItem = evolutionItem.NextSiblingElement(FightLoader::text_evolution);
                                         }
                                     }
                                     else
-                                        std::cerr << "Unable to open the xml file: " << file << ", attack_list balise is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                        std::cerr << "Unable to open the xml file: " << file << ", attack_list balise is not an element: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                 }
                             }
                             int index=0;
@@ -800,15 +799,15 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                             monsters[id]=monster;
                         }
                         else
-                            std::cerr << "Unable to open the xml file: " << file << ", one of the attribute is wrong or is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                            std::cerr << "Unable to open the xml file: " << file << ", one of the attribute is wrong or is not a number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                     }
                 }
                 else
-                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster id: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster id: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
             }
             else
-                std::cerr << "Unable to open the xml file: " << file << ", is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
-            item = item.nextSiblingElement(QString::fromStdString("monster"));
+                std::cerr << "Unable to open the xml file: " << file << ", is not an element: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+            item = item.NextSiblingElement("monster");
         }
         //check the evolveTo
         auto i = monsters.begin();
@@ -823,7 +822,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                 {
                     if(evolutionByLevel)
                     {
-                        std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " have already evolution by level: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                        std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " have already evolution by level: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                         i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
                         continue;
                     }
@@ -833,7 +832,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                 {
                     if(evolutionByTrade)
                     {
-                        std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " have already evolution by trade: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                        std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " have already evolution by trade: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                         i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
                         continue;
                     }
@@ -843,7 +842,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                 {
                     if(itemUse.find(i->second.evolutions.at(index).level)!=itemUse.cend())
                     {
-                        std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " have already evolution with this item: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                        std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " have already evolution with this item: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                         i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
                         continue;
                     }
@@ -851,13 +850,13 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                 }
                 if(i->second.evolutions.at(index).evolveTo==i->first)
                 {
-                    std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " can't evolve into them self: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " can't evolve into them self: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                     i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
                     continue;
                 }
                 else if(monsters.find(i->second.evolutions.at(index).evolveTo)==monsters.cend())
                 {
-                    std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->second.evolutions.at(index).evolveTo << " for the evolution of " << i->first << " can't be found: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->second.evolutions.at(index).evolveTo << " for the evolution of " << i->first << " can't be found: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                     i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
                     continue;
                 }
@@ -968,8 +967,8 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                 CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
             }
             #endif
-            const TiXmlElement * root = domDocument.documentElement();
-            if(root.tagName()!="fights")
+            const TiXmlElement * root = domDocument.RootElement();
+            if(root->ValueStr()!="fights")
             {
                 std::cerr << "Unable to open the xml file: " << file << ", \"fights\" root balise not found for the xml file" << std::endl;
                 index_file++;
@@ -978,92 +977,92 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
 
             //load the content
             bool ok;
-            const TiXmlElement * item = root.firstChildElement("fight");
-            while(!item.isNull())
+            const TiXmlElement * item = root->FirstChildElement("fight");
+            while(item!=NULL)
             {
-                if(item.isElement())
+                if(item->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                 {
                     if(item.hasAttribute("id"))
                     {
-                        uint32_t id=item.attribute("id").toUInt(&ok);
+                        uint32_t id=item->Attribute("id").toUInt(&ok);
                         if(ok)
                         {
                             bool entryValid=true;
                             CatchChallenger::BotFight botFight;
                             botFight.cash=0;
                             {
-                                const TiXmlElement * monster = item.firstChildElement("monster");
-                                while(entryValid && !monster.isNull())
+                                const TiXmlElement * monster = item.FirstChildElement("monster");
+                                while(entryValid && monster!=NULL)
                                 {
                                     if(!monster.hasAttribute("id"))
-                                        std::cerr << "Has not attribute \"id\": tagName(): " << monster.tagName().toStdString() << " (at line: " << monster.lineNumber() << ")" << std::endl;
-                                    else if(!monster.isElement())
-                                        std::cerr << "Is not an element: type: " << monster.attribute("type").toStdString() << " tagName(): " << monster.tagName().toStdString() << " (at line: " << monster.lineNumber() << ")" << std::endl;
+                                        std::cerr << "Has not attribute \"id\": ValueStr(): " << monster.ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
+                                    else if(monster->Type()!=TiXmlNode::NodeType::TINYXML_ELEMENT)
+                                        std::cerr << "Is not an element: type: " << monster->Attribute("type").toStdString() << " ValueStr(): " << monster.ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
                                     else
                                     {
                                         CatchChallenger::BotFight::BotFightMonster botFightMonster;
                                         botFightMonster.level=1;
-                                        botFightMonster.id=monster.attribute("id").toUInt(&ok);
+                                        botFightMonster.id=monster->Attribute("id").toUInt(&ok);
                                         if(ok)
                                         {
                                             if(monsters.find(botFightMonster.id)==monsters.cend())
                                             {
                                                 entryValid=false;
-                                                std::cerr << "Monster not found into the monster list: " << botFightMonster.id << " into the tagName(): " << monster.tagName().toStdString() << " (at line: " << monster.lineNumber() << ")" << std::endl;
+                                                std::cerr << "Monster not found into the monster list: " << botFightMonster.id << " into the ValueStr(): " << monster.ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
                                                 break;
                                             }
                                             if(monster.hasAttribute("level"))
                                             {
-                                                botFightMonster.level=monster.attribute("level").toUShort(&ok);
+                                                botFightMonster.level=monster->Attribute("level").toUShort(&ok);
                                                 if(!ok)
                                                 {
-                                                    std::cerr << "The level is not a number: type: " << monster.attribute("type").toStdString() << " tagName(): " << monster.tagName().toStdString() << " (at line: " << monster.lineNumber() << ")" << std::endl;
+                                                    std::cerr << "The level is not a number: type: " << monster->Attribute("type").toStdString() << " ValueStr(): " << monster.ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
                                                     botFightMonster.level=1;
                                                 }
                                                 if(botFightMonster.level<1)
                                                 {
-                                                    std::cerr << "Can't be 0 or negative: type: " << monster.attribute("type").toStdString() << " tagName(): " << monster.tagName().toStdString() << " (at line: " << monster.lineNumber() << ")" << std::endl;
+                                                    std::cerr << "Can't be 0 or negative: type: " << monster->Attribute("type").toStdString() << " ValueStr(): " << monster.ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
                                                     botFightMonster.level=1;
                                                 }
                                             }
-                                            const TiXmlElement * attack = monster.firstChildElement("attack");
-                                            while(entryValid && !attack.isNull())
+                                            const TiXmlElement * attack = monster.FirstChildElement("attack");
+                                            while(entryValid && attack!=NULL)
                                             {
                                                 uint8_t attackLevel=1;
                                                 if(!attack.hasAttribute("id"))
-                                                    std::cerr << "Has not attribute \"type\": tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
-                                                else if(!attack.isElement())
-                                                    std::cerr << "Is not an element: tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
+                                                    std::cerr << "Has not attribute \"type\": ValueStr(): " << attack.ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
+                                                else if(attack->Type()!=TiXmlNode::NodeType::TINYXML_ELEMENT)
+                                                    std::cerr << "Is not an element: ValueStr(): " << attack.ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
                                                 else
                                                 {
-                                                    uint32_t attackId=attack.attribute("id").toUInt(&ok);
+                                                    uint32_t attackId=attack->Attribute("id").toUInt(&ok);
                                                     if(ok)
                                                     {
                                                         if(monsterSkills.find(attackId)==monsterSkills.cend())
                                                         {
                                                             entryValid=false;
-                                                            std::cerr << "Monster attack not found: %1 into the tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
+                                                            std::cerr << "Monster attack not found: %1 into the ValueStr(): " << attack.ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
                                                             break;
                                                         }
                                                         if(attack.hasAttribute("level"))
                                                         {
-                                                            attackLevel=attack.attribute("level").toUShort(&ok);
+                                                            attackLevel=attack->Attribute("level").toUShort(&ok);
                                                             if(!ok)
                                                             {
-                                                                std::cerr << "The level is not a number: tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
+                                                                std::cerr << "The level is not a number: ValueStr(): " << attack.ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
                                                                 entryValid=false;
                                                                 break;
                                                             }
                                                             if(attackLevel<1)
                                                             {
-                                                                std::cerr << "Can't be 0 or negative: tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
+                                                                std::cerr << "Can't be 0 or negative: ValueStr(): " << attack.ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
                                                                 entryValid=false;
                                                                 break;
                                                             }
                                                         }
                                                         if(attackLevel>monsterSkills.at(attackId).level.size())
                                                         {
-                                                            std::cerr << "Level out of range: tagName(): " << attack.tagName().toStdString() << " (at line: " << attack.lineNumber() << ")" << std::endl;
+                                                            std::cerr << "Level out of range: ValueStr(): " << attack.ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
                                                             entryValid=false;
                                                             break;
                                                         }
@@ -1073,68 +1072,68 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                                                         botFightMonster.attacks.push_back(botFightAttack);
                                                     }
                                                 }
-                                                attack = attack.nextSiblingElement("attack");
+                                                attack = attack.NextSiblingElement("attack");
                                             }
                                             if(botFightMonster.attacks.empty())
                                                 botFightMonster.attacks=loadDefaultAttack(botFightMonster.id,botFightMonster.level,monsters,monsterSkills);
                                             if(botFightMonster.attacks.empty())
                                             {
-                                                std::cerr << "Empty attack list: tagName(): " << monster.tagName().toStdString() << " (at line: " << monster.lineNumber() << ")" << std::endl;
+                                                std::cerr << "Empty attack list: ValueStr(): " << monster.ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
                                                 entryValid=false;
                                                 break;
                                             }
                                             botFight.monsters.push_back(botFightMonster);
                                         }
                                     }
-                                    monster = monster.nextSiblingElement("monster");
+                                    monster = monster.NextSiblingElement("monster");
                                 }
                             }
                             {
-                                const TiXmlElement * gain = item.firstChildElement("gain");
-                                while(entryValid && !gain.isNull())
+                                const TiXmlElement * gain = item.FirstChildElement("gain");
+                                while(entryValid && gain!=NULL)
                                 {
-                                    if(gain.isElement())
+                                    if(gain->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                     {
                                         if(gain.hasAttribute("cash"))
                                         {
-                                            const uint32_t &cash=gain.attribute("cash").toUInt(&ok)*CommonSettingsServer::commonSettingsServer.rates_gold;
+                                            const uint32_t &cash=gain->Attribute("cash").toUInt(&ok)*CommonSettingsServer::commonSettingsServer.rates_gold;
                                             if(ok)
                                                 botFight.cash+=cash;
                                             else
-                                                std::cerr << "Unable to open the xml file: " << file << ", unknow cash text: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                std::cerr << "Unable to open the xml file: " << file << ", unknow cash text: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                         }
                                         else if(gain.hasAttribute("item"))
                                         {
                                             BotFight::Item itemVar;
                                             itemVar.quantity=1;
-                                            itemVar.id=gain.attribute("item").toUInt(&ok);
+                                            itemVar.id=gain->Attribute("item").toUInt(&ok);
                                             if(ok)
                                             {
                                                 if(items.find(itemVar.id)!=items.cend())
                                                 {
                                                     if(gain.hasAttribute("quantity"))
                                                     {
-                                                        itemVar.quantity=gain.attribute("quantity").toUInt(&ok);
+                                                        itemVar.quantity=gain->Attribute("quantity").toUInt(&ok);
                                                         if(!ok || itemVar.quantity<1)
                                                         {
                                                             itemVar.quantity=1;
-                                                            std::cerr << "Unable to open the xml file: " << file << ", quantity value is wrong: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                            std::cerr << "Unable to open the xml file: " << file << ", quantity value is wrong: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                         }
                                                     }
                                                     botFight.items.push_back(itemVar);
                                                 }
                                                 else
-                                                    std::cerr << "Unable to open the xml file: " << file << ", item not found: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                    std::cerr << "Unable to open the xml file: " << file << ", item not found: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                             }
                                             else
-                                                std::cerr << "Unable to open the xml file: " << file << ", unknow item id text: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                std::cerr << "Unable to open the xml file: " << file << ", unknow item id text: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                         }
                                         else
-                                            std::cerr << "unknown fight gain: file: " << file << " child.tagName(): " << gain.tagName().toStdString() << " (at line: " << gain.lineNumber() << ")" << std::endl;
+                                            std::cerr << "unknown fight gain: file: " << file << " child.ValueStr(): " << gain.ValueStr() << " (at line: " << gain->Row() << ")" << std::endl;
                                     }
                                     else
-                                        std::cerr << "Is not an element: file: " << file << ", type: " << gain.attribute("type").toStdString() << " child.tagName(): " << gain.tagName().toStdString() << " (at line: " << gain.lineNumber() << ")" << std::endl;
-                                    gain = gain.nextSiblingElement("gain");
+                                        std::cerr << "Is not an element: file: " << file << ", type: " << gain->Attribute("type").toStdString() << " child.ValueStr(): " << gain.ValueStr() << " (at line: " << gain->Row() << ")" << std::endl;
+                                    gain = gain.NextSiblingElement("gain");
                                 }
                             }
                             if(entryValid)
@@ -1144,19 +1143,19 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                                     if(!botFight.monsters.empty())
                                         botFightList[id]=botFight;
                                     else
-                                        std::cerr << "Monster list is empty to open the xml file: " << file << ", id already found: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                        std::cerr << "Monster list is empty to open the xml file: " << file << ", id already found: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                 }
                                 else
-                                    std::cerr << "Unable to open the xml file: " << file << ", id already found: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                    std::cerr << "Unable to open the xml file: " << file << ", id already found: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                             }
                         }
                         else
-                            std::cerr << "Unable to open the xml file: " << file << ", id is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                            std::cerr << "Unable to open the xml file: " << file << ", id is not a number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                     }
                 }
                 else
-                    std::cerr << "Unable to open the xml file: " << file << ", is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
-                item = item.nextSiblingElement("fight");
+                    std::cerr << "Unable to open the xml file: " << file << ", is not an element: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+                item = item.NextSiblingElement("fight");
             }
             index_file++;
         }
@@ -1219,8 +1218,8 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
             CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
         #endif
-        const TiXmlElement * root = domDocument.documentElement();
-        if(root.tagName()!="skills")
+        const TiXmlElement * root = domDocument.RootElement();
+        if(root->ValueStr()!="skills")
         {
             std::cerr << "Unable to open the xml file: " << file << ", \"list\" root balise not found for the xml file" << std::endl;
             file_index++;
@@ -1232,59 +1231,59 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
         #ifndef CATCHCHALLENGER_CLASS_MASTER
         bool ok2;
         #endif
-        const TiXmlElement * item = root.firstChildElement("skill");
-        while(!item.isNull())
+        const TiXmlElement * item = root->FirstChildElement("skill");
+        while(item!=NULL)
         {
-            if(item.isElement())
+            if(item->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
             {
                 if(item.hasAttribute("id"))
                 {
-                    uint32_t id=item.attribute("id").toUInt(&ok);
+                    uint32_t id=item->Attribute("id").toUInt(&ok);
                     if(ok && monsterSkills.find(id)!=monsterSkills.cend())
-                        std::cerr << "Unable to open the xml file: " << file << ", id already found: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                        std::cerr << "Unable to open the xml file: " << file << ", id already found: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                     else if(ok)
                     {
                         std::unordered_map<uint8_t,Skill::SkillList> levelDef;
-                        const TiXmlElement * effect = item.firstChildElement("effect");
-                        if(!effect.isNull())
+                        const TiXmlElement * effect = item.FirstChildElement("effect");
+                        if(effect!=NULL)
                         {
-                            if(effect.isElement())
+                            if(effect->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                             {
-                                const TiXmlElement * level = effect.firstChildElement("level");
-                                while(!level.isNull())
+                                const TiXmlElement * level = effect.FirstChildElement("level");
+                                while(level!=NULL)
                                 {
-                                    if(level.isElement())
+                                    if(level->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                     {
                                         if(level.hasAttribute("number"))
                                         {
                                             uint32_t sp=0;
                                             if(level.hasAttribute("sp"))
                                             {
-                                                sp=level.attribute("sp").toUShort(&ok);
+                                                sp=level->Attribute("sp").toUShort(&ok);
                                                 if(!ok)
                                                 {
-                                                    std::cerr << "Unable to open the xml file: " << file << ", sp is not number: child.tagName(): " << level.tagName().toStdString() << " (at line: " << level.lineNumber() << ")" << std::endl;
+                                                    std::cerr << "Unable to open the xml file: " << file << ", sp is not number: child.ValueStr(): " << level.ValueStr() << " (at line: " << level->Row() << ")" << std::endl;
                                                     sp=0;
                                                 }
                                             }
                                             uint8_t endurance=40;
                                             if(level.hasAttribute("endurance"))
                                             {
-                                                endurance=level.attribute("endurance").toUShort(&ok);
+                                                endurance=level->Attribute("endurance").toUShort(&ok);
                                                 if(!ok)
                                                 {
-                                                    std::cerr << "Unable to open the xml file: " << file << ", endurance is not number: child.tagName(): " << level.tagName().toStdString() << " (at line: " << level.lineNumber() << ")" << std::endl;
+                                                    std::cerr << "Unable to open the xml file: " << file << ", endurance is not number: child.ValueStr(): " << level.ValueStr() << " (at line: " << level->Row() << ")" << std::endl;
                                                     endurance=40;
                                                 }
                                                 if(endurance<1)
                                                 {
-                                                    std::cerr << "Unable to open the xml file: " << file << ", endurance lower than 1: child.tagName(): " << level.tagName().toStdString() << " (at line: " << level.lineNumber() << ")" << std::endl;
+                                                    std::cerr << "Unable to open the xml file: " << file << ", endurance lower than 1: child.ValueStr(): " << level.ValueStr() << " (at line: " << level->Row() << ")" << std::endl;
                                                     endurance=40;
                                                 }
                                             }
                                             uint8_t number;
                                             if(ok)
-                                                number=level.attribute("number").toUShort(&ok);
+                                                number=level->Attribute("number").toUShort(&ok);
                                             if(ok)
                                             {
                                                 levelDef[number].sp_to_learn=sp;
@@ -1293,27 +1292,27 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                 {
                                                     #ifndef CATCHCHALLENGER_CLASS_MASTER
                                                     {
-                                                        const TiXmlElement * life = level.firstChildElement("life");
-                                                        while(!life.isNull())
+                                                        const TiXmlElement * life = level.FirstChildElement("life");
+                                                        while(life!=NULL)
                                                         {
-                                                            if(life.isElement())
+                                                            if(life->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                                             {
                                                                 Skill::Life effect;
                                                                 if(life.hasAttribute("applyOn"))
                                                                 {
-                                                                    if(life.attribute("applyOn")=="aloneEnemy")
+                                                                    if(life->Attribute("applyOn")=="aloneEnemy")
                                                                         effect.effect.on=ApplyOn_AloneEnemy;
-                                                                    else if(life.attribute("applyOn")=="themself")
+                                                                    else if(life->Attribute("applyOn")=="themself")
                                                                         effect.effect.on=ApplyOn_Themself;
-                                                                    else if(life.attribute("applyOn")=="allEnemy")
+                                                                    else if(life->Attribute("applyOn")=="allEnemy")
                                                                         effect.effect.on=ApplyOn_AllEnemy;
-                                                                    else if(life.attribute("applyOn")=="allAlly")
+                                                                    else if(life->Attribute("applyOn")=="allAlly")
                                                                         effect.effect.on=ApplyOn_AllAlly;
-                                                                    else if(life.attribute("applyOn")=="nobody")
+                                                                    else if(life->Attribute("applyOn")=="nobody")
                                                                         effect.effect.on=ApplyOn_Nobody;
                                                                     else
                                                                     {
-                                                                        std::cerr << "Unable to open the xml file: " << file << ", applyOn tag wrong " << life.attribute("applyOn").toStdString() << ": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                                        std::cerr << "Unable to open the xml file: " << file << ", applyOn tag wrong " << life->Attribute("applyOn").toStdString() << ": child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                                         effect.effect.on=ApplyOn_AloneEnemy;
                                                                     }
                                                                 }
@@ -1321,7 +1320,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                                     effect.effect.on=ApplyOn_AloneEnemy;
                                                                 std::string text;
                                                                 if(life.hasAttribute("quantity"))
-                                                                    text=life.attribute("quantity").toStdString();
+                                                                    text=life->Attribute("quantity").toStdString();
                                                                 if(stringEndsWith(text,"%"))
                                                                     effect.effect.type=QuantityType_Percent;
                                                                 else
@@ -1332,12 +1331,12 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                                 effect.success=100;
                                                                 if(life.hasAttribute("success"))
                                                                 {
-                                                                    std::string success=life.attribute("success").toStdString();
+                                                                    std::string success=life->Attribute("success").toStdString();
                                                                     stringreplaceOne(success,"%","");
                                                                     effect.success=stringtouint8(success,&ok2);
                                                                     if(!ok2)
                                                                     {
-                                                                        std::cerr << "Unable to open the xml file: " << file << ", success wrong corrected to 100%: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                                        std::cerr << "Unable to open the xml file: " << file << ", success wrong corrected to 100%: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                                         effect.success=100;
                                                                     }
                                                                 }
@@ -1347,79 +1346,79 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                                         levelDef[number].life.push_back(effect);
                                                                 }
                                                                 else
-                                                                    std::cerr << "Unable to open the xml file: " << file << ", " << text << " is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                                    std::cerr << "Unable to open the xml file: " << file << ", " << text << " is not a number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                             }
-                                                            life = life.nextSiblingElement("life");
+                                                            life = life.NextSiblingElement("life");
                                                         }
                                                     }
                                                     #endif // CATCHCHALLENGER_CLASS_MASTER
                                                     #ifndef CATCHCHALLENGER_CLASS_MASTER
                                                     {
-                                                        const TiXmlElement * buff = level.firstChildElement("buff");
-                                                        while(!buff.isNull())
+                                                        const TiXmlElement * buff = level.FirstChildElement("buff");
+                                                        while(buff!=NULL)
                                                         {
-                                                            if(buff.isElement())
+                                                            if(buff->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                                             {
                                                                 if(buff.hasAttribute("id"))
                                                                 {
-                                                                    uint32_t idBuff=buff.attribute("id").toUInt(&ok);
+                                                                    uint32_t idBuff=buff->Attribute("id").toUInt(&ok);
                                                                     if(ok)
                                                                     {
                                                                         Skill::Buff effect;
                                                                         if(buff.hasAttribute("applyOn"))
                                                                         {
-                                                                            if(buff.attribute("applyOn")=="aloneEnemy")
+                                                                            if(buff->Attribute("applyOn")=="aloneEnemy")
                                                                                 effect.effect.on=ApplyOn_AloneEnemy;
-                                                                            else if(buff.attribute("applyOn")=="themself")
+                                                                            else if(buff->Attribute("applyOn")=="themself")
                                                                                 effect.effect.on=ApplyOn_Themself;
-                                                                            else if(buff.attribute("applyOn")=="allEnemy")
+                                                                            else if(buff->Attribute("applyOn")=="allEnemy")
                                                                                 effect.effect.on=ApplyOn_AllEnemy;
-                                                                            else if(buff.attribute("applyOn")=="allAlly")
+                                                                            else if(buff->Attribute("applyOn")=="allAlly")
                                                                                 effect.effect.on=ApplyOn_AllAlly;
-                                                                            else if(buff.attribute("applyOn")=="nobody")
+                                                                            else if(buff->Attribute("applyOn")=="nobody")
                                                                                 effect.effect.on=ApplyOn_Nobody;
                                                                             else
                                                                             {
-                                                                                std::cerr << "Unable to open the xml file: " << file << ", applyOn tag wrong " << buff.attribute("applyOn").toStdString() << ": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                                                std::cerr << "Unable to open the xml file: " << file << ", applyOn tag wrong " << buff->Attribute("applyOn").toStdString() << ": child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                                                 effect.effect.on=ApplyOn_AloneEnemy;
                                                                             }
                                                                         }
                                                                         else
                                                                             effect.effect.on=ApplyOn_AloneEnemy;
                                                                         if(monsterBuffs.find(idBuff)==monsterBuffs.cend())
-                                                                            std::cerr << "Unable to open the xml file: " << file << ", this buff id is not found: " << idBuff << ": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                                            std::cerr << "Unable to open the xml file: " << file << ", this buff id is not found: " << idBuff << ": child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                                         else
                                                                         {
                                                                             effect.effect.level=1;
                                                                             ok2=true;
                                                                             if(buff.hasAttribute("level"))
                                                                             {
-                                                                                std::string level=buff.attribute("level").toStdString();
+                                                                                std::string level=buff->Attribute("level").toStdString();
                                                                                 effect.effect.level=stringtouint8(level,&ok2);
                                                                                 if(!ok2)
-                                                                                    std::cerr << "Unable to open the xml file: " << file << ", level wrong: " << buff.attribute("level").toStdString() << " child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                                                    std::cerr << "Unable to open the xml file: " << file << ", level wrong: " << buff->Attribute("level").toStdString() << " child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                                                 if(effect.effect.level<=0)
                                                                                 {
                                                                                     ok2=false;
-                                                                                    std::cerr << "Unable to open the xml file: " << file << ", level need be egal or greater than 1: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                                                    std::cerr << "Unable to open the xml file: " << file << ", level need be egal or greater than 1: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                                                 }
                                                                             }
                                                                             if(ok2)
                                                                             {
                                                                                 if(monsterBuffs.at(idBuff).level.size()<effect.effect.level)
-                                                                                    std::cerr << "Unable to open the xml file: " << file << ", level needed: " << effect.effect.level << ", level max found: " << monsterBuffs.at(idBuff).level.size() << ": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                                                    std::cerr << "Unable to open the xml file: " << file << ", level needed: " << effect.effect.level << ", level max found: " << monsterBuffs.at(idBuff).level.size() << ": child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                                                 else
                                                                                 {
                                                                                     effect.effect.buff=idBuff;
                                                                                     effect.success=100;
                                                                                     if(buff.hasAttribute("success"))
                                                                                     {
-                                                                                        std::string success=buff.attribute("success").toStdString();
+                                                                                        std::string success=buff->Attribute("success").toStdString();
                                                                                         stringreplaceOne(success,"%","");
                                                                                         effect.success=stringtouint8(success,&ok2);
                                                                                         if(!ok2)
                                                                                         {
-                                                                                            std::cerr << "Unable to open the xml file: " << file << ", success wrong corrected to 100%: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                                                            std::cerr << "Unable to open the xml file: " << file << ", success wrong corrected to 100%: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                                                             effect.success=100;
                                                                                         }
                                                                                     }
@@ -1429,39 +1428,39 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                                         }
                                                                     }
                                                                     else
-                                                                        std::cerr << "Unable to open the xml file: " << file << ", have not tag id: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                                        std::cerr << "Unable to open the xml file: " << file << ", have not tag id: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                                 }
                                                                 else
-                                                                    std::cerr << "Unable to open the xml file: " << file << ", have not tag id: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                                    std::cerr << "Unable to open the xml file: " << file << ", have not tag id: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                             }
-                                                            buff = buff.nextSiblingElement("buff");
+                                                            buff = buff.NextSiblingElement("buff");
                                                         }
                                                     }
                                                     #endif // CATCHCHALLENGER_CLASS_MASTER
                                                 }
                                                 else
-                                                    std::cerr << "Unable to open the xml file: " << file << ", level need be egal or greater than 1: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                    std::cerr << "Unable to open the xml file: " << file << ", level need be egal or greater than 1: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                             }
                                             else
-                                                std::cerr << "Unable to open the xml file: " << file << ", number tag is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                std::cerr << "Unable to open the xml file: " << file << ", number tag is not a number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                         }
                                     }
                                     else
-                                        std::cerr << "Unable to open the xml file: " << file << ", level balise is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
-                                    level = level.nextSiblingElement("level");
+                                        std::cerr << "Unable to open the xml file: " << file << ", level balise is not an element: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+                                    level = level.NextSiblingElement("level");
                                 }
                                 if(levelDef.size()==0)
-                                    std::cerr << "Unable to open the xml file: " << file << ", 0 level found: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                    std::cerr << "Unable to open the xml file: " << file << ", 0 level found: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                 else
                                 {
                                     monsterSkills[id].type=255;
                                     #ifndef CATCHCHALLENGER_CLASS_MASTER
                                     if(item.hasAttribute("type"))
                                     {
-                                        if(typeNameToId.find(item.attribute("type").toStdString())!=typeNameToId.cend())
-                                            monsterSkills[id].type=typeNameToId.at(item.attribute("type").toStdString());
+                                        if(typeNameToId.find(item->Attribute("type").toStdString())!=typeNameToId.cend())
+                                            monsterSkills[id].type=typeNameToId.at(item->Attribute("type").toStdString());
                                         else
-                                            std::cerr << "Unable to open the xml file: " << file << ", type not found: " << item.attribute("type").toStdString() << ": child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                            std::cerr << "Unable to open the xml file: " << file << ", type not found: " << item->Attribute("type").toStdString() << ": child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                     }
                                     #endif // CATCHCHALLENGER_CLASS_MASTER
                                 }
@@ -1470,29 +1469,29 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                 while(levelDef.find(index)!=levelDef.cend())
                                 {
                                     /*if(levelDef.value(index).buff.empty() && levelDef.value(index).life.empty())
-                                        std::cerr << "Unable to open the xml file: " << file << ", no effect loaded for skill %4 at level %5, missing level to continue: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(id).arg(index));*/
+                                        std::cerr << "Unable to open the xml file: " << file << ", no effect loaded for skill %4 at level %5, missing level to continue: child.ValueStr(): %2 (at line: %3)").arg(file).arg(item.ValueStr()).arg(item->Row()).arg(id).arg(index));*/
                                     monsterSkills[id].level.push_back(levelDef.at(index));
                                     levelDef.erase(index);
                                     index++;
                                 }
                                 if(levelDef.size()>0)
-                                    std::cerr << "Unable to open the xml file: " << file << ", level up to " << index << " loaded, missing level to continue: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                    std::cerr << "Unable to open the xml file: " << file << ", level up to " << index << " loaded, missing level to continue: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                             }
                             else
-                                std::cerr << "Unable to open the xml file: " << file << ", effect balise is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                std::cerr << "Unable to open the xml file: " << file << ", effect balise is not an element: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                         }
                         /*else
-                            std::cerr << "Unable to open the xml file: " << file << ", have not effect balise: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;*/
+                            std::cerr << "Unable to open the xml file: " << file << ", have not effect balise: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;*/
                     }
                     else
-                        std::cerr << "Unable to open the xml file: " << file << ", id is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                        std::cerr << "Unable to open the xml file: " << file << ", id is not a number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                 }
                 else
-                    std::cerr << "Unable to open the xml file: " << file << ", have not the skill id: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the skill id: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
             }
             else
-                std::cerr << "Unable to open the xml file: " << file << ", is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
-            item = item.nextSiblingElement("skill");
+                std::cerr << "Unable to open the xml file: " << file << ", is not an element: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+            item = item.NextSiblingElement("skill");
         }
         //check the default attack
         if(monsterSkills.find(0)==monsterSkills.cend())
@@ -1574,8 +1573,8 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
             CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
         #endif
-        const TiXmlElement * root = domDocument.documentElement();
-        if(root.tagName()!="buffs")
+        const TiXmlElement * root = domDocument.RootElement();
+        if(root->ValueStr()!="buffs")
         {
             std::cerr << "Unable to open the xml file: " << file << ", \"list\" root balise not found for the xml file" << std::endl;
             file_index++;
@@ -1584,16 +1583,16 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
 
         //load the content
         bool ok;
-        const TiXmlElement * item = root.firstChildElement("buff");
-        while(!item.isNull())
+        const TiXmlElement * item = root->FirstChildElement("buff");
+        while(item!=NULL)
         {
-            if(item.isElement())
+            if(item->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
             {
                 if(item.hasAttribute("id"))
                 {
-                    uint32_t id=item.attribute("id").toUInt(&ok);
+                    uint32_t id=item->Attribute("id").toUInt(&ok);
                     if(ok && monsterBuffs.find(id)!=monsterBuffs.cend())
-                        std::cerr << "Unable to open the xml file: " << file << ", id already found: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                        std::cerr << "Unable to open the xml file: " << file << ", id already found: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                     else if(ok)
                     {
                         Buff::Duration general_duration=Buff::Duration_ThisFight;
@@ -1601,30 +1600,30 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                         float general_capture_bonus=1.0;
                         if(item.hasAttribute("capture_bonus"))
                         {
-                           general_capture_bonus=item.attribute("capture_bonus").toFloat(&ok);
+                           general_capture_bonus=item->Attribute("capture_bonus").toFloat(&ok);
                             if(!ok)
                             {
-                                std::cerr << "Unable to open the xml file: " << file << ", capture_bonus is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                std::cerr << "Unable to open the xml file: " << file << ", capture_bonus is not a number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                 general_capture_bonus=1.0;
                             }
                         }
                         if(item.hasAttribute("duration"))
                         {
-                            if(item.attribute("duration")=="Always")
+                            if(item->Attribute("duration")=="Always")
                                 general_duration=Buff::Duration_Always;
-                            else if(item.attribute("duration")=="NumberOfTurn")
+                            else if(item->Attribute("duration")=="NumberOfTurn")
                             {
                                 if(item.hasAttribute("durationNumberOfTurn"))
                                 {
-                                    general_durationNumberOfTurn=item.attribute("durationNumberOfTurn").toUShort(&ok);
+                                    general_durationNumberOfTurn=item->Attribute("durationNumberOfTurn").toUShort(&ok);
                                     if(!ok)
                                     {
-                                        std::cerr << "Unable to open the xml file: " << file << ", durationNumberOfTurn is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                        std::cerr << "Unable to open the xml file: " << file << ", durationNumberOfTurn is not a number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                         general_durationNumberOfTurn=3;
                                     }
                                     if(general_durationNumberOfTurn<=0)
                                     {
-                                        std::cerr << "Unable to open the xml file: " << file << ", durationNumberOfTurn is egal to 0: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                        std::cerr << "Unable to open the xml file: " << file << ", durationNumberOfTurn is egal to 0: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                         general_durationNumberOfTurn=3;
                                     }
                                 }
@@ -1632,28 +1631,28 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                     general_durationNumberOfTurn=3;
                                 general_duration=Buff::Duration_NumberOfTurn;
                             }
-                            else if(item.attribute("duration")=="ThisFight")
+                            else if(item->Attribute("duration")=="ThisFight")
                                 general_duration=Buff::Duration_ThisFight;
                             else
                             {
-                                std::cerr << "Unable to open the xml file: " << file << ", attribute duration have wrong value \"" << item.attribute("duration").toStdString() << "\" is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                std::cerr << "Unable to open the xml file: " << file << ", attribute duration have wrong value \"" << item->Attribute("duration").toStdString() << "\" is not a number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                 general_duration=Buff::Duration_ThisFight;
                             }
                         }
                         std::unordered_map<uint8_t,Buff::GeneralEffect> levelDef;
-                        const TiXmlElement * effect = item.firstChildElement("effect");
-                        if(!effect.isNull())
+                        const TiXmlElement * effect = item.FirstChildElement("effect");
+                        if(effect!=NULL)
                         {
-                            if(effect.isElement())
+                            if(effect->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                             {
-                                const TiXmlElement * level = effect.firstChildElement("level");
-                                while(!level.isNull())
+                                const TiXmlElement * level = effect.FirstChildElement("level");
+                                while(level!=NULL)
                                 {
-                                    if(level.isElement())
+                                    if(level->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                     {
                                         if(level.hasAttribute("number"))
                                         {
-                                            uint8_t number=level.attribute("number").toUShort(&ok);
+                                            uint8_t number=level->Attribute("number").toUShort(&ok);
                                             if(ok)
                                             {
                                                 if(number>0)
@@ -1663,25 +1662,25 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                                     float capture_bonus=general_capture_bonus;
                                                     if(item.hasAttribute("capture_bonus"))
                                                     {
-                                                       capture_bonus=item.attribute("capture_bonus").toFloat(&ok);
+                                                       capture_bonus=item->Attribute("capture_bonus").toFloat(&ok);
                                                         if(!ok)
                                                         {
-                                                            std::cerr << "Unable to open the xml file: " << file << ", capture_bonus is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                            std::cerr << "Unable to open the xml file: " << file << ", capture_bonus is not a number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                             capture_bonus=general_capture_bonus;
                                                         }
                                                     }
                                                     if(item.hasAttribute("duration"))
                                                     {
-                                                        if(item.attribute("duration")=="Always")
+                                                        if(item->Attribute("duration")=="Always")
                                                             duration=Buff::Duration_Always;
-                                                        else if(item.attribute("duration")=="NumberOfTurn")
+                                                        else if(item->Attribute("duration")=="NumberOfTurn")
                                                         {
                                                             if(item.hasAttribute("durationNumberOfTurn"))
                                                             {
-                                                                durationNumberOfTurn=item.attribute("durationNumberOfTurn").toUShort(&ok);
+                                                                durationNumberOfTurn=item->Attribute("durationNumberOfTurn").toUShort(&ok);
                                                                 if(!ok)
                                                                 {
-                                                                    std::cerr << "Unable to open the xml file: " << file << ", durationNumberOfTurn is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                                    std::cerr << "Unable to open the xml file: " << file << ", durationNumberOfTurn is not a number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                                     durationNumberOfTurn=general_durationNumberOfTurn;
                                                                 }
                                                             }
@@ -1689,11 +1688,11 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                                                 durationNumberOfTurn=general_durationNumberOfTurn;
                                                             duration=Buff::Duration_NumberOfTurn;
                                                         }
-                                                        else if(item.attribute("duration")=="ThisFight")
+                                                        else if(item->Attribute("duration")=="ThisFight")
                                                             duration=Buff::Duration_ThisFight;
                                                         else
                                                         {
-                                                            std::cerr << "Unable to open the xml file: " << file << ", attribute duration have wrong value \"" << item.attribute("duration").toStdString() << "\" is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                            std::cerr << "Unable to open the xml file: " << file << ", attribute duration have wrong value \"" << item->Attribute("duration").toStdString() << "\" is not a number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                             duration=general_duration;
                                                         }
                                                     }
@@ -1703,33 +1702,33 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
 
 
 
-                                                    const TiXmlElement * inFight = level.firstChildElement("inFight");
-                                                    while(!inFight.isNull())
+                                                    const TiXmlElement * inFight = level.FirstChildElement("inFight");
+                                                    while(inFight!=NULL)
                                                     {
-                                                        if(inFight.isElement())
+                                                        if(inFight->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                                         {
                                                             ok=true;
                                                             Buff::Effect effect;
                                                             std::string text;
                                                             if(inFight.hasAttribute("hp"))
                                                             {
-                                                                text=inFight.attribute("hp").toStdString();
+                                                                text=inFight->Attribute("hp").toStdString();
                                                                 effect.on=Buff::Effect::EffectOn_HP;
                                                             }
                                                             else if(inFight.hasAttribute("defense"))
                                                             {
-                                                                text=inFight.attribute("defense").toStdString();
+                                                                text=inFight->Attribute("defense").toStdString();
                                                                 effect.on=Buff::Effect::EffectOn_Defense;
                                                             }
                                                             else if(inFight.hasAttribute("attack"))
                                                             {
-                                                                text=inFight.attribute("attack").toStdString();
+                                                                text=inFight->Attribute("attack").toStdString();
                                                                 effect.on=Buff::Effect::EffectOn_Attack;
                                                             }
                                                             else
                                                             {
                                                                 ok=false;
-                                                                std::cerr << "Unable to open the xml file: " << file << ", not know attribute balise: child.tagName(): " << inFight.tagName().toStdString() << " (at line: " << inFight.lineNumber() << ")" << std::endl;
+                                                                std::cerr << "Unable to open the xml file: " << file << ", not know attribute balise: child.ValueStr(): " << inFight.ValueStr() << " (at line: " << inFight->Row() << ")" << std::endl;
                                                             }
                                                             if(ok)
                                                             {
@@ -1743,19 +1742,19 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                                                 if(ok)
                                                                     levelDef[number].fight.push_back(effect);
                                                                 else
-                                                                    std::cerr << "Unable to open the xml file: " << file << ", \"" << text << "\" something is wrong, or is not a number, or not into hp or defense balise: child.tagName(): " << inFight.tagName().toStdString() << " (at line: " << inFight.lineNumber() << ")" << std::endl;
+                                                                    std::cerr << "Unable to open the xml file: " << file << ", \"" << text << "\" something is wrong, or is not a number, or not into hp or defense balise: child.ValueStr(): " << inFight.ValueStr() << " (at line: " << inFight->Row() << ")" << std::endl;
                                                             }
                                                         }
-                                                        inFight = inFight.nextSiblingElement("inFight");
+                                                        inFight = inFight.NextSiblingElement("inFight");
                                                     }
-                                                    const TiXmlElement * inWalk = level.firstChildElement("inWalk");
-                                                    while(!inWalk.isNull())
+                                                    const TiXmlElement * inWalk = level.FirstChildElement("inWalk");
+                                                    while(inWalk!=NULL)
                                                     {
-                                                        if(inWalk.isElement())
+                                                        if(inWalk->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                                         {
                                                             if(inWalk.hasAttribute("steps"))
                                                             {
-                                                                uint32_t steps=inWalk.attribute("steps").toUInt(&ok);
+                                                                uint32_t steps=inWalk->Attribute("steps").toUInt(&ok);
                                                                 if(ok)
                                                                 {
                                                                     Buff::EffectInWalk effect;
@@ -1763,16 +1762,16 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                                                     std::string text;
                                                                     if(inWalk.hasAttribute("hp"))
                                                                     {
-                                                                        text=inWalk.attribute("hp").toStdString();
+                                                                        text=inWalk->Attribute("hp").toStdString();
                                                                         effect.effect.on=Buff::Effect::EffectOn_HP;
                                                                     }
                                                                     else if(inWalk.hasAttribute("defense"))
                                                                     {
-                                                                        text=inWalk.attribute("defense").toStdString();
+                                                                        text=inWalk->Attribute("defense").toStdString();
                                                                         effect.effect.on=Buff::Effect::EffectOn_Defense;
                                                                     }
                                                                     else
-                                                                        std::cerr << "Unable to open the xml file: " << file << ", not action found: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                                        std::cerr << "Unable to open the xml file: " << file << ", not action found: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                                     if(stringEndsWith(text,"%"))
                                                                         effect.effect.type=QuantityType_Percent;
                                                                     else
@@ -1783,55 +1782,55 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                                                     if(ok)
                                                                         levelDef[number].walk.push_back(effect);
                                                                     else
-                                                                        std::cerr << "Unable to open the xml file: " << file << ", " << text << " is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                                        std::cerr << "Unable to open the xml file: " << file << ", " << text << " is not a number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                                 }
                                                                 else
-                                                                    std::cerr << "Unable to open the xml file: " << file << ", have not tag steps: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                                    std::cerr << "Unable to open the xml file: " << file << ", have not tag steps: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                             }
                                                             else
-                                                                std::cerr << "Unable to open the xml file: " << file << ", have not tag steps: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                                std::cerr << "Unable to open the xml file: " << file << ", have not tag steps: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                         }
-                                                        inWalk = inWalk.nextSiblingElement("inWalk");
+                                                        inWalk = inWalk.NextSiblingElement("inWalk");
                                                     }
                                                 }
                                                 else
-                                                    std::cerr << "Unable to open the xml file: " << file << ", level need be egal or greater than 1: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                    std::cerr << "Unable to open the xml file: " << file << ", level need be egal or greater than 1: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                             }
                                             else
-                                                std::cerr << "Unable to open the xml file: " << file << ", number tag is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                                std::cerr << "Unable to open the xml file: " << file << ", number tag is not a number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                         }
                                     }
                                     else
-                                        std::cerr << "Unable to open the xml file: " << file << ", level balise is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
-                                    level = level.nextSiblingElement("level");
+                                        std::cerr << "Unable to open the xml file: " << file << ", level balise is not an element: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+                                    level = level.NextSiblingElement("level");
                                 }
                                 uint8_t index=1;
                                 while(levelDef.find(index)!=levelDef.cend())
                                 {
                                     /*if(levelDef.value(index).fight.empty() && levelDef.value(index).walk.empty())
-                                        std::cerr << "Unable to open the xml file: " << file << ", no effect loaded for buff %4 at level %5, missing level to continue: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(id).arg(index));*/
+                                        std::cerr << "Unable to open the xml file: " << file << ", no effect loaded for buff %4 at level %5, missing level to continue: child.ValueStr(): %2 (at line: %3)").arg(file).arg(item.ValueStr()).arg(item->Row()).arg(id).arg(index));*/
                                     monsterBuffs[id].level.push_back(levelDef.at(index));
                                     levelDef.erase(index);
                                     index++;
                                 }
                                 if(levelDef.size()>0)
-                                    std::cerr << "Unable to open the xml file: " << file << ", level up to " << index << " loaded, missing level to continue: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                    std::cerr << "Unable to open the xml file: " << file << ", level up to " << index << " loaded, missing level to continue: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                             }
                             else
-                                std::cerr << "Unable to open the xml file: " << file << ", effect balise is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                                std::cerr << "Unable to open the xml file: " << file << ", effect balise is not an element: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                         }
                         else
-                            std::cerr << "Unable to open the xml file: " << file << ", have not effet balise: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                            std::cerr << "Unable to open the xml file: " << file << ", have not effet balise: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                     }
                     else
-                        std::cerr << "Unable to open the xml file: " << file << ", id is not a number: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                        std::cerr << "Unable to open the xml file: " << file << ", id is not a number: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                 }
                 else
-                    std::cerr << "Unable to open the xml file: " << file << ", have not the buff id: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", have not the buff id: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
             }
             else
-                std::cerr << "Unable to open the xml file: " << file << ", is not an element: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
-            item = item.nextSiblingElement("buff");
+                std::cerr << "Unable to open the xml file: " << file << ", is not an element: child.ValueStr(): " << item.ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+            item = item.NextSiblingElement("buff");
         }
         file_index++;
     }
