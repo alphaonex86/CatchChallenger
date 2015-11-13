@@ -6,8 +6,8 @@
 
 #include <QFile>
 #include <vector>
-#include <QDomDocument>
-#include <QDomElement>
+#include <TiXmlDocument>
+#include <const TiXmlElement *>
 #include <QtCore/qmath.h>
 #include <QDir>
 #include <iostream>
@@ -90,7 +90,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
 {
     std::unordered_map<std::string,uint8_t> nameToId;
     std::vector<Type> types;
-    QDomDocument domDocument;
+    TiXmlDocument domDocument(file.c_str());
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -98,27 +98,17 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
     else
     {
         #endif
-        QFile itemsFile(QString::fromStdString(file));
-        QByteArray xmlContent;
-        if(!itemsFile.open(QIODevice::ReadOnly))
+        const bool loadOkay=domDocument.LoadFile();
+        if(!loadOkay)
         {
-            std::cerr << "Unable to open the file: " << file << ", error: " << itemsFile.errorString().toStdString() << std::endl;
-            return types;
-        }
-        xmlContent=itemsFile.readAll();
-        itemsFile.close();
-        QString errorStr;
-        int errorLine,errorColumn;
-        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-        {
-            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
             return types;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     #endif
-    QDomElement root = domDocument.documentElement();
+    const TiXmlElement * root = domDocument.documentElement();
     if(root.tagName()!=QLatin1String("types"))
     {
         std::cerr << "Unable to open the file: " << file << ", \"types\" root balise not found for the xml file" << std::endl;
@@ -129,7 +119,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
     bool ok;
     {
         std::unordered_set<std::string> duplicate;
-        QDomElement typeItem = root.firstChildElement(QString::fromStdString("type"));
+        const TiXmlElement * typeItem = root.firstChildElement(QString::fromStdString("type"));
         while(!typeItem.isNull())
         {
             if(typeItem.isElement())
@@ -158,7 +148,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
     }
     {
         std::unordered_set<std::string> duplicate;
-        QDomElement typeItem = root.firstChildElement(QString::fromStdString("type"));
+        const TiXmlElement * typeItem = root.firstChildElement(QString::fromStdString("type"));
         while(!typeItem.isNull())
         {
             if(typeItem.isElement())
@@ -169,7 +159,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
                     if(duplicate.find(name)==duplicate.cend())
                     {
                         duplicate.insert(name);
-                        QDomElement multiplicator = typeItem.firstChildElement(QString::fromStdString(FightLoader::text_multiplicator));
+                        const TiXmlElement * multiplicator = typeItem.firstChildElement(QString::fromStdString(FightLoader::text_multiplicator));
                         while(!multiplicator.isNull())
                         {
                             if(multiplicator.isElement())
@@ -258,7 +248,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
             }
         }
         #endif
-        QDomDocument domDocument;
+        TiXmlDocument domDocument(file.c_str());
         //open and quick check the file
         #ifndef EPOLLCATCHCHALLENGERSERVER
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -266,21 +256,10 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
         else
         {
             #endif
-            QFile xmlFile(QString::fromStdString(file));
-            QByteArray xmlContent;
-            if(!xmlFile.open(QIODevice::ReadOnly))
+            const bool loadOkay=domDocument.LoadFile();
+            if(!loadOkay)
             {
-                std::cerr << "Unable to open the xml monster file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
-                file_index++;
-                continue;
-            }
-            xmlContent=xmlFile.readAll();
-            xmlFile.close();
-            QString errorStr;
-            int errorLine,errorColumn;
-            if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-            {
-                std::cerr << "Unable to open the xml file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+                std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
                 file_index++;
                 continue;
             }
@@ -288,7 +267,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
             CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
         #endif
-        QDomElement root = domDocument.documentElement();
+        const TiXmlElement * root = domDocument.documentElement();
         if(root.tagName().toStdString()!=FightLoader::text_monsters)
         {
             file_index++;
@@ -297,7 +276,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
 
         //load the content
         bool ok,ok2;
-        QDomElement item = root.firstChildElement(QString::fromStdString("monster"));
+        const TiXmlElement * item = root.firstChildElement(QString::fromStdString("monster"));
         while(!item.isNull())
         {
             if(item.isElement())
@@ -535,12 +514,12 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                         if(ok)
                         {
                             {
-                                QDomElement attack_list = item.firstChildElement(QString::fromStdString(FightLoader::text_attack_list));
+                                const TiXmlElement * attack_list = item.firstChildElement(QString::fromStdString(FightLoader::text_attack_list));
                                 if(!attack_list.isNull())
                                 {
                                     if(attack_list.isElement())
                                     {
-                                        QDomElement attack = attack_list.firstChildElement(QString::fromStdString("attack"));
+                                        const TiXmlElement * attack = attack_list.firstChildElement(QString::fromStdString("attack"));
                                         while(!attack.isNull())
                                         {
                                             if(attack.isElement())
@@ -701,12 +680,12 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                             }
                             #ifndef CATCHCHALLENGER_CLASS_MASTER
                             {
-                                QDomElement evolutionsItem = item.firstChildElement(QString::fromStdString(FightLoader::text_evolutions));
+                                const TiXmlElement * evolutionsItem = item.firstChildElement(QString::fromStdString(FightLoader::text_evolutions));
                                 if(!evolutionsItem.isNull())
                                 {
                                     if(evolutionsItem.isElement())
                                     {
-                                        QDomElement evolutionItem = evolutionsItem.firstChildElement(QString::fromStdString(FightLoader::text_evolution));
+                                        const TiXmlElement * evolutionItem = evolutionsItem.firstChildElement(QString::fromStdString(FightLoader::text_evolution));
                                         while(!evolutionItem.isNull())
                                         {
                                             if(evolutionItem.isElement())
@@ -970,7 +949,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
         if(list.at(index_file).isFile())
         {
             const std::string &file=list.at(index_file).absoluteFilePath().toStdString();
-            QDomDocument domDocument;
+            TiXmlDocument domDocument(file.c_str());
             //open and quick check the file
             #ifndef EPOLLCATCHCHALLENGERSERVER
             if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -978,21 +957,10 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
             else
             {
                 #endif
-                QFile xmlFile(QString::fromStdString(file));
-                QByteArray xmlContent;
-                if(!xmlFile.open(QIODevice::ReadOnly))
+                const bool loadOkay=domDocument.LoadFile();
+                if(!loadOkay)
                 {
-                    std::cerr << "Unable to open the xml fight file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
-                    index_file++;
-                    continue;
-                }
-                xmlContent=xmlFile.readAll();
-                xmlFile.close();
-                QString errorStr;
-                int errorLine,errorColumn;
-                if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-                {
-                    std::cerr << "Unable to open the xml file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+                    std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
                     index_file++;
                     continue;
                 }
@@ -1000,7 +968,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                 CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
             }
             #endif
-            QDomElement root = domDocument.documentElement();
+            const TiXmlElement * root = domDocument.documentElement();
             if(root.tagName()!="fights")
             {
                 std::cerr << "Unable to open the xml file: " << file << ", \"fights\" root balise not found for the xml file" << std::endl;
@@ -1010,7 +978,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
 
             //load the content
             bool ok;
-            QDomElement item = root.firstChildElement("fight");
+            const TiXmlElement * item = root.firstChildElement("fight");
             while(!item.isNull())
             {
                 if(item.isElement())
@@ -1024,7 +992,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                             CatchChallenger::BotFight botFight;
                             botFight.cash=0;
                             {
-                                QDomElement monster = item.firstChildElement("monster");
+                                const TiXmlElement * monster = item.firstChildElement("monster");
                                 while(entryValid && !monster.isNull())
                                 {
                                     if(!monster.hasAttribute("id"))
@@ -1058,7 +1026,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                                                     botFightMonster.level=1;
                                                 }
                                             }
-                                            QDomElement attack = monster.firstChildElement("attack");
+                                            const TiXmlElement * attack = monster.firstChildElement("attack");
                                             while(entryValid && !attack.isNull())
                                             {
                                                 uint8_t attackLevel=1;
@@ -1122,7 +1090,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                                 }
                             }
                             {
-                                QDomElement gain = item.firstChildElement("gain");
+                                const TiXmlElement * gain = item.firstChildElement("gain");
                                 while(entryValid && !gain.isNull())
                                 {
                                     if(gain.isElement())
@@ -1232,7 +1200,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
             }
         }
         #endif // CATCHCHALLENGER_CLASS_MASTER
-        QDomDocument domDocument;
+        TiXmlDocument domDocument(file.c_str());
         //open and quick check the file
         #ifndef EPOLLCATCHCHALLENGERSERVER
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -1240,21 +1208,10 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
         else
         {
             #endif
-            QFile xmlFile(QString::fromStdString(file));
-            QByteArray xmlContent;
-            if(!xmlFile.open(QIODevice::ReadOnly))
+            const bool loadOkay=domDocument.LoadFile();
+            if(!loadOkay)
             {
-                std::cerr << "Unable to open the xml skill monster " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
-                file_index++;
-                continue;
-            }
-            xmlContent=xmlFile.readAll();
-            xmlFile.close();
-            QString errorStr;
-            int errorLine,errorColumn;
-            if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-            {
-                std::cerr << "Unable to open the xml file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+                std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
                 file_index++;
                 continue;
             }
@@ -1262,7 +1219,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
             CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
         #endif
-        QDomElement root = domDocument.documentElement();
+        const TiXmlElement * root = domDocument.documentElement();
         if(root.tagName()!="skills")
         {
             std::cerr << "Unable to open the xml file: " << file << ", \"list\" root balise not found for the xml file" << std::endl;
@@ -1275,7 +1232,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
         #ifndef CATCHCHALLENGER_CLASS_MASTER
         bool ok2;
         #endif
-        QDomElement item = root.firstChildElement("skill");
+        const TiXmlElement * item = root.firstChildElement("skill");
         while(!item.isNull())
         {
             if(item.isElement())
@@ -1288,12 +1245,12 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                     else if(ok)
                     {
                         std::unordered_map<uint8_t,Skill::SkillList> levelDef;
-                        QDomElement effect = item.firstChildElement("effect");
+                        const TiXmlElement * effect = item.firstChildElement("effect");
                         if(!effect.isNull())
                         {
                             if(effect.isElement())
                             {
-                                QDomElement level = effect.firstChildElement("level");
+                                const TiXmlElement * level = effect.firstChildElement("level");
                                 while(!level.isNull())
                                 {
                                     if(level.isElement())
@@ -1336,7 +1293,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                 {
                                                     #ifndef CATCHCHALLENGER_CLASS_MASTER
                                                     {
-                                                        QDomElement life = level.firstChildElement("life");
+                                                        const TiXmlElement * life = level.firstChildElement("life");
                                                         while(!life.isNull())
                                                         {
                                                             if(life.isElement())
@@ -1398,7 +1355,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                     #endif // CATCHCHALLENGER_CLASS_MASTER
                                                     #ifndef CATCHCHALLENGER_CLASS_MASTER
                                                     {
-                                                        QDomElement buff = level.firstChildElement("buff");
+                                                        const TiXmlElement * buff = level.firstChildElement("buff");
                                                         while(!buff.isNull())
                                                         {
                                                             if(buff.isElement())
@@ -1598,7 +1555,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
             file_index++;
             continue;
         }
-        QDomDocument domDocument;
+        TiXmlDocument domDocument(file.c_str());
         //open and quick check the file
         #ifndef EPOLLCATCHCHALLENGERSERVER
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -1606,21 +1563,10 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
         else
         {
             #endif
-            QFile xmlFile(QString::fromStdString(file));
-            QByteArray xmlContent;
-            if(!xmlFile.open(QIODevice::ReadOnly))
+            const bool loadOkay=domDocument.LoadFile();
+            if(!loadOkay)
             {
-                std::cerr << "Unable to open the xml buff monster file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
-                file_index++;
-                continue;
-            }
-            xmlContent=xmlFile.readAll();
-            xmlFile.close();
-            QString errorStr;
-            int errorLine,errorColumn;
-            if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-            {
-                std::cerr << "Unable to open the xml file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+                std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
                 file_index++;
                 continue;
             }
@@ -1628,7 +1574,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
             CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
         #endif
-        QDomElement root = domDocument.documentElement();
+        const TiXmlElement * root = domDocument.documentElement();
         if(root.tagName()!="buffs")
         {
             std::cerr << "Unable to open the xml file: " << file << ", \"list\" root balise not found for the xml file" << std::endl;
@@ -1638,7 +1584,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
 
         //load the content
         bool ok;
-        QDomElement item = root.firstChildElement("buff");
+        const TiXmlElement * item = root.firstChildElement("buff");
         while(!item.isNull())
         {
             if(item.isElement())
@@ -1695,12 +1641,12 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                             }
                         }
                         std::unordered_map<uint8_t,Buff::GeneralEffect> levelDef;
-                        QDomElement effect = item.firstChildElement("effect");
+                        const TiXmlElement * effect = item.firstChildElement("effect");
                         if(!effect.isNull())
                         {
                             if(effect.isElement())
                             {
-                                QDomElement level = effect.firstChildElement("level");
+                                const TiXmlElement * level = effect.firstChildElement("level");
                                 while(!level.isNull())
                                 {
                                     if(level.isElement())
@@ -1757,7 +1703,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
 
 
 
-                                                    QDomElement inFight = level.firstChildElement("inFight");
+                                                    const TiXmlElement * inFight = level.firstChildElement("inFight");
                                                     while(!inFight.isNull())
                                                     {
                                                         if(inFight.isElement())
@@ -1802,7 +1748,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                                         }
                                                         inFight = inFight.nextSiblingElement("inFight");
                                                     }
-                                                    QDomElement inWalk = level.firstChildElement("inWalk");
+                                                    const TiXmlElement * inWalk = level.firstChildElement("inWalk");
                                                     while(!inWalk.isNull())
                                                     {
                                                         if(inWalk.isElement())

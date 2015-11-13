@@ -403,29 +403,18 @@ bool BaseServer::preload_zone_init()
         }
         std::string zoneCodeName=entryListZone.at(index).fileName().toStdString();
         stringreplaceOne(zoneCodeName,BaseServer::text_dotxml,"");
-        QDomDocument domDocument;
         const std::string &file=entryListZone.at(index).absoluteFilePath().toStdString();
+        TiXmlDocument domDocument(file.c_str());
         #ifndef EPOLLCATCHCHALLENGERSERVER
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
             domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
         else
         {
         #endif
-            QFile itemsFile(file.c_str());
-            QByteArray xmlContent;
-            if(!itemsFile.open(QIODevice::ReadOnly))
+            const bool loadOkay=domDocument.LoadFile();
+            if(!loadOkay)
             {
-                std::cerr << "Unable to open the file: " << file.c_str() << ", error: " << itemsFile.errorString().toStdString() << std::endl;
-                index++;
-                continue;
-            }
-            xmlContent=itemsFile.readAll();
-            itemsFile.close();
-            QString errorStr;
-            int errorLine,errorColumn;
-            if(!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-            {
-                std::cerr << "Unable to open the file: " << file.c_str() << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+                std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
                 index++;
                 continue;
             }
@@ -440,7 +429,7 @@ bool BaseServer::preload_zone_init()
             index++;
             continue;
         }
-        QDomElement root(domDocument.documentElement());
+        const TiXmlElement * root(domDocument.documentElement());
         if(root.tagName().toStdString()!=BaseServer::text_zone)
         {
             std::cerr << "Unable to open the file: " << file.c_str() << ", \"zone\" root balise not found for the xml file" << std::endl;
@@ -450,7 +439,7 @@ bool BaseServer::preload_zone_init()
 
         //load capture
         std::vector<uint16_t> fightIdList;
-        QDomElement capture(root.firstChildElement(QString::fromStdString(BaseServer::text_capture)));
+        const TiXmlElement * capture(root.firstChildElement(QString::fromStdString(BaseServer::text_capture)));
         if(!capture.isNull())
         {
             if(capture.isElement() && capture.hasAttribute(QString::fromStdString(BaseServer::text_fightId)))
@@ -1837,7 +1826,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                     auto i=step.begin();
                     while (i!=step.end())
                     {
-                        QDomElement step = i->second;
+                        const TiXmlElement * step = i->second;
                         std::pair<uint8_t,uint8_t> pairpoint(bot_Semi.point.x,bot_Semi.point.y);
                         MapServer * const mapServer=static_cast<MapServer *>(semi_loaded_map.at(index).map);
                         if(step.attribute(QString::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_shop)
@@ -2288,24 +2277,15 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
     if(botFiles.find(file)!=botFiles.cend())
         return;
     botFiles[file];//create the entry
-    QDomDocument domDocument;
+    TiXmlDocument domDocument(file.c_str());
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
     else
     {
         #endif
-        QFile botFile(QString::fromStdString(file));
-        if(!botFile.open(QIODevice::ReadOnly))
-        {
-            std::cerr << mapfile << botFile.fileName().toStdString() << ": " << botFile.errorString().toStdString() << std::endl;
-            return;
-        }
-        QByteArray xmlContent=botFile.readAll();
-        botFile.close();
-        QString errorStr;
-        int errorLine,errorColumn;
-        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        const bool loadOkay=domDocument.LoadFile();
+        if(!loadOkay)
         {
             std::cerr << botFile.fileName().toStdString() << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
             return;
@@ -2315,14 +2295,14 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
     }
     #endif
     bool ok;
-    QDomElement root = domDocument.documentElement();
+    const TiXmlElement * root = domDocument.documentElement();
     if(root.tagName()!="bots")
     {
         std::cerr << "\"bots\" root balise not found for the xml file" << std::endl;
         return;
     }
     //load the bots
-    QDomElement child = root.firstChildElement("bot");
+    const TiXmlElement * child = root.firstChildElement("bot");
     while(!child.isNull())
     {
         if(!child.hasAttribute("id"))
@@ -2338,7 +2318,7 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
                     std::cerr << "Bot " << id << " into file " << file << " have same id as another bot: bot.tagName(): " << child.tagName().toStdString() << " (at line: " << child.lineNumber() << ")" << std::endl;
                 botIdLoaded.insert(id);
                 botFiles[file][id];
-                QDomElement step = child.firstChildElement("step");
+                const TiXmlElement * step = child.firstChildElement("step");
                 while(!step.isNull())
                 {
                     if(!step.hasAttribute("id"))
