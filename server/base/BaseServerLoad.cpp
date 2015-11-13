@@ -429,8 +429,8 @@ bool BaseServer::preload_zone_init()
             index++;
             continue;
         }
-        const TiXmlElement * root(domDocument.documentElement());
-        if(root.tagName().toStdString()!=BaseServer::text_zone)
+        const TiXmlElement* root = domDocument.RootElement();
+        if(root->ValueStr()!=BaseServer::text_zone)
         {
             std::cerr << "Unable to open the file: " << file.c_str() << ", \"zone\" root balise not found for the xml file" << std::endl;
             index++;
@@ -439,13 +439,13 @@ bool BaseServer::preload_zone_init()
 
         //load capture
         std::vector<uint16_t> fightIdList;
-        const TiXmlElement * capture(root.firstChildElement(QString::fromStdString(BaseServer::text_capture)));
-        if(!capture.isNull())
+        const TiXmlElement * capture(root->FirstChildElement(BaseServer::text_capture));
+        if(capture!=NULL)
         {
-            if(capture.isElement() && capture.hasAttribute(QString::fromStdString(BaseServer::text_fightId)))
+            if(capture->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && capture->Attribute(BaseServer::text_fightId)!=NULL)
             {
                 bool ok;
-                const std::vector<std::string> &fightIdStringList=stringsplit(capture.attribute(QString::fromStdString(BaseServer::text_fightId)).toStdString(),';');
+                const std::vector<std::string> &fightIdStringList=stringsplit(*capture->Attribute(BaseServer::text_fightId),';');
                 int sub_index=0;
                 const int &listsize=fightIdStringList.size();
                 while(sub_index<listsize)
@@ -465,7 +465,7 @@ bool BaseServer::preload_zone_init()
                 break;
             }
             else
-                std::cerr << "Unable to open the file: " << file << ", is not an element: child.tagName(): " << capture.tagName().toStdString() << " (at line: " << capture.lineNumber() << ")" << std::endl;
+                std::cerr << "Unable to open the file: " << file << ", is not an element: (at line: " << capture->Row() << ")" << std::endl;
         }
         index++;
     }
@@ -1829,9 +1829,9 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                         const TiXmlElement * step = i->second;
                         std::pair<uint8_t,uint8_t> pairpoint(bot_Semi.point.x,bot_Semi.point.y);
                         MapServer * const mapServer=static_cast<MapServer *>(semi_loaded_map.at(index).map);
-                        if(step.attribute(QString::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_shop)
+                        if(*step->Attribute(BaseServer::text_type)==BaseServer::text_shop)
                         {
-                            if(!step.hasAttribute(QString::fromStdString(BaseServer::text_shop)))
+                            if(step->Attribute(BaseServer::text_shop)==NULL)
                                 std::cerr << "Has not attribute \"shop\": for bot id: "
                                           << bot_Semi.id
                                           << " ("
@@ -1847,7 +1847,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                           << std::endl;
                             else
                             {
-                                uint32_t shop=step.attribute(QString::fromStdString(BaseServer::text_shop)).toUInt(&ok);
+                                uint32_t shop=stringtouint32(*step->Attribute(BaseServer::text_shop),&ok);
                                 if(!ok)
                                     std::cerr << "shop is not a number: for bot id: "
                                               << bot_Semi.id
@@ -1898,7 +1898,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 }
                             }
                         }
-                        else if(step.attribute(QString::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_learn)
+                        else if(*step->Attribute(BaseServer::text_type)==BaseServer::text_learn)
                         {
                             if(mapServer->learn.find(pairpoint)!=mapServer->learn.end())
                                 std::cerr << "learn point already on the map: for bot id: "
@@ -1935,7 +1935,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 learnpoint_number++;
                             }
                         }
-                        else if(step.attribute(QString::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_heal)
+                        else if(*step->Attribute(BaseServer::text_type)==BaseServer::text_heal)
                         {
                             if(mapServer->heal.find(pairpoint)!=mapServer->heal.end())
                                 std::cerr << "heal point already on the map: for bot id: "
@@ -1972,7 +1972,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 healpoint_number++;
                             }
                         }
-                        else if(step.attribute(QString::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_market)
+                        else if(*step->Attribute(BaseServer::text_type)==BaseServer::text_market)
                         {
                             if(mapServer->market.find(pairpoint)!=mapServer->market.end())
                                 std::cerr << "market point already on the map: for bot id: "
@@ -2009,9 +2009,9 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 marketpoint_number++;
                             }
                         }
-                        else if(step.attribute(QString::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_zonecapture)
+                        else if(*step->Attribute(BaseServer::text_type)==BaseServer::text_zonecapture)
                         {
-                            if(!step.hasAttribute(QString::fromStdString(BaseServer::text_zone)))
+                            if(step->Attribute(BaseServer::text_zone)==NULL)
                                 std::cerr << "zonecapture point have not the zone attribute: for bot id: "
                                           << bot_Semi.id
                                           << " ("
@@ -2056,11 +2056,11 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                               << std::to_string(i->first)
                                               << std::endl;
                                 #endif
-                                mapServer->zonecapture[pairpoint]=step.attribute(QString::fromStdString(BaseServer::text_zone)).toStdString();
+                                mapServer->zonecapture[pairpoint]=*step->Attribute(BaseServer::text_zone);
                                 zonecapturepoint_number++;
                             }
                         }
-                        else if(step.attribute(QString::fromStdString(BaseServer::text_type)).toStdString()==BaseServer::text_fight)
+                        else if(*step->Attribute(BaseServer::text_type)==BaseServer::text_fight)
                         {
                             if(mapServer->botsFight.find(pairpoint)!=mapServer->botsFight.end())
                                 std::cerr << "botsFight point already on the map: for bot id: "
@@ -2078,7 +2078,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                           << std::endl;
                             else
                             {
-                                const uint32_t &fightid=step.attribute(QString::fromStdString(BaseServer::text_fightid)).toUInt(&ok);
+                                const uint32_t &fightid=stringtouint32(*step->Attribute(BaseServer::text_fightid),&ok);
                                 if(ok)
                                 {
                                     if(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightid)!=CommonDatapackServerSpec::commonDatapackServerSpec.botFights.end())
@@ -2274,6 +2274,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
 
 void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
 {
+    (void)mapfile;
     if(botFiles.find(file)!=botFiles.cend())
         return;
     botFiles[file];//create the entry
@@ -2287,7 +2288,7 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
         const bool loadOkay=domDocument.LoadFile();
         if(!loadOkay)
         {
-            std::cerr << botFile.fileName().toStdString() << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
             return;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -2295,52 +2296,52 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
     }
     #endif
     bool ok;
-    const TiXmlElement * root = domDocument.documentElement();
-    if(root.tagName()!="bots")
+    const TiXmlElement * root = domDocument.RootElement();
+    if(root->ValueStr()!="bots")
     {
         std::cerr << "\"bots\" root balise not found for the xml file" << std::endl;
         return;
     }
     //load the bots
-    const TiXmlElement * child = root.firstChildElement("bot");
-    while(!child.isNull())
+    const TiXmlElement * child = root->FirstChildElement("bot");
+    while(child!=NULL)
     {
-        if(!child.hasAttribute("id"))
-            std::cerr << "Has not attribute \"id\": child.tagName(): " << child.tagName().toStdString() << " (at line: " << child.lineNumber() << ")" << std::endl;
-        else if(!child.isElement())
-            std::cerr << "Is not an element: child.tagName(): " << child.tagName().toStdString() << ", name: " << child.attribute("name").toStdString() << " (at line: " << child.lineNumber() << ")" << std::endl;
+        if(child->Attribute("id")==NULL)
+            std::cerr << "Has not attribute \"id\": child.ValueStr(): " << child.ValueStr() << " (at line: " << child->Row() << ")" << std::endl;
+        else if(child->Type()!=TiXmlNode::NodeType::TINYXML_ELEMENT)
+            std::cerr << "Is not an element: child.ValueStr(): " << child.ValueStr() << ", name: " << child->Attribute("name").toStdString() << " (at line: " << child->Row() << ")" << std::endl;
         else
         {
-            uint32_t id=child.attribute("id").toUInt(&ok);
+            uint32_t id=child->Attribute("id").toUInt(&ok);
             if(ok)
             {
                 if(botIdLoaded.find(id)!=botIdLoaded.cend())
-                    std::cerr << "Bot " << id << " into file " << file << " have same id as another bot: bot.tagName(): " << child.tagName().toStdString() << " (at line: " << child.lineNumber() << ")" << std::endl;
+                    std::cerr << "Bot " << id << " into file " << file << " have same id as another bot: bot.ValueStr(): " << child.ValueStr() << " (at line: " << child->Row() << ")" << std::endl;
                 botIdLoaded.insert(id);
                 botFiles[file][id];
-                const TiXmlElement * step = child.firstChildElement("step");
-                while(!step.isNull())
+                const TiXmlElement * step = child.FirstChildElement("step");
+                while(step!=NULL)
                 {
-                    if(!step.hasAttribute("id"))
-                        std::cerr << "Has not attribute \"type\": bot.tagName(): " << step.tagName().toStdString() << " (at line: " << step.lineNumber() << ")" << std::endl;
-                    else if(!step.hasAttribute("type"))
-                        std::cerr << "Has not attribute \"type\": bot.tagName(): " << step.tagName().toStdString() << " (at line: " << step.lineNumber() << ")" << std::endl;
-                    else if(!step.isElement())
-                        std::cerr << "Is not an element: bot.tagName(): " << step.tagName().toStdString() << ", type: " << step.attribute("type").toStdString() << " (at line: " << step.lineNumber() << ")" << std::endl;
+                    if(step->Attribute("id")==NULL)
+                        std::cerr << "Has not attribute \"type\": bot.ValueStr(): " << step.ValueStr() << " (at line: " << step->Row() << ")" << std::endl;
+                    else if(step->Attribute("type")==NULL)
+                        std::cerr << "Has not attribute \"type\": bot.ValueStr(): " << step.ValueStr() << " (at line: " << step->Row() << ")" << std::endl;
+                    else if(step->Type()!=TiXmlNode::NodeType::TINYXML_ELEMENT)
+                        std::cerr << "Is not an element: bot.ValueStr(): " << step.ValueStr() << ", type: " << step->Attribute("type").toStdString() << " (at line: " << step->Row() << ")" << std::endl;
                     else
                     {
-                        uint32_t stepId=step.attribute("id").toUInt(&ok);
+                        uint32_t stepId=step->Attribute("id").toUInt(&ok);
                         if(ok)
                             botFiles[file][id].step[stepId]=step;
                     }
-                    step = step.nextSiblingElement("step");
+                    step = step.NextSiblingElement("step");
                 }
                 if(botFiles.at(file).at(id).step.find(1)==botFiles.at(file).at(id).step.cend())
                     botFiles[file].erase(id);
             }
             else
-                std::cerr << "Attribute \"id\" is not a number: bot.tagName(): " << child.tagName().toStdString() << " (at line: " << child.lineNumber() << ")" << std::endl;
+                std::cerr << "Attribute \"id\" is not a number: bot.ValueStr(): " << child.ValueStr() << " (at line: " << child->Row() << ")" << std::endl;
         }
-        child = child.nextSiblingElement("bot");
+        child = child.NextSiblingElement("bot");
     }
 }
