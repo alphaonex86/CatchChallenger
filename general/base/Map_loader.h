@@ -25,10 +25,10 @@ public:
 
     Map_to_send map_to_send;
     std::string errorString();
-    bool tryLoadMap(const std::string &fileName);
+    bool tryLoadMap(const std::string &file);
     static void removeMapLayer(const ParsedLayer &parsed_layer);
-    bool loadMonsterMap(const std::string &fileName,std::vector<std::string> detectedMonsterCollisionMonsterType,std::vector<std::string> detectedMonsterCollisionLayer);
-    static std::string resolvRelativeMap(const std::string &fileName,const std::string &link,const std::string &datapackPath=std::string());
+    bool loadMonsterMap(const std::string &file, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer);
+    static std::string resolvRelativeMap(const std::string &file, const std::string &link, const std::string &datapackPath=std::string());
     static const TiXmlElement * getXmlCondition(const std::string &fileName,const std::string &conditionFile,const uint32_t &conditionId);
     static MapCondition xmlConditionToMapCondition(const std::string &conditionFile, const TiXmlElement * const item);
     std::vector<MapMonster> loadSpecificMonster(const std::string &fileName,const std::string &monsterType);
