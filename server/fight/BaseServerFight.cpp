@@ -3,14 +3,13 @@
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/CommonMap.h"
 #include "../../general/fight/FightLoader.h"
+#include "../../general/base/tinyXML/tinyxml.h"
 #include "../base/GlobalServerData.h"
 #include "../VariableServer.h"
 
 #include <QFile>
 #include <string>
 #include <vector>
-#include <QDomDocument>
-#include <QDomElement>
 
 using namespace CatchChallenger;
 
@@ -77,7 +76,7 @@ void BaseServer::load_monsters_max_id_return()
 
 std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterDrop(const std::string &file, std::unordered_map<uint16_t,Item> items,const std::unordered_map<uint16_t,Monster> &monsters)
 {
-    QDomDocument domDocument;
+    TiXmlDocument domDocument(file.c_str());
     std::unordered_map<uint16_t,std::vector<MonsterDrops> > monsterDrops;
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -86,27 +85,17 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
     else
     {
         #endif
-        QFile xmlFile(QString::fromStdString(file));
-        QByteArray xmlContent;
-        if(!xmlFile.open(QIODevice::ReadOnly))
+        const bool loadOkay=domDocument.LoadFile();
+        if(!loadOkay)
         {
-            std::cerr << "Unable to open the xml monsters drop file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
-            return monsterDrops;
-        }
-        xmlContent=xmlFile.readAll();
-        xmlFile.close();
-        QString errorStr;
-        int errorLine,errorColumn;
-        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-        {
-            std::cerr << "Unable to open the xml file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+            std::cerr << "Unable to open the file: " << file.c_str() << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
             return monsterDrops;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     #endif
-    QDomElement root = domDocument.documentElement();
+    const TiXmlElement * root = domDocument.documentElement();
     if(root.tagName().toStdString()!=BaseServer::text_monsters)
     {
         std::cerr << "Unable to open the xml file: " << file << ", \"monsters\" root balise not found for the xml file" << std::endl;
@@ -115,7 +104,7 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
 
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement(QString::fromStdString(BaseServer::text_monster));
+    const TiXmlElement * item = root.firstChildElement(QString::fromStdString(BaseServer::text_monster));
     while(!item.isNull())
     {
         if(item.isElement())
@@ -129,12 +118,12 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
                     std::cerr << "Unable to open the xml file: " << file << ", id into the monster list, skip: child.tagName(): " << item.tagName().toStdString() << " (at line: " << item.lineNumber() << ")" << std::endl;
                 else
                 {
-                    QDomElement drops = item.firstChildElement(QString::fromStdString(BaseServer::text_drops));
+                    const TiXmlElement * drops = item.firstChildElement(QString::fromStdString(BaseServer::text_drops));
                     if(!drops.isNull())
                     {
                         if(drops.isElement())
                         {
-                            QDomElement drop = drops.firstChildElement(QString::fromStdString(BaseServer::text_drop));
+                            const TiXmlElement * drop = drops.firstChildElement(QString::fromStdString(BaseServer::text_drop));
                             while(!drop.isNull())
                             {
                                 if(drop.isElement())

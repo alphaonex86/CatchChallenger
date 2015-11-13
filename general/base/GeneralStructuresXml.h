@@ -6,8 +6,8 @@
 #include <string>
 #include <unordered_map>
 #include <QVariant>
-#include <QDomElement>
 
+#include "tinyXML/tinyxml.h"
 #include "GeneralType.h"
 #include "GeneralStructures.h"
 
@@ -18,7 +18,7 @@ struct Map_semi_teleport
     COORD_TYPE source_x,source_y;
     COORD_TYPE destination_x,destination_y;
     std::string map;
-    QDomElement conditionUnparsed;
+    const TiXmlElement * conditionUnparsed;
     MapCondition condition;
 };
 
@@ -70,13 +70,13 @@ struct Map_to_send
     uint8_t *monstersCollisionMap;
     std::vector<MonstersCollisionValue> monstersCollisionList;
 
-    QDomElement xmlRoot;
+    const TiXmlElement * xmlRoot;
 };
 
 //permanent bot on client, temp to parse on the server
 struct Bot
 {
-    std::unordered_map<uint8_t,QDomElement> step;
+    std::unordered_map<uint8_t,const TiXmlElement *> step;
     std::unordered_map<std::string,std::string> properties;
     uint32_t botId;//id need be unique for the quests, then 32Bits
     std::string skin;

@@ -1,6 +1,6 @@
 CONFIG += c++11
 
-QT       += core gui network xml
+QT       += core
 
 LIBS += -lz -llzma
 
@@ -25,7 +25,6 @@ SOURCES += $$PWD/base/ChatParsing.cpp \
     $$PWD/base/CommonDatapackServerSpec.cpp \
     $$PWD/fight/CommonFightEngine.cpp \
     $$PWD/fight/CommonFightEngineBase.cpp \
-    $$PWD/base/lz4/lz4.c \
     $$PWD/base/CommonSettingsCommon.cpp \
     $$PWD/base/CommonSettingsServer.cpp \
     $$PWD/base/cpp11addition.cpp
@@ -50,13 +49,24 @@ HEADERS  += $$PWD/base/GeneralStructures.h \
     $$PWD/base/CommonDatapackServerSpec.h \
     $$PWD/fight/CommonFightEngine.h \
     $$PWD/fight/CommonFightEngineBase.h \
-    $$PWD/base/lz4/lz4.h \
     $$PWD/base/CommonSettingsCommon.h \
     $$PWD/base/CommonSettingsServer.h \
     $$PWD/base/GeneralType.h \
-    $$PWD/base/cpp11addition.h
+    $$PWD/base/cpp11addition.h \
+    $$PWD/base/GeneralStructuresXml.h
 
-win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc
+HEADERS += \
+    $$PWD/base/lz4/lz4.h \
+    $$PWD/base/tinyXML/tinystr.h \
+    $$PWD/base/tinyXML/tinyxml.h
+
+SOURCES += \
+    $$PWD/base/lz4/lz4.c \
+    $$PWD/base/tinyXML/tinystr.cpp \
+    $$PWD/base/tinyXML/tinyxml.cpp \
+    $$PWD/base/tinyXML/tinyxmlerror.cpp \
+    $$PWD/base/tinyXML/tinyxmlparser.cpp
+
 mac:INCLUDEPATH += /usr/local/include/
 mac:LIBS += -L/usr/local/lib/
 win32:LIBS += -lWs2_32
