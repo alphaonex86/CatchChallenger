@@ -6,8 +6,8 @@
 
 #include <QFile>
 #include <vector>
-#include <QDomDocument>
-#include <QDomElement>
+#include <TiXmlDocument>
+#include <const TiXmlElement *>
 #include <QFileInfoList>
 #include <QDir>
 #include <iostream>
@@ -18,7 +18,7 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
 {
     std::regex excludeFilterRegex("[\"']");
     std::regex typeRegex("^[a-z]{1,32}$");
-    QDomDocument domDocument;
+    TiXmlDocument domDocument(file.c_str());
     std::vector<Reputation> reputation;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -26,27 +26,17 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
     else
     {
         #endif
-        //open and quick check the file
-        QFile itemsFile(QString::fromStdString(file));
-        if(!itemsFile.open(QIODevice::ReadOnly))
+        const bool loadOkay=domDocument.LoadFile();
+        if(!loadOkay)
         {
-            std::cerr << "Unable to open the file: " << file << ", error: " << itemsFile.errorString().toStdString() << std::endl;
-            return reputation;
-        }
-        const QByteArray &xmlContent=itemsFile.readAll();
-        itemsFile.close();
-        QString errorStr;
-        int errorLine,errorColumn;
-        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-        {
-            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
             return reputation;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     #endif
-    const QDomElement &root = domDocument.documentElement();
+    const const TiXmlElement * &root = domDocument.documentElement();
     if(root.tagName()!="reputations")
     {
         std::cerr << "Unable to open the file: " << file << ", \"reputations\" root balise not found for reputation of the xml file" << std::endl;
@@ -55,7 +45,7 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
 
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement("reputation");
+    const TiXmlElement * item = root.firstChildElement("reputation");
     while(!item.isNull())
     {
         if(item.isElement())
@@ -64,7 +54,7 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
             {
                 std::vector<int32_t> point_list_positive,point_list_negative;
                 std::vector<std::string> text_positive,text_negative;
-                QDomElement level = item.firstChildElement("level");
+                const TiXmlElement * level = item.firstChildElement("level");
                 ok=true;
                 while(!level.isNull() && ok)
                 {
@@ -253,34 +243,24 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     }
     CatchChallenger::Quest quest;
     quest.id=0;
-    QDomDocument domDocument;
+    TiXmlDocument domDocument(file.c_str());
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
         #endif
-        QFile itemsFile(QString::fromStdString(file));
-        if(!itemsFile.open(QIODevice::ReadOnly))
+        const bool loadOkay=domDocument.LoadFile();
+        if(!loadOkay)
         {
-            std::cerr << "Unable to open the file: " << file << ", error: " << itemsFile.errorString().toStdString() << std::endl;
-            return std::pair<bool,Quest>(false,quest);
-        }
-        const QByteArray &xmlContent=itemsFile.readAll();
-        itemsFile.close();
-
-        QString errorStr;
-        int errorLine,errorColumn;
-        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-        {
-            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
             return std::pair<bool,Quest>(false,quest);
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     #endif
-    const QDomElement &root = domDocument.documentElement();
+    const const TiXmlElement * &root = domDocument.documentElement();
     if(root.tagName()!="quest")
     {
         std::cerr << "Unable to open the file: " << file << ", \"quest\" root balise not found for reputation of the xml file" << std::endl;
@@ -309,14 +289,14 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     }
 
     //load requirements
-    QDomElement requirements = root.firstChildElement("requirements");
+    const TiXmlElement * requirements = root.firstChildElement("requirements");
     while(!requirements.isNull())
     {
         if(requirements.isElement())
         {
             //load requirements reputation
             {
-                QDomElement requirementsItem = requirements.firstChildElement("reputation");
+                const TiXmlElement * requirementsItem = requirements.firstChildElement("reputation");
                 while(!requirementsItem.isNull())
                 {
                     if(requirementsItem.isElement())
@@ -354,7 +334,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
             }
             //load requirements quest
             {
-                QDomElement requirementsItem = requirements.firstChildElement("quest");
+                const TiXmlElement * requirementsItem = requirements.firstChildElement("quest");
                 while(!requirementsItem.isNull())
                 {
                     if(requirementsItem.isElement())
@@ -390,14 +370,14 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     }
 
     //load rewards
-    QDomElement rewards = root.firstChildElement("rewards");
+    const TiXmlElement * rewards = root.firstChildElement("rewards");
     while(!rewards.isNull())
     {
         if(rewards.isElement())
         {
             //load rewards reputation
             {
-                QDomElement reputationItem = rewards.firstChildElement("reputation");
+                const TiXmlElement * reputationItem = rewards.firstChildElement("reputation");
                 while(!reputationItem.isNull())
                 {
                     if(reputationItem.isElement())
@@ -430,7 +410,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
             }
             //load rewards item
             {
-                QDomElement rewardsItem = rewards.firstChildElement("item");
+                const TiXmlElement * rewardsItem = rewards.firstChildElement("item");
                 while(!rewardsItem.isNull())
                 {
                     if(rewardsItem.isElement())
@@ -468,7 +448,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
             }
             //load rewards allow
             {
-                QDomElement allowItem = rewards.firstChildElement("allow");
+                const TiXmlElement * allowItem = rewards.firstChildElement("allow");
                 while(!allowItem.isNull())
                 {
                     if(allowItem.isElement())
@@ -496,7 +476,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
 
     std::unordered_map<uint8_t,CatchChallenger::Quest::Step> steps;
     //load step
-    QDomElement step = root.firstChildElement("step");
+    const TiXmlElement * step = root.firstChildElement("step");
     while(!step.isNull())
     {
         if(step.isElement())
@@ -523,7 +503,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                         stepObject.bots=defaultBots;
                     //do the item
                     {
-                        QDomElement stepItem = step.firstChildElement("item");
+                        const TiXmlElement * stepItem = step.firstChildElement("item");
                         while(!stepItem.isNull())
                         {
                             if(stepItem.isElement())
@@ -582,7 +562,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     }
                     //do the fight
                     {
-                        QDomElement fightItem = step.firstChildElement("fight");
+                        const TiXmlElement * fightItem = step.firstChildElement("fight");
                         while(!fightItem.isNull())
                         {
                             if(fightItem.isElement())
@@ -642,7 +622,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
         }
     }
     std::unordered_map<uint8_t, Plant> plants;
-    QDomDocument domDocument;
+    TiXmlDocument domDocument(file.c_str());
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -650,27 +630,17 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
     else
     {
         #endif
-        QFile plantsFile(QString::fromStdString(file));
-        if(!plantsFile.open(QIODevice::ReadOnly))
+        const bool loadOkay=domDocument.LoadFile();
+        if(!loadOkay)
         {
-            std::cerr << "Unable to open the file: " << file << ", error: " << plantsFile.errorString().toStdString() << std::endl;
-            return plants;
-        }
-        const QByteArray &xmlContent=plantsFile.readAll();
-        plantsFile.close();
-
-        QString errorStr;
-        int errorLine,errorColumn;
-        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-        {
-            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
             return plants;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     #endif
-    const QDomElement &root = domDocument.documentElement();
+    const const TiXmlElement * &root = domDocument.documentElement();
     if(root.tagName()!="plants")
     {
         std::cerr << "Unable to open the file: " << file << ", \"plants\" root balise not found for reputation of the xml file" << std::endl;
@@ -679,7 +649,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
 
     //load the content
     bool ok,ok2;
-    QDomElement plantItem = root.firstChildElement("plant");
+    const TiXmlElement * plantItem = root.firstChildElement("plant");
     while(!plantItem.isNull())
     {
         if(plantItem.isElement())
@@ -699,10 +669,10 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                         plant.flowering_seconds=0;
                         plant.itemUsed=itemUsed;
                         {
-                            QDomElement requirementsItem = plantItem.firstChildElement("requirements");
+                            const TiXmlElement * requirementsItem = plantItem.firstChildElement("requirements");
                             if(!requirementsItem.isNull() && requirementsItem.isElement())
                             {
-                                QDomElement reputationItem = requirementsItem.firstChildElement("reputation");
+                                const TiXmlElement * reputationItem = requirementsItem.firstChildElement("reputation");
                                 while(!reputationItem.isNull())
                                 {
                                     if(reputationItem.isElement())
@@ -736,10 +706,10 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                             }
                         }
                         {
-                            QDomElement rewardsItem = plantItem.firstChildElement("rewards");
+                            const TiXmlElement * rewardsItem = plantItem.firstChildElement("rewards");
                             if(!rewardsItem.isNull() && rewardsItem.isElement())
                             {
-                                QDomElement reputationItem = rewardsItem.firstChildElement("reputation");
+                                const TiXmlElement * reputationItem = rewardsItem.firstChildElement("reputation");
                                 while(!reputationItem.isNull())
                                 {
                                     if(reputationItem.isElement())
@@ -767,7 +737,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                             }
                         }
                         ok=false;
-                        QDomElement quantity = plantItem.firstChildElement("quantity");
+                        const TiXmlElement * quantity = plantItem.firstChildElement("quantity");
                         if(!quantity.isNull())
                         {
                             if(quantity.isElement())
@@ -782,12 +752,12 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                             }
                         }
                         int intermediateTimeCount=0;
-                        QDomElement grow = plantItem.firstChildElement("grow");
+                        const TiXmlElement * grow = plantItem.firstChildElement("grow");
                         if(!grow.isNull())
                         {
                             if(grow.isElement())
                             {
-                                const QDomElement &fruits = grow.firstChildElement("fruits");
+                                const const TiXmlElement * &fruits = grow.firstChildElement("fruits");
                                 if(!fruits.isNull())
                                 {
                                     if(fruits.isElement())
@@ -813,7 +783,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                     ok=false;
                                     std::cerr << "Unable to parse the plants file: " << file << ", fruits is null: child.tagName(): " << fruits.tagName().toStdString() << " (at line: " << fruits.lineNumber() << ")" << std::endl;
                                 }
-                                const QDomElement &sprouted = grow.firstChildElement("sprouted");
+                                const const TiXmlElement * &sprouted = grow.firstChildElement("sprouted");
                                 if(!sprouted.isNull())
                                 {
                                     if(sprouted.isElement())
@@ -830,7 +800,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                     else
                                         std::cerr << "Unable to parse the plants file: " << file << ", sprouted is not an element: child.tagName(): " << sprouted.tagName().toStdString() << " (at line: " << sprouted.lineNumber() << ")" << std::endl;
                                 }
-                                const QDomElement &taller = grow.firstChildElement("taller");
+                                const const TiXmlElement * &taller = grow.firstChildElement("taller");
                                 if(!taller.isNull())
                                 {
                                     if(taller.isElement())
@@ -847,7 +817,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                     else
                                         std::cerr << "Unable to parse the plants file: " << file << ", taller is not an element: child.tagName(): " << taller.tagName().toStdString() << " (at line: " << taller.lineNumber() << ")" << std::endl;
                                 }
-                                const QDomElement &flowering = grow.firstChildElement("flowering");
+                                const const TiXmlElement * &flowering = grow.firstChildElement("flowering");
                                 if(!flowering.isNull())
                                 {
                                     if(flowering.isElement())
@@ -935,7 +905,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
     }
     std::unordered_map<uint16_t,CrafingRecipe> crafingRecipes;
     std::unordered_map<uint16_t,uint16_t> itemToCrafingRecipes;
-    QDomDocument domDocument;
+    TiXmlDocument domDocument(file.c_str());
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -943,27 +913,17 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
     else
     {
         #endif
-        QFile craftingRecipesFile(QString::fromStdString(file));
-        if(!craftingRecipesFile.open(QIODevice::ReadOnly))
+        const bool loadOkay=domDocument.LoadFile();
+        if(!loadOkay)
         {
-            std::cerr << "Unable to open the file: " << file << ", error: " << craftingRecipesFile.errorString().toStdString() << std::endl;
-            return std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
-        }
-        const QByteArray &xmlContent=craftingRecipesFile.readAll();
-        craftingRecipesFile.close();
-
-        QString errorStr;
-        int errorLine,errorColumn;
-        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-        {
-            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
             return std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     #endif
-    const QDomElement &root = domDocument.documentElement();
+    const const TiXmlElement * &root = domDocument.documentElement();
     if(root.tagName()!="recipes")
     {
         std::cerr << "Unable to open the file: " << file << ", \"recipes\" root balise not found for reputation of the xml file" << std::endl;
@@ -972,7 +932,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
 
     //load the content
     bool ok,ok2,ok3;
-    QDomElement recipeItem = root.firstChildElement("recipe");
+    const TiXmlElement * recipeItem = root.firstChildElement("recipe");
     while(!recipeItem.isNull())
     {
         if(recipeItem.isElement())
@@ -1022,10 +982,10 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                         recipe.quantity=quantity;
                         recipe.success=success;
                         {
-                            QDomElement requirementsItem = recipeItem.firstChildElement("requirements");
+                            const TiXmlElement * requirementsItem = recipeItem.firstChildElement("requirements");
                             if(!requirementsItem.isNull() && requirementsItem.isElement())
                             {
-                                QDomElement reputationItem = requirementsItem.firstChildElement("reputation");
+                                const TiXmlElement * reputationItem = requirementsItem.firstChildElement("reputation");
                                 while(!reputationItem.isNull())
                                 {
                                     if(reputationItem.isElement())
@@ -1059,10 +1019,10 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                             }
                         }
                         {
-                            QDomElement rewardsItem = recipeItem.firstChildElement("rewards");
+                            const TiXmlElement * rewardsItem = recipeItem.firstChildElement("rewards");
                             if(!rewardsItem.isNull() && rewardsItem.isElement())
                             {
-                                QDomElement reputationItem = rewardsItem.firstChildElement("reputation");
+                                const TiXmlElement * reputationItem = rewardsItem.firstChildElement("reputation");
                                 while(!reputationItem.isNull())
                                 {
                                     if(reputationItem.isElement())
@@ -1089,7 +1049,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                                 }
                             }
                         }
-                        QDomElement material = recipeItem.firstChildElement("material");
+                        const TiXmlElement * material = recipeItem.firstChildElement("material");
                         while(!material.isNull() && ok)
                         {
                             if(material.isElement())
@@ -1239,7 +1199,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
             file_index++;
             continue;
         }
-        QDomDocument domDocument;
+        TiXmlDocument domDocument(file.c_str());
         const std::string &file=fileList.at(file_index).absoluteFilePath().toStdString();
         //open and quick check the file
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -1248,20 +1208,10 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
         else
         {
             #endif
-            QFile industryFile(QString::fromStdString(file));
-            if(!industryFile.open(QIODevice::ReadOnly))
+            const bool loadOkay=domDocument.LoadFile();
+            if(!loadOkay)
             {
-                std::cerr << "Unable to open the file: " << file << ", error: " << industryFile.errorString().toStdString() << std::endl;
-                file_index++;
-                continue;
-            }
-            const QByteArray &xmlContent=industryFile.readAll();
-            industryFile.close();
-            QString errorStr;
-            int errorLine,errorColumn;
-            if(!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-            {
-                std::cerr << "Unable to open the file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+                std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
                 file_index++;
                 continue;
             }
@@ -1269,7 +1219,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
             CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
         #endif
-        const QDomElement &root = domDocument.documentElement();
+        const const TiXmlElement * &root = domDocument.documentElement();
         if(root.tagName()!="industries")
         {
             std::cerr << "Unable to open the file: " << file << ", \"industries\" root balise not found for reputation of the xml file" << std::endl;
@@ -1279,7 +1229,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
 
         //load the content
         bool ok,ok2,ok3;
-        QDomElement industryItem = root.firstChildElement("industrialrecipe");
+        const TiXmlElement * industryItem = root.firstChildElement("industrialrecipe");
         while(!industryItem.isNull())
         {
             if(industryItem.isElement())
@@ -1311,7 +1261,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                             }
                             //resource
                             {
-                                QDomElement resourceItem = industryItem.firstChildElement("resource");
+                                const TiXmlElement * resourceItem = industryItem.firstChildElement("resource");
                                 ok=true;
                                 while(!resourceItem.isNull() && ok)
                                 {
@@ -1389,7 +1339,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                             //product
                             if(ok)
                             {
-                                QDomElement productItem = industryItem.firstChildElement("product");
+                                const TiXmlElement * productItem = industryItem.firstChildElement("product");
                                 ok=true;
                                 while(!productItem.isNull() && ok)
                                 {
@@ -1503,7 +1453,7 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
         }
     }
     std::unordered_map<uint16_t,IndustryLink> industriesLink;
-    QDomDocument domDocument;
+    TiXmlDocument domDocument(file.c_str());
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -1511,26 +1461,17 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
     else
     {
         #endif
-        QFile industriesLinkFile(QString::fromStdString(file));
-        if(!industriesLinkFile.open(QIODevice::ReadOnly))
+        const bool loadOkay=domDocument.LoadFile();
+        if(!loadOkay)
         {
-            std::cerr << "Unable to open the file: " << file << ", error: " << industriesLinkFile.errorString().toStdString() << std::endl;
-            return industriesLink;
-        }
-        const QByteArray &xmlContent=industriesLinkFile.readAll();
-        industriesLinkFile.close();
-        QString errorStr;
-        int errorLine,errorColumn;
-        if(!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-        {
-            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
             return industriesLink;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     #endif
-    const QDomElement &root = domDocument.documentElement();
+    const const TiXmlElement * &root = domDocument.documentElement();
     if(root.tagName()!="industries")
     {
         std::cerr << "Unable to open the file: " << file << ", \"industries\" root balise not found for reputation of the xml file" << std::endl;
@@ -1539,7 +1480,7 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
 
     //load the content
     bool ok,ok2;
-    QDomElement linkItem = root.firstChildElement("link");
+    const TiXmlElement * linkItem = root.firstChildElement("link");
     while(!linkItem.isNull())
     {
         if(linkItem.isElement())
@@ -1558,10 +1499,10 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
                             IndustryLink *industryLink=&industriesLink[factory_id];
                             {
                                 {
-                                    QDomElement requirementsItem = linkItem.firstChildElement("requirements");
+                                    const TiXmlElement * requirementsItem = linkItem.firstChildElement("requirements");
                                     if(!requirementsItem.isNull() && requirementsItem.isElement())
                                     {
-                                        QDomElement reputationItem = requirementsItem.firstChildElement("reputation");
+                                        const TiXmlElement * reputationItem = requirementsItem.firstChildElement("reputation");
                                         while(!reputationItem.isNull())
                                         {
                                             if(reputationItem.isElement())
@@ -1595,10 +1536,10 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
                                     }
                                 }
                                 {
-                                    QDomElement rewardsItem = linkItem.firstChildElement("rewards");
+                                    const TiXmlElement * rewardsItem = linkItem.firstChildElement("rewards");
                                     if(!rewardsItem.isNull() && rewardsItem.isElement())
                                     {
-                                        QDomElement reputationItem = rewardsItem.firstChildElement("reputation");
+                                        const TiXmlElement * reputationItem = rewardsItem.firstChildElement("reputation");
                                         while(!reputationItem.isNull())
                                         {
                                             if(reputationItem.isElement())
@@ -1668,7 +1609,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
             file_index++;
             continue;
         }
-        QDomDocument domDocument;
+        TiXmlDocument domDocument(file.c_str());
         //open and quick check the file
         if(!stringEndsWith(file,".xml"))
         {
@@ -1681,20 +1622,10 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
         else
         {
             #endif
-            QFile itemsFile(QString::fromStdString(file));
-            if(!itemsFile.open(QIODevice::ReadOnly))
+            const bool loadOkay=domDocument.LoadFile();
+            if(!loadOkay)
             {
-                std::cerr << "Unable to open the file: " << file << ", error: " << itemsFile.errorString().toStdString() << std::endl;
-                file_index++;
-                continue;
-            }
-            const QByteArray &xmlContent=itemsFile.readAll();
-            itemsFile.close();
-            QString errorStr;
-            int errorLine,errorColumn;
-            if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-            {
-                std::cerr << "Unable to open the file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+                std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
                 file_index++;
                 continue;
             }
@@ -1702,7 +1633,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
             CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
         #endif
-        const QDomElement &root = domDocument.documentElement();
+        const const TiXmlElement * &root = domDocument.documentElement();
         if(root.tagName()!="items")
         {
             file_index++;
@@ -1711,7 +1642,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
 
         //load the content
         bool ok;
-        QDomElement item = root.firstChildElement("item");
+        const TiXmlElement * item = root.firstChildElement("item");
         while(!item.isNull())
         {
             if(item.isElement())
@@ -1758,7 +1689,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                             //load the trap
                             if(!haveAnEffect)
                             {
-                                QDomElement trapItem = item.firstChildElement("trap");
+                                const TiXmlElement * trapItem = item.firstChildElement("trap");
                                 if(!trapItem.isNull())
                                 {
                                     if(trapItem.isElement())
@@ -1783,7 +1714,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                             //load the repel
                             if(!haveAnEffect)
                             {
-                                QDomElement repelItem = item.firstChildElement("repel");
+                                const TiXmlElement * repelItem = item.firstChildElement("repel");
                                 if(!repelItem.isNull())
                                 {
                                     if(repelItem.isElement())
@@ -1813,7 +1744,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                             if(!haveAnEffect)
                             {
                                 {
-                                    QDomElement hpItem = item.firstChildElement("hp");
+                                    const TiXmlElement * hpItem = item.firstChildElement("hp");
                                     while(!hpItem.isNull())
                                     {
                                         if(hpItem.isElement())
@@ -1857,7 +1788,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                 }
                                 #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
                                 {
-                                    QDomElement buffItem = item.firstChildElement("buff");
+                                    const TiXmlElement * buffItem = item.firstChildElement("buff");
                                     while(!buffItem.isNull())
                                     {
                                         if(buffItem.isElement())
@@ -1909,7 +1840,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                             //load the monster offline effect
                             if(!haveAnEffect)
                             {
-                                QDomElement levelItem = item.firstChildElement("level");
+                                const TiXmlElement * levelItem = item.firstChildElement("level");
                                 while(!levelItem.isNull())
                                 {
                                     if(levelItem.isElement())
@@ -1960,7 +1891,7 @@ std::vector<std::string> DatapackGeneralLoader::loadSkins(const std::string &fol
     return FacilityLibGeneral::skinIdList(folder);
 }
 
-std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader::loadProfileList(const std::string &datapackPath, const std::string &file,
+std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGeneralLoader::loadProfileList(const std::string &datapackPath, const std::string &file,
                                                                                   #ifndef CATCHCHALLENGER_CLASS_MASTER
                                                                                   const std::unordered_map<uint16_t, Item> &items,
                                                                                   #endif // CATCHCHALLENGER_CLASS_MASTER
@@ -1987,8 +1918,8 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
             index++;
         }
     }
-    std::pair<std::vector<QDomElement>, std::vector<Profile> > returnVar;
-    QDomDocument domDocument;
+    std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > returnVar;
+    TiXmlDocument domDocument(file.c_str());
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -1996,26 +1927,17 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
     else
     {
         #endif
-        QFile xmlFile(QString::fromStdString(file));
-        if(!xmlFile.open(QIODevice::ReadOnly))
+        const bool loadOkay=domDocument.LoadFile();
+        if(!loadOkay)
         {
-            std::cerr << "Unable to open the file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
-            return returnVar;
-        }
-        const QByteArray &xmlContent=xmlFile.readAll();
-        xmlFile.close();
-        QString errorStr;
-        int errorLine,errorColumn;
-        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-        {
-            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
             return returnVar;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     #endif
-    const QDomElement &root = domDocument.documentElement();
+    const const TiXmlElement * &root = domDocument.documentElement();
     if(root.tagName()!="profile")
     {
         std::cerr << "Unable to open the file: " << file << ", \"profile\" root balise not found for reputation of the xml file" << std::endl;
@@ -2024,7 +1946,7 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
 
     //load the content
     bool ok;
-    QDomElement startItem = root.firstChildElement("start");
+    const TiXmlElement * startItem = root.firstChildElement("start");
     while(!startItem.isNull())
     {
         if(startItem.isElement())
@@ -2043,7 +1965,7 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
 
             if(!profile.id.empty() && idDuplicate.find(profile.id)==idDuplicate.cend())
             {
-                const QDomElement &forcedskin = startItem.firstChildElement("forcedskin");
+                const const TiXmlElement * &forcedskin = startItem.firstChildElement("forcedskin");
 
                 std::vector<std::string> forcedskinList;
                 if(!forcedskin.isNull() && forcedskin.isElement() && forcedskin.hasAttribute("value"))
@@ -2074,7 +1996,7 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
                 }
 
                 profile.cash=0;
-                const QDomElement &cash = startItem.firstChildElement("cash");
+                const const TiXmlElement * &cash = startItem.firstChildElement("cash");
                 if(!cash.isNull() && cash.isElement() && cash.hasAttribute("value"))
                 {
                     profile.cash=cash.attribute("value").toULongLong(&ok);
@@ -2084,7 +2006,7 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
                         profile.cash=0;
                     }
                 }
-                QDomElement monstersElement = startItem.firstChildElement("monster");
+                const TiXmlElement * monstersElement = startItem.firstChildElement("monster");
                 while(!monstersElement.isNull())
                 {
                     Profile::Monster monster;
@@ -2136,7 +2058,7 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
                     startItem = startItem.nextSiblingElement("start");
                     continue;
                 }
-                QDomElement reputationElement = startItem.firstChildElement("reputation");
+                const TiXmlElement * reputationElement = startItem.firstChildElement("reputation");
                 while(!reputationElement.isNull())
                 {
                     Profile::Reputation reputationTemp;
@@ -2197,7 +2119,7 @@ std::pair<std::vector<QDomElement>, std::vector<Profile> > DatapackGeneralLoader
                     }
                     reputationElement = reputationElement.nextSiblingElement("reputation");
                 }
-                QDomElement itemElement = startItem.firstChildElement("item");
+                const TiXmlElement * itemElement = startItem.firstChildElement("item");
                 while(!itemElement.isNull())
                 {
                     Profile::Item itemTemp;
@@ -2273,7 +2195,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
         }
     }
     std::vector<MonstersCollision> returnVar;
-    QDomDocument domDocument;
+    TiXmlDocument domDocument(file.c_str());
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -2281,26 +2203,17 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
     else
     {
         #endif
-        QFile xmlFile(QString::fromStdString(file));
-        if(!xmlFile.open(QIODevice::ReadOnly))
+        const bool loadOkay=domDocument.LoadFile();
+        if(!loadOkay)
         {
-            std::cerr << "Unable to open the file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
-            return returnVar;
-        }
-        const QByteArray &xmlContent=xmlFile.readAll();
-        xmlFile.close();
-        QString errorStr;
-        int errorLine,errorColumn;
-        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-        {
-            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
             return returnVar;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     #endif
-    const QDomElement &root = domDocument.documentElement();
+    const const TiXmlElement * &root = domDocument.documentElement();
     if(root.tagName()!="layers")
     {
         std::cerr << "Unable to open the file: " << file << ", \"layers\" root balise not found for reputation of the xml file" << std::endl;
@@ -2309,7 +2222,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
 
     //load the content
     bool ok;
-    QDomElement monstersCollisionItem = root.firstChildElement("monstersCollision");
+    const TiXmlElement * monstersCollisionItem = root.firstChildElement("monstersCollision");
     while(!monstersCollisionItem.isNull())
     {
         if(monstersCollisionItem.isElement())
@@ -2378,7 +2291,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
                         vectorDuplicatesForSmallList(monstersCollision.defautMonsterTypeList);
                         monstersCollision.monsterTypeList=monstersCollision.defautMonsterTypeList;
                         //load the condition
-                        QDomElement eventItem = monstersCollisionItem.firstChildElement("event");
+                        const TiXmlElement * eventItem = monstersCollisionItem.firstChildElement("event");
                         while(!eventItem.isNull())
                         {
                             if(eventItem.isElement())
@@ -2466,7 +2379,7 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const std::string &file)
 {
     LayersOptions returnVar;
     returnVar.zoom=2;
-    QDomDocument domDocument;
+    TiXmlDocument domDocument(file.c_str());
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -2474,26 +2387,17 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const std::string &file)
     else
     {
         #endif
-        QFile xmlFile(QString::fromStdString(file));
-        if(!xmlFile.open(QIODevice::ReadOnly))
+        const bool loadOkay=domDocument.LoadFile();
+        if(!loadOkay)
         {
-            std::cerr << "Unable to open the file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
-            return returnVar;
-        }
-        const QByteArray &xmlContent=xmlFile.readAll();
-        xmlFile.close();
-        QString errorStr;
-        int errorLine,errorColumn;
-        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-        {
-            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
             return returnVar;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     #endif
-    QDomElement root = domDocument.documentElement();
+    const TiXmlElement * root = domDocument.documentElement();
     if(root.tagName()!="layers")
     {
         std::cerr << "Unable to open the file: " << file << ", \"layers\" root balise not found for reputation of the xml file" << std::endl;
@@ -2526,7 +2430,7 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
 {
     std::vector<Event> returnVar;
 
-    QDomDocument domDocument;
+    TiXmlDocument domDocument(file.c_str());
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -2534,26 +2438,17 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
     else
     {
         #endif
-        QFile xmlFile(QString::fromStdString(file));
-        if(!xmlFile.open(QIODevice::ReadOnly))
+        const bool loadOkay=domDocument.LoadFile();
+        if(!loadOkay)
         {
-            std::cerr << "Unable to open the file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
-            return returnVar;
-        }
-        const QByteArray &xmlContent=xmlFile.readAll();
-        xmlFile.close();
-        QString errorStr;
-        int errorLine,errorColumn;
-        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-        {
-            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
             return returnVar;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     #endif
-    QDomElement root = domDocument.documentElement();
+    const TiXmlElement * root = domDocument.documentElement();
     if(root.tagName()!="events")
     {
         std::cerr << "Unable to open the file: " << file << ", \"events\" root balise not found for reputation of the xml file" << std::endl;
@@ -2561,7 +2456,7 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
     }
 
     //load the content
-    QDomElement eventItem = root.firstChildElement("event");
+    const TiXmlElement * eventItem = root.firstChildElement("event");
     while(!eventItem.isNull())
     {
         if(eventItem.isElement())
@@ -2574,7 +2469,7 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
             {
                 Event event;
                 event.name=eventItem.attribute("id").toStdString();
-                QDomElement valueItem = eventItem.firstChildElement("value");
+                const TiXmlElement * valueItem = eventItem.firstChildElement("value");
                 while(!valueItem.isNull())
                 {
                     if(valueItem.isElement())
@@ -2594,7 +2489,7 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
 {
     std::unordered_map<uint32_t,Shop> shops;
 
-    QDomDocument domDocument;
+    TiXmlDocument domDocument(file.c_str());
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -2602,26 +2497,16 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
     else
     {
         #endif
-        QFile shopFile(QString::fromStdString(file));
-        QByteArray xmlContent;
-        if(!shopFile.open(QIODevice::ReadOnly))
+        const bool loadOkay=domDocument.LoadFile();
+        if(!loadOkay)
         {
-            std::cerr << "Unable to open the file: " << file << ", error: " << shopFile.errorString().toStdString() << std::endl;
-            return shops;
-        }
-        xmlContent=shopFile.readAll();
-        shopFile.close();
-        QString errorStr;
-        int errorLine,errorColumn;
-        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-        {
-            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
             return shops;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
     }
     #endif
-    QDomElement root = domDocument.documentElement();
+    const TiXmlElement * root = domDocument.documentElement();
     if(root.tagName()!="shops")
     {
         std::cerr << "Unable to open the file: " << file << ", \"shops\" root balise not found for reputation of the xml file" << std::endl;
@@ -2630,7 +2515,7 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
 
     //load the content
     bool ok;
-    QDomElement shopItem = root.firstChildElement("shop");
+    const TiXmlElement * shopItem = root.firstChildElement("shop");
     while(!shopItem.isNull())
     {
         if(shopItem.isElement())
@@ -2643,7 +2528,7 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
                     if(shops.find(id)==shops.cend())
                     {
                         Shop shop;
-                        QDomElement product = shopItem.firstChildElement("product");
+                        const TiXmlElement * product = shopItem.firstChildElement("product");
                         while(!product.isNull())
                         {
                             if(product.isElement())
@@ -2760,7 +2645,7 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(
     std::unordered_set<std::string> idDuplicate;
     std::vector<ServerProfile> serverProfileList;
 
-    QDomDocument domDocument;
+    TiXmlDocument domDocument(file.c_str());
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -2768,26 +2653,17 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(
     else
     {
         #endif
-        QFile xmlFile(QString::fromStdString(file));
-        if(!xmlFile.open(QIODevice::ReadOnly))
+        const bool loadOkay=domDocument.LoadFile();
+        if(!loadOkay)
         {
-            std::cerr << "Unable to open the file: " << file << ", error: " << xmlFile.errorString().toStdString() << std::endl;
-            return serverProfileList;
-        }
-        const QByteArray &xmlContent=xmlFile.readAll();
-        xmlFile.close();
-        QString errorStr;
-        int errorLine,errorColumn;
-        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-        {
-            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
+            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
             return serverProfileList;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     #endif
-    const QDomElement &root = domDocument.documentElement();
+    const const TiXmlElement * &root = domDocument.documentElement();
     if(root.tagName()!="profile")
     {
         std::cerr << "Unable to open the file: " << file << ", \"profile\" root balise not found for reputation of the xml file" << std::endl;
@@ -2796,7 +2672,7 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(
 
     //load the content
     bool ok;
-    QDomElement startItem = root.firstChildElement("start");
+    const TiXmlElement * startItem = root.firstChildElement("start");
     while(!startItem.isNull())
     {
         if(startItem.isElement())
@@ -2804,7 +2680,7 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(
             ServerProfile serverProfile;
             serverProfile.orientation=Orientation_bottom;
 
-            const QDomElement &map = startItem.firstChildElement("map");
+            const const TiXmlElement * &map = startItem.firstChildElement("map");
             if(!map.isNull() && map.isElement() && map.hasAttribute("file") && map.hasAttribute("x") && map.hasAttribute("y"))
             {
                 serverProfile.mapString=map.attribute("file").toStdString();

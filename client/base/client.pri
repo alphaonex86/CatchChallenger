@@ -2,6 +2,7 @@ include(../tiled/tiled.pri)
 
 LIBS += -lvlc
 QT       += script opengl widgets qml quick
+QT       += gui network xml
 
 win32:CONFIG   += console
 DEFINES += CATCHCHALLENGER_CLIENT
@@ -124,6 +125,7 @@ FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/NewProfile.ui \
     $$PWD/interface/NewGame.ui
 
+win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc
 win32:RC_FILE += $$PWD/resources/resources-windows.rc
 ICON = $$PWD/resources/client.icns
 macx:INCLUDEPATH += /usr/local/include/

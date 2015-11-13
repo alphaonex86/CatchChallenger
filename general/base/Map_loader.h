@@ -4,8 +4,8 @@
 #include <QObject>
 #include <vector>
 #include <string>
-#include <QDomElement>
 
+#include "tinyXML/tinyxml.h"
 #include "GeneralStructures.h"
 #include "GeneralStructuresXml.h"
 #include "CommonMap.h"
@@ -29,10 +29,10 @@ public:
     static void removeMapLayer(const ParsedLayer &parsed_layer);
     bool loadMonsterMap(const std::string &fileName,std::vector<std::string> detectedMonsterCollisionMonsterType,std::vector<std::string> detectedMonsterCollisionLayer);
     static std::string resolvRelativeMap(const std::string &fileName,const std::string &link,const std::string &datapackPath=std::string());
-    static QDomElement getXmlCondition(const std::string &fileName,const std::string &conditionFile,const uint32_t &conditionId);
-    static MapCondition xmlConditionToMapCondition(const std::string &conditionFile, const QDomElement &item);
+    static const TiXmlElement * getXmlCondition(const std::string &fileName,const std::string &conditionFile,const uint32_t &conditionId);
+    static MapCondition xmlConditionToMapCondition(const std::string &conditionFile, const TiXmlElement * const item);
     std::vector<MapMonster> loadSpecificMonster(const std::string &fileName,const std::string &monsterType);
-    static std::unordered_map<std::string/*file*/, std::unordered_map<uint32_t/*id*/,QDomElement> > teleportConditionsUnparsed;
+    static std::unordered_map<std::string/*file*/, std::unordered_map<uint32_t/*id*/,const TiXmlElement *> > teleportConditionsUnparsed;
 private:
     std::string error;
     std::unordered_map<std::string,uint8_t> zoneNumber;

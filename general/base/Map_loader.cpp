@@ -1480,7 +1480,7 @@ std::string Map_loader::resolvRelativeMap(const std::string &fileName,const std:
     return link;
 }
 
-QDomElement Map_loader::getXmlCondition(const std::string &fileName,const std::string &conditionFile,const uint32_t &conditionId)
+const TiXmlElement *Map_loader::getXmlCondition(const std::string &fileName,const std::string &conditionFile,const uint32_t &conditionId)
 {
     #ifdef ONLYMAPRENDER
     return QDomElement();
@@ -1555,7 +1555,7 @@ QDomElement Map_loader::getXmlCondition(const std::string &fileName,const std::s
     return QDomElement();
 }
 
-MapCondition Map_loader::xmlConditionToMapCondition(const std::string &conditionFile,const QDomElement &conditionContent)
+MapCondition Map_loader::xmlConditionToMapCondition(const std::string &conditionFile, const TiXmlElement * const conditionContent)
 {
     #ifdef ONLYMAPRENDER
     return MapCondition();
