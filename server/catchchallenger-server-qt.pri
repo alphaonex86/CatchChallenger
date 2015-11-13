@@ -1,5 +1,8 @@
 include(catchchallenger-server.pri)
 
+win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc
+QT       += gui network xml
+
 SOURCES += $$PWD/base/QtServer.cpp \
     $$PWD/base/QtTimerEvents.cpp \
     $$PWD/base/QtDatabase.cpp
