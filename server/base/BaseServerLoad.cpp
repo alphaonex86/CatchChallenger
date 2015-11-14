@@ -439,7 +439,7 @@ bool BaseServer::preload_zone_init()
 
         //load capture
         std::vector<uint16_t> fightIdList;
-        const TiXmlElement * capture(root->FirstChildElement(BaseServer::text_capture));
+        const TiXmlElement * capture=root->FirstChildElement(BaseServer::text_capture);
         if(capture!=NULL)
         {
             if(capture->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && capture->Attribute(BaseServer::text_fightId)!=NULL)
@@ -2307,41 +2307,41 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
     while(child!=NULL)
     {
         if(child->Attribute("id")==NULL)
-            std::cerr << "Has not attribute \"id\": child.ValueStr(): " << child.ValueStr() << " (at line: " << child->Row() << ")" << std::endl;
+            std::cerr << "Has not attribute \"id\": child->ValueStr(): " << child->ValueStr() << " (at line: " << child->Row() << ")" << std::endl;
         else if(child->Type()!=TiXmlNode::NodeType::TINYXML_ELEMENT)
-            std::cerr << "Is not an element: child.ValueStr(): " << child.ValueStr() << ", name: " << child->Attribute("name").toStdString() << " (at line: " << child->Row() << ")" << std::endl;
+            std::cerr << "Is not an element: child->ValueStr(): " << child->ValueStr() << ", name: " << child->Attribute("name") << " (at line: " << child->Row() << ")" << std::endl;
         else
         {
-            uint32_t id=child->Attribute("id").toUInt(&ok);
+            uint32_t id=stringtouint32(child->Attribute("id"),&ok);
             if(ok)
             {
                 if(botIdLoaded.find(id)!=botIdLoaded.cend())
-                    std::cerr << "Bot " << id << " into file " << file << " have same id as another bot: bot.ValueStr(): " << child.ValueStr() << " (at line: " << child->Row() << ")" << std::endl;
+                    std::cerr << "Bot " << id << " into file " << file << " have same id as another bot: bot->ValueStr(): " << child->ValueStr() << " (at line: " << child->Row() << ")" << std::endl;
                 botIdLoaded.insert(id);
                 botFiles[file][id];
-                const TiXmlElement * step = child.FirstChildElement("step");
+                const TiXmlElement * step = child->FirstChildElement("step");
                 while(step!=NULL)
                 {
                     if(step->Attribute("id")==NULL)
-                        std::cerr << "Has not attribute \"type\": bot.ValueStr(): " << step.ValueStr() << " (at line: " << step->Row() << ")" << std::endl;
+                        std::cerr << "Has not attribute \"type\": bot->ValueStr(): " << step->ValueStr() << " (at line: " << step->Row() << ")" << std::endl;
                     else if(step->Attribute("type")==NULL)
-                        std::cerr << "Has not attribute \"type\": bot.ValueStr(): " << step.ValueStr() << " (at line: " << step->Row() << ")" << std::endl;
+                        std::cerr << "Has not attribute \"type\": bot->ValueStr(): " << step->ValueStr() << " (at line: " << step->Row() << ")" << std::endl;
                     else if(step->Type()!=TiXmlNode::NodeType::TINYXML_ELEMENT)
-                        std::cerr << "Is not an element: bot.ValueStr(): " << step.ValueStr() << ", type: " << step->Attribute("type").toStdString() << " (at line: " << step->Row() << ")" << std::endl;
+                        std::cerr << "Is not an element: bot->ValueStr(): " << step->ValueStr() << ", type: " << step->Attribute("type") << " (at line: " << step->Row() << ")" << std::endl;
                     else
                     {
-                        uint32_t stepId=step->Attribute("id").toUInt(&ok);
+                        uint32_t stepId=stringtouint32(step->Attribute("id"),&ok);
                         if(ok)
                             botFiles[file][id].step[stepId]=step;
                     }
-                    step = step.NextSiblingElement("step");
+                    step = step->NextSiblingElement("step");
                 }
                 if(botFiles.at(file).at(id).step.find(1)==botFiles.at(file).at(id).step.cend())
                     botFiles[file].erase(id);
             }
             else
-                std::cerr << "Attribute \"id\" is not a number: bot.ValueStr(): " << child.ValueStr() << " (at line: " << child->Row() << ")" << std::endl;
+                std::cerr << "Attribute \"id\" is not a number: bot->ValueStr(): " << child->ValueStr() << " (at line: " << child->Row() << ")" << std::endl;
         }
-        child = child.NextSiblingElement("bot");
+        child = child->NextSiblingElement("bot");
     }
 }
