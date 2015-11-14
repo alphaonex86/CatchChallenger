@@ -17,7 +17,7 @@
 
 using namespace CatchChallenger;
 
-std::unordered_map<std::string/*file*/, std::unordered_map<uint32_t/*id*/,QDomElement> > Map_loader::teleportConditionsUnparsed;
+std::unordered_map<std::string/*file*/, std::unordered_map<uint32_t/*id*/,const TiXmlElement *> > Map_loader::teleportConditionsUnparsed;
 
 const std::string Map_loader::text_map="map";
 const std::string Map_loader::text_width="width";
@@ -137,10 +137,10 @@ bool Map_loader::tryLoadMap(const std::string &file)
     else
     {
         #endif
-        bool loadOkay = doc.LoadFile();
+        bool loadOkay = domDocument.LoadFile();
         if (loadOkay)
         {
-            error=mapFile.fileName().toStdString()+", Parse error at line "+std::to_string(errorLine)+" column "+std::to_string(errorColumn)+": "+errorStr.toStdString();
+            error=file+", Parse error at line "+std::to_string(domDocument.ErrorRow())+" column "+std::to_string(domDocument.ErrorCol())+": "+domDocument.ErrorDesc();
             return false;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -155,12 +155,12 @@ bool Map_loader::tryLoadMap(const std::string &file)
     }
 
     //get the width
-    if(!root->hasAttribute(Map_loader::text_width))
+    if(root->Attribute(Map_loader::text_width)==NULL)
     {
         error="the root node has not the attribute \"width\"";
         return false;
     }
-    map_to_send_temp.width=root->Attribute(Map_loader::text_width).toUInt(&ok);
+    map_to_send_temp.width=stringtouint32(*root->Attribute(Map_loader::text_width),&ok);
     if(!ok)
     {
         error="the root node has wrong attribute \"width\"";
@@ -168,12 +168,12 @@ bool Map_loader::tryLoadMap(const std::string &file)
     }
 
     //get the height
-    if(!root->hasAttribute(Map_loader::text_height))
+    if(root->Attribute(Map_loader::text_height)==NULL)
     {
         error="the root node has not the attribute \"height\"";
         return false;
     }
-    map_to_send_temp.height=root->Attribute(Map_loader::text_height).toUInt(&ok);
+    map_to_send_temp.height=stringtouint32(*root->Attribute(Map_loader::text_height),&ok);
     if(!ok)
     {
         error="the root node has wrong attribute \"height\"";
@@ -193,27 +193,27 @@ bool Map_loader::tryLoadMap(const std::string &file)
     }
 
     //properties
-    QDomElement child = root->FirstChildElement(Map_loader::text_properties);
+    const TiXmlDocument * child = root->FirstChildElement(Map_loader::text_properties);
     if(child!=NULL)
     {
         if(child->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
         {
-            QDomElement SubChild=child.FirstChildElement(Map_loader::text_property);
+            const TiXmlDocument * SubChild=child->FirstChildElement(Map_loader::text_property);
             while(SubChild!=NULL)
             {
                 if(SubChild->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                 {
-                    if(SubChild.hasAttribute(Map_loader::text_name) && SubChild.hasAttribute(Map_loader::text_value))
+                    if(SubChild.Attribute(Map_loader::text_name)!=NULL && SubChild.Attribute(Map_loader::text_value)!=NULL)
                         map_to_send_temp.property[SubChild->Attribute(Map_loader::text_name)]=SubChild->Attribute(Map_loader::text_value);
                     else
                     {
-                        error="Missing attribute name or value: child.ValueStr(): "+SubChild.ValueStr()+" (at line: "+std::to_string(SubChild->Row())+")";
+                        error="Missing attribute name or value: child->ValueStr(): "+SubChild->ValueStr()+" (at line: "+std::to_string(SubChild->Row())+")";
                         return false;
                     }
                 }
                 else
                 {
-                    error="Is not an element: child.ValueStr(): "+SubChild.ValueStr()+" (at line: "+std::to_string(SubChild->Row())+")";
+                    error="Is not an element: child->ValueStr(): "+SubChild->ValueStr()+" (at line: "+std::to_string(SubChild->Row())+")";
                     return false;
                 }
                 SubChild = SubChild.NextSiblingElement(Map_loader::text_property);
@@ -221,14 +221,14 @@ bool Map_loader::tryLoadMap(const std::string &file)
         }
         else
         {
-            error="Is not an element: child.ValueStr(): "+child.ValueStr()+" (at line: "+std::to_string(child->Row())+")";
+            error="Is not an element: child->ValueStr(): "+child->ValueStr()+" (at line: "+std::to_string(child->Row())+")";
             return false;
         }
     }
 
     int tilewidth=16;
     int tileheight=16;
-    if(root->hasAttribute(Map_loader::text_tilewidth))
+    if(root->Attribute(Map_loader::text_tilewidth)!=NULL)
     {
         tilewidth=root->Attribute(Map_loader::text_tilewidth).toUShort(&ok);
         if(!ok)
@@ -237,7 +237,7 @@ bool Map_loader::tryLoadMap(const std::string &file)
             tilewidth=16;
         }
     }
-    if(root->hasAttribute(Map_loader::text_tileheight))
+    if(root->Attribute(Map_loader::text_tileheight)!=NULL)
     {
         tileheight=root->Attribute(Map_loader::text_tileheight).toUShort(&ok);
         if(!ok)
@@ -251,57 +251,57 @@ bool Map_loader::tryLoadMap(const std::string &file)
     child = root->FirstChildElement(Map_loader::text_objectgroup);
     while(child!=NULL)
     {
-        if(!child.hasAttribute(Map_loader::text_name))
-            std::cerr << "Has not attribute \"name\": child.ValueStr(): " << child.ValueStr() << " (at line: " << child->Row() << ")";
+        if(child.Attribute(Map_loader::text_name)==NULL)
+            std::cerr << "Has not attribute \"name\": child->ValueStr(): " << child->ValueStr() << " (at line: " << child->Row() << ")";
         else if(child->Type()!=TiXmlNode::NodeType::TINYXML_ELEMENT)
             std::cerr << "Is not an element: name: " << child->Attribute(Map_loader::text_name)
-                      << " child.ValueStr(): " << child.ValueStr() << " (at line: " << child->Row() << ")";
+                      << " child->ValueStr(): " << child->ValueStr() << " (at line: " << child->Row() << ")";
         else
         {
             if(child->Attribute(Map_loader::text_name)==Map_loader::text_Moving)
             {
-                QDomElement SubChild=child.FirstChildElement(Map_loader::text_object);
+                const TiXmlDocument *SubChild=child.FirstChildElement(Map_loader::text_object);
                 while(SubChild!=NULL)
                 {
-                    if(SubChild->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && SubChild.hasAttribute(Map_loader::text_x) && SubChild.hasAttribute(Map_loader::text_y))
+                    if(SubChild->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && SubChild.Attribute(Map_loader::text_x)!=NULL && SubChild.Attribute(Map_loader::text_y)!=NULL)
                     {
-                        const uint32_t &object_x=SubChild->Attribute(Map_loader::text_x).toUInt(&ok)/tilewidth;
+                        const uint32_t &object_x=stringtouint32(SubChild->Attribute(Map_loader::text_x),&ok)/tilewidth;
                         if(!ok)
-                            std::cerr << "Wrong conversion with x: child.ValueStr(): " << SubChild.ValueStr()
+                            std::cerr << "Wrong conversion with x: child->ValueStr(): " << SubChild->ValueStr()
                                         << " (at line: " << std::to_string(SubChild->Row())
                                         << "), file: " << file << std::endl;
                         else
                         {
                             /** the -1 is important to fix object layer bug into tiled!!!
                              * Don't remove! */
-                            const uint32_t &object_y=(SubChild->Attribute(Map_loader::text_y).toUInt(&ok)/tileheight)-1;
+                            const uint32_t &object_y=(stringtouint32(SubChild->Attribute(Map_loader::text_y),&ok)/tileheight)-1;
 
                             if(!ok)
-                                std::cerr << "Wrong conversion with y: child.ValueStr(): " << SubChild.ValueStr()
+                                std::cerr << "Wrong conversion with y: child->ValueStr(): " << SubChild->ValueStr()
                                             << " (at line: " << std::to_string(SubChild->Row())
                                             << "), file: " << file << std::endl;
                             else if(object_x>map_to_send_temp.width || object_y>map_to_send_temp.height)
-                                std::cerr << "Object out of the map: child.ValueStr(): " << SubChild.ValueStr()
+                                std::cerr << "Object out of the map: child->ValueStr(): " << SubChild->ValueStr()
                                             << " (at line: " << std::to_string(SubChild->Row())
                                             << "), file: " << file << std::endl;
-                            else if(SubChild.hasAttribute(Map_loader::text_type))
+                            else if(SubChild.Attribute(Map_loader::text_type)!=NULL)
                             {
-                                const std::string &type=SubChild->Attribute(Map_loader::text_type).toStdString();
+                                const std::string &type=SubChild->Attribute(Map_loader::text_type);
 
                                 std::unordered_map<std::string,std::string> property_text;
-                                const QDomElement &prop=SubChild.FirstChildElement(Map_loader::text_properties);
+                                const TiXmlDocument *prop=SubChild.FirstChildElement(Map_loader::text_properties);
                                 if(prop!=NULL)
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP
-                                    std::cerr << "Wrong conversion with y: child.ValueStr(): " << prop.ValueStr()
+                                    std::cerr << "Wrong conversion with y: child->ValueStr(): " << prop->ValueStr()
                                                 << " (at line: " << std::to_string(prop->Row())
                                                 << "), file: " << fileName << std::endl;
                                     #endif
-                                    QDomElement property=prop.FirstChildElement(Map_loader::text_property);
+                                    const TiXmlDocument *property=prop.FirstChildElement(Map_loader::text_property);
                                     while(property!=NULL)
                                     {
-                                        if(property.hasAttribute(Map_loader::text_name) && property.hasAttribute(Map_loader::text_value))
-                                            property_text[property->Attribute(Map_loader::text_name).toStdString()]=property->Attribute(Map_loader::text_value).toStdString();
+                                        if(property.Attribute(Map_loader::text_name)!=NULL && property.Attribute(Map_loader::text_value)!=NULL)
+                                            property_text[property->Attribute(Map_loader::text_name)]=property->Attribute(Map_loader::text_value);
                                         property = property.NextSiblingElement(Map_loader::text_property);
                                     }
                                 }
@@ -329,10 +329,10 @@ bool Map_loader::tryLoadMap(const std::string &file)
                                                     map_to_send_temp.border.left.y_offset=object_y;
                                                 }
                                                 else
-                                                    std::cerr << "The border " << SubChild.ValueStr() << " " << type << " is already set (at line: " << SubChild->Row() << "), file: " << file << std::endl;
+                                                    std::cerr << "The border " << SubChild->ValueStr() << " " << type << " is already set (at line: " << SubChild->Row() << "), file: " << file << std::endl;
                                             }
                                             else
-                                                std::cerr << "The border " << SubChild.ValueStr() << " " << type << " can't be empty (at line: " << SubChild->Row() << "), file: " << file << std::endl;
+                                                std::cerr << "The border " << SubChild->ValueStr() << " " << type << " can't be empty (at line: " << SubChild->Row() << "), file: " << file << std::endl;
                                         }
                                         else if(type==Map_loader::text_borderright)//border right
                                         {
@@ -347,10 +347,10 @@ bool Map_loader::tryLoadMap(const std::string &file)
                                                     map_to_send_temp.border.right.y_offset=object_y;
                                                 }
                                                 else
-                                                    std::cerr << "The border " << SubChild.ValueStr() << " " << type << " is already set (at line: " << SubChild->Row() << "), file: " << file << std::endl;
+                                                    std::cerr << "The border " << SubChild->ValueStr() << " " << type << " is already set (at line: " << SubChild->Row() << "), file: " << file << std::endl;
                                             }
                                             else
-                                                std::cerr << "The border " << SubChild.ValueStr() << " " << type << " can't be empty (at line: " << SubChild->Row() << "), file: " << file << std::endl;
+                                                std::cerr << "The border " << SubChild->ValueStr() << " " << type << " can't be empty (at line: " << SubChild->Row() << "), file: " << file << std::endl;
                                         }
                                         else if(type==Map_loader::text_bordertop)//border top
                                         {
@@ -365,10 +365,10 @@ bool Map_loader::tryLoadMap(const std::string &file)
                                                     map_to_send_temp.border.top.x_offset=object_x;
                                                 }
                                                 else
-                                                    std::cerr << "The border " << SubChild.ValueStr() << " " << type << " is already set (at line: " << SubChild->Row() << "), file: " << file << std::endl;
+                                                    std::cerr << "The border " << SubChild->ValueStr() << " " << type << " is already set (at line: " << SubChild->Row() << "), file: " << file << std::endl;
                                             }
                                             else
-                                                std::cerr << "The border " << SubChild.ValueStr() << " " << type << " can't be empty (at line: " << SubChild->Row() << "), file: " << file << std::endl;
+                                                std::cerr << "The border " << SubChild->ValueStr() << " " << type << " can't be empty (at line: " << SubChild->Row() << "), file: " << file << std::endl;
                                         }
                                         else if(type==Map_loader::text_borderbottom)//border bottom
                                         {
@@ -383,16 +383,16 @@ bool Map_loader::tryLoadMap(const std::string &file)
                                                     map_to_send_temp.border.bottom.x_offset=object_x;
                                                 }
                                                 else
-                                                    std::cerr << "The border " << SubChild.ValueStr() << " " << type << " is already set (at line: " << SubChild->Row() << "), file: " << file << std::endl;
+                                                    std::cerr << "The border " << SubChild->ValueStr() << " " << type << " is already set (at line: " << SubChild->Row() << "), file: " << file << std::endl;
                                             }
                                             else
-                                                std::cerr << "The border " << SubChild.ValueStr() << " " << type << " can't be empty (at line: " << SubChild->Row() << "), file: " << file << std::endl;
+                                                std::cerr << "The border " << SubChild->ValueStr() << " " << type << " can't be empty (at line: " << SubChild->Row() << "), file: " << file << std::endl;
                                         }
                                         else
-                                            std::cerr << "Not at middle of border: child.ValueStr(): " << SubChild.ValueStr() << ", object_x: " << object_x << ", object_y: " << object_y << ", file: " << file << std::endl;
+                                            std::cerr << "Not at middle of border: child->ValueStr(): " << SubChild->ValueStr() << ", object_x: " << object_x << ", object_y: " << object_y << ", file: " << file << std::endl;
                                     }
                                     else
-                                        std::cerr << "Missing \"map\" properties for the border: " << SubChild.ValueStr() << " (at line: " << SubChild->Row() << ")" << std::endl;
+                                        std::cerr << "Missing \"map\" properties for the border: " << SubChild->ValueStr() << " (at line: " << SubChild->Row() << ")" << std::endl;
                                 }
                                 else if(type==Map_loader::text_teleport_on_push || type==Map_loader::text_teleport_on_it || type==Map_loader::text_door)
                                 {
@@ -418,7 +418,7 @@ bool Map_loader::tryLoadMap(const std::string &file)
                                                                     QFileInfo(QString::fromStdString(file)).absolutePath()+
                                                                     QString::fromStdString(Map_loader::text_slash)+
                                                                     QString::fromStdString(property_text.at(Map_loader::text_condition_file))
-                                                                    ).absoluteFilePath().toStdString();
+                                                                    ).absoluteFilePath();
                                                         if(!stringEndsWith(conditionFile,Map_loader::text_dotxml))
                                                             conditionFile+=Map_loader::text_dotxml;
                                                         new_tp.conditionUnparsed=getXmlCondition(file,conditionFile,conditionId);
@@ -454,58 +454,58 @@ bool Map_loader::tryLoadMap(const std::string &file)
                                     std::cerr << "Unknown type: " << type
                                               << ", object_x: " << object_x
                                               << ", object_y: " << object_y
-                                              << " (moving), " << SubChild.ValueStr()
+                                              << " (moving), " << SubChild->ValueStr()
                                               << " (line: " << SubChild->Row()
                                               << "), file: " << file << std::endl;
                                 }
                             }
                             else
-                                std::cerr << "Missing attribute type missing: SubChild.ValueStr(): " << SubChild.ValueStr() << " (at line: " << SubChild->Row() << "), file: " << file << std::endl;
+                                std::cerr << "Missing attribute type missing: SubChild->ValueStr(): " << SubChild->ValueStr() << " (at line: " << SubChild->Row() << "), file: " << file << std::endl;
                         }
                     }
                     else
-                        std::cerr << "Is not Element: SubChild.ValueStr(): " << SubChild.ValueStr() << " (at line: " << SubChild->Row() << "), file: " << file << std::endl;
+                        std::cerr << "Is not Element: SubChild->ValueStr(): " << SubChild->ValueStr() << " (at line: " << SubChild->Row() << "), file: " << file << std::endl;
                     SubChild = SubChild.NextSiblingElement(Map_loader::text_object);
                 }
             }
             if(child->Attribute(Map_loader::text_name)==Map_loader::text_Object)
             {
-                QDomElement SubChild=child.FirstChildElement(Map_loader::text_object);
+                const TiXmlDocument * SubChild=child.FirstChildElement(Map_loader::text_object);
                 while(SubChild!=NULL)
                 {
-                    if(SubChild->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && SubChild.hasAttribute(Map_loader::text_x) && SubChild.hasAttribute(Map_loader::text_y))
+                    if(SubChild->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && SubChild.Attribute(Map_loader::text_x)!=NULL && SubChild.Attribute(Map_loader::text_y)!=NULL)
                     {
-                        const uint32_t &object_x=SubChild->Attribute(Map_loader::text_x).toUInt(&ok)/tilewidth;
+                        const uint32_t &object_x=stringtouint32(SubChild->Attribute(Map_loader::text_x),&ok)/tilewidth;
                         if(!ok)
-                            std::cerr << "Wrong conversion with x: child.ValueStr(): " << SubChild.ValueStr()
+                            std::cerr << "Wrong conversion with x: child->ValueStr(): " << SubChild->ValueStr()
                                         << " (at line: " << std::to_string(SubChild->Row())
                                         << "), file: " << file << std::endl;
                         else
                         {
                             /** the -1 is important to fix object layer bug into tiled!!!
                              * Don't remove! */
-                            const uint32_t &object_y=(SubChild->Attribute(Map_loader::text_y).toUInt(&ok)/tileheight)-1;
+                            const uint32_t &object_y=(stringtouint32(SubChild->Attribute(Map_loader::text_y),&ok)/tileheight)-1;
 
                             if(!ok)
-                                std::cerr << "Wrong conversion with y: child.ValueStr(): " << SubChild.ValueStr()
+                                std::cerr << "Wrong conversion with y: child->ValueStr(): " << SubChild->ValueStr()
                                             << " (at line: " << std::to_string(SubChild->Row())
                                             << "), file: " << file << std::endl;
                             else if(object_x>map_to_send_temp.width || object_y>map_to_send_temp.height)
-                                std::cerr << "Object out of the map: child.ValueStr(): " << SubChild.ValueStr()
+                                std::cerr << "Object out of the map: child->ValueStr(): " << SubChild->ValueStr()
                                             << " (at line: " << std::to_string(SubChild->Row())
                                             << "), file: " << file << std::endl;
-                            else if(SubChild.hasAttribute(Map_loader::text_type))
+                            else if(SubChild.Attribute(Map_loader::text_type)!=NULL)
                             {
-                                const std::string &type=SubChild->Attribute(Map_loader::text_type).toStdString();
+                                const std::string &type=SubChild->Attribute(Map_loader::text_type);
 
                                 std::unordered_map<std::string,std::string> property_text;
-                                const QDomElement &prop=SubChild.FirstChildElement(Map_loader::text_properties);
+                                const TiXmlDocument * prop=SubChild.FirstChildElement(Map_loader::text_properties);
                                 if(prop!=NULL)
                                 {
-                                    QDomElement property=prop.FirstChildElement(Map_loader::text_property);
+                                    const TiXmlDocument * property=prop.FirstChildElement(Map_loader::text_property);
                                     while(property!=NULL)
                                     {
-                                        if(property.hasAttribute(Map_loader::text_name) && property.hasAttribute(Map_loader::text_value))
+                                        if(property.Attribute(Map_loader::text_name)!=NULL && property.Attribute(Map_loader::text_value)!=NULL)
                                             property_text[property->Attribute(Map_loader::text_name)]=property->Attribute(Map_loader::text_value);
                                         property = property.NextSiblingElement(Map_loader::text_property);
                                     }
@@ -515,18 +515,18 @@ bool Map_loader::tryLoadMap(const std::string &file)
                                     if(property_text.find(Map_loader::text_skin)!=property_text.cend() && !property_text.at(Map_loader::text_skin).empty() && property_text.find(Map_loader::text_lookAt)==property_text.cend())
                                     {
                                         property_text[Map_loader::text_lookAt]=Map_loader::text_bottom;
-                                        std::cerr << "skin but not lookAt, fixed by bottom: " << SubChild.ValueStr() << " (" << file << " at line: " << SubChild->Row() << ")" << std::endl;
+                                        std::cerr << "skin but not lookAt, fixed by bottom: " << SubChild->ValueStr() << " (" << file << " at line: " << SubChild->Row() << ")" << std::endl;
                                     }
                                     if(property_text.find(Map_loader::text_file)!=property_text.cend() && property_text.find(Map_loader::text_id)!=property_text.cend())
                                     {
                                         Map_to_send::Bot_Semi bot_semi;
                                         bot_semi.file=QFileInfo(
                                                         QString::fromStdString(
-                                                            QFileInfo(QString::fromStdString(file)).absolutePath().toStdString()+
+                                                            QFileInfo(QString::fromStdString(file)).absolutePath()+
                                                             Map_loader::text_slash+
                                                             property_text.at(Map_loader::text_file)
                                                         )
-                                                    ).absoluteFilePath().toStdString();
+                                                    ).absoluteFilePath();
                                         bot_semi.id=stringtouint16(property_text.at(Map_loader::text_id),&ok);
                                         bot_semi.property_text=property_text;
                                         if(ok)
@@ -537,7 +537,7 @@ bool Map_loader::tryLoadMap(const std::string &file)
                                         }
                                     }
                                     else
-                                        std::cerr << "Missing \"bot\" properties for the bot: " << SubChild.ValueStr()
+                                        std::cerr << "Missing \"bot\" properties for the bot: " << SubChild->ValueStr()
                                                   << " (at line: " << SubChild->Row()
                                                   << "), file: " << file << std::endl;
                                 }
@@ -561,7 +561,7 @@ bool Map_loader::tryLoadMap(const std::string &file)
                                         }
                                     }
                                     else
-                                        std::cerr << "Missing \"bot\" properties for the bot: " << SubChild.ValueStr()
+                                        std::cerr << "Missing \"bot\" properties for the bot: " << SubChild->ValueStr()
                                                   << " (at line: " << SubChild->Row()
                                                   << "), file: " << file
                                                   << std::endl;
@@ -571,18 +571,18 @@ bool Map_loader::tryLoadMap(const std::string &file)
                                     std::cerr << "Unknown type: " << type
                                               << ", object_x: " << object_x
                                               << ", object_y: " << object_y
-                                              << " (moving), " << SubChild.ValueStr()
+                                              << " (moving), " << SubChild->ValueStr()
                                               << " (line: " << SubChild->Row()
                                               << "), file: " << file
                                               << std::endl;
                                 }
                             }
                             else
-                                std::cerr << "Missing attribute type missing: SubChild.ValueStr(): " << SubChild.ValueStr() << " (at line: " << SubChild->Row() << "), file: " << file << std::endl;
+                                std::cerr << "Missing attribute type missing: SubChild->ValueStr(): " << SubChild->ValueStr() << " (at line: " << SubChild->Row() << "), file: " << file << std::endl;
                         }
                     }
                     else
-                        std::cerr << "Is not Element: SubChild.ValueStr(): " << SubChild.ValueStr() << " (at line: " << SubChild->Row() << "), file: " << file << std::endl;
+                        std::cerr << "Is not Element: SubChild->ValueStr(): " << SubChild->ValueStr() << " (at line: " << SubChild->Row() << "), file: " << file << std::endl;
                     SubChild = SubChild.NextSiblingElement(Map_loader::text_object);
                 }
             }
@@ -598,36 +598,36 @@ bool Map_loader::tryLoadMap(const std::string &file)
     {
         if(child->Type()!=TiXmlNode::NodeType::TINYXML_ELEMENT)
         {
-            error="Is Element: child.ValueStr(): "+child.ValueStr()+", file: "+file;
+            error="Is Element: child->ValueStr(): "+child->ValueStr()+", file: "+file;
             return false;
         }
-        else if(!child.hasAttribute(Map_loader::text_name))
+        else if(child.Attribute(Map_loader::text_name)==NULL)
         {
-            error="Has not attribute \"name\": child.ValueStr(): "+child.ValueStr()+", file: "+file;
+            error="Has not attribute \"name\": child->ValueStr(): "+child->ValueStr()+", file: "+file;
             return false;
         }
         else
         {
-            const QDomElement &data=child.FirstChildElement(Map_loader::text_data);
-            const std::string name=child->Attribute(Map_loader::text_name).toStdString();
+            const TiXmlDocument *data=child.FirstChildElement(Map_loader::text_data);
+            const std::string name=child->Attribute(Map_loader::text_name);
             if(data==NULL)
             {
-                error="Is Element for layer is null: "+data.ValueStr()+" and name: "+name+", file: "+file;
+                error="Is Element for layer is null: "+data->ValueStr()+" and name: "+name+", file: "+file;
                 return false;
             }
             else if(data->Type()!=TiXmlNode::NodeType::TINYXML_ELEMENT)
             {
-                error="Is Element for layer child.ValueStr(): "+data.ValueStr()+", file: "+file;
+                error="Is Element for layer child->ValueStr(): "+data->ValueStr()+", file: "+file;
                 return false;
             }
-            else if(!data.hasAttribute(Map_loader::text_encoding))
+            else if(data.Attribute(Map_loader::text_encoding)==NULL)
             {
-                error="Has not attribute \"base64\": child.ValueStr(): "+data.ValueStr()+", file: "+file;
+                error="Has not attribute \"base64\": child->ValueStr(): "+data->ValueStr()+", file: "+file;
                 return false;
             }
-            else if(!data.hasAttribute(Map_loader::text_compression))
+            else if(data.Attribute(Map_loader::text_compression)==NULL)
             {
-                error="Has not attribute \"zlib\": child.ValueStr(): "+data.ValueStr()+", file: "+file;
+                error="Has not attribute \"zlib\": child->ValueStr(): "+data->ValueStr()+", file: "+file;
                 return false;
             }
             else if(data->Attribute(Map_loader::text_encoding)!=Map_loader::text_base64)
@@ -642,7 +642,7 @@ bool Map_loader::tryLoadMap(const std::string &file)
             }
             else
             {
-                const std::string &base64text=data.text().toStdString();
+                const std::string &base64text=data.text();
                 std::regex e("[^A-Za-z0-9+/=]+");
 
                 // using string/c-string (3) version:
@@ -794,7 +794,7 @@ bool Map_loader::tryLoadMap(const std::string &file)
                 }
                 else
                 {
-                    error="base64 encoding layer corrupted \""+name+"\": child.ValueStr(): "+child.ValueStr()+", file: "+file;
+                    error="base64 encoding layer corrupted \""+name+"\": child->ValueStr(): "+child->ValueStr()+", file: "+file;
                     return false;
                 }
             }
@@ -1175,7 +1175,7 @@ bool Map_loader::loadMonsterMap(const std::string &file, std::vector<std::string
         const bool loadOkay=domDocument.LoadFile();
                     if(!loadOkay)
         {
-            std::cerr << mapFile.fileName().toStdString() << ", Parse error at line " << std::to_string(errorLine) << ", column " << std::to_string(errorColumn) << ": " << errorStr.toStdString() << std::endl;
+            std::cerr << mapFile.fileName() << ", Parse error at line " << std::to_string(domDocument.ErrorRow()) << ", column " << std::to_string(domDocument.ErrorCol()) << ": " << domDocument.ErrorDesc() << std::endl;
             return false;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -1309,41 +1309,41 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
     std::vector<MapMonster> monsterTypeList;
     bool ok;
     uint32_t tempLuckTotal=0;
-    const QDomElement &layer = map_to_send.xmlroot->FirstChildElement(monsterType);
+    const TiXmlDocument *layer = map_to_send.xmlroot->FirstChildElement(monsterType);
     if(layer!=NULL)
     {
         if(layer->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
         {
-            QDomElement monsters=layer.FirstChildElement(Map_loader::text_monster);
+            const TiXmlDocument *monsters=layer.FirstChildElement(Map_loader::text_monster);
             while(monsters!=NULL)
             {
                 if(monsters->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                 {
-                    if(monsters.hasAttribute(Map_loader::text_id) && ((monsters.hasAttribute(Map_loader::text_minLevel) && monsters.hasAttribute(Map_loader::text_maxLevel)) || monsters.hasAttribute(Map_loader::text_level)) && monsters.hasAttribute(Map_loader::text_luck))
+                    if(monsters.Attribute(Map_loader::text_id)!=NULL && ((monsters.Attribute(Map_loader::text_minLevel)!=NULL && monsters.Attribute(Map_loader::text_maxLevel)!=NULL) || monsters.Attribute(Map_loader::text_level)!=NULL) && monsters.ttribute(Map_loader::text_luck)!=NULL)
                     {
                         MapMonster mapMonster;
-                        mapMonster.id=monsters->Attribute(Map_loader::text_id).toUInt(&ok);
+                        mapMonster.id=stringtouint32(monsters->Attribute(Map_loader::text_id),&ok);
                         if(!ok)
-                            std::cerr << "id is not a number: child.ValueStr(): " << monsters.ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
+                            std::cerr << "id is not a number: child->ValueStr(): " << monsters->ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
                         if(ok)
                             if(CommonDatapack::commonDatapack.monsters.find(mapMonster.id)==CommonDatapack::commonDatapack.monsters.cend())
                             {
-                                std::cerr << "monster " << mapMonster.id << " not found into the monster list: " << monsters.ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
+                                std::cerr << "monster " << mapMonster.id << " not found into the monster list: " << monsters->ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
-                        if(monsters.hasAttribute(Map_loader::text_minLevel) && monsters.hasAttribute(Map_loader::text_maxLevel))
+                        if(monsters.Attribute(Map_loader::text_minLevel)!=NULL && monsters.Attribute(Map_loader::text_maxLevel)!=NULL)
                         {
                             if(ok)
                             {
                                 mapMonster.minLevel=monsters->Attribute(Map_loader::text_minLevel).toUShort(&ok);
                                 if(!ok)
-                                    std::cerr << "minLevel is not a number: child.ValueStr(): " << monsters.ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
+                                    std::cerr << "minLevel is not a number: child->ValueStr(): " << monsters->ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
                             }
                             if(ok)
                             {
                                 mapMonster.maxLevel=monsters->Attribute(Map_loader::text_maxLevel).toUShort(&ok);
                                 if(!ok)
-                                    std::cerr << "maxLevel is not a number: child.ValueStr(): " << monsters.ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
+                                    std::cerr << "maxLevel is not a number: child->ValueStr(): " << monsters->ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
                             }
                         }
                         else
@@ -1353,57 +1353,57 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
                                 mapMonster.maxLevel=monsters->Attribute(Map_loader::text_level).toUShort(&ok);
                                 mapMonster.minLevel=mapMonster.maxLevel;
                                 if(!ok)
-                                    std::cerr << "level is not a number: child.ValueStr(): " << monsters.ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
+                                    std::cerr << "level is not a number: child->ValueStr(): " << monsters->ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
                             }
                         }
                         if(ok)
                         {
-                            std::string textLuck=monsters->Attribute(Map_loader::text_luck).toStdString();
+                            std::string textLuck=monsters->Attribute(Map_loader::text_luck);
                             stringreplaceAll(textLuck,Map_loader::text_percent,"");
                             mapMonster.luck=stringtouint8(textLuck,&ok);
                             if(!ok)
-                                std::cerr << "luck is not a number: child.ValueStr(): " << monsters.ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
+                                std::cerr << "luck is not a number: child->ValueStr(): " << monsters->ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
                         }
                         if(ok)
                             if(mapMonster.minLevel>mapMonster.maxLevel)
                             {
-                                std::cerr << "min > max for the level: child.ValueStr(): " << monsters.ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
+                                std::cerr << "min > max for the level: child->ValueStr(): " << monsters->ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(ok)
                             if(mapMonster.luck<=0)
                             {
-                                std::cerr << "luck is too low: child.ValueStr(): " << monsters.ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
+                                std::cerr << "luck is too low: child->ValueStr(): " << monsters->ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(ok)
                             if(mapMonster.minLevel<=0)
                             {
-                                std::cerr << "min level is too low: child.ValueStr(): " << monsters.ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
+                                std::cerr << "min level is too low: child->ValueStr(): " << monsters->ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(ok)
                             if(mapMonster.maxLevel<=0)
                             {
-                                std::cerr << "max level is too low: child.ValueStr(): " << monsters.ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
+                                std::cerr << "max level is too low: child->ValueStr(): " << monsters->ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(ok)
                             if(mapMonster.luck>100)
                             {
-                                std::cerr << "luck is greater than 100: child.ValueStr(): " << monsters.ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
+                                std::cerr << "luck is greater than 100: child->ValueStr(): " << monsters->ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(ok)
                             if(mapMonster.minLevel>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
                             {
-                                std::cerr << "min level is greater than " << CATCHCHALLENGER_MONSTER_LEVEL_MAX << ": child.ValueStr(): " << monsters.ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
+                                std::cerr << "min level is greater than " << CATCHCHALLENGER_MONSTER_LEVEL_MAX << ": child->ValueStr(): " << monsters->ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(ok)
                             if(mapMonster.maxLevel>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
                             {
-                                std::cerr << "max level is greater than " << CATCHCHALLENGER_MONSTER_LEVEL_MAX << ": child.ValueStr(): " << monsters.ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
+                                std::cerr << "max level is greater than " << CATCHCHALLENGER_MONSTER_LEVEL_MAX << ": child->ValueStr(): " << monsters->ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(ok)
@@ -1413,31 +1413,31 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
                         }
                     }
                     else
-                        std::cerr << "Missing attribute: child.ValueStr(): " << monsters.ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
+                        std::cerr << "Missing attribute: child->ValueStr(): " << monsters->ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
                 }
                 else
-                    std::cerr << "Is not an element: child.ValueStr(): " << monsters.ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
+                    std::cerr << "Is not an element: child->ValueStr(): " << monsters->ValueStr() << " (at line: " << monsters->Row() << "), file: " << fileName << std::endl;
                 monsters = monsters.NextSiblingElement(Map_loader::text_monster);
             }
             if(monsterTypeList.empty())
                 std::cerr << "map have empty monster layer:" << fileName << "type:" << monsterType;
         }
         else
-            std::cerr << "Is not an element: child.ValueStr(): " << layer.ValueStr() << " (at line: " << layer->Row() << "), file: " << fileName << std::endl;
+            std::cerr << "Is not an element: child->ValueStr(): " << layer->ValueStr() << " (at line: " << layer->Row() << "), file: " << fileName << std::endl;
         if(tempLuckTotal!=100)
         {
-            std::cerr << "total luck is not egal to 100 (" << tempLuckTotal << ") for grass, monsters dropped: child.ValueStr(): " << layer.ValueStr() << " (at line: " << std::to_string(layer->Row()) << "), file: " << fileName << std::endl;
+            std::cerr << "total luck is not egal to 100 (" << tempLuckTotal << ") for grass, monsters dropped: child->ValueStr(): " << layer->ValueStr() << " (at line: " << std::to_string(layer->Row()) << "), file: " << fileName << std::endl;
             monsterTypeList.clear();
         }
         else
             return monsterTypeList;
     }
     /*else//do ignore for cave
-    qDebug() << std::stringLiteral("A layer on map is found, but no matching monster list into the meta (%3), monsters dropped: child.ValueStr(): %1 (at line: %2)").arg(layer.ValueStr()).arg(layer->Row()).arg(fileName);*/
+    qDebug() << std::stringLiteral("A layer on map is found, but no matching monster list into the meta (%3), monsters dropped: child->ValueStr(): %1 (at line: %2)").arg(layer->ValueStr()).arg(layer->Row()).arg(fileName);*/
     return monsterTypeList;
 }
 
-std::string Map_loader::errorString()
+std::string Map_loader::domDocument.ErrorDesc()ing()
 {
     return error;
 }
@@ -1446,9 +1446,9 @@ std::string Map_loader::resolvRelativeMap(const std::string &file,const std::str
 {
     if(link.empty())
         return link;
-    const std::string &currentPath=QFileInfo(QString::fromStdString(file)).absolutePath().toStdString();
+    const std::string &currentPath=QFileInfo(QString::fromStdString(file)).absolutePath();
     QFileInfo newmap(QString::fromStdString(currentPath)+QDir::separator()+QString::fromStdString(link));
-    std::string newPath=newmap.absoluteFilePath().toStdString();
+    std::string newPath=newmap.absoluteFilePath();
     if(datapackPath.empty() || stringStartWith(newPath,datapackPath))
     {
         newPath.erase(0,datapackPath.size());
@@ -1464,14 +1464,14 @@ std::string Map_loader::resolvRelativeMap(const std::string &file,const std::str
 const TiXmlElement *Map_loader::getXmlCondition(const std::string &fileName,const std::string &conditionFile,const uint32_t &conditionId)
 {
     #ifdef ONLYMAPRENDER
-    return QDomElement();
+    return TiXmlDocument();
     #endif
     if(teleportConditionsUnparsed.find(conditionFile)!=teleportConditionsUnparsed.cend())
     {
         if(teleportConditionsUnparsed.at(conditionFile).find(conditionId)!=teleportConditionsUnparsed.at(conditionFile).cend())
             return teleportConditionsUnparsed.at(conditionFile).at(conditionId);
         else
-            return QDomElement();
+            return TiXmlDocument();
     }
     teleportConditionsUnparsed[conditionFile][conditionId];
     bool ok;
@@ -1487,8 +1487,8 @@ const TiXmlElement *Map_loader::getXmlCondition(const std::string &fileName,cons
         const bool loadOkay=domDocument.LoadFile();
         if(!loadOkay)
         {
-            std::cerr << mapFile.fileName().toStdString() << ", Parse error at line " << errorLine << ", column " << errorColumn << ": " << errorStr.toStdString() << std::endl;
-            return QDomElement();
+            std::cerr << mapFile.fileName() << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
+            return TiXmlDocument();
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[conditionFile]=domDocument;
@@ -1498,21 +1498,21 @@ const TiXmlElement *Map_loader::getXmlCondition(const std::string &fileName,cons
     if(root->ValueStr()!=QLatin1String("conditions"))
     {
         std::cerr << "\"conditions\" root balise not found for the xml file " << conditionFile << std::endl;
-        return QDomElement();
+        return TiXmlDocument();
     }
 
-    QDomElement item = root->FirstChildElement(Map_loader::text_condition);
+    const TiXmlDocument *item = root->FirstChildElement(Map_loader::text_condition);
     while(item!=NULL)
     {
         if(item->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
         {
-            if(!item.hasAttribute(Map_loader::text_id))
+            if(item.Attribute(Map_loader::text_id)==NULL)
                 std::cerr << "\"condition\" balise have not id attribute (" << conditionFile << " at " << item->Row() << ")" << std::endl;
-            else if(!item.hasAttribute(Map_loader::text_type))
+            else if(item.Attribute(Map_loader::text_type)==NULL)
                 std::cerr << "\"condition\" balise have not type attribute (" << conditionFile << " at " << item->Row() << ")" << std::endl;
             else
             {
-                const uint32_t &id=item->Attribute(Map_loader::text_id).toUInt(&ok);
+                const uint32_t &id=stringtouint32(item->Attribute(Map_loader::text_id),&ok);
                 if(!ok)
                     std::cerr << "\"condition\" balise have id is not a number (" << conditionFile << " at " << item->Row() << ")" << std::endl;
                 else
@@ -1524,7 +1524,7 @@ const TiXmlElement *Map_loader::getXmlCondition(const std::string &fileName,cons
     if(teleportConditionsUnparsed.find(conditionFile)!=teleportConditionsUnparsed.cend())
         if(teleportConditionsUnparsed.at(conditionFile).find(conditionId)!=teleportConditionsUnparsed.at(conditionFile).cend())
             return teleportConditionsUnparsed.at(conditionFile).at(conditionId);
-    return QDomElement();
+    return TiXmlDocument();
 }
 
 MapCondition Map_loader::xmlConditionToMapCondition(const std::string &conditionFile, const TiXmlElement * const conditionContent)
@@ -1560,7 +1560,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
             std::cerr << "\"condition\" balise have type=item but item attribute not found, item, clan or fightBot (" << conditionFile << " at " << conditionContent->Row() << ")" << std::endl;
         else
         {
-            const uint32_t &item=conditionContent->Attribute(Map_loader::text_item).toUInt(&ok);
+            const uint32_t &item=stringtouint32(conditionContent->Attribute(Map_loader::text_item),&ok);
             if(!ok)
                 std::cerr << "\"condition\" balise have type=item but item attribute is not a number, item, clan or fightBot (" << conditionFile << " at " << conditionContent->Row() << ")" << std::endl;
             else if(CommonDatapack::commonDatapack.items.item.find(item)==CommonDatapack::commonDatapack.items.item.cend())
@@ -1578,7 +1578,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
             std::cerr << "\"condition\" balise have type=fightBot but fightBot attribute not found, item, clan or fightBot (" << conditionFile << " at " << conditionContent->Row() << ")" << std::endl;
         else
         {
-            const uint32_t &fightBot=conditionContent->Attribute(Map_loader::text_fightBot).toUInt(&ok);
+            const uint32_t &fightBot=stringtouint32(conditionContent->Attribute(Map_loader::text_fightBot),&ok);
             if(!ok)
                 std::cerr << "\"condition\" balise have type=fightBot but fightBot attribute is not a number, item, clan or fightBot (" << conditionFile << " at " << conditionContent->Row() << ")" << std::endl;
             else if(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightBot)==CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
