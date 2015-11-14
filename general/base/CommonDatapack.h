@@ -5,11 +5,9 @@
 #include <QMutex>
 #include <unordered_map>
 #include <string>
-#ifndef EPOLLCATCHCHALLENGERSERVER
-#include <QDomDocument>
-#endif
 
 #include "GeneralStructures.h"
+#include "tinyXML/tinyxml.h"
 
 namespace CatchChallenger {
 class CommonDatapack
@@ -46,9 +44,7 @@ public:
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     std::vector<Type> types;
     #endif
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    std::unordered_map<std::string/*file*/, QDomDocument> xmlLoadedFile;
-    #endif
+    std::unordered_map<std::string/*file*/, TiXmlDocument> xmlLoadedFile;
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     LayersOptions layersOptions;
     std::vector<Event> events;

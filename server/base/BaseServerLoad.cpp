@@ -404,24 +404,20 @@ bool BaseServer::preload_zone_init()
         std::string zoneCodeName=entryListZone.at(index).fileName().toStdString();
         stringreplaceOne(zoneCodeName,BaseServer::text_dotxml,"");
         const std::string &file=entryListZone.at(index).absoluteFilePath().toStdString();
-        TiXmlDocument domDocument(file.c_str());
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        TiXmlDocument *domDocument;
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-            domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
+            domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         else
         {
-        #endif
-            const bool loadOkay=domDocument.LoadFile();
+            domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            const bool loadOkay=domDocument->LoadFile(file);
             if(!loadOkay)
             {
-                std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
+                std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
                 index++;
                 continue;
             }
-            #ifndef EPOLLCATCHCHALLENGERSERVER
-            CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
-        #endif
         auto search = GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.find(zoneCodeName);
         if(search != GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.end())
         {
@@ -429,7 +425,7 @@ bool BaseServer::preload_zone_init()
             index++;
             continue;
         }
-        const TiXmlElement* root = domDocument.RootElement();
+        const TiXmlElement* root = domDocument->RootElement();
         if(root->ValueStr()!=BaseServer::text_zone)
         {
             std::cerr << "Unable to open the file: " << file.c_str() << ", \"zone\" root balise not found for the xml file" << std::endl;
@@ -1808,7 +1804,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
             if(botFiles.find(bot_Semi.file)!=botFiles.end())
                 if(botFiles.at(bot_Semi.file).find(bot_Semi.id)!=botFiles.at(bot_Semi.file).end())
                 {
-                    const auto &step=botFiles.at(bot_Semi.file).at(bot_Semi.id).step;
+                    const auto &step_list=botFiles.at(bot_Semi.file).at(bot_Semi.id).step;
                     #ifdef DEBUG_MESSAGE_MAP_LOAD
                     std::cout << "Bot "
                               << bot_Semi.id
@@ -1823,13 +1819,24 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                               << ")"
                               << std::endl;
                     #endif
-                    auto i=step.begin();
-                    while (i!=step.end())
+                    auto i=step_list.begin();
+                    while (i!=step_list.end())
                     {
                         const TiXmlElement * step = i->second;
+                        if(step==NULL)
+                        {
+                            ++i;
+                            continue;
+                        }
                         std::pair<uint8_t,uint8_t> pairpoint(bot_Semi.point.x,bot_Semi.point.y);
                         MapServer * const mapServer=static_cast<MapServer *>(semi_loaded_map.at(index).map);
-                        if(*step->Attribute(BaseServer::text_type)==BaseServer::text_shop)
+                        const std::string * const step_type=step->Attribute(BaseServer::text_type);
+                        if(step_type==NULL)
+                        {
+                            ++i;
+                            continue;
+                        }
+                        if(*step_type==BaseServer::text_shop)
                         {
                             if(step->Attribute(BaseServer::text_shop)==NULL)
                                 std::cerr << "Has not attribute \"shop\": for bot id: "
@@ -1898,7 +1905,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 }
                             }
                         }
-                        else if(*step->Attribute(BaseServer::text_type)==BaseServer::text_learn)
+                        else if(*step_type==BaseServer::text_learn)
                         {
                             if(mapServer->learn.find(pairpoint)!=mapServer->learn.end())
                                 std::cerr << "learn point already on the map: for bot id: "
@@ -1935,7 +1942,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 learnpoint_number++;
                             }
                         }
-                        else if(*step->Attribute(BaseServer::text_type)==BaseServer::text_heal)
+                        else if(*step_type==BaseServer::text_heal)
                         {
                             if(mapServer->heal.find(pairpoint)!=mapServer->heal.end())
                                 std::cerr << "heal point already on the map: for bot id: "
@@ -1972,7 +1979,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 healpoint_number++;
                             }
                         }
-                        else if(*step->Attribute(BaseServer::text_type)==BaseServer::text_market)
+                        else if(*step_type==BaseServer::text_market)
                         {
                             if(mapServer->market.find(pairpoint)!=mapServer->market.end())
                                 std::cerr << "market point already on the map: for bot id: "
@@ -2009,7 +2016,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 marketpoint_number++;
                             }
                         }
-                        else if(*step->Attribute(BaseServer::text_type)==BaseServer::text_zonecapture)
+                        else if(*step_type==BaseServer::text_zonecapture)
                         {
                             if(step->Attribute(BaseServer::text_zone)==NULL)
                                 std::cerr << "zonecapture point have not the zone attribute: for bot id: "
@@ -2060,7 +2067,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 zonecapturepoint_number++;
                             }
                         }
-                        else if(*step->Attribute(BaseServer::text_type)==BaseServer::text_fight)
+                        else if(*step_type==BaseServer::text_fight)
                         {
                             if(mapServer->botsFight.find(pairpoint)!=mapServer->botsFight.end())
                                 std::cerr << "botsFight point already on the map: for bot id: "
@@ -2278,25 +2285,21 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
     if(botFiles.find(file)!=botFiles.cend())
         return;
     botFiles[file];//create the entry
-    TiXmlDocument domDocument(file.c_str());
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    TiXmlDocument *domDocument;
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
+        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
-        #endif
-        const bool loadOkay=domDocument.LoadFile();
+        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        const bool loadOkay=domDocument->LoadFile(file);
         if(!loadOkay)
         {
-            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
+            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
             return;
         }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
-    #endif
     bool ok;
-    const TiXmlElement * root = domDocument.RootElement();
+    const TiXmlElement * root = domDocument->RootElement();
     if(root->ValueStr()!="bots")
     {
         std::cerr << "\"bots\" root balise not found for the xml file" << std::endl;

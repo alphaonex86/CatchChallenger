@@ -26,7 +26,22 @@ void NormalServerGlobal::displayInfo()
         #endif
     #endif
     std::cout << "Qt version: " << qVersion() << " (" << QT_VERSION << ")" << std::endl;
-    std::cout << "Base client size without string/pointer content: " << sizeof(CatchChallenger::Client) << std::endl;
+    std::cout << "Base client size without string/pointer content: " << sizeof(CatchChallenger::Client)
+              << ": ("
+              << "Client: " << (sizeof(CatchChallenger::Client)-sizeof(BaseClassSwitch)-sizeof(CatchChallenger::ProtocolParsingInputOutput)-sizeof(CatchChallenger::CommonFightEngine)-sizeof(CatchChallenger::ClientMapManagement)) << " + "
+              << "BaseClassSwitch: " << sizeof(BaseClassSwitch) << " + "
+              << "ProtocolParsingInputOutput: " << sizeof(CatchChallenger::ProtocolParsingInputOutput) << " + "
+              << "CommonFightEngine: " << sizeof(CatchChallenger::CommonFightEngine) << " ("
+                << "CommonFightEngine: " << (sizeof(CatchChallenger::CommonFightEngine)-sizeof(CatchChallenger::ClientBase)-sizeof(CatchChallenger::CommonFightEngineBase)) << " + "
+                    << "ClientBase: " << sizeof(CatchChallenger::ClientBase) << "("
+                        << "ClientBase: " << (sizeof(CatchChallenger::ClientBase)-sizeof(CatchChallenger::Player_private_and_public_informations)) << " + "
+                        << "Player_private_and_public_informations: " << sizeof(CatchChallenger::Player_private_and_public_informations) << " + "
+                        << "CommonFightEngineBase: " << sizeof(CatchChallenger::CommonFightEngineBase)
+                      << ") + "
+                    << "CommonFightEngineBase: " << sizeof(CatchChallenger::CommonFightEngineBase)
+                  << ") + "
+              << "ClientMapManagement: " << sizeof(CatchChallenger::ClientMapManagement) << ")"
+              << std::endl;
 }
 
 void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const std::string &datapack_basePath)

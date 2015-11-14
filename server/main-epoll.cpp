@@ -97,13 +97,46 @@ void send_settings()
     formatedServerNormalSettings.proxy_port				= settings->value(QLatin1Literal("proxy_port")).toUInt();
     formatedServerNormalSettings.useSsl					= settings->value(QLatin1Literal("useSsl")).toBool();
 
-    CommonSettingsServer::commonSettingsServer.mainDatapackCode             = settings->value(QLatin1Literal("mainDatapackCode")).toString().toStdString();
-    if(CommonSettingsServer::commonSettingsServer.mainDatapackCode.empty())
+    if(settings->contains("mainDatapackCode"))
+        CommonSettingsServer::commonSettingsServer.mainDatapackCode=settings->value("mainDatapackCode","[main]").toString().toStdString();
+    else
     {
-        std::cerr << "mainDatapackCode is empty, please put it into the settings" << std::endl;
-        abort();
+        const QFileInfoList &list=QDir(QString::fromStdString(GlobalServerData::serverSettings.datapack_basePath)+"/map/main/").entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+        if(list.empty())
+        {
+            std::cerr << "No main code detected into the current datapack (abort)" << std::endl;
+            settings->sync();
+            abort();
+        }
+        if(list.size()==1)
+        {
+            settings->setValue("mainDatapackCode",list.at(0).fileName());
+            CommonSettingsServer::commonSettingsServer.mainDatapackCode=list.at(0).fileName().toStdString();
+        }
     }
-    CommonSettingsServer::commonSettingsServer.subDatapackCode              = settings->value(QLatin1Literal("subDatapackCode")).toString().toStdString();
+    if(settings->contains("subDatapackCode"))
+        CommonSettingsServer::commonSettingsServer.subDatapackCode=settings->value("subDatapackCode","").toString().toStdString();
+    else
+    {
+        const QFileInfoList &list=QDir(QString::fromStdString(GlobalServerData::serverSettings.datapack_basePath)+"/map/main/"+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/sub/").entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+        if(!list.isEmpty())
+        {
+            if(list.size()==1)
+            {
+                settings->setValue("subDatapackCode",list.at(0).fileName());
+                CommonSettingsServer::commonSettingsServer.subDatapackCode=list.at(0).fileName().toStdString();
+            }
+            else
+            {
+                std::cerr << "No sub code detected into the current datapack" << std::endl;
+                settings->setValue("subDatapackCode","");
+                settings->sync();
+                CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
+            }
+        }
+        else
+            CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
+    }
     formatedServerSettings.anonymous					= settings->value(QLatin1Literal("anonymous")).toBool();
     formatedServerSettings.server_message				= settings->value(QLatin1Literal("server_message")).toString().toStdString();
     CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase	= settings->value(QLatin1Literal("httpDatapackMirror")).toString().toStdString();

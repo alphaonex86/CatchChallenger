@@ -357,7 +357,7 @@ int64_t stringtoint64(const std::string &string,bool *ok)
     }
 }
 
-float stringtofloat(const std::string &string,bool *ok=NULL)
+float stringtofloat(const std::string &string,bool *ok)
 {
     if(Q_LIKELY(std::regex_match(string,isadouble)))
     {
@@ -373,7 +373,7 @@ float stringtofloat(const std::string &string,bool *ok=NULL)
     }
 }
 
-double stringtodouble(const std::string &string,bool *ok=NULL)
+double stringtodouble(const std::string &string,bool *ok)
 {
     if(Q_LIKELY(std::regex_match(string,isadouble)))
     {

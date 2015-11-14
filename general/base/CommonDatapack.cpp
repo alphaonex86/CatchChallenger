@@ -6,8 +6,6 @@
 
 #include <iostream>
 #include <QFile>
-#include <QDomElement>
-#include <QDomDocument>
 #include <vector>
 #include <QDir>
 #include <QFileInfoList>
