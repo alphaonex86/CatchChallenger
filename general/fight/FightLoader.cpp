@@ -108,7 +108,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
     }
     #endif
     const TiXmlElement * root = domDocument.RootElement();
-    if(root->ValueStr()!=QLatin1String("types"))
+    if(root->ValueStr()!="types")
     {
         std::cerr << "Unable to open the file: " << file << ", \"types\" root balise not found for the xml file" << std::endl;
         return types;
@@ -142,7 +142,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
             }
             else
                 std::cerr << "Unable to open the file: " << file << ", is not an element: child->ValueStr(): " << typeItem->ValueStr() << " (at line: " << typeItem->Row() << ")" << std::endl;
-            typeItem = typeItem.NextSiblingElement("type");
+            typeItem = typeItem->NextSiblingElement("type");
         }
     }
     {
@@ -158,7 +158,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
                     if(duplicate.find(name)==duplicate.cend())
                     {
                         duplicate.insert(name);
-                        const TiXmlElement * multiplicator = typeItem.FirstChildElement(FightLoader::text_multiplicator);
+                        const TiXmlElement * multiplicator = typeItem->FirstChildElement(FightLoader::text_multiplicator);
                         while(multiplicator!=NULL)
                         {
                             if(multiplicator->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -195,7 +195,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
                             }
                             else
                                 std::cerr << "Unable to open the file: " << file << ", is not an element: child->ValueStr(): " << multiplicator->ValueStr() << " (at line: " << multiplicator->Row() << ")" << std::endl;
-                            multiplicator = multiplicator.NextSiblingElement(FightLoader::text_multiplicator);
+                            multiplicator = multiplicator->NextSiblingElement(FightLoader::text_multiplicator);
                         }
                     }
                     else
@@ -206,7 +206,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
             }
             else
                 std::cerr << "Unable to open the file: " << file << ", is not an element: child->ValueStr(): " << typeItem->ValueStr() << " (at line: " << typeItem->Row() << ")" << std::endl;
-            typeItem = typeItem.NextSiblingElement("type");
+            typeItem = typeItem->NextSiblingElement("type");
         }
     }
     return types;
@@ -513,12 +513,12 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                         if(ok)
                         {
                             {
-                                const TiXmlElement * attack_list = item.FirstChildElement(FightLoader::text_attack_list);
+                                const TiXmlElement * attack_list = item->FirstChildElement(FightLoader::text_attack_list);
                                 if(attack_list!=NULL)
                                 {
                                     if(attack_list->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                     {
-                                        const TiXmlElement * attack = attack_list.FirstChildElement("attack");
+                                        const TiXmlElement * attack = attack_list->FirstChildElement("attack");
                                         while(attack!=NULL)
                                         {
                                             if(attack->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -667,7 +667,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                             }
                                             else
                                                 std::cerr << "Unable to open the xml file: " << file << ", attack_list balise is not an element: child->ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
-                                            attack = attack.NextSiblingElement("attack");
+                                            attack = attack->NextSiblingElement("attack");
                                         }
                                         qSort(monster.learn);
                                     }
@@ -679,12 +679,12 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                             }
                             #ifndef CATCHCHALLENGER_CLASS_MASTER
                             {
-                                const TiXmlElement * evolutionsItem = item.FirstChildElement(FightLoader::text_evolutions);
+                                const TiXmlElement * evolutionsItem = item->FirstChildElement(FightLoader::text_evolutions);
                                 if(evolutionsItem!=NULL)
                                 {
                                     if(evolutionsItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                     {
-                                        const TiXmlElement * evolutionItem = evolutionsItem.FirstChildElement(FightLoader::text_evolution);
+                                        const TiXmlElement * evolutionItem = evolutionsItem->FirstChildElement(FightLoader::text_evolution);
                                         while(evolutionItem!=NULL)
                                         {
                                             if(evolutionItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -757,7 +757,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                             }
                                             else
                                                 std::cerr << "Unable to open the xml file: " << file << ", attack_list balise is not an element: child->ValueStr(): " << evolutionItem->ValueStr() << " (at line: " << evolutionItem->Row() << ")" << std::endl;
-                                            evolutionItem = evolutionItem.NextSiblingElement(FightLoader::text_evolution);
+                                            evolutionItem = evolutionItem->NextSiblingElement(FightLoader::text_evolution);
                                         }
                                     }
                                     else
@@ -807,7 +807,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
             }
             else
                 std::cerr << "Unable to open the xml file: " << file << ", is not an element: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
-            item = item.NextSiblingElement("monster");
+            item = item->NextSiblingElement("monster");
         }
         //check the evolveTo
         auto i = monsters.begin();
@@ -991,7 +991,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                             CatchChallenger::BotFight botFight;
                             botFight.cash=0;
                             {
-                                const TiXmlElement * monster = item.FirstChildElement("monster");
+                                const TiXmlElement * monster = item->FirstChildElement("monster");
                                 while(entryValid && monster!=NULL)
                                 {
                                     if(!monster.hasAttribute("id"))
@@ -1025,7 +1025,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                                                     botFightMonster.level=1;
                                                 }
                                             }
-                                            const TiXmlElement * attack = monster.FirstChildElement("attack");
+                                            const TiXmlElement * attack = monster->FirstChildElement("attack");
                                             while(entryValid && attack!=NULL)
                                             {
                                                 uint8_t attackLevel=1;
@@ -1072,7 +1072,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                                                         botFightMonster.attacks.push_back(botFightAttack);
                                                     }
                                                 }
-                                                attack = attack.NextSiblingElement("attack");
+                                                attack = attack->NextSiblingElement("attack");
                                             }
                                             if(botFightMonster.attacks.empty())
                                                 botFightMonster.attacks=loadDefaultAttack(botFightMonster.id,botFightMonster.level,monsters,monsterSkills);
@@ -1085,11 +1085,11 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                                             botFight.monsters.push_back(botFightMonster);
                                         }
                                     }
-                                    monster = monster.NextSiblingElement("monster");
+                                    monster = monster->NextSiblingElement("monster");
                                 }
                             }
                             {
-                                const TiXmlElement * gain = item.FirstChildElement("gain");
+                                const TiXmlElement * gain = item->FirstChildElement("gain");
                                 while(entryValid && gain!=NULL)
                                 {
                                     if(gain->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -1133,7 +1133,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                                     }
                                     else
                                         std::cerr << "Is not an element: file: " << file << ", type: " << gain->Attribute("type") << " child->ValueStr(): " << gain->ValueStr() << " (at line: " << gain->Row() << ")" << std::endl;
-                                    gain = gain.NextSiblingElement("gain");
+                                    gain = gain->NextSiblingElement("gain");
                                 }
                             }
                             if(entryValid)
@@ -1155,7 +1155,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                 }
                 else
                     std::cerr << "Unable to open the xml file: " << file << ", is not an element: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
-                item = item.NextSiblingElement("fight");
+                item = item->NextSiblingElement("fight");
             }
             index_file++;
         }
@@ -1244,12 +1244,12 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                     else if(ok)
                     {
                         std::unordered_map<uint8_t,Skill::SkillList> levelDef;
-                        const TiXmlElement * effect = item.FirstChildElement("effect");
+                        const TiXmlElement * effect = item->FirstChildElement("effect");
                         if(effect!=NULL)
                         {
                             if(effect->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                             {
-                                const TiXmlElement * level = effect.FirstChildElement("level");
+                                const TiXmlElement * level = effect->FirstChildElement("level");
                                 while(level!=NULL)
                                 {
                                     if(level->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -1292,7 +1292,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                 {
                                                     #ifndef CATCHCHALLENGER_CLASS_MASTER
                                                     {
-                                                        const TiXmlElement * life = level.FirstChildElement("life");
+                                                        const TiXmlElement * life = level->FirstChildElement("life");
                                                         while(life!=NULL)
                                                         {
                                                             if(life->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -1348,13 +1348,13 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                                 else
                                                                     std::cerr << "Unable to open the xml file: " << file << ", " << text << " is not a number: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                             }
-                                                            life = life.NextSiblingElement("life");
+                                                            life = life->NextSiblingElement("life");
                                                         }
                                                     }
                                                     #endif // CATCHCHALLENGER_CLASS_MASTER
                                                     #ifndef CATCHCHALLENGER_CLASS_MASTER
                                                     {
-                                                        const TiXmlElement * buff = level.FirstChildElement("buff");
+                                                        const TiXmlElement * buff = level->FirstChildElement("buff");
                                                         while(buff!=NULL)
                                                         {
                                                             if(buff->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -1433,7 +1433,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                                 else
                                                                     std::cerr << "Unable to open the xml file: " << file << ", have not tag id: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                             }
-                                                            buff = buff.NextSiblingElement("buff");
+                                                            buff = buff->NextSiblingElement("buff");
                                                         }
                                                     }
                                                     #endif // CATCHCHALLENGER_CLASS_MASTER
@@ -1447,7 +1447,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                     }
                                     else
                                         std::cerr << "Unable to open the xml file: " << file << ", level balise is not an element: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
-                                    level = level.NextSiblingElement("level");
+                                    level = level->NextSiblingElement("level");
                                 }
                                 if(levelDef.size()==0)
                                     std::cerr << "Unable to open the xml file: " << file << ", 0 level found: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
@@ -1491,7 +1491,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
             }
             else
                 std::cerr << "Unable to open the xml file: " << file << ", is not an element: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
-            item = item.NextSiblingElement("skill");
+            item = item->NextSiblingElement("skill");
         }
         //check the default attack
         if(monsterSkills.find(0)==monsterSkills.cend())
@@ -1640,12 +1640,12 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                             }
                         }
                         std::unordered_map<uint8_t,Buff::GeneralEffect> levelDef;
-                        const TiXmlElement * effect = item.FirstChildElement("effect");
+                        const TiXmlElement * effect = item->FirstChildElement("effect");
                         if(effect!=NULL)
                         {
                             if(effect->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                             {
-                                const TiXmlElement * level = effect.FirstChildElement("level");
+                                const TiXmlElement * level = effect->FirstChildElement("level");
                                 while(level!=NULL)
                                 {
                                     if(level->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -1702,7 +1702,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
 
 
 
-                                                    const TiXmlElement * inFight = level.FirstChildElement("inFight");
+                                                    const TiXmlElement * inFight = level->FirstChildElement("inFight");
                                                     while(inFight!=NULL)
                                                     {
                                                         if(inFight->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -1745,9 +1745,9 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                                                     std::cerr << "Unable to open the xml file: " << file << ", \"" << text << "\" something is wrong, or is not a number, or not into hp or defense balise: child->ValueStr(): " << inFight->ValueStr() << " (at line: " << inFight->Row() << ")" << std::endl;
                                                             }
                                                         }
-                                                        inFight = inFight.NextSiblingElement("inFight");
+                                                        inFight = inFight->NextSiblingElement("inFight");
                                                     }
-                                                    const TiXmlElement * inWalk = level.FirstChildElement("inWalk");
+                                                    const TiXmlElement * inWalk = level->FirstChildElement("inWalk");
                                                     while(inWalk!=NULL)
                                                     {
                                                         if(inWalk->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -1790,7 +1790,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                                             else
                                                                 std::cerr << "Unable to open the xml file: " << file << ", have not tag steps: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                                         }
-                                                        inWalk = inWalk.NextSiblingElement("inWalk");
+                                                        inWalk = inWalk->NextSiblingElement("inWalk");
                                                     }
                                                 }
                                                 else
@@ -1802,7 +1802,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                     }
                                     else
                                         std::cerr << "Unable to open the xml file: " << file << ", level balise is not an element: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
-                                    level = level.NextSiblingElement("level");
+                                    level = level->NextSiblingElement("level");
                                 }
                                 uint8_t index=1;
                                 while(levelDef.find(index)!=levelDef.cend())
@@ -1830,7 +1830,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
             }
             else
                 std::cerr << "Unable to open the xml file: " << file << ", is not an element: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
-            item = item.NextSiblingElement("buff");
+            item = item->NextSiblingElement("buff");
         }
         file_index++;
     }
