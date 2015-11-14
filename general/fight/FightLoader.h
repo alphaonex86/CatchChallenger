@@ -94,6 +94,11 @@ public:
     static std::string text_inFight;
     static std::string text_inWalk;
     static std::string text_steps;
+    static std::string text_nobody;
+    static std::string text_allAlly;
+    static std::string text_allEnemy;
+    static std::string text_themself;
+    static std::string text_aloneEnemy;
 };
 bool operator<(const Monster::AttackToLearn &entry1, const Monster::AttackToLearn &entry2);
 }

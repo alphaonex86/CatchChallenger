@@ -49,7 +49,7 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
     {
         if(item->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
         {
-            if(item.hasAttribute("type"))
+            if(item->Attribute("type")!=NULL)
             {
                 std::vector<int32_t> point_list_positive,point_list_negative;
                 std::vector<std::string> text_positive,text_negative;
@@ -59,9 +59,9 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
                 {
                     if(level->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                     {
-                        if(level.hasAttribute("point"))
+                        if(level->Attribute("point")!=NULL)
                         {
-                            const int32_t &point=level->Attribute("point").toInt(&ok);
+                            const int32_t &point=stringtouint32(*level->Attribute("point"),&ok);
                             std::string text_val;
                             if(ok)
                             {
@@ -271,10 +271,10 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     std::vector<uint16_t> defaultBots;
     quest.id=0;
     quest.repeatable=false;
-    if(root->hasAttribute("repeatable"))
+    if(root->Attribute("repeatable")!=NULL)
         if(root->Attribute("repeatable")=="yes" || root->Attribute("repeatable")=="true")
             quest.repeatable=true;
-    if(root->hasAttribute("bot"))
+    if(root->Attribute("bot")!=NULL)
     {
         const std::vector<std::string> &tempStringList=stringsplit(root->Attribute("bot"),';');
         unsigned int index=0;
@@ -300,7 +300,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                 {
                     if(requirementsItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                     {
-                        if(requirementsItem.hasAttribute("type") && requirementsItem.hasAttribute("level"))
+                        if(requirementsItem->Attribute("type")!=NULL && requirementsItem->Attribute("level")!=NULL)
                         {
                             if(reputationNameToId.find(requirementsItem->Attribute("type"))!=reputationNameToId.cend())
                             {
@@ -338,7 +338,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                 {
                     if(requirementsItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                     {
-                        if(requirementsItem.hasAttribute("id"))
+                        if(requirementsItem->Attribute("id")!=NULL)
                         {
                             const uint32_t &questId=stringtouint32(requirementsItem->Attribute("id"),&ok);
                             if(ok)
@@ -346,7 +346,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                                 QuestRequirements questNewEntry;
                                 questNewEntry.quest=questId;
                                 questNewEntry.inverse=false;
-                                if(requirementsItem.hasAttribute("inverse"))
+                                if(requirementsItem->Attribute("inverse")!=NULL)
                                     if(requirementsItem->Attribute("inverse")=="true")
                                         questNewEntry.inverse=true;
                                 quest.requirements.quests.push_back(questNewEntry);
@@ -381,7 +381,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                 {
                     if(reputationItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                     {
-                        if(reputationItem.hasAttribute("type") && reputationItem.hasAttribute("point"))
+                        if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("point")!=NULL)
                         {
                             if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
                             {
@@ -414,7 +414,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                 {
                     if(rewardsItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                     {
-                        if(rewardsItem.hasAttribute("id"))
+                        if(rewardsItem->Attribute("id")!=NULL)
                         {
                             CatchChallenger::Quest::Item item;
                             item.item=stringtouint32(rewardsItem->Attribute("id"),&ok);
@@ -426,7 +426,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                                     std::cerr << "Unable to open the file: " << file << ", rewards item id is not into the item list: " << rewardsItem->Attribute("id") << ": child->ValueStr(): " << rewardsItem->ValueStr() << " (at line: " << rewardsItem->Row() << ")" << std::endl;
                                     return std::pair<bool,Quest>(false,quest);
                                 }
-                                if(rewardsItem.hasAttribute("quantity"))
+                                if(rewardsItem->Attribute("quantity")!=NULL)
                                 {
                                     item.quantity=stringtouint32(rewardsItem->Attribute("quantity"),&ok);
                                     if(!ok)
@@ -452,7 +452,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                 {
                     if(allowItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                     {
-                        if(allowItem.hasAttribute("type"))
+                        if(allowItem->Attribute("type")!=NULL)
                         {
                             if(allowItem->Attribute("type")=="clan")
                                 quest.rewards.allow.push_back(CatchChallenger::ActionAllow_Clan);
@@ -480,13 +480,13 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     {
         if(step->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
         {
-            if(step.hasAttribute("id"))
+            if(step->Attribute("id")!=NULL)
             {
                 const uint32_t &id=stringtouint32(step->Attribute("id"),&ok);
                 if(ok)
                 {
                     CatchChallenger::Quest::Step stepObject;
-                    if(step.hasAttribute("bot"))
+                    if(step->Attribute("bot")!=NULL)
                     {
                         const std::vector<std::string> &tempStringList=stringsplit(step->Attribute("bot"),';');
                         unsigned int index=0;
@@ -507,7 +507,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                         {
                             if(stepItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                             {
-                                if(stepItem.hasAttribute("id"))
+                                if(stepItem->Attribute("id")!=NULL)
                                 {
                                     CatchChallenger::Quest::Item item;
                                     item.item=stringtouint32(stepItem->Attribute("id"),&ok);
@@ -519,14 +519,14 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                                             std::cerr << "Unable to open the file: " << file << ", rewards item id is not into the item list: " << stepItem->Attribute("id") << ": child->ValueStr(): " << stepItem->ValueStr() << " (at line: " << stepItem->Row() << ")" << std::endl;
                                             return std::pair<bool,Quest>(false,quest);
                                         }
-                                        if(stepItem.hasAttribute("quantity"))
+                                        if(stepItem->Attribute("quantity")!=NULL)
                                         {
                                             item.quantity=stringtouint32(stepItem->Attribute("quantity"),&ok);
                                             if(!ok)
                                                 item.quantity=1;
                                         }
                                         stepObject.requirements.items.push_back(item);
-                                        if(stepItem.hasAttribute("monster") && stepItem.hasAttribute("rate"))
+                                        if(stepItem->Attribute("monster")!=NULL && stepItem->Attribute("rate")!=NULL)
                                         {
                                             CatchChallenger::Quest::ItemMonster itemMonster;
                                             itemMonster.item=item.item;
@@ -566,7 +566,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                         {
                             if(fightItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                             {
-                                if(fightItem.hasAttribute("id"))
+                                if(fightItem->Attribute("id")!=NULL)
                                 {
                                     const uint32_t &fightId=stringtouint32(fightItem->Attribute("id"),&ok);
                                     if(ok)
@@ -653,7 +653,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
     {
         if(plantItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
         {
-            if(plantItem.hasAttribute("id") && plantItem.hasAttribute("itemUsed"))
+            if(plantItem->Attribute("id")!=NULL && plantItem->Attribute("itemUsed")!=NULL)
             {
                 const uint8_t &id=plantItem->Attribute("id").toUShort(&ok);
                 const uint32_t &itemUsed=stringtouint32(plantItem->Attribute("itemUsed"),&ok2);
@@ -676,7 +676,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                 {
                                     if(reputationItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                     {
-                                        if(reputationItem.hasAttribute("type") && reputationItem.hasAttribute("level"))
+                                        if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("level")!=NULL)
                                         {
                                             if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
                                             {
@@ -713,7 +713,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                 {
                                     if(reputationItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                     {
-                                        if(reputationItem.hasAttribute("type") && reputationItem.hasAttribute("point"))
+                                        if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("point")!=NULL)
                                         {
                                             if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
                                             {
@@ -936,10 +936,10 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
     {
         if(recipeItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
         {
-            if(recipeItem.hasAttribute("id") && recipeItem.hasAttribute("itemToLearn") && recipeItem.hasAttribute("doItemId"))
+            if(recipeItem->Attribute("id")!=NULL && recipeItem->Attribute("itemToLearn")!=NULL && recipeItem->Attribute("doItemId")!=NULL)
             {
                 uint8_t success=100;
-                if(recipeItem.hasAttribute("success"))
+                if(recipeItem->Attribute("success")!=NULL)
                 {
                     const uint8_t &tempShort=recipeItem->Attribute("success").toUShort(&ok);
                     if(ok)
@@ -953,7 +953,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                         std::cerr << "preload_crafting_recipes() success in not an number for crafting recipe file: " << file << ", child->ValueStr(): " << recipeItem->ValueStr() << " (at line: " << recipeItem->Row() << ")" << std::endl;
                 }
                 uint16_t quantity=1;
-                if(recipeItem.hasAttribute("quantity"))
+                if(recipeItem->Attribute("quantity")!=NULL)
                 {
                     const uint32_t &tempShort=stringtouint32(recipeItem->Attribute("quantity"),&ok);
                     if(ok)
@@ -989,7 +989,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                                 {
                                     if(reputationItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                     {
-                                        if(reputationItem.hasAttribute("type") && reputationItem.hasAttribute("level"))
+                                        if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("level")!=NULL)
                                         {
                                             if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
                                             {
@@ -1026,7 +1026,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                                 {
                                     if(reputationItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                     {
-                                        if(reputationItem.hasAttribute("type") && reputationItem.hasAttribute("point"))
+                                        if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("point")!=NULL)
                                         {
                                             if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
                                             {
@@ -1053,7 +1053,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                         {
                             if(material->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                             {
-                                if(material.hasAttribute("itemId"))
+                                if(material->Attribute("itemId")!=NULL)
                                 {
                                     const uint32_t &itemId=stringtouint32(material->Attribute("itemId"),&ok2);
                                     if(!ok2)
@@ -1063,7 +1063,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                                         break;
                                     }
                                     uint16_t quantity=1;
-                                    if(material.hasAttribute("quantity"))
+                                    if(material->Attribute("quantity")!=NULL)
                                     {
                                         const uint32_t &tempShort=stringtouint32(material->Attribute("quantity"),&ok2);
                                         if(ok2)
@@ -1233,7 +1233,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
         {
             if(industryItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
             {
-                if(industryItem.hasAttribute("id") && industryItem.hasAttribute("time") && industryItem.hasAttribute("cycletobefull"))
+                if(industryItem->Attribute("id")!=NULL && industryItem->Attribute("time")!=NULL && industryItem->Attribute("cycletobefull")!=NULL)
                 {
                     Industry industry;
                     const uint32_t &id=stringtouint32(industryItem->Attribute("id"),&ok);
@@ -1268,7 +1268,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                                     {
                                         Industry::Resource resource;
                                         resource.quantity=1;
-                                        if(resourceItem.hasAttribute("quantity"))
+                                        if(resourceItem->Attribute("quantity")!=NULL)
                                         {
                                             resource.quantity=stringtouint32(resourceItem->Attribute("quantity"),&ok);
                                             if(!ok)
@@ -1276,7 +1276,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                                         }
                                         if(ok)
                                         {
-                                            if(resourceItem.hasAttribute("id"))
+                                            if(resourceItem->Attribute("id")!=NULL)
                                             {
                                                 resource.item=stringtouint32(resourceItem->Attribute("id"),&ok);
                                                 if(!ok)
@@ -1346,7 +1346,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                                     {
                                         Industry::Product product;
                                         product.quantity=1;
-                                        if(productItem.hasAttribute("quantity"))
+                                        if(productItem->Attribute("quantity")!=NULL)
                                         {
                                             product.quantity=stringtouint32(productItem->Attribute("quantity"),&ok);
                                             if(!ok)
@@ -1354,7 +1354,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                                         }
                                         if(ok)
                                         {
-                                            if(productItem.hasAttribute("id"))
+                                            if(productItem->Attribute("id")!=NULL)
                                             {
                                                 product.item=stringtouint32(productItem->Attribute("id"),&ok);
                                                 if(!ok)
@@ -1484,7 +1484,7 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
     {
         if(linkItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
         {
-            if(linkItem.hasAttribute("industrialrecipe") && linkItem.hasAttribute("industry"))
+            if(linkItem->Attribute("industrialrecipe")!=NULL && linkItem->Attribute("industry")!=NULL)
             {
                 const uint32_t &industry_id=stringtouint32(linkItem->Attribute("industrialrecipe"),&ok);
                 const uint32_t &factory_id=stringtouint32(linkItem->Attribute("industry"),&ok2);
@@ -1506,7 +1506,7 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
                                         {
                                             if(reputationItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                             {
-                                                if(reputationItem.hasAttribute("type") && reputationItem.hasAttribute("level"))
+                                                if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("level")!=NULL)
                                                 {
                                                     if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
                                                     {
@@ -1543,7 +1543,7 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
                                         {
                                             if(reputationItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                             {
-                                                if(reputationItem.hasAttribute("type") && reputationItem.hasAttribute("point"))
+                                                if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("point")!=NULL)
                                                 {
                                                     if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
                                                     {
@@ -1646,7 +1646,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
         {
             if(item->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
             {
-                if(item.hasAttribute("id"))
+                if(item->Attribute("id")!=NULL)
                 {
                     const uint32_t &id=stringtouint32(item->Attribute("id"),&ok);
                     if(ok)
@@ -1655,7 +1655,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                         {
                             //load the price
                             {
-                                if(item.hasAttribute("price"))
+                                if(item->Attribute("price")!=NULL)
                                 {
                                     bool ok;
                                     items.item[id].price=stringtouint32(item->Attribute("price"),&ok);
@@ -1667,14 +1667,14 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                 }
                                 else
                                 {
-                                    /*if(!item.hasAttribute("quest") || item->Attribute("quest")!="yes")
+                                    /*if(!item->Attribute("quest")!=NULL || item->Attribute("quest")!="yes")
                                         std::cerr << "For parse item: Price not found, default to 0 (not sellable): child->ValueStr(): %1 (%2 at line: %3)").arg(item->ValueStr()).arg(file).arg(item->Row());*/
                                     items.item[id].price=0;
                                 }
                             }
                             //load the consumeAtUse
                             {
-                                if(item.hasAttribute("consumeAtUse"))
+                                if(item->Attribute("consumeAtUse")!=NULL)
                                 {
                                     if(item->Attribute("consumeAtUse")=="false")
                                         items.item[id].consumeAtUse=false;
@@ -1695,7 +1695,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                     {
                                         Trap trap;
                                         trap.bonus_rate=1.0;
-                                        if(trapItem.hasAttribute("bonus_rate"))
+                                        if(trapItem->Attribute("bonus_rate")!=NULL)
                                         {
                                             float bonus_rate=trapItem->Attribute("bonus_rate").toFloat(&ok);
                                             if(ok)
@@ -1718,7 +1718,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                 {
                                     if(repelItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                     {
-                                        if(repelItem.hasAttribute("step"))
+                                        if(repelItem->Attribute("step")!=NULL)
                                         {
                                             const uint32_t &step=stringtouint32(repelItem->Attribute("step"),&ok);
                                             if(ok)
@@ -1748,7 +1748,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                     {
                                         if(hpItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                         {
-                                            if(hpItem.hasAttribute("add"))
+                                            if(hpItem->Attribute("add")!=NULL)
                                             {
                                                 if(hpItem->Attribute("add")=="all")
                                                 {
@@ -1792,7 +1792,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                     {
                                         if(buffItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                         {
-                                            if(buffItem.hasAttribute("remove"))
+                                            if(buffItem->Attribute("remove")!=NULL)
                                             {
                                                 if(buffItem->Attribute("remove")=="all")
                                                 {
@@ -1844,7 +1844,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                 {
                                     if(levelItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                     {
-                                        if(levelItem.hasAttribute("up"))
+                                        if(levelItem->Attribute("up")!=NULL)
                                         {
                                             const uint32_t &levelUp=stringtouint32(levelItem->Attribute("up"),&ok);
                                             if(!ok)
@@ -1952,7 +1952,7 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
         {
             Profile profile;
 
-            if(startItem.hasAttribute("id"))
+            if(startItem->Attribute("id")!=NULL)
                 profile.id=startItem->Attribute("id");
 
             if(idDuplicate.find(profile.id)!=idDuplicate.cend())
@@ -1967,7 +1967,7 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
                 const TiXmlElement * forcedskin = startItem->FirstChildElement("forcedskin");
 
                 std::vector<std::string> forcedskinList;
-                if(forcedskin!=NULL && forcedskin->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && forcedskin.hasAttribute("value"))
+                if(forcedskin!=NULL && forcedskin->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && forcedskin->Attribute("value")!=NULL)
                     forcedskinList=stringsplit(forcedskin->Attribute("value"),';');
                 else
                     forcedskinList=defaultforcedskinList;
@@ -1996,7 +1996,7 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
 
                 profile.cash=0;
                 const TiXmlElement * cash = startItem->FirstChildElement("cash");
-                if(cash!=NULL && cash->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && cash.hasAttribute("value"))
+                if(cash!=NULL && cash->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && cash->Attribute("value")!=NULL)
                 {
                     profile.cash=cash->Attribute("value").toULongLong(&ok);
                     if(!ok)
@@ -2009,7 +2009,7 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
                 while(monstersElement!=NULL)
                 {
                     Profile::Monster monster;
-                    if(monstersElement->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && monstersElement.hasAttribute("id") && monstersElement.hasAttribute("level") && monstersElement.hasAttribute("captured_with"))
+                    if(monstersElement->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && monstersElement->Attribute("id")!=NULL && monstersElement->Attribute("level")!=NULL && monstersElement->Attribute("captured_with")!=NULL)
                     {
                         monster.id=stringtouint32(monstersElement->Attribute("id"),&ok);
                         if(!ok)
@@ -2061,7 +2061,7 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
                 while(reputationElement!=NULL)
                 {
                     Profile::Reputation reputationTemp;
-                    if(reputationElement->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && reputationElement.hasAttribute("type") && reputationElement.hasAttribute("level"))
+                    if(reputationElement->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && reputationElement->Attribute("type")!=NULL && reputationElement->Attribute("level")!=NULL)
                     {
                         reputationTemp.level=reputationElement->Attribute("level").toShort(&ok);
                         if(!ok)
@@ -2101,7 +2101,7 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
                             if(ok)
                             {
                                 reputationTemp.point=0;
-                                if(reputationElement.hasAttribute("point"))
+                                if(reputationElement->Attribute("point")!=NULL)
                                 {
                                     reputationTemp.point=reputationElement->Attribute("point").toInt(&ok);
                                     std::cerr << "Unable to open the xml file: " << file << ", reputation point is not a number: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
@@ -2122,7 +2122,7 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
                 while(itemElement!=NULL)
                 {
                     Profile::Item itemTemp;
-                    if(itemElement->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && itemElement.hasAttribute("id"))
+                    if(itemElement->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && itemElement->Attribute("id")!=NULL)
                     {
                         itemTemp.id=stringtouint32(itemElement->Attribute("id"),&ok);
                         if(!ok)
@@ -2130,7 +2130,7 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
                         if(ok)
                         {
                             itemTemp.quantity=0;
-                            if(itemElement.hasAttribute("quantity"))
+                            if(itemElement->Attribute("quantity")!=NULL)
                             {
                                 itemTemp.quantity=stringtouint32(itemElement->Attribute("quantity"),&ok);
                                 if(!ok)
@@ -2226,9 +2226,9 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
     {
         if(monstersCollisionItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
         {
-            if(!monstersCollisionItem.hasAttribute("type"))
+            if(!monstersCollisionItem->Attribute("type")!=NULL)
                 std::cerr << "Have not the attribute type, into file: " << file << " at line " << monstersCollisionItem->Row() << std::endl;
-            else if(!monstersCollisionItem.hasAttribute("monsterType"))
+            else if(!monstersCollisionItem->Attribute("monsterType")!=NULL)
                 std::cerr << "Have not the attribute monsterType, into: file: " << file << " at line " << monstersCollisionItem->Row() << std::endl;
             else
             {
@@ -2245,7 +2245,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
                 }
                 if(ok)
                 {
-                    if(monstersCollisionItem.hasAttribute("layer"))
+                    if(monstersCollisionItem->Attribute("layer")!=NULL)
                         monstersCollision.layer=monstersCollisionItem->Attribute("layer");
                 }
                 if(ok)
@@ -2258,7 +2258,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
                     else
                     {
                         monstersCollision.item=0;
-                        if(monstersCollisionItem.hasAttribute("item"))
+                        if(monstersCollisionItem->Attribute("item")!=NULL)
                         {
                             monstersCollision.item=stringtouint32(monstersCollisionItem->Attribute("item"),&ok);
                             if(!ok)
@@ -2273,17 +2273,17 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
                 }
                 if(ok)
                 {
-                    if(monstersCollisionItem.hasAttribute("tile"))
+                    if(monstersCollisionItem->Attribute("tile")!=NULL)
                         monstersCollision.tile=monstersCollisionItem->Attribute("tile");
                 }
                 if(ok)
                 {
-                    if(monstersCollisionItem.hasAttribute("background"))
+                    if(monstersCollisionItem->Attribute("background")!=NULL)
                         monstersCollision.background=monstersCollisionItem->Attribute("background");
                 }
                 if(ok)
                 {
-                    if(monstersCollisionItem.hasAttribute("monsterType"))
+                    if(monstersCollisionItem->Attribute("monsterType")!=NULL)
                     {
                         monstersCollision.defautMonsterTypeList=stringsplit(monstersCollisionItem->Attribute("monsterType"),';');
                         vectorRemoveEmpty(monstersCollision.defautMonsterTypeList);
@@ -2295,7 +2295,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
                         {
                             if(eventItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                             {
-                                if(eventItem.hasAttribute("id") && eventItem.hasAttribute("value") && eventItem.hasAttribute("monsterType"))
+                                if(eventItem->Attribute("id")!=NULL && eventItem->Attribute("value")!=NULL && eventItem->Attribute("monsterType")!=NULL)
                                 {
                                     if(eventStringToId.find(eventItem->Attribute("id"))!=eventStringToId.cend())
                                     {
@@ -2403,7 +2403,7 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const std::string &file)
         std::cerr << "Unable to open the xml file: " << file << ", \"list\" root balise not found for the xml file" << std::endl;
         return returnVar;
     }
-    if(root->hasAttribute(QLatin1Literal("zoom")))
+    if(root->Attribute("zoom")!=NULL)
     {
         bool ok;
         returnVar.zoom=root->Attribute(QLatin1Literal("zoom")).toUShort(&ok);
@@ -2460,7 +2460,7 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
     {
         if(eventItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
         {
-            if(!eventItem.hasAttribute("id"))
+            if(eventItem->Attribute("id")==NULL)
                 std::cerr << "Have not the attribute id, into file: " << file << " at line " << eventItem->Row() << std::endl;
             else if(eventItem->Attribute("id").empty())
                 std::cerr << "Have id empty, into file: " << file << " at line " << eventItem->Row() << std::endl;
@@ -2519,7 +2519,7 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
     {
         if(shopItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
         {
-            if(shopItem.hasAttribute("id"))
+            if(shopItem->Attribute("id")!=NULL)
             {
                 uint32_t id=stringtouint32(shopItem->Attribute("id"),&ok);
                 if(ok)
@@ -2532,7 +2532,7 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
                         {
                             if(product->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                             {
-                                if(product.hasAttribute("itemId"))
+                                if(product->Attribute("itemId")!=NULL)
                                 {
                                     uint32_t itemId=stringtouint32(product->Attribute("itemId"),&ok);
                                     if(!ok)
@@ -2544,7 +2544,7 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
                                         else
                                         {
                                             uint32_t price=items.at(itemId).price;
-                                            if(product.hasAttribute("overridePrice"))
+                                            if(product->Attribute("overridePrice")!=NULL)
                                             {
                                                 price=stringtouint32(product->Attribute("overridePrice"),&ok);
                                                 if(!ok)
@@ -2680,7 +2680,7 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(
             serverProfile.orientation=Orientation_bottom;
 
             const TiXmlElement * map = startItem->FirstChildElement("map");
-            if(map!=NULL && map->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && map.hasAttribute("file") && map.hasAttribute("x") && map.hasAttribute("y"))
+            if(map!=NULL && map->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && map->Attribute("file")!=NULL && map->Attribute("x")!=NULL && map->Attribute("y")!=NULL)
             {
                 serverProfile.mapString=map->Attribute("file");
                 if(!stringEndsWith(serverProfile.mapString,".tmx"))
@@ -2713,7 +2713,7 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(
                 continue;
             }
 
-            if(startItem.hasAttribute("id"))
+            if(startItem->Attribute("id")!=NULL)
                 serverProfile.id=startItem->Attribute("id");
 
             if(idDuplicate.find(serverProfile.id)!=idDuplicate.cend())
