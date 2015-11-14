@@ -44,6 +44,8 @@ int8_t stringtoint8(const std::string &string,bool *ok=NULL);
 int16_t stringtoint16(const std::string &string,bool *ok=NULL);
 int32_t stringtoint32(const std::string &string,bool *ok=NULL);
 int64_t stringtoint64(const std::string &string,bool *ok=NULL);
+float stringtofloat(const std::string &string,bool *ok=NULL);
+double stringtodouble(const std::string &string,bool *ok=NULL);
 std::string binarytoHexa(const std::vector<char> &data);
 std::string binarytoHexa(const char * const data,const uint32_t &size);
 std::vector<char> hexatoBinary(const std::string &data);

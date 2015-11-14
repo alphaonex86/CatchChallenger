@@ -4,6 +4,7 @@
 
 static const std::regex isaunsignednumber("^[0-9]+$");
 static const std::regex isasignednumber("^-?[0-9]+$");
+static const std::regex isadouble("^-?[0-9]+(\\.[0-9]+)?$");
 static const std::regex ishexa("^([0-9a-fA-F][0-9a-fA-F])+$");
 
 static const std::string base64_chars =
@@ -347,6 +348,38 @@ int64_t stringtoint64(const std::string &string,bool *ok)
         if(Q_LIKELY(ok!=NULL))
             *ok=true;
         return std::stoll(string);
+    }
+    else
+    {
+        if(ok!=NULL)
+            *ok=false;
+        return 0;
+    }
+}
+
+float stringtofloat(const std::string &string,bool *ok=NULL)
+{
+    if(Q_LIKELY(std::regex_match(string,isadouble)))
+    {
+        if(Q_LIKELY(ok!=NULL))
+            *ok=true;
+        return std::stof(string);
+    }
+    else
+    {
+        if(ok!=NULL)
+            *ok=false;
+        return 0;
+    }
+}
+
+double stringtodouble(const std::string &string,bool *ok=NULL)
+{
+    if(Q_LIKELY(std::regex_match(string,isadouble)))
+    {
+        if(Q_LIKELY(ok!=NULL))
+            *ok=true;
+        return std::stod(string);
     }
     else
     {
