@@ -94,25 +94,21 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
 {
     std::unordered_map<std::string,uint8_t> nameToId;
     std::vector<Type> types;
-    TiXmlDocument domDocument(file.c_str());
+    TiXmlDocument *domDocument;
     //open and quick check the file
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
+        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
-        #endif
-        const bool loadOkay=domDocument.LoadFile();
+        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        const bool loadOkay=domDocument->LoadFile(file);
         if(!loadOkay)
         {
-            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
+            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
             return types;
         }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
-    #endif
-    const TiXmlElement * root = domDocument.RootElement();
+    const TiXmlElement * root = domDocument->RootElement();
     if(root->ValueStr()!="types")
     {
         std::cerr << "Unable to open the file: " << file << ", \"types\" root balise not found for the xml file" << std::endl;
@@ -252,26 +248,22 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
             }
         }
         #endif
-        TiXmlDocument domDocument(file.c_str());
+        TiXmlDocument *domDocument;
         //open and quick check the file
-        #ifndef EPOLLCATCHCHALLENGERSERVER
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-            domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
+            domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         else
         {
-            #endif
-            const bool loadOkay=domDocument.LoadFile();
+            domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            const bool loadOkay=domDocument->LoadFile(file);
             if(!loadOkay)
             {
-                std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
+                std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
                 file_index++;
                 continue;
             }
-            #ifndef EPOLLCATCHCHALLENGERSERVER
-            CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
-        #endif
-        const TiXmlElement * root = domDocument.RootElement();
+        const TiXmlElement * root = domDocument->RootElement();
         if(root->ValueStr()!=FightLoader::text_monsters)
         {
             file_index++;
@@ -953,26 +945,22 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
         if(list.at(index_file).isFile())
         {
             const std::string &file=list.at(index_file).absoluteFilePath().toStdString();
-            TiXmlDocument domDocument(file.c_str());
+            TiXmlDocument *domDocument;
             //open and quick check the file
-            #ifndef EPOLLCATCHCHALLENGERSERVER
             if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-                domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
+                domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
             else
             {
-                #endif
-                const bool loadOkay=domDocument.LoadFile();
+                domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+                const bool loadOkay=domDocument->LoadFile(file);
                 if(!loadOkay)
                 {
-                    std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
+                    std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
                     index_file++;
                     continue;
                 }
-                #ifndef EPOLLCATCHCHALLENGERSERVER
-                CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
             }
-            #endif
-            const TiXmlElement * root = domDocument.RootElement();
+            const TiXmlElement * root = domDocument->RootElement();
             if(root->ValueStr()!="fights")
             {
                 std::cerr << "Unable to open the xml file: " << file << ", \"fights\" root balise not found for the xml file" << std::endl;
@@ -1204,26 +1192,22 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
             }
         }
         #endif // CATCHCHALLENGER_CLASS_MASTER
-        TiXmlDocument domDocument(file.c_str());
+        TiXmlDocument *domDocument;
         //open and quick check the file
-        #ifndef EPOLLCATCHCHALLENGERSERVER
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-            domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
+            domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         else
         {
-            #endif
-            const bool loadOkay=domDocument.LoadFile();
+            domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            const bool loadOkay=domDocument->LoadFile(file);
             if(!loadOkay)
             {
-                std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
+                std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
                 file_index++;
                 continue;
             }
-            #ifndef EPOLLCATCHCHALLENGERSERVER
-            CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
-        #endif
-        const TiXmlElement * root = domDocument.RootElement();
+        const TiXmlElement * root = domDocument->RootElement();
         if(root->ValueStr()!="skills")
         {
             std::cerr << "Unable to open the xml file: " << file << ", \"list\" root balise not found for the xml file" << std::endl;
@@ -1561,26 +1545,22 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
             file_index++;
             continue;
         }
-        TiXmlDocument domDocument(file.c_str());
+        TiXmlDocument *domDocument;
         //open and quick check the file
-        #ifndef EPOLLCATCHCHALLENGERSERVER
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-            domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
+            domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         else
         {
-            #endif
-            const bool loadOkay=domDocument.LoadFile();
+            domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            const bool loadOkay=domDocument->LoadFile(file);
             if(!loadOkay)
             {
-                std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
+                std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
                 file_index++;
                 continue;
             }
-            #ifndef EPOLLCATCHCHALLENGERSERVER
-            CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
-        #endif
-        const TiXmlElement * root = domDocument.RootElement();
+        const TiXmlElement * root = domDocument->RootElement();
         if(root->ValueStr()!="buffs")
         {
             std::cerr << "Unable to open the xml file: " << file << ", \"list\" root balise not found for the xml file" << std::endl;

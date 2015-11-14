@@ -76,26 +76,22 @@ void BaseServer::load_monsters_max_id_return()
 
 std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterDrop(const std::string &file, std::unordered_map<uint16_t,Item> items,const std::unordered_map<uint16_t,Monster> &monsters)
 {
-    TiXmlDocument domDocument(file.c_str());
+    TiXmlDocument *domDocument;
     std::unordered_map<uint16_t,std::vector<MonsterDrops> > monsterDrops;
     //open and quick check the file
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
+        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
-        #endif
-        const bool loadOkay=domDocument.LoadFile();
+        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        const bool loadOkay=domDocument->LoadFile(file);
         if(!loadOkay)
         {
-            std::cerr << "Unable to open the file: " << file.c_str() << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
+            std::cerr << "Unable to open the file: " << file.c_str() << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
             return monsterDrops;
         }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
-    #endif
-    const TiXmlElement * root = domDocument.RootElement();;
+    const TiXmlElement * root = domDocument->RootElement();;
     if(root->ValueStr()!=BaseServer::text_monsters)
     {
         std::cerr << "Unable to open the xml file: " << file << ", \"monsters\" root balise not found for the xml file" << std::endl;

@@ -1,5 +1,7 @@
 <?php
 $content=file_get_contents($argv[1]);
+$content=preg_replace('#'.preg_quote('<?xml ').'[^>]*'.preg_quote('?>').'#isU','',$content);
+$content=preg_replace('#'.preg_quote('<!DOCTYPE ').'[^>]*'.preg_quote('>').'#isU','',$content);
 $content=str_replace(' lang="en"','',$content);
 $content=preg_replace('#<!--.*-->#isU','',$content);
 //$content=preg_replace("#<[a-z]+ ?/>#isU",'',$content);////drop <br /> into bot test
