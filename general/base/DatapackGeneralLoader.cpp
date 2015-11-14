@@ -53,7 +53,7 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
             {
                 std::vector<int32_t> point_list_positive,point_list_negative;
                 std::vector<std::string> text_positive,text_negative;
-                const TiXmlElement * level = item.FirstChildElement("level");
+                const TiXmlElement * level = item->FirstChildElement("level");
                 ok=true;
                 while(level!=NULL && ok)
                 {
@@ -127,7 +127,7 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
                     }
                     else
                         std::cerr << "Unable to open the file: " << file << ", point attribute not found: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
-                    level = level.NextSiblingElement("level");
+                    level = level->NextSiblingElement("level");
                 }
                 qSort(point_list_positive);
                 qSort(point_list_negative.end(),point_list_negative.begin());
@@ -182,7 +182,7 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
         }
         else
             std::cerr << "Unable to open the file: " << file << ", is not an element: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
-        item = item.NextSiblingElement("reputation");
+        item = item->NextSiblingElement("reputation");
     }
 
     return reputation;
@@ -295,7 +295,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
         {
             //load requirements reputation
             {
-                const TiXmlElement * requirementsItem = requirements.FirstChildElement("reputation");
+                const TiXmlElement * requirementsItem = requirements->FirstChildElement("reputation");
                 while(requirementsItem!=NULL)
                 {
                     if(requirementsItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -328,12 +328,12 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     }
                     else
                         std::cerr << "Unable to open the file: " << file << ", is not an element: child->ValueStr(): " << requirementsItem->ValueStr() << " (at line: " << requirementsItem->Row() << ")" << std::endl;
-                    requirementsItem = requirementsItem.NextSiblingElement("reputation");
+                    requirementsItem = requirementsItem->NextSiblingElement("reputation");
                 }
             }
             //load requirements quest
             {
-                const TiXmlElement * requirementsItem = requirements.FirstChildElement("quest");
+                const TiXmlElement * requirementsItem = requirements->FirstChildElement("quest");
                 while(requirementsItem!=NULL)
                 {
                     if(requirementsItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -359,13 +359,13 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     }
                     else
                         std::cerr << "Unable to open the file: " << file << ", is not an element: child->ValueStr(): " << requirementsItem->ValueStr() << " (at line: " << requirementsItem->Row() << ")" << std::endl;
-                    requirementsItem = requirementsItem.NextSiblingElement("quest");
+                    requirementsItem = requirementsItem->NextSiblingElement("quest");
                 }
             }
         }
         else
             std::cerr << "Unable to open the file: " << file << ", is not an element: child->ValueStr(): " << requirements->ValueStr() << " (at line: " << requirements->Row() << ")" << std::endl;
-        requirements = requirements.NextSiblingElement("requirements");
+        requirements = requirements->NextSiblingElement("requirements");
     }
 
     //load rewards
@@ -376,7 +376,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
         {
             //load rewards reputation
             {
-                const TiXmlElement * reputationItem = rewards.FirstChildElement("reputation");
+                const TiXmlElement * reputationItem = rewards->FirstChildElement("reputation");
                 while(reputationItem!=NULL)
                 {
                     if(reputationItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -404,12 +404,12 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     }
                     else
                         std::cerr << "Unable to open the file: " << file << ", is not an element: child->ValueStr(): " << reputationItem->ValueStr() << " (at line: " << reputationItem->Row() << ")" << std::endl;
-                    reputationItem = reputationItem.NextSiblingElement("reputation");
+                    reputationItem = reputationItem->NextSiblingElement("reputation");
                 }
             }
             //load rewards item
             {
-                const TiXmlElement * rewardsItem = rewards.FirstChildElement("item");
+                const TiXmlElement * rewardsItem = rewards->FirstChildElement("item");
                 while(rewardsItem!=NULL)
                 {
                     if(rewardsItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -442,12 +442,12 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     }
                     else
                         std::cerr << "Unable to open the file: " << file << ", is not an element: child->ValueStr(): " << rewardsItem->ValueStr() << " (at line: " << rewardsItem->Row() << ")" << std::endl;
-                    rewardsItem = rewardsItem.NextSiblingElement("item");
+                    rewardsItem = rewardsItem->NextSiblingElement("item");
                 }
             }
             //load rewards allow
             {
-                const TiXmlElement * allowItem = rewards.FirstChildElement("allow");
+                const TiXmlElement * allowItem = rewards->FirstChildElement("allow");
                 while(allowItem!=NULL)
                 {
                     if(allowItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -464,13 +464,13 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     }
                     else
                         std::cerr << "Unable to open the file: " << file << ", is not an element: child->ValueStr(): " << allowItem->ValueStr() << " (at line: " << allowItem->Row() << ")" << std::endl;
-                    allowItem = allowItem.NextSiblingElement("allow");
+                    allowItem = allowItem->NextSiblingElement("allow");
                 }
             }
         }
         else
             std::cerr << "Unable to open the file: " << file << ", is not an element: child->ValueStr(): " << rewards->ValueStr() << " (at line: " << rewards->Row() << ")" << std::endl;
-        rewards = rewards.NextSiblingElement("rewards");
+        rewards = rewards->NextSiblingElement("rewards");
     }
 
     std::unordered_map<uint8_t,CatchChallenger::Quest::Step> steps;
@@ -502,7 +502,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                         stepObject.bots=defaultBots;
                     //do the item
                     {
-                        const TiXmlElement * stepItem = step.FirstChildElement("item");
+                        const TiXmlElement * stepItem = step->FirstChildElement("item");
                         while(stepItem!=NULL)
                         {
                             if(stepItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -556,12 +556,12 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                             }
                             else
                                 std::cerr << "Unable to open the file: " << file << ", is not an element: child->ValueStr(): " << step->ValueStr() << " (at line: " << step->Row() << ")" << std::endl;
-                            stepItem = stepItem.NextSiblingElement("item");
+                            stepItem = stepItem->NextSiblingElement("item");
                         }
                     }
                     //do the fight
                     {
-                        const TiXmlElement * fightItem = step.FirstChildElement("fight");
+                        const TiXmlElement * fightItem = step->FirstChildElement("fight");
                         while(fightItem!=NULL)
                         {
                             if(fightItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -579,7 +579,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                             }
                             else
                                 std::cerr << "Unable to open the file: " << file << ", is not an element: child->ValueStr(): " << fightItem->ValueStr() << " (at line: " << fightItem->Row() << ")" << std::endl;
-                            fightItem = fightItem.NextSiblingElement("fight");
+                            fightItem = fightItem->NextSiblingElement("fight");
                         }
                     }
                     steps[id]=stepObject;
@@ -592,7 +592,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
         }
         else
             std::cerr << "Unable to open the file: " << file << ", is not an element: child->ValueStr(): " << step->ValueStr() << " (at line: " << step->Row() << ")" << std::endl;
-        step = step.NextSiblingElement("step");
+        step = step->NextSiblingElement("step");
     }
 
     //sort the step
@@ -668,10 +668,10 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                         plant.flowering_seconds=0;
                         plant.itemUsed=itemUsed;
                         {
-                            const TiXmlElement * requirementsItem = plantItem.FirstChildElement("requirements");
+                            const TiXmlElement * requirementsItem = plantItem->FirstChildElement("requirements");
                             if(requirementsItem!=NULL && requirementsItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                             {
-                                const TiXmlElement * reputationItem = requirementsItem.FirstChildElement("reputation");
+                                const TiXmlElement * reputationItem = requirementsItem->FirstChildElement("reputation");
                                 while(reputationItem!=NULL)
                                 {
                                     if(reputationItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -700,15 +700,15 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                     }
                                     else
                                         std::cerr << "Unable to open the industries link file: " << file << ", is not a element, child->ValueStr(): " << reputationItem->ValueStr() << " (at line: " << reputationItem->Row() << ")" << std::endl;
-                                    reputationItem = reputationItem.NextSiblingElement("reputation");
+                                    reputationItem = reputationItem->NextSiblingElement("reputation");
                                 }
                             }
                         }
                         {
-                            const TiXmlElement * rewardsItem = plantItem.FirstChildElement("rewards");
+                            const TiXmlElement * rewardsItem = plantItem->FirstChildElement("rewards");
                             if(rewardsItem!=NULL && rewardsItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                             {
-                                const TiXmlElement * reputationItem = rewardsItem.FirstChildElement("reputation");
+                                const TiXmlElement * reputationItem = rewardsItem->FirstChildElement("reputation");
                                 while(reputationItem!=NULL)
                                 {
                                     if(reputationItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -731,12 +731,12 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                     }
                                     else
                                         std::cerr << "Unable to open the industries link file: " << file << ", is not a element, child->ValueStr(): " << reputationItem->ValueStr() << " (at line: " << reputationItem->Row() << ")" << std::endl;
-                                    reputationItem = reputationItem.NextSiblingElement("reputation");
+                                    reputationItem = reputationItem->NextSiblingElement("reputation");
                                 }
                             }
                         }
                         ok=false;
-                        const TiXmlElement * quantity = plantItem.FirstChildElement("quantity");
+                        const TiXmlElement * quantity = plantItem->FirstChildElement("quantity");
                         if(quantity!=NULL)
                         {
                             if(quantity->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -751,12 +751,12 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                             }
                         }
                         int intermediateTimeCount=0;
-                        const TiXmlElement * grow = plantItem.FirstChildElement("grow");
+                        const TiXmlElement * grow = plantItem->FirstChildElement("grow");
                         if(grow!=NULL)
                         {
                             if(grow->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                             {
-                                const TiXmlElement * fruits = grow.FirstChildElement("fruits");
+                                const TiXmlElement * fruits = grow->FirstChildElement("fruits");
                                 if(fruits!=NULL)
                                 {
                                     if(fruits->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -782,7 +782,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                     ok=false;
                                     std::cerr << "Unable to parse the plants file: " << file << ", fruits is null: child->ValueStr(): " << fruits->ValueStr() << " (at line: " << fruits->Row() << ")" << std::endl;
                                 }
-                                const TiXmlElement * sprouted = grow.FirstChildElement("sprouted");
+                                const TiXmlElement * sprouted = grow->FirstChildElement("sprouted");
                                 if(sprouted!=NULL)
                                 {
                                     if(sprouted->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -799,7 +799,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                     else
                                         std::cerr << "Unable to parse the plants file: " << file << ", sprouted is not an element: child->ValueStr(): " << sprouted->ValueStr() << " (at line: " << sprouted->Row() << ")" << std::endl;
                                 }
-                                const TiXmlElement * taller = grow.FirstChildElement("taller");
+                                const TiXmlElement * taller = grow->FirstChildElement("taller");
                                 if(taller!=NULL)
                                 {
                                     if(taller->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -816,7 +816,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                     else
                                         std::cerr << "Unable to parse the plants file: " << file << ", taller is not an element: child->ValueStr(): " << taller->ValueStr() << " (at line: " << taller->Row() << ")" << std::endl;
                                 }
-                                const TiXmlElement * flowering = grow.FirstChildElement("flowering");
+                                const TiXmlElement * flowering = grow->FirstChildElement("flowering");
                                 if(flowering!=NULL)
                                 {
                                     if(flowering->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -886,7 +886,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
         }
         else
             std::cerr << "Unable to open the plants file: " << file << ", is not an element: child->ValueStr(): " << plantItem->ValueStr() << " (at line: " << plantItem->Row() << ")" << std::endl;
-        plantItem = plantItem.NextSiblingElement("plant");
+        plantItem = plantItem->NextSiblingElement("plant");
     }
     return plants;
 }
@@ -981,10 +981,10 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                         recipe.quantity=quantity;
                         recipe.success=success;
                         {
-                            const TiXmlElement * requirementsItem = recipeItem.FirstChildElement("requirements");
+                            const TiXmlElement * requirementsItem = recipeItem->FirstChildElement("requirements");
                             if(requirementsItem!=NULL && requirementsItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                             {
-                                const TiXmlElement * reputationItem = requirementsItem.FirstChildElement("reputation");
+                                const TiXmlElement * reputationItem = requirementsItem->FirstChildElement("reputation");
                                 while(reputationItem!=NULL)
                                 {
                                     if(reputationItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -1013,15 +1013,15 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                                     }
                                     else
                                         std::cerr << "Unable to open the industries link file: " << file << ", is not a element, child->ValueStr(): " << reputationItem->ValueStr() << " (at line: " << reputationItem->Row() << ")" << std::endl;
-                                    reputationItem = reputationItem.NextSiblingElement("reputation");
+                                    reputationItem = reputationItem->NextSiblingElement("reputation");
                                 }
                             }
                         }
                         {
-                            const TiXmlElement * rewardsItem = recipeItem.FirstChildElement("rewards");
+                            const TiXmlElement * rewardsItem = recipeItem->FirstChildElement("rewards");
                             if(rewardsItem!=NULL && rewardsItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                             {
-                                const TiXmlElement * reputationItem = rewardsItem.FirstChildElement("reputation");
+                                const TiXmlElement * reputationItem = rewardsItem->FirstChildElement("reputation");
                                 while(reputationItem!=NULL)
                                 {
                                     if(reputationItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -1044,11 +1044,11 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                                     }
                                     else
                                         std::cerr << "Unable to open the industries link file: " << file << ", is not a element, child->ValueStr(): " << reputationItem->ValueStr() << " (at line: " << reputationItem->Row() << ")" << std::endl;
-                                    reputationItem = reputationItem.NextSiblingElement("reputation");
+                                    reputationItem = reputationItem->NextSiblingElement("reputation");
                                 }
                             }
                         }
-                        const TiXmlElement * material = recipeItem.FirstChildElement("material");
+                        const TiXmlElement * material = recipeItem->FirstChildElement("material");
                         while(material!=NULL && ok)
                         {
                             if(material->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -1121,7 +1121,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                             }
                             else
                                 std::cerr << "preload_crafting_recipes() material is not an element for crafting recipe file: " << file << ": child->ValueStr(): " << material->ValueStr() << " (at line: " << material->Row() << ")" << std::endl;
-                            material = material.NextSiblingElement("material");
+                            material = material->NextSiblingElement("material");
                         }
                         if(ok)
                         {
@@ -1180,7 +1180,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
         }
         else
             std::cerr << "Unable to open the crafting recipe file: " << file << ", is not an element: child->ValueStr(): " << recipeItem->ValueStr() << " (at line: " << recipeItem->Row() << ")" << std::endl;
-        recipeItem = recipeItem.NextSiblingElement("recipe");
+        recipeItem = recipeItem->NextSiblingElement("recipe");
     }
     return std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
 }
@@ -1260,7 +1260,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                             }
                             //resource
                             {
-                                const TiXmlElement * resourceItem = industryItem.FirstChildElement("resource");
+                                const TiXmlElement * resourceItem = industryItem->FirstChildElement("resource");
                                 ok=true;
                                 while(resourceItem!=NULL && ok)
                                 {
@@ -1331,14 +1331,14 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                                         ok=false;
                                         std::cerr << "is not a elements: child->ValueStr(): " << industryItem->ValueStr() << " (at line: " << industryItem->Row() << ")" << std::endl;
                                     }
-                                    resourceItem = resourceItem.NextSiblingElement("resource");
+                                    resourceItem = resourceItem->NextSiblingElement("resource");
                                 }
                             }
 
                             //product
                             if(ok)
                             {
-                                const TiXmlElement * productItem = industryItem.FirstChildElement("product");
+                                const TiXmlElement * productItem = industryItem->FirstChildElement("product");
                                 ok=true;
                                 while(productItem!=NULL && ok)
                                 {
@@ -1409,7 +1409,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                                         ok=false;
                                         std::cerr << "is not a elements: child->ValueStr(): " << industryItem->ValueStr() << " (at line: " << industryItem->Row() << ")" << std::endl;
                                     }
-                                    productItem = productItem.NextSiblingElement("product");
+                                    productItem = productItem->NextSiblingElement("product");
                                 }
                             }
 
@@ -1433,7 +1433,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
             }
             else
                 std::cerr << "Unable to open the industries is not an element: file: " << file << ", child->ValueStr(): " << industryItem->ValueStr() << " (at line: " << industryItem->Row() << ")" << std::endl;
-            industryItem = industryItem.NextSiblingElement("industrialrecipe");
+            industryItem = industryItem->NextSiblingElement("industrialrecipe");
         }
         file_index++;
     }
@@ -1498,10 +1498,10 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
                             IndustryLink *industryLink=&industriesLink[factory_id];
                             {
                                 {
-                                    const TiXmlElement * requirementsItem = linkItem.FirstChildElement("requirements");
+                                    const TiXmlElement * requirementsItem = linkItem->FirstChildElement("requirements");
                                     if(requirementsItem!=NULL && requirementsItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                     {
-                                        const TiXmlElement * reputationItem = requirementsItem.FirstChildElement("reputation");
+                                        const TiXmlElement * reputationItem = requirementsItem->FirstChildElement("reputation");
                                         while(reputationItem!=NULL)
                                         {
                                             if(reputationItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -1530,15 +1530,15 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
                                             }
                                             else
                                                 std::cerr << "Unable to open the industries link is not a element, file: " << file << ", child->ValueStr(): " << reputationItem->ValueStr() << " (at line: " << reputationItem->Row() << ")" << std::endl;
-                                            reputationItem = reputationItem.NextSiblingElement("reputation");
+                                            reputationItem = reputationItem->NextSiblingElement("reputation");
                                         }
                                     }
                                 }
                                 {
-                                    const TiXmlElement * rewardsItem = linkItem.FirstChildElement("rewards");
+                                    const TiXmlElement * rewardsItem = linkItem->FirstChildElement("rewards");
                                     if(rewardsItem!=NULL && rewardsItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                                     {
-                                        const TiXmlElement * reputationItem = rewardsItem.FirstChildElement("reputation");
+                                        const TiXmlElement * reputationItem = rewardsItem->FirstChildElement("reputation");
                                         while(reputationItem!=NULL)
                                         {
                                             if(reputationItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -1561,7 +1561,7 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
                                             }
                                             else
                                                 std::cerr << "Unable to open the industries link is not a element, file: " << file << ", child->ValueStr(): " << reputationItem->ValueStr() << " (at line: " << reputationItem->Row() << ")" << std::endl;
-                                            reputationItem = reputationItem.NextSiblingElement("reputation");
+                                            reputationItem = reputationItem->NextSiblingElement("reputation");
                                         }
                                     }
                                 }
@@ -1581,7 +1581,7 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
         }
         else
             std::cerr << "Unable to open the industries link is not a element, file: " << file << ", child->ValueStr(): " << linkItem->ValueStr() << " (at line: " << linkItem->Row() << ")" << std::endl;
-        linkItem = linkItem.NextSiblingElement("link");
+        linkItem = linkItem->NextSiblingElement("link");
     }
     return industriesLink;
 }
@@ -1688,7 +1688,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                             //load the trap
                             if(!haveAnEffect)
                             {
-                                const TiXmlElement * trapItem = item.FirstChildElement("trap");
+                                const TiXmlElement * trapItem = item->FirstChildElement("trap");
                                 if(trapItem!=NULL)
                                 {
                                     if(trapItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -1713,7 +1713,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                             //load the repel
                             if(!haveAnEffect)
                             {
-                                const TiXmlElement * repelItem = item.FirstChildElement("repel");
+                                const TiXmlElement * repelItem = item->FirstChildElement("repel");
                                 if(repelItem!=NULL)
                                 {
                                     if(repelItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -1743,7 +1743,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                             if(!haveAnEffect)
                             {
                                 {
-                                    const TiXmlElement * hpItem = item.FirstChildElement("hp");
+                                    const TiXmlElement * hpItem = item->FirstChildElement("hp");
                                     while(hpItem!=NULL)
                                     {
                                         if(hpItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -1782,12 +1782,12 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                             else
                                                 std::cerr << "Unable to open the file, hp have not the attribute add, file: " << file << ", child->ValueStr(): " << hpItem->ValueStr() << " (at line: " << hpItem->Row() << ")" << std::endl;
                                         }
-                                        hpItem = hpItem.NextSiblingElement("hp");
+                                        hpItem = hpItem->NextSiblingElement("hp");
                                     }
                                 }
                                 #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
                                 {
-                                    const TiXmlElement * buffItem = item.FirstChildElement("buff");
+                                    const TiXmlElement * buffItem = item->FirstChildElement("buff");
                                     while(buffItem!=NULL)
                                     {
                                         if(buffItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -1829,7 +1829,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                              /* else
                                                 std::cerr << "Unable to open the file: " << file << ", buff have not the attribute know attribute like remove: child->ValueStr(): %2 (at line: %3)").arg(file).arg(buffItem->ValueStr()).arg(buffItem->Row());*/
                                         }
-                                        buffItem = buffItem.NextSiblingElement("buff");
+                                        buffItem = buffItem->NextSiblingElement("buff");
                                     }
                                 }
                                 #endif
@@ -1839,7 +1839,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                             //load the monster offline effect
                             if(!haveAnEffect)
                             {
-                                const TiXmlElement * levelItem = item.FirstChildElement("level");
+                                const TiXmlElement * levelItem = item->FirstChildElement("level");
                                 while(levelItem!=NULL)
                                 {
                                     if(levelItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -1862,7 +1862,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                         else
                                             std::cerr << "Unable to open the file, level have not the attribute up, file: " << file << ", child->ValueStr(): " << levelItem->ValueStr() << " (at line: " << levelItem->Row() << ")" << std::endl;
                                     }
-                                    levelItem = levelItem.NextSiblingElement("level");
+                                    levelItem = levelItem->NextSiblingElement("level");
                                 }
                             }
                         }
@@ -1877,7 +1877,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
             }
             else
                 std::cerr << "Unable to open the file, is not an element, file: " << file << ", child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
-            item = item.NextSiblingElement("item");
+            item = item->NextSiblingElement("item");
         }
         file_index++;
     }
@@ -1958,13 +1958,13 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
             if(idDuplicate.find(profile.id)!=idDuplicate.cend())
             {
                 std::cerr << "Unable to open the xml file: " << file << ", child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
-                startItem = startItem.NextSiblingElement("start");
+                startItem = startItem->NextSiblingElement("start");
                 continue;
             }
 
             if(!profile.id.empty() && idDuplicate.find(profile.id)==idDuplicate.cend())
             {
-                const TiXmlElement * forcedskin = startItem.FirstChildElement("forcedskin");
+                const TiXmlElement * forcedskin = startItem->FirstChildElement("forcedskin");
 
                 std::vector<std::string> forcedskinList;
                 if(forcedskin!=NULL && forcedskin->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && forcedskin.hasAttribute("value"))
@@ -1995,7 +1995,7 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
                 }
 
                 profile.cash=0;
-                const TiXmlElement * cash = startItem.FirstChildElement("cash");
+                const TiXmlElement * cash = startItem->FirstChildElement("cash");
                 if(cash!=NULL && cash->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && cash.hasAttribute("value"))
                 {
                     profile.cash=cash->Attribute("value").toULongLong(&ok);
@@ -2005,7 +2005,7 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
                         profile.cash=0;
                     }
                 }
-                const TiXmlElement * monstersElement = startItem.FirstChildElement("monster");
+                const TiXmlElement * monstersElement = startItem->FirstChildElement("monster");
                 while(monstersElement!=NULL)
                 {
                     Profile::Monster monster;
@@ -2049,15 +2049,15 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
                         if(ok)
                             profile.monsters.push_back(monster);
                     }
-                    monstersElement = monstersElement.NextSiblingElement("monster");
+                    monstersElement = monstersElement->NextSiblingElement("monster");
                 }
                 if(profile.monsters.empty())
                 {
                     std::cerr << "Unable to open the xml file: " << file << ", not monster to load: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
-                    startItem = startItem.NextSiblingElement("start");
+                    startItem = startItem->NextSiblingElement("start");
                     continue;
                 }
-                const TiXmlElement * reputationElement = startItem.FirstChildElement("reputation");
+                const TiXmlElement * reputationElement = startItem->FirstChildElement("reputation");
                 while(reputationElement!=NULL)
                 {
                     Profile::Reputation reputationTemp;
@@ -2116,9 +2116,9 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
                         if(ok)
                             profile.reputation.push_back(reputationTemp);
                     }
-                    reputationElement = reputationElement.NextSiblingElement("reputation");
+                    reputationElement = reputationElement->NextSiblingElement("reputation");
                 }
-                const TiXmlElement * itemElement = startItem.FirstChildElement("item");
+                const TiXmlElement * itemElement = startItem->FirstChildElement("item");
                 while(itemElement!=NULL)
                 {
                     Profile::Item itemTemp;
@@ -2158,7 +2158,7 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
                         if(ok)
                             profile.items.push_back(itemTemp);
                     }
-                    itemElement = itemElement.NextSiblingElement("item");
+                    itemElement = itemElement->NextSiblingElement("item");
                 }
                 idDuplicate.insert(profile.id);
                 returnVar.second.push_back(profile);
@@ -2167,7 +2167,7 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
         }
         else
             std::cerr << "Unable to open the xml file: " << file << ", is not an element: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
-        startItem = startItem.NextSiblingElement("start");
+        startItem = startItem->NextSiblingElement("start");
     }
     return returnVar;
 }
@@ -2290,7 +2290,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
                         vectorDuplicatesForSmallList(monstersCollision.defautMonsterTypeList);
                         monstersCollision.monsterTypeList=monstersCollision.defautMonsterTypeList;
                         //load the condition
-                        const TiXmlElement * eventItem = monstersCollisionItem.FirstChildElement("event");
+                        const TiXmlElement * eventItem = monstersCollisionItem->FirstChildElement("event");
                         while(eventItem!=NULL)
                         {
                             if(eventItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -2328,7 +2328,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
                                 else
                                     std::cerr << "event have missing attribute, into file: " << file << " at line " << eventItem->Row() << std::endl;
                             }
-                            eventItem = eventItem.NextSiblingElement("event");
+                            eventItem = eventItem->NextSiblingElement("event");
                         }
                     }
                 }
@@ -2369,7 +2369,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
                 }
             }
         }
-        monstersCollisionItem = monstersCollisionItem.NextSiblingElement("monstersCollision");
+        monstersCollisionItem = monstersCollisionItem->NextSiblingElement("monstersCollision");
     }
     return returnVar;
 }
@@ -2468,18 +2468,18 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
             {
                 Event event;
                 event.name=eventItem->Attribute("id");
-                const TiXmlElement * valueItem = eventItem.FirstChildElement("value");
+                const TiXmlElement * valueItem = eventItem->FirstChildElement("value");
                 while(valueItem!=NULL)
                 {
                     if(valueItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
                         event.values.push_back(valueItem.text());
-                    valueItem = valueItem.NextSiblingElement("value");
+                    valueItem = valueItem->NextSiblingElement("value");
                 }
                 if(!event.values.empty())
                     returnVar.push_back(event);
             }
         }
-        eventItem = eventItem.NextSiblingElement("event");
+        eventItem = eventItem->NextSiblingElement("event");
     }
     return returnVar;
 }
@@ -2527,7 +2527,7 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
                     if(shops.find(id)==shops.cend())
                     {
                         Shop shop;
-                        const TiXmlElement * product = shopItem.FirstChildElement("product");
+                        const TiXmlElement * product = shopItem->FirstChildElement("product");
                         while(product!=NULL)
                         {
                             if(product->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
@@ -2565,7 +2565,7 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
                             }
                             else
                                 std::cerr << "preload_shop() material is not an element for shops file: " << file << ", child->ValueStr(): " << shopItem->ValueStr() << " (at line: " << shopItem->Row() << ")" << std::endl;
-                            product = product.NextSiblingElement("product");
+                            product = product->NextSiblingElement("product");
                         }
                         shops[id]=shop;
                     }
@@ -2580,7 +2580,7 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
         }
         else
             std::cerr << "Unable to open the shops file: " << file << ", is not an element: child->ValueStr(): " << shopItem->ValueStr() << " (at line: " << shopItem->Row() << ")" << std::endl;
-        shopItem = shopItem.NextSiblingElement("shop");
+        shopItem = shopItem->NextSiblingElement("shop");
     }
     return shops;
 }
@@ -2679,7 +2679,7 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(
             ServerProfile serverProfile;
             serverProfile.orientation=Orientation_bottom;
 
-            const TiXmlElement * map = startItem.FirstChildElement("map");
+            const TiXmlElement * map = startItem->FirstChildElement("map");
             if(map!=NULL && map->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && map.hasAttribute("file") && map.hasAttribute("x") && map.hasAttribute("y"))
             {
                 serverProfile.mapString=map->Attribute("file");
@@ -2688,28 +2688,28 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(
                 if(!QFile::exists(QString::fromStdString(datapackPath+DATAPACK_BASE_PATH_MAPMAIN+mainDatapackCode+"/"+serverProfile.mapString)))
                 {
                     std::cerr << "Unable to open the xml file: " << file << ", map don't exists " << serverProfile.mapString << ": child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
-                    startItem = startItem.NextSiblingElement("start");
+                    startItem = startItem->NextSiblingElement("start");
                     continue;
                 }
                 serverProfile.x=map->Attribute("x").toUShort(&ok);
                 if(!ok)
                 {
                     std::cerr << "Unable to open the xml file: " << file << ", map x is not a number: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
-                    startItem = startItem.NextSiblingElement("start");
+                    startItem = startItem->NextSiblingElement("start");
                     continue;
                 }
                 serverProfile.y=map->Attribute("y").toUShort(&ok);
                 if(!ok)
                 {
                     std::cerr << "Unable to open the xml file: " << file << ", map y is not a number: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
-                    startItem = startItem.NextSiblingElement("start");
+                    startItem = startItem->NextSiblingElement("start");
                     continue;
                 }
             }
             else
             {
                 std::cerr << "Unable to open the xml file: " << file << ", no correct map configuration: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
-                startItem = startItem.NextSiblingElement("start");
+                startItem = startItem->NextSiblingElement("start");
                 continue;
             }
 
@@ -2719,7 +2719,7 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(
             if(idDuplicate.find(serverProfile.id)!=idDuplicate.cend())
             {
                 std::cerr << "Unable to open the xml file: " << file << ", id duplicate: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
-                startItem = startItem.NextSiblingElement("start");
+                startItem = startItem->NextSiblingElement("start");
                 continue;
             }
 
@@ -2731,7 +2731,7 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(
         }
         else
             std::cerr << "Unable to open the xml file: " << file << ", is not an element: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
-        startItem = startItem.NextSiblingElement("start");
+        startItem = startItem->NextSiblingElement("start");
     }
 
     return serverProfileList;
