@@ -309,6 +309,7 @@ void BaseServer::preload_finish()
     std::cout << GlobalServerData::serverPrivateVariables.marketItemList.size() << " SQL market item" << std::endl;
     std::cout << "Loaded the server SQL datapack into " << timeDatapack.elapsed() << "ms" << std::endl;
     preload_other();
+    CommonDatapack::commonDatapack.xmlLoadedFile.clear();
 }
 
 bool BaseServer::load_next_city_capture()

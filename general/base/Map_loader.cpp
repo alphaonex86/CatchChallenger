@@ -128,26 +128,22 @@ bool Map_loader::tryLoadMap(const std::string &file)
     std::vector<std::vector<char> > monsterList;
     std::map<std::string/*layer*/,std::vector<char> > mapLayerContentForMonsterCollision;
     bool ok;
-    TiXmlDocument domDocument(file);
+    TiXmlDocument *domDocument;
 
     //open and quick check the file
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
+        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
-        #endif
-        bool loadOkay = domDocument.LoadFile();
-        if (loadOkay)
+        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        bool loadOkay = domDocument->LoadFile(file);
+        if (!loadOkay)
         {
-            error=file+", Parse error at line "+std::to_string(domDocument.ErrorRow())+" column "+std::to_string(domDocument.ErrorCol())+": "+domDocument.ErrorDesc();
+            error=file+", Parse error at line "+std::to_string(domDocument->ErrorRow())+" column "+std::to_string(domDocument->ErrorCol())+": "+domDocument->ErrorDesc();
             return false;
         }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        CommonDatapack::commonDatapack.xmlLoadedFile[fileName]=domDocument;
     }
-    #endif
-    const TiXmlElement * root = domDocument.RootElement();
+    const TiXmlElement * root = domDocument->RootElement();
     if(root->ValueStr()!=Map_loader::text_map)
     {
         error="\"map\" root balise not found for the xml file";
@@ -1163,26 +1159,22 @@ bool Map_loader::tryLoadMap(const std::string &file)
 
 bool Map_loader::loadMonsterMap(const std::string &file, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer)
 {
-    TiXmlDocument domDocument;
+    TiXmlDocument *domDocument;
 
     //open and quick check the file
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(fileName)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(fileName);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
-        #endif
-        const bool loadOkay=domDocument.LoadFile();
-                    if(!loadOkay)
+        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        const bool loadOkay=domDocument->LoadFile(file);
+        if(!loadOkay)
         {
-            std::cerr << file << ", Parse error at line " << std::to_string(domDocument.ErrorRow()) << ", column " << std::to_string(domDocument.ErrorCol()) << ": " << domDocument.ErrorDesc() << std::endl;
+            std::cerr << file << ", Parse error at line " << std::to_string(domDocument->ErrorRow()) << ", column " << std::to_string(domDocument->ErrorCol()) << ": " << domDocument->ErrorDesc() << std::endl;
             return false;
         }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        CommonDatapack::commonDatapack.xmlLoadedFile[fileName]=domDocument;
     }
-    #endif
-    this->map_to_send.xmlRoot = domDocument.RootElement();
+    this->map_to_send.xmlRoot = domDocument->RootElement();
     if(this->map_to_send.xmlRoot->ValueStr()!=Map_loader::text_map)
     {
         std::cerr << "\"map\" root balise not found for the xml file" << std::endl;
@@ -1476,26 +1468,22 @@ TiXmlElement *Map_loader::getXmlCondition(const std::string &fileName,const std:
     }
     teleportConditionsUnparsed[file][conditionId];
     bool ok;
-    TiXmlDocument domDocument;
+    TiXmlDocument *domDocument;
 
     //open and quick check the file
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(conditionFile)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.at(conditionFile);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
-        #endif
-        const bool loadOkay=domDocument.LoadFile();
+        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        const bool loadOkay=domDocument->LoadFile(file);
         if(!loadOkay)
         {
-            std::cerr << file << ", Parse error at line " << domDocument.ErrorRow() << ", column " << domDocument.ErrorCol() << ": " << domDocument.ErrorDesc() << std::endl;
+            std::cerr << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
             return NULL;
         }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        CommonDatapack::commonDatapack.xmlLoadedFile[conditionFile]=domDocument;
     }
-    #endif
-    const TiXmlElement * root = domDocument.RootElement();
+    const TiXmlElement * root = domDocument->RootElement();
     if(root->ValueStr()!="conditions")
     {
         std::cerr << "\"conditions\" root balise not found for the xml file " << file << std::endl;
@@ -1537,8 +1525,12 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
     MapCondition condition;
     condition.type=MapConditionType_None;
     condition.value=0;
-    const std::string &conditionContentType=*conditionContent->Attribute(Map_loader::text_type);
-    if(conditionContentType==Map_loader::text_quest)
+    if(conditionContent==NULL)
+        return condition;
+    const std::string * const conditionContentType=conditionContent->Attribute(Map_loader::text_type);
+    if(conditionContentType==NULL)
+        return condition;
+    if(*conditionContentType==Map_loader::text_quest)
     {
         if(conditionContent->Attribute(Map_loader::text_quest)==NULL)
             std::cerr << "\"condition\" balise have type=quest but quest attribute not found, item, clan or fightBot (" << conditionFile << " at " << conditionContent->Row() << ")" << std::endl;
@@ -1556,7 +1548,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
             }
         }
     }
-    else if(conditionContentType==Map_loader::text_item)
+    else if(*conditionContentType==Map_loader::text_item)
     {
         if(conditionContent->Attribute(Map_loader::text_item)==NULL)
             std::cerr << "\"condition\" balise have type=item but item attribute not found, item, clan or fightBot (" << conditionFile << " at " << conditionContent->Row() << ")" << std::endl;
@@ -1574,7 +1566,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
             }
         }
     }
-    else if(conditionContentType==Map_loader::text_fightBot)
+    else if(*conditionContentType==Map_loader::text_fightBot)
     {
         if(conditionContent->Attribute(Map_loader::text_fightBot)==NULL)
             std::cerr << "\"condition\" balise have type=fightBot but fightBot attribute not found, item, clan or fightBot (" << conditionFile << " at " << conditionContent->Row() << ")" << std::endl;
@@ -1592,7 +1584,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
             }
         }
     }
-    else if(conditionContentType==Map_loader::text_clan)
+    else if(*conditionContentType==Map_loader::text_clan)
         condition.type=MapConditionType_Clan;
     else
         std::cerr << "\"condition\" balise have type but value is not quest, item, clan or fightBot (" << conditionFile << " at " << conditionContent->Row() << ")" << std::endl;
