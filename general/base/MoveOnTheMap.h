@@ -1,7 +1,6 @@
 #ifndef CATCHCHALLENGER_MOVEONTHEMAP_H
 #define CATCHCHALLENGER_MOVEONTHEMAP_H
 
-#include <QObject>
 #include <string>
 
 #include "GeneralStructures.h"

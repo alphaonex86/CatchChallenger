@@ -2,9 +2,7 @@
 #include "CommonDatapack.h"
 #include "CommonSettingsServer.h"
 
-#include <QFileInfo>
-#include <QFileInfoList>
-#include <QDir>
+#include <ctime>
 
 using namespace CatchChallenger;
 
@@ -112,28 +110,29 @@ std::string FacilityLib::genderToString(const Gender &gender)
     return FacilityLib::text_unknown;
 }
 
-QDateTime FacilityLib::nextCaptureTime(const City &city)
+uint64_t FacilityLib::nextCaptureTime(const City &city)
 {
-    QDateTime nextCityCapture=QDateTime::currentDateTime();
-    nextCityCapture.setTime(QTime(city.capture.hour,city.capture.minute));
+    time_t t = time(0);   // get time now
+    struct std::tm * nextCityCapture = localtime(&t);
+    nextCityCapture->tm_sec=0;
+    nextCityCapture->tm_min=city.capture.minute;
+    nextCityCapture->tm_hour=city.capture.hour;
     if(city.capture.frenquency==City::Capture::Frequency_week)
     {
-        while(nextCityCapture.date().dayOfWeek()!=(int)city.capture.day || nextCityCapture<=QDateTime::currentDateTime())
-            nextCityCapture=nextCityCapture.addDays(1);
+        while(nextCityCapture->tm_wday!=(int)city.capture.day)
+            nextCityCapture->tm_mday++;
     }
     else
     {
-        while(nextCityCapture<=QDateTime::currentDateTime())
+        if(nextCityCapture->tm_mon>=12)
         {
-            QDate tempDate=nextCityCapture.date();
-            if(tempDate.month()>=12)
-                tempDate.setDate(tempDate.year()+1,1,1);
-            else
-                tempDate.setDate(tempDate.year(),tempDate.month()+1,1);
-            nextCityCapture.setDate(tempDate);
+            nextCityCapture->tm_mon=0;
+            nextCityCapture->tm_year++;
         }
+        else
+            nextCityCapture->tm_mon++;
     }
-    return nextCityCapture;
+    return std::mktime(nextCityCapture);
 }
 
 uint32_t FacilityLib::privateMonsterToBinary(char *data,const PlayerMonster &monster)
@@ -196,7 +195,7 @@ IndustryStatus FacilityLib::factoryCheckProductionStart(const IndustryStatus &in
 {
     IndustryStatus industryStatusCopy=industryStatus;
     if(factoryProductionStarted(industryStatus,industry))
-        industryStatusCopy.last_update=QDateTime::currentMSecsSinceEpoch()/1000;
+        industryStatusCopy.last_update=time(0);
     return industryStatusCopy;
 }
 
@@ -237,9 +236,9 @@ IndustryStatus FacilityLib::industryStatusWithCurrentTime(const IndustryStatus &
     IndustryStatus industryStatusCopy=industryStatus;
     //do the generated item
     uint32_t ableToProduceCycleCount=0;
-    if(industryStatus.last_update<(QDateTime::currentMSecsSinceEpoch()/1000))
+    if(industryStatus.last_update<(time(0)))
     {
-        ableToProduceCycleCount=(QDateTime::currentMSecsSinceEpoch()/1000-industryStatus.last_update)/industry.time;
+        ableToProduceCycleCount=(time(0)-industryStatus.last_update)/industry.time;
         if(ableToProduceCycleCount>industry.cycletobefull)
             ableToProduceCycleCount=industry.cycletobefull;
     }

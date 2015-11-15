@@ -30,10 +30,8 @@ uint8_t ProtocolParsing::compressionLevel=6;
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 
-extern "C" void *lz_alloc(void *opaque, size_t nmemb, size_t size)
+extern "C" void *lz_alloc(void *, size_t , size_t size)
 {
-    Q_UNUSED(opaque);
-    Q_UNUSED(nmemb);
     void *p = NULL;
     try{
         p = new char [size];
@@ -45,9 +43,8 @@ extern "C" void *lz_alloc(void *opaque, size_t nmemb, size_t size)
     return p;
 }
 
-extern "C" void lz_free(void *opaque, void *ptr)
+extern "C" void lz_free(void *, void *ptr)
 {
-    Q_UNUSED(opaque);
     delete [] (char*)ptr;
 }
 
