@@ -1,8 +1,6 @@
 #ifndef COMMONDATAPACK_H
 #define COMMONDATAPACK_H
 
-#include <QObject>
-#include <QMutex>
 #include <unordered_map>
 #include <string>
 
@@ -51,7 +49,6 @@ public:
     #endif
     std::vector<std::string > skins;
 private:
-    QMutex inProgress;
     bool isParsed;
     std::string datapackPath;
 private:

@@ -1,11 +1,9 @@
 #ifndef CATCHCHALLENGER_GENERAL_STRUCTURES_XML_H
 #define CATCHCHALLENGER_GENERAL_STRUCTURES_XML_H
 
-#include <QObject>
 #include <vector>
 #include <string>
 #include <unordered_map>
-#include <QVariant>
 
 #include "tinyXML/tinyxml.h"
 #include "GeneralType.h"

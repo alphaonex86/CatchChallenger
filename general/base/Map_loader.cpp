@@ -5,15 +5,9 @@
 
 #include "CommonDatapack.h"
 
-#include <QDir>
-#include <QFile>
-#include <QCoreApplication>
-#include <QVariant>
-#include <QMutex>
-#include <QTime>
-#include <QMutexLocker>
-
 #include <iostream>
+#include <unordered_map>
+#include <map>
 
 using namespace CatchChallenger;
 
@@ -410,11 +404,11 @@ bool Map_loader::tryLoadMap(const std::string &file)
                                                         std::cerr << "condition id is not a number, id: " << property_text.at("condition-id") << " (" << file << " at line: " << SubChild->Row() << ")" << std::endl;
                                                     else
                                                     {
-                                                        std::string conditionFile=QFileInfo(
-                                                                    QFileInfo(QString::fromStdString(file)).absolutePath()+
-                                                                    QString::fromStdString(Map_loader::text_slash)+
-                                                                    QString::fromStdString(property_text.at(Map_loader::text_condition_file))
-                                                                    ).absoluteFilePath().toStdString();
+                                                        std::string conditionFile=FSabsoluteFilePath(
+                                                                    FSabsolutePath(file)+
+                                                                    Map_loader::text_slash+
+                                                                    property_text.at(Map_loader::text_condition_file)
+                                                                    );
                                                         if(!stringEndsWith(conditionFile,Map_loader::text_dotxml))
                                                             conditionFile+=Map_loader::text_dotxml;
                                                         new_tp.conditionUnparsed=getXmlCondition(file,conditionFile,conditionId);
@@ -516,13 +510,11 @@ bool Map_loader::tryLoadMap(const std::string &file)
                                     if(property_text.find(Map_loader::text_file)!=property_text.cend() && property_text.find(Map_loader::text_id)!=property_text.cend())
                                     {
                                         Map_to_send::Bot_Semi bot_semi;
-                                        bot_semi.file=QFileInfo(
-                                                        QString::fromStdString(
-                                                            QFileInfo(QString::fromStdString(file)).absolutePath().toStdString()+
+                                        bot_semi.file=FSabsoluteFilePath(
+                                                            FSabsolutePath(file)+
                                                             Map_loader::text_slash+
                                                             property_text.at(Map_loader::text_file)
-                                                        )
-                                                    ).absoluteFilePath().toStdString();
+                                                    );
                                         bot_semi.id=stringtouint16(property_text.at(Map_loader::text_id),&ok);
                                         bot_semi.property_text=property_text;
                                         if(ok)
@@ -989,8 +981,7 @@ bool Map_loader::tryLoadMap(const std::string &file)
 
     std::string xmlExtra=file;
     stringreplaceAll(xmlExtra,Map_loader::text_dottmx,Map_loader::text_dotxml);
-    if(QFile::exists(QString::fromStdString(xmlExtra)))
-        loadMonsterMap(xmlExtra,detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer);
+    loadMonsterMap(xmlExtra,detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer);
 
     {
         this->map_to_send.parsed_layer.monstersCollisionMap=new uint8_t[this->map_to_send.width*this->map_to_send.height];
@@ -1438,16 +1429,14 @@ std::string Map_loader::resolvRelativeMap(const std::string &file,const std::str
 {
     if(link.empty())
         return link;
-    const std::string &currentPath=QFileInfo(QString::fromStdString(file)).absolutePath().toStdString();
-    QFileInfo newmap(QString::fromStdString(currentPath)+QDir::separator()+QString::fromStdString(link));
-    std::string newPath=newmap.absoluteFilePath().toStdString();
+    std::string newPath=FSabsoluteFilePath(FSabsolutePath(file)+'/'+link);
     if(datapackPath.empty() || stringStartWith(newPath,datapackPath))
     {
         newPath.erase(0,datapackPath.size());
         return newPath;
     }
     std::cerr << "map link not resolved: " << link
-              << ", full path: " << currentPath << QDir::separator().toLatin1() << link
+              << ", file: " << file << ", link: " << link
               << ", newPath: " << newPath
               << ", datapackPath: " << datapackPath << std::endl;
     return link;

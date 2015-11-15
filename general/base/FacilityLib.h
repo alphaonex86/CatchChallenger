@@ -3,9 +3,6 @@
 
 #include <vector>
 #include <string>
-#include <QRect>
-#include <QDir>
-#include <QDateTime>
 #include "GeneralStructures.h"
 
 namespace CatchChallenger {
@@ -17,7 +14,7 @@ public:
     static uint16_t publicPlayerMonsterToBinary(char *data,const PublicPlayerMonster &publicPlayerMonster);
     static PlayerMonster botFightMonsterToPlayerMonster(const BotFight::BotFightMonster &botFightMonster, const Monster::Stat &stat);
     static std::string genderToString(const Gender &gender);
-    static QDateTime nextCaptureTime(const City &city);
+    static uint64_t nextCaptureTime(const City &city);
     static uint32_t privateMonsterToBinary(char *data, const PlayerMonster &monster);
     static IndustryStatus industryStatusWithCurrentTime(const IndustryStatus &industryStatus, const Industry &industry);
     static uint32_t getFactoryResourcePrice(const uint32_t &quantityInStock,const Industry::Resource &resource,const Industry &industry);

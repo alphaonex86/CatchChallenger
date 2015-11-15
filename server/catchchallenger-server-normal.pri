@@ -1,5 +1,5 @@
-include(catchchallenger-server-qt.pri)
 include(../general/general.pri)
+include(catchchallenger-server-qt.pri)
 
 SOURCES += $$PWD/NormalServer.cpp \
     QSslServer.cpp \

@@ -1,7 +1,6 @@
 #ifndef CATCHCHALLENGER_MAP_LOADER_H
 #define CATCHCHALLENGER_MAP_LOADER_H
 
-#include <QObject>
 #include <vector>
 #include <string>
 

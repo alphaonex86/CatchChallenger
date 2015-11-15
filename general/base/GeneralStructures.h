@@ -1,7 +1,6 @@
 #ifndef CATCHCHALLENGER_GENERAL_STRUCTURES_H
 #define CATCHCHALLENGER_GENERAL_STRUCTURES_H
 
-#include <QObject>
 #include <vector>
 #include <string>
 #include <unordered_map>
