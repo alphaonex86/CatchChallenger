@@ -1,8 +1,15 @@
 #include "FacilityLibGeneral.h"
 
-#include <QFileInfo>
-#include <QFileInfoList>
-#include <QDir>
+#include <cstring>
+#include <string>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <errno.h>
+#include <vector>
+#include <iostream>
+#include <algorithm>
+#include <unistd.h>
 
 using namespace CatchChallenger;
 
@@ -31,21 +38,61 @@ unsigned int FacilityLibGeneral::toUTF8With16BitsHeader(const std::string &text,
     return 2+text.size();
 }
 
+std::vector<FacilityLibGeneral::InodeDescriptor> FacilityLibGeneral::listFolderNotRecursive(const std::string& folder,const ListFolder &type)
+{
+    std::vector<InodeDescriptor> output;
+    DIR *dir;
+    struct dirent *ent;
+    if((dir=opendir(folder.c_str()))!=NULL)
+    {
+        /* print all the files and directories within directory */
+        while((ent=readdir(dir))!=NULL)
+        {
+            InodeDescriptor inode;
+            inode.name=ent->d_name;
+            inode.absoluteFilePath=folder+'/'+ent->d_name;
+            struct stat myStat;
+            if ((stat(ent->d_name,&myStat)==0))
+            {
+                if((myStat.st_mode&S_IFMT)==S_IFDIR && type&FacilityLibGeneral::ListFolder::Dirs)
+                {
+                    inode.type=FacilityLibGeneral::InodeDescriptor::Type::Dir;
+                    output.push_back(inode);
+                }
+                if((myStat.st_mode&S_IFMT)==S_IFREG && type&FacilityLibGeneral::ListFolder::Files)
+                {
+                    inode.type=FacilityLibGeneral::InodeDescriptor::Type::File;
+                    output.push_back(inode);
+                }
+            }
+        }
+        closedir(dir);
+        std::sort(output.begin(),output.end());
+        return output;
+    }
+    else
+    {
+        /* could not open directory */
+        std::cerr << "Unable to open: " << folder << ", errno: " << errno << std::endl;
+        return std::vector<InodeDescriptor>();
+    }
+}
+
 std::vector<std::string> FacilityLibGeneral::listFolder(const std::string& folder,const std::string& suffix)
 {
     std::vector<std::string> returnList;
-    QFileInfoList entryList=QDir(QString::fromStdString(folder+suffix)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot);//possible wait time here
+    std::vector<FacilityLibGeneral::InodeDescriptor> entryList=listFolderNotRecursive(folder+suffix);//possible wait time here
     int sizeEntryList=entryList.size();
     for (int index=0;index<sizeEntryList;++index)
     {
-        QFileInfo fileInfo=entryList.at(index);
-        if(fileInfo.isDir())
+        const FacilityLibGeneral::InodeDescriptor &fileInfo=entryList.at(index);
+        if(fileInfo.type==FacilityLibGeneral::InodeDescriptor::Type::Dir)
         {
-            const std::vector<std::string> &newList=listFolder(folder,suffix+fileInfo.fileName().toStdString()+text_slash);//put unix separator because it's transformed into that's under windows too
+            const std::vector<std::string> &newList=listFolder(folder,suffix+fileInfo.name+text_slash);//put unix separator because it's transformed into that's under windows too
             returnList.insert(returnList.end(),newList.begin(),newList.end());
         }
-        else if(fileInfo.isFile())
-            returnList.push_back(suffix+fileInfo.fileName().toStdString());
+        else if(fileInfo.type==FacilityLibGeneral::InodeDescriptor::Type::File)
+            returnList.push_back(suffix+fileInfo.name);
     }
     return returnList;
 }
@@ -55,18 +102,18 @@ std::vector<std::string> FacilityLibGeneral::listFolderWithExclude(const std::st
     std::vector<std::string> returnList;
     if(suffix==exclude)
         return returnList;
-    QFileInfoList entryList=QDir(QString::fromStdString(folder+suffix)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot);//possible wait time here
+    std::vector<FacilityLibGeneral::InodeDescriptor> entryList=listFolderNotRecursive(folder+suffix);//possible wait time here
     int sizeEntryList=entryList.size();
     for (int index=0;index<sizeEntryList;++index)
     {
-        QFileInfo fileInfo=entryList.at(index);
-        if(fileInfo.isDir())
+        const FacilityLibGeneral::InodeDescriptor &fileInfo=entryList.at(index);
+        if(fileInfo.type==FacilityLibGeneral::InodeDescriptor::Type::Dir)
         {
-            const std::vector<std::string> &newList=listFolderWithExclude(folder,exclude,suffix+fileInfo.fileName().toStdString()+text_slash);//put unix separator because it's transformed into that's under windows too
+            const std::vector<std::string> &newList=listFolderWithExclude(folder,exclude,suffix+fileInfo.name+text_slash);//put unix separator because it's transformed into that's under windows too
             returnList.insert(returnList.end(),newList.begin(),newList.end());
         }
-        else if(fileInfo.isFile())
-            returnList.push_back(suffix+fileInfo.fileName().toStdString());
+        else if(fileInfo.type==FacilityLibGeneral::InodeDescriptor::Type::File)
+            returnList.push_back(suffix+fileInfo.name);
     }
     return returnList;
 }
@@ -88,21 +135,31 @@ std::string FacilityLibGeneral::randomPassword(const std::string& string,const u
 std::vector<std::string> FacilityLibGeneral::skinIdList(const std::string& skinPath)
 {
     std::vector<std::string> skinFolderList;
-    QFileInfoList entryList=QDir(QString::fromStdString(skinPath)).entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::DirsFirst);//possible wait time here
-    int sizeEntryList=entryList.size();
-    for (int index=0;index<sizeEntryList;++index)
+    std::vector<FacilityLibGeneral::InodeDescriptor> entryList=listFolderNotRecursive(skinPath,FacilityLibGeneral::ListFolder::Dirs);//possible wait time here
+    const unsigned int &sizeEntryList=entryList.size();
+    for(unsigned int index=0;index<sizeEntryList;++index)
     {
-        QFileInfo fileInfo=entryList.at(index);
-        if(fileInfo.isDir())
-            if(QFile(fileInfo.absoluteFilePath()+"/back.png").exists() &&
-                    QFile(fileInfo.absoluteFilePath()+"/front.png").exists() &&
-                    QFile(fileInfo.absoluteFilePath()+"/trainer.png").exists())
-                skinFolderList.push_back(fileInfo.fileName().toStdString());
+        const FacilityLibGeneral::InodeDescriptor &fileInfo=entryList.at(index);
+        if(fileInfo.type==FacilityLibGeneral::InodeDescriptor::Type::Dir)
+            if(FacilityLibGeneral::isFile(fileInfo.absoluteFilePath+"/back.png") &&
+                    FacilityLibGeneral::isFile(fileInfo.absoluteFilePath+"/front.png") &&
+                    FacilityLibGeneral::isFile(fileInfo.absoluteFilePath+"/trainer.png"))
+                skinFolderList.push_back(fileInfo.name);
     }
     std::sort(skinFolderList.begin(), skinFolderList.end());
     while(skinFolderList.size()>255)
         skinFolderList.pop_back();
     return skinFolderList;
+}
+
+bool FacilityLibGeneral::isFile(const std::string& file)
+{
+    if (FILE *filedesc = fopen(file.c_str(), "rb")) {
+        fclose(filedesc);
+        return true;
+    } else {
+        return false;
+    }
 }
 
 /*std::string FacilityLibGeneral::secondsToString(const uint64_t &seconds)
@@ -117,50 +174,59 @@ std::vector<std::string> FacilityLibGeneral::skinIdList(const std::string& skinP
         return QObject::tr("%n day(s)","",seconds/(60*60*24));
 }*/
 
-bool FacilityLibGeneral::rectTouch(QRect r1,QRect r2)
-{
-    if (r1.isNull() || r2.isNull())
-        return false;
-
-    if((r1.x()+r1.width())<r2.x())
-        return false;
-    if((r2.x()+r2.width())<r1.x())
-        return false;
-
-    if((r1.y()+r1.height())<r2.y())
-        return false;
-    if((r2.y()+r2.height())<r1.y())
-        return false;
-
-    return true;
-}
-
 bool FacilityLibGeneral::rmpath(const std::string &dirPath)
 {
-    const QDir dir(QString::fromStdString(dirPath));
-    if(!dir.exists())
-        return true;
-    bool allHaveWork=true;
-    QFileInfoList list = dir.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);
-    for (int i = 0; i < list.size(); ++i)
+    DIR *dir;
+    struct dirent *ent;
+    if((dir=opendir(dirPath.c_str()))!=NULL)
     {
-        QFileInfo fileInfo(list.at(i));
-        if(!fileInfo.isDir())
+        bool allHaveWork=true;
+        /* print all the files and directories within directory */
+        while((ent=readdir(dir))!=NULL)
         {
-            if(!QFile(fileInfo.absoluteFilePath()).remove())
-                allHaveWork=false;
+            InodeDescriptor inode;
+            inode.name=ent->d_name;
+            inode.absoluteFilePath=dirPath+'/'+ent->d_name;
+            struct stat myStat;
+            if ((stat(ent->d_name,&myStat)==0))
+            {
+                if((myStat.st_mode&S_IFMT)==S_IFDIR)
+                {
+                    if(!rmpath(inode.absoluteFilePath))
+                        allHaveWork=false;
+                }
+                else
+                {
+                    if(remove(inode.absoluteFilePath.c_str())!=0)
+                    {
+                        std::cerr << "Unable to remove file: " << inode.absoluteFilePath << ", errno: " << errno << std::endl;
+                        allHaveWork=false;
+                    }
+                }
+            }
+        }
+        closedir(dir);
+
+        if(!allHaveWork)
+            return false;
+        allHaveWork=rmdir(dirPath.c_str())==0;
+        if(!allHaveWork)
+        {
+            std::cerr << "Unable to remove folder: " << dirPath << ", errno: " << errno << std::endl;
+            return false;
+        }
+        return allHaveWork;
+    }
+    else
+    {
+        if(errno!=ENOENT)
+        {
+            std::cerr << "Unable to remove folder: " << dirPath << ", errno: " << errno << std::endl;
+            return false;
         }
         else
-        {
-            //return the fonction for scan the new folder
-            if(!FacilityLibGeneral::rmpath(dir.absolutePath().toStdString()+FacilityLibGeneral::text_slash+fileInfo.fileName().toStdString()+FacilityLibGeneral::text_slash))
-                allHaveWork=false;
-        }
+            return true;
     }
-    if(!allHaveWork)
-        return false;
-    allHaveWork=dir.rmdir(dir.absolutePath());
-    return allHaveWork;
 }
 
 /*std::string FacilityLibGeneral::timeToString(const uint32_t &time)

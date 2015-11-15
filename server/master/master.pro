@@ -2,7 +2,7 @@
 #QMAKE_CXXFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations"
 
 QT       -= gui widgets network sql
-QT       += xml
+QT       -= xml core
 
 DEFINES += SERVERNOBUFFER
 #DEFINES += SERVERSSL

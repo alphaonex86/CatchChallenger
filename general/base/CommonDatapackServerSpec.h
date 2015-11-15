@@ -1,8 +1,6 @@
 #ifndef COMMONDATAPACK_ServerSpec_H
 #define COMMONDATAPACK_ServerSpec_H
 
-#include <QObject>
-#include <QMutex>
 #include <unordered_map>
 #include <string>
 
@@ -24,7 +22,6 @@ public:
     std::vector<ServerProfile> serverProfileList;
     static CommonDatapackServerSpec commonDatapackServerSpec;
 private:
-    QMutex inProgressSpec;
     bool isParsedSpec;
     std::string datapackPath;
     std::string mainDatapackCode;

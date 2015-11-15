@@ -14,6 +14,7 @@ class FacilityLibClient
 public:
     static QString timeToString(const uint32_t &sec);
     static QStringList stdvectorstringToQStringList(const std::vector<std::string> &vector);
+    static bool rectTouch(QRect r1,QRect r2);
 };
 
 template <class T, class U>

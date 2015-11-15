@@ -4,8 +4,6 @@
 #include "cpp11addition.h"
 #include <iostream>
 
-#include <QByteArray>
-
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 #include <lzma.h>
 #include "lz4/lz4.h"
@@ -676,10 +674,8 @@ std::vector<std::string> ProtocolParsingBase::getQueryRunningList()
 }
 #endif
 
-void ProtocolParsingBase::storeInputQuery(const uint8_t &packetCode,const uint8_t &queryNumber)
+void ProtocolParsingBase::storeInputQuery(const uint8_t &,const uint8_t &)
 {
-    Q_UNUSED(packetCode);
-    Q_UNUSED(queryNumber);
 }
 
 void ProtocolParsingInputOutput::storeInputQuery(const uint8_t &packetCode,const uint8_t &queryNumber)
