@@ -1,6 +1,6 @@
 CONFIG += c++11
 
-QT       += core
+QT       -= core
 DEFINES += TIXML_USE_STL
 
 LIBS += -lz -llzma

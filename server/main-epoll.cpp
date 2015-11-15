@@ -7,8 +7,6 @@
 #include <chrono>
 #include <ctime>
 
-#include <QStringList>
-
 #include "epoll/EpollSocket.h"
 #include "epoll/EpollSslClient.h"
 #include "epoll/EpollSslServer.h"

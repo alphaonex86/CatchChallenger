@@ -1,5 +1,5 @@
-include(catchchallenger-server.pri)
 include(../general/general.pri)
+include(catchchallenger-server.pri)
 
 QT       -= gui widgets network sql
 #QT       -= core xml

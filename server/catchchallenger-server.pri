@@ -1,5 +1,3 @@
-QT       += sql
-
 TEMPLATE = app
 
 SOURCES += \
@@ -78,8 +76,3 @@ HEADERS += \
     $$PWD/base/PreparedDBQuery.h \
     $$PWD/base/DatabaseBase.h \
     $$PWD/base/BaseServerLogin.h
-
-RESOURCES += \
-    $$PWD/all-server-resources.qrc
-
-win32:RC_FILE += $$PWD/resources-windows.rc

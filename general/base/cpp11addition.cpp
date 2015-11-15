@@ -1,6 +1,7 @@
 #include "cpp11addition.h"
 #include <sstream>
 #include <cassert>
+#include <stdlib.h>
 
 static const std::regex isaunsignednumber("^[0-9]+$");
 static const std::regex isasignednumber("^-?[0-9]+$");
@@ -560,4 +561,21 @@ std::vector<char> base64toBinary(const std::string &string)
     }
 
     return ret;
+}
+
+std::string FSabsoluteFilePath(const std::string &string)
+{
+    char actualpath [PATH_MAX+1];
+    char *ptr = realpath(string.c_str(), actualpath);
+    return ptr;
+}
+
+std::string FSabsolutePath(const std::string &string)
+{
+    const std::string &tempFile=FSabsoluteFilePath(string);
+    const std::size_t &found=tempFile.find_last_of("/\\");
+    if(found!=std::string::npos)
+        return tempFile.substr(0,found)+'/';
+    else
+        return tempFile;
 }

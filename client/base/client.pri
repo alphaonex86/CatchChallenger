@@ -2,7 +2,7 @@ include(../tiled/tiled.pri)
 
 LIBS += -lvlc
 QT       += script opengl widgets qml quick
-QT       += gui network xml
+QT       += gui network xml core
 
 win32:CONFIG   += console
 DEFINES += CATCHCHALLENGER_CLIENT

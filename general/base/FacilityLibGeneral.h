@@ -3,9 +3,6 @@
 
 #include <string>
 #include <vector>
-#include <QRect>
-#include <QDir>
-#include <QDateTime>
 
 namespace CatchChallenger {
 class FacilityLibGeneral
@@ -18,9 +15,33 @@ public:
     static std::string randomPassword(const std::string& string,const uint8_t& length);
     static std::vector<std::string> skinIdList(const std::string& skinPath);
     //static std::string secondsToString(const uint64_t &seconds);
-    static bool rectTouch(QRect r1,QRect r2);
     static bool rmpath(const std::string &dirPath);
     //static std::string timeToString(const uint32_t &time);
+    enum ListFolder
+    {
+        Dirs=1,
+        Files=2,
+        FilesAndDirs=3
+    };
+    struct InodeDescriptor
+    {
+        enum Type
+        {
+            Dir,
+            File
+        };
+        Type type;
+        std::string name;
+        std::string absoluteFilePath;
+
+        bool operator < (const InodeDescriptor &b) const
+        {
+            return absoluteFilePath<b.absoluteFilePath;
+        }
+    };
+
+    static std::vector<InodeDescriptor> listFolderNotRecursive(const std::string& folder,const ListFolder &type=ListFolder::FilesAndDirs);
+    static bool isFile(const std::string& file);
 private:
     static std::string text_slash;
     static std::string text_male;

@@ -1,7 +1,7 @@
 #ifndef CATCHCHALLENGER_CHAT_PARSING_H
 #define CATCHCHALLENGER_CHAT_PARSING_H
 
-#include <QObject>
+#include <string>
 
 #include "GeneralStructures.h"
 

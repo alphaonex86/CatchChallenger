@@ -5,10 +5,7 @@
 #include "../base/CommonDatapack.h"
 #include "../base/tinyXML/tinyxml.h"
 
-#include <QFile>
 #include <vector>
-#include <QtCore/qmath.h>
-#include <QDir>
 #include <iostream>
 
 using namespace CatchChallenger;
