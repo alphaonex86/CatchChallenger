@@ -8,7 +8,7 @@
 #include "base/ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.h"
 #include "base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.h"
 
-#ifdef Q_OS_LINUX
+#ifdef __linux__
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -32,7 +32,7 @@ NormalServer::NormalServer() :
     normalServerSettings.server_ip      = std::string();
     normalServerSettings.server_port    = 42489;
     normalServerSettings.useSsl         = true;
-    #ifdef Q_OS_LINUX
+    #ifdef __linux__
     CommonSettingsServer::commonSettingsServer.tcpCork  = true;
     normalServerSettings.tcpNodelay         = false;
     #endif
@@ -115,7 +115,7 @@ void NormalServer::start_internal_server()
             args << "req" << "-newkey" << "rsa:4096" << "-sha512" << "-x509" << "-nodes" << "-days" << "3560" << "-out" << QCoreApplication::applicationDirPath()+"/server.crt"
                     << "-keyout" << QCoreApplication::applicationDirPath()+"/server.key" << "-subj" << "/C=FR/ST=South-West/L=Paris/O=Catchchallenger/OU=Developer Department/CN=*"
                     << "-extensions usr_cert";
-            #ifdef Q_OS_WIN32
+            #ifdef _WIN32
             std::string opensslAppPath=QCoreApplication::applicationDirPath()+"/openssl/openssl.exe";
             #else
             std::string opensslAppPath="/usr/bin/openssl";
@@ -240,7 +240,7 @@ void NormalServer::start_internal_server()
         error(std::stringLiteral("Unable to listen the internal server"));
         return;
     }
-    #ifdef Q_OS_LINUX
+    #ifdef __linux__
     if(CommonSettingsServer::commonSettingsServer.tcpCork)
     {
         qintptr socketDescriptor=sslServer->socketDescriptor();
@@ -405,7 +405,7 @@ void NormalServer::newConnection()
                 connect(socket,static_cast<void(QSslSocket::*)(const std::vector<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&NormalServer::sslErrors);
                 if(socket!=NULL)
                 {
-                    #ifdef Q_OS_LINUX
+                    #ifdef __linux__
                     if(CommonSettingsServer::commonSettingsServer.tcpCork)
                     {
                         qintptr socketDescriptor=socket->socketDescriptor();

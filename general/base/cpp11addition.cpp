@@ -2,6 +2,8 @@
 #include <sstream>
 #include <cassert>
 #include <stdlib.h>
+#include <limits.h>
+#include <stdlib.h>
 
 static const std::regex isaunsignednumber("^[0-9]+$");
 static const std::regex isasignednumber("^-?[0-9]+$");
@@ -565,7 +567,7 @@ std::vector<char> base64toBinary(const std::string &string)
 
 std::string FSabsoluteFilePath(const std::string &string)
 {
-    char actualpath [PATH_MAX+1];
+    char actualpath[PATH_MAX+1];
     char *ptr = realpath(string.c_str(), actualpath);
     return ptr;
 }

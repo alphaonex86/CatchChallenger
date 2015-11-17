@@ -13,7 +13,7 @@ public:
     explicit BaseServerLogin();
     virtual ~BaseServerLogin();
 
-    #ifdef Q_OS_LINUX
+    #ifdef __linux__
     static FILE *fpRandomFile;
     #endif
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

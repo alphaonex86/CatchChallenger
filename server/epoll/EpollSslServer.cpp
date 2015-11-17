@@ -18,7 +18,7 @@ EpollSslServer::EpollSslServer()
     normalServerSettings.server_ip      = std::string();
     normalServerSettings.server_port    = 42489;
     normalServerSettings.useSsl         = true;
-    #ifdef Q_OS_LINUX
+    #ifdef __linux__
     CommonSettings::commonSettings.tcpCork                      = true;
     #endif
     GlobalServerData::serverPrivateVariables.db=new EpollPostgresql();
