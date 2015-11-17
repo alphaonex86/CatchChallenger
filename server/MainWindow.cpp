@@ -407,7 +407,7 @@ void MainWindow::load_settings()
             on_programmedEventType_currentIndexChanged(0);
     }
     {
-        #ifdef Q_OS_LINUX
+        #ifdef __linux__
         bool tcpNodelay=false;
         bool tcpCork=true;
         settings->beginGroup(QLatin1Literal("Linux"));
@@ -685,7 +685,7 @@ void MainWindow::send_settings()
         formatedServerSettings.datapackCache			= 0;
     else
         formatedServerSettings.datapackCache			= ui->datapack_cache_timeout->value();
-    #ifdef Q_OS_LINUX
+    #ifdef __linux__
     CommonSettingsServer::commonSettingsServer.tcpCork  = ui->linux_socket_cork->isChecked();
     formatedServerNormalSettings.tcpNodelay  = ui->tcpNodelay->isChecked();
     #endif
@@ -1309,7 +1309,7 @@ void MainWindow::datapack_cache_save()
 
 void MainWindow::on_linux_socket_cork_toggled(bool checked)
 {
-    #ifdef Q_OS_LINUX
+    #ifdef __linux__
     settings->beginGroup(QLatin1Literal("Linux"));
     settings->setValue(QLatin1Literal("tcpCork"),checked);
     settings->endGroup();
@@ -1475,7 +1475,7 @@ void CatchChallenger::MainWindow::on_programmedEventRemove_clicked()
 
 void CatchChallenger::MainWindow::on_tcpNodelay_toggled(bool checked)
 {
-    #ifdef Q_OS_LINUX
+    #ifdef __linux__
     settings->beginGroup(QLatin1Literal("Linux"));
     settings->setValue(QLatin1Literal("tcpNodelay"),checked);
     settings->endGroup();

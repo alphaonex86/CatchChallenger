@@ -115,7 +115,7 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const std:
         settings->setValue("plantOnlyVisibleByPlayer",false);
     #endif
     if(!settings->contains("useSsl"))
-    #ifdef Q_OS_LINUX
+    #ifdef __linux__
         settings->setValue("useSsl",false);
     #else
         settings->setValue("useSsl",false);
@@ -168,7 +168,7 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const std:
     settings->endGroup();
     #endif
 
-    #ifdef Q_OS_LINUX
+    #ifdef __linux__
     settings->beginGroup("Linux");
     if(!settings->contains("tcpCork"))
         settings->setValue("tcpCork",true);

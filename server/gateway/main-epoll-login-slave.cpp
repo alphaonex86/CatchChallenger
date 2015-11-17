@@ -25,8 +25,12 @@ using namespace CatchChallenger;
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication a(argc, argv);
-    Q_UNUSED(a);
+    if(argc<1)
+    {
+        std::cerr << "argc<1: wrong arg count" << std::endl;
+        return EXIT_FAILURE;
+    }
+    CatchChallenger::FacilityLibGeneral::applicationDirPath=argv[0];
 
     LinkToGameServer::mDatapackBase=QFileInfo(QCoreApplication::applicationDirPath()+"/datapack/").absoluteFilePath().toStdString();
 

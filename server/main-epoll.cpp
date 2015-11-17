@@ -140,7 +140,7 @@ void send_settings()
     CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase	= settings->value(QLatin1Literal("httpDatapackMirror")).toString().toStdString();
     CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase;
     formatedServerSettings.datapackCache				= settings->value(QLatin1Literal("datapackCache")).toInt();
-    #ifdef Q_OS_LINUX
+    #ifdef __linux__
     settings->beginGroup(QLatin1Literal("Linux"));
     CommonSettingsServer::commonSettingsServer.tcpCork	= settings->value(QLatin1Literal("tcpCork")).toBool();
     formatedServerNormalSettings.tcpNodelay= settings->value(QLatin1Literal("tcpNodelay")).toBool();
@@ -461,8 +461,12 @@ void send_settings()
 int main(int argc, char *argv[])
 {
     NormalServerGlobal::displayInfo();
-    QCoreApplication a(argc, argv);
-    Q_UNUSED(a);
+    if(argc<1)
+    {
+        std::cerr << "argc<1: wrong arg count" << std::endl;
+        return EXIT_FAILURE;
+    }
+    CatchChallenger::FacilityLibGeneral::applicationDirPath=argv[0];
 
     bool datapack_loaded=false;
 

@@ -20,16 +20,17 @@
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/cpp11addition.h"
 
+#include <vector>
+#include <time.h>
+#include <iostream>
+#include <chrono>
+#ifndef EPOLLCATCHCHALLENGERSERVER
+#include <QTimer>
 #include <QFile>
 #include <QDir>
-#include <vector>
 #include <QDateTime>
 #include <QTime>
 #include <QCryptographicHash>
-#include <time.h>
-#include <iostream>
-#ifndef EPOLLCATCHCHALLENGERSERVER
-#include <QTimer>
 #endif
 
 using namespace CatchChallenger;
@@ -109,7 +110,12 @@ BaseServer::BaseServer() :
 
     GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm       = CatchChallenger::MapVisibilityAlgorithmSelection_None;
     GlobalServerData::serverSettings.datapackCache                              = -1;
-    GlobalServerData::serverSettings.datapack_basePath                          = (QCoreApplication::applicationDirPath()+"/datapack/").toStdString();
+    if(FacilityLibGeneral::applicationDirPath.empty())
+    {
+        std::cerr << "FacilityLibGeneral::applicationDirPath is empty" << std::endl;
+        abort();
+    }
+    GlobalServerData::serverSettings.datapack_basePath                          = CatchChallenger::FacilityLibGeneral::applicationDirPath+"/datapack/";
     GlobalServerData::serverSettings.compressionType                            = CompressionType_Zlib;
     GlobalServerData::serverSettings.dontSendPlayerType                         = false;
     CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange = true;
@@ -236,13 +242,13 @@ void BaseServer::preload_the_data()
     std::cout << "Datapack, base: " << GlobalServerData::serverSettings.datapack_basePath
               << std::endl;
     {
-        QTime time;
-        time.restart();
+        const double &now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         CommonDatapack::commonDatapack.parseDatapack(GlobalServerData::serverSettings.datapack_basePath);
         CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(GlobalServerData::serverSettings.datapack_basePath,CommonSettingsServer::commonSettingsServer.mainDatapackCode);
-        std::cout << "Loaded the common datapack into " << time.elapsed() << "ms" << std::endl;
+        double after = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        std::cout << "Loaded the common datapack into " << (after-now) << "ms" << std::endl;
     }
-    timeDatapack.restart();
+    timeDatapack = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     preload_the_randomData();
     preload_randomBlock();
     preload_the_events();
@@ -307,9 +313,11 @@ void BaseServer::preload_finish()
 {
     std::cout << plant_on_the_map << " SQL plant on map" << std::endl;
     std::cout << GlobalServerData::serverPrivateVariables.marketItemList.size() << " SQL market item" << std::endl;
-    std::cout << "Loaded the server SQL datapack into " << timeDatapack.elapsed() << "ms" << std::endl;
+    const double &now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    std::cout << "Loaded the server SQL datapack into " << (now-timeDatapack) << "ms" << std::endl;
     preload_other();
     CommonDatapack::commonDatapack.xmlLoadedFile.clear();
+    entryListZone.clear();
 }
 
 bool BaseServer::load_next_city_capture()
@@ -762,7 +770,7 @@ void BaseServer::loadAndFixSettings()
         }
     }
     const std::string &mainDir=GlobalServerData::serverSettings.datapack_basePath+std::string("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+std::string("/");
-    if(!QDir(mainDir.c_str()).exists())
+    if(!FacilityLibGeneral::isDir(mainDir))
     {
         std::cerr << mainDir << " don't exists" << std::endl;
         abort();
@@ -771,7 +779,7 @@ void BaseServer::loadAndFixSettings()
     {
         const std::string &subDatapackFolder=GlobalServerData::serverSettings.datapack_basePath+std::string("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+std::string("/")+
                 std::string("sub/")+CommonSettingsServer::commonSettingsServer.subDatapackCode+std::string("/");
-        if(!QDir(subDatapackFolder.c_str()).exists())
+        if(!FacilityLibGeneral::isDir(subDatapackFolder))
         {
             std::cerr << subDatapackFolder << " don't exists, drop spec" << std::endl;
             CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
