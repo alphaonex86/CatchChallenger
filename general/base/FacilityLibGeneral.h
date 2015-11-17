@@ -42,6 +42,12 @@ public:
 
     static std::vector<InodeDescriptor> listFolderNotRecursive(const std::string& folder,const ListFolder &type=ListFolder::FilesAndDirs);
     static bool isFile(const std::string& file);
+    static bool isDir(const std::string& folder);
+    static std::vector<char> readAllFileAndClose(FILE * file);
+    static uint32_t fileSize(FILE * file);
+    static std::string getSuffix(const std::string& fileName);
+
+    static std::string applicationDirPath;
 private:
     static std::string text_slash;
     static std::string text_male;

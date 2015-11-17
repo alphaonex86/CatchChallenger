@@ -8,6 +8,13 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     a.setApplicationName("client-single-player");
     a.setOrganizationName("CatchChallenger");
+    
+    if(argc<1)
+    {
+        std::cerr << "argc<1: wrong arg count" << std::endl;
+        return EXIT_FAILURE;
+    }
+    CatchChallenger::FacilityLibGeneral::applicationDirPath=argv[0];
 
     LocalListener localListener;
     const QStringList &arguments=QCoreApplication::arguments();

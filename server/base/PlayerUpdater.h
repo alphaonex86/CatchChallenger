@@ -1,12 +1,14 @@
 #ifndef CATCHCHALLENGER_PLAYERUPDATER_H
 #define CATCHCHALLENGER_PLAYERUPDATER_H
 
-#include <QObject>
-#include <QTimer>
-
 #ifdef EPOLLCATCHCHALLENGERSERVER
 #include "../epoll/EpollTimer.h"
+#else
+#include <QObject>
+#include <QTimer>
 #endif
+
+#include <stdint.h>
 
 namespace CatchChallenger {
 class PlayerUpdater

@@ -20,11 +20,7 @@
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/cpp11addition.h"
 
-#include <QFile>
 #include <vector>
-#include <QDateTime>
-#include <QTime>
-#include <QCryptographicHash>
 #include <time.h>
 #include <iostream>
 #ifndef EPOLLCATCHCHALLENGERSERVER

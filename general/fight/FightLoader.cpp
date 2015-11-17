@@ -2,11 +2,13 @@
 #include "../base/GeneralVariable.h"
 #include "../base/CommonSettingsCommon.h"
 #include "../base/CommonSettingsServer.h"
+#include "../base/FacilityLibGeneral.h"
 #include "../base/CommonDatapack.h"
 #include "../base/tinyXML/tinyxml.h"
 
 #include <vector>
 #include <iostream>
+#include <math.h>
 
 using namespace CatchChallenger;
 
@@ -218,17 +220,11 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                 )
 {
     std::unordered_map<uint16_t,Monster> monsters;
-    QDir dir(QString::fromStdString(folder));
-    QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
+    const std::vector<FacilityLibGeneral::InodeDescriptor> &fileList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder,CatchChallenger::FacilityLibGeneral::ListFolder::Files);
     unsigned int file_index=0;
     while(file_index<(uint32_t)fileList.size())
     {
-        if(!fileList.at(file_index).isFile())
-        {
-            file_index++;
-            continue;
-        }
-        const std::string &file=fileList.at(file_index).absoluteFilePath().toStdString();
+        const std::string &file=fileList.at(file_index).absoluteFilePath;
         if(!stringEndsWith(file,FightLoader::text_dotxml))
         {
             file_index++;
@@ -389,32 +385,32 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                 index++;
                             }
                         }
-                        qreal pow=1.0;
+                        double powerVar=1.0;
                         if(ok)
                         {
                             if(item->Attribute(FightLoader::text_pow)!=NULL)
                             {
-                                pow=stringtodouble(*item->Attribute(FightLoader::text_pow),&ok);
+                                powerVar=stringtodouble(*item->Attribute(FightLoader::text_pow),&ok);
                                 if(!ok)
                                 {
-                                    pow=1.0;
+                                    powerVar=1.0;
                                     std::cerr << "Unable to open the xml file: " << file << ", pow is not a double: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                     ok=true;
                                 }
-                                if(pow<=1.0)
+                                if(powerVar<=1.0)
                                 {
-                                    pow=1.0;
+                                    powerVar=1.0;
                                     std::cerr << "Unable to open the xml file: " << file << ", pow is too low: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                 }
-                                if(pow>=10.0)
+                                if(powerVar>=10.0)
                                 {
-                                    pow=1.0;
+                                    powerVar=1.0;
                                     std::cerr << "Unable to open the xml file: " << file << ", pow is too hight: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                                 }
                             }
                         }
                         #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
-                        pow=qPow(pow,CommonSettingsServer::commonSettingsServer.rates_xp_pow);
+                        powerVar=std::pow(powerVar,CommonSettingsServer::commonSettingsServer.rates_xp_pow);
                         #endif
                         if(ok)
                         {
@@ -663,7 +659,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                 std::cerr << "Unable to open the xml file: " << file << ", attack_list balise is not an element: child->ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
                                             attack = attack->NextSiblingElement(FightLoader::text_attack);
                                         }
-                                        qSort(monster.learn);
+                                        std::sort(monster.learn.begin(),monster.learn.end());
                                     }
                                     else
                                         std::cerr << "Unable to open the xml file: " << file << ", attack_list balise is not an element: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
@@ -761,9 +757,9 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                             int index=0;
                             while(index<CATCHCHALLENGER_MONSTER_LEVEL_MAX)
                             {
-                                uint64_t xp_for_this_level=qPow(index+1,pow);
+                                uint64_t xp_for_this_level=std::pow(index+1,powerVar);
                                 uint64_t xp_for_max_level=monster.xp_for_max_level;
-                                uint64_t max_xp=qPow(CATCHCHALLENGER_MONSTER_LEVEL_MAX,pow);
+                                uint64_t max_xp=std::pow(CATCHCHALLENGER_MONSTER_LEVEL_MAX,powerVar);
                                 uint64_t tempXp=xp_for_this_level*xp_for_max_level/max_xp;
                                 if(tempXp<1)
                                     tempXp=1;
@@ -934,221 +930,217 @@ std::vector<PlayerMonster::PlayerSkill> FightLoader::loadDefaultAttack(const uin
 std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &folder, const std::unordered_map<uint16_t,Monster> &monsters, const std::unordered_map<uint16_t, Skill> &monsterSkills, const std::unordered_map<uint16_t, Item> &items)
 {
     std::unordered_map<uint16_t,BotFight> botFightList;
-    QDir dir(QString::fromStdString(folder));
-    QFileInfoList list=dir.entryInfoList(QStringList(),QDir::NoDotAndDotDot|QDir::Files);
-    int index_file=0;
-    while(index_file<list.size())
+    const std::vector<FacilityLibGeneral::InodeDescriptor> &fileList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder,CatchChallenger::FacilityLibGeneral::ListFolder::Files);
+    unsigned int index_file=0;
+    while(index_file<fileList.size())
     {
-        if(list.at(index_file).isFile())
+        const std::string &file=fileList.at(index_file).absoluteFilePath;
+        TiXmlDocument *domDocument;
+        //open and quick check the file
+        if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+            domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        else
         {
-            const std::string &file=list.at(index_file).absoluteFilePath().toStdString();
-            TiXmlDocument *domDocument;
-            //open and quick check the file
-            if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-                domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
-            else
+            domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            const bool loadOkay=domDocument->LoadFile(file);
+            if(!loadOkay)
             {
-                domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
-                const bool loadOkay=domDocument->LoadFile(file);
-                if(!loadOkay)
-                {
-                    std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
-                    index_file++;
-                    continue;
-                }
-            }
-            const TiXmlElement * root = domDocument->RootElement();
-            if(root->ValueStr()!="fights")
-            {
-                std::cerr << "Unable to open the xml file: " << file << ", \"fights\" root balise not found for the xml file" << std::endl;
+                std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
                 index_file++;
                 continue;
             }
+        }
+        const TiXmlElement * root = domDocument->RootElement();
+        if(root->ValueStr()!="fights")
+        {
+            std::cerr << "Unable to open the xml file: " << file << ", \"fights\" root balise not found for the xml file" << std::endl;
+            index_file++;
+            continue;
+        }
 
-            //load the content
-            bool ok;
-            const TiXmlElement * item = root->FirstChildElement("fight");
-            while(item!=NULL)
+        //load the content
+        bool ok;
+        const TiXmlElement * item = root->FirstChildElement("fight");
+        while(item!=NULL)
+        {
+            if(item->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
             {
-                if(item->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
+                if(item->Attribute(FightLoader::text_id)!=NULL)
                 {
-                    if(item->Attribute(FightLoader::text_id)!=NULL)
+                    uint32_t id=stringtouint32(*item->Attribute(FightLoader::text_id),&ok);
+                    if(ok)
                     {
-                        uint32_t id=stringtouint32(*item->Attribute(FightLoader::text_id),&ok);
-                        if(ok)
+                        bool entryValid=true;
+                        CatchChallenger::BotFight botFight;
+                        botFight.cash=0;
                         {
-                            bool entryValid=true;
-                            CatchChallenger::BotFight botFight;
-                            botFight.cash=0;
+                            const TiXmlElement * monster = item->FirstChildElement("monster");
+                            while(entryValid && monster!=NULL)
                             {
-                                const TiXmlElement * monster = item->FirstChildElement("monster");
-                                while(entryValid && monster!=NULL)
-                                {
-                                    if(monster->Attribute(FightLoader::text_id)==NULL)
-                                        std::cerr << "Has not attribute \"id\": ValueStr(): " << monster->ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
-                                    else if(monster->Type()!=TiXmlNode::NodeType::TINYXML_ELEMENT)
-                                        std::cerr << "Is not an element: type: " << monster->Attribute(FightLoader::text_type) << " ValueStr(): " << monster->ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
-                                    else
-                                    {
-                                        CatchChallenger::BotFight::BotFightMonster botFightMonster;
-                                        botFightMonster.level=1;
-                                        botFightMonster.id=stringtouint32(*monster->Attribute(FightLoader::text_id),&ok);
-                                        if(ok)
-                                        {
-                                            if(monsters.find(botFightMonster.id)==monsters.cend())
-                                            {
-                                                entryValid=false;
-                                                std::cerr << "Monster not found into the monster list: " << botFightMonster.id << " into the ValueStr(): " << monster->ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
-                                                break;
-                                            }
-                                            if(monster->Attribute(FightLoader::text_level)!=NULL)
-                                            {
-                                                botFightMonster.level=stringtouint16(*monster->Attribute(FightLoader::text_level),&ok);
-                                                if(!ok)
-                                                {
-                                                    std::cerr << "The level is not a number: type: " << monster->Attribute(FightLoader::text_type) << " ValueStr(): " << monster->ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
-                                                    botFightMonster.level=1;
-                                                }
-                                                if(botFightMonster.level<1)
-                                                {
-                                                    std::cerr << "Can't be 0 or negative: type: " << monster->Attribute(FightLoader::text_type) << " ValueStr(): " << monster->ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
-                                                    botFightMonster.level=1;
-                                                }
-                                            }
-                                            const TiXmlElement * attack = monster->FirstChildElement(FightLoader::text_attack);
-                                            while(entryValid && attack!=NULL)
-                                            {
-                                                uint8_t attackLevel=1;
-                                                if(attack->Attribute(FightLoader::text_id)==NULL)
-                                                    std::cerr << "Has not attribute \"type\": ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
-                                                else if(attack->Type()!=TiXmlNode::NodeType::TINYXML_ELEMENT)
-                                                    std::cerr << "Is not an element: ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
-                                                else
-                                                {
-                                                    uint32_t attackId=stringtouint32(*attack->Attribute(FightLoader::text_id),&ok);
-                                                    if(ok)
-                                                    {
-                                                        if(monsterSkills.find(attackId)==monsterSkills.cend())
-                                                        {
-                                                            entryValid=false;
-                                                            std::cerr << "Monster attack not found: %1 into the ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
-                                                            break;
-                                                        }
-                                                        if(attack->Attribute(FightLoader::text_level)!=NULL)
-                                                        {
-                                                            attackLevel=stringtouint16(*attack->Attribute(FightLoader::text_level),&ok);
-                                                            if(!ok)
-                                                            {
-                                                                std::cerr << "The level is not a number: ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
-                                                                entryValid=false;
-                                                                break;
-                                                            }
-                                                            if(attackLevel<1)
-                                                            {
-                                                                std::cerr << "Can't be 0 or negative: ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
-                                                                entryValid=false;
-                                                                break;
-                                                            }
-                                                        }
-                                                        if(attackLevel>monsterSkills.at(attackId).level.size())
-                                                        {
-                                                            std::cerr << "Level out of range: ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
-                                                            entryValid=false;
-                                                            break;
-                                                        }
-                                                        CatchChallenger::PlayerMonster::PlayerSkill botFightAttack;
-                                                        botFightAttack.skill=attackId;
-                                                        botFightAttack.level=attackLevel;
-                                                        botFightMonster.attacks.push_back(botFightAttack);
-                                                    }
-                                                }
-                                                attack = attack->NextSiblingElement(FightLoader::text_attack);
-                                            }
-                                            if(botFightMonster.attacks.empty())
-                                                botFightMonster.attacks=loadDefaultAttack(botFightMonster.id,botFightMonster.level,monsters,monsterSkills);
-                                            if(botFightMonster.attacks.empty())
-                                            {
-                                                std::cerr << "Empty attack list: ValueStr(): " << monster->ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
-                                                entryValid=false;
-                                                break;
-                                            }
-                                            botFight.monsters.push_back(botFightMonster);
-                                        }
-                                    }
-                                    monster = monster->NextSiblingElement("monster");
-                                }
-                            }
-                            {
-                                const TiXmlElement * gain = item->FirstChildElement("gain");
-                                while(entryValid && gain!=NULL)
-                                {
-                                    if(gain->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
-                                    {
-                                        if(gain->Attribute("cash")!=NULL)
-                                        {
-                                            const uint32_t &cash=stringtouint32(gain->Attribute("cash"),&ok)*CommonSettingsServer::commonSettingsServer.rates_gold;
-                                            if(ok)
-                                                botFight.cash+=cash;
-                                            else
-                                                std::cerr << "Unable to open the xml file: " << file << ", unknow cash text: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
-                                        }
-                                        else if(gain->Attribute(FightLoader::text_item)!=NULL)
-                                        {
-                                            BotFight::Item itemVar;
-                                            itemVar.quantity=1;
-                                            itemVar.id=stringtouint32(*gain->Attribute(FightLoader::text_item),&ok);
-                                            if(ok)
-                                            {
-                                                if(items.find(itemVar.id)!=items.cend())
-                                                {
-                                                    if(gain->Attribute("quantity")!=NULL)
-                                                    {
-                                                        itemVar.quantity=stringtouint32(gain->Attribute("quantity"),&ok);
-                                                        if(!ok || itemVar.quantity<1)
-                                                        {
-                                                            itemVar.quantity=1;
-                                                            std::cerr << "Unable to open the xml file: " << file << ", quantity value is wrong: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
-                                                        }
-                                                    }
-                                                    botFight.items.push_back(itemVar);
-                                                }
-                                                else
-                                                    std::cerr << "Unable to open the xml file: " << file << ", item not found: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
-                                            }
-                                            else
-                                                std::cerr << "Unable to open the xml file: " << file << ", unknow item id text: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
-                                        }
-                                        else
-                                            std::cerr << "unknown fight gain: file: " << file << " child->ValueStr(): " << gain->ValueStr() << " (at line: " << gain->Row() << ")" << std::endl;
-                                    }
-                                    else
-                                        std::cerr << "Is not an element: file: " << file << ", type: " << gain->Attribute(FightLoader::text_type) << " child->ValueStr(): " << gain->ValueStr() << " (at line: " << gain->Row() << ")" << std::endl;
-                                    gain = gain->NextSiblingElement("gain");
-                                }
-                            }
-                            if(entryValid)
-                            {
-                                if(botFightList.find(id)==botFightList.cend())
-                                {
-                                    if(!botFight.monsters.empty())
-                                        botFightList[id]=botFight;
-                                    else
-                                        std::cerr << "Monster list is empty to open the xml file: " << file << ", id already found: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
-                                }
+                                if(monster->Attribute(FightLoader::text_id)==NULL)
+                                    std::cerr << "Has not attribute \"id\": ValueStr(): " << monster->ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
+                                else if(monster->Type()!=TiXmlNode::NodeType::TINYXML_ELEMENT)
+                                    std::cerr << "Is not an element: type: " << monster->Attribute(FightLoader::text_type) << " ValueStr(): " << monster->ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
                                 else
-                                    std::cerr << "Unable to open the xml file: " << file << ", id already found: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+                                {
+                                    CatchChallenger::BotFight::BotFightMonster botFightMonster;
+                                    botFightMonster.level=1;
+                                    botFightMonster.id=stringtouint32(*monster->Attribute(FightLoader::text_id),&ok);
+                                    if(ok)
+                                    {
+                                        if(monsters.find(botFightMonster.id)==monsters.cend())
+                                        {
+                                            entryValid=false;
+                                            std::cerr << "Monster not found into the monster list: " << botFightMonster.id << " into the ValueStr(): " << monster->ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
+                                            break;
+                                        }
+                                        if(monster->Attribute(FightLoader::text_level)!=NULL)
+                                        {
+                                            botFightMonster.level=stringtouint16(*monster->Attribute(FightLoader::text_level),&ok);
+                                            if(!ok)
+                                            {
+                                                std::cerr << "The level is not a number: type: " << monster->Attribute(FightLoader::text_type) << " ValueStr(): " << monster->ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
+                                                botFightMonster.level=1;
+                                            }
+                                            if(botFightMonster.level<1)
+                                            {
+                                                std::cerr << "Can't be 0 or negative: type: " << monster->Attribute(FightLoader::text_type) << " ValueStr(): " << monster->ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
+                                                botFightMonster.level=1;
+                                            }
+                                        }
+                                        const TiXmlElement * attack = monster->FirstChildElement(FightLoader::text_attack);
+                                        while(entryValid && attack!=NULL)
+                                        {
+                                            uint8_t attackLevel=1;
+                                            if(attack->Attribute(FightLoader::text_id)==NULL)
+                                                std::cerr << "Has not attribute \"type\": ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
+                                            else if(attack->Type()!=TiXmlNode::NodeType::TINYXML_ELEMENT)
+                                                std::cerr << "Is not an element: ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
+                                            else
+                                            {
+                                                uint32_t attackId=stringtouint32(*attack->Attribute(FightLoader::text_id),&ok);
+                                                if(ok)
+                                                {
+                                                    if(monsterSkills.find(attackId)==monsterSkills.cend())
+                                                    {
+                                                        entryValid=false;
+                                                        std::cerr << "Monster attack not found: %1 into the ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
+                                                        break;
+                                                    }
+                                                    if(attack->Attribute(FightLoader::text_level)!=NULL)
+                                                    {
+                                                        attackLevel=stringtouint16(*attack->Attribute(FightLoader::text_level),&ok);
+                                                        if(!ok)
+                                                        {
+                                                            std::cerr << "The level is not a number: ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
+                                                            entryValid=false;
+                                                            break;
+                                                        }
+                                                        if(attackLevel<1)
+                                                        {
+                                                            std::cerr << "Can't be 0 or negative: ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
+                                                            entryValid=false;
+                                                            break;
+                                                        }
+                                                    }
+                                                    if(attackLevel>monsterSkills.at(attackId).level.size())
+                                                    {
+                                                        std::cerr << "Level out of range: ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
+                                                        entryValid=false;
+                                                        break;
+                                                    }
+                                                    CatchChallenger::PlayerMonster::PlayerSkill botFightAttack;
+                                                    botFightAttack.skill=attackId;
+                                                    botFightAttack.level=attackLevel;
+                                                    botFightMonster.attacks.push_back(botFightAttack);
+                                                }
+                                            }
+                                            attack = attack->NextSiblingElement(FightLoader::text_attack);
+                                        }
+                                        if(botFightMonster.attacks.empty())
+                                            botFightMonster.attacks=loadDefaultAttack(botFightMonster.id,botFightMonster.level,monsters,monsterSkills);
+                                        if(botFightMonster.attacks.empty())
+                                        {
+                                            std::cerr << "Empty attack list: ValueStr(): " << monster->ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
+                                            entryValid=false;
+                                            break;
+                                        }
+                                        botFight.monsters.push_back(botFightMonster);
+                                    }
+                                }
+                                monster = monster->NextSiblingElement("monster");
                             }
                         }
-                        else
-                            std::cerr << "Unable to open the xml file: " << file << ", id is not a number: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+                        {
+                            const TiXmlElement * gain = item->FirstChildElement("gain");
+                            while(entryValid && gain!=NULL)
+                            {
+                                if(gain->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
+                                {
+                                    if(gain->Attribute("cash")!=NULL)
+                                    {
+                                        const uint32_t &cash=stringtouint32(gain->Attribute("cash"),&ok)*CommonSettingsServer::commonSettingsServer.rates_gold;
+                                        if(ok)
+                                            botFight.cash+=cash;
+                                        else
+                                            std::cerr << "Unable to open the xml file: " << file << ", unknow cash text: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+                                    }
+                                    else if(gain->Attribute(FightLoader::text_item)!=NULL)
+                                    {
+                                        BotFight::Item itemVar;
+                                        itemVar.quantity=1;
+                                        itemVar.id=stringtouint32(*gain->Attribute(FightLoader::text_item),&ok);
+                                        if(ok)
+                                        {
+                                            if(items.find(itemVar.id)!=items.cend())
+                                            {
+                                                if(gain->Attribute("quantity")!=NULL)
+                                                {
+                                                    itemVar.quantity=stringtouint32(gain->Attribute("quantity"),&ok);
+                                                    if(!ok || itemVar.quantity<1)
+                                                    {
+                                                        itemVar.quantity=1;
+                                                        std::cerr << "Unable to open the xml file: " << file << ", quantity value is wrong: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+                                                    }
+                                                }
+                                                botFight.items.push_back(itemVar);
+                                            }
+                                            else
+                                                std::cerr << "Unable to open the xml file: " << file << ", item not found: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+                                        }
+                                        else
+                                            std::cerr << "Unable to open the xml file: " << file << ", unknow item id text: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+                                    }
+                                    else
+                                        std::cerr << "unknown fight gain: file: " << file << " child->ValueStr(): " << gain->ValueStr() << " (at line: " << gain->Row() << ")" << std::endl;
+                                }
+                                else
+                                    std::cerr << "Is not an element: file: " << file << ", type: " << gain->Attribute(FightLoader::text_type) << " child->ValueStr(): " << gain->ValueStr() << " (at line: " << gain->Row() << ")" << std::endl;
+                                gain = gain->NextSiblingElement("gain");
+                            }
+                        }
+                        if(entryValid)
+                        {
+                            if(botFightList.find(id)==botFightList.cend())
+                            {
+                                if(!botFight.monsters.empty())
+                                    botFightList[id]=botFight;
+                                else
+                                    std::cerr << "Monster list is empty to open the xml file: " << file << ", id already found: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+                            }
+                            else
+                                std::cerr << "Unable to open the xml file: " << file << ", id already found: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+                        }
                     }
+                    else
+                        std::cerr << "Unable to open the xml file: " << file << ", id is not a number: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                 }
-                else
-                    std::cerr << "Unable to open the xml file: " << file << ", is not an element: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
-                item = item->NextSiblingElement("fight");
             }
-            index_file++;
+            else
+                std::cerr << "Unable to open the xml file: " << file << ", is not an element: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+            item = item->NextSiblingElement("fight");
         }
+        index_file++;
     }
     return botFightList;
 }
@@ -1162,17 +1154,11 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                    )
 {
     std::unordered_map<uint16_t,Skill> monsterSkills;
-    QDir dir(QString::fromStdString(folder));
-    QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
-    int file_index=0;
+    const std::vector<FacilityLibGeneral::InodeDescriptor> &fileList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder,CatchChallenger::FacilityLibGeneral::ListFolder::Files);
+    unsigned int file_index=0;
     while(file_index<fileList.size())
     {
-        if(!fileList.at(file_index).isFile())
-        {
-            file_index++;
-            continue;
-        }
-        const std::string &file=fileList.at(file_index).absoluteFilePath().toStdString();
+        const std::string &file=fileList.at(file_index).absoluteFilePath;
         if(!stringEndsWith(file,FightLoader::text_dotxml))
         {
             file_index++;
@@ -1526,17 +1512,11 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
 std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string &folder)
 {
     std::unordered_map<uint8_t,Buff> monsterBuffs;
-    QDir dir(QString::fromStdString(folder));
-    QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
-    int file_index=0;
+    const std::vector<FacilityLibGeneral::InodeDescriptor> &fileList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder,CatchChallenger::FacilityLibGeneral::ListFolder::Files);
+    unsigned int file_index=0;
     while(file_index<fileList.size())
     {
-        if(!fileList.at(file_index).isFile())
-        {
-            file_index++;
-            continue;
-        }
-        const std::string &file=fileList.at(file_index).absoluteFilePath().toStdString();
+        const std::string &file=fileList.at(file_index).absoluteFilePath;
         if(!stringEndsWith(file,FightLoader::text_dotxml))
         {
             file_index++;

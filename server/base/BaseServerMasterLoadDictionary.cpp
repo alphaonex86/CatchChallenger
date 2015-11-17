@@ -5,7 +5,6 @@
 #include "../../general/base/GeneralVariable.h"
 #include "../VariableServer.h"
 
-#include <QCryptographicHash>
 #include <regex>
 #include <iostream>
 

@@ -17,6 +17,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <chrono>
 
 using namespace CatchChallenger;
 
@@ -345,7 +346,8 @@ bool Client::singleMove(const Direction &direction)
         errorOutput("Try move when is in capture city");
         return false;
     }
-    if(oldEvents.oldEventList.size()>0 && (QDateTime::currentDateTime().toTime_t()-oldEvents.time.toTime_t())>30/*30s*/)
+    const double &now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    if(oldEvents.oldEventList.size()>0 && (now-oldEvents.time)>30/*30s*/)
     {
         errorOutput("Try move but lost of event sync");
         return false;
@@ -1204,13 +1206,13 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
 void Client::setEvent(const uint8_t &event, const uint8_t &new_value)
 {
     const uint8_t &event_value=GlobalServerData::serverPrivateVariables.events.at(event);
-    QDateTime currentDateTime=QDateTime::currentDateTime();
+    const double &now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     std::vector<Client *> playerList;
     playerList.reserve(playerByPseudo.size());
     auto i=playerByPseudo.begin();
     while(i!=playerByPseudo.cend())
     {
-        i->second->addEventInQueue(event,event_value,currentDateTime);
+        i->second->addEventInQueue(event,event_value,now);
         playerList.push_back(i->second);
         ++i;
     }
@@ -1229,7 +1231,7 @@ void Client::setEvent(const uint8_t &event, const uint8_t &new_value)
     GlobalServerData::serverPrivateVariables.events[event]=new_value;
 }
 
-void Client::addEventInQueue(const uint8_t &event,const uint8_t &event_value,const QDateTime &currentDateTime)
+void Client::addEventInQueue(const uint8_t &event, const uint8_t &event_value, const uint64_t &currentDateTime)
 {
     if(oldEvents.oldEventList.size()==0)
         oldEvents.time=currentDateTime;
@@ -1248,7 +1250,10 @@ void Client::removeFirstEventInQueue()
     }
     oldEvents.oldEventList.erase(oldEvents.oldEventList.begin());
     if(oldEvents.oldEventList.size()>0)
-        oldEvents.time=QDateTime::currentDateTime();
+    {
+        const double &now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        oldEvents.time=now;
+    }
 }
 
 bool Client::learnSkill(const uint32_t &monsterId, const uint16_t &skill)
@@ -2080,7 +2085,7 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
     {
         unsigned int index,count_item;
         const IndustryStatus &industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus.at(factoryId),industry);
-        uint64_t currentTime=QDateTime::currentMSecsSinceEpoch()/1000;
+        uint64_t currentTime=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         if(industryStatus.last_update>currentTime)
         {
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
@@ -2322,7 +2327,7 @@ void Client::sellFactoryResource(const uint8_t &query_id,const uint16_t &factory
     IndustryStatus industryStatus;
     if(GlobalServerData::serverPrivateVariables.industriesStatus.find(factoryId)==GlobalServerData::serverPrivateVariables.industriesStatus.cend())
     {
-        industryStatus.last_update=(QDateTime::currentMSecsSinceEpoch()/1000);
+        industryStatus.last_update=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         unsigned int index;
         //send the resource
         index=0;
@@ -2961,7 +2966,7 @@ void Client::addClan_object()
     delete clanActionParam;
 }
 
-void Client::addClan_return(const uint8_t &query_id,const uint8_t &action,const std::string &text)
+void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::string &text)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBackType.front()!="ClanActionParam")
@@ -2972,7 +2977,6 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &action,const 
     paramToPassToCallBackType.pop();
     #endif
     callbackRegistred.pop();
-    Q_UNUSED(action);
 
     //send the network reply
     removeFromQueryReceived(query_id);
@@ -3015,7 +3019,7 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &action,const 
     std::string queryText=PreparedDBQueryCommon::db_query_insert_clan;
     stringreplaceOne(queryText,"%1",std::to_string(clanId));
     stringreplaceOne(queryText,"%2",SqlFunction::quoteSqlVariable(text));
-    stringreplaceOne(queryText,"%3",std::to_string(QDateTime::currentMSecsSinceEpoch()/1000));
+    stringreplaceOne(queryText,"%3",std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()));
     dbQueryWriteCommon(queryText);
     insertIntoAClan(clanId);
 }

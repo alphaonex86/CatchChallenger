@@ -3,9 +3,9 @@
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QObject>
+#include <QTimer>
 #endif
 #include <vector>
-#include <QTimer>
 
 #include "ServerStructures.h"
 #include "ClientMapManagement/ClientMapManagement.h"
@@ -185,7 +185,7 @@ private:
     PlayerOnMap rescue;
     PlayerOnMap unvalidated_rescue;
     std::unordered_map<uint32_t,std::vector<MonsterDrops> > questsDrop;
-    QDateTime connectedSince;
+    uint64_t connectedSince;
     struct OldEvents
     {
         struct OldEventEntry
@@ -193,7 +193,7 @@ private:
             uint8_t event;
             uint8_t eventValue;
         };
-        QDateTime time;
+        uint64_t time;
         std::vector<OldEventEntry> oldEventList;
     };
     OldEvents oldEvents;
@@ -429,7 +429,7 @@ private:
     void selectClan_object();
     void selectClan_return();
 
-    void fake_receive_data(const std::vector<char> &data);
+    void fake_receive_data(const std::vector<char> &);
     void purgeReadBuffer();
 
     void sendNewEvent(char * const data, const uint32_t &size);
@@ -479,7 +479,7 @@ private:
     bool haveReputationRequirements(const std::vector<ReputationRequirements> &reputationList) const;
     void confirmEvolution(const uint32_t &monsterId);
     void sendHandlerCommand(const std::string &command,const std::string &extraText);
-    void addEventInQueue(const uint8_t &event, const uint8_t &event_value, const QDateTime &currentDateTime);
+    void addEventInQueue(const uint8_t &event, const uint8_t &event_value, const uint64_t &currentDateTime);
     void removeFirstEventInQueue();
     //inventory
     void destroyObject(const uint16_t &itemId,const uint32_t &quantity);

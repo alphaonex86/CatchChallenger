@@ -5,15 +5,11 @@
 #include <QTimer>
 #endif
 
-#include <QObject>
 #include <vector>
 #include <string>
-#include <QVariant>
 #include <unordered_set>
 #include <unordered_map>
 #include <regex>
-#include <QDateTime>
-#include <QProcess>
 
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/ConnectedSocket.h"
@@ -108,7 +104,7 @@ struct NormalServerSettings
     std::string proxy;
     uint16_t proxy_port;
     bool useSsl;
-    #ifdef Q_OS_LINUX
+    #ifdef __linux__
     bool tcpNodelay;
     #endif
 };
@@ -347,7 +343,7 @@ struct ServerPrivateVariables
     uint32_t maxAccountId;
     uint32_t maxCharacterId;
     #endif
-    QDateTime time_city_capture;
+    uint64_t time_city_capture;
     std::unordered_map<uint32_t,Clan *> clanList;
 
     //map

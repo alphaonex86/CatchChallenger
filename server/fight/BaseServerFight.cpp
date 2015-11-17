@@ -7,7 +7,6 @@
 #include "../base/GlobalServerData.h"
 #include "../VariableServer.h"
 
-#include <QFile>
 #include <string>
 #include <vector>
 

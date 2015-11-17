@@ -22,7 +22,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <QCryptographicHash>
+#include <chrono>
+#include <openssl/sha.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
     #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB*1024
@@ -68,10 +72,8 @@ bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
     #endif
     std::vector<char> login;
     {
-        QCryptographicHash hash(QCryptographicHash::Sha224);
-        hash.addData(rawdata,CATCHCHALLENGER_SHA224HASH_SIZE);
-        login.resize(hash.result().size());
-        memcpy(login.data(),hash.result().constData(),hash.result().size());
+        login.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+        SHA224(reinterpret_cast<const unsigned char *>(rawdata),CATCHCHALLENGER_SHA224HASH_SIZE,reinterpret_cast<unsigned char *>(login.data()));
     }
     AskLoginParam *askLoginParam=new AskLoginParam;
     askLoginParam->query_id=query_id;
@@ -161,7 +163,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                 return;
 /*                GlobalServerData::serverPrivateVariables.maxAccountId++;
                 account_id=GlobalServerData::serverPrivateVariables.maxAccountId;
-                dbQueryWrite(PreparedDBQuery::db_query_insert_login.arg(account_id).arg(std::string(askLoginParam->login.toHex())).arg(std::string(askLoginParam->pass.toHex())).arg(QDateTime::currentDateTime().toTime_t()));*/
+                dbQueryWrite(PreparedDBQuery::db_query_insert_login.arg(account_id).arg(std::string(askLoginParam->login.toHex())).arg(std::string(askLoginParam->pass.toHex())).arg(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()));*/
             }
             else
             {
@@ -194,15 +196,12 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                             std::cerr << "convertion to binary for pass failed for: " << GlobalServerData::serverPrivateVariables.db_login->value(1) << std::endl;
                             abort();
                         }
-                        QCryptographicHash hash(QCryptographicHash::Sha224);
-                        hash.addData(secretTokenBinary.data(),secretTokenBinary.size());
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
                         tempAddedToken.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         memcpy(tempAddedToken.data(),tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         #endif
-                        hash.addData(tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        hashedToken.resize(hash.result().size());
-                        memcpy(hashedToken.data(),hash.result().constData(),hash.result().size());
+                        hashedToken.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+                        SHA224(reinterpret_cast<const unsigned char *>(secretTokenBinary.data()),secretTokenBinary.size(),reinterpret_cast<unsigned char *>(hashedToken.data()));
                         BaseServerLogin::tokenForAuthSize--;
                         //see to do with SIMD
                         if(BaseServerLogin::tokenForAuthSize>0)
@@ -401,7 +400,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         stringreplaceOne(queryText,"%1",std::to_string(account_id));
         stringreplaceOne(queryText,"%2",binarytoHexa(askLoginParam->login));
         stringreplaceOne(queryText,"%3",binarytoHexa(askLoginParam->pass));
-        stringreplaceOne(queryText,"%4",std::to_string(QDateTime::currentDateTime().toTime_t()));
+        stringreplaceOne(queryText,"%4",std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()));
         dbQueryWriteLogin(queryText);
 
         //send the network reply
@@ -480,7 +479,7 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
     uint32_t posOutput=0;
 
     {
-        const uint64_t &current_time=QDateTime::currentDateTime().toTime_t();
+        const uint64_t &current_time=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         std::vector<CharacterEntry> characterEntryList;
         bool ok;
         while(GlobalServerData::serverPrivateVariables.db_common->next() && characterEntryList.size()<CommonSettingsCommon::commonSettingsCommon.max_character)
@@ -655,7 +654,7 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
     int tempRawDataSizeToSetServerCount=posOutput;
     posOutput+=1;
 
-    const uint64_t &current_time=QDateTime::currentDateTime().toTime_t();
+    const uint64_t &current_time=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     bool ok;
     uint8_t validServerCount=0;
     if(GlobalServerData::serverPrivateVariables.db_common->next())
@@ -692,13 +691,13 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
         std::string queryText=PreparedDBQueryCommon::db_query_insert_server_time;
         stringreplaceOne(queryText,"%1","0");
         stringreplaceOne(queryText,"%2",std::to_string(account_id));
-        stringreplaceOne(queryText,"%3",std::to_string(QDateTime::currentDateTime().toTime_t()));
+        stringreplaceOne(queryText,"%3",std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()));
         dbQueryWriteCommon(queryText);
     }
     else
     {
         std::string queryText=PreparedDBQueryCommon::db_query_update_server_time_last_connect;
-        stringreplaceOne(queryText,"%1",std::to_string(QDateTime::currentDateTime().toTime_t()));
+        stringreplaceOne(queryText,"%1",std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()));
         stringreplaceOne(queryText,"%2","0");
         stringreplaceOne(queryText,"%3",std::to_string(account_id));
         dbQueryWriteCommon(queryText);
@@ -1139,7 +1138,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
                  serverProfileInternal.preparedQueryAddCharacter.at(3)+
                  std::to_string(DictionaryLogin::dictionary_skin_internal_to_database.at(skinId))+
                  serverProfileInternal.preparedQueryAddCharacter.at(4)+
-                 std::to_string(QDateTime::currentDateTime().toTime_t())+
+                 std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count())+
                  serverProfileInternal.preparedQueryAddCharacter.at(5)
                  );
     while(index<profile.monsters.size())
@@ -1351,7 +1350,7 @@ void Client::removeCharacterLater_return(const uint8_t &query_id,const uint32_t 
     stringreplaceOne(queryText,"%2",
                   //date to delete, not time (no sens on database, delete the date of removing
                   std::to_string(
-                        QDateTime::currentDateTime().toTime_t()+
+                        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()+
                         CommonSettingsCommon::commonSettingsCommon.character_delete_time
                     )
                   );
@@ -1391,37 +1390,41 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
     const int &size=returnList.size();
     while(index<size)
     {
-        #ifdef Q_OS_WIN32
+        #ifdef _WIN32
         std::string fileName=returnList.at(index);
         #else
         const std::string &fileName=returnList.at(index);
         #endif
         if(regex_search(fileName,GlobalServerData::serverPrivateVariables.datapack_rightFileName))
         {
-            QFileInfo fileInfo(QString::fromStdString(fileName));
-            if(!fileInfo.suffix().toStdString().empty() &&
-                    BaseServerMasterSendDatapack::extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())
+            const std::string &suffix=FacilityLibGeneral::getSuffix(fileName);
+            if(!suffix.empty() &&
+                    BaseServerMasterSendDatapack::extensionAllowed.find(suffix)
                     !=BaseServerMasterSendDatapack::extensionAllowed.cend())
             {
-                QFile file(QString::fromStdString(path+returnList.at(index)));
-                if(file.size()<=8*1024*1024)
+                struct stat buf;
+                if(stat((path+returnList.at(index)).c_str(),&buf)!=-1)
                 {
-                    if(file.open(QIODevice::ReadOnly))
+                    if(buf.st_size<=8*1024*1024)
                     {
-                        DatapackCacheFile datapackCacheFile;
-                        #ifdef Q_OS_WIN32
-                        fileName.replace(Client::text_antislash,Client::text_slash);//remplace if is under windows server
-                        #endif
-                        if(withHash)
+                        FILE *filedesc = fopen((path+returnList.at(index)).c_str(), "rb");
+                        if(filedesc!=NULL)
                         {
-                            QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                            hashFile.addData(file.readAll());
-                            datapackCacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
+                            DatapackCacheFile datapackCacheFile;
+                            #ifdef _WIN32
+                            fileName.replace(Client::text_antislash,Client::text_slash);//remplace if is under windows server
+                            #endif
+                            if(withHash)
+                            {
+                                const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
+                                SHA224(reinterpret_cast<const unsigned char *>(data.data()),data.size(),reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
+                                datapackCacheFile.partialHash=*reinterpret_cast<const int *>(ProtocolParsingBase::tempBigBufferForOutput);
+                            }
+                            else
+                                datapackCacheFile.partialHash=0;
+                            filesList[fileName]=datapackCacheFile;
+                            fclose(filedesc);
                         }
-                        else
-                            datapackCacheFile.partialHash=0;
-                        filesList[fileName]=datapackCacheFile;
-                        file.close();
                     }
                 }
             }
@@ -1440,14 +1443,14 @@ std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file
     {
         if(Client::datapack_list_cache_timestamp_base==0)
         {
-            Client::datapack_list_cache_timestamp_base=QDateTime::currentDateTime().toTime_t();
+            Client::datapack_list_cache_timestamp_base=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
             Client::datapack_file_hash_cache_base=datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"map/main/");
         }
         return Client::datapack_file_hash_cache_base;
     }
     else
     {
-        const uint64_t &currentTime=QDateTime::currentDateTime().toTime_t();
+        const uint64_t &currentTime=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         if(Client::datapack_list_cache_timestamp_base<(currentTime-GlobalServerData::serverSettings.datapackCache))
         {
             Client::datapack_list_cache_timestamp_base=currentTime;
@@ -1465,14 +1468,14 @@ std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file
     {
         if(Client::datapack_list_cache_timestamp_main==0)
         {
-            Client::datapack_list_cache_timestamp_main=QDateTime::currentDateTime().toTime_t();
+            Client::datapack_list_cache_timestamp_main=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
             Client::datapack_file_hash_cache_main=datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,"sub/");
         }
         return Client::datapack_file_hash_cache_main;
     }
     else
     {
-        const uint64_t &currentTime=QDateTime::currentDateTime().toTime_t();
+        const uint64_t &currentTime=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         if(Client::datapack_list_cache_timestamp_main<(currentTime-GlobalServerData::serverSettings.datapackCache))
         {
             Client::datapack_list_cache_timestamp_main=currentTime;
@@ -1490,14 +1493,14 @@ std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file
     {
         if(Client::datapack_list_cache_timestamp_sub==0)
         {
-            Client::datapack_list_cache_timestamp_sub=QDateTime::currentDateTime().toTime_t();
+            Client::datapack_list_cache_timestamp_sub=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
             Client::datapack_file_hash_cache_sub=datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,"");
         }
         return Client::datapack_file_hash_cache_sub;
     }
     else
     {
-        const uint64_t &currentTime=QDateTime::currentDateTime().toTime_t();
+        const uint64_t &currentTime=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         if(Client::datapack_list_cache_timestamp_sub<(currentTime-GlobalServerData::serverSettings.datapackCache))
         {
             Client::datapack_list_cache_timestamp_sub=currentTime;
@@ -1596,16 +1599,20 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
                     addDatapackListReply(false);//file found don't need be updated
                 else
                 {
-                    QFile file(QString::fromStdString(datapackPath+fileName));
-                    if(file.open(QIODevice::ReadOnly))
+                    FILE *filedesc = fopen((datapackPath+fileName).c_str(), "rb");
+                    if(filedesc!=NULL)
                     {
-                        addDatapackListReply(false);//found but need an update
-                        datapckFileNumber++;
-                        datapckFileSize+=file.size();
-                        FileToSend fileToSend;
-                        fileToSend.file=fileName;
-                        fileToSendList.push_back(fileToSend);
-                        file.close();
+                        struct stat buf;
+                        if(stat((datapackPath+fileName).c_str(),&buf)!=-1)
+                        {
+                            addDatapackListReply(false);//found but need an update
+                            datapckFileNumber++;
+                            datapckFileSize+=buf.st_size;
+                            FileToSend fileToSend;
+                            fileToSend.file=fileName;
+                            fileToSendList.push_back(fileToSend);
+                        }
+                        fclose(filedesc);
                     }
                 }
                 filesListForSize.erase(fileName);
@@ -1620,15 +1627,19 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
         auto i=filesListForSize.begin();
         while(i!=filesListForSize.cend())
         {
-            QFile file(QString::fromStdString(datapackPath+i->first));
-            if(file.open(QIODevice::ReadOnly))
+            FILE *filedesc = fopen((datapackPath+i->first).c_str(), "rb");
+            if(filedesc!=NULL)
             {
-                datapckFileNumber++;
-                datapckFileSize+=file.size();
-                FileToSend fileToSend;
-                fileToSend.file=i->first;
-                fileToSendList.push_back(fileToSend);
-                file.close();
+                struct stat buf;
+                if(stat((datapackPath+i->first).c_str(),&buf)!=-1)
+                {
+                    datapckFileNumber++;
+                    datapckFileSize+=buf.st_size;
+                    FileToSend fileToSend;
+                    fileToSend.file=i->first;
+                    fileToSendList.push_back(fileToSend);
+                }
+                fclose(filedesc);
             }
             ++i;
         }
@@ -1651,7 +1662,7 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
         errorOutput("Ask datapack list where the checksum match");
         return;
     }
-    qSort(fileToSendList);
+    std::sort(fileToSendList.begin(),fileToSendList.end());
     //validate, remove or update the file actualy on the client
     if(tempDatapackListReplyTestCount!=files.size())
     {
@@ -1851,18 +1862,13 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
         return false;
     }
 
-    QFile file(QString::fromStdString(datapackPath+fileName));
-    if(file.open(QIODevice::ReadOnly))
+    FILE *filedesc = fopen((datapackPath+fileName).c_str(), "rb");
+    if(filedesc!=NULL)
     {
-        std::vector<char> content;
-        {
-            const QByteArray &mQtData=file.readAll();
-            content.resize(mQtData.size());
-            memcpy(content.data(),mQtData.constData(),mQtData.size());
-        }
+        const std::vector<char> &content=FacilityLibGeneral::readAllFileAndClose(filedesc);
         const int &contentsize=content.size();
 
-        const std::string &suffix=QFileInfo(file).suffix().toStdString();
+        const std::string &suffix=FacilityLibGeneral::getSuffix(fileName);
         if(ProtocolParsing::compressionTypeServer!=ProtocolParsing::CompressionType::None &&
                 BaseServerMasterSendDatapack::compressedExtension.find(suffix)!=BaseServerMasterSendDatapack::compressedExtension.cend() &&
                 (
@@ -1965,12 +1971,12 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
                     sendFileContent();
             }
         }
-        file.close();
+        fclose(filedesc);
         return true;
     }
     else
     {
-        errorOutput("Unable to open into CatchChallenger::sendFile(): "+file.errorString().toStdString());
+        errorOutput("Unable to open into CatchChallenger::sendFile(): "+fileName);
         return false;
     }
 }

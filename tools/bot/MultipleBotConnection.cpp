@@ -28,7 +28,7 @@ MultipleBotConnection::~MultipleBotConnection()
 
 QString MultipleBotConnection::getResolvedPluginName(const QString &name)
 {
-    #if defined(Q_OS_LINUX)
+    #if defined(__linux__)
         return QStringLiteral("lib")+name+QStringLiteral(".so");
     #elif defined(Q_OS_MAC)
         #if defined(QT_DEBUG)
@@ -36,7 +36,7 @@ QString MultipleBotConnection::getResolvedPluginName(const QString &name)
         #else
             return QStringLiteral("lib")+name+QStringLiteral(".dylib");
         #endif
-    #elif defined(Q_OS_WIN32)
+    #elif defined(_WIN32)
         #if defined(QT_DEBUG)
             return name+QStringLiteral("d.dll");
         #else

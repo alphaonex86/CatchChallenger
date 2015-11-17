@@ -50,6 +50,7 @@ public:
     std::vector<std::string > skins;
 private:
     bool isParsed;
+    bool parsing;
     std::string datapackPath;
 private:
     void parseTypes();

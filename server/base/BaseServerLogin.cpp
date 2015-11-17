@@ -5,12 +5,11 @@
 #include "../VariableServer.h"
 #include "../VariableServer.h"
 
-#include <QCryptographicHash>
 #include <iostream>
 
 using namespace CatchChallenger;
 
-#ifdef Q_OS_LINUX
+#ifdef __linux__
 FILE * BaseServerLogin::fpRandomFile=NULL;
 #endif
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
@@ -34,7 +33,7 @@ void BaseServerLogin::preload_the_randomData()
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     BaseServerLogin::tokenForAuthSize=0;
     #endif
-    #ifdef Q_OS_LINUX
+    #ifdef __linux__
     if(BaseServerLogin::fpRandomFile!=NULL)
         fclose(BaseServerLogin::fpRandomFile);
     BaseServerLogin::fpRandomFile = fopen(RANDOMFILEDEVICE,"rb");
@@ -75,7 +74,7 @@ void BaseServerLogin::unload()
 
 void BaseServerLogin::unload_the_randomData()
 {
-    #ifdef Q_OS_LINUX
+    #ifdef __linux__
     if(BaseServerLogin::fpRandomFile!=NULL)
     {
         fclose(BaseServerLogin::fpRandomFile);

@@ -203,9 +203,8 @@ void Client::sendBattleRequest(char * const data, const uint32_t &size)
     queryNumberList.pop_back();
 }
 
-bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
+bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const unsigned int &)
 {
-    Q_UNUSED(size);
     if(stopIt)
         return false;
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
@@ -267,7 +266,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                 BaseServerLogin::TokenLink *token=&BaseServerLogin::tokenForAuth[BaseServerLogin::tokenForAuthSize];
                 {
                     token->client=this;
-                    #ifdef Q_OS_LINUX
+                    #ifdef __linux__
                     if(BaseServerLogin::fpRandomFile==NULL)
                     {
                         //failback
@@ -305,7 +304,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                     /// \warning total insecure implementation
                     // not abort(); because under not linux will not work
                     int index=0;
-                    while(index<CATCHCHALLENGER_TOKENSIZE)
+                    while(index<TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
                     {
                         token->value[index]=rand()%256;
                         index++;
@@ -1220,7 +1219,6 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
 {
     if(stopIt)
         return false;
-    Q_UNUSED(data);
     const bool goodQueryBeforeLoginLoaded=
             packetCode==0xA0 ||
             packetCode==0xA8
@@ -2004,8 +2002,6 @@ bool Client::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber
     queryNumberList.push_back(queryNumber);
     if(stopIt)
         return false;
-    Q_UNUSED(data);
-    Q_UNUSED(size);
     if(account_id==0)
     {
         disconnectClient();
@@ -2111,9 +2107,8 @@ bool Client::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber
 }
 
 /// \warning it need be complete protocol trame
-void Client::fake_receive_data(const std::vector<char> &data)
+void Client::fake_receive_data(const std::vector<char> &)
 {
-    Q_UNUSED(data);
 //	parseInputAfterLogin(data);
 }
 

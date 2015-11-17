@@ -6,11 +6,11 @@
 #include <QUrl>
 #include <QRegularExpression>
 
-#ifdef Q_OS_UNIX
+#ifdef __unix__
     #include <unistd.h>
     #include <sys/types.h>
 #endif
-#ifdef Q_OS_WIN32
+#ifdef _WIN32
     #ifndef NOMINMAX
         #define NOMINMAX
     #endif
@@ -55,7 +55,7 @@ void InternetUpdater::downloadFile()
             #endif
         #endif
     #endif
-    #if defined(Q_OS_WIN32) || defined(Q_OS_MAC)
+    #if defined(_WIN32) || defined(Q_OS_MAC)
     catchChallengerVersion+=QStringLiteral(" (OS: %1)").arg(GetOSDisplayString());
     #endif
     QNetworkRequest networkRequest(QStringLiteral("%1?platform=%2").arg(CATCHCHALLENGER_UPDATER_URL).arg(CATCHCHALLENGER_PLATFORM_CODE));
@@ -147,7 +147,7 @@ QString InternetUpdater::getText(const QString &version)
                                                          );
 }
 
-#ifdef Q_OS_WIN32
+#ifdef _WIN32
 QString InternetUpdater::GetOSDisplayString()
 {
    QString Os;
