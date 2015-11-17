@@ -9,7 +9,7 @@
 #define PLATFORM_MACRO_H
 
 //windows
-#if defined(Q_OS_WIN32)
+#if defined(_WIN32)
     #if defined(_M_X64) //_WIN64
         //windows 64Bits
         #define CATCHCHALLENGER_PLATFORM_NAME tr("Windows 64Bits")
@@ -23,7 +23,7 @@
     //Mac OS X
     #define CATCHCHALLENGER_PLATFORM_NAME tr("Mac OS X")
     #define CATCHCHALLENGER_PLATFORM_CODE "mac-os-x"
-#elif defined(Q_OS_LINUX)
+#elif defined(__linux__)
     #if defined(__i386__)
         //linux pc i386
         #define CATCHCHALLENGER_PLATFORM_NAME tr("Linux pc i386")

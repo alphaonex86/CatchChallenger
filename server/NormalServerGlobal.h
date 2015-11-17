@@ -1,7 +1,6 @@
 #ifndef NORMALSERVERGLOBAL_H
 #define NORMALSERVERGLOBAL_H
 
-#include <QSettings>
 #include <string>
 
 class NormalServerGlobal

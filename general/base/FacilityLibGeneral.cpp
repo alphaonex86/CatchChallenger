@@ -20,6 +20,8 @@ std::string FacilityLibGeneral::text_unknown="unknown";
 std::string FacilityLibGeneral::text_clan="clan";
 std::string FacilityLibGeneral::text_dotcomma=";";
 
+std::string FacilityLibGeneral::applicationDirPath;
+
 unsigned int FacilityLibGeneral::toUTF8WithHeader(const std::string &text,char * const data)
 {
     if(text.empty() || text.size()>255)
@@ -160,6 +162,49 @@ bool FacilityLibGeneral::isFile(const std::string& file)
     } else {
         return false;
     }
+}
+
+bool FacilityLibGeneral::isDir(const std::string& folder)
+{
+    DIR *dir=opendir(folder.c_str());
+    if(dir!=NULL)
+    {
+        closedir(dir);
+        return true;
+    }
+    else
+        return false;
+}
+
+std::vector<char> FacilityLibGeneral::readAllFileAndClose(FILE * file)
+{
+    std::vector<char> data;
+    fseek(file,0,SEEK_END);
+    long fsize=ftell(file);
+    fseek(file,0,SEEK_SET);
+
+    data.resize(fsize);
+    fread(data.data(),fsize,1,file);
+    fclose(file);
+
+    return data;
+}
+
+uint32_t FacilityLibGeneral::fileSize(FILE * file)
+{
+    fseek(file,0,SEEK_END);
+    uint32_t fsize=ftell(file);
+    fseek(file,0,SEEK_SET);
+    return fsize;
+}
+
+std::string FacilityLibGeneral::getSuffix(const std::string& fileName)
+{
+    const auto &pos=fileName.find_last_of('.');
+    if(pos==std::string::npos)
+        return std::string();
+    else
+        return fileName.substr(pos+1);
 }
 
 /*std::string FacilityLibGeneral::secondsToString(const uint64_t &seconds)

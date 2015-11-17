@@ -11,7 +11,7 @@
 #include <QStandardPaths>
 #include <QSslKey>
 
-#ifdef Q_OS_LINUX
+#ifdef __linux__
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>

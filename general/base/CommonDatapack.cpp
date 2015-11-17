@@ -5,11 +5,7 @@
 #include "DatapackGeneralLoader.h"
 
 #include <iostream>
-#include <QFile>
 #include <vector>
-#include <QDir>
-#include <QFileInfoList>
-#include <QMutexLocker>
 
 using namespace CatchChallenger;
 
@@ -18,13 +14,16 @@ CommonDatapack CommonDatapack::commonDatapack;
 CommonDatapack::CommonDatapack()
 {
     isParsed=false;
+    parsing=false;
 }
 
 void CommonDatapack::parseDatapack(const std::string &datapackPath)
 {
     if(isParsed)
         return;
-    QMutexLocker mutexLocker(&inProgress);
+    if(parsing)
+        return;
+    parsing=true;
 
     this->datapackPath=datapackPath;
     parseSkins();
@@ -44,6 +43,7 @@ void CommonDatapack::parseDatapack(const std::string &datapackPath)
     parseProfileList();
     parseLayersOptions();
 
+    parsing=false;
     isParsed=true;
 }
 
@@ -185,9 +185,11 @@ void CommonDatapack::parseLayersOptions()
 
 void CommonDatapack::unload()
 {
-    QMutexLocker mutexLocker(&inProgress);
     if(!isParsed)
         return;
+    if(parsing)
+        return;
+    parsing=true;
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     plants.clear();
     crafingRecipes.clear();
@@ -215,5 +217,6 @@ void CommonDatapack::unload()
     xmlLoadedFile.clear();
     #endif
     skins.clear();
+    parsing=false;
     isParsed=false;
 }

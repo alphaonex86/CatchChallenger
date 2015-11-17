@@ -23,6 +23,7 @@ public:
     static CommonDatapackServerSpec commonDatapackServerSpec;
 private:
     bool isParsedSpec;
+    bool parsingSpec;
     std::string datapackPath;
     std::string mainDatapackCode;
 private:

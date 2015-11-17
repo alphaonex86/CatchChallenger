@@ -46,14 +46,12 @@ COORD_TYPE MapBasicMove::getY() const
     return y;
 }
 
-void MapBasicMove::errorOutput(const std::string &errorString)
+void MapBasicMove::errorOutput(const std::string &)
 {
-    Q_UNUSED(errorString);
 }
 
-void MapBasicMove::normalOutput(const std::string &message) const
+void MapBasicMove::normalOutput(const std::string &) const
 {
-    Q_UNUSED(message);
 }
 
 void MapBasicMove::put_on_the_map(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation)

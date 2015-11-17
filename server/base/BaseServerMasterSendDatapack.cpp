@@ -6,9 +6,12 @@
 #include "../VariableServer.h"
 #include "../../general/base/cpp11addition.h"
 
-#include <QCryptographicHash>
 #include <regex>
 #include <iostream>
+#include <openssl/sha.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 using namespace CatchChallenger;
 
@@ -55,6 +58,8 @@ void BaseServerMasterSendDatapack::preload_the_skin()
 
 void BaseServerMasterSendDatapack::loadTheDatapackFileList()
 {
+    char tempBigBufferForOutput[CATCHCHALLENGER_SHA224HASH_SIZE];
+
     std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
     extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
     std::vector<std::string> compressedExtensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
@@ -64,53 +69,53 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
     std::string text_datapack(datapack_basePathLogin);
     std::string text_exclude("map/main/");
 
-    QCryptographicHash hashBase(QCryptographicHash::Sha224);
+    SHA256_CTX hashBase;
     std::vector<std::string> datapack_file_temp=FacilityLibGeneral::listFolder(text_datapack);
     std::sort(datapack_file_temp.begin(),datapack_file_temp.end());
 
     unsigned int index=0;
     while(index<datapack_file_temp.size()) {
-        QFile file(QString::fromStdString(text_datapack+datapack_file_temp.at(index)));
         if(regex_search(datapack_file_temp.at(index),datapack_rightFileName))
         {
-            if(file.size()<=8*1024*1024)
+            if(!stringStartWith(datapack_file_temp.at(index),text_exclude))
             {
-                if(!stringStartWith(datapack_file_temp.at(index),text_exclude))
+                struct stat buf;
+                if(stat((text_datapack+datapack_file_temp.at(index)).c_str(),&buf)!=-1)
                 {
-                    if(file.open(QIODevice::ReadOnly))
+                    if(buf.st_size<=8*1024*1024)
                     {
-                        std::vector<char> data;
-                        QByteArray d(file.readAll());
-                        data.resize(d.size());
-                        memcpy(data.data(),d.constData(),d.size());
+                        FILE *filedesc = fopen((text_datapack+datapack_file_temp.at(index)).c_str(), "rb");
+                        if(filedesc!=NULL)
                         {
-                            QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                            hashFile.addData(QByteArray(data.data(),data.size()));
-                            BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
-                            cacheFile.mtime=QFileInfo(file).lastModified().toTime_t();
-                            cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
-                            datapack_file_hash_cache[datapack_file_temp.at(index)]=cacheFile;
+                            const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
+                            {
+                                SHA256_CTX hashFile;
+                                SHA224_Update(&hashFile,data.data(),data.size());
+                                BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
+                                cacheFile.mtime=buf.st_mtime;
+                                SHA224_Final(reinterpret_cast<unsigned char *>(tempBigBufferForOutput),&hashFile);
+                                cacheFile.partialHash=*reinterpret_cast<const int *>(tempBigBufferForOutput);
+                                datapack_file_hash_cache[datapack_file_temp.at(index)]=cacheFile;
+                            }
+                            SHA224_Update(&hashBase,data.data(),data.size());
                         }
-                        hashBase.addData(QByteArray(data.data(),data.size()));
-                        file.close();
+                        else
+                            std::cerr << "Stop now! Unable to open the file " << text_datapack+datapack_file_temp.at(index) << " to do the datapack checksum for the mirror" << std::endl;
                     }
                     else
-                    {
-                        std::cerr << "Stop now! Unable to open the file " << file.fileName().toStdString() << " to do the datapack checksum for the mirror" << std::endl;
-                        abort();
-                    }
+                        std::cerr << "File to big: " << text_datapack+datapack_file_temp.at(index) << " size: " << buf.st_size << std::endl;
                 }
+                else
+                    std::cerr << "Unable to stat the file: " << text_datapack+datapack_file_temp.at(index) << std::endl;
             }
-            else
-                std::cerr << "File to big: " << datapack_file_temp.at(index) << " size: " << file.size() << std::endl;
         }
         else
-            std::cerr << "File excluded because don't match the regex: " << file.fileName().toStdString() << std::endl;
+            std::cerr << "File excluded because don't match the regex: " << datapack_file_temp.at(index) << std::endl;
         index++;
     }
 
-    CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(hashBase.result().size());
-    memcpy(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),hashBase.result().constData(),hashBase.result().size());
+    CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+    SHA224_Final(reinterpret_cast<unsigned char *>(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data()),&hashBase);
 
     std::cout << datapack_file_temp.size() << " files for datapack loaded" << std::endl;
 }

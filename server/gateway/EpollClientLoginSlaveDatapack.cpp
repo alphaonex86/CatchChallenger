@@ -28,7 +28,7 @@ std::unordered_map<std::string,EpollClientLoginSlave::DatapackCacheFile> EpollCl
     const int &size=returnList.size();
     while(index<size)
     {
-        #ifdef Q_OS_WIN32
+        #ifdef _WIN32
         std::string fileName=returnList.at(index);
         #else
         const std::string &fileName=returnList.at(index);
@@ -44,7 +44,7 @@ std::unordered_map<std::string,EpollClientLoginSlave::DatapackCacheFile> EpollCl
                     if(file.open(QIODevice::ReadOnly))
                     {
                         DatapackCacheFile datapackCacheFile;
-                        #ifdef Q_OS_WIN32
+                        #ifdef _WIN32
                         fileName.replace(EpollClientLoginSlave::text_antislash,EpollClientLoginSlave::text_slash);//remplace if is under windows server
                         #endif
                         if(withHash)

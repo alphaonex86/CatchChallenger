@@ -1,7 +1,9 @@
 #ifndef CATCHCHALLENGER_BROADCASTWITHOUTSENDER_H
 #define CATCHCHALLENGER_BROADCASTWITHOUTSENDER_H
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QObject>
+#endif
 #include "../../general/base/GeneralStructures.h"
 #include "ServerStructures.h"
 

@@ -25,7 +25,7 @@ private slots:
     void downloadFile();
     void httpFinished();
     bool versionIsNewer(const QString &version);
-    #if defined(Q_OS_WIN32) || defined(Q_OS_MAC)
+    #if defined(_WIN32) || defined(Q_OS_MAC)
     static QString GetOSDisplayString();
     #endif
 };

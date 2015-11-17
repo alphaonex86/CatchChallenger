@@ -5,10 +5,7 @@
 #include "FacilityLibGeneral.h"
 #include "tinyXML/tinyxml.h"
 
-#include <QFile>
 #include <vector>
-#include <QFileInfoList>
-#include <QDir>
 #include <iostream>
 
 using namespace CatchChallenger;
@@ -125,8 +122,9 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
                         std::cerr << "Unable to open the file: " << file << ", point attribute not found: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                     level = level->NextSiblingElement("level");
                 }
-                qSort(point_list_positive);
-                qSort(point_list_negative.end(),point_list_negative.begin());
+                std::sort(point_list_positive.begin(),point_list_positive.end());
+                std::sort(point_list_negative.begin(),point_list_negative.end());
+                std::reverse(point_list_negative.begin(),point_list_negative.end());
                 if(ok)
                     if(point_list_positive.size()<2)
                     {
@@ -190,36 +188,31 @@ std::unordered_map<uint16_t, Quest> DatapackGeneralLoader::loadQuests(const std:
     bool ok;
     std::unordered_map<uint16_t, Quest> quests;
     //open and quick check the file
-    QFileInfoList entryList=QDir(QString::fromStdString(folder)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
-    int index=0;
-    while(index<entryList.size())
+    const std::vector<FacilityLibGeneral::InodeDescriptor> &fileList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder,CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
+    unsigned int index=0;
+    while(index<fileList.size())
     {
-        if(!entryList.at(index).isDir())
+        if(!CatchChallenger::FacilityLibGeneral::isFile(fileList.at(index).absoluteFilePath+"/definition.xml"))
         {
             index++;
             continue;
         }
-        if(!QFile(entryList.at(index).absoluteFilePath()+"/definition.xml").exists())
-        {
-            index++;
-            continue;
-        }
-        const uint32_t &questId=stringtouint32(entryList.at(index).fileName().toStdString(),&ok);
+        const uint32_t &questId=stringtouint32(fileList.at(index).name,&ok);
         if(ok)
         {
             //add it, all seam ok
-            std::pair<bool,Quest> returnedQuest=loadSingleQuest(entryList.at(index).absoluteFilePath().toStdString()+"/definition.xml");
+            std::pair<bool,Quest> returnedQuest=loadSingleQuest(fileList.at(index).absoluteFilePath+"/definition.xml");
             if(returnedQuest.first==true)
             {
                 returnedQuest.second.id=questId;
                 if(quests.find(returnedQuest.second.id)!=quests.cend())
-                    std::cerr << "The quest with id: " << returnedQuest.second.id << " is already found, disable: " << entryList.at(index).absoluteFilePath().toStdString() << "/definition.xml" << std::endl;
+                    std::cerr << "The quest with id: " << returnedQuest.second.id << " is already found, disable: " << fileList.at(index).absoluteFilePath << "/definition.xml" << std::endl;
                 else
                     quests[returnedQuest.second.id]=returnedQuest.second;
             }
         }
         else
-            std::cerr << "Unable to open the folder: " << entryList.at(index).fileName().toStdString() << ", because is folder name is not a number" << std::endl;
+            std::cerr << "Unable to open the folder: " << fileList.at(index).absoluteFilePath << ", because is folder name is not a number" << std::endl;
         index++;
     }
     return quests;
@@ -1172,17 +1165,11 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
 std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(const std::string &folder,const std::unordered_map<uint16_t, Item> &items)
 {
     std::unordered_map<uint16_t,Industry> industries;
-    QDir dir(QString::fromStdString(folder));
-    const QFileInfoList &fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
-    int file_index=0;
+    const std::vector<FacilityLibGeneral::InodeDescriptor> &fileList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder,CatchChallenger::FacilityLibGeneral::ListFolder::Files);
+    unsigned int file_index=0;
     while(file_index<fileList.size())
     {
-        if(!fileList.at(file_index).isFile())
-        {
-            file_index++;
-            continue;
-        }
-        const std::string &file=fileList.at(file_index).absoluteFilePath().toStdString();
+        const std::string &file=fileList.at(file_index).absoluteFilePath;
         TiXmlDocument *domDocument;
         //open and quick check the file
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -1568,8 +1555,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
     (void)monsterBuffs;
     #endif
     ItemFull items;
-    QDir dir(QString::fromStdString(folder));
-    const std::vector<std::string> &fileList=FacilityLibGeneral::listFolder(dir.absolutePath().toStdString()+"/");
+    const std::vector<std::string> &fileList=FacilityLibGeneral::listFolder(folder+'/');
     unsigned int file_index=0;
     while(file_index<fileList.size())
     {
@@ -1579,11 +1565,6 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
             continue;
         }
         const std::string &file=folder+fileList.at(file_index);
-        if(!QFileInfo(QString::fromStdString(file)).isFile())
-        {
-            file_index++;
-            continue;
-        }
         TiXmlDocument *domDocument;
         //open and quick check the file
         if(!stringEndsWith(file,".xml"))
@@ -1953,7 +1934,7 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
                 unsigned int index=0;
                 while(index<profile.forcedskin.size())
                 {
-                    if(!QFile::exists(QString::fromStdString(datapackPath)+DATAPACK_BASE_PATH_SKIN+QString::fromStdString(CommonDatapack::commonDatapack.skins.at(profile.forcedskin.at(index)))))
+                    if(!CatchChallenger::FacilityLibGeneral::isFile(datapackPath+DATAPACK_BASE_PATH_SKIN+CommonDatapack::commonDatapack.skins.at(profile.forcedskin.at(index))))
                     {
                         std::cerr << "Unable to open the xml file: " << file << ", skin skin " << forcedskinList.at(index) << " don't exists into: into " << datapackPath << DATAPACK_BASE_PATH_SKIN << CommonDatapack::commonDatapack.skins.at(profile.forcedskin.at(index)) << ": child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
                         profile.forcedskin.erase(profile.forcedskin.begin()+index);
@@ -2634,7 +2615,7 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(
                 serverProfile.mapString=map->Attribute("file");
                 if(!stringEndsWith(serverProfile.mapString,".tmx"))
                     serverProfile.mapString+=".tmx";
-                if(!QFile::exists(QString::fromStdString(datapackPath+DATAPACK_BASE_PATH_MAPMAIN+mainDatapackCode+"/"+serverProfile.mapString)))
+                if(!CatchChallenger::FacilityLibGeneral::isFile(datapackPath+DATAPACK_BASE_PATH_MAPMAIN+mainDatapackCode+'/'+serverProfile.mapString))
                 {
                     std::cerr << "Unable to open the xml file: " << file << ", map don't exists " << serverProfile.mapString << ": child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
                     startItem = startItem->NextSiblingElement("start");

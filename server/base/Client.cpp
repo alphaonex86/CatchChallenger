@@ -9,7 +9,7 @@
 
 #include "BaseServerLogin.h"
 
-#include <QCryptographicHash>
+#include <chrono>
 
 using namespace CatchChallenger;
 
@@ -254,7 +254,7 @@ void Client::disconnectClient()
         playerByPseudo.erase(public_and_private_informations.public_informations.pseudo);
         playerById.erase(character_id);
         leaveTheCityCapture();
-        const uint32_t &addTime=QDateTime::currentDateTime().toMSecsSinceEpoch()/1000-connectedSince.toMSecsSinceEpoch()/1000;
+        const uint32_t &addTime=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()-connectedSince;
         if(addTime>5)
         {
             std::string queryText=PreparedDBQueryCommon::db_query_played_time;
@@ -397,13 +397,14 @@ std::string Client::headerOutput() const
         else
             ip=socketString;
         #endif
-        if(GlobalServerData::serverSettings.anonymous)
+        /// \todo fast hide the ip
+        /*if(GlobalServerData::serverSettings.anonymous)
         {
             QCryptographicHash hash(QCryptographicHash::Sha224);
             hash.addData(ip.data(),ip.size());
             return std::string(hash.result().toHex())+": ";
         }
-        else
+        else*/
             return ip+": ";
     }
 }

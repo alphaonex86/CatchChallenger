@@ -20,15 +20,16 @@
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/cpp11addition.h"
 
-#include <QFile>
 #include <vector>
+#include <time.h>
+#include <iostream>
+#include <chrono>
+#ifndef EPOLLCATCHCHALLENGERSERVER
+#include <QFile>
+#include <QTimer>
 #include <QDateTime>
 #include <QTime>
 #include <QCryptographicHash>
-#include <time.h>
-#include <iostream>
-#ifndef EPOLLCATCHCHALLENGERSERVER
-#include <QTimer>
 #endif
 
 using namespace CatchChallenger;
@@ -38,7 +39,7 @@ void BaseServer::preload_zone_sql()
     const int &listsize=entryListZone.size();
     while(entryListIndex<listsize)
     {
-        std::string zoneCodeName=entryListZone.at(entryListIndex).fileName().toStdString();
+        std::string zoneCodeName=entryListZone.at(entryListIndex).name;
         stringreplaceOne(zoneCodeName,BaseServer::text_dotxml,"");
         std::string queryText;
         switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
@@ -102,8 +103,10 @@ void BaseServer::preload_pointOnMap_sql()
         preload_the_visibility_algorithm();
         preload_the_city_capture();
         preload_zone();
-        std::cout << "Loaded the server static datapack into " << timeDatapack.elapsed() << "ms" << std::endl;
-        timeDatapack.restart();
+
+        double now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        std::cout << "Loaded the server static datapack into " << (timeDatapack-now) << "ms" << std::endl;
+        timeDatapack=now;
 
         //start SQL load
         preload_map_semi_after_db_id();
@@ -209,8 +212,9 @@ void BaseServer::preload_pointOnMap_return()
             return;
         if(!preload_zone())
             return;
-        std::cout << "Loaded the server static datapack into " << timeDatapack.elapsed() << "ms" << std::endl;
-        timeDatapack.restart();
+        double now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        std::cout << "Loaded the server static datapack into " << (timeDatapack-now) << "ms" << std::endl;
+        timeDatapack=now;
 
         //start SQL load
         preload_map_semi_after_db_id();

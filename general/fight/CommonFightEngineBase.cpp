@@ -3,8 +3,6 @@
 #include "../base/CommonSettingsCommon.h"
 #include "../base/GeneralVariable.h"
 
-#include <QtMath>
-
 using namespace CatchChallenger;
 
 std::vector<PlayerMonster::PlayerSkill> CommonFightEngineBase::generateWildSkill(const Monster &monster, const uint8_t &level)

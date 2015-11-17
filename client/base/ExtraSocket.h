@@ -8,7 +8,7 @@
 
 #include <QString>
 
-#ifdef Q_OS_UNIX
+#ifdef __unix__
     #include <unistd.h>
     #include <sys/types.h>
 #else

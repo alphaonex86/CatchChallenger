@@ -20,16 +20,17 @@
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/cpp11addition.h"
 
-#include <QFile>
+#include <openssl/sha.h>
 #include <vector>
-#include <QDateTime>
-#include <QTime>
-#include <QCryptographicHash>
 #include <time.h>
 #include <iostream>
 #include <algorithm>
 #include <regex>
 #ifndef EPOLLCATCHCHALLENGERSERVER
+#include <QFile>
+#include <QDateTime>
+#include <QTime>
+#include <QCryptographicHash>
 #include <QTimer>
 #endif
 
@@ -386,24 +387,19 @@ void BaseServer::preload_the_ddos()
 
 bool BaseServer::preload_zone_init()
 {
-    const int &listsize=entryListZone.size();
-    int index=0;
+    const unsigned int &listsize=entryListZone.size();
+    unsigned int index=0;
     while(index<listsize)
     {
-        if(!entryListZone.at(index).isFile())
+        if(!regex_search(entryListZone.at(index).name,regexXmlFile))
         {
+            std::cerr << entryListZone.at(index).name << " the zone file name not match" << std::endl;
             index++;
             continue;
         }
-        if(!regex_search(entryListZone.at(index).fileName().toStdString(),regexXmlFile))
-        {
-            std::cerr << entryListZone.at(index).fileName().toStdString() << " the zone file name not match" << std::endl;
-            index++;
-            continue;
-        }
-        std::string zoneCodeName=entryListZone.at(index).fileName().toStdString();
+        std::string zoneCodeName=entryListZone.at(index).name;
         stringreplaceOne(zoneCodeName,BaseServer::text_dotxml,"");
-        const std::string &file=entryListZone.at(index).absoluteFilePath().toStdString();
+        const std::string &file=entryListZone.at(index).name;
         TiXmlDocument *domDocument;
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
@@ -824,9 +820,7 @@ void BaseServer::preload_profile()
 bool BaseServer::preload_zone()
 {
     //open and quick check the file
-    entryListZone=QFileInfoList(QDir(
-                                    std::string(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_ZONE1+CommonSettingsServer::commonSettingsServer.mainDatapackCode+DATAPACK_BASE_PATH_ZONE2).c_str()
-                                    ).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot));
+    entryListZone=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_ZONE1+CommonSettingsServer::commonSettingsServer.mainDatapackCode+DATAPACK_BASE_PATH_ZONE2,CatchChallenger::FacilityLibGeneral::ListFolder::Files);
     entryListIndex=0;
     return preload_zone_init();
 }
@@ -841,7 +835,7 @@ void BaseServer::preload_zone_return()
     if(GlobalServerData::serverPrivateVariables.db_server->next())
     {
         bool ok;
-        std::string zoneCodeName=entryListZone.at(entryListIndex).fileName().toStdString();
+        std::string zoneCodeName=entryListZone.at(entryListIndex).name;
         stringreplaceOne(zoneCodeName,BaseServer::text_dotxml,"");
         const std::string &tempString=std::string(GlobalServerData::serverPrivateVariables.db_server->value(0));
         const uint32_t &clanId=stringtouint32(tempString,&ok);
@@ -1430,7 +1424,7 @@ void BaseServer::preload_the_datapack()
                       << CATCHCHALLENGER_CHECK_MAINDATAPACKCODE;
             abort();
         }
-        if(!QDir(QString::fromStdString(GlobalServerData::serverPrivateVariables.mainDatapackFolder)).exists())
+        if(!FacilityLibGeneral::isDir(GlobalServerData::serverPrivateVariables.mainDatapackFolder))
         {
             std::cerr << GlobalServerData::serverPrivateVariables.mainDatapackFolder << " don't exists" << std::endl;
             abort();
@@ -1446,7 +1440,7 @@ void BaseServer::preload_the_datapack()
                 "/sub/"+
                 CommonSettingsServer::commonSettingsServer.subDatapackCode+
                 "/";
-        if(!QDir(QString::fromStdString(GlobalServerData::serverPrivateVariables.subDatapackFolder)).exists())
+        if(!FacilityLibGeneral::isDir(GlobalServerData::serverPrivateVariables.subDatapackFolder))
         {
             std::cerr << GlobalServerData::serverPrivateVariables.subDatapackFolder << " don't exists, drop spec" << std::endl;
             GlobalServerData::serverPrivateVariables.subDatapackFolder.clear();
@@ -1465,7 +1459,12 @@ void BaseServer::preload_the_datapack()
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     //do the base
     {
-        QCryptographicHash hashBase(QCryptographicHash::Sha224);
+        SHA256_CTX hashBase;
+        if(SHA224_Init(&hashBase)!=1)
+        {
+            std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
+            abort();
+        }
         const std::unordered_map<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"map/main/",false);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         {
@@ -1486,22 +1485,19 @@ void BaseServer::preload_the_datapack()
         const std::regex mainDatapackBaseFilter("^map[/\\\\]main[/\\\\]");
         unsigned int index=0;
         while(index<datapack_file_temp.size()) {
-            QFile file(QString::fromStdString(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index)));
             if(regex_search(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName))
             {
-                if(file.open(QIODevice::ReadOnly))
+                FILE *filedesc = fopen((GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index)).c_str(), "rb");
+                if(filedesc!=NULL)
                 {
                     //read and load the file
-                    std::vector<char> data;
-                    QByteArray d(file.readAll());
-                    data.resize(d.size());
-                    memcpy(data.data(),d.constData(),d.size());
+                    const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
 
                     if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
                         if(GlobalServerData::serverSettings.max_players>1)//if not internal
                         {
-                            if(BaseServerMasterSendDatapack::compressedExtension.find(QFileInfo(file).suffix().toStdString())!=BaseServerMasterSendDatapack::compressedExtension.end())
+                            if(BaseServerMasterSendDatapack::compressedExtension.find(FacilityLibGeneral::getSuffix(datapack_file_temp.at(index)))!=BaseServerMasterSendDatapack::compressedExtension.end())
                             {
                                 if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
                                 {
@@ -1522,16 +1518,20 @@ void BaseServer::preload_the_datapack()
                     {}
                     else
                     {
-                        QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                        hashFile.addData(QByteArray(data.data(),data.size()));
+                        SHA256_CTX hashFile;
+                        if(SHA224_Init(&hashFile)!=1)
+                        {
+                            std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
+                            abort();
+                        }
+                        SHA224_Update(&hashFile,data.data(),data.size());
                         Client::DatapackCacheFile cacheFile;
-                        cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
+                        SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
+                        cacheFile.partialHash=*reinterpret_cast<const int *>(ProtocolParsingBase::tempBigBufferForOutput);
                         Client::datapack_file_hash_cache_base[datapack_file_temp.at(index)]=cacheFile;
 
-                        hashBase.addData(QByteArray(data.data(),data.size()));
+                        SHA224_Update(&hashBase,data.data(),data.size());
                     }
-
-                    file.close();
                 }
                 else
                 {
@@ -1543,15 +1543,20 @@ void BaseServer::preload_the_datapack()
                 std::cerr << "File excluded because don't match the regex: " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << std::endl;
             index++;
         }
-        CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(hashBase.result().size());
-        memcpy(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),hashBase.result().constData(),hashBase.result().size());
+        CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+        SHA224_Final(reinterpret_cast<unsigned char *>(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data()),&hashBase);
     }
     #endif
     /// \todo check if big file is compressible under 1MB
 
     //do the main
     {
-        QCryptographicHash hashMain(QCryptographicHash::Sha224);
+        SHA256_CTX hashMain;
+        if(SHA224_Init(&hashMain)!=1)
+        {
+            std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
+            abort();
+        }
         const std::unordered_map<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,"sub/",false);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         {
@@ -1572,22 +1577,19 @@ void BaseServer::preload_the_datapack()
         const std::regex mainDatapackFolderFilter("^sub[/\\\\]");
         unsigned int index=0;
         while(index<datapack_file_temp.size()) {
-            QFile file(QString::fromStdString(GlobalServerData::serverPrivateVariables.mainDatapackFolder+datapack_file_temp.at(index)));
             if(regex_search(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName))
             {
-                if(file.open(QIODevice::ReadOnly))
+                FILE *filedesc = fopen((GlobalServerData::serverPrivateVariables.mainDatapackFolder+datapack_file_temp.at(index)).c_str(), "rb");
+                if(filedesc!=NULL)
                 {
                     //read and load the file
-                    std::vector<char> data;
-                    QByteArray d(file.readAll());
-                    data.resize(d.size());
-                    memcpy(data.data(),d.constData(),d.size());
+                    const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
 
                     if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
                         if(GlobalServerData::serverSettings.max_players>1)//if not internal
                         {
-                            if(BaseServerMasterSendDatapack::compressedExtension.find(QFileInfo(file).suffix().toStdString())!=BaseServerMasterSendDatapack::compressedExtension.end())
+                            if(BaseServerMasterSendDatapack::compressedExtension.find(FacilityLibGeneral::getSuffix(datapack_file_temp.at(index)))!=BaseServerMasterSendDatapack::compressedExtension.end())
                             {
                                 if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
                                 {
@@ -1609,16 +1611,20 @@ void BaseServer::preload_the_datapack()
                     }
                     else
                     {
-                        QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                        hashFile.addData(QByteArray(data.data(),data.size()));
+                        SHA256_CTX hashFile;
+                        if(SHA224_Init(&hashFile)!=1)
+                        {
+                            std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
+                            abort();
+                        }
+                        SHA224_Update(&hashFile,data.data(),data.size());
                         Client::DatapackCacheFile cacheFile;
-                        cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
+                        SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
+                        cacheFile.partialHash=*reinterpret_cast<const int *>(ProtocolParsingBase::tempBigBufferForOutput);
                         Client::datapack_file_hash_cache_main[datapack_file_temp.at(index)]=cacheFile;
 
-                        hashMain.addData(QByteArray(data.data(),data.size()));
+                        SHA224_Update(&hashMain,data.data(),data.size());
                     }
-
-                    file.close();
                 }
                 else
                 {
@@ -1630,34 +1636,36 @@ void BaseServer::preload_the_datapack()
                 std::cerr << "File excluded because don't match the regex: " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << std::endl;
             index++;
         }
-        CommonSettingsServer::commonSettingsServer.datapackHashServerMain.resize(hashMain.result().size());
-        memcpy(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),hashMain.result().constData(),hashMain.result().size());
+        CommonSettingsServer::commonSettingsServer.datapackHashServerMain.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+        SHA224_Final(reinterpret_cast<unsigned char *>(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data()),&hashMain);
     }
     //do the sub
     if(GlobalServerData::serverPrivateVariables.subDatapackFolder.size()>0)
     {
-        QCryptographicHash hashSub(QCryptographicHash::Sha224);
+        SHA256_CTX hashSub;
+        if(SHA224_Init(&hashSub)!=1)
+        {
+            std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
+            abort();
+        }
         const std::unordered_map<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,"",false);
         std::vector<std::string> datapack_file_temp=unordered_map_keys_vector(pair);
         std::sort(datapack_file_temp.begin(), datapack_file_temp.end());
         unsigned int index=0;
         while(index<datapack_file_temp.size()) {
-            QFile file(QString::fromStdString(GlobalServerData::serverPrivateVariables.subDatapackFolder+datapack_file_temp.at(index)));
             if(regex_search(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName))
             {
-                if(file.open(QIODevice::ReadOnly))
+                FILE *filedesc = fopen((GlobalServerData::serverPrivateVariables.subDatapackFolder+datapack_file_temp.at(index)).c_str(), "rb");
+                if(filedesc!=NULL)
                 {
                     //read and load the file
-                    std::vector<char> data;
-                    QByteArray d(file.readAll());
-                    data.resize(d.size());
-                    memcpy(data.data(),d.constData(),d.size());
+                    const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
 
                     if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
                         if(GlobalServerData::serverSettings.max_players>1)//if not internal
                         {
-                            if(BaseServerMasterSendDatapack::compressedExtension.find(QFileInfo(file).suffix().toStdString())!=BaseServerMasterSendDatapack::compressedExtension.end())
+                            if(BaseServerMasterSendDatapack::compressedExtension.find(FacilityLibGeneral::getSuffix(datapack_file_temp.at(index)))!=BaseServerMasterSendDatapack::compressedExtension.end())
                             {
                                 if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
                                 {
@@ -1674,15 +1682,19 @@ void BaseServer::preload_the_datapack()
                     }
 
                     //switch the data to correct hash or drop it
-                    QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                    hashFile.addData(QByteArray(data.data(),data.size()));
+                    SHA256_CTX hashFile;
+                    if(SHA224_Init(&hashFile)!=1)
+                    {
+                        std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
+                        abort();
+                    }
+                    SHA224_Update(&hashFile,data.data(),data.size());
                     Client::DatapackCacheFile cacheFile;
-                    cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
+                    SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
+                    cacheFile.partialHash=*reinterpret_cast<const int *>(ProtocolParsingBase::tempBigBufferForOutput);
                     Client::datapack_file_hash_cache_sub[datapack_file_temp.at(index)]=cacheFile;
 
-                    hashSub.addData(QByteArray(data.data(),data.size()));
-
-                    file.close();
+                    SHA224_Update(&hashSub,data.data(),data.size());
                 }
                 else
                 {
@@ -1694,8 +1706,8 @@ void BaseServer::preload_the_datapack()
                 std::cerr << "File excluded because don't match the regex: " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << std::endl;
             index++;
         }
-        CommonSettingsServer::commonSettingsServer.datapackHashServerSub.resize(hashSub.result().size());
-        memcpy(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),hashSub.result().constData(),hashSub.result().size());
+        CommonSettingsServer::commonSettingsServer.datapackHashServerSub.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+        SHA224_Final(reinterpret_cast<unsigned char *>(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data()),&hashSub);
     }
 
     std::cout << Client::datapack_file_hash_cache_base.size()

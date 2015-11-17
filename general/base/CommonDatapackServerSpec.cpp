@@ -7,11 +7,7 @@
 #include "DatapackGeneralLoader.h"
 
 #include <iostream>
-#include <QFile>
 #include <vector>
-#include <QDir>
-#include <QFileInfoList>
-#include <QMutexLocker>
 
 using namespace CatchChallenger;
 
@@ -19,13 +15,17 @@ CommonDatapackServerSpec CommonDatapackServerSpec::commonDatapackServerSpec;
 
 CommonDatapackServerSpec::CommonDatapackServerSpec()
 {
+    isParsedSpec=false;
+    parsingSpec=false;
 }
 
 void CommonDatapackServerSpec::parseDatapack(const std::string &datapackPath,const std::string &mainDatapackCode)
 {
     if(isParsedSpec)
         return;
-    QMutexLocker mutexLocker(&inProgressSpec);
+    if(parsingSpec)
+        return;
+    parsingSpec=true;
 
     this->datapackPath=datapackPath;
     this->mainDatapackCode=mainDatapackCode;
@@ -42,6 +42,7 @@ void CommonDatapackServerSpec::parseDatapack(const std::string &datapackPath,con
     Map_loader::teleportConditionsUnparsed.clear();
     #endif
 
+    parsingSpec=false;
     isParsedSpec=true;
 }
 
@@ -99,9 +100,11 @@ void CommonDatapackServerSpec::parseIndustries()
 
 void CommonDatapackServerSpec::unload()
 {
-    QMutexLocker mutexLocker(&inProgressSpec);
     if(!isParsedSpec)
         return;
+    if(parsingSpec)
+        return;
+    parsingSpec=true;
     botFights.clear();
     quests.clear();
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -110,5 +113,7 @@ void CommonDatapackServerSpec::unload()
     shops.clear();
     serverProfileList.clear();
     CommonDatapack::commonDatapack.unload();
+
+    parsingSpec=false;
     isParsedSpec=false;
 }

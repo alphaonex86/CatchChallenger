@@ -5,7 +5,6 @@
 #include "../base/CommonSettingsCommon.h"
 #include "../base/GeneralVariable.h"
 
-#include <QtMath>
 #include <iostream>
 
 using namespace CatchChallenger;
@@ -1183,7 +1182,7 @@ bool CommonFightEngine::internalTryCapture(const Trap &trap)
     uint32_t tempRate=(catch_rate*(wildMonsterStat.hp*maxTempRate-wildMonsters.front().hp*minTempRate)*bonusStat*trap.bonus_rate)/(wildMonsterStat.hp*maxTempRate);
     if(tempRate>255)
         return true;
-    uint32_t realRate=65535*qPow((float)tempRate/(float)255,0.25);
+    uint32_t realRate=65535*std::pow((float)tempRate/(float)255,0.25);
 
     messageFightEngine("Formule: ("+std::to_string(catch_rate)+
                        "*("+std::to_string(wildMonsterStat.hp*maxTempRate)+
@@ -1351,9 +1350,8 @@ PlayerMonster * CommonFightEngine::monsterById(const uint32_t &monsterId)
     return NULL;
 }
 
-void CommonFightEngine::wildDrop(const uint32_t &monster)
+void CommonFightEngine::wildDrop(const uint32_t &)
 {
-    Q_UNUSED(monster);
 }
 
 bool CommonFightEngine::checkKOOtherMonstersForGain()
@@ -1547,9 +1545,6 @@ std::vector<Monster::AttackToLearn> CommonFightEngine::autoLearnSkill(const uint
 void CommonFightEngine::levelUp(const uint8_t &level,const uint8_t &monsterIndex)//call after done the level
 {
     autoLearnSkill(level,monsterIndex);
-
-    Q_UNUSED(level);
-    Q_UNUSED(monsterIndex);
 }
 
 bool CommonFightEngine::tryEscape()

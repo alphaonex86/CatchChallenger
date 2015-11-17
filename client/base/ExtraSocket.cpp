@@ -11,7 +11,7 @@
 
 QString ExtraSocket::pathSocket(const QString &name)
 {
-#ifdef Q_OS_UNIX
+#ifdef __unix__
     return name+"-"+QString::number(getuid());
 #else
     QString userName;

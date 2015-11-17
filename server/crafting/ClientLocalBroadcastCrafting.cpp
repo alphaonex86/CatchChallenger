@@ -6,7 +6,7 @@
 #include "../base/GlobalServerData.h"
 #include "../base/PreparedDBQuery.h"
 
-#include <QDateTime>
+#include <chrono>
 
 using namespace CatchChallenger;
 
@@ -176,7 +176,7 @@ void Client::seedValidated()
     postReply(plant_list_in_waiting.front().query_id,data.constData(),data.size());
     #endif
 
-    const uint64_t &current_time=QDateTime::currentMSecsSinceEpoch()/1000;
+    const uint64_t &current_time=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     const std::pair<uint8_t,uint8_t> pos(plant_list_in_waiting.front().x,plant_list_in_waiting.front().y);
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     const MapServer::PlantOnMap &plantOnMap=static_cast<MapServer *>(plant_list_in_waiting.front().map)->plants.at(pos);
@@ -273,7 +273,7 @@ void Client::sendNearPlant()
         out << i.key().first;
         out << i.key().second;
         out << plant.plant;
-        uint64_t current_time=QDateTime::currentMSecsSinceEpoch()/1000;
+        uint64_t current_time=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         if(current_time>=plant.mature_at)
             out << (uint16_t)0;
         else if((plant.mature_at-current_time)>65535)
@@ -416,7 +416,7 @@ void Client::collectPlant(
         return;
     }
     //check if is free
-    const uint64_t &current_time=QDateTime::currentMSecsSinceEpoch()/1000;
+    const uint64_t &current_time=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.at(std::pair<uint8_t,uint8_t>(x,y));
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     if(public_and_private_informations.plantOnMap.find(plant.indexOfOnMap)!=public_and_private_informations.plantOnMap.cend())

@@ -6,7 +6,7 @@
 #include <iostream>
 #include <fcntl.h>
 
-#ifdef Q_OS_LINUX
+#ifdef __linux__
 #include <netinet/tcp.h>
 #include <netdb.h>
 #endif
@@ -178,7 +178,7 @@ bool ConnectedSocket::isValid() const
 
 void ConnectedSocket::setTcpCork(const bool &cork)
 {
-    #ifdef Q_OS_LINUX
+    #ifdef __linux__
     if(sslSocket!=NULL)
     {
         const int &infd=sslSocket->socketDescriptor();

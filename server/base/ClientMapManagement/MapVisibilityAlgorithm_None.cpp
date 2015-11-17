@@ -33,10 +33,8 @@ void MapVisibilityAlgorithm_None::insertClient()
     //ClientMapManagement::insertAnotherClient(player_id,map,x,y,direction,speed);
 }
 
-void MapVisibilityAlgorithm_None::moveClient(const uint8_t &movedUnit,const Direction &direction)
+void MapVisibilityAlgorithm_None::moveClient(const uint8_t &,const Direction &)
 {
-    Q_UNUSED(movedUnit);
-    Q_UNUSED(direction);
 }
 
 void MapVisibilityAlgorithm_None::removeClient()

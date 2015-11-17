@@ -1,23 +1,24 @@
 #ifndef CATCHCHALLENGER_BASESERVER_H
 #define CATCHCHALLENGER_BASESERVER_H
 
-#include <QObject>
-#include <QTimer>
-#include <QCoreApplication>
 #include <vector>
-#include <QDir>
-#include <QSemaphore>
 #include <string>
 #include <regex>
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QSqlDatabase>
+#include <QObject>
+#include <QTimer>
+#include <QCoreApplication>
+#include <QDir>
+#include <QSemaphore>
+#include "../../general/base/QFakeServer.h"
+#include "../../general/base/QFakeSocket.h"
 #endif
 
 #include "../../general/base/Map_loader.h"
 #include "../../general/base/ProtocolParsing.h"
-#include "../../general/base/QFakeServer.h"
-#include "../../general/base/QFakeSocket.h"
+#include "../../general/base/FacilityLibGeneral.h"
 #include "ServerStructures.h"
 #include "Client.h"
 #include "MapServer.h"
@@ -174,12 +175,12 @@ protected:
 
     std::unordered_map<std::string/*file name*/,std::unordered_map<uint8_t/*bot id*/,CatchChallenger::Bot> > botFiles;
     std::unordered_set<uint32_t> botIdLoaded;
-    QTime timeDatapack;
+    uint64_t timeDatapack;
     unsigned int dictionary_pointOnMap_maxId;
     BaseServerMasterSendDatapack baseServerMasterSendDatapack;
     std::vector<Monster_Semi_Market> monsterSemiMarketList;
 
-    QFileInfoList entryListZone;
+    std::vector<FacilityLibGeneral::InodeDescriptor> entryListZone;
     int entryListIndex;
     int plant_on_the_map;
     std::vector<Map_semi> semi_loaded_map;

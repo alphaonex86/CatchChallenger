@@ -98,10 +98,8 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::insertClient()
     //insertAnotherClient(player_id,current_map,x,y,last_direction,speed);
 }
 
-void MapVisibilityAlgorithm_Simple_StoreOnSender::moveClient(const uint8_t &movedUnit,const Direction &direction)
+void MapVisibilityAlgorithm_Simple_StoreOnSender::moveClient(const uint8_t &,const Direction &)
 {
-    Q_UNUSED(movedUnit);
-    Q_UNUSED(direction);
     Map_server_MapVisibility_Simple_StoreOnSender *temp_map=static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(map);
     if(Q_UNLIKELY(mapHaveChanged))
     {
