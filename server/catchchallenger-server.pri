@@ -45,7 +45,8 @@ SOURCES += \
     $$PWD/fight/ClientHeavyLoadFight.cpp \
     $$PWD/base/PreparedDBQuery.cpp \
     $$PWD/base/DatabaseBase.cpp \
-    $$PWD/base/BaseServerLogin.cpp
+    $$PWD/base/BaseServerLogin.cpp \
+    $$PWD/base/TinyXMLSettings.cpp
 
 HEADERS += \
     $$PWD/base/GlobalServerData.h \
@@ -75,4 +76,5 @@ HEADERS += \
     $$PWD/crafting/MapServerCrafting.h \
     $$PWD/base/PreparedDBQuery.h \
     $$PWD/base/DatabaseBase.h \
-    $$PWD/base/BaseServerLogin.h
+    $$PWD/base/BaseServerLogin.h \
+    $$PWD/base/TinyXMLSettings.h
