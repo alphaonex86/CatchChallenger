@@ -1,10 +1,8 @@
 #include "NormalServerGlobal.h"
 #include "VariableServer.h"
 #include "base/Client.h"
+#include "../general/base/FacilityLibGeneral.h"
 
-#include <QDir>
-#include <QFileInfo>
-#include <QFileInfoList>
 #include <regex>
 
 #include <random>
@@ -25,7 +23,9 @@ void NormalServerGlobal::displayInfo()
             std::cout << "Unknow compiler" << std::endl;
         #endif
     #endif
+    #ifndef CATCHCHALLENGER_CLASS_ALLINONESERVER
     std::cout << "Qt version: " << qVersion() << " (" << QT_VERSION << ")" << std::endl;
+    #endif
     std::cout << "Base client size without string/pointer content: " << sizeof(CatchChallenger::Client)
               << ": ("
               << "Client: " << (sizeof(CatchChallenger::Client)-sizeof(BaseClassSwitch)-sizeof(CatchChallenger::ProtocolParsingInputOutput)-sizeof(CatchChallenger::CommonFightEngine)-sizeof(CatchChallenger::ClientMapManagement)) << " + "
@@ -44,7 +44,11 @@ void NormalServerGlobal::displayInfo()
               << std::endl;
 }
 
-void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const std::string &datapack_basePath)
+#ifdef CATCHCHALLENGER_CLASS_ALLINONESERVER
+void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, const std::string &datapack_basePath)
+#else
+void NormalServerGlobal::checkSettingsFile(QSettings * const settings, const std::string &datapack_basePath)
+#endif
 {
     if(!settings->contains("max-players"))
         settings->setValue("max-players",200);
@@ -123,14 +127,12 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const std:
     if(!settings->contains("mainDatapackCode"))
     {
         settings->setValue("mainDatapackCode","");
-        QDir dir(QString::fromStdString(datapack_basePath+"map/main/"));
-        const QFileInfoList &fileInfoList=dir.entryInfoList(QStringList(),QDir::AllDirs|QDir::NoDot|QDir::NoDotDot);
+        const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &fileInfoList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(datapack_basePath+"map/main/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
         if(fileInfoList.size()==1)
         {
-            QFileInfo folder=fileInfoList.first();
-            const std::string &string=folder.fileName().toStdString();
+            const std::string &string=fileInfoList.at(0).name;
             if(regex_search(string,std::regex("^[a-z0-9\\- _]+$",std::regex_constants::optimize)))
-                settings->setValue("mainDatapackCode",QString::fromStdString(string));
+                settings->setValue("mainDatapackCode",string);
         }
     }
     if(!settings->contains("subDatapackCode"))
