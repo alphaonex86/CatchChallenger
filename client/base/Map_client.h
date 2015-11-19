@@ -51,7 +51,7 @@ public:
     QMultiHash<QPair<uint8_t,uint8_t>,QPair<uint8_t,uint8_t> > botsFightTriggerExtra;//trigger line in front of bot fight, tigger x,y, bot x,y
     QHash<QPair<uint8_t,uint8_t>,ItemOnMapForClient> itemsOnMap;
 
-    QDomElement xmlRoot;
+    const TiXmlElement * xmlRoot;
 };
 }
 

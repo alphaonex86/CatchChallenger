@@ -2356,7 +2356,7 @@ void Client::sellFactoryResource(const uint8_t &query_id,const uint16_t &factory
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
     posOutput+=1+4;
 
-    uint32_t resourcePrice;
+    uint32_t resourcePrice=0;
     //check if not overfull
     {
         unsigned int index=0;

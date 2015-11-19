@@ -94,7 +94,7 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
                                 BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
                                 cacheFile.mtime=buf.st_mtime;
                                 SHA224_Final(reinterpret_cast<unsigned char *>(tempBigBufferForOutput),&hashFile);
-                                cacheFile.partialHash=*reinterpret_cast<const int *>(tempBigBufferForOutput);
+                                cacheFile.partialHash=*reinterpret_cast<const uint32_t *>(tempBigBufferForOutput);
                                 datapack_file_hash_cache[datapack_file_temp.at(index)]=cacheFile;
                             }
                             SHA224_Update(&hashBase,data.data(),data.size());

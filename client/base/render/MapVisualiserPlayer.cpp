@@ -1103,9 +1103,9 @@ QString MapVisualiserPlayer::currentMapType() const
     if(all_map.value(current_map)->tiledMap->properties().contains(MapVisualiserPlayer::text_type))
         if(!all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_type).isEmpty())
             return all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_type);
-    if(all_map.value(current_map)->logicalMap.xmlRoot.hasAttribute(MapVisualiserPlayer::text_type))
-        if(!all_map.value(current_map)->logicalMap.xmlRoot.attribute(MapVisualiserPlayer::text_type).isEmpty())
-            return all_map.value(current_map)->logicalMap.xmlRoot.attribute(MapVisualiserPlayer::text_type);
+    if(all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("type"))==NULL)
+        if(!all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("type"))->empty())
+            return QString::fromStdString(*all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("type")));
     return QString();
 }
 
@@ -1116,9 +1116,9 @@ QString MapVisualiserPlayer::currentZone() const
     if(all_map.value(current_map)->tiledMap->properties().contains(MapVisualiserPlayer::text_zone))
         if(!all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_zone).isEmpty())
             return all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_zone);
-    if(all_map.value(current_map)->logicalMap.xmlRoot.hasAttribute(MapVisualiserPlayer::text_zone))
-        if(!all_map.value(current_map)->logicalMap.xmlRoot.attribute(MapVisualiserPlayer::text_zone).isEmpty())
-            return all_map.value(current_map)->logicalMap.xmlRoot.attribute(MapVisualiserPlayer::text_zone);
+    if(all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("zone")))
+        if(!all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("zone"))->empty())
+            return QString::fromStdString(*all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("zone")));
     return QString();
 }
 
@@ -1129,9 +1129,9 @@ QString MapVisualiserPlayer::currentBackgroundsound() const
     if(all_map.value(current_map)->tiledMap->properties().contains(MapVisualiserPlayer::text_backgroundsound))
         if(!all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_backgroundsound).isEmpty())
             return all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_backgroundsound);
-    if(all_map.value(current_map)->logicalMap.xmlRoot.hasAttribute(MapVisualiserPlayer::text_backgroundsound))
-        if(!all_map.value(current_map)->logicalMap.xmlRoot.attribute(MapVisualiserPlayer::text_backgroundsound).isEmpty())
-            return all_map.value(current_map)->logicalMap.xmlRoot.attribute(MapVisualiserPlayer::text_backgroundsound);
+    if(all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("backgroundsound")))
+        if(!all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("backgroundsound"))->empty())
+            return QString::fromStdString(*all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("backgroundsound")));
     return QString();
 }
 

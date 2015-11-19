@@ -1418,7 +1418,7 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
                             {
                                 const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
                                 SHA224(reinterpret_cast<const unsigned char *>(data.data()),data.size(),reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
-                                datapackCacheFile.partialHash=*reinterpret_cast<const int *>(ProtocolParsingBase::tempBigBufferForOutput);
+                                datapackCacheFile.partialHash=*reinterpret_cast<const uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput);
                             }
                             else
                                 datapackCacheFile.partialHash=0;

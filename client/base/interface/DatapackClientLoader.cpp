@@ -256,7 +256,7 @@ void DatapackClientLoader::parseVisualCategory()
     //open and quick check the file
     const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPBASE)+QStringLiteral("visualcategory.xml");
     if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file.toStdString());
+        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(file.toStdString());
     else
     {
         QFile itemsFile(file);
@@ -275,7 +275,7 @@ void DatapackClientLoader::parseVisualCategory()
             return;
         }
         //qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
-        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file.toStdString()]=domDocument;
+        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt[file.toStdString()]=domDocument;
     }
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackClientLoader::text_visual)
@@ -412,7 +412,7 @@ void DatapackClientLoader::parseReputationExtra()
     //open and quick check the file
     const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYERBASE)+QStringLiteral("reputation.xml");
     if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file.toStdString());
+        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(file.toStdString());
     else
     {
         QFile itemsFile(file);
@@ -431,7 +431,7 @@ void DatapackClientLoader::parseReputationExtra()
             return;
         }
         //qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
-        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file.toStdString()]=domDocument;
+        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt[file.toStdString()]=domDocument;
     }
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!="reputations")
@@ -707,7 +707,7 @@ void DatapackClientLoader::parseItemsExtra()
         }
         //open and quick check the file
         if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-            domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file.toStdString());
+            domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(file.toStdString());
         else
         {
             QFile itemsFile(file);
@@ -728,7 +728,7 @@ void DatapackClientLoader::parseItemsExtra()
                 continue;
             }
             //qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
-            CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file.toStdString()]=domDocument;
+            CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt[file.toStdString()]=domDocument;
         }
         const QDomElement &root = domDocument.documentElement();
         if(root.tagName()!=DatapackClientLoader::text_items)
@@ -1141,7 +1141,7 @@ void DatapackClientLoader::parseQuestsExtra()
         QDomDocument domDocument;
         const QString &file=entryList.at(index).absoluteFilePath()+DatapackClientLoader::text_slashdefinitiondotxml;
         if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-            domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file.toStdString());
+            domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(file.toStdString());
         else
         {
             QFile itemsFile(file);
@@ -1162,7 +1162,7 @@ void DatapackClientLoader::parseQuestsExtra()
                 continue;
             }
             //qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
-            CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file.toStdString()]=domDocument;
+            CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt[file.toStdString()]=domDocument;
         }
         const QDomElement &root = domDocument.documentElement();
         if(root.tagName()!=DatapackClientLoader::text_quest)
@@ -1448,7 +1448,7 @@ void DatapackClientLoader::parseAudioAmbiance()
     QDomDocument domDocument;
     //open and quick check the file
     if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file.toStdString());
+        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(file.toStdString());
     else
     {
         QFile itemsFile(file);
@@ -1468,7 +1468,7 @@ void DatapackClientLoader::parseAudioAmbiance()
             return;
         }
         //qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
-        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file.toStdString()]=domDocument;
+        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt[file.toStdString()]=domDocument;
     }
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!="musics")

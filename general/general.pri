@@ -4,6 +4,7 @@ QT       -= core
 DEFINES += TIXML_USE_STL
 
 LIBS += -lz -llzma
+LIBS += -lcrypto
 
 TEMPLATE = app
 
