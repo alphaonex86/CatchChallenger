@@ -184,7 +184,12 @@ std::vector<char> FacilityLibGeneral::readAllFileAndClose(FILE * file)
     fseek(file,0,SEEK_SET);
 
     data.resize(fsize);
-    fread(data.data(),fsize,1,file);
+    int64_t size=fread(data.data(),fsize,1,file);
+    if(size!=fsize)
+    {
+        std::cerr << "Read file size not same" << std::endl;
+        abort();
+    }
     fclose(file);
 
     return data;

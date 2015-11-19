@@ -16,6 +16,7 @@
 #include "../../tiled/tiled_tile.h"
 #include "../../../general/base/CommonMap.h"
 #include "../ClientVariable.h"
+#include "../FacilityLibClient.h"
 
 /// \warning all ObjectGroupItem destroyed into removeMap()
 void MapVisualiser::destroyMap(MapVisualiserThread::Map_full *map)
@@ -121,7 +122,7 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
     }
     QRect map_rect(tempMapObject->relative_x,tempMapObject->relative_y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
     //if the new map touch the current map
-    if(CatchChallenger::FacilityLibGeneral::rectTouch(current_map_rect,map_rect))
+    if(CatchChallenger::FacilityLibClient::rectTouch(current_map_rect,map_rect))
     {
         //display a new map now visible
         if(!mapItem->haveMap(tempMapObject->tiledMap))
@@ -274,7 +275,7 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                             border_map->logicalMap.border.bottom.map=&tempMapObject->logicalMap;
                             border_map->logicalMap.border.bottom.x_offset=-offset;
                             QRect map_rect(tempMapObject->relative_x,tempMapObject->relative_y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
-                            if(CatchChallenger::FacilityLibGeneral::rectTouch(current_map_rect,map_rect))
+                            if(CatchChallenger::FacilityLibClient::rectTouch(current_map_rect,map_rect))
                             {
                                 tempMapObject->displayed=true;
                                 asyncDetectBorder(tempMapObject);
@@ -303,7 +304,7 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                             border_map->logicalMap.border.top.map=&tempMapObject->logicalMap;
                             border_map->logicalMap.border.top.x_offset=-offset;
                             QRect map_rect(tempMapObject->relative_x,tempMapObject->relative_y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
-                            if(CatchChallenger::FacilityLibGeneral::rectTouch(current_map_rect,map_rect))
+                            if(CatchChallenger::FacilityLibClient::rectTouch(current_map_rect,map_rect))
                             {
                                 tempMapObject->displayed=true;
                                 asyncDetectBorder(tempMapObject);
@@ -332,7 +333,7 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                             border_map->logicalMap.border.left.map=&tempMapObject->logicalMap;
                             border_map->logicalMap.border.left.y_offset=-offset;
                             QRect map_rect(tempMapObject->relative_x,tempMapObject->relative_y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
-                            if(CatchChallenger::FacilityLibGeneral::rectTouch(current_map_rect,map_rect))
+                            if(CatchChallenger::FacilityLibClient::rectTouch(current_map_rect,map_rect))
                             {
                                 tempMapObject->displayed=true;
                                 asyncDetectBorder(tempMapObject);
@@ -361,7 +362,7 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                             border_map->logicalMap.border.right.map=&tempMapObject->logicalMap;
                             border_map->logicalMap.border.right.y_offset=-offset;
                             QRect map_rect(tempMapObject->relative_x,tempMapObject->relative_y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
-                            if(CatchChallenger::FacilityLibGeneral::rectTouch(current_map_rect,map_rect))
+                            if(CatchChallenger::FacilityLibClient::rectTouch(current_map_rect,map_rect))
                             {
                                 tempMapObject->displayed=true;
                                 asyncDetectBorder(tempMapObject);

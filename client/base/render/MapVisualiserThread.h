@@ -50,7 +50,7 @@ public slots:
     //drop and remplace by Map_loader info
     bool loadOtherMapClientPart(MapVisualiserThread::Map_full *parsedMap);
     bool loadOtherMapMetaData(MapVisualiserThread::Map_full *parsedMap);
-    void loadBotFile(const QString &fileName);
+    void loadBotFile(const std::string &file);
 public slots:
     virtual void resetAll();
 private:

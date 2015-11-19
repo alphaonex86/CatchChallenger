@@ -948,7 +948,14 @@ int main(int argc, char *argv[])
                                 delete client;
                             }
                             else
-                                ::write(infd,encodingBuff,sizeof(encodingBuff));
+                            {
+                                if(::write(infd,encodingBuff,sizeof(encodingBuff))!=sizeof(encodingBuff))
+                                {
+                                    std::cerr << "socket first byte write error" << std::endl;
+                                    delete client;
+                                }
+                            }
+
                         }
                     }
                     continue;
