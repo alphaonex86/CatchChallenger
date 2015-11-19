@@ -7,6 +7,11 @@
 #include "GeneralStructures.h"
 #include "tinyXML/tinyxml.h"
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
+#include <QDomDocument>
+#include <QObject>
+#endif
+
 namespace CatchChallenger {
 class CommonDatapack
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -43,6 +48,9 @@ public:
     std::vector<Type> types;
     #endif
     std::unordered_map<std::string/*file*/, TiXmlDocument> xmlLoadedFile;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
+    std::unordered_map<std::string/*file*/, QDomDocument> xmlLoadedFileQt;
+    #endif
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     LayersOptions layersOptions;
     std::vector<Event> events;

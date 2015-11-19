@@ -9,6 +9,10 @@
 #include "GeneralStructuresXml.h"
 #include "CommonMap.h"
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
+#include <QObject>
+#endif
+
 namespace CatchChallenger {
 class Map_loader
         #ifndef EPOLLCATCHCHALLENGERSERVER
