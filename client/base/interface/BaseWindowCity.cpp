@@ -13,7 +13,7 @@ void BaseWindow::cityCaptureUpdateTime()
     if(city.capture.frenquency==City::Capture::Frequency_week)
         nextCatch=QDateTime::fromMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()+24*3600*7*1000);
     else
-        nextCatch=FacilityLib::nextCaptureTime(city);
+        nextCatch=QDateTime::fromMSecsSinceEpoch(FacilityLib::nextCaptureTime(city));
     nextCityCatchTimer.start(nextCatch.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch());
 }
 

@@ -324,7 +324,7 @@ bool BaseServer::load_next_city_capture()
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     GlobalServerData::serverPrivateVariables.time_city_capture=FacilityLib::nextCaptureTime(GlobalServerData::serverSettings.city);
-    const int64_t &time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
+    const int64_t &time=GlobalServerData::serverPrivateVariables.time_city_capture-QDateTime::currentMSecsSinceEpoch();
     GlobalServerData::serverPrivateVariables.timer_city_capture->start(time);
     #endif
     return true;

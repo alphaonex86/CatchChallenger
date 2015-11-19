@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <QDebug>
 
+#include "../../../general/base/tinyXML/tinyxml.h"
 #include "../../../general/base/CommonDatapack.h"
 #include "../../../general/base/DatapackGeneralLoader.h"
 #include "../../../general/base/GeneralVariable.h"
@@ -52,7 +53,7 @@ NewProfile::~NewProfile()
 void NewProfile::loadProfileText()
 {
     const QString &xmlFile=datapackPath+DATAPACK_BASE_PATH_PLAYERBASE+"start.xml";
-    std::vector<QDomElement> xmlList=CatchChallenger::DatapackGeneralLoader::loadProfileList(
+    std::vector<const TiXmlElement *> xmlList=CatchChallenger::DatapackGeneralLoader::loadProfileList(
                 datapackPath.toStdString(),xmlFile.toStdString(),
                 CatchChallenger::CommonDatapack::commonDatapack.items.item,
                 CatchChallenger::CommonDatapack::commonDatapack.monsters,
@@ -62,82 +63,70 @@ void NewProfile::loadProfileText()
     while(index<xmlList.size())
     {
         ProfileText profile;
-        QDomElement startItem=xmlList.at(index);
+        const TiXmlElement * startItem=xmlList.at(index);
         const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
         bool found=false;
-        QDomElement name = startItem.firstChildElement("name");
+        const TiXmlElement * name = startItem->FirstChildElement("name");
         if(!language.isEmpty() && language!="en")
-            while(!name.isNull())
+            while(name!=NULL)
             {
-                if(name.isElement())
+                if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language)
                 {
-                    if(name.hasAttribute("lang") && name.attribute("lang")==language)
-                    {
-                        profile.name=name.text();
-                        found=true;
-                        break;
-                    }
+                    profile.name=name->GetText();
+                    found=true;
+                    break;
                 }
-                name = name.nextSiblingElement("name");
+                name = name->NextSiblingElement("name");
             }
         if(!found)
         {
-            name = startItem.firstChildElement("name");
-            while(!name.isNull())
+            name = startItem->FirstChildElement("name");
+            while(name!=NULL)
             {
-                if(name.isElement())
+                if(name->Attribute("lang")==NULL || *name->Attribute(std::string("lang"))=="en")
                 {
-                    if(!name.hasAttribute("lang") || name.attribute("lang")=="en")
-                    {
-                        profile.name=name.text();
-                        break;
-                    }
+                    profile.name=name->GetText();
+                    break;
                 }
-                name = name.nextSiblingElement("name");
+                name = name->NextSiblingElement("name");
             }
         }
         if(profile.name.isEmpty())
         {
-            qDebug() << (QStringLiteral("Unable to open the xml file: %1, name empty or not found: child.tagName(): %2 (at line: %3)").arg(xmlFile).arg(startItem.tagName()).arg(startItem.lineNumber()));
-            startItem = startItem.nextSiblingElement("start");
+            qDebug() << (QStringLiteral("Unable to open the xml file: %1, name empty or not found: child.tagName(): %2 (at line: %3)").arg(xmlFile).arg(startItem->GetText()).arg("?"));
+            startItem = startItem->NextSiblingElement("start");
             continue;
         }
         found=false;
-        QDomElement description = startItem.firstChildElement("description");
+        const TiXmlElement * description = startItem->FirstChildElement("description");
         if(!language.isEmpty() && language!="en")
-            while(!description.isNull())
+            while(description!=NULL)
             {
-                if(description.isElement())
+                if(description->Attribute("lang")!=NULL && *description->Attribute(std::string("lang"))==language.toStdString())
                 {
-                    if(description.hasAttribute("lang") && description.attribute("lang")==language)
-                    {
-                        profile.description=description.text();
-                        found=true;
-                        break;
-                    }
+                    profile.description=description->GetText();
+                    found=true;
+                    break;
                 }
-                description = description.nextSiblingElement("description");
+                description = description->NextSiblingElement("description");
             }
         if(!found)
         {
-            description = startItem.firstChildElement("description");
-            while(!description.isNull())
+            description = startItem->FirstChildElement("description");
+            while(description!=NULL)
             {
-                if(description.isElement())
+                if(description->Attribute("lang")==NULL || *description->Attribute(std::string("lang"))=="en")
                 {
-                    if(!description.hasAttribute("lang") || description.attribute("lang")=="en")
-                    {
-                        profile.description=description.text();
-                        break;
-                    }
+                    profile.description=description->GetText();
+                    break;
                 }
-                description = description.nextSiblingElement("description");
+                description = description->NextSiblingElement("description");
             }
         }
         if(profile.description.isEmpty())
         {
-            qDebug() << (QStringLiteral("Unable to open the xml file: %1, description empty or not found: child.tagName(): %2 (at line: %3)").arg(xmlFile).arg(startItem.tagName()).arg(startItem.lineNumber()));
-            startItem = startItem.nextSiblingElement("start");
+            qDebug() << (QStringLiteral("Unable to open the xml file: %1, description empty or not found: child.tagName(): %2 (at line: %3)").arg(xmlFile).arg(startItem->GetText()).arg("?"));
+            startItem = startItem->NextSiblingElement("start");
             continue;
         }
         profileTextList << profile;

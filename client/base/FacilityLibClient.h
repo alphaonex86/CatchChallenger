@@ -5,6 +5,7 @@
 #include <QList>
 #include <QStringList>
 #include <QHash>
+#include <QRect>
 #include <unordered_map>
 #include <unordered_set>
 

@@ -1669,15 +1669,15 @@ void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, uint8_t x, 
         newError(tr("Internal error"),"Bot trigged but no step found");
         return;
     }
-    if(actualBot.step.at(step).attribute(BaseWindow::text_type)=="fight")
+    if(*actualBot.step.at(step)->Attribute(std::string("type"))=="fight")
     {
-        if(!actualBot.step.at(step).hasAttribute("fightid"))
+        if(actualBot.step.at(step)->Attribute(std::string("fightid"))==NULL)
         {
             showTip(tr("Bot step missing data error, repport this error please"));
             return;
         }
         bool ok;
-        uint32_t fightId=actualBot.step.at(step).attribute("fightid").toUInt(&ok);
+        uint32_t fightId=stringtouint32(*actualBot.step.at(step)->Attribute(std::string("fightid")),&ok);
         if(!ok)
         {
             showTip(tr("Bot step wrong data type error, repport this error please"));
@@ -2404,50 +2404,50 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         showTip(tr("Error into the bot, repport this error please"));
         return;
     }
-    if(actualBot.step.at(step).attribute(BaseWindow::text_type)=="text")
+    if(*actualBot.step.at(step)->Attribute(std::string("type"))=="text")
     {
         const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
-        QDomElement text = actualBot.step.at(step).firstChildElement(BaseWindow::text_text);
+        auto text = actualBot.step.at(step)->FirstChildElement(std::string("text"));
         if(!language.isEmpty() && language!=BaseWindow::text_en)
-            while(!text.isNull())
+            while(text!=NULL)
             {
-                if(text.hasAttribute(BaseWindow::text_lang) && text.attribute(BaseWindow::text_lang)==language)
+                if(text->Attribute(std::string("lang"))!=NULL && *text->Attribute(std::string("lang"))==language.toStdString())
                 {
-                    QString textToShow=text.text();
+                    QString textToShow=QString::fromStdString(text->GetText());
                     textToShow=parseHtmlToDisplay(textToShow);
                     ui->IG_dialog_text->setText(textToShow);
                     ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
                     ui->IG_dialog->setVisible(true);
                     return;
                 }
-                text = text.nextSiblingElement(BaseWindow::text_text);
+                text = text->NextSiblingElement(std::string("text"));
             }
-        text = actualBot.step.at(step).firstChildElement(BaseWindow::text_text);
-        while(!text.isNull())
+        text = actualBot.step.at(step)->FirstChildElement(std::string("text"));
+        while(text!=NULL)
         {
-            if(!text.hasAttribute(BaseWindow::text_lang) || text.attribute(BaseWindow::text_lang)==BaseWindow::text_en)
+            if(text->Attribute(std::string("lang"))!=NULL && *text->Attribute(std::string("lang"))==language.toStdString())
             {
-                QString textToShow=text.text();
+                QString textToShow=text->GetText();
                 textToShow=parseHtmlToDisplay(textToShow);
                 ui->IG_dialog_text->setText(textToShow);
                 ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
                 ui->IG_dialog->setVisible(true);
                 return;
             }
-            text = text.nextSiblingElement(BaseWindow::text_text);
+            text = text->NextSiblingElement(std::string("text"));
         }
         showTip(tr("Bot text not found, repport this error please"));
         return;
     }
-    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("shop"))
+    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="shop")
     {
-        if(!actualBot.step.at(step).hasAttribute(QStringLiteral("shop")))
+        if(actualBot.step.at(step)->Attribute(std::string("shop"))==NULL)
         {
             showTip(tr("Shop called but missing informations"));
             return;
         }
         bool ok;
-        shopId=actualBot.step.at(step).attribute("shop").toUInt(&ok);
+        shopId=stringtouint32(*actualBot.step.at(step)->Attribute(std::string("shop")),&ok);
         if(!ok)
         {
             showTip(tr("Shop called but wrong id"));
@@ -2501,15 +2501,15 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         #endif
         return;
     }
-    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("sell"))
+    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="sell")
     {
-        if(!actualBot.step.at(step).hasAttribute(QStringLiteral("shop")))
+        if(actualBot.step.at(step)->Attribute(std::string("shop"))==NULL)
         {
             showTip(tr("Shop called but missing informations"));
             return;
         }
         bool ok;
-        shopId=actualBot.step.at(step).attribute(QStringLiteral("shop")).toUInt(&ok);
+        shopId=stringtouint32(*actualBot.step.at(step)->Attribute(std::string("shop")),&ok);
         if(!ok)
         {
             showTip(tr("Shop called but wrong id"));
@@ -2532,12 +2532,12 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         selectObject(ObjectType_Sell);
         return;
     }
-    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("learn"))
+    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="learn")
     {
         selectObject(ObjectType_MonsterToLearn);
         return;
     }
-    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("heal"))
+    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="heal")
     {
         ClientFightEngine::fightEngine.healAllMonsters();
         CatchChallenger::Api_client_real::client->heal();
@@ -2545,7 +2545,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         showTip(tr("You are healed"));
         return;
     }
-    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("quests"))
+    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="quests")
     {
         QString textToShow;
         const QList<QPair<uint32_t,QString> > &quests=BaseWindow::getQuestList(actualBot.botId);
@@ -2587,7 +2587,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         ui->IG_dialog->setVisible(true);
         return;
     }
-    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("clan"))
+    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="clan")
     {
         QString textToShow;
         if(clan==0)
@@ -2604,7 +2604,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         ui->IG_dialog->setVisible(true);
         return;
     }
-    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("warehouse"))
+    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="warehouse")
     {
         monster_to_withdraw.clear();
         monster_to_deposit.clear();
@@ -2640,7 +2640,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         updateTheWareHouseContent();
         return;
     }
-    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("market"))
+    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="market")
     {
         ui->marketMonster->clear();
         ui->marketObject->clear();
@@ -2652,16 +2652,16 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         ui->stackedWidget->setCurrentWidget(ui->page_market);
         return;
     }
-    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("industry"))
+    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="industry")
     {
-        if(!actualBot.step.at(step).hasAttribute(QStringLiteral("industry")))
+        if(actualBot.step.at(step)->Attribute("industry")==NULL)
         {
             showTip(tr("Industry called but missing informations"));
             return;
         }
 
         bool ok;
-        factoryId=actualBot.step.at(step).attribute(QStringLiteral("industry")).toUInt(&ok);
+        factoryId=stringtouint32(*actualBot.step.at(step)->Attribute(std::string("industry")),&ok);
         if(!ok)
         {
             showTip(tr("Industry called but wrong id"));
@@ -2692,9 +2692,9 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         CatchChallenger::Api_client_real::client->getFactoryList(factoryId);
         return;
     }
-    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("zonecapture"))
+    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="zonecapture")
     {
-        if(!actualBot.step.at(step).hasAttribute(QStringLiteral("zone")))
+        if(!actualBot.step.at(step)->Attribute(std::string("zone")))
         {
             showTip(tr("Missing attribute for the step"));
             return;
@@ -2704,7 +2704,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
             showTip(tr("You can't try capture if you are not in a clan"));
             return;
         }
-        QString zone=actualBot.step.at(step).attribute(QStringLiteral("zone"));
+        QString zone=QString::fromStdString(*actualBot.step.at(step)->Attribute(std::string("zone")));
         if(DatapackClientLoader::datapackLoader.zonesExtra.contains(zone))
         {
             zonecatchName=DatapackClientLoader::datapackLoader.zonesExtra.value(zone).name;
@@ -2723,10 +2723,10 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         updatePageZoneCatch();
         return;
     }
-    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("script"))
+    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="script")
     {
         QScriptEngine engine;
-        QString contents = actualBot.step.at(step).text();
+        QString contents = QString::fromStdString(actualBot.step.at(step)->GetText());
         contents=QStringLiteral("function getTextEntryPoint()\n{\n")+contents+QStringLiteral("\n}");
         QScriptValue result = engine.evaluate(contents);
         if (result.isError()) {
@@ -2765,15 +2765,15 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         qDebug() << QStringLiteral("textEntryPoint:") << textEntryPoint;
         return;
     }
-    else if(actualBot.step.at(step).attribute(BaseWindow::text_type)==QStringLiteral("fight"))
+    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="fight")
     {
-        if(!actualBot.step.at(step).hasAttribute(QStringLiteral("fightid")))
+        if(actualBot.step.at(step)->Attribute(std::string("fightid"))==NULL)
         {
             showTip(tr("Bot step missing data error, repport this error please"));
             return;
         }
         bool ok;
-        uint32_t fightId=actualBot.step.at(step).attribute(QStringLiteral("fightid")).toUInt(&ok);
+        uint32_t fightId=stringtouint32(*actualBot.step.at(step)->Attribute(std::string("fightid")),&ok);
         if(!ok)
         {
             showTip(tr("Bot step wrong data type error, repport this error please"));

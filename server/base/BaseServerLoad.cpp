@@ -210,7 +210,7 @@ void BaseServer::preload_other()
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
         else if(GlobalServerData::serverPrivateVariables.timer_city_capture->isActive())
         {
-            const int64_t &time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
+            const int64_t &time=GlobalServerData::serverPrivateVariables.time_city_capture-QDateTime::currentMSecsSinceEpoch();
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(time/1000);
         }
         else
@@ -1527,7 +1527,7 @@ void BaseServer::preload_the_datapack()
                         SHA224_Update(&hashFile,data.data(),data.size());
                         Client::DatapackCacheFile cacheFile;
                         SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
-                        cacheFile.partialHash=*reinterpret_cast<const int *>(ProtocolParsingBase::tempBigBufferForOutput);
+                        cacheFile.partialHash=*reinterpret_cast<const uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput);
                         Client::datapack_file_hash_cache_base[datapack_file_temp.at(index)]=cacheFile;
 
                         SHA224_Update(&hashBase,data.data(),data.size());
@@ -1620,7 +1620,7 @@ void BaseServer::preload_the_datapack()
                         SHA224_Update(&hashFile,data.data(),data.size());
                         Client::DatapackCacheFile cacheFile;
                         SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
-                        cacheFile.partialHash=*reinterpret_cast<const int *>(ProtocolParsingBase::tempBigBufferForOutput);
+                        cacheFile.partialHash=*reinterpret_cast<const uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput);
                         Client::datapack_file_hash_cache_main[datapack_file_temp.at(index)]=cacheFile;
 
                         SHA224_Update(&hashMain,data.data(),data.size());
@@ -1691,7 +1691,7 @@ void BaseServer::preload_the_datapack()
                     SHA224_Update(&hashFile,data.data(),data.size());
                     Client::DatapackCacheFile cacheFile;
                     SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
-                    cacheFile.partialHash=*reinterpret_cast<const int *>(ProtocolParsingBase::tempBigBufferForOutput);
+                    cacheFile.partialHash=*reinterpret_cast<const uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput);
                     Client::datapack_file_hash_cache_sub[datapack_file_temp.at(index)]=cacheFile;
 
                     SHA224_Update(&hashSub,data.data(),data.size());

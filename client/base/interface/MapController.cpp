@@ -364,11 +364,11 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
 
     if(parsedMap->logicalMap.bots.value(Qtpos).step.find(1)!=parsedMap->logicalMap.bots.value(Qtpos).step.cend())
     {
-        QDomElement stepBot=parsedMap->logicalMap.bots.value(Qtpos).step.at(1);
-        if(stepBot.hasAttribute(MapController::text_type) && stepBot.attribute(MapController::text_type)==MapController::text_fight && stepBot.hasAttribute(MapController::text_fightid))
+        auto stepBot=parsedMap->logicalMap.bots.value(Qtpos).step.at(1);
+        if(stepBot->Attribute(std::string("type"))!=NULL && *stepBot->Attribute(std::string("type"))=="fight" && stepBot->Attribute(std::string("fightid"))!=NULL)
         {
             bool ok;
-            uint32_t fightid=stepBot.attribute(MapController::text_fightid).toUInt(&ok);
+            uint32_t fightid=stringtouint32(*stepBot->Attribute(std::string("fightid")),&ok);
             if(ok)
             {
                 if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightid)!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
