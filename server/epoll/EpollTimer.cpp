@@ -22,7 +22,7 @@ EpollTimer::~EpollTimer()
 {
     stop();
     //mostly bad usage for my own upper class
-    abort();
+    //abort();
 }
 
 BaseClassSwitch::EpollObjectType EpollTimer::getType() const

@@ -46,6 +46,7 @@ public:
     static std::vector<char> readAllFileAndClose(FILE * file);
     static uint32_t fileSize(FILE * file);
     static std::string getSuffix(const std::string& fileName);
+    static std::string getFolderFromFile(const std::string& fileName);
 
     static std::string applicationDirPath;
 private:
