@@ -115,7 +115,7 @@ BaseServer::BaseServer() :
         std::cerr << "FacilityLibGeneral::applicationDirPath is empty" << std::endl;
         abort();
     }
-    GlobalServerData::serverSettings.datapack_basePath                          = CatchChallenger::FacilityLibGeneral::applicationDirPath+"/datapack/";
+    GlobalServerData::serverSettings.datapack_basePath                          = FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/";
     GlobalServerData::serverSettings.compressionType                            = CompressionType_Zlib;
     GlobalServerData::serverSettings.dontSendPlayerType                         = false;
     CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange = true;

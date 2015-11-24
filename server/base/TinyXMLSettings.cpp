@@ -5,6 +5,11 @@ TinyXMLSettings::TinyXMLSettings()
     abort();//todo to home folder
     document.LoadFile("");
     whereIs=document.RootElement();
+    if(whereIs==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", unable to link the base root" << std::endl;
+        abort();
+    }
 }
 
 TinyXMLSettings::TinyXMLSettings(const std::string &file)
@@ -12,10 +17,23 @@ TinyXMLSettings::TinyXMLSettings(const std::string &file)
     this->file=file;
     if(!document.LoadFile(file))
     {
-        std::cerr << "Unable to open the file: " << file << ", Parse error at line " << document.ErrorRow() << ", column " << document.ErrorCol() << ": " << document.ErrorDesc() << std::endl;
-        abort();
+        if(document.ErrorId()!=12 && errno!=2)
+        {
+            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << document.ErrorRow() << ", column " << document.ErrorCol() << ": " << document.ErrorDesc() << ", error id: " << document.ErrorId() << std::endl;
+            abort();
+        }
+        else
+        {
+            TiXmlElement * root = new TiXmlElement( "configuration" );
+            document.LinkEndChild(root);
+        }
     }
     whereIs=document.RootElement();
+    if(whereIs==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", unable to link the base root" << std::endl;
+        abort();
+    }
 }
 
 TinyXMLSettings::~TinyXMLSettings()
@@ -88,9 +106,14 @@ void TinyXMLSettings::setValue(const std::string &var,const double &value)
 void TinyXMLSettings::setValue(const std::string &var,const bool &value)
 {
     if(value)
-        setValue(var,"true");
+        setValue(var,std::string("true"));
     else
-        setValue(var,"false");
+        setValue(var,std::string("false"));
+}
+
+void TinyXMLSettings::setValue(const std::string &var,const char * const value)
+{
+    setValue(var,std::string(value));
 }
 
 void TinyXMLSettings::sync()
