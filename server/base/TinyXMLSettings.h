@@ -17,6 +17,7 @@ public:
     void setValue(const std::string &var,const int &value);
     void setValue(const std::string &var,const double &value);
     void setValue(const std::string &var,const bool &value);
+    void setValue(const std::string &var,const char * const value);
     void sync();
 private:
     TiXmlDocument document;

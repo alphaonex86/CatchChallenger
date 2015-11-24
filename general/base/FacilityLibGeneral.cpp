@@ -54,7 +54,7 @@ std::vector<FacilityLibGeneral::InodeDescriptor> FacilityLibGeneral::listFolderN
             inode.name=ent->d_name;
             inode.absoluteFilePath=folder+'/'+ent->d_name;
             struct stat myStat;
-            if ((stat(ent->d_name,&myStat)==0))
+            if(strcmp(ent->d_name,".")!=0 && strcmp(ent->d_name,"..")!=0 && (stat(ent->d_name,&myStat)==0))
             {
                 if((myStat.st_mode&S_IFMT)==S_IFDIR && type&FacilityLibGeneral::ListFolder::Dirs)
                 {
@@ -210,6 +210,15 @@ std::string FacilityLibGeneral::getSuffix(const std::string& fileName)
         return std::string();
     else
         return fileName.substr(pos+1);
+}
+
+std::string FacilityLibGeneral::getFolderFromFile(const std::string& fileName)
+{
+    const auto &pos=fileName.find_last_of('/');
+    if(pos==std::string::npos)
+        return std::string();
+    else
+        return fileName.substr(0,pos);
 }
 
 /*std::string FacilityLibGeneral::secondsToString(const uint64_t &seconds)
