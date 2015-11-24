@@ -470,14 +470,14 @@ int main(int argc, char *argv[])
 
     bool datapack_loaded=false;
 
-    if(!CatchChallenger::FacilityLibGeneral::isFile(CatchChallenger::FacilityLibGeneral::applicationDirPath+"/datapack/informations.xml"))
+    if(!CatchChallenger::FacilityLibGeneral::isFile(FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/informations.xml"))
     {
-        std::cerr << "No datapack found into: " << CatchChallenger::FacilityLibGeneral::applicationDirPath << "/datapack/" << std::endl;
+        std::cerr << "No datapack found into: " << FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath) << "/datapack/" << std::endl;
         return EXIT_FAILURE;
     }
 
-    settings=new TinyXMLSettings(CatchChallenger::FacilityLibGeneral::applicationDirPath+"/server.properties");
-    NormalServerGlobal::checkSettingsFile(settings,CatchChallenger::FacilityLibGeneral::applicationDirPath+"/datapack/");
+    settings=new TinyXMLSettings(FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/server.properties");
+    NormalServerGlobal::checkSettingsFile(settings,FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/");
 
     if(!Epoll::epoll.init())
         return EPOLLERR;
