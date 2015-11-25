@@ -509,6 +509,8 @@ bool Map_loader::tryLoadMap(const std::string &file)
                                     }
                                     if(property_text.find(Map_loader::text_file)!=property_text.cend() && property_text.find(Map_loader::text_id)!=property_text.cend())
                                     {
+                                        if(!stringEndsWith(property_text[Map_loader::text_file],".xml"))
+                                            property_text[Map_loader::text_file]+=".xml";
                                         Map_to_send::Bot_Semi bot_semi;
                                         bot_semi.file=FSabsoluteFilePath(
                                                             FSabsolutePath(file)+

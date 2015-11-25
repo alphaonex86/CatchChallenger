@@ -70,6 +70,11 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
     std::string text_exclude("map/main/");
 
     SHA256_CTX hashBase;
+    if(SHA224_Init(&hashBase)!=1)
+    {
+        std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
+        abort();
+    }
     std::vector<std::string> datapack_file_temp=FacilityLibGeneral::listFolder(text_datapack);
     std::sort(datapack_file_temp.begin(),datapack_file_temp.end());
 
@@ -90,6 +95,11 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
                             const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
                             {
                                 SHA256_CTX hashFile;
+                                if(SHA224_Init(&hashFile)!=1)
+                                {
+                                    std::cerr << "SHA224_Init(&hashFile)!=1" << std::endl;
+                                    abort();
+                                }
                                 SHA224_Update(&hashFile,data.data(),data.size());
                                 BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
                                 cacheFile.mtime=buf.st_mtime;
