@@ -54,17 +54,20 @@ std::vector<FacilityLibGeneral::InodeDescriptor> FacilityLibGeneral::listFolderN
             inode.name=ent->d_name;
             inode.absoluteFilePath=folder+'/'+ent->d_name;
             struct stat myStat;
-            if(strcmp(ent->d_name,".")!=0 && strcmp(ent->d_name,"..")!=0 && (stat(ent->d_name,&myStat)==0))
+            if(strcmp(ent->d_name,".")!=0 && strcmp(ent->d_name,"..")!=0)
             {
-                if((myStat.st_mode&S_IFMT)==S_IFDIR && type&FacilityLibGeneral::ListFolder::Dirs)
+                if(stat((folder+ent->d_name).c_str(),&myStat)==0)
                 {
-                    inode.type=FacilityLibGeneral::InodeDescriptor::Type::Dir;
-                    output.push_back(inode);
-                }
-                if((myStat.st_mode&S_IFMT)==S_IFREG && type&FacilityLibGeneral::ListFolder::Files)
-                {
-                    inode.type=FacilityLibGeneral::InodeDescriptor::Type::File;
-                    output.push_back(inode);
+                    if((myStat.st_mode&S_IFMT)==S_IFDIR && type&FacilityLibGeneral::ListFolder::Dirs)
+                    {
+                        inode.type=FacilityLibGeneral::InodeDescriptor::Type::Dir;
+                        output.push_back(inode);
+                    }
+                    if((myStat.st_mode&S_IFMT)==S_IFREG && type&FacilityLibGeneral::ListFolder::Files)
+                    {
+                        inode.type=FacilityLibGeneral::InodeDescriptor::Type::File;
+                        output.push_back(inode);
+                    }
                 }
             }
         }

@@ -130,7 +130,6 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings, const std
     #endif
     if(!settings->contains("mainDatapackCode"))
     {
-        settings->setValue("mainDatapackCode","[main]");
         const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &fileInfoList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(datapack_basePath+"map/main/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
         if(fileInfoList.size()==1)
         {
@@ -138,6 +137,8 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings, const std
             if(regex_search(string,std::regex("^[a-z0-9\\- _]+$",std::regex_constants::optimize)))
                 settings->setValue("mainDatapackCode",string);
         }
+        else
+            settings->setValue("mainDatapackCode","[main]");
     }
     if(!settings->contains("subDatapackCode"))
         settings->setValue("subDatapackCode","");
