@@ -2138,7 +2138,10 @@ bool Api_protocol::postReplyData(const uint8_t &queryNumber, const char * const 
     {
         if(fixedSize!=size)
         {
-            std::cout << "Sended packet size: " << size << ": " << binarytoHexa(data,size) << ", but the fixed packet size defined at: " << std::to_string((int)fixedSize) << std::endl;
+            std::cout << "postReplyData() Sended packet size: " << size << ": " << binarytoHexa(data,size) << ", but the fixed packet size defined at: " << std::to_string((int)fixedSize) << std::endl;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            abort();
+            #endif
             return false;
         }
         //fixed size
@@ -2179,7 +2182,10 @@ bool Api_protocol::packOutcommingData(const uint8_t &packetCode,const char * con
     {
         if(fixedSize!=size)
         {
-            std::cout << "Sended packet size: " << size << ": " << binarytoHexa(data,size) << ", but the fixed packet size defined at: " << std::to_string((int)fixedSize) << std::endl;
+            std::cout << "packOutcommingData(): Sended packet size: " << size << ": " << binarytoHexa(data,size) << ", but the fixed packet size defined at: " << std::to_string((int)fixedSize) << std::endl;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            abort();
+            #endif
             return false;
         }
         //fixed size
@@ -2218,7 +2224,10 @@ bool Api_protocol::packOutcommingQuery(const uint8_t &packetCode,const uint8_t &
     {
         if(fixedSize!=size)
         {
-            std::cout << "Sended packet size: " << size << ": " << binarytoHexa(data,size) << ", but the fixed packet size defined at: " << std::to_string((int)fixedSize) << std::endl;
+            std::cout << "packOutcommingQuery(): Sended packet size: " << size << ": " << binarytoHexa(data,size) << ", but the fixed packet size defined at: " << std::to_string((int)fixedSize) << std::endl;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            abort();
+            #endif
             return false;
         }
         //fixed size

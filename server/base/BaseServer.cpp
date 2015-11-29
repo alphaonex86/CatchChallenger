@@ -242,13 +242,13 @@ void BaseServer::preload_the_data()
     std::cout << "Datapack, base: " << GlobalServerData::serverSettings.datapack_basePath
               << std::endl;
     {
-        const double &now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        const double &now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         CommonDatapack::commonDatapack.parseDatapack(GlobalServerData::serverSettings.datapack_basePath);
         CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(GlobalServerData::serverSettings.datapack_basePath,CommonSettingsServer::commonSettingsServer.mainDatapackCode);
-        double after = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        double after = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         std::cout << "Loaded the common datapack into " << (after-now) << "ms" << std::endl;
     }
-    timeDatapack = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    timeDatapack = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     preload_the_randomData();
     preload_randomBlock();
     preload_the_events();
@@ -313,7 +313,7 @@ void BaseServer::preload_finish()
 {
     std::cout << plant_on_the_map << " SQL plant on map" << std::endl;
     std::cout << GlobalServerData::serverPrivateVariables.marketItemList.size() << " SQL market item" << std::endl;
-    const double &now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    const double &now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     std::cout << "Loaded the server SQL datapack into " << (now-timeDatapack) << "ms" << std::endl;
     preload_other();
     CommonDatapack::commonDatapack.xmlLoadedFile.clear();

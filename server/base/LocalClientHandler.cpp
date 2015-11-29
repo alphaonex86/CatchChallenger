@@ -346,7 +346,7 @@ bool Client::singleMove(const Direction &direction)
         errorOutput("Try move when is in capture city");
         return false;
     }
-    const double &now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    const double &now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     if(oldEvents.oldEventList.size()>0 && (now-oldEvents.time)>30/*30s*/)
     {
         errorOutput("Try move but lost of event sync");
@@ -1206,7 +1206,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
 void Client::setEvent(const uint8_t &event, const uint8_t &new_value)
 {
     const uint8_t &event_value=GlobalServerData::serverPrivateVariables.events.at(event);
-    const double &now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    const double &now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     std::vector<Client *> playerList;
     playerList.reserve(playerByPseudo.size());
     auto i=playerByPseudo.begin();
@@ -1251,7 +1251,7 @@ void Client::removeFirstEventInQueue()
     oldEvents.oldEventList.erase(oldEvents.oldEventList.begin());
     if(oldEvents.oldEventList.size()>0)
     {
-        const double &now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        const double &now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         oldEvents.time=now;
     }
 }
@@ -2085,7 +2085,7 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
     {
         unsigned int index,count_item;
         const IndustryStatus &industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus.at(factoryId),industry);
-        uint64_t currentTime=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        uint64_t currentTime=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         if(industryStatus.last_update>currentTime)
         {
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
@@ -2327,7 +2327,7 @@ void Client::sellFactoryResource(const uint8_t &query_id,const uint16_t &factory
     IndustryStatus industryStatus;
     if(GlobalServerData::serverPrivateVariables.industriesStatus.find(factoryId)==GlobalServerData::serverPrivateVariables.industriesStatus.cend())
     {
-        industryStatus.last_update=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        industryStatus.last_update=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         unsigned int index;
         //send the resource
         index=0;
@@ -3019,7 +3019,7 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
     std::string queryText=PreparedDBQueryCommon::db_query_insert_clan;
     stringreplaceOne(queryText,"%1",std::to_string(clanId));
     stringreplaceOne(queryText,"%2",SqlFunction::quoteSqlVariable(text));
-    stringreplaceOne(queryText,"%3",std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()));
+    stringreplaceOne(queryText,"%3",std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()));
     dbQueryWriteCommon(queryText);
     insertIntoAClan(clanId);
 }

@@ -254,7 +254,7 @@ void Client::disconnectClient()
         playerByPseudo.erase(public_and_private_informations.public_informations.pseudo);
         playerById.erase(character_id);
         leaveTheCityCapture();
-        const uint32_t &addTime=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()-connectedSince;
+        const uint32_t &addTime=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()-connectedSince;
         if(addTime>5)
         {
             std::string queryText=PreparedDBQueryCommon::db_query_played_time;
