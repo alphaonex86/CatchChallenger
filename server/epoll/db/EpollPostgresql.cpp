@@ -116,7 +116,7 @@ bool EpollPostgresql::syncConnectInternal()
             if(elapsed.count()<5*tryInterval && connStatusType==CONNECTION_BAD)
             {
                 const unsigned int ms=5*tryInterval-elapsed.count();
-                std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+                std::this_thread::sleep_for(std::chrono::seconds(ms));
             }
             index++;
         }

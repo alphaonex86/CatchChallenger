@@ -721,7 +721,7 @@ int main(int argc, char *argv[])
     #endif
     {
         GlobalServerData::serverPrivateVariables.time_city_capture=FacilityLib::nextCaptureTime(GlobalServerData::serverSettings.city);
-        const int64_t &time=GlobalServerData::serverPrivateVariables.time_city_capture-std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        const int64_t &time=GlobalServerData::serverPrivateVariables.time_city_capture-std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         timerCityCapture.setSingleShot(true);
         if(!timerCityCapture.start(time))
         {

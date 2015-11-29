@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS `character_forserver` (
   `unvalidated_rescue_x` tinyint(3) unsigned NOT NULL,
   `unvalidated_rescue_y` tinyint(3) unsigned NOT NULL,
   `unvalidated_rescue_orientation` smallint(6) NOT NULL,
-  `date` int(11) unsigned NOT NULL,
+  `date` bigint(20) unsigned NOT NULL,
   `market_cash` bigint(20) unsigned NOT NULL,
   PRIMARY KEY (`character`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS `factory` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `resources` text NOT NULL,
   `products` text NOT NULL,
-  `last_update` int(11) unsigned NOT NULL,
+  `last_update` bigint(20) unsigned NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 

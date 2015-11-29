@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS `character` (
   `type` smallint(6) NOT NULL,
   `clan` int(11) NOT NULL,
   `clan_leader` tinyint(1) NOT NULL,
-  `date` int(11) unsigned NOT NULL,
+  `date` bigint(20) unsigned NOT NULL,
   `cash` bigint(20) unsigned NOT NULL,
   `warehouse_cash` bigint(20) unsigned NOT NULL,
   `time_to_delete` int(11) unsigned NOT NULL,
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS `clan` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` text NOT NULL,
   `cash` bigint(20) unsigned NOT NULL,
-  `date` int(11) unsigned NOT NULL,
+  `date` bigint(20) unsigned NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 

@@ -44,7 +44,7 @@ CREATE TABLE character_forserver (
     unvalidated_rescue_x smallint,
     unvalidated_rescue_y smallint,
     unvalidated_rescue_orientation smallint,
-    date integer,
+    date bigint,
     market_cash bigint
 );
 
@@ -104,7 +104,7 @@ CREATE TABLE factory (
     id integer NOT NULL,
     resources text,
     products text,
-    last_update integer
+    last_update bigint
 );
 
 

@@ -27,7 +27,7 @@ CREATE TABLE "character" (
     type smallint,
     clan integer,
     clan_leader boolean,
-    date integer,
+    date bigint,
     cash bigint,
     warehouse_cash bigint,
     time_to_delete integer,
@@ -55,7 +55,7 @@ CREATE TABLE clan (
     id integer NOT NULL,
     name text,
     cash bigint,
-    date integer
+    date bigint
 );
 
 

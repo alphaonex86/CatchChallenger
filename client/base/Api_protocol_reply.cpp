@@ -442,7 +442,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                 hashAndToken.addData(passHash+token);
                 outputData+=hashAndToken.result();
                 const uint8_t &query_number=Api_protocol::queryNumber();
-                packOutcommingQuery(0x04,query_number,outputData.constData(),outputData.size());
+                packOutcommingQuery(0xA8,query_number,outputData.constData(),outputData.size());
             }
         }
         break;

@@ -19,7 +19,7 @@ CREATE TABLE account (
     id integer NOT NULL,
     login bytea,
     password bytea,
-    date integer,
+    date bigint,
     email text
 );
 
@@ -33,7 +33,7 @@ CREATE TABLE account_register (
     password bytea,
     email text
     key text,
-    date integer
+    date bigint
 );
 
 --

@@ -137,7 +137,7 @@ int LinkToGameServer::tryConnect(const char * const host, const uint16_t &port,c
             if(elapsed.count()<(uint32_t)tryInterval*1000 && index<considerDownAfterNumberOfTry && connStatusType<0)
             {
                 const unsigned int ms=(uint32_t)tryInterval*1000-elapsed.count();
-                std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+                std::this_thread::sleep_for(std::chrono::seconds(ms));
             }
         }
         if(connStatusType<0)

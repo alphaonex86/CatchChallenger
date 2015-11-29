@@ -105,7 +105,7 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
             if(elapsed.count()<(uint32_t)tryInterval*1000 && index<considerDownAfterNumberOfTry && connStatusType<0)
             {
                 const unsigned int ms=(uint32_t)tryInterval*1000-elapsed.count();
-                std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+                std::this_thread::sleep_for(std::chrono::seconds(ms));
             }
         }
         if(connStatusType<0)
@@ -549,7 +549,7 @@ void LinkToMaster::tryReconnect()
             if(elapsed.count()<5000 && stat!=Stat::Connected)
             {
                 const unsigned int ms=5000-elapsed.count();
-                std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+                std::this_thread::sleep_for(std::chrono::seconds(ms));
             }
         } while(stat!=Stat::Connected);
         readTheFirstSslHeader();
