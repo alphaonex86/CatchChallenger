@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS `account` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `login` varbinary(28) NOT NULL,
   `password` varbinary(28) NOT NULL,
-  `date` int(11) unsigned NOT NULL,
+  `date` bigint(20) unsigned NOT NULL,
   `email` varchar(64) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `login` (`login`)
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS `account_register` (
   `password` varbinary(28) NOT NULL,
   `email` text NOT NULL,
   `key` text NOT NULL,
-  `date` int(11) unsigned NOT NULL,
+  `date` bigint(20) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `login_2` (`login`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
