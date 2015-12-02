@@ -186,19 +186,24 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                     const BaseServerLogin::TokenLink &tokenLink=BaseServerLogin::tokenForAuth[tokenForAuthIndex];
                     if(tokenLink.client==this)
                     {
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                        secretTokenBinary=hexatoBinary(GlobalServerData::serverPrivateVariables.db_login->value(1));
-                        #else
-                        const std::vector<char> &secretTokenBinary=hexatoBinary(GlobalServerData::serverPrivateVariables.db_login->value(1));
-                        #endif
+                        std::vector<char> secretTokenBinary=hexatoBinary(GlobalServerData::serverPrivateVariables.db_login->value(1));
                         if(secretTokenBinary.empty() || secretTokenBinary.size()!=CATCHCHALLENGER_SHA224HASH_SIZE)
                         {
                             std::cerr << "convertion to binary for pass failed for: " << GlobalServerData::serverPrivateVariables.db_login->value(1) << std::endl;
                             abort();
                         }
+                        //append the token
+                        secretTokenBinary.resize(secretTokenBinary.size()+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        memcpy(secretTokenBinary.data()+CATCHCHALLENGER_SHA224HASH_SIZE,tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
                         tempAddedToken.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         memcpy(tempAddedToken.data(),tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        if(secretTokenBinary.size()!=(CATCHCHALLENGER_SHA224HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+                        {
+                            std::cerr << "secretTokenBinary.size()!=(CATCHCHALLENGER_SHA224HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)" << std::endl;
+                            abort();
+                        }
                         #endif
                         hashedToken.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
                         SHA224(reinterpret_cast<const unsigned char *>(secretTokenBinary.data()),secretTokenBinary.size(),reinterpret_cast<unsigned char *>(hashedToken.data()));
