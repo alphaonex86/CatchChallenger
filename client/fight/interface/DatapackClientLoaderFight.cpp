@@ -40,7 +40,7 @@ void DatapackClientLoader::parseMonstersExtra()
         }
         QDomDocument domDocument;
         //open and quick check the file
-        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.cend())
             domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(file.toStdString());
         else
         {
@@ -320,7 +320,7 @@ void DatapackClientLoader::parseTypesExtra()
     const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("type.xml");
     QDomDocument domDocument;
     //open and quick check the file
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.cend())
         domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(file.toStdString());
     else
     {
@@ -439,7 +439,7 @@ void DatapackClientLoader::parseBuffExtra()
         const QString &dotgif=QLatin1Literal(".gif");
         QDomDocument domDocument;
         //open and quick check the file
-        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.cend())
             domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(file.toStdString());
         else
         {
@@ -631,7 +631,7 @@ void DatapackClientLoader::parseSkillsExtra()
         }
         //open and quick check the file
         QDomDocument domDocument;
-        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.cend())
             domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(file.toStdString());
         else
         {
@@ -807,7 +807,7 @@ void DatapackClientLoader::parseBotFightsExtra()
             const QString &file=list.at(index_file).absoluteFilePath();
             QDomDocument domDocument;
             //open and quick check the file
-            if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+            if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.cend())
                 domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(file.toStdString());
             else
             {
