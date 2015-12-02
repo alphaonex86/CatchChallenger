@@ -5,7 +5,7 @@
 
 using namespace CatchChallenger;
 
-unsigned char BroadCastWithoutSender::bufferSendPlayer[]={0xC3/*reply server to client*/,0x00,0x00};
+unsigned char BroadCastWithoutSender::bufferSendPlayer[]={0x64/*reply server to client*/,0x00,0x00};
 
 BroadCastWithoutSender BroadCastWithoutSender::broadCastWithoutSender;
 

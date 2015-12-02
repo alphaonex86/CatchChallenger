@@ -178,11 +178,13 @@ uint32_t FacilityLib::privateMonsterToBinary(char *data,const PlayerMonster &mon
     posOutput+=2;
     while(sub_index<monster.skills.size())
     {
-        data[posOutput]=monster.skills.at(sub_index).skill;
+        const PlayerMonster::PlayerSkill &playerSkill=monster.skills.at(sub_index);
+
+        *reinterpret_cast<uint16_t *>(data+posOutput)=htole16(playerSkill.skill);
+        posOutput+=2;
+        data[posOutput]=playerSkill.level;
         posOutput+=1;
-        data[posOutput]=monster.skills.at(sub_index).level;
-        posOutput+=1;
-        data[posOutput]=monster.skills.at(sub_index).endurance;
+        data[posOutput]=playerSkill.endurance;
         posOutput+=1;
 
         sub_index++;
