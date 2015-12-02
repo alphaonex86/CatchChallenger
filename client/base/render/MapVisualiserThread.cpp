@@ -193,30 +193,33 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
             const TiXmlElement * item=map_loader.map_to_send.teleport.at(index).conditionUnparsed;
             QString conditionText;
             {
-                bool text_found=false;
-                const TiXmlElement * blockedtext = item->FirstChildElement(std::string("blockedtext"));
-                if(!language.isEmpty() && language!=MapVisualiserThread::text_en)
-                    while(blockedtext!=NULL)
-                    {
-                        if(blockedtext->Attribute(std::string("lang"))!=NULL && *blockedtext->Attribute(std::string("lang"))==language.toStdString())
-                        {
-                            conditionText=blockedtext->GetText();
-                            text_found=true;
-                            break;
-                        }
-                        blockedtext = blockedtext->NextSiblingElement(std::string("blockedtext"));
-                    }
-                if(!text_found)
+                if(item!=NULL)
                 {
-                    blockedtext = item->FirstChildElement(std::string("blockedtext"));
-                    while(blockedtext!=NULL)
-                    {
-                        if(blockedtext->Attribute(std::string("lang"))==NULL || *blockedtext->Attribute(std::string("lang"))=="en")
+                    bool text_found=false;
+                    const TiXmlElement * blockedtext = item->FirstChildElement(std::string("blockedtext"));
+                    if(!language.isEmpty() && language!=MapVisualiserThread::text_en)
+                        while(blockedtext!=NULL)
                         {
-                            conditionText=blockedtext->GetText();
-                            break;
+                            if(blockedtext->Attribute(std::string("lang"))!=NULL && *blockedtext->Attribute(std::string("lang"))==language.toStdString())
+                            {
+                                conditionText=blockedtext->GetText();
+                                text_found=true;
+                                break;
+                            }
+                            blockedtext = blockedtext->NextSiblingElement(std::string("blockedtext"));
                         }
-                        blockedtext = blockedtext->NextSiblingElement(std::string("blockedtext"));
+                    if(!text_found)
+                    {
+                        blockedtext = item->FirstChildElement(std::string("blockedtext"));
+                        while(blockedtext!=NULL)
+                        {
+                            if(blockedtext->Attribute(std::string("lang"))==NULL || *blockedtext->Attribute(std::string("lang"))=="en")
+                            {
+                                conditionText=blockedtext->GetText();
+                                break;
+                            }
+                            blockedtext = blockedtext->NextSiblingElement(std::string("blockedtext"));
+                        }
                     }
                 }
             }
@@ -520,7 +523,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
     QDomDocument domDocument;
     //open and quick check the file
     const QString &fileName=QString::fromStdString(parsedMap->logicalMap.map_file);
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(fileName.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.find(fileName.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.cend())
         domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(fileName.toStdString());
     else
     {
@@ -738,7 +741,7 @@ bool MapVisualiserThread::loadOtherMapMetaData(MapVisualiserThread::Map_full *pa
     //open and quick check the file
     QString fileName=QString::fromStdString(parsedMap->logicalMap.map_file);
     fileName.replace(MapVisualiserThread::text_dottmx,MapVisualiserThread::text_dotxml);
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(fileName.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.find(fileName.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.cend())
         domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(fileName.toStdString());
     else
     {

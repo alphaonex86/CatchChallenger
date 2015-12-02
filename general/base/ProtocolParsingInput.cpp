@@ -87,6 +87,18 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
                     abort();
                 }
                 protocolParsingCheck->valid=false;
+                if((cursor-size)>0)
+                {
+                    const uint8_t &mainCode=data[0];
+                    if(mainCode!=0x01 && mainCode!=0x7F)
+                    {
+                        if(ProtocolParsingBase::packetFixedSize[mainCode]==0xFF)
+                        {
+                            std::cerr << "unknow packet: " << mainCode << std::endl;
+                            abort();
+                        }
+                    }
+                }
             } while(cursor!=(uint32_t)size);
             /*if(cursor!=(uint32_t)size)
             {
