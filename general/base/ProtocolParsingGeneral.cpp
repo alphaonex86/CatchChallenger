@@ -536,11 +536,11 @@ void ProtocolParsing::setMaxPlayers(const uint16_t &maxPlayers)
     uint8_t *writePacketFixedSize=const_cast<uint8_t *>(ProtocolParsingBase::packetFixedSize);
 
     if(maxPlayers<=255)
-        writePacketFixedSize[0x61]=1;
+        writePacketFixedSize[0x64]=1;
     else
         //NO: this case do into initialiseTheVariable()
         //YES: reinitialise because the initialise already done, but this object can be reused
-        writePacketFixedSize[0x61]=2;
+        writePacketFixedSize[0x64]=2;
 }
 
 ProtocolParsingBase::~ProtocolParsingBase()
