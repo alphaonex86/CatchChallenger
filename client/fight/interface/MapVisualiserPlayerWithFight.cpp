@@ -84,40 +84,44 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         fightMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
     if(fightMonster!=NULL)
     {
-        std::vector<uint32_t> botFightList=all_map.value(current_map)->logicalMap.botsFightTrigger.at(std::pair<uint8_t,uint8_t>(x,y));
-        QList<QPair<uint8_t,uint8_t> > botFightRemotePointList=all_map.value(current_map)->logicalMap.botsFightTriggerExtra.values(QPair<uint8_t,uint8_t>(x,y));
-        unsigned int index=0;
-        while(index<botFightList.size())
+        std::pair<uint8_t,uint8_t> pos(x,y);
+        if(all_map.value(current_map)->logicalMap.botsFightTrigger.find(pos)!=all_map.value(current_map)->logicalMap.botsFightTrigger.cend())
         {
-            if(!botAlreadyBeaten.contains(botFightList.at(index)))
+            std::vector<uint32_t> botFightList=all_map.value(current_map)->logicalMap.botsFightTrigger.at(pos);
+            QList<QPair<uint8_t,uint8_t> > botFightRemotePointList=all_map.value(current_map)->logicalMap.botsFightTriggerExtra.values(QPair<uint8_t,uint8_t>(x,y));
+            unsigned int index=0;
+            while(index<botFightList.size())
             {
-                if(inMove)
+                if(!botAlreadyBeaten.contains(botFightList.at(index)))
                 {
-                    inMove=false;
-                    emit send_player_direction(direction);
-                    keyPressed.clear();
-                }
-                parseStop();
-                emit botFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map.value(current_map)->logicalMap),botFightRemotePointList.at(index).first,botFightRemotePointList.at(index).second);
-                if(all_map.value(current_map)->logicalMap.botsDisplay.contains(botFightRemotePointList.at(index)))
-                {
-                    TemporaryTile *temporaryTile=all_map.value(current_map)->logicalMap.botsDisplay.value(botFightRemotePointList.at(index)).temporaryTile;
-                    //show a temporary flags
+                    if(inMove)
                     {
-                        if(fightCollisionBot==NULL)
-                        {
-                            fightCollisionBot=new Tiled::Tileset(QLatin1Literal("fightCollisionBot"),16,16);
-                            fightCollisionBot->loadFromImage(QImage(QStringLiteral(":/images/fightCollisionBot.png")),QStringLiteral(":/images/fightCollisionBot.png"));
-                        }
+                        inMove=false;
+                        emit send_player_direction(direction);
+                        keyPressed.clear();
                     }
-                    temporaryTile->startAnimation(fightCollisionBot->tileAt(0),150,fightCollisionBot->tileCount());
+                    parseStop();
+                    emit botFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map.value(current_map)->logicalMap),botFightRemotePointList.at(index).first,botFightRemotePointList.at(index).second);
+                    if(all_map.value(current_map)->logicalMap.botsDisplay.contains(botFightRemotePointList.at(index)))
+                    {
+                        TemporaryTile *temporaryTile=all_map.value(current_map)->logicalMap.botsDisplay.value(botFightRemotePointList.at(index)).temporaryTile;
+                        //show a temporary flags
+                        {
+                            if(fightCollisionBot==NULL)
+                            {
+                                fightCollisionBot=new Tiled::Tileset(QLatin1Literal("fightCollisionBot"),16,16);
+                                fightCollisionBot->loadFromImage(QImage(QStringLiteral(":/images/fightCollisionBot.png")),QStringLiteral(":/images/fightCollisionBot.png"));
+                            }
+                        }
+                        temporaryTile->startAnimation(fightCollisionBot->tileAt(0),150,fightCollisionBot->tileCount());
+                    }
+                    else
+                        qDebug() <<  "temporaryTile not found";
+                    blocked=true;
+                    return true;
                 }
-                else
-                    qDebug() <<  "temporaryTile not found";
-                blocked=true;
-                return true;
+                index++;
             }
-            index++;
         }
         //check if is in fight collision, but only if is move
         if(repel_step<=0)
