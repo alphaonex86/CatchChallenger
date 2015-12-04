@@ -140,7 +140,7 @@ bool Map_loader::tryLoadMap(const std::string &file)
     const TiXmlElement * root = domDocument->RootElement();
     if(root->ValueStr()!=Map_loader::text_map)
     {
-        error="\"map\" root balise not found for the xml file";
+        error=file+", tryLoadMap(): \"map\" root balise not found for the xml file";
         return false;
     }
 
@@ -1170,7 +1170,7 @@ bool Map_loader::loadMonsterMap(const std::string &file, std::vector<std::string
     this->map_to_send.xmlRoot = domDocument->RootElement();
     if(this->map_to_send.xmlRoot->ValueStr()!=Map_loader::text_map)
     {
-        std::cerr << "\"map\" root balise not found for the xml file" << std::endl;
+        std::cerr << file+", loadMonsterMap(): \"map\" root balise not found for the xml file" << std::endl;
         return false;
     }
 
