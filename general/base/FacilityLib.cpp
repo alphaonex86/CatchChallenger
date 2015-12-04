@@ -3,6 +3,7 @@
 #include "CommonSettingsServer.h"
 
 #include <ctime>
+#include <time.h>
 
 using namespace CatchChallenger;
 
@@ -112,15 +113,18 @@ std::string FacilityLib::genderToString(const Gender &gender)
 
 uint64_t FacilityLib::nextCaptureTime(const City &city)
 {
-    time_t t = time(0);   // get time now
-    struct std::tm * nextCityCapture = localtime(&t);
+    time_t t=time(0);   // get time now
+    struct std::tm * nextCityCapture=localtime(&t);
     nextCityCapture->tm_sec=0;
     nextCityCapture->tm_min=city.capture.minute;
     nextCityCapture->tm_hour=city.capture.hour;
     if(city.capture.frenquency==City::Capture::Frequency_week)
     {
         while(nextCityCapture->tm_wday!=(int)city.capture.day)
-            nextCityCapture->tm_mday++;
+        {
+            t+=3600*24;
+            nextCityCapture=localtime(&t);
+        }
     }
     else
     {
