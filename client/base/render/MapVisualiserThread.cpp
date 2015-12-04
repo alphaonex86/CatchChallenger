@@ -537,7 +537,6 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
         mapFile.close();
         if(stopIt)
                 return false;
-        QDomDocument domDocument;
         QString errorStr;
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
@@ -550,7 +549,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=MapVisualiserThread::text_map)
     {
-        qDebug() << QStringLiteral("\"map\" root balise not found for the xml file");
+        qDebug() << fileName << QStringLiteral(", MapVisualiserThread::loadOtherMapClientPart(): \"map\" root balise not found for the xml file: ") << root.tagName();
         return false;
     }
     bool ok,ok2;
@@ -757,7 +756,6 @@ bool MapVisualiserThread::loadOtherMapMetaData(MapVisualiserThread::Map_full *pa
         mapFile.close();
         if(stopIt)
                 return false;
-        QDomDocument domDocument;
         QString errorStr;
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
@@ -770,7 +768,7 @@ bool MapVisualiserThread::loadOtherMapMetaData(MapVisualiserThread::Map_full *pa
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=MapVisualiserThread::text_map)
     {
-        qDebug() << QStringLiteral("\"map\" root balise not found for the xml file");
+        qDebug() << fileName << QStringLiteral(", MapVisualiserThread::loadOtherMapMetaData(): \"map\" root balise not found for the xml file");
         return false;
     }
     if(root.hasAttribute(MapVisualiserThread::text_type))
