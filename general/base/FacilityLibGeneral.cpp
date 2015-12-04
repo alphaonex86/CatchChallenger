@@ -250,19 +250,22 @@ bool FacilityLibGeneral::rmpath(const std::string &dirPath)
             inode.name=ent->d_name;
             inode.absoluteFilePath=dirPath+'/'+ent->d_name;
             struct stat myStat;
-            if ((stat(ent->d_name,&myStat)==0))
+            if(strcmp(ent->d_name,".")!=0 && strcmp(ent->d_name,"..")!=0)
             {
-                if((myStat.st_mode&S_IFMT)==S_IFDIR)
+                if(stat(inode.absoluteFilePath.c_str(),&myStat)==0)
                 {
-                    if(!rmpath(inode.absoluteFilePath))
-                        allHaveWork=false;
-                }
-                else
-                {
-                    if(remove(inode.absoluteFilePath.c_str())!=0)
+                    if((myStat.st_mode&S_IFMT)==S_IFDIR)
                     {
-                        std::cerr << "Unable to remove file: " << inode.absoluteFilePath << ", errno: " << errno << std::endl;
-                        allHaveWork=false;
+                        if(!rmpath(inode.absoluteFilePath))
+                            allHaveWork=false;
+                    }
+                    else
+                    {
+                        if(remove(inode.absoluteFilePath.c_str())!=0)
+                        {
+                            std::cerr << "Unable to remove file: " << inode.absoluteFilePath << ", errno: " << errno << std::endl;
+                            allHaveWork=false;
+                        }
                     }
                 }
             }
