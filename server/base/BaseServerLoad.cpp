@@ -399,7 +399,7 @@ bool BaseServer::preload_zone_init()
         }
         std::string zoneCodeName=entryListZone.at(index).name;
         stringreplaceOne(zoneCodeName,BaseServer::text_dotxml,"");
-        const std::string &file=entryListZone.at(index).name;
+        const std::string &file=entryListZone.at(index).absoluteFilePath;
         TiXmlDocument *domDocument;
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
