@@ -10,6 +10,9 @@ static const std::regex isaunsignednumber("^[0-9]+$");
 static const std::regex isasignednumber("^-?[0-9]+$");
 static const std::regex isadouble("^-?[0-9]+(\\.[0-9]+)?$");
 static const std::regex ishexa("^([0-9a-fA-F][0-9a-fA-F])+$");
+#ifdef _WIN32
+static const std::regex regexseparators("[/\\]+");
+#endif
 
 static const std::string base64_chars =
              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -59,21 +62,26 @@ std::vector<std::string> stringregexsplit(const std::string& input, const std::r
     return {first, last};
 }
 
-std::vector<std::string> &stringsplit(const std::string &s, char delim, std::vector<std::string> &elems)
-{
-    std::stringstream ss(s);
-    std::string item;
-    while (std::getline(ss, item, delim)) {
-        elems.push_back(item);
-    }
-    return elems;
-}
-
-
 std::vector<std::string> stringsplit(const std::string &s, char delim)
 {
     std::vector<std::string> elems;
+
+    std::string::size_type i = 0;
+    std::string::size_type j = s.find(delim);
+
+    while (j != std::string::npos) {
+       elems.push_back(s.substr(i, j-i));
+       i = ++j;
+       j = s.find(delim, j);
+
+       if (j == std::string::npos)
+          elems.push_back(s.substr(i, s.length()));
+    }
+    /*
+
     stringsplit(s, delim, elems);
+    */
+
     return elems;
 }
 
@@ -569,29 +577,44 @@ std::vector<char> base64toBinary(const std::string &string)
 
 std::string FSabsoluteFilePath(const std::string &string)
 {
-    char actualpath[PATH_MAX+1];
-    char *ptr = realpath(string.c_str(), actualpath);
-    if(ptr==NULL)
+    std::string newstring=string;
+    stringreplaceAll(newstring,"//","/");
+    #ifdef _WIN32
+    stringreplaceAll(newstring,"\\\\","\\");
+    std::vector<std::string> parts=stringregexsplit(newstring,regexseparators);
+    #else
+    std::vector<std::string> parts=stringsplit(newstring,'/');
+    #endif
+
+    #ifndef _WIN32
+    unsigned int index=1;
+    #else
+    unsigned int index=2;
+    #endif
+    while(index<parts.size())
     {
-        std::cerr << "realpath(" << string << ") failed: " << errno << std::endl;
-        std::string newstring=string;
-        stringreplaceAll(newstring,"//","/");
-        stringreplaceAll(newstring,"\\\\","\\");
-
-        struct MatchPathSeparator
+        if(parts.at(index)=="..")
         {
-            bool operator()( char ch ) const
+            parts.erase(parts.begin()+index);
+            #ifndef _WIN32
+            if(index>0 && (index>1 || !parts.at(index-1).empty()))
+            #else
+            if(index>1)
+            #endif
             {
-                return ch == '\\' || ch == '/';
+                parts.erase(parts.begin()+index-1);
+                index--;
             }
-        };
-
-        return std::string(
-                std::find_if( newstring.rbegin(), newstring.rend(),
-                              MatchPathSeparator() ).base(),
-                newstring.end() );
+        }
+        else
+            index++;
     }
-    return ptr;
+
+    #ifndef _WIN32
+    if(parts.empty() || (parts.size()==1 && parts.at(0).empty()))
+        return "/";
+    #endif
+    return stringimplode(parts,'/');
 }
 
 std::string FSabsolutePath(const std::string &string)
