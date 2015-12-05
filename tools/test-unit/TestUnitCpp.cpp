@@ -39,3 +39,85 @@ void TestUnitCpp::testHexaToBinary()
             std::cout << "hexatoBinary 2: Ok" << std::endl;
     }
 }
+
+void TestUnitCpp::testFSabsoluteFilePath()
+{
+    finalResult=true;
+    {
+        /*const std::vector<std::string> &parts=stringregexsplit("/toto/../tatt/",std::regex("/"));
+        if(parts.size()!=5)
+        {
+            std::cerr << "FSabsoluteFilePath -1: Failed" << std::endl;
+            finalResult=false;
+            return;
+        }
+        else
+            std::cout << "FSabsoluteFilePath -1: Ok" << std::endl;*/
+    }
+    {
+        const std::vector<std::string> &parts=stringsplit("/toto/../tatt/",'/');
+        if(parts.size()!=5)
+        {
+            std::cerr << "FSabsoluteFilePath 0: Failed" << std::endl;
+            finalResult=false;
+            return;
+        }
+        else
+            std::cout << "FSabsoluteFilePath 0: Ok" << std::endl;
+    }
+    {
+        const std::string output=FSabsoluteFilePath("/toto/../tatt/");
+        if(output!="/tatt/")
+        {
+            std::cerr << "FSabsoluteFilePath 1: Failed" << std::endl;
+            finalResult=false;
+            return;
+        }
+        else
+            std::cout << "FSabsoluteFilePath 1: Ok" << std::endl;
+    }
+    {
+        const std::string output=FSabsoluteFilePath("/toto/../tatt/a");
+        if(output!="/tatt/a")
+        {
+            std::cerr << "FSabsoluteFilePath 2: Failed" << std::endl;
+            finalResult=false;
+            return;
+        }
+        else
+            std::cout << "FSabsoluteFilePath 2: Ok" << std::endl;
+    }
+    {
+        const std::string output=FSabsoluteFilePath("/../tatt/");
+        if(output!="/tatt/")
+        {
+            std::cerr << "FSabsoluteFilePath 3: Failed" << std::endl;
+            finalResult=false;
+            return;
+        }
+        else
+            std::cout << "FSabsoluteFilePath 3: Ok" << std::endl;
+    }
+    {
+        const std::string output=FSabsoluteFilePath("/toto/..");
+        if(output!="/")
+        {
+            std::cerr << "FSabsoluteFilePath 4: Failed" << std::endl;
+            finalResult=false;
+            return;
+        }
+        else
+            std::cout << "FSabsoluteFilePath 4: Ok" << std::endl;
+    }
+    {
+        const std::string output=FSabsoluteFilePath("/..");
+        if(output!="/")
+        {
+            std::cerr << "FSabsoluteFilePath 5: Failed" << std::endl;
+            finalResult=false;
+            return;
+        }
+        else
+            std::cout << "FSabsoluteFilePath 5: Ok" << std::endl;
+    }
+}

@@ -25,7 +25,6 @@ public:
 bool stringreplaceOne(std::string& str, const std::string& from, const std::string& to);
 uint8_t stringreplaceAll(std::string& str, const std::string& from, const std::string& to);
 std::vector<std::string> stringregexsplit(const std::string& input, const std::regex& regex);
-std::vector<std::string> &stringsplit(const std::string &s, char delim, std::vector<std::string> &elems);
 std::vector<std::string> stringsplit(const std::string &s, char delim);
 bool stringEndsWith(std::string const &fullString, std::string const &ending);
 bool stringEndsWith(std::string const &fullString, char const &ending);

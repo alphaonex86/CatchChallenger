@@ -40,6 +40,19 @@ int main(int argc, char *argv[])
     }
 
     {
+        TestUnitCpp testUnitCpp;
+
+        testUnitCpp.finalResult=true;
+        testUnitCpp.testFSabsoluteFilePath();
+
+        if(!testUnitCpp.finalResult)
+        {
+            qDebug() << "Final result: Failed: " << __LINE__;
+            return EXIT_FAILURE;
+        }
+    }
+
+    {
         TestUnitMessageParsing testUnitParsing;
 
         testUnitParsing.finalResult=true;
