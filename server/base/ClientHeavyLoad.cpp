@@ -646,10 +646,8 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
     callbackRegistred.pop();
     //send signals into the server
 
-    #ifndef CATCHCHALLENGER_SOLO
     //C20F and C2OE, logical block and server list
     sendRawBlock((char *)Client::protocolMessageLogicalGroupAndServerList,Client::protocolMessageLogicalGroupAndServerListSize);
-    #endif
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(Client::protocolReplyCharacterListSize==0)
