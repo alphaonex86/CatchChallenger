@@ -10,6 +10,7 @@ public:
     bool finalResult;
 
     void testHexaToBinary();
+    void testFSabsoluteFilePath();
 };
 
 #endif // TESTUNITCPP_H
