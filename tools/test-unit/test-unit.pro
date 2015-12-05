@@ -1,7 +1,8 @@
+#DEFINES += EPOLLCATCHCHALLENGERSERVER
+
 include(../../general/general.pri)
 
-QT       += core
-
+QT       += core network xml
 QT       -= gui
 
 TARGET = test-unit

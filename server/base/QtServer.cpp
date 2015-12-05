@@ -59,6 +59,7 @@ void QtServer::preload_the_city_capture()
 
 void QtServer::preload_finish()
 {
+    BaseServer::preload_finish();
     emit is_started(true);
 }
 

@@ -140,6 +140,7 @@ void PreparedDBQueryLogin::initDatabaseQueryLogin(const DatabaseBase::DatabaseTy
         case DatabaseBase::DatabaseType::SQLite:
         PreparedDBQueryLogin::db_query_login="SELECT id,password FROM account WHERE login='%1'";
         PreparedDBQueryLogin::db_query_insert_login="INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4)";
+        break;
         #endif
 
         case DatabaseBase::DatabaseType::PostgreSQL:
