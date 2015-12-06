@@ -6,15 +6,12 @@
 #include "CharactersGroupForLogin.h"
 #include "../../general/base/CommonSettingsCommon.h"
 
-#include <QCryptographicHash>
+#include <openssl/sha.h>
 
 using namespace CatchChallenger;
 
-bool LinkToMaster::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
+bool LinkToMaster::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &, const char * const , const unsigned int &)
 {
-    Q_UNUSED(queryNumber);
-    Q_UNUSED(size);
-    Q_UNUSED(data);
     switch(mainCodeType)
     {
         default:
@@ -812,7 +809,6 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
 //have query with reply
 bool LinkToMaster::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
-    Q_UNUSED(data);
     if(stat!=Stat::Logged)
     {
         return parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
@@ -842,8 +838,6 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
             return false;
         }
     }
-    Q_UNUSED(data);
-    Q_UNUSED(size);
     //do the work here
     switch(mainCodeType)
     {
@@ -885,9 +879,17 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                 stat=Stat::ProtocolGood;
                 //send the query 0x08
                 {
-                    QCryptographicHash hash(QCryptographicHash::Sha224);
-                    hash.addData(reinterpret_cast<const char *>(LinkToMaster::private_token),TOKEN_SIZE_FOR_MASTERAUTH);
-                    hash.addData(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                    SHA256_CTX hash;
+                    if(SHA224_Init(&hash)!=1)
+                    {
+                        std::cerr << "SHA224_Init(&hash)!=1" << std::endl;
+                        abort();
+                    }
+                    SHA224_Update(&hash,reinterpret_cast<const char *>(LinkToMaster::private_token),TOKEN_SIZE_FOR_MASTERAUTH);
+                    SHA224_Update(&hash,data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                    unsigned char tempHashResult[CATCHCHALLENGER_SHA224HASH_SIZE];
+                    SHA224_Final(tempHashResult,&hash);
+
                     memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));
 
                     //send the network query
@@ -895,7 +897,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     ProtocolParsingBase::tempBigBufferForOutput[0x00]=0xBD;
                     ProtocolParsingBase::tempBigBufferForOutput[0x01]=queryNumberList.back();
 
-                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,hash.result().constData(),CATCHCHALLENGER_SHA224HASH_SIZE);
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,tempHashResult,CATCHCHALLENGER_SHA224HASH_SIZE);
 
                     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+1+CATCHCHALLENGER_SHA224HASH_SIZE);
 

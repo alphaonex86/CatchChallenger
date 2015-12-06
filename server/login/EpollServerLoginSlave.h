@@ -5,9 +5,9 @@
 
 #include "../epoll/EpollGenericServer.h"
 #include "../base/BaseServerLogin.h"
+#include "../base/TinyXMLSettings.h"
 #include "EpollClientLoginSlave.h"
 
-#include <QSettings>
 #include <string>
 #include <vector>
 
@@ -72,7 +72,7 @@ private:
     std::string server_port;
 private:
     void preload_profile();
-    void generateToken(QSettings &settings);
+    void generateToken(TinyXMLSettings &settings);
     void SQL_common_load_finish();
 };
 }

@@ -73,7 +73,7 @@ protected:
     //send reply
     bool parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
 
-    bool parseInputBeforeLogin(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    bool parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &, const char * const, const unsigned int &);
 private:
     static char host[256];
     static uint16_t port;
