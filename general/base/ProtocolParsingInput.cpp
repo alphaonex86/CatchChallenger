@@ -339,7 +339,7 @@ bool ProtocolParsingBase::isReply() const
     return false;*/
 }
 
-int8_t ProtocolParsingBase::parseHeader(const char * const commonBuffer,const uint32_t &size,uint32_t &cursor)
+int8_t ProtocolParsingBase::parseHeader(const char * const commonBuffer,const uint32_t &,uint32_t &cursor)
 {
     if(Q_LIKELY(!(flags & 0x80)))
     {
@@ -364,7 +364,7 @@ int8_t ProtocolParsingBase::parseHeader(const char * const commonBuffer,const ui
             {
                 if(!(flags & 0x08))
                 {
-                    errorParsingLayer("dynamic size blocked");
+                    errorParsingLayer("dynamic size blocked (header)");
                     return -1;
                 }
             }
@@ -397,6 +397,7 @@ int8_t ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,con
         // it's reply
         if(isReply())
         {
+            //put to 0x00 at ProtocolParsingBase::parseDispatch()
             const uint8_t &replyTo=outputQueryNumberToPacketCode[queryNumber];
             //not a reply to a query
             if(replyTo==0x00)
@@ -410,7 +411,7 @@ int8_t ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,con
             {
                 if(!(flags & 0x08))
                 {
-                    errorParsingLayer("dynamic size blocked");
+                    errorParsingLayer("dynamic size blocked (query number)");
                     return -1;
                 }
             }
@@ -638,10 +639,11 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                     #endif
         std::stringLiteral(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, packetCode: %2").arg(queryNumber).arg(packetCode));
         #endif
-        const uint8_t &replyTo=outputQueryNumberToPacketCode[queryNumber];
+        //copy because can resend query with same queryNumber, in this case the outputQueryNumberToPacketCode[queryNumber] need be 0x00
+        const uint8_t replyTo=outputQueryNumberToPacketCode[queryNumber];
+        outputQueryNumberToPacketCode[queryNumber]=0x00;
 
         const bool &returnValue=parseReplyData(replyTo,queryNumber,data,size);
-        outputQueryNumberToPacketCode[queryNumber]=0x00;
         return returnValue;
     }
     if(packetCode<0x80)
