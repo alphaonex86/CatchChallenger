@@ -39,6 +39,7 @@ LinkToMaster::LinkToMaster(
             ),
         stat(Stat::Connected)
 {
+    flags|=0x08;
     queryNumberList.resize(CATCHCHALLENGER_MAXPROTOCOLQUERY);
     unsigned int index=0;
     while(index<queryNumberList.size())
@@ -341,7 +342,7 @@ bool LinkToMaster::trySelectCharacter(void * const client,const uint8_t &client_
 void LinkToMaster::sendProtocolHeader()
 {
     //register it
-    registerOutputQuery(queryNumberList.back(),0xBE);
+    registerOutputQuery(queryNumberList.back(),0xB8);
 
     LinkToMaster::header_magic_number[0x01]=queryNumberList.back();
     internalSendRawSmallPacket(reinterpret_cast<char *>(LinkToMaster::header_magic_number),sizeof(LinkToMaster::header_magic_number));
@@ -350,5 +351,5 @@ void LinkToMaster::sendProtocolHeader()
 
 bool LinkToMaster::sendRawBlock(const char * const data,const unsigned int &size)
 {
-    return sendRawBlock(data,size);
+    return internalSendRawSmallPacket(data,size);
 }

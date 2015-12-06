@@ -31,6 +31,8 @@ unsigned int EpollClientLoginMaster::loginPreviousToReplyCacheSize=0;
 std::unordered_map<std::string,int> EpollClientLoginMaster::logicalGroupHash;
 
 bool EpollClientLoginMaster::currentPlayerForGameServerToUpdate=false;
+uint32_t EpollClientLoginMaster::lastSizeDisplayLoginServers=0;
+uint32_t EpollClientLoginMaster::lastSizeDisplayGameServers=0;
 
 //start to 0 due to pre incrementation before use
 uint32_t EpollClientLoginMaster::maxAccountId=0;
