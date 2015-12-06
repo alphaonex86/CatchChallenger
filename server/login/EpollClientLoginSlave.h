@@ -71,8 +71,8 @@ public:
     struct AskLoginParam
     {
         uint8_t query_id;
-        std::vector<char> login;
-        std::vector<char> pass;
+        char login[CATCHCHALLENGER_SHA224HASH_SIZE];
+        char pass[CATCHCHALLENGER_SHA224HASH_SIZE];
     };
     struct SelectCharacterParam
     {

@@ -6,6 +6,7 @@
 #include "../base/DictionaryLogin.h"
 #include "../../general/base/CommonSettingsCommon.h"
 #include <iostream>
+#include <chrono>
 
 using namespace CatchChallenger;
 
@@ -530,7 +531,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[4],profile.preparedQuerySize[4]);
     tempBufferSize+=profile.preparedQuerySize[4];
 
-    numberBuffer=std::to_string(QDateTime::currentMSecsSinceEpoch()/1000);
+    numberBuffer=std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.data(),numberBuffer.size());
     tempBufferSize+=numberBuffer.size();
 
