@@ -52,6 +52,49 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
         return false;
     }
     #endif
+
+    //control the content BEFORE send
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        uint32_t cursor=0;
+        do
+        {
+            protocolParsingCheck->flags|=0x08;
+            if(protocolParsingCheck->parseIncommingDataRaw(data,size,cursor)!=1)
+            {
+                std::cerr << "Bug at data-sending: " << binarytoHexa(data,size) << std::endl;
+                abort();
+            }
+            if(!protocolParsingCheck->valid)
+            {
+                std::cerr << "Bug at data-sending not tigger the function" << std::endl;
+                abort();
+            }
+            protocolParsingCheck->valid=false;
+            if((cursor-size)>0)
+            {
+                const uint8_t &mainCode=data[0];
+                if(mainCode!=0x01 && mainCode!=0x7F)
+                {
+                    if(ProtocolParsingBase::packetFixedSize[mainCode]==0xFF)
+                    {
+                        std::cerr << "unknow packet: " << mainCode << std::endl;
+                        abort();
+                    }
+                }
+            }
+        } while(cursor!=(uint32_t)size);
+        /*if(cursor!=(uint32_t)size)
+        {
+            // Muliple concatened packet
+            qDebug() << "Bug at data-sending cursor != size:" << cursor << "!=" << size;
+            qDebug() << "raw write control bug:" << std::string(std::vector<char>(data,size).toHex());
+            //abort();
+        }*/
+    }
+    #endif
+
+    //send AFTER the content control
     #ifdef EPOLLCATCHCHALLENGERSERVER
     const ssize_t &byteWriten=epollSocket.write(data,size);
     #else
@@ -68,48 +111,7 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
         messageParsingLayer("All the bytes have not be written: "+socket->errorString().toStdString()+", byteWriten: "+std::to_string(byteWriten));
         #endif
     }
-    else
-    {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        {
-            uint32_t cursor=0;
-            do
-            {
-                protocolParsingCheck->flags|=0x08;
-                if(protocolParsingCheck->parseIncommingDataRaw(data,size,cursor)!=1)
-                {
-                    std::cerr << "Bug at data-sending: " << binarytoHexa(data,size) << std::endl;
-                    abort();
-                }
-                if(!protocolParsingCheck->valid)
-                {
-                    std::cerr << "Bug at data-sending not tigger the function" << std::endl;
-                    abort();
-                }
-                protocolParsingCheck->valid=false;
-                if((cursor-size)>0)
-                {
-                    const uint8_t &mainCode=data[0];
-                    if(mainCode!=0x01 && mainCode!=0x7F)
-                    {
-                        if(ProtocolParsingBase::packetFixedSize[mainCode]==0xFF)
-                        {
-                            std::cerr << "unknow packet: " << mainCode << std::endl;
-                            abort();
-                        }
-                    }
-                }
-            } while(cursor!=(uint32_t)size);
-            /*if(cursor!=(uint32_t)size)
-            {
-                // Muliple concatened packet
-                qDebug() << "Bug at data-sending cursor != size:" << cursor << "!=" << size;
-                qDebug() << "raw write control bug:" << std::string(std::vector<char>(data,size).toHex());
-                //abort();
-            }*/
-        }
-        #endif
-    }
+
     return byteWriten;
 }
 
