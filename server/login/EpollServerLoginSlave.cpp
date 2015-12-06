@@ -100,10 +100,11 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     }
 
     if(!settings.contains("httpDatapackMirror"))
-        settings.setValue("httpDatapackMirror","");
+        settings.setValue("httpDatapackMirror","http://localhost/datapack/");
     std::string httpDatapackMirror=settings.value("httpDatapackMirror");
     if(httpDatapackMirror.empty())
     {
+        settings.sync();
         std::cerr << "empty mirror in the settings but not supported from now (abort)" << std::endl;
         abort();
 
