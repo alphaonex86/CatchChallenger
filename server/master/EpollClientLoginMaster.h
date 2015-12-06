@@ -63,11 +63,14 @@ public:
 
     static char private_token[TOKEN_SIZE_FOR_MASTERAUTH];
     static const unsigned char protocolHeaderToMatch[BASE_PROTOCOL_MAGIC_SIZE];
-    static unsigned char protocolReplyProtocolNotSupported[4];
-    static unsigned char protocolReplyWrongAuth[4];
-    static unsigned char protocolReplyCompressionNone[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
-    static unsigned char protocolReplyCompresssionZlib[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
-    static unsigned char protocolReplyCompressionXz[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char protocolReplyProtocolNotSupported[7];
+    static unsigned char protocolReplyWrongAuth[7];
+    static unsigned char protocolReplyCompressionNone[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    static unsigned char protocolReplyCompresssionZlib[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char protocolReplyCompressionXz[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char protocolReplyCompressionLz4[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    #endif
     static unsigned char selectCharaterRequestOnGameServer[2/*header*/+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
     static unsigned char duplicateConnexionDetected[1/*header*/+4];
     static unsigned char getTokenForCharacterSelect[2/*header*/+4+4];
