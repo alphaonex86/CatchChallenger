@@ -274,7 +274,10 @@ int8_t ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffe
         if(returnVar!=1)
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            std::cerr << "Break due to need more in query number" << std::endl;
+            if(returnVar==0)
+                std::cerr << "Break due to need more in query number" << std::endl;
+            else
+                std::cerr << "Not a reply to a query or similar bug" << std::endl;
             #endif
             return returnVar;
         }
@@ -338,10 +341,10 @@ bool ProtocolParsingBase::isReply() const
 
 int8_t ProtocolParsingBase::parseHeader(const char * const commonBuffer,const uint32_t &size,uint32_t &cursor)
 {
-    if(!(flags & 0x80))
+    if(Q_LIKELY(!(flags & 0x80)))
     {
-        if((size-cursor)<sizeof(uint8_t))//ignore because first int is cuted!
-            return 0;
+        /*if((size-cursor)<sizeof(uint8_t))//ignore because first int is cuted!
+            return 0;*/
         packetCode=*(commonBuffer+cursor);
         cursor+=sizeof(uint8_t);
         flags |= 0x80;
@@ -374,16 +377,16 @@ int8_t ProtocolParsingBase::parseHeader(const char * const commonBuffer,const ui
 
 int8_t ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,const uint32_t &size,uint32_t &cursor)
 {
-    if(!(flags & 0x20) && (isReply() || packetCode>=0x80))
+    if(Q_LIKELY(!(flags & 0x20) && (isReply() || packetCode>=0x80)))
     {
-        if((size-cursor)<sizeof(uint8_t))
+        if(Q_UNLIKELY((size-cursor)<sizeof(uint8_t)))
         {
             //todo, write message: need more bytes
             return 0;
         }
         queryNumber=*(commonBuffer+cursor);
         cursor+=sizeof(uint8_t);
-        if(queryNumber>(CATCHCHALLENGER_MAXPROTOCOLQUERY-1))
+        if(Q_UNLIKELY(queryNumber>(CATCHCHALLENGER_MAXPROTOCOLQUERY-1)))
         {
             errorParsingLayer("query number >"+std::to_string(CATCHCHALLENGER_MAXPROTOCOLQUERY-1));
             return -1;
@@ -423,7 +426,7 @@ int8_t ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,con
 
 int8_t ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor)
 {
-    if(!(flags & 0x40))
+    if(Q_LIKELY(!(flags & 0x40)))
     {
         #ifdef PROTOCOLPARSINGDEBUG
         messageParsingLayer(
