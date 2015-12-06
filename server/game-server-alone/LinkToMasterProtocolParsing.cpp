@@ -6,11 +6,8 @@
 
 using namespace CatchChallenger;
 
-bool LinkToMaster::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
+bool LinkToMaster::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &, const char * const , const unsigned int &)
 {
-    Q_UNUSED(queryNumber);
-    Q_UNUSED(size);
-    Q_UNUSED(data);
     switch(mainCodeType)
     {
         default:
@@ -62,7 +59,6 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char * const d
 //have query with reply
 bool LinkToMaster::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
-    Q_UNUSED(data);
     if(stat!=Stat::Logged)
     {
         return parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
@@ -114,8 +110,6 @@ bool LinkToMaster::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNu
 bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     queryNumberList.push_back(queryNumber);
-    Q_UNUSED(data);
-    Q_UNUSED(size);
     //do the work here
     switch(mainCodeType)
     {
@@ -188,7 +182,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                 {
                     const uint32_t &uniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
                     pos+=4;
-                    settings->setValue(QLatin1Literal("uniqueKey"),uniqueKey);
+                    settings->setValue("uniqueKey",std::to_string(uniqueKey));
                 }
                 case 0x01:
                 {
@@ -238,7 +232,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                 stat=Stat::Logged;
                 return true;
                 case 0x03:
-                    std::cerr << "charactersGroup not found" << settings->value(QLatin1Literal("charactersGroup")).toString().toStdString() << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    std::cerr << "charactersGroup not found" << settings->value("charactersGroup") << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                     abort();
                 break;
                 case 0x04:

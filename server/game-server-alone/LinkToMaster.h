@@ -3,9 +3,9 @@
 
 #include "../../general/base/ProtocolParsing.h"
 #include "TimerReconnectOnTheMaster.h"
+#include "../base/TinyXMLSettings.h"
 #include <vector>
 #include <random>
-#include <QSettings>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -63,7 +63,7 @@ public:
     bool registerGameServer(const std::string &exportedXml,const char * const dynamicToken);
     void generateToken();
     void sendProtocolHeader();
-    bool setSettings(QSettings * const settings);
+    bool setSettings(TinyXMLSettings * const settings);
     void characterDisconnected(const uint32_t &characterId);
     void currentPlayerChange(const uint16_t &currentPlayer);
     void askMoreMaxMonsterId();
@@ -88,7 +88,7 @@ protected:
 
     bool parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size);
 private:
-    QSettings * settings;
+    TinyXMLSettings * settings;
     std::mt19937 rng;
     static sockaddr_in serv_addr;
 };

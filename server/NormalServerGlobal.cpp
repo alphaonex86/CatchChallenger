@@ -27,7 +27,7 @@ void NormalServerGlobal::displayInfo()
             #endif
         #endif
     #endif
-    #ifndef CATCHCHALLENGER_CLASS_ALLINONESERVER
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     std::cout << "Qt version: " << qVersion() << " (" << QT_VERSION << ")" << std::endl;
     #endif
     std::cout << "Base client size without string/pointer content: " << sizeof(CatchChallenger::Client)
@@ -48,7 +48,7 @@ void NormalServerGlobal::displayInfo()
               << std::endl;
 }
 
-#ifdef CATCHCHALLENGER_CLASS_ALLINONESERVER
+#ifdef EPOLLCATCHCHALLENGERSERVER
 void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, const std::string &datapack_basePath)
 #else
 void NormalServerGlobal::checkSettingsFile(QSettings * const settings, const std::string &datapack_basePath)
@@ -148,16 +148,16 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings, const std
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     settings->beginGroup("master");
     if(!settings->contains("external-server-ip"))
-        settings->setValue("external-server-ip",settings->value("server-ip").toString());
+        settings->setValue("external-server-ip",settings->value("server-ip"));
     if(!settings->contains("external-server-port"))
-        settings->setValue("external-server-port",settings->value("server-port").toString());
+        settings->setValue("external-server-port",settings->value("server-port"));
     {
         std::mt19937 rng;
         rng.seed(time(0));
         if(!settings->contains("uniqueKey"))
-            settings->setValue("uniqueKey",static_cast<unsigned int>(rng()));
+            settings->setValue("uniqueKey",std::to_string(static_cast<unsigned int>(rng())));
         if(!settings->contains("charactersGroup"))
-            settings->setValue("charactersGroup","PutHereTheInfoLike-"+QString::number(rng()));
+            settings->setValue("charactersGroup","PutHereTheInfoLike-"+std::to_string(rng()));
     }
     if(!settings->contains("logicalGroup"))
         settings->setValue("logicalGroup","");

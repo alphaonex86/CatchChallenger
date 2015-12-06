@@ -14,7 +14,8 @@
 #include <chrono>         // std::chrono::seconds
 #include <unistd.h>
 #include <time.h>
-#include <QCryptographicHash>
+#include <cstring>
+#include <openssl/sha.h>
 
 using namespace CatchChallenger;
 
@@ -273,7 +274,7 @@ void LinkToMaster::parseIncommingData()
     ProtocolParsingInputOutput::parseIncommingData();
 }
 
-bool LinkToMaster::setSettings(QSettings * const settings)
+bool LinkToMaster::setSettings(TinyXMLSettings * const settings)
 {
     this->settings=settings;
 
@@ -281,17 +282,17 @@ bool LinkToMaster::setSettings(QSettings * const settings)
     settings->beginGroup("master");
     if(!settings->contains("token"))
         generateToken();
-    std::string token=settings->value("token").toString().toStdString();
+    std::string token=settings->value("token");
     if(token.size()!=TOKEN_SIZE_FOR_MASTERAUTH*2/*String Hexa, not binary*/)
         generateToken();
-    token=settings->value("token").toString().toStdString();
-    auto binarytoken=hexatoBinary(token);
+    token=settings->value("token");
+    std::vector<char> binarytoken=hexatoBinary(token);
     if(binarytoken.empty())
     {
         std::cerr << "convertion to binary for pass failed for: " << token << std::endl;
         abort();
     }
-    memcpy(LinkToMaster::private_token,binarytoken,TOKEN_SIZE_FOR_MASTERAUTH);
+    memcpy(LinkToMaster::private_token,binarytoken.data(),binarytoken.size());
     settings->endGroup();
 
     return true;
@@ -311,7 +312,7 @@ void LinkToMaster::generateToken()
         std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token" << std::endl;
         abort();
     }
-    settings->setValue("token",QString::fromStdString(binarytoHexa(reinterpret_cast<char *>(LinkToMaster::private_token),TOKEN_SIZE_FOR_MASTERAUTH)));
+    settings->setValue("token",binarytoHexa(reinterpret_cast<char *>(LinkToMaster::private_token),TOKEN_SIZE_FOR_MASTERAUTH));
     fclose(fpRandomFile);
     settings->sync();
 }
@@ -332,23 +333,28 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
     posOutput+=1+4;
 
     {
-        QCryptographicHash hash(QCryptographicHash::Sha224);
-        hash.addData(reinterpret_cast<const char *>(LinkToMaster::private_token),TOKEN_SIZE_FOR_MASTERAUTH);
-        hash.addData(dynamicToken,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-        const QByteArray &hashedToken=hash.result();
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput,hashedToken.constData(),hashedToken.size());
-        posOutput+=hashedToken.size();
+        SHA256_CTX hashFile;
+        if(SHA224_Init(&hashFile)!=1)
+        {
+            std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
+            abort();
+        }
+
+        SHA224_Update(&hashFile,reinterpret_cast<const char *>(LinkToMaster::private_token),TOKEN_SIZE_FOR_MASTERAUTH);
+        SHA224_Update(&hashFile,dynamicToken,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+        SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput),&hashFile);
+        posOutput+=CATCHCHALLENGER_SHA224HASH_SIZE;
         memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));
     }
 
-    std::string server_ip=settings->value("server-ip").toString().toStdString();
-    std::string server_port=settings->value("server-port").toString().toStdString();
+    std::string server_ip=settings->value("server-ip");
+    std::string server_port=settings->value("server-port");
 
     settings->beginGroup("master");
     //group to find the catchchallenger_common database
     {
-        if(!settings->value("charactersGroup").toString().isEmpty())
-            newSizeCharactersGroup=FacilityLibGeneral::toUTF8WithHeader(settings->value("charactersGroup").toString().toStdString(),ProtocolParsingBase::tempBigBufferForOutput+posOutput);
+        if(!settings->value("charactersGroup").empty())
+            newSizeCharactersGroup=FacilityLibGeneral::toUTF8WithHeader(settings->value("charactersGroup"),ProtocolParsingBase::tempBigBufferForOutput+posOutput);
         else
         {
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
@@ -360,19 +366,19 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
     //the unique key to save the info by server
     {
         unsigned int uniqueKey;
-        if(!settings->contains(QLatin1Literal("uniqueKey")))
+        if(!settings->contains("uniqueKey"))
         {
             uniqueKey = rng();
-            settings->setValue(QLatin1Literal("uniqueKey"),uniqueKey);
+            settings->setValue("uniqueKey",std::to_string(uniqueKey));
         }
         else
         {
             bool ok;
-            uniqueKey=settings->value(QLatin1Literal("uniqueKey")).toUInt(&ok);
+            uniqueKey=stringtouint32(settings->value("uniqueKey"),&ok);
             if(!ok)
             {
                 uniqueKey = rng();
-                settings->setValue(QLatin1Literal("uniqueKey"),uniqueKey);
+                settings->setValue("uniqueKey",std::to_string(uniqueKey));
             }
         }
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(uniqueKey);
@@ -382,12 +388,12 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
     //the external information to connect the client or the login server as proxy
     {
         if(!settings->contains("external-server-ip"))
-            settings->setValue("external-server-ip",QString::fromStdString(server_ip));
-        std::string externalServerIp=settings->value("external-server-ip").toString().toStdString();
+            settings->setValue("external-server-ip",server_ip);
+        std::string externalServerIp=settings->value("external-server-ip");
         if(externalServerIp.empty())
         {
             externalServerIp="localhost";
-            settings->setValue("external-server-ip",QString::fromStdString(externalServerIp));
+            settings->setValue("external-server-ip",externalServerIp);
         }
 
         unsigned int newSizeText=FacilityLibGeneral::toUTF8WithHeader(externalServerIp,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
@@ -396,16 +402,16 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
     {
         unsigned short int externalServerPort;
         if(!settings->contains("external-server-port"))
-            settings->setValue("external-server-port",QString::fromStdString(server_port));
+            settings->setValue("external-server-port",server_port);
         bool ok;
-        externalServerPort=settings->value("external-server-port").toUInt(&ok);
+        externalServerPort=stringtouint16(settings->value("external-server-port"),&ok);
         if(!ok)
-            settings->setValue("external-server-port",QString::fromStdString(server_port));
-        externalServerPort=settings->value("external-server-port").toUInt(&ok);
+            settings->setValue("external-server-port",server_port);
+        externalServerPort=stringtouint16(settings->value("external-server-port"),&ok);
         if(!ok)
         {
             externalServerPort = rng()%(65535-8192)+8192;
-            settings->setValue("external-server-port",QString::number(externalServerPort));
+            settings->setValue("external-server-port",externalServerPort);
         }
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(externalServerPort);
         posOutput+=2;
@@ -427,8 +433,8 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
     settings->beginGroup("master");
     //logical group
     {
-        if(!settings->value("logicalGroup").toString().isEmpty())
-            newSizeCharactersGroup=FacilityLibGeneral::toUTF8WithHeader(settings->value("logicalGroup").toString().toStdString(),ProtocolParsingBase::tempBigBufferForOutput+posOutput);
+        if(!settings->value("logicalGroup").empty())
+            newSizeCharactersGroup=FacilityLibGeneral::toUTF8WithHeader(settings->value("logicalGroup"),ProtocolParsingBase::tempBigBufferForOutput+posOutput);
         else
         {
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
