@@ -3,6 +3,7 @@
 #include "CharactersGroupForLogin.h"
 #include "../base/PreparedDBQuery.h"
 #include <iostream>
+#include <chrono>
 #include <openssl/sha.h>
 #include "../../general/base/CommonSettingsCommon.h"
 
@@ -17,19 +18,13 @@ void EpollClientLoginSlave::askLogin(const uint8_t &query_id,const char *rawdata
         return;
     }
     #endif
-    std::vector<char> login;
-    {
-        login.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-        SHA224(reinterpret_cast<const unsigned char *>(rawdata),CATCHCHALLENGER_SHA224HASH_SIZE,reinterpret_cast<unsigned char *>(login.data()));
-    }
     AskLoginParam *askLoginParam=new AskLoginParam;
+    SHA224(reinterpret_cast<const unsigned char *>(rawdata),CATCHCHALLENGER_SHA224HASH_SIZE,reinterpret_cast<unsigned char *>(askLoginParam->login));
     askLoginParam->query_id=query_id;
-    askLoginParam->login=login;
-    askLoginParam->pass.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-    memcpy(askLoginParam->pass.data(),rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
+    memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
 
     std::string queryText=PreparedDBQueryLogin::db_query_login;
-    stringreplaceOne(queryText,"%1",binarytoHexa(login));
+    stringreplaceOne(queryText,"%1",binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE));
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseLogin.asyncRead(queryText,this,&EpollClientLoginSlave::askLogin_static);
     if(callback==NULL)
     {
@@ -107,11 +102,11 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                 return;
 /*                PreparedDBQuery::maxAccountId++;
                 account_id=PreparedDBQuery::maxAccountId;
-                dbQueryWrite(PreparedDBQuery::db_query_insert_login.arg(account_id).arg(std::string(askLoginParam->login.toHex())).arg(std::string(askLoginParam->pass.toHex())).arg(QDateTime::currentDateTime().toTime_t()));*/
+                dbQueryWrite(PreparedDBQuery::db_query_insert_login.arg(account_id).arg(std::string(askLoginParam->login.toHex())).arg(std::string(askLoginParam->pass.toHex())).arg(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()));*/
             }
             else
             {
-                loginIsWrong(askLoginParam->query_id,0x02,"Bad login for: "+binarytoHexa(askLoginParam->login)+", pass: "+binarytoHexa(askLoginParam->pass));
+                loginIsWrong(askLoginParam->query_id,0x02,"Bad login for: "+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)+", pass: "+binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE));
                 paramToPassToCallBack.pop();
                 paramToPassToCallBackType.pop();
                 delete askLoginParam;
@@ -121,7 +116,6 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
         }
         else
         {
-            std::vector<char> hashedToken;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             std::vector<char> tempAddedToken;
             #endif
@@ -139,15 +133,20 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                             std::cerr << "convertion to binary for pass failed for: " << databaseBaseLogin.value(1) << std::endl;
                             abort();
                         }
-                        QCryptographicHash hash(QCryptographicHash::Sha224);
-                        hash.addData(secretTokenBinary.data(),secretTokenBinary.size());
+                        SHA256_CTX hash;
+                        if(SHA224_Init(&hash)!=1)
+                        {
+                            std::cerr << "SHA224_Init(&hash)!=1" << std::endl;
+                            abort();
+                        }
+                        SHA224_Update(&hash,secretTokenBinary.data(),secretTokenBinary.size());
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
                         tempAddedToken.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         memcpy(tempAddedToken.data(),tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         #endif
-                        hash.addData(tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        hashedToken.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-                        memcpy(hashedToken.data(),hash.result().constData(),CATCHCHALLENGER_SHA224HASH_SIZE);
+                        SHA224_Update(&hash,tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hash);
+
                         BaseServerLogin::tokenForAuthSize--;
                         //see to do with SIMD
                         if(BaseServerLogin::tokenForAuthSize>0)
@@ -174,12 +173,12 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                     return;
                 }
             }
-            if(hashedToken!=askLoginParam->pass)
+            if(memcmp(ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                loginIsWrong(askLoginParam->query_id,0x03,"Password wrong: "+binarytoHexa(askLoginParam->pass)+" with token "+binarytoHexa(tempAddedToken)+" for the login: "+binarytoHexa(askLoginParam->login));
+                loginIsWrong(askLoginParam->query_id,0x03,"Password wrong: "+binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE)+" with token "+binarytoHexa(tempAddedToken)+" for the login: "+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE));
                 #else
-                loginIsWrong(askLoginParam->query_id,0x03,"Password wrong: "+binarytoHexa(askLoginParam->pass)+" for the login: "+binarytoHexa(askLoginParam->login));
+                loginIsWrong(askLoginParam->query_id,0x03,"Password wrong: "+binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE)+" for the login: "+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE));
                 #endif
                 paramToPassToCallBack.pop();
                 paramToPassToCallBackType.pop();
@@ -376,21 +375,14 @@ void EpollClientLoginSlave::createAccount(const uint8_t &query_id, const char *r
         loginIsWrong(query_id,0x04,"maxAccountIdList is empty");
         return;
     }
-    std::vector<char> login;
-    {
-        QCryptographicHash hash(QCryptographicHash::Sha224);
-        hash.addData(rawdata,CATCHCHALLENGER_SHA224HASH_SIZE);
-        login.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-        memcpy(login.data(),hash.result().constData(),CATCHCHALLENGER_SHA224HASH_SIZE);
-    }
     AskLoginParam *askLoginParam=new AskLoginParam;
+    SHA224(reinterpret_cast<const unsigned char *>(rawdata),CATCHCHALLENGER_SHA224HASH_SIZE,reinterpret_cast<unsigned char *>(askLoginParam->login));
     askLoginParam->query_id=query_id;
-    askLoginParam->login=login;
-    askLoginParam->pass.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-    memcpy(askLoginParam->pass.data(),rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
+    memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
+    askLoginParam->query_id=query_id;
 
     std::string queryText=PreparedDBQueryLogin::db_query_login;
-    stringreplaceOne(queryText,"%1",binarytoHexa(login));
+    stringreplaceOne(queryText,"%1",binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE));
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseLogin.asyncRead(queryText,this,&EpollClientLoginSlave::createAccount_static);
     if(callback==NULL)
     {
@@ -492,9 +484,9 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
         {
             std::string queryText=PreparedDBQueryLogin::db_query_insert_login;
             stringreplaceOne(queryText,"%1",std::to_string(account_id));
-            stringreplaceOne(queryText,"%2",binarytoHexa(askLoginParam->login));
-            stringreplaceOne(queryText,"%3",binarytoHexa(askLoginParam->pass));
-            stringreplaceOne(queryText,"%4",std::to_string(QDateTime::currentDateTime().toTime_t()));
+            stringreplaceOne(queryText,"%2",binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE));
+            stringreplaceOne(queryText,"%3",binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE));
+            stringreplaceOne(queryText,"%4",std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()));
             dbQueryWriteLogin(queryText);
         }
         //send the network reply
@@ -514,7 +506,7 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
         stat=EpollClientLoginStat::ProtocolGood;
     }
     else
-        loginIsWrong(askLoginParam->query_id,0x02,"Login already used: "+binarytoHexa(askLoginParam->login));
+        loginIsWrong(askLoginParam->query_id,0x02,"Login already used: "+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE));
 }
 
 void EpollClientLoginSlave::dbQueryWriteLogin(const std::string &queryText)
