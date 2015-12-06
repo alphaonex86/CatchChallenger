@@ -1,6 +1,7 @@
 #QMAKE_CFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations"
 #QMAKE_CXXFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations"
 
+DEFINES += TIXML_USE_STL
 QT       -= gui widgets network sql
 QT       -= xml core
 
@@ -13,7 +14,7 @@ DEFINES += EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 DEFINES += EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
 DEFINES += CATCHCHALLENGER_CLASS_MASTER
 
-#LIBS += -lssl -lcrypto
+LIBS += -lssl -lcrypto
 
 # postgresql 9+
 DEFINES += CATCHCHALLENGER_DB_POSTGRESQL
@@ -59,7 +60,12 @@ SOURCES += \
     PlayerUpdaterToLogin.cpp \
     ../epoll/EpollTimer.cpp \
     PurgeTheLockedAccount.cpp \
-    ../../general/base/cpp11addition.cpp
+    ../../general/base/cpp11addition.cpp \
+    ../../general/base/tinyXML/tinystr.cpp \
+    ../../general/base/tinyXML/tinyxml.cpp \
+    ../../general/base/tinyXML/tinyxmlerror.cpp \
+    ../../general/base/tinyXML/tinyxmlparser.cpp \
+    ../base/TinyXMLSettings.cpp
 
 HEADERS += \
     EpollClientLoginMaster.h \
@@ -89,4 +95,7 @@ HEADERS += \
     PlayerUpdaterToLogin.h \
     ../epoll/EpollTimer.h \
     PurgeTheLockedAccount.h \
-    ../../general/base/cpp11addition.h
+    ../../general/base/cpp11addition.h \
+    ../../general/base/tinyXML/tinystr.h \
+    ../../general/base/tinyXML/tinyxml.h \
+    ../base/TinyXMLSettings.h

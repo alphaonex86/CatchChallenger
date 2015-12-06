@@ -9,8 +9,8 @@
 #include "../epoll/db/EpollPostgresql.h"
 #include "../base/BaseServerMasterLoadDictionary.h"
 #include "../base/BaseServerMasterSendDatapack.h"
+#include "../base/TinyXMLSettings.h"
 
-#include <QSettings>
 #include <string>
 #include <vector>
 
@@ -35,7 +35,7 @@ private:
 
     BaseServerMasterSendDatapack baseServerMasterSendDatapack;
 private:
-    void generateToken(QSettings &settings);
+    void generateToken(TinyXMLSettings &settings);
 
     void load_account_max_id();
     static void load_account_max_id_static(void *object);
@@ -43,11 +43,11 @@ private:
 
     void loadTheDatapack();
     void loadTheDatapackFileList();
-    void loadLoginSettings(QSettings &settings);
-    void loadDBLoginSettings(QSettings &settings);
-    std::vector<std::string> loadCharactersGroup(QSettings &settings);
+    void loadLoginSettings(TinyXMLSettings &settings);
+    void loadDBLoginSettings(TinyXMLSettings &settings);
+    std::vector<std::string> loadCharactersGroup(TinyXMLSettings &settings);
     void charactersGroupListReply(std::vector<std::string> &charactersGroupList);
-    void doTheLogicalGroup(QSettings &settings);
+    void doTheLogicalGroup(TinyXMLSettings &settings);
     void loadTheProfile();
     void SQL_common_load_finish();
 };

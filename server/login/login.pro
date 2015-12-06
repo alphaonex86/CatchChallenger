@@ -4,6 +4,7 @@
 QT       -= gui widgets network sql xml
 QT       -= xml core
 
+DEFINES += TIXML_USE_STL
 DEFINES += SERVERNOBUFFER
 #DEFINES += SERVERSSL
 
@@ -18,7 +19,7 @@ LIBS    += -lpq
 #LIBS    += -lmysqlclient
 #DEFINES += CATCHCHALLENGER_DB_MYSQL
 
-#LIBS += -lssl -lcrypto
+LIBS += -lssl -lcrypto
 LIBS    += -llzma
 
 CONFIG += c++11

@@ -2,9 +2,8 @@
 #include "EpollServerLoginSlave.h"
 #include "CharactersGroupForLogin.h"
 #include "../base/PreparedDBQuery.h"
-#include <QCryptographicHash>
-#include <QDateTime>
 #include <iostream>
+#include <openssl/sha.h>
 #include "../../general/base/CommonSettingsCommon.h"
 
 using namespace CatchChallenger;
@@ -21,9 +20,7 @@ void EpollClientLoginSlave::askLogin(const uint8_t &query_id,const char *rawdata
     std::vector<char> login;
     {
         login.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-        QCryptographicHash hash(QCryptographicHash::Sha224);
-        hash.addData(rawdata,CATCHCHALLENGER_SHA224HASH_SIZE);
-        memcpy(login.data(),hash.result().constData(),CATCHCHALLENGER_SHA224HASH_SIZE);
+        SHA224(reinterpret_cast<const unsigned char *>(rawdata),CATCHCHALLENGER_SHA224HASH_SIZE,reinterpret_cast<unsigned char *>(login.data()));
     }
     AskLoginParam *askLoginParam=new AskLoginParam;
     askLoginParam->query_id=query_id;

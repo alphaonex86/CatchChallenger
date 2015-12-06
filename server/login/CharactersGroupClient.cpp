@@ -40,7 +40,7 @@ void CharactersGroupForLogin::character_list_object()
     //memset(tempRawData,0x00,sizeof(4*1024));//performance
     int tempRawDataSize=0x01;
 
-    const uint64_t &current_time=QDateTime::currentDateTime().toTime_t();
+    const uint64_t &current_time=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     bool ok;
     uint8_t validCharaterCount=0;
     while(databaseBaseCommon->next() && validCharaterCount<CommonSettingsCommon::commonSettingsCommon.max_character)
@@ -185,7 +185,7 @@ void CharactersGroupForLogin::server_list_object()
     //memset(tempRawData,0x00,sizeof(4*1024));
     int tempRawDataSize=0x00;
 
-    const uint64_t &current_time=QDateTime::currentDateTime().toTime_t();
+    const uint64_t &current_time=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     bool ok;
     uint8_t validServerCount=0;
     while(databaseBaseCommon->next() && validServerCount<CommonSettingsCommon::commonSettingsCommon.max_character)
@@ -698,7 +698,7 @@ void CharactersGroupForLogin::removeCharacter_return(EpollClientLoginSlave * con
     stringreplaceOne(queryText,"%2",
                   //date to delete, not time (no sens on database, delete the date of removing
                   std::to_string(
-                        QDateTime::currentDateTime().toTime_t()+
+                        std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()+
                         CommonSettingsCommon::commonSettingsCommon.character_delete_time
                     )
                   );

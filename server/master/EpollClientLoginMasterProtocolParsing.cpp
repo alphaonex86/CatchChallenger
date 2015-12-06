@@ -3,14 +3,12 @@
 #include "../../general/base/CommonSettingsCommon.h"
 
 #include <iostream>
-#include <QDateTime>
-#include <QCryptographicHash>
+#include <openssl/sha.h>
 
 using namespace CatchChallenger;
 
 bool EpollClientLoginMaster::parseInputBeforeLogin(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
-    Q_UNUSED(size);
     switch(mainCodeType)
     {
         case 0x01:
@@ -173,7 +171,6 @@ bool EpollClientLoginMaster::parseMessage(const uint8_t &mainCodeType, const cha
 //have query with reply
 bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
-    Q_UNUSED(data);
     if(stat==EpollClientLoginMasterStat::None)
     {
         parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
@@ -279,10 +276,16 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                     parseNetworkReadError("tokenForAuth.isEmpty()");
                     return false;
                 }
-                QCryptographicHash hash(QCryptographicHash::Sha224);
-                hash.addData(EpollClientLoginMaster::private_token);
-                hash.addData(tokenForAuth.data(),tokenForAuth.size());
-                if(memcmp(hash.result().constData(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
+                SHA256_CTX hash;
+                if(SHA224_Init(&hash)!=1)
+                {
+                    std::cerr << "SHA224_Init(&hash)!=1" << std::endl;
+                    abort();
+                }
+                SHA224_Update(&hash,EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH);
+                SHA224_Update(&hash,tokenForAuth.data(),tokenForAuth.size());
+                SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hash);
+                if(memcmp(ProtocolParsingBase::tempBigBufferForOutput,data+pos,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
                 {
                     *(EpollClientLoginMaster::protocolReplyWrongAuth+1)=queryNumber;
                     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyWrongAuth),sizeof(EpollClientLoginMaster::protocolReplyWrongAuth));
@@ -598,10 +601,16 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                     parseNetworkReadError("tokenForAuth.isEmpty()");
                     return false;
                 }
-                QCryptographicHash hash(QCryptographicHash::Sha224);
-                hash.addData(EpollClientLoginMaster::private_token);
-                hash.addData(tokenForAuth.data(),tokenForAuth.size());
-                if(memcmp(hash.result().constData(),data,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
+                SHA256_CTX hash;
+                if(SHA224_Init(&hash)!=1)
+                {
+                    std::cerr << "SHA224_Init(&hash)!=1" << std::endl;
+                    abort();
+                }
+                SHA224_Update(&hash,EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH);
+                SHA224_Update(&hash,tokenForAuth.data(),tokenForAuth.size());
+                SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hash);
+                if(memcmp(ProtocolParsingBase::tempBigBufferForOutput,data,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
                 {
                     *(EpollClientLoginMaster::protocolReplyWrongAuth+1)=queryNumber;
                     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyWrongAuth),sizeof(EpollClientLoginMaster::protocolReplyWrongAuth));

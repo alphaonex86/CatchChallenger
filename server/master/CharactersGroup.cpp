@@ -1,7 +1,7 @@
 #include "CharactersGroup.h"
 #include "EpollServerLoginMaster.h"
 #include <iostream>
-#include <QDateTime>
+#include <chrono>
 
 using namespace CatchChallenger;
 
@@ -193,7 +193,7 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
             if(lockedAccount.find(*i)==lockedAccount.cend())
             {
                 //was disconnected from the last game server disconnection
-                this->lockedAccount[*i]=QDateTime::currentMSecsSinceEpoch()/1000+5;//wait 5s before reconnect
+                this->lockedAccount[*i]=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()+5;//wait 5s before reconnect
             }
             ++i;
         }
@@ -221,7 +221,7 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
             {
                 const uint64_t &timeLock=this->lockedAccount.at(*i);
                 //drop the timeouted lock
-                if(timeLock>0 && timeLock<(uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)
+                if(timeLock>0 && timeLock<(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count())
                 {
                     tempServer.lockedAccount.insert(*i);
                     this->lockedAccount[*i]=0;
@@ -242,7 +242,7 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
                             }
                             ++j;
                         }
-                        this->lockedAccount[*i]=QDateTime::currentMSecsSinceEpoch()/1000+5*60;//wait 5min before reconnect
+                        this->lockedAccount[*i]=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()+5*60;//wait 5min before reconnect
                         static_cast<EpollClientLoginMaster *>(client)->disconnectForDuplicateConnexionDetected(*i);
                     }
                     else
@@ -288,7 +288,7 @@ bool CharactersGroup::characterIsLocked(const uint32_t &characterId)
     {
         if(lockedAccount.at(characterId)==0)
             return true;
-        if(lockedAccount.at(characterId)<(uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)
+        if(lockedAccount.at(characterId)<(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count())
         {
             lockedAccount.erase(characterId);
             return false;
@@ -312,7 +312,7 @@ void CharactersGroup::lockTheCharacter(const uint32_t &characterId)
             std::cerr << "lockedAccount already contains: " << std::to_string(characterId) << std::endl;
             return;
         }
-        if(lockedAccount.at(characterId)>(uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)
+        if(lockedAccount.at(characterId)>(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count())
         {
             std::cerr << "lockedAccount already contains not finished timeout: " << std::to_string(characterId) << std::endl;
             return;
@@ -342,7 +342,7 @@ void CharactersGroup::unlockTheCharacter(const uint32_t &characterId)
     else if(lockedAccount.at(characterId)!=0)
         std::cerr << "unlock " << characterId << " already planned into: " << lockedAccount.at(characterId) << " (reset for 5s)" << std::endl;
     #endif
-    lockedAccount[characterId]=QDateTime::currentMSecsSinceEpoch()/1000+5;
+    lockedAccount[characterId]=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()+5;
     //std::cerr << "unlock the char " << std::to_string(characterId) << " total locked: " << std::to_string(lockedAccount.size()) << std::endl;
 }
 
@@ -354,7 +354,7 @@ void CharactersGroup::waitBeforeReconnect(const uint32_t &characterId)
     else if(lockedAccount.at(characterId)!=0)
         std::cerr << "lockedAccount contains set timeout: " << characterId << std::endl;
     #endif
-    lockedAccount[characterId]=QDateTime::currentMSecsSinceEpoch()/1000+5;
+    lockedAccount[characterId]=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()+5;
     //std::cerr << "waitBeforeReconnect the char " << std::to_string(characterId) << " total locked: " << std::to_string(lockedAccount.size()) << std::endl;
 }
 
@@ -367,9 +367,9 @@ void CharactersGroup::purgeTheLockedAccount()
     {
         if(i->second!=0)
         {
-            if(i->second<(uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)
+            if(i->second<(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count())
                 charactedToUnlock.push_back(i->first);
-            else if(i->second>((uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)+3600)
+            else if(i->second>((uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count())+3600)
             {
                 charactedToUnlock.push_back(i->first);
                 clockDriftDetected=true;
