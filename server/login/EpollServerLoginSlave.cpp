@@ -141,15 +141,15 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     if(!settings.contains("compression"))
         settings.setValue("compression","zlib");
-    if(settings.value("compression").toString()=="none")
+    if(settings.value("compression")=="none")
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::None;
-    else if(settings.value("compression").toString()=="xz")
+    else if(settings.value("compression")=="xz")
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Xz;
-    else if(settings.value("compression").toString()=="lz4")
+    else if(settings.value("compression")=="lz4")
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Lz4;
     else
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Zlib;
-    ProtocolParsing::compressionLevel          = settings.value("compressionLevel").toUInt();
+    ProtocolParsing::compressionLevel          = stringtouint8(settings.value("compressionLevel"));
     #endif
 
     settings.beginGroup("Linux");
@@ -157,8 +157,8 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         settings.setValue("tcpCork",true);
     if(!settings.contains("tcpNodelay"))
         settings.setValue("tcpNodelay",false);
-    tcpCork=settings.value("tcpCork").toBool();
-    tcpNodelay=settings.value("tcpNodelay").toBool();
+    tcpCork=stringtobool(settings.value("tcpCork"));
+    tcpNodelay=stringtobool(settings.value("tcpNodelay"));
     settings.endGroup();
     settings.sync();
 
@@ -186,7 +186,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         if(!settings.contains("type"))
             settings.setValue("type","postgresql");
         settings.sync();
-        EpollClientLoginSlave::databaseBaseLogin.considerDownAfterNumberOfTry=settings.value("considerDownAfterNumberOfTry").toUInt(&ok);
+        EpollClientLoginSlave::databaseBaseLogin.considerDownAfterNumberOfTry=stringtouint32(settings.value("considerDownAfterNumberOfTry"),&ok);
         if(EpollClientLoginSlave::databaseBaseLogin.considerDownAfterNumberOfTry==0 || !ok)
         {
             std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
@@ -196,7 +196,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         host=settings.value("host");
         login=settings.value("login");
         pass=settings.value("pass");
-        EpollClientLoginSlave::databaseBaseLogin.tryInterval=settings.value("tryInterval").toUInt(&ok);
+        EpollClientLoginSlave::databaseBaseLogin.tryInterval=stringtouint32(settings.value("tryInterval"),&ok);
         if(EpollClientLoginSlave::databaseBaseLogin.tryInterval==0 || !ok)
         {
             std::cerr << "tryInterval==0 (abort)" << std::endl;
@@ -227,7 +227,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     int CharactersGroupForLoginId=0;
     while(continueCharactersGroupForLoginSettings)
     {
-        settings.beginGroup(QString("db-common-%1").arg(CharactersGroupForLoginId));
+        settings.beginGroup("db-common-"+std::to_string(CharactersGroupForLoginId));
         if(CharactersGroupForLoginId==0)
         {
             if(!settings.contains("considerDownAfterNumberOfTry"))
@@ -255,7 +255,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             const std::string &charactersGroup=settings.value("charactersGroup");
             if(CharactersGroupForLogin::hash.find(charactersGroup)==CharactersGroupForLogin::hash.cend())
             {
-                const uint8_t &considerDownAfterNumberOfTry=settings.value("considerDownAfterNumberOfTry").toUInt(&ok);
+                const uint8_t &considerDownAfterNumberOfTry=stringtouint8(settings.value("considerDownAfterNumberOfTry"),&ok);
                 if(considerDownAfterNumberOfTry==0 || !ok)
                 {
                     std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
@@ -265,7 +265,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
                 host=settings.value("host");
                 login=settings.value("login");
                 pass=settings.value("pass");
-                const uint8_t &tryInterval=settings.value("tryInterval").toUInt(&ok);
+                const uint8_t &tryInterval=stringtouint8(settings.value("tryInterval"),&ok);
                 if(tryInterval==0 || !ok)
                 {
                     std::cerr << "tryInterval==0 (abort)" << std::endl;
@@ -332,19 +332,19 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             settings.setValue("tryInterval",5);
         settings.sync();
         const std::string &host=settings.value("host");
-        const uint16_t &port=settings.value("port").toUInt(&ok);
+        const uint16_t &port=stringtouint16(settings.value("port"),&ok);
         if(port==0 || !ok)
         {
             std::cerr << "Master port not a number or 0:" << settings.value("port") << std::endl;
             abort();
         }
-        const uint8_t &tryInterval=settings.value("tryInterval").toUInt(&ok);
+        const uint8_t &tryInterval=stringtouint8(settings.value("tryInterval"),&ok);
         if(tryInterval==0 || !ok)
         {
             std::cerr << "tryInterval==0 (abort)" << std::endl;
             abort();
         }
-        const uint8_t &considerDownAfterNumberOfTry=settings.value("considerDownAfterNumberOfTry").toUInt(&ok);
+        const uint8_t &considerDownAfterNumberOfTry=stringtouint8(settings.value("considerDownAfterNumberOfTry"),&ok);
         if(considerDownAfterNumberOfTry==0 || !ok)
         {
             std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;

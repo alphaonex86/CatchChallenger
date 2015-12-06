@@ -9,9 +9,6 @@ using namespace CatchChallenger;
 
 bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
 {
-    Q_UNUSED(queryNumber);
-    Q_UNUSED(size);
-    Q_UNUSED(data);
     switch(mainCodeType)
     {
         case 0x03:
@@ -145,7 +142,6 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
 //have query with reply
 bool LinkToGameServer::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
-    Q_UNUSED(data);
     if(stat!=Stat::Logged)
         return parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
     if(client!=NULL)
@@ -202,8 +198,6 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             return false;
         }
     }
-    Q_UNUSED(data);
-    Q_UNUSED(size);
     //do the work here
     //do the work here
     switch(mainCodeType)

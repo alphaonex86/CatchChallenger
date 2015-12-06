@@ -20,7 +20,7 @@ LIBS    += -lpq
 #DEFINES += CATCHCHALLENGER_DB_MYSQL
 
 LIBS += -lssl -lcrypto
-LIBS    += -llzma
+LIBS    += -llzma -lz
 
 CONFIG += c++11
 
@@ -68,7 +68,12 @@ SOURCES += \
     TimerDdos.cpp \
     ../epoll/EpollTimer.cpp \
     ../../general/base/lz4/lz4.c \
-    ../../general/base/cpp11addition.cpp
+    ../../general/base/cpp11addition.cpp \
+    ../base/TinyXMLSettings.cpp \
+    ../../general/base/tinyXML/tinystr.cpp \
+    ../../general/base/tinyXML/tinyxml.cpp \
+    ../../general/base/tinyXML/tinyxmlerror.cpp \
+    ../../general/base/tinyXML/tinyxmlparser.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \
@@ -100,4 +105,7 @@ HEADERS += \
     TimerDdos.h \
     ../epoll/EpollTimer.h \
     ../../general/base/lz4/lz4.h \
-    ../../general/base/cpp11addition.h
+    ../../general/base/cpp11addition.h \
+    ../base/TinyXMLSettings.h \
+    ../../general/base/tinyXML/tinystr.h \
+    ../../general/base/tinyXML/tinyxml.h
