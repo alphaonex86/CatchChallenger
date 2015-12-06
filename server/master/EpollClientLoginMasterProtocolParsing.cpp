@@ -11,7 +11,8 @@ bool EpollClientLoginMaster::parseInputBeforeLogin(const uint8_t &mainCodeType,c
 {
     switch(mainCodeType)
     {
-        case 0x01:
+        //Protocol initialization and auth for master
+        case 0xB8:
             removeFromQueryReceived(queryNumber);
             if(size==sizeof(EpollClientLoginMaster::protocolHeaderToMatch))
             {
@@ -36,18 +37,23 @@ bool EpollClientLoginMaster::parseInputBeforeLogin(const uint8_t &mainCodeType,c
                     {
                         case CompressionType_None:
                             *(EpollClientLoginMaster::protocolReplyCompressionNone+1)=queryNumber;
-                            memcpy(EpollClientLoginMaster::protocolReplyCompressionNone+4,tokenForAuth.constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                            memcpy(EpollClientLoginMaster::protocolReplyCompressionNone+7,tokenForAuth.constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                             internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionNone),sizeof(EpollClientLoginMaster::protocolReplyCompressionNone));
                         break;
                         case CompressionType_Zlib:
                             *(EpollClientLoginMaster::protocolReplyCompresssionZlib+1)=queryNumber;
-                            memcpy(EpollClientLoginMaster::protocolReplyCompresssionZlib+4,tokenForAuth.constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                            memcpy(EpollClientLoginMaster::protocolReplyCompresssionZlib+7,tokenForAuth.constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                             internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompresssionZlib),sizeof(EpollClientLoginMaster::protocolReplyCompresssionZlib));
                         break;
                         case CompressionType_Xz:
                             *(EpollClientLoginMaster::protocolReplyCompressionXz+1)=queryNumber;
-                            memcpy(EpollClientLoginMaster::protocolReplyCompressionXz+4,tokenForAuth.constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                            memcpy(EpollClientLoginMaster::protocolReplyCompressionXz+7,tokenForAuth.constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                             internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionXz),sizeof(EpollClientLoginMaster::protocolReplyCompressionXz));
+                        break;
+                        case CompressionType_Lz4:
+                            *(EpollClientLoginMaster::protocolReplyCompressionLz4+1)=queryNumber;
+                            memcpy(EpollClientLoginMaster::protocolReplyCompressionLz4+7,tokenForAuth.constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                            internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionLz4),sizeof(EpollClientLoginMaster::protocolReplyCompressionLz4));
                         break;
                         default:
                             errorParsingLayer("Compression selected wrong");
@@ -55,7 +61,7 @@ bool EpollClientLoginMaster::parseInputBeforeLogin(const uint8_t &mainCodeType,c
                     }
                     #else
                     *(EpollClientLoginMaster::protocolReplyCompressionNone+1)=queryNumber;
-                    memcpy(EpollClientLoginMaster::protocolReplyCompressionNone+4,tokenForAuth.data(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                    memcpy(EpollClientLoginMaster::protocolReplyCompressionNone+7,tokenForAuth.data(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionNone),sizeof(EpollClientLoginMaster::protocolReplyCompressionNone));
                     #endif
                     stat=EpollClientLoginMasterStat::Logged;
@@ -79,7 +85,8 @@ bool EpollClientLoginMaster::parseInputBeforeLogin(const uint8_t &mainCodeType,c
                 return false;
             }
         break;
-        case 0x02:
+        //Select character on master
+        case 0xBE:
             if(stat!=EpollClientLoginMasterStat::Logged)
             {
                 errorParsingLayer("send login before the protocol");
@@ -99,6 +106,7 @@ bool EpollClientLoginMaster::parseMessage(const uint8_t &mainCodeType, const cha
     (void)size;
     switch(mainCodeType)
     {
+        //Unlock and unregister charater id (disconnected)
         case 0x3E:
         {
             if(stat!=EpollClientLoginMasterStat::GameServer)
@@ -117,6 +125,7 @@ bool EpollClientLoginMaster::parseMessage(const uint8_t &mainCodeType, const cha
             return true;
         }
         break;
+        //Current player number (Game server to master)
         case 0x3F:
         {
             if(stat!=EpollClientLoginMasterStat::GameServer)
@@ -178,6 +187,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
     }
     switch(mainCodeType)
     {
+        //get maxMonsterId block
         case 0xB0:
         {
             if(stat!=EpollClientLoginMasterStat::GameServer)
@@ -219,6 +229,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         }
         break;
+        //get maxClanId block
         case 0xB1:
         {
             if(stat!=EpollClientLoginMasterStat::GameServer)
@@ -260,6 +271,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         }
         break;
+        //Register game server
         case 0xB2:
         {
             unsigned int pos=0;
@@ -587,6 +599,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             std::cout << "Online: " << loginServers.size() << " login server and " << gameServers.size() << " game server" << std::endl;
         }
         break;
+        //Register login server
         case 0xBD:
         {
             //token auth
@@ -701,6 +714,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             selectCharacter(queryNumber,serverUniqueKey,charactersGroupIndex,characterId,accountId);
         }
         break;
+        //get maxAccountId block
         case 0xBF:
         {
             if(stat!=EpollClientLoginMasterStat::LoginServer)
@@ -735,6 +749,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         }
         break;
+        //get maxCharacterId block
         case 0xC0:
         {
             if(stat!=EpollClientLoginMasterStat::LoginServer)
@@ -776,6 +791,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         }
         break;
+        //get maxMonsterId block
         case 0xC1:
         {
             if(stat!=EpollClientLoginMasterStat::LoginServer)
@@ -834,6 +850,7 @@ bool EpollClientLoginMaster::parseReplyData(const uint8_t &mainCodeType,const ui
     //do the work here
     switch(mainCodeType)
     {
+        //Get token for character select
         case 0xF8:
         {
             if(stat!=EpollClientLoginMasterStat::GameServer)
