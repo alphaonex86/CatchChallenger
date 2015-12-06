@@ -39,7 +39,7 @@ LinkToMaster::LinkToMaster(
             ),
         stat(Stat::Connected)
 {
-    queryNumberList.resize(30);
+    queryNumberList.resize(CATCHCHALLENGER_MAXPROTOCOLQUERY);
     unsigned int index=0;
     while(index<queryNumberList.size())
     {

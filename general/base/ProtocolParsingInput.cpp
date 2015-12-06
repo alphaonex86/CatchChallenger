@@ -381,9 +381,9 @@ int8_t ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,con
         }
         queryNumber=*(commonBuffer+cursor);
         cursor+=sizeof(uint8_t);
-        if(queryNumber>15)
+        if(queryNumber>(CATCHCHALLENGER_MAXPROTOCOLQUERY-1))
         {
-            errorParsingLayer("query number >15");
+            errorParsingLayer("query number >"+std::to_string(CATCHCHALLENGER_MAXPROTOCOLQUERY-1));
             return -1;
         }
         //set this parsing step is done
