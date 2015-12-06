@@ -52,7 +52,7 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
         memset(rawServerListForC211,0x00,sizeof(EpollClientLoginMaster::loginSettingsAndCharactersGroup));
     }
 
-    TinyXMLSettings settings(FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"master.xml");
+    TinyXMLSettings settings(FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/master.xml");
 
     srand(time(NULL));
 
