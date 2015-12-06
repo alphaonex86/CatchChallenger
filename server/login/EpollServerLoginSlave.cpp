@@ -23,9 +23,7 @@ EpollServerLoginSlave *EpollServerLoginSlave::epollServerLoginSlave=NULL;
 EpollServerLoginSlave::EpollServerLoginSlave() :
     tcpNodelay(false),
     tcpCork(false),
-    serverReady(false),
-    server_ip(NULL),
-    server_port(NULL)
+    serverReady(false)
 {
     CommonSettingsCommon::commonSettingsCommon.automatic_account_creation   = false;
     CommonSettingsCommon::commonSettingsCommon.character_delete_time        = 3600;
