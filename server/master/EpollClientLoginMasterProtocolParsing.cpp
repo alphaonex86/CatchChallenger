@@ -567,9 +567,9 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
 
             //only game server will receive query
             {
-                queryNumberList.reserve(50);
+                queryNumberList.reserve(CATCHCHALLENGER_MAXPROTOCOLQUERY);
                 int index=0;
-                while(index<50)
+                while(index<CATCHCHALLENGER_MAXPROTOCOLQUERY)
                 {
                     queryNumberList.push_back(index);
                     index++;
