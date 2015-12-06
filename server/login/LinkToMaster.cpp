@@ -340,6 +340,9 @@ bool LinkToMaster::trySelectCharacter(void * const client,const uint8_t &client_
 
 void LinkToMaster::sendProtocolHeader()
 {
+    //register it
+    registerOutputQuery(queryNumberList.back(),0xBE);
+
     LinkToMaster::header_magic_number[0x01]=queryNumberList.back();
     internalSendRawSmallPacket(reinterpret_cast<char *>(LinkToMaster::header_magic_number),sizeof(LinkToMaster::header_magic_number));
     queryNumberList.pop_back();
