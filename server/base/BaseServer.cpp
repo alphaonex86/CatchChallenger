@@ -316,7 +316,10 @@ void BaseServer::preload_finish()
     const double &now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     std::cout << "Loaded the server SQL datapack into " << (now-timeDatapack) << "ms" << std::endl;
     preload_other();
+    #if defined(EPOLLCATCHCHALLENGERSERVER) && ! defined(CATCHCHALLENGER_CLIENT)
     CommonDatapack::commonDatapack.xmlLoadedFile.clear();
+    Map_loader::teleportConditionsUnparsed.clear();
+    #endif
     entryListZone.clear();
 }
 
