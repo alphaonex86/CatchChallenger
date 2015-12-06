@@ -7,8 +7,8 @@
 #include <chrono>
 #include <ctime>
 #include <vector>
-#include <QCoreApplication>
 
+#include "../../general/base/FacilityLibGeneral.h"
 #include "../epoll/EpollSocket.h"
 #include "../epoll/Epoll.h"
 #include "EpollServerLoginSlave.h"

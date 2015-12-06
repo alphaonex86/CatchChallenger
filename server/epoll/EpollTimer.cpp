@@ -144,5 +144,6 @@ void EpollTimer::setSingleShot(const bool &singleShot)
 
 void EpollTimer::validateTheTimer()
 {
-    ::read(tfd, buff_temp, sizeof(uint64_t));
+    if(::read(tfd, buff_temp, sizeof(uint64_t))!=sizeof(uint64_t))
+    {}
 }

@@ -8,9 +8,7 @@
 
 using namespace CatchChallenger;
 
-#include <QFile>
 #include <vector>
-#include <QCryptographicHash>
 #include <regex>
 
 #include <stdio.h>      /* printf, scanf, puts, NULL */
@@ -54,7 +52,7 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
         memset(rawServerListForC211,0x00,sizeof(EpollClientLoginMaster::loginSettingsAndCharactersGroup));
     }
 
-    QSettings settings("master.conf",QSettings::IniFormat);
+    TinyXMLSettings settings(FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"master.xml");
 
     srand(time(NULL));
 
@@ -115,11 +113,11 @@ EpollServerLoginMaster::~EpollServerLoginMaster()
     CharactersGroup::hash.clear();
 }
 
-void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
+void EpollServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
 {
     if(!settings.contains("ip"))
         settings.setValue("ip","");
-    const std::string &server_ip_string=settings.value("ip").toString().toStdString();
+    const std::string &server_ip_string=settings.value("ip");
     if(!server_ip_string.empty())
     {
         server_ip=new char[server_ip_string.size()+1];
@@ -127,15 +125,15 @@ void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
     }
     if(!settings.contains("port"))
         settings.setValue("port",rand()%40000+10000);
-    const std::string &server_port_data=settings.value("port").toString().toStdString();
+    const std::string &server_port_data=settings.value("port");
     server_port=new char[server_port_data.size()+1];
     strcpy(server_port,server_port_data.data());
     if(!settings.contains("token"))
         generateToken(settings);
-    std::string token=settings.value("token").toString().toStdString();
+    std::string token=settings.value("token");
     if(token.size()!=(TOKEN_SIZE_FOR_MASTERAUTH*2))
         generateToken(settings);
-    token=settings.value("token").toString().toStdString();
+    token=settings.value("token");
     const std::vector<char> &tokenbinary=hexatoBinary(token);
     if(tokenbinary.empty())
     {
@@ -156,7 +154,7 @@ void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
             ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Lz4;
     else
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Zlib;
-    ProtocolParsing::compressionLevel          = settings.value("compressionLevel").toUInt();
+    ProtocolParsing::compressionLevel          = stringtouint8(settings.value("compressionLevel"));
     #endif
     if(!settings.contains("automatic_account_creation"))
         settings.setValue("automatic_account_creation",false);
@@ -168,21 +166,21 @@ void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
         settings.setValue("max_character",3);
     if(!settings.contains("min_character"))
         settings.setValue("min_character",1);
-    CommonSettingsCommon::commonSettingsCommon.automatic_account_creation=settings.value("automatic_account_creation").toBool();
+    CommonSettingsCommon::commonSettingsCommon.automatic_account_creation=stringtobool(settings.value("automatic_account_creation"));
     bool ok;
-    CommonSettingsCommon::commonSettingsCommon.character_delete_time=settings.value("character_delete_time").toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.character_delete_time=stringtouint32(settings.value("character_delete_time"),&ok);
     if(CommonSettingsCommon::commonSettingsCommon.character_delete_time==0 || !ok)
     {
         std::cerr << "character_delete_time==0 (abort)" << std::endl;
         abort();
     }
-    CommonSettingsCommon::commonSettingsCommon.min_character=settings.value("min_character").toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.min_character=stringtouint8(settings.value("min_character"),&ok);
     if(!ok)
     {
         std::cerr << "CommonSettingsCommon::commonSettingsCommon.min_character not number (abort)" << std::endl;
         abort();
     }
-    CommonSettingsCommon::commonSettingsCommon.max_character=settings.value("max_character").toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.max_character=stringtouint8(settings.value("max_character"),&ok);
     if(CommonSettingsCommon::commonSettingsCommon.max_character<=0 || !ok)
     {
         std::cerr << "max_character<=0 (abort)" << std::endl;
@@ -193,7 +191,7 @@ void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
         std::cerr << "max_character<min_character (abort)" << std::endl;
         abort();
     }
-    CommonSettingsCommon::commonSettingsCommon.max_pseudo_size=settings.value("max_pseudo_size").toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.max_pseudo_size=stringtouint8(settings.value("max_pseudo_size"),&ok);
     if(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size==0 || !ok)
     {
         std::cerr << "max_pseudo_size==0 (abort)" << std::endl;
@@ -207,25 +205,25 @@ void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
         settings.setValue("maxPlayerItems",30);
     if(!settings.contains("maxWarehousePlayerItems"))
         settings.setValue("maxWarehousePlayerItems",150);
-    CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters=settings.value("maxPlayerMonsters").toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters=stringtouint8(settings.value("maxPlayerMonsters"),&ok);
     if(CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters==0 || !ok)
     {
         std::cerr << "maxPlayerMonsters==0 (abort)" << std::endl;
         abort();
     }
-    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters=settings.value("maxWarehousePlayerMonsters").toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters=stringtouint16(settings.value("maxWarehousePlayerMonsters"),&ok);
     if(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters==0 || !ok)
     {
         std::cerr << "maxWarehousePlayerMonsters==0 (abort)" << std::endl;
         abort();
     }
-    CommonSettingsCommon::commonSettingsCommon.maxPlayerItems=settings.value("maxPlayerItems").toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.maxPlayerItems=stringtouint8(settings.value("maxPlayerItems"),&ok);
     if(CommonSettingsCommon::commonSettingsCommon.maxPlayerItems==0 || !ok)
     {
         std::cerr << "maxPlayerItems==0 (abort)" << std::endl;
         abort();
     }
-    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems=settings.value("maxWarehousePlayerItems").toUInt(&ok);
+    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems=stringtouint16(settings.value("maxWarehousePlayerItems"),&ok);
     if(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems==0 || !ok)
     {
         std::cerr << "maxWarehousePlayerItems==0 (abort)" << std::endl;
@@ -233,7 +231,7 @@ void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
     }
 }
 
-void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
+void EpollServerLoginMaster::loadDBLoginSettings(TinyXMLSettings &settings)
 {
     if(CommonSettingsCommon::commonSettingsCommon.automatic_account_creation)
     {
@@ -268,23 +266,23 @@ void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
             databaseBaseLogin=new EpollPostgresql();
             //here to have by login server an auth
 
-            databaseBaseLogin->considerDownAfterNumberOfTry=settings.value("considerDownAfterNumberOfTry").toUInt(&ok);
+            databaseBaseLogin->considerDownAfterNumberOfTry=stringtouint32(settings.value("considerDownAfterNumberOfTry"),&ok);
             if(databaseBaseLogin->considerDownAfterNumberOfTry==0 || !ok)
             {
                 std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
                 abort();
             }
-            db=settings.value("db").toString().toStdString();
-            host=settings.value("host").toString().toStdString();
-            login=settings.value("login").toString().toStdString();
-            pass=settings.value("pass").toString().toStdString();
-            databaseBaseLogin->tryInterval=settings.value("tryInterval").toUInt(&ok);
+            db=settings.value("db");
+            host=settings.value("host");
+            login=settings.value("login");
+            pass=settings.value("pass");
+            databaseBaseLogin->tryInterval=stringtouint32(settings.value("tryInterval"),&ok);
             if(databaseBaseLogin->tryInterval==0 || !ok)
             {
                 std::cerr << "tryInterval==0 (abort)" << std::endl;
                 abort();
             }
-            type=settings.value("type").toString().toStdString();
+            type=settings.value("type");
             if(type!="postgresql")
             {
                 std::cerr << "only db type postgresql supported (abort)" << std::endl;
@@ -338,23 +336,23 @@ void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
             databaseBaseBase=new EpollPostgresql();
             //here to have by login server an auth
 
-            databaseBaseBase->considerDownAfterNumberOfTry=settings.value("considerDownAfterNumberOfTry").toUInt(&ok);
+            databaseBaseBase->considerDownAfterNumberOfTry=stringtouint32(settings.value("considerDownAfterNumberOfTry"),&ok);
             if(databaseBaseBase->considerDownAfterNumberOfTry==0 || !ok)
             {
                 std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
                 abort();
             }
-            db=settings.value("db").toString().toStdString();
-            host=settings.value("host").toString().toStdString();
-            login=settings.value("login").toString().toStdString();
-            pass=settings.value("pass").toString().toStdString();
-            databaseBaseBase->tryInterval=settings.value("tryInterval").toUInt(&ok);
+            db=settings.value("db");
+            host=settings.value("host");
+            login=settings.value("login");
+            pass=settings.value("pass");
+            databaseBaseBase->tryInterval=stringtouint32(settings.value("tryInterval"),&ok);
             if(databaseBaseBase->tryInterval==0 || !ok)
             {
                 std::cerr << "tryInterval==0 (abort)" << std::endl;
                 abort();
             }
-            type=settings.value("type").toString().toStdString();
+            type=settings.value("type");
             if(type!="postgresql")
             {
                 std::cerr << "only db type postgresql supported (abort)" << std::endl;
@@ -372,7 +370,7 @@ void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
     }
 }
 
-std::vector<std::string> EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
+std::vector<std::string> EpollServerLoginMaster::loadCharactersGroup(TinyXMLSettings &settings)
 {
     std::string db;
     std::string host;
@@ -386,7 +384,7 @@ std::vector<std::string> EpollServerLoginMaster::loadCharactersGroup(QSettings &
     int charactersGroupId=0;
     while(continueCharactersGroupSettings)
     {
-        settings.beginGroup(QString::fromStdString("db-common-"+std::to_string(charactersGroupId)));
+        settings.beginGroup("db-common-"+std::to_string(charactersGroupId));
         if(charactersGroupId==0)
         {
             if(!settings.contains("considerDownAfterNumberOfTry"))
@@ -411,27 +409,27 @@ std::vector<std::string> EpollServerLoginMaster::loadCharactersGroup(QSettings &
         settings.sync();
         if(settings.contains("login"))
         {
-            const std::string &charactersGroup=settings.value("charactersGroup").toString().toStdString();
+            const std::string &charactersGroup=settings.value("charactersGroup");
             if(CharactersGroup::hash.find(charactersGroup)==CharactersGroup::hash.cend())
             {
                 CharactersGroup::serverWaitedToBeReady++;
-                const uint8_t &considerDownAfterNumberOfTry=settings.value("considerDownAfterNumberOfTry").toUInt(&ok);
+                const uint8_t &considerDownAfterNumberOfTry=stringtouint8(settings.value("considerDownAfterNumberOfTry"),&ok);
                 if(considerDownAfterNumberOfTry==0 || !ok)
                 {
                     std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
                     abort();
                 }
-                db=settings.value("db").toString().toStdString();
-                host=settings.value("host").toString().toStdString();
-                login=settings.value("login").toString().toStdString();
-                pass=settings.value("pass").toString().toStdString();
-                const uint8_t &tryInterval=settings.value("tryInterval").toUInt(&ok);
+                db=settings.value("db");
+                host=settings.value("host");
+                login=settings.value("login");
+                pass=settings.value("pass");
+                const uint8_t &tryInterval=stringtouint8(settings.value("tryInterval"),&ok);
                 if(tryInterval==0 || !ok)
                 {
                     std::cerr << "tryInterval==0 (abort)" << std::endl;
                     abort();
                 }
-                type=settings.value("type").toString().toStdString();
+                type=settings.value("type");
                 if(type!="postgresql")
                 {
                     std::cerr << "only db type postgresql supported (abort)" << std::endl;
@@ -495,7 +493,7 @@ void EpollServerLoginMaster::charactersGroupListReply(std::vector<std::string> &
     }
 }
 
-void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
+void EpollServerLoginMaster::doTheLogicalGroup(TinyXMLSettings &settings)
 {
     //do the LogicalGroup
     memset(EpollClientLoginMaster::serverLogicalGroupList,0x00,sizeof(EpollClientLoginMaster::serverLogicalGroupList));
@@ -507,7 +505,7 @@ void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
     bool logicalGroupContinue=true;
     while(logicalGroupContinue)
     {
-        settings.beginGroup(QString::fromStdString("logical-group-"+std::to_string(logicalGroup)));
+        settings.beginGroup("logical-group-"+std::to_string(logicalGroup));
         logicalGroupContinue=settings.contains("path") && settings.contains("xml") && logicalGroup<255;
         if(!logicalGroupContinue && logicalGroup==0)
         {
@@ -521,7 +519,7 @@ void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
         {
             //path
             {
-                textToConvert=settings.value("path").toString().toStdString();
+                textToConvert=settings.value("path");
                 if(textToConvert.size()>20)
                 {
                     std::cerr << "path too hurge (abort)" << std::endl;
@@ -542,7 +540,7 @@ void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
             }
             //translation
             {
-                textToConvert=settings.value("xml").toString().toStdString();
+                textToConvert=settings.value("xml");
                 if(textToConvert.size()>0)
                 {
                     if(textToConvert.size()>4*1024)
@@ -750,7 +748,7 @@ bool EpollServerLoginMaster::tryListen()
     return returnedValue;
 }
 
-void EpollServerLoginMaster::generateToken(QSettings &settings)
+void EpollServerLoginMaster::generateToken(TinyXMLSettings &settings)
 {
     FILE *fpRandomFile = fopen(RANDOMFILEDEVICE,"rb");
     if(fpRandomFile==NULL)
@@ -816,10 +814,7 @@ void EpollServerLoginMaster::load_account_max_id_return()
 
 void EpollServerLoginMaster::loadTheDatapack()
 {
-    QTime time;
-    time.restart();
     CommonDatapack::commonDatapack.parseDatapack("datapack/");
-    std::cerr << "Loaded the common datapack into " << time.elapsed() << "ms" << std::endl;
 
     if(databaseBaseBase==NULL)
     {

@@ -9,8 +9,8 @@
 #include <chrono>
 #include <ctime>
 #include <vector>
-#include <QCoreApplication>
 
+#include "../../general/base/FacilityLibGeneral.h"
 #include "../epoll/EpollSocket.h"
 #include "../epoll/Epoll.h"
 #include "EpollServerLoginMaster.h"
@@ -192,7 +192,13 @@ int main(int argc, char *argv[])
                                 delete client;
                             }
                             else
-                                ::write(infd,encodingBuff,sizeof(encodingBuff));
+                            {
+                                if(::write(infd,encodingBuff,sizeof(encodingBuff))!=sizeof(encodingBuff))
+                                {
+                                    std::cerr << "epoll_ctl on socket write error" << std::endl;
+                                    delete client;
+                                }
+                            }
                         }
                     }
                     continue;

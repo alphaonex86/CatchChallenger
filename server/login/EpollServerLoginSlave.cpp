@@ -2,12 +2,10 @@
 #include "CharactersGroupForLogin.h"
 #include "../epoll/Epoll.h"
 #include "../../general/base/CommonSettingsCommon.h"
+#include "../../general/base/FacilityLibGeneral.h"
 #include "../base/PreparedDBQuery.h"
 
 using namespace CatchChallenger;
-
-#include <QFile>
-#include <QCoreApplication>
 
 #include <stdio.h>      /* printf, scanf, puts, NULL */
 #include <stdlib.h>     /* srand, rand */
@@ -39,7 +37,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     CommonSettingsCommon::commonSettingsCommon.maxPlayerItems               = 30;
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems      = 150;
 
-    QSettings settings(QCoreApplication::applicationDirPath()+"/login.conf",QSettings::IniFormat);
+    TinyXMLSettings settings(FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/login.xml");
 
     {
         memset(EpollClientLoginSlave::serverServerList,0x00,sizeof(EpollClientLoginSlave::serverServerList));
@@ -59,19 +57,19 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
     if(!settings.contains("ip"))
         settings.setValue("ip","");
-    server_ip=settings.value("ip").toString().toStdString();
+    server_ip=settings.value("ip");
     if(!settings.contains("port"))
         settings.setValue("port",rand()%40000+10000);
-    server_port=settings.value("port").toString().toStdString();
+    server_port=settings.value("port");
 
     //token
     settings.beginGroup("master");
     if(!settings.contains("token"))
         generateToken(settings);
-    std::string token=settings.value("token").toString().toStdString();
+    std::string token=settings.value("token");
     if(token.size()!=TOKEN_SIZE_FOR_MASTERAUTH*2/*String Hexa, not binary*/)
         generateToken(settings);
-    token=settings.value("token").toString().toStdString();
+    token=settings.value("token");
     const std::vector<char> &tokenBinary=hexatoBinary(token);
     if(tokenBinary.empty())
     {
@@ -85,7 +83,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     {
         if(!settings.contains("mode"))
             settings.setValue("mode","direct");//or proxy
-        std::string mode=settings.value("mode").toString().toStdString();
+        std::string mode=settings.value("mode");
         if(mode!="direct" && mode!="proxy")
         {
             mode="direct";
@@ -105,7 +103,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
     if(!settings.contains("httpDatapackMirror"))
         settings.setValue("httpDatapackMirror","");
-    std::string httpDatapackMirror=settings.value("httpDatapackMirror").toString().toStdString();
+    std::string httpDatapackMirror=settings.value("httpDatapackMirror");
     if(httpDatapackMirror.empty())
     {
         std::cerr << "empty mirror in the settings but not supported from now (abort)" << std::endl;
@@ -194,17 +192,17 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
             abort();
         }
-        db=settings.value("db").toString().toStdString();
-        host=settings.value("host").toString().toStdString();
-        login=settings.value("login").toString().toStdString();
-        pass=settings.value("pass").toString().toStdString();
+        db=settings.value("db");
+        host=settings.value("host");
+        login=settings.value("login");
+        pass=settings.value("pass");
         EpollClientLoginSlave::databaseBaseLogin.tryInterval=settings.value("tryInterval").toUInt(&ok);
         if(EpollClientLoginSlave::databaseBaseLogin.tryInterval==0 || !ok)
         {
             std::cerr << "tryInterval==0 (abort)" << std::endl;
             abort();
         }
-        type=settings.value("type").toString().toStdString();
+        type=settings.value("type");
         if(type!="postgresql")
         {
             std::cerr << "only db type postgresql supported (abort)" << std::endl;
@@ -254,7 +252,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         }
         if(settings.contains("login"))
         {
-            const std::string &charactersGroup=settings.value("charactersGroup").toString().toStdString();
+            const std::string &charactersGroup=settings.value("charactersGroup");
             if(CharactersGroupForLogin::hash.find(charactersGroup)==CharactersGroupForLogin::hash.cend())
             {
                 const uint8_t &considerDownAfterNumberOfTry=settings.value("considerDownAfterNumberOfTry").toUInt(&ok);
@@ -263,17 +261,17 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
                     std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
                     abort();
                 }
-                db=settings.value("db").toString().toStdString();
-                host=settings.value("host").toString().toStdString();
-                login=settings.value("login").toString().toStdString();
-                pass=settings.value("pass").toString().toStdString();
+                db=settings.value("db");
+                host=settings.value("host");
+                login=settings.value("login");
+                pass=settings.value("pass");
                 const uint8_t &tryInterval=settings.value("tryInterval").toUInt(&ok);
                 if(tryInterval==0 || !ok)
                 {
                     std::cerr << "tryInterval==0 (abort)" << std::endl;
                     abort();
                 }
-                type=settings.value("type").toString().toStdString();
+                type=settings.value("type");
                 if(type!="postgresql")
                 {
                     std::cerr << "only db type postgresql supported (abort)" << std::endl;
@@ -333,11 +331,11 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         if(!settings.contains("tryInterval"))
             settings.setValue("tryInterval",5);
         settings.sync();
-        const std::string &host=settings.value("host").toString().toStdString();
+        const std::string &host=settings.value("host");
         const uint16_t &port=settings.value("port").toUInt(&ok);
         if(port==0 || !ok)
         {
-            std::cerr << "Master port not a number or 0:" << settings.value("port").toString().toStdString() << std::endl;
+            std::cerr << "Master port not a number or 0:" << settings.value("port") << std::endl;
             abort();
         }
         const uint8_t &tryInterval=settings.value("tryInterval").toUInt(&ok);
@@ -434,7 +432,7 @@ bool EpollServerLoginSlave::tryListen()
     return returnedValue;
 }
 
-void EpollServerLoginSlave::generateToken(QSettings &settings)
+void EpollServerLoginSlave::generateToken(TinyXMLSettings &settings)
 {
     FILE *fpRandomFile = fopen(RANDOMFILEDEVICE,"rb");
     if(fpRandomFile==NULL)

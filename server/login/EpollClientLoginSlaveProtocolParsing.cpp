@@ -122,7 +122,6 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
         return false;
     }
     otherPacketKickNewValue++;
-    Q_UNUSED(size);
     switch(mainCodeType)
     {
         case 0xA0:
@@ -373,7 +372,6 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
         return false;
     }
     otherPacketKickNewValue++;
-    Q_UNUSED(data);
     if(stat!=EpollClientLoginStat::Logged)
     {
         if(stat==EpollClientLoginStat::GameServerConnecting)
@@ -584,8 +582,6 @@ bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
         }
     }
     //queryNumberList << queryNumber;
-    Q_UNUSED(data);
-    Q_UNUSED(size);
     parseNetworkReadError("The server for now not ask anything: "+std::to_string(mainCodeType)+", "+std::to_string(queryNumber));
     return false;
 }
