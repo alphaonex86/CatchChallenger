@@ -148,8 +148,8 @@ private:
     void dataClear();
 public:
     //reply to the query
-    char outputQueryNumberToPacketCode[16];//invalidation packet code: 0x00, store the packetCode
-    char inputQueryNumberToPacketCode[16];//invalidation packet code: 0x00, store the packetCode, store size is useless because the resolution or is do at send or at receive, then no performance gain
+    char outputQueryNumberToPacketCode[CATCHCHALLENGER_MAXPROTOCOLQUERY];//invalidation packet code: 0x00, store the packetCode
+    char inputQueryNumberToPacketCode[CATCHCHALLENGER_MAXPROTOCOLQUERY];//invalidation packet code: 0x00, store the packetCode, store size is useless because the resolution or is do at send or at receive, then no performance gain
 
     static char tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
     static char tempBigBufferForInput[CATCHCHALLENGER_BIGBUFFERSIZE];//to store the input buffer on linux READ() interface or with Qt

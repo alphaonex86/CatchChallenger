@@ -44,7 +44,7 @@ LinkToMaster::LinkToMaster(
         stat(Stat::Unconnected)
 {
     rng.seed(time(0));
-    queryNumberList.resize(30);
+    queryNumberList.resize(CATCHCHALLENGER_MAXPROTOCOLQUERY);
     unsigned int index=0;
     while(index<queryNumberList.size())
     {
