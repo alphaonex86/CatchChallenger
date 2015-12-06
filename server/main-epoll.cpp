@@ -389,19 +389,19 @@ void send_settings()
         bool ok;
         settings->beginGroup("master");
         master_host=settings->value("host");
-        master_port=settings->value("port").toUInt(&ok);
+        master_port=stringtouint16(settings->value("port"),&ok);
         if(master_port==0 || !ok)
         {
             std::cerr << "Master port not a number or 0:" << settings->value("port") << std::endl;
             abort();
         }
-        master_tryInterval=settings->value("tryInterval").toUInt(&ok);
+        master_tryInterval=stringtouint8(settings->value("tryInterval"),&ok);
         if(master_tryInterval==0 || !ok)
         {
             std::cerr << "tryInterval==0 (abort)" << std::endl;
             abort();
         }
-        master_considerDownAfterNumberOfTry=settings->value("considerDownAfterNumberOfTry").toUInt(&ok);
+        master_considerDownAfterNumberOfTry=stringtouint8(settings->value("considerDownAfterNumberOfTry"),&ok);
         if(master_considerDownAfterNumberOfTry==0 || !ok)
         {
             std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;

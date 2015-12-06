@@ -2,7 +2,7 @@
 #define NORMALSERVERGLOBAL_H
 
 #include <string>
-#ifdef CATCHCHALLENGER_CLASS_ALLINONESERVER
+#ifdef EPOLLCATCHCHALLENGERSERVER
 #include "base/TinyXMLSettings.h"
 #else
 #include <QSettings>
@@ -13,7 +13,7 @@ class NormalServerGlobal
 public:
     NormalServerGlobal();
     static void displayInfo();
-    #ifdef CATCHCHALLENGER_CLASS_ALLINONESERVER
+    #ifdef EPOLLCATCHCHALLENGERSERVER
     static void checkSettingsFile(TinyXMLSettings * const settings, const std::string &datapack_basePath);
     #else
     static void checkSettingsFile(QSettings * const settings, const std::string &datapack_basePath);
