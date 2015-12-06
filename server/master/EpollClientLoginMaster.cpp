@@ -71,7 +71,12 @@ EpollClientLoginMaster::~EpollClientLoginMaster()
         EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();
         EpollClientLoginMaster::broadcastGameServerChange();
     }
-    std::cout << "Online: " << loginServers.size() << " login server and " << gameServers.size() << " game server" << std::endl;
+    if(EpollClientLoginMaster::lastSizeDisplayGameServers!=gameServers.size() || EpollClientLoginMaster::lastSizeDisplayLoginServers!=loginServers.size())
+    {
+        EpollClientLoginMaster::lastSizeDisplayGameServers=gameServers.size();
+        EpollClientLoginMaster::lastSizeDisplayLoginServers=loginServers.size();
+        std::cout << "Online: " << EpollClientLoginMaster::lastSizeDisplayLoginServers << " login server and " << EpollClientLoginMaster::lastSizeDisplayGameServers << " game server" << std::endl;
+    }
 }
 
 void EpollClientLoginMaster::disconnectClient()
