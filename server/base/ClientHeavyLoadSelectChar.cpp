@@ -43,7 +43,7 @@ void Client::characterSelectionIsWrong(const uint8_t &query_id,const uint8_t &re
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void Client::selectCharacter(const uint8_t &query_id, const char * const token)
 {
-    const uint64_t &time=QDateTime::currentDateTime().toMSecsSinceEpoch()/1000;
+    const uint64_t &time=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     unsigned int index=0;
     while(index<tokenAuthList.size())
     {
@@ -73,7 +73,7 @@ void Client::selectCharacter(const uint8_t &query_id, const char * const token)
 
 void Client::purgeTokenAuthList()
 {
-    const uint64_t &time=QDateTime::currentDateTime().toMSecsSinceEpoch()/1000;
+    const uint64_t &time=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     unsigned int index=0;
     while(index<tokenAuthList.size())
     {

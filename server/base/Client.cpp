@@ -459,7 +459,7 @@ char *Client::addAuthGetToken(const uint32_t &characterId, const uint32_t &accou
     TokenAuth newEntry;
     newEntry.characterId=characterId;
     newEntry.accountIdRequester=accountIdRequester;
-    newEntry.createTime=QDateTime::currentMSecsSinceEpoch()/1000;
+    newEntry.createTime=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     newEntry.token=new char[CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
     const int &returnedSize=fread(newEntry.token,1,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER,BaseServerLogin::fpRandomFile);
     if(returnedSize!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
