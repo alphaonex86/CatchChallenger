@@ -11,7 +11,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
 {
     switch(mainCodeType)
     {
-        case 0x03:
+        case 0xA0:
         {
             //Protocol initialization
             if(size<1)
@@ -199,9 +199,9 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
         }
     }
     //do the work here
-    //do the work here
     switch(mainCodeType)
     {
+        //Select character on game server
         case 0x93:
             if(stat==Stat::ProtocolGood)
             {
