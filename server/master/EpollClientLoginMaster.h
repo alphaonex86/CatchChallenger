@@ -39,6 +39,8 @@ public:
         LoginServer,
     };
 
+    static uint32_t lastSizeDisplayLoginServers;
+    static uint32_t lastSizeDisplayGameServers;
     static bool currentPlayerForGameServerToUpdate;
     EpollClientLoginMasterStat stat;
     std::mt19937 rng;
