@@ -57,6 +57,7 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
         uint32_t cursor=0;
+        uint32_t old_cursor=0;
         do
         {
             protocolParsingCheck->flags|=0x08;
@@ -83,6 +84,13 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
                     }
                 }
             }
+            #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
+            {
+                const uint32_t &splitedSize=(cursor-old_cursor);
+                std::cout << "Splited packet size: " << splitedSize << ": " << binarytoHexa(data+old_cursor,splitedSize) << std::endl;
+            }
+            #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
+            old_cursor=cursor;
         } while(cursor!=(uint32_t)size);
         /*if(cursor!=(uint32_t)size)
         {

@@ -337,6 +337,7 @@ void EpollClientLoginSlave::server_list_return(const uint8_t &serverCount,char *
         //send the reply
         removeFromQueryReceived(askLoginParam->query_id);
         EpollClientLoginSlave::loginGood[0x01]=askLoginParam->query_id;
+        *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::loginGood+1+1)=htole32(tempSize-1-1-4);//set the dynamic size
         internalSendRawSmallPacket(EpollClientLoginSlave::loginGood,tempSize);
         paramToPassToCallBack.pop();
         paramToPassToCallBackType.pop();
