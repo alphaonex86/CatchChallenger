@@ -369,6 +369,18 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         }
 
         LinkToMaster::linkToMaster->httpDatapackMirror=httpDatapackMirror;
+
+        if(LinkToMaster::linkToMaster->httpDatapackMirror.empty())
+        {
+            std::cerr << "EpollClientLoginSlave::linkToMaster->httpDatapackMirror.isEmpty(), not coded for now (abort)" << std::endl;
+            abort();
+        }
+        if(LinkToMaster::linkToMaster->httpDatapackMirror.size()>255)
+        {
+            std::cerr << "LinkToMaster::linkToMaster->httpDatapackMirror size>255 (abort)" << std::endl;
+            abort();
+        }
+
         settings.endGroup();
     }
 }

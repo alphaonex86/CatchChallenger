@@ -30,7 +30,10 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
     hints.ai_socktype = SOCK_STREAM; /* We want a TCP socket */
     hints.ai_flags = AI_PASSIVE;     /* All interfaces */
 
-    s = getaddrinfo(ip, port, &hints, &result);
+    if(ip==NULL || ip[0]=='\0')
+        s = getaddrinfo(NULL, port, &hints, &result);
+    else
+        s = getaddrinfo(ip, port, &hints, &result);
     if (s != 0)
     {
         std::cerr << "getaddrinfo:" << gai_strerror(s) << std::endl;

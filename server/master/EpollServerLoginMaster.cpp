@@ -497,8 +497,8 @@ void EpollServerLoginMaster::doTheLogicalGroup(TinyXMLSettings &settings)
 {
     //do the LogicalGroup
     memset(EpollClientLoginMaster::serverLogicalGroupList,0x00,sizeof(EpollClientLoginMaster::serverLogicalGroupList));
-    ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x44;
-    EpollClientLoginMaster::serverLogicalGroupListSize=1+4+0x01;
+    EpollClientLoginMaster::serverLogicalGroupList[0x00]=0x44;
+    EpollClientLoginMaster::serverLogicalGroupListSize=1+4+0x01/*logicalGroupSize*/;
 
     std::string textToConvert;
     uint8_t logicalGroup=0;
@@ -533,9 +533,9 @@ void EpollServerLoginMaster::doTheLogicalGroup(TinyXMLSettings &settings)
                     std::cerr << "logical group converted too big (abort)" << std::endl;
                     abort();
                 }
-                ProtocolParsingBase::tempBigBufferForOutput[EpollClientLoginMaster::serverLogicalGroupListSize]=textToConvert.size();
+                EpollClientLoginMaster::serverLogicalGroupList[EpollClientLoginMaster::serverLogicalGroupListSize]=textToConvert.size();
                 EpollClientLoginMaster::serverLogicalGroupListSize+=1;
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput+EpollClientLoginMaster::serverLogicalGroupListSize,textToConvert.data(),textToConvert.size());
+                memcpy(EpollClientLoginMaster::serverLogicalGroupList+EpollClientLoginMaster::serverLogicalGroupListSize,textToConvert.data(),textToConvert.size());
                 EpollClientLoginMaster::serverLogicalGroupListSize+=textToConvert.size();
             }
             //translation
@@ -548,7 +548,7 @@ void EpollServerLoginMaster::doTheLogicalGroup(TinyXMLSettings &settings)
                         std::cerr << "translation too hurge (abort)" << std::endl;
                         abort();
                     }
-                    int newSize=FacilityLibGeneral::toUTF8With16BitsHeader(textToConvert,ProtocolParsingBase::tempBigBufferForOutput+EpollClientLoginMaster::serverLogicalGroupListSize);
+                    int newSize=FacilityLibGeneral::toUTF8With16BitsHeader(textToConvert,EpollClientLoginMaster::serverLogicalGroupList+EpollClientLoginMaster::serverLogicalGroupListSize);
                     if(newSize==0)
                     {
                         std::cerr << "translation null or unable to translate in utf8 (abort)" << std::endl;
@@ -558,7 +558,7 @@ void EpollServerLoginMaster::doTheLogicalGroup(TinyXMLSettings &settings)
                 }
                 else
                 {
-                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+EpollClientLoginMaster::serverLogicalGroupListSize)=0;//not convert to le16... 0 remain 0
+                    *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::serverLogicalGroupList+EpollClientLoginMaster::serverLogicalGroupListSize)=0;//not convert to le16... 0 remain 0
                     EpollClientLoginMaster::serverLogicalGroupListSize+=2;
                 }
             }
@@ -567,9 +567,8 @@ void EpollServerLoginMaster::doTheLogicalGroup(TinyXMLSettings &settings)
         }
         settings.endGroup();
     }
-    ProtocolParsingBase::tempBigBufferForOutput[1+4]=logicalGroup;
-    EpollClientLoginMaster::serverLogicalGroupListSize+=1;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(EpollClientLoginMaster::serverLogicalGroupListSize-1-4);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::serverLogicalGroupList+1)=htole32(EpollClientLoginMaster::serverLogicalGroupListSize-1-4);//set the dynamic size
+    EpollClientLoginMaster::serverLogicalGroupList[1+4]=logicalGroup;
 
     if(EpollClientLoginMaster::serverLogicalGroupListSize==0)
     {

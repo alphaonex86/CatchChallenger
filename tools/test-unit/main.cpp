@@ -13,14 +13,18 @@ int main(int argc, char *argv[])
 
         testUnitReputation.finalResult=true;
         testUnitReputation.reputationJustAppend();
-        testUnitReputation.reputationJustAppendAtLevel1();
-        testUnitReputation.reputationJustAppendAtLevelMax();
-        testUnitReputation.reputationLevelUp();
-        testUnitReputation.reputationLevelDown();
+        if(testUnitReputation.finalResult)
+            testUnitReputation.reputationJustAppendAtLevel1();
+        if(testUnitReputation.finalResult)
+            testUnitReputation.reputationJustAppendAtLevelMax();
+        if(testUnitReputation.finalResult)
+            testUnitReputation.reputationLevelUp();
+        if(testUnitReputation.finalResult)
+            testUnitReputation.reputationLevelDown();
 
         if(!testUnitReputation.finalResult)
         {
-            qDebug() << "Final result: Failed: " << __LINE__;
+            qDebug() << "Final result: Failed: " << __FILE__ << ":" <<  __LINE__;
             return EXIT_FAILURE;
         }
     }
@@ -31,23 +35,14 @@ int main(int argc, char *argv[])
 
         testUnitCpp.finalResult=true;
         testUnitCpp.testHexaToBinary();
+        if(testUnitCpp.finalResult)
+            testUnitCpp.testStringSplit();
+        if(testUnitCpp.finalResult)
+            testUnitCpp.testFSabsoluteFilePath();
 
         if(!testUnitCpp.finalResult)
         {
-            qDebug() << "Final result: Failed: " << __LINE__;
-            return EXIT_FAILURE;
-        }
-    }
-
-    {
-        TestUnitCpp testUnitCpp;
-
-        testUnitCpp.finalResult=true;
-        testUnitCpp.testFSabsoluteFilePath();
-
-        if(!testUnitCpp.finalResult)
-        {
-            qDebug() << "Final result: Failed: " << __LINE__;
+            qDebug() << "Final result: Failed: " << __FILE__ << ":" <<  __LINE__;
             return EXIT_FAILURE;
         }
     }
@@ -60,7 +55,7 @@ int main(int argc, char *argv[])
 
         if(!testUnitParsing.finalResult)
         {
-            qDebug() << "Final result: Failed: " << __LINE__;
+            qDebug() << "Final result: Failed: " << __FILE__ << ":" <<  __LINE__;
             return EXIT_FAILURE;
         }
     }

@@ -35,8 +35,6 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
             return false;
         }
     }
-    (void)rawData;
-    (void)size;
     switch(mainCodeType)
     {
         case 0x44:
