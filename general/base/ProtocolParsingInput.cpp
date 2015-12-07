@@ -260,7 +260,7 @@ int8_t ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffe
             if(returnVar==0)
                 std::cerr << "Break due to need more in query number" << std::endl;
             else
-                std::cerr << "Have bug" << std::endl;
+                std::cerr << "parseIncommingDataRaw() Have bug" << std::endl;
             #endif
             return returnVar;
         }
@@ -342,12 +342,12 @@ bool ProtocolParsingBase::isReply() const
     return false;*/
 }
 
-int8_t ProtocolParsingBase::parseHeader(const char * const commonBuffer,const uint32_t &,uint32_t &cursor)
+int8_t ProtocolParsingBase::parseHeader(const char * const commonBuffer,const uint32_t &size,uint32_t &cursor)
 {
     if(Q_LIKELY(!(flags & 0x80)))
     {
-        /*if((size-cursor)<sizeof(uint8_t))//ignore because first int is cuted!
-            return 0;*/
+        if((size-cursor)<sizeof(uint8_t))//ignore because first int is cuted!
+            return 0;
         packetCode=*(commonBuffer+cursor);
         cursor+=sizeof(uint8_t);
         flags |= 0x80;
