@@ -614,17 +614,16 @@ void EpollClientLoginSlave::selectCharacter_ReturnFailed(const uint8_t &query_id
 {
     //send the network reply
     removeFromQueryReceived(query_id);
-    uint32_t posOutput=0;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-    posOutput+=1;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
-    posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
 
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=errorCode;
-    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[0]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    ProtocolParsingBase::tempBigBufferForOutput[1]=query_id;
+    ProtocolParsingBase::tempBigBufferForOutput[1+1+0]=0x01;
+    ProtocolParsingBase::tempBigBufferForOutput[1+1+1]=0x00;
+    ProtocolParsingBase::tempBigBufferForOutput[1+1+2]=0x00;
+    ProtocolParsingBase::tempBigBufferForOutput[1+1+3]=0x00;
+    ProtocolParsingBase::tempBigBufferForOutput[1+1+4]=errorCode;
 
-    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,7);
 
     if(errorCode!=0x05)
         errorParsingLayer("EpollClientLoginSlave::selectCharacter_ReturnFailed() errorCode:"+std::to_string(errorCode));
