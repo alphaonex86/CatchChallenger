@@ -57,6 +57,11 @@ ssize_t EpollClient::read(char *buffer,const size_t &bufferSize)
 {
     if(infd==-1)
         return -1;
+    {
+        const auto &bytesAvailableVar=bytesAvailable();
+        if(bytesAvailableVar<=0)//non blocking for read
+            return bytesAvailableVar;
+    }
     const ssize_t &count=::read(infd, buffer, bufferSize);
     if(count == -1)
     {

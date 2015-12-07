@@ -230,6 +230,7 @@ void LinkToMaster::readTheFirstSslHeader()
     #endif
     haveTheFirstSslHeader=true;
     stat=Stat::Connected;
+    EpollSocket::make_non_blocking(LinkToMaster::linkToMasterSocketFd);
     sendProtocolHeader();
 }
 

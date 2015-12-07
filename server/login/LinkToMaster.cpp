@@ -1,6 +1,7 @@
 #include "LinkToMaster.h"
 #include "EpollClientLoginSlave.h"
 #include "../epoll/Epoll.h"
+#include "../epoll/EpollSocket.h"
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
@@ -247,6 +248,7 @@ void LinkToMaster::readTheFirstSslHeader()
     #endif
     haveTheFirstSslHeader=true;
     stat=Stat::Connected;
+    EpollSocket::make_non_blocking(LinkToMaster::linkToMasterSocketFd);
     sendProtocolHeader();
 }
 
