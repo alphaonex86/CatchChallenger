@@ -9,7 +9,6 @@ TestUnitCpp::TestUnitCpp()
 
 void TestUnitCpp::testHexaToBinary()
 {
-    finalResult=true;
     {
         const std::vector<char> binary=hexatoBinary("01EEff");
         std::vector<char> compare;
@@ -40,31 +39,56 @@ void TestUnitCpp::testHexaToBinary()
     }
 }
 
-void TestUnitCpp::testFSabsoluteFilePath()
+void TestUnitCpp::testStringSplit()
 {
-    finalResult=true;
     {
         /*const std::vector<std::string> &parts=stringregexsplit("/toto/../tatt/",std::regex("/"));
         if(parts.size()!=5)
         {
-            std::cerr << "FSabsoluteFilePath -1: Failed" << std::endl;
+            std::cerr << "testStringSplit 1: Failed" << std::endl;
             finalResult=false;
             return;
         }
         else
-            std::cout << "FSabsoluteFilePath -1: Ok" << std::endl;*/
+            std::cout << "testStringSplit 1: Ok" << std::endl;*/
     }
     {
         const std::vector<std::string> &parts=stringsplit("/toto/../tatt/",'/');
         if(parts.size()!=5)
         {
-            std::cerr << "FSabsoluteFilePath 0: Failed" << std::endl;
+            std::cerr << "testStringSplit 2: Failed" << std::endl;
             finalResult=false;
             return;
         }
         else
-            std::cout << "FSabsoluteFilePath 0: Ok" << std::endl;
+            std::cout << "testStringSplit 2: Ok" << std::endl;
     }
+    {
+        const std::vector<std::string> &parts=stringsplit("http://localhost/datapack/",';');
+        if(parts.size()!=1 || parts.front()!="http://localhost/datapack/")
+        {
+            std::cerr << "testStringSplit 3: Failed" << std::endl;
+            finalResult=false;
+            return;
+        }
+        else
+            std::cout << "testStringSplit 3: Ok" << std::endl;
+    }
+    {
+        const std::vector<std::string> &parts=stringsplit("",';');
+        if(parts.size()!=0)
+        {
+            std::cerr << "testStringSplit 4: Failed" << std::endl;
+            finalResult=false;
+            return;
+        }
+        else
+            std::cout << "testStringSplit 4: Ok" << std::endl;
+    }
+}
+
+void TestUnitCpp::testFSabsoluteFilePath()
+{
     {
         const std::string output=FSabsoluteFilePath("/toto/../tatt/");
         if(output!="/tatt/")

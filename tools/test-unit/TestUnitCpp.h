@@ -10,6 +10,7 @@ public:
     bool finalResult;
 
     void testHexaToBinary();
+    void testStringSplit();
     void testFSabsoluteFilePath();
 };
 

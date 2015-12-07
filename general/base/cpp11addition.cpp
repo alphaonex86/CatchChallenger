@@ -69,20 +69,24 @@ std::vector<std::string> stringsplit(const std::string &s, char delim)
     std::string::size_type i = 0;
     std::string::size_type j = s.find(delim);
 
-    while (j != std::string::npos) {
-       elems.push_back(s.substr(i, j-i));
-       i = ++j;
-       j = s.find(delim, j);
-
-       if (j == std::string::npos)
-          elems.push_back(s.substr(i, s.length()));
+    if(j == std::string::npos)
+    {
+        if(!s.empty())
+            elems.push_back(s);
+        return elems;
     }
-    /*
+    else
+    {
+        while (j != std::string::npos) {
+           elems.push_back(s.substr(i, j-i));
+           i = ++j;
+           j = s.find(delim, j);
 
-    stringsplit(s, delim, elems);
-    */
-
-    return elems;
+           if (j == std::string::npos)
+              elems.push_back(s.substr(i, s.length()));
+        }
+        return elems;
+    }
 }
 
 bool stringEndsWith(std::string const &fullString, std::string const &ending)
