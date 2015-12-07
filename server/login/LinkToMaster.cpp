@@ -338,7 +338,7 @@ bool LinkToMaster::trySelectCharacter(void * const client,const uint8_t &client_
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+0x0B)=htole32(static_cast<EpollClientLoginSlave *>(client)->account_id);
 
     queryNumberList.pop_back();
-    return internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,0x0C);
+    return internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,(/*header*/1+1)+1+4+4+4);
 }
 
 void LinkToMaster::sendProtocolHeader()

@@ -599,7 +599,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             currentPlayerForGameServerToUpdate=false;
             EpollClientLoginMaster::broadcastGameServerChange();
 
-            std::cout << "Online: " << loginServers.size() << " login server and " << gameServers.size() << " game server" << std::endl;
+            updateConsoleCountServer();
         }
         break;
         //Register login server
@@ -706,7 +706,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
         }
         EpollClientLoginMaster::loginServers.push_back(this);
 
-        std::cout << "Online: " << loginServers.size() << " login server and " << gameServers.size() << " game server" << std::endl;
+        updateConsoleCountServer();
         break;
         case 0xBE:
         {
