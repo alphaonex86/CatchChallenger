@@ -421,7 +421,7 @@ std::string Client::getPseudo() const
 
 void Client::dropAllClients()
 {
-    ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x62;
+    ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x65;
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,0x01);
 }
 

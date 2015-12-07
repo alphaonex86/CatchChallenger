@@ -82,7 +82,7 @@ bool LinkToMaster::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNu
                     if(token!=NULL)
                     {
                         LinkToMaster::protocolReplyGetToken[0x01]=queryNumber;
-                        memcpy(LinkToMaster::protocolReplyGetToken+0x03,token,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                        memcpy(LinkToMaster::protocolReplyGetToken+1+1+4,token,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
                         internalSendRawSmallPacket(LinkToMaster::protocolReplyGetToken,sizeof(LinkToMaster::protocolReplyGetToken));
                     }
                     else

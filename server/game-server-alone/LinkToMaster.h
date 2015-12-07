@@ -43,9 +43,9 @@ public:
     std::string httpDatapackMirror;
     //to unordered reply
     std::unordered_map<uint8_t/*queryNumber*/,DataForSelectedCharacterReturn> selectCharacterClients;
-    static char protocolReplyNoMoreToken[4];
-    static char protocolReplyAlreadyConnectedToken[4];
-    static char protocolReplyGetToken[3+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
+    static char protocolReplyNoMoreToken[7];
+    static char protocolReplyAlreadyConnectedToken[7];
+    static char protocolReplyGetToken[6+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
     static char sendDisconnectedPlayer[2+4];
     static char sendCurrentPlayer[2+2];
     static unsigned char header_magic_number[9];
