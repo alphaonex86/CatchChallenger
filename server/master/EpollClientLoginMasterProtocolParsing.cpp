@@ -66,6 +66,9 @@ bool EpollClientLoginMaster::parseInputBeforeLogin(const uint8_t &mainCodeType,c
                     #endif
                     stat=EpollClientLoginMasterStat::Logged;
                     //messageParsingLayer("Protocol sended and replied");
+
+                    //not after due to B2 Register game server:
+                    flags|=0x08;
                 }
                 else
                 {
@@ -306,7 +309,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 }
                 pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
             }
-            flags|=0x08;
+            //flags|=0x08;
 
             std::string charactersGroup;
             std::string host;
@@ -631,7 +634,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                     return false;
                 }
             }
-            flags|=0x08;
+            //flags|=0x08;
 
             if(stat!=EpollClientLoginMasterStat::Logged)
             {

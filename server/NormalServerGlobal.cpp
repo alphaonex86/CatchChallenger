@@ -291,7 +291,7 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings, const std
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     settings->beginGroup("db-login");
     if(!settings->contains("type"))
-        settings->setValue("type","sqlite");
+        settings->setValue("type",CATCHCHALLENGERDEFAULTDBTYPE);
     if(!settings->contains("host"))
         settings->setValue("host","localhost");
     if(!settings->contains("login"))
@@ -309,7 +309,7 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings, const std
 
     settings->beginGroup("db-base");
     if(!settings->contains("type"))
-        settings->setValue("type","sqlite");
+        settings->setValue("type",CATCHCHALLENGERDEFAULTDBTYPE);
     if(!settings->contains("host"))
         settings->setValue("host","localhost");
     if(!settings->contains("login"))
@@ -326,7 +326,7 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings, const std
 
     settings->beginGroup("db-common");
     if(!settings->contains("type"))
-        settings->setValue("type","sqlite");
+        settings->setValue("type",CATCHCHALLENGERDEFAULTDBTYPE);
     if(!settings->contains("host"))
         settings->setValue("host","localhost");
     if(!settings->contains("login"))
@@ -343,7 +343,7 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings, const std
 
     settings->beginGroup("db-server");
     if(!settings->contains("type"))
-        settings->setValue("type","sqlite");
+        settings->setValue("type",CATCHCHALLENGERDEFAULTDBTYPE);
     if(!settings->contains("host"))
         settings->setValue("host","localhost");
     if(!settings->contains("login"))

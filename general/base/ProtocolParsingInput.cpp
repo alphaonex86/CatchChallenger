@@ -257,7 +257,10 @@ int8_t ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffe
         if(returnVar!=1)
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            std::cerr << "Break due to need more in header" << std::endl;
+            if(returnVar==0)
+                std::cerr << "Break due to need more in query number" << std::endl;
+            else
+                std::cerr << "Have bug" << std::endl;
             #endif
             return returnVar;
         }
@@ -451,7 +454,15 @@ int8_t ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const
             errorParsingLayer("packet size too big (define)");
             return -1;
         }
-        if(dataSize>16*1024*1024)
+        #ifdef CATCHCHALLENGER_CLASS_MASTER
+        if(dataSize>4*1024)
+        #else
+            #ifdef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+            if(dataSize>64*1024)
+            #else
+            if(dataSize>16*1024*1024)
+            #endif
+        #endif
         {
             errorParsingLayer("packet size too big (hard)");
             return -1;
