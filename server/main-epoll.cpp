@@ -634,6 +634,10 @@ int main(int argc, char *argv[])
             qDebug() << "Need mirror because CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION is def, need decompression to datapack list input";
             return EXIT_FAILURE;
             #endif
+            #ifdef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+            std::cerr << "CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR defined, httpDatapackMirrorBase can't be empty" << std::endl;
+            return EXIT_FAILURE;
+            #endif
         }
         else
         {

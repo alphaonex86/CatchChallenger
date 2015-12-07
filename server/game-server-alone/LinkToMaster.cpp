@@ -43,6 +43,7 @@ LinkToMaster::LinkToMaster(
             ),
         stat(Stat::Unconnected)
 {
+    flags|=0x08;
     rng.seed(time(0));
     queryNumberList.resize(CATCHCHALLENGER_MAXPROTOCOLQUERY);
     unsigned int index=0;
