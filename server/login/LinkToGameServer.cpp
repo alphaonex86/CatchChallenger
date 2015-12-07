@@ -38,6 +38,7 @@ LinkToGameServer::LinkToGameServer(
         queryIdToReconnect(0),
         socketFd(infd)
 {
+    flags|=0x08;
 }
 
 LinkToGameServer::~LinkToGameServer()
