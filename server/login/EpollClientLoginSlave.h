@@ -146,7 +146,7 @@ public:
     static char serverLogicalGroupAndServerList[512*1024];
     static unsigned int serverLogicalGroupAndServerListSize;
 
-    static unsigned char loginIsWrongBufferReply[4];
+    static unsigned char loginIsWrongBufferReply[7];
 private:
     std::queue<DatabaseBase::CallBack *> callbackRegistred;
     std::queue<void *> paramToPassToCallBack;
@@ -154,17 +154,20 @@ private:
     std::queue<std::string> paramToPassToCallBackType;
     #endif
 
-    static unsigned char protocolReplyProtocolNotSupported[4];
-    static unsigned char protocolReplyServerFull[4];
-    static unsigned char protocolReplyCompressionNone[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
-    static unsigned char protocolReplyCompresssionZlib[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
-    static unsigned char protocolReplyCompressionXz[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char protocolReplyProtocolNotSupported[7];
+    static unsigned char protocolReplyServerFull[7];
+    static unsigned char protocolReplyCompressionNone[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    static unsigned char protocolReplyCompresssionZlib[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char protocolReplyCompressionXz[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char protocolReplyCompressionLz4[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    #endif
 
-    static unsigned char loginInProgressBuffer[4];
-    static unsigned char addCharacterIsWrongBuffer[8];
+    static unsigned char loginInProgressBuffer[7];
+    static unsigned char addCharacterIsWrongBuffer[11];
     static char loginCharacterList[1024];
-    static unsigned char addCharacterReply[3+1+4];
-    static unsigned char removeCharacterReply[3+1];
+    static unsigned char addCharacterReply[3+4+4];
+    static unsigned char removeCharacterReply[3+4];
 
     static const unsigned char protocolHeaderToMatch[5];
     BaseClassSwitch::EpollObjectType getType() const;
