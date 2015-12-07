@@ -62,7 +62,7 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
             protocolParsingCheck->flags|=0x08;
             if(protocolParsingCheck->parseIncommingDataRaw(data,size,cursor)!=1)
             {
-                std::cerr << "Bug at data-sending: " << binarytoHexa(data,size) << std::endl;
+                std::cerr << "Bug at data-sending: " << binarytoHexa(data+cursor,size-cursor) << std::endl;
                 abort();
             }
             if(!protocolParsingCheck->valid)
