@@ -4,17 +4,10 @@
 #include "../../general/base/GeneralVariable.h"
 #include "../../client/base/DatapackChecksum.h"
 
-#include <QObject>
 #include <string>
-#include <QCoreApplication>
-#include <QAbstractSocket>
 #include <string>
 #include <vector>
-#include <QDir>
 #include <unordered_map>
-#include <QFileInfo>
-#include <QDateTime>
-#include <QCryptographicHash>
 #include <regex>
 
 #include <curl/curl.h>
@@ -98,7 +91,7 @@ private:
 private:
     bool getHttpFileMain(const std::string &url, const std::string &fileName);
     bool getHttpFileSub(const std::string &url, const std::string &fileName);
-private slots:
+private:
     void writeNewFileMain(const std::string &fileName, const std::vector<char> &data);
     void writeNewFileSub(const std::string &fileName, const std::vector<char> &data);
     void checkIfContinueOrFinished();
