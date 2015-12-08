@@ -500,13 +500,13 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
 
 void LinkToMaster::characterDisconnected(const uint32_t &characterId)
 {
-    *reinterpret_cast<uint32_t *>(LinkToMaster::sendDisconnectedPlayer+0x02)=htole32(characterId);
+    *reinterpret_cast<uint32_t *>(LinkToMaster::sendDisconnectedPlayer+0x01)=htole32(characterId);
     internalSendRawSmallPacket(LinkToMaster::sendDisconnectedPlayer,sizeof(LinkToMaster::sendDisconnectedPlayer));
 }
 
 void LinkToMaster::currentPlayerChange(const uint16_t &currentPlayer)
 {
-    *reinterpret_cast<uint16_t *>(LinkToMaster::sendCurrentPlayer+0x02)=htole16(currentPlayer);
+    *reinterpret_cast<uint16_t *>(LinkToMaster::sendCurrentPlayer+0x01)=htole16(currentPlayer);
     internalSendRawSmallPacket(LinkToMaster::sendCurrentPlayer,sizeof(LinkToMaster::sendCurrentPlayer));
 }
 

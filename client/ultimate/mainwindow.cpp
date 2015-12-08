@@ -1042,7 +1042,7 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
 {
     if(socketState==QAbstractSocket::ConnectedState)
     {
-        if(realSslSocket==NULL)
+        if(realSslSocket==NULL)//If comment: Internal problem: Api_protocol::sendProtocol() !haveFirstHeader
             CatchChallenger::Api_client_real::client->sendProtocol();
         else
             qDebug() << "Tcp socket found, skip sendProtocol()";
