@@ -92,7 +92,7 @@ bool EpollPostgresql::syncConnect(const std::string &host, const std::string &db
         strcat(strCoPG," password=");
         strcat(strCoPG,password.c_str());
     }
-    std::cerr << "Connecting to postgresql: " << host << "..." << std::endl;
+    std::cout << "Connecting to postgresql: " << host << "..." << std::endl;
     return syncConnectInternal();
 }
 
@@ -123,7 +123,7 @@ bool EpollPostgresql::syncConnectInternal()
         if(connStatusType==CONNECTION_BAD)
             return false;
     }
-    std::cerr << "Connected to postgresql" << std::endl;
+    std::cout << "Connected to postgresql" << std::endl;
     if(PQsetnonblocking(conn,1)!=0)
     {
        std::cerr << "pg no blocking error" << std::endl;
@@ -149,8 +149,8 @@ bool EpollPostgresql::syncConnectInternal()
     PQsetNoticeReceiver(conn,noticeReceiver,NULL);
     PQsetNoticeProcessor(conn,noticeProcessor,NULL);
     started=true;
-    std::cerr << "Protocol version:" << PQprotocolVersion(conn) << std::endl;
-    std::cerr << "Server version:" << PQserverVersion(conn) << std::endl;
+    std::cout << "Protocol version:" << PQprotocolVersion(conn) << std::endl;
+    std::cout << "Server version:" << PQserverVersion(conn) << std::endl;
     return true;
 }
 

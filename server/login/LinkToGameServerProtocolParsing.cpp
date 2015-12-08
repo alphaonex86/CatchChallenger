@@ -47,17 +47,12 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                 }
                 //send token to game server
                 registerOutputQuery(queryIdToReconnect,0x93);
-                uint32_t posOutput=0;
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x93;
-                posOutput+=1;
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryIdToReconnect;
-                posOutput+=1+4;
+                ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x93;
+                ProtocolParsingBase::tempBigBufferForOutput[0x01]=queryIdToReconnect;
 
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,tokenForGameServer,sizeof(tokenForGameServer));
-                posOutput+=sizeof(tokenForGameServer);
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,tokenForGameServer,sizeof(tokenForGameServer));
 
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
-                sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+1+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
 
                 stat=ProtocolGood;
                 return true;
@@ -192,7 +187,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
     {
         if(mainCodeType==0xA0 && queryNumber==0x01 && stat==Stat::Connected)
             return parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
-        else
+        else if(mainCodeType!=0x93)
         {
             parseNetworkReadError("is not logged, parseReplyData("+std::to_string(mainCodeType)+","+std::to_string(queryNumber)+"): "+std::string(__FILE__)+", "+std::to_string(__LINE__));
             return false;
@@ -211,6 +206,19 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     {
                         stat=Stat::Logged;
                         client->stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnected;
+                        /// \note need reply to AC, convert directly by SIMD the reply, adapt the query id
+                        // don't use directly parseReplyData() due to cross reply: this->removeFromQueryReceived(query_id); not client->removeFromQueryReceived(query_id);
+
+                        //send the network reply
+                        client->removeFromQueryReceived(queryNumber);
+                        ProtocolParsingBase::tempBigBufferForOutput[0x00]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+                        ProtocolParsingBase::tempBigBufferForOutput[0x01]=queryNumber;
+                        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
+
+                        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
+
+                        client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+1+4+size);
+
                         return true;
                     }
                     else
