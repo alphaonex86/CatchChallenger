@@ -2091,7 +2091,7 @@ void Api_protocol::connectTheExternalSocketInternal()
     //continue the normal procedure
     if(stageConnexion==StageConnexion::Stage1)
         connectedOnLoginServer();
-    if(stageConnexion==StageConnexion::Stage2)
+    if(stageConnexion==StageConnexion::Stage2 || stageConnexion==StageConnexion::Stage3)
     {
         stageConnexion=StageConnexion::Stage3;
         connectedOnGameServer();

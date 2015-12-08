@@ -319,6 +319,7 @@ void LinkToMaster::tryReconnect()
 
 bool LinkToMaster::trySelectCharacter(void * const client,const uint8_t &client_query_id,const uint32_t &serverUniqueKey,const uint8_t &charactersGroupIndex,const uint32_t &characterId)
 {
+    //todo: cache the user cache to locally double lock check to minimize the master
     if(queryNumberList.empty())
         return false;
     DataForSelectedCharacterReturn dataForSelectedCharacterReturn;

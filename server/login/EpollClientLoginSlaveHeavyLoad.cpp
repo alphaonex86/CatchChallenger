@@ -544,8 +544,10 @@ void EpollClientLoginSlave::selectCharacter(const uint8_t &query_id,const uint32
         errorParsingLayer("EpollClientLoginSlave::selectCharacter() charactersGroupIndex is out of range");
         return;
     }
-    //account id verified on game server when loading the character
-    if(!LinkToMaster::linkToMaster->trySelectCharacter(this,query_id,serverUniqueKey,charactersGroupIndex,characterId))
+    /// \note account id verified on game server when loading the character, do here is big performance mistake
+
+    //check if the server exists
+    if(!CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
     {
         //send the network reply
         removeFromQueryReceived(query_id);
@@ -562,6 +564,8 @@ void EpollClientLoginSlave::selectCharacter(const uint8_t &query_id,const uint32
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
     }
+
+    //send to master to know if the character is not already locked
     if(!LinkToMaster::linkToMaster->trySelectCharacter(this,query_id,serverUniqueKey,charactersGroupIndex,characterId))
     {
         //send the network reply
@@ -580,6 +584,7 @@ void EpollClientLoginSlave::selectCharacter(const uint8_t &query_id,const uint32
         errorParsingLayer("EpollClientLoginSlave::selectCharacter() out of query for request the master server");
         return;
     }
+
     stat=CharacterSelecting;
     this->charactersGroupIndex=charactersGroupIndex;
     this->serverUniqueKey=serverUniqueKey;
