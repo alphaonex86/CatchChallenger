@@ -7,9 +7,8 @@
 #include <chrono>
 #include <ctime>
 #include <vector>
-#include <QCoreApplication>
-#include <QFileInfo>
 
+#include "../../general/base/FacilityLibGeneral.h"
 #include "../epoll/EpollSocket.h"
 #include "../epoll/Epoll.h"
 #include "EpollServerLoginSlave.h"
@@ -32,7 +31,7 @@ int main(int argc, char *argv[])
     }
     CatchChallenger::FacilityLibGeneral::applicationDirPath=argv[0];
 
-    LinkToGameServer::mDatapackBase=QFileInfo(QCoreApplication::applicationDirPath()+"/datapack/").absoluteFilePath().toStdString();
+    LinkToGameServer::mDatapackBase=FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/";
 
     (void)argc;
     (void)argv;

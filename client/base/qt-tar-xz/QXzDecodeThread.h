@@ -6,7 +6,6 @@
 #ifndef QXZDECODETHREAD_H
 #define QXZDECODETHREAD_H
 
-#include <QThread>
 #include "QXzDecode.h"
 
 /// \brief to decode the xz via a thread

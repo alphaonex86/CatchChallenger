@@ -6,12 +6,11 @@
 #ifndef QTARDECODE_H
 #define QTARDECODE_H
 
-#include <QObject>
 #include <vector>
 #include <string>
 
 /// \brief read the raw tar data, and organize it into data structure
-class QTarDecode : public QObject
+class QTarDecode
 {
     public:
         QTarDecode();

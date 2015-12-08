@@ -6,15 +6,11 @@
 #ifndef QXZDECODE_H
 #define QXZDECODE_H
 
-#include <QObject>
-#include <QByteArray>
-#include <QDataStream>
-
 //comment this to check integrity of compressed file, compressed via: xz --check=crc32 YourFile
 //#define XZ_DEC_ANY_CHECK
 
 /// \brief The decode class for the xz stream
-class QXzDecode : public QObject
+class QXzDecode
 {
     public:
         /** \brief create the object to decode it
