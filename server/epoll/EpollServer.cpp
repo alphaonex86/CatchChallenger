@@ -172,7 +172,7 @@ void EpollServer::preload_finish()
     BaseServer::preload_finish();
     if(!ready)
     {
-        std::cerr << "Waiting connection on port " << normalServerSettings.server_port << std::endl;
+        std::cout << "Waiting connection on port " << normalServerSettings.server_port << std::endl;
         ready=true;
 
         if(!tryListen())

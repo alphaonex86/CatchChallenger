@@ -66,7 +66,7 @@ bool EpollMySQL::syncConnect(const char * const host, const char * const dbname,
     strcpy(strCouser,user);
     strcpy(strCodatabase,dbname);
     strcpy(strCopass,password);
-    std::cerr << "Connecting to mysql: " << host << "..." << std::endl;
+    std::cout << "Connecting to mysql: " << host << "..." << std::endl;
     return syncConnectInternal();
 }
 
@@ -106,7 +106,7 @@ bool EpollMySQL::syncConnectInternal()
             return false;
         }
     }
-    std::cerr << "Connected to mysql" << std::endl;
+    std::cout << "Connected to mysql" << std::endl;
     /*if(CatchChallenger::EpollSocket::make_non_blocking(conn->net.fd)!=0)
     {
        std::cerr << "mysql no blocking error" << std::endl;
@@ -124,8 +124,8 @@ bool EpollMySQL::syncConnectInternal()
     }
 
     started=true;
-    std::cerr << "Protocol version:" << mysql_get_proto_info(conn) << std::endl;
-    std::cerr << "Server version:" << mysql_get_server_version(conn) << std::endl;
+    std::cout << "Protocol version:" << mysql_get_proto_info(conn) << std::endl;
+    std::cout << "Server version:" << mysql_get_server_version(conn) << std::endl;
     return true;
 }
 
