@@ -4,6 +4,7 @@
 #include "EpollServerLoginSlave.h"
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
+#include "../../general/base/FacilityLibGeneral.h"
 #include "DatapackDownloaderBase.h"
 #include "DatapackDownloaderMainSub.h"
 #include "../epoll/Epoll.h"
@@ -12,9 +13,9 @@ using namespace CatchChallenger;
 
 bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
 {
-    Q_UNUSED(queryNumber);
-    Q_UNUSED(size);
-    Q_UNUSED(data);
+    (void)queryNumber;
+    (void)size;
+    (void)data;
     switch(mainCodeType)
     {
         case 0xA0:
@@ -83,7 +84,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                     }
 
                     //send the network query
-                    registerOutputQuery(queryIdToReconnect);
+                    registerOutputQuery(queryIdToReconnect,0x93);
                     uint32_t posOutput=0;
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x93;
                     posOutput+=1;
@@ -441,9 +442,9 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                     fileName=std::string(data+pos,fileNameSize);
                     pos+=fileNameSize;
                 }
-                if(DatapackDownloaderBase::extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())==DatapackDownloaderBase::extensionAllowed.cend())
+                if(DatapackDownloaderBase::extensionAllowed.find(CatchChallenger::FacilityLibGeneral::getSuffix(fileName))==DatapackDownloaderBase::extensionAllowed.cend())
                 {
-                    parseNetworkReadError("extension not allowed: "+QFileInfo(QString::fromStdString(fileName)).suffix().toStdString()+" with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
+                    parseNetworkReadError("extension not allowed: "+CatchChallenger::FacilityLibGeneral::getSuffix(fileName)+" with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
                     return false;
                 }
                 if((size-pos)<(int)(sizeof(uint32_t)))
@@ -522,7 +523,6 @@ bool LinkToGameServer::parseQuery(const uint8_t &mainCodeType,const uint8_t &que
         parseNetworkReadError("client not connected");
         return false;
     }
-    Q_UNUSED(data);
     if(stat!=Stat::ProtocolGood)
         return parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
 
@@ -537,7 +537,7 @@ bool LinkToGameServer::parseQuery(const uint8_t &mainCodeType,const uint8_t &que
     memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
     posOutput+=size;
 
-    client->registerOutputQuery(queryNumber);
+    client->registerOutputQuery(queryNumber,mainCodeType);
     return client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
@@ -551,8 +551,6 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
     }
     if(mainCodeType==0x03 && stat==Stat::Connected)
         return parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
-    Q_UNUSED(data);
-    Q_UNUSED(size);
     //do the work here
 
     /* intercept part here */

@@ -5,8 +5,6 @@ using namespace CatchChallenger;
 #include <iostream>
 #include <cmath>
 #include <regex>
-#include <QNetworkReply>
-#include <QProcess>
 
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
@@ -67,9 +65,10 @@ void DatapackDownloaderBase::haveTheDatapack()
 
     resetAll();
 
-    if(!DatapackDownloaderBase::commandUpdateDatapackBase.empty())
+    /** \todo fix this in unix
+     * if(!DatapackDownloaderBase::commandUpdateDatapackBase.empty())
         if(QProcess::execute(QString::fromStdString(DatapackDownloaderBase::commandUpdateDatapackBase),QStringList() << QString::fromStdString(mDatapackBase))<0)
-            std::cerr << "Unable to execute " << DatapackDownloaderBase::commandUpdateDatapackBase << " " << mDatapackBase << std::endl;
+            std::cerr << "Unable to execute " << DatapackDownloaderBase::commandUpdateDatapackBase << " " << mDatapackBase << std::endl;*/
 }
 
 void DatapackDownloaderBase::resetAll()

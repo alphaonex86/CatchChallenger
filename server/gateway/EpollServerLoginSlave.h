@@ -7,7 +7,6 @@
 #include "../base/BaseServerLogin.h"
 #include "EpollClientLoginSlave.h"
 
-#include <QSettings>
 #include <string>
 #include <vector>
 
