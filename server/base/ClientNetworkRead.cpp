@@ -203,7 +203,7 @@ void Client::sendBattleRequest(char * const data, const uint32_t &size)
     queryNumberList.pop_back();
 }
 
-bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const unsigned int &)
+bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
 {
     if(stopIt)
         return false;
@@ -217,6 +217,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
         return false;
     }
     otherPacketKickNewValue++;
+    (void)size;
     #endif
     switch(packetCode)
     {
@@ -418,6 +419,25 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                     return false;
                 }
             }
+        break;
+        #else
+        //Select character on game server
+        case 0x93:
+        {
+            if(character_loaded)
+            {
+                errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+")");
+                return false;
+            }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(size!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
+            {
+                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
+                return false;
+            }
+            #endif
+            selectCharacter(queryNumber,data);
+        }
         break;
         #endif
         default:
@@ -1220,18 +1240,22 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
     if(stopIt)
         return false;
     const bool goodQueryBeforeLoginLoaded=
-            packetCode==0xA0 ||
-            packetCode==0xA8
+            //before be logged, accept:
+            packetCode==0xA0 || //protocol header
+            #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+            packetCode==0xA8 //login by login/pass
+            #else
+            packetCode==0x93 //login by token + Select character (Get first data and send the login)
+            #endif
             ;
-    if(account_id==0 || (!character_loaded && goodQueryBeforeLoginLoaded))
+    if(account_id==0 || goodQueryBeforeLoginLoaded)
         return parseInputBeforeLogin(packetCode,queryNumber,data,size);
     const bool goodQueryBeforeCharacterLoaded=
+            //before character selected (but after login), accept:
             #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-            packetCode==0xAA ||
-            packetCode==0xAB ||
-            packetCode==0xAC ||
-            #else
-            packetCode==0x93 ||
+            packetCode==0xAA || //Add character
+            packetCode==0xAB || //Remove character
+            packetCode==0xAC || //Select character
             #endif
             packetCode==0xA1;
     if(!character_loaded && !goodQueryBeforeCharacterLoaded)
@@ -1680,26 +1704,6 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             return true;
         }
         break;
-        #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-        //Select character on game server
-        case 0x93:
-        {
-            if(character_loaded)
-            {
-                errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+")");
-                return false;
-            }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
-            {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
-                return false;
-            }
-            #endif
-            selectCharacter(queryNumber,data);
-        }
-        break;
-        #endif
         //Send datapack file list
         case 0xA1:
         #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
