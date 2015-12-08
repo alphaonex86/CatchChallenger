@@ -4,15 +4,9 @@
 #include "../../general/base/GeneralVariable.h"
 #include "../../client/base/DatapackChecksum.h"
 
-#include <QObject>
 #include <string>
-#include <QCoreApplication>
 #include <vector>
-#include <QDir>
 #include <unordered_map>
-#include <QFileInfo>
-#include <QDateTime>
-#include <QCryptographicHash>
 #include <regex>
 
 #include <curl/curl.h>
@@ -75,7 +69,7 @@ private:
     CURL *curl;
 private:
     bool getHttpFileBase(const std::string &url, const std::string &fileName);
-private slots:
+private:
     void datapackDownloadFinishedBase();
     void datapackChecksumDoneBase(const std::vector<std::string> &datapackFilesList,const std::vector<char> &hash, const std::vector<uint32_t> &partialHash);
     void haveTheDatapack();
