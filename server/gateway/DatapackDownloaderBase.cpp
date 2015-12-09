@@ -437,7 +437,6 @@ void DatapackDownloaderBase::decodedIsFinishBase()
             unsigned int index=0;
             while(index<fileList.size())
             {
-
                 if(!FacilityLibGateway::mkpath(FacilityLibGeneral::getFolderFromFile(mDatapackBase+fileList.at(index))))
                 {
                     std::cerr << "unable to mkpath file of datapack " << mDatapackBase+fileList.at(index) << ": " << errno << std::endl;
@@ -446,7 +445,7 @@ void DatapackDownloaderBase::decodedIsFinishBase()
 
                 if(extensionAllowed.find(FacilityLibGeneral::getSuffix(fileList.at(index)))!=extensionAllowed.cend())
                 {
-                    FILE *file=::fopen((mDatapackBase+fileList.at(index)).c_str(),"w");
+                    FILE *file=::fopen((mDatapackBase+fileList.at(index)).c_str(),"wb");
                     if(file)
                     {
                         if(fwrite(dataList.at(index).data(),1,dataList.at(index).size(),file)!=dataList.at(index).size())
