@@ -1,10 +1,13 @@
 ﻿#include "DatapackDownloaderBase.h"
 
+#include <stdio.h>
+
 using namespace CatchChallenger;
 
 #include <iostream>
 #include <cmath>
 #include <regex>
+#include <cstdio>
 
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
@@ -14,6 +17,7 @@ using namespace CatchChallenger;
 #include "../../general/base/cpp11addition.h"
 #include "LinkToGameServer.h"
 #include "EpollServerLoginSlave.h"
+#include "FacilityLibGateway.h"
 
 //need host + port here to have datapack base
 
@@ -128,9 +132,8 @@ void DatapackDownloaderBase::datapackFileList(const char * const data,const unsi
         if(boolList.at(index))
         {
             std::cerr << "remove the file: " << mDatapackBase << '/' << datapackFilesListBase.at(index) << std::endl;
-            QFile file(QString::fromStdString(mDatapackBase+'/'+datapackFilesListBase.at(index)));
-            if(!file.remove())
-                std::cerr << "unable to remove the file: " << datapackFilesListBase.at(index) << ": " << file.errorString().toStdString() << std::endl;
+            if(remove((mDatapackBase+'/'+datapackFilesListBase.at(index)).c_str())!=0)
+                std::cerr << "unable to remove the file: " << datapackFilesListBase.at(index) << ": " << errno << std::endl;
             //removeFile(datapackFilesListBase.at(index));
         }
         index++;
@@ -149,37 +152,29 @@ void DatapackDownloaderBase::datapackFileList(const char * const data,const unsi
 
 void DatapackDownloaderBase::writeNewFileBase(const std::string &fileName,const std::vector<char> &data)
 {
-    const std::string &fullPath=mDatapackBase+'/'+fileName;
+    std::string fullPath=mDatapackBase+'/'+fileName;
+    stringreplaceAll(fullPath,"//","/");
     //to be sure the QFile is destroyed
     {
-        QFile file(QString::fromStdString(fullPath));
-        QFileInfo fileInfo(file);
-
-        if(!QDir(fileInfo.absolutePath()).mkpath(fileInfo.absolutePath()))
+        if(!FacilityLibGateway::mkpath(FacilityLibGeneral::getFolderFromFile(fullPath)))
         {
-            qDebug() << "unable to make the path: " << fileInfo.absolutePath();
+            std::cerr << "unable to make the path: " << fullPath << std::endl;
             abort();
         }
 
-        if(file.exists())
-            if(!file.remove())
-            {
-                std::cerr << "Can't remove: " << fileName << ": " << file.errorString().toStdString() << std::endl;
-                return;
-            }
-        if(!file.open(QIODevice::WriteOnly))
+        FILE *file=fopen(fullPath.c_str(),"wb");
+        if(file==NULL)
         {
-            std::cerr << "Can't open: " << fileName << ": " << file.errorString().toStdString() << std::endl;
+            std::cerr << "Can't open: " << fileName << ": " << errno << std::endl;
             return;
         }
-        if(file.write(data.data(),data.size())!=(int64_t)data.size())
+        if(fwrite(data.data(),1,data.size(),file)!=data.size())
         {
-            file.close();
-            std::cerr << "Can't write: " << fileName << ": " << file.errorString().toStdString() << std::endl;
+            fclose(file);
+            std::cerr << "Can't write: " << fileName << ": " << errno << std::endl;
             return;
         }
-        file.flush();
-        file.close();
+        fclose(file);
     }
 }
 
@@ -190,7 +185,8 @@ bool DatapackDownloaderBase::getHttpFileBase(const std::string &url, const std::
     if(!httpModeBase)
         httpModeBase=true;
 
-    const std::string &fullPath=mDatapackBase+'/'+fileName;
+    std::string fullPath=mDatapackBase+'/'+fileName;
+    stringreplaceAll(fullPath,"//","/");
     {
         QFile file(QString::fromStdString(fullPath));
         QFileInfo fileInfo(file);
