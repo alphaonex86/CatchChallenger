@@ -5,8 +5,6 @@ using namespace CatchChallenger;
 #include <iostream>
 #include <cmath>
 #include <regex>
-#include <QNetworkReply>
-#include <QProcess>
 
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
@@ -18,40 +16,33 @@ using namespace CatchChallenger;
 #include "EpollServerLoginSlave.h"
 #include "LinkToGameServer.h"
 #include "EpollServerLoginSlave.h"
+#include "FacilityLibGateway.h"
 
 void DatapackDownloaderMainSub::writeNewFileSub(const std::string &fileName,const std::vector<char> &data)
 {
-    const std::string &fullPath=mDatapackSub+'/'+fileName;
+    std::string fullPath=mDatapackSub+'/'+fileName;
+    stringreplaceAll(fullPath,"//","/");
     //to be sure the QFile is destroyed
     {
-        QFile file(QString::fromStdString(fullPath));
-        QFileInfo fileInfo(file);
-
-        if(!QDir(fileInfo.absolutePath()).mkpath(fileInfo.absolutePath()))
+        if(!FacilityLibGateway::mkpath(FacilityLibGeneral::getFolderFromFile(fullPath)))
         {
-            qDebug() << "unable to make the path: " << fileInfo.absolutePath();
+            std::cerr << "unable to make the path: " << fullPath << std::endl;
             abort();
         }
 
-        if(file.exists())
-            if(!file.remove())
-            {
-                std::cerr << "Can't remove: " << fileName << ": " << file.errorString().toStdString() << std::endl;
-                return;
-            }
-        if(!file.open(QIODevice::WriteOnly))
+        FILE *file=fopen(fullPath.c_str(),"wb");
+        if(file==NULL)
         {
-            std::cerr << "Can't open: " << fileName << ": " << file.errorString().toStdString() << std::endl;
+            std::cerr << "Can't open: " << fileName << ": " << errno << std::endl;
             return;
         }
-        if(file.write(data.data(),data.size())!=(int32_t)data.size())
+        if(fwrite(data.data(),1,data.size(),file)!=data.size())
         {
-            file.close();
-            std::cerr << "Can't write: " << fileName << ": " << file.errorString().toStdString() << std::endl;
+            fclose(file);
+            std::cerr << "Can't write: " << fileName << ": " << errno << std::endl;
             return;
         }
-        file.flush();
-        file.close();
+        fclose(file);
     }
 }
 
@@ -59,7 +50,7 @@ bool DatapackDownloaderMainSub::getHttpFileSub(const std::string &url, const std
 {
     if(subDatapackCode.empty())
     {
-        qDebug() << "subDatapackCode.empty() to get from mirror";
+        std::cerr << "subDatapackCode.empty() to get from mirror" << std::endl;
         abort();
     }
     if(httpError)
@@ -67,14 +58,12 @@ bool DatapackDownloaderMainSub::getHttpFileSub(const std::string &url, const std
     if(!httpModeSub)
         httpModeSub=true;
 
-    const std::string &fullPath=mDatapackSub+'/'+fileName;
+    std::string fullPath=mDatapackSub+'/'+fileName;
+    stringreplaceAll(fullPath,"//","/");
     {
-        QFile file(QString::fromStdString(fullPath));
-        QFileInfo fileInfo(file);
-
-        if(!QDir(fileInfo.absolutePath()).mkpath(fileInfo.absolutePath()))
+        if(!FacilityLibGateway::mkpath(FacilityLibGeneral::getFolderFromFile(fullPath)))
         {
-            qDebug() << "unable to make the path: " << fileInfo.absolutePath();
+            std::cerr << "unable to make the path: " << fullPath << std::endl;
             abort();
         }
     }
@@ -127,7 +116,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneSub(const std::vector<std::s
     this->partialHashListSub=partialHashList;
     if(!datapackFilesListSub.empty() && hash==sendedHashSub)
     {
-        qDebug() << "Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote";
+        std::cout << "Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote" << std::endl;
         datapackDownloadFinishedSub();
         return;
     }
@@ -135,26 +124,22 @@ void DatapackDownloaderMainSub::datapackChecksumDoneSub(const std::vector<std::s
     if(DatapackDownloaderMainSub::httpDatapackMirrorServerList.empty())
     {
         {
-            QFile file(QString::fromStdString(mDatapackSub+"/pack/datapack.tar.xz"));
-            if(file.exists())
-                if(!file.remove())
-                {
-                    qDebug() << "Unable to remove "+file.fileName();
-                    return;
-                }
+            if(remove((mDatapackSub+"/pack/datapack.tar.xz").c_str())!=0 && errno!=ENOENT)
+            {
+                std::cerr << "Unable to remove " << mDatapackSub << "/pack/datapack.tar.xz" << std::endl;
+                abort();
+            }
         }
         {
-            QFile file(QString::fromStdString(mDatapackSub+"/datapack-list/sub.txt"));
-            if(file.exists())
-                if(!file.remove())
-                {
-                    qDebug() << "Unable to remove "+file.fileName();
-                    return;
-                }
+            if(remove((mDatapackSub+"/datapack-list/Sub.txt").c_str())!=0 && errno!=ENOENT)
+            {
+                std::cerr << "Unable to remove " << mDatapackSub << "/datapack-list/sub.txt" << std::endl;
+                abort();
+            }
         }
         if(sendedHashSub.empty())
         {
-            qDebug() << "Datapack checksum done but not send by the server";
+            std::cerr << "Datapack checksum done but not send by the server" << std::endl;
             abort();//need CommonSettings::commonSettings.datapackHash send by the server
         }
         uint8_t datapack_content_query_number=0;
@@ -173,7 +158,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneSub(const std::vector<std::s
             }
             if(indexForClient>=clientInSuspend.size())
             {
-                qDebug() << "no client in suspend to do the query to do in protocol datapack download";
+                std::cerr << "no client in suspend to do the query to do in protocol datapack download" << std::endl;
                 resetAll();
                 return;//need CommonSettings::commonSettings.datapackHash send by the server
             }
@@ -182,7 +167,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneSub(const std::vector<std::s
                   << binarytoHexa(CommonSettingsServer::commonSettingsServer.datapackHashServerSub) << std::endl;
 
         //send the network query
-        client->registerOutputQuery(datapack_content_query_number);
+        client->registerOutputQuery(datapack_content_query_number,0xA1);
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xA1;
         posOutput+=1;
