@@ -103,7 +103,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
     this->partialHashListMain=partialHashList;
     if(!datapackFilesListMain.empty() && hash==sendedHashMain)
     {
-        qDebug() << "Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote";
+        std::cout << "Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote" << std::endl;
         checkIfContinueOrFinished();
         return;
     }
@@ -145,7 +145,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
             }
             if(indexForClient>=clientInSuspend.size())
             {
-                qDebug() << "no client in suspend to do the query to do in protocol datapack download";
+                std::cerr << "no client in suspend to do the query to do in protocol datapack download" << std::endl;
                 resetAll();
                 return;//need CommonSettings::commonSettings.datapackHash send by the server
             }
@@ -154,7 +154,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
                   << binarytoHexa(CommonSettingsServer::commonSettingsServer.datapackHashServerSub) << std::endl;
 
         //send the network query
-        client->registerOutputQuery(datapack_content_query_number);
+        client->registerOutputQuery(datapack_content_query_number,0xA1);
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xA1;
         posOutput+=1;
@@ -292,31 +292,39 @@ void DatapackDownloaderMainSub::decodedIsFinishMain()
         QTarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
-            QDir dir;
             const std::vector<std::string> &fileList=tarDecode.getFileList();
             const std::vector<std::vector<char> > &dataList=tarDecode.getDataList();
             unsigned int index=0;
             while(index<fileList.size())
             {
-                QFile file(QString::fromStdString(mDatapackMain+fileList.at(index)));
-                QFileInfo fileInfo(file);
-                dir.mkpath(fileInfo.absolutePath());
-                if(extensionAllowed.find(fileInfo.suffix().toStdString())!=extensionAllowed.cend())
+                if(!FacilityLibGateway::mkpath(FacilityLibGeneral::getFolderFromFile(mDatapackMain+fileList.at(index))))
                 {
-                    if(file.open(QIODevice::Truncate|QIODevice::WriteOnly))
+                    std::cerr << "unable to mkpath file of datapack " << mDatapackMain+fileList.at(index) << ": " << errno << std::endl;
+                    return;
+                }
+
+                if(extensionAllowed.find(FacilityLibGeneral::getSuffix(fileList.at(index)))!=extensionAllowed.cend())
+                {
+                    FILE *file=::fopen((mDatapackMain+fileList.at(index)).c_str(),"wb");
+                    if(file)
                     {
-                        file.write(dataList.at(index).data(),dataList.at(index).size());
-                        file.close();
+                        if(fwrite(dataList.at(index).data(),1,dataList.at(index).size(),file)!=dataList.at(index).size())
+                        {
+                            fclose(file);
+                            std::cerr << "unable to write file content of datapack " << mDatapackMain+fileList.at(index) << ": " << errno << std::endl;
+                            return;
+                        }
+                        fclose(file);
                     }
                     else
                     {
-                        std::cerr << "unable to write file of datapack " << file.fileName().toStdString() << ": " << file.errorString().toStdString() << std::endl;
+                        std::cerr << "unable to write file of datapack " << mDatapackMain+fileList.at(index) << ": " << errno << std::endl;
                         return;
                     }
                 }
                 else
                 {
-                    std::cerr << "file not allowed: " << file.fileName().toStdString() << std::endl;
+                    std::cerr << "file not allowed: " << mDatapackMain+fileList.at(index) << std::endl;
                     return;
                 }
                 index++;
@@ -421,8 +429,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
                         if(indexInDatapackList!=-1)
                         {
                             const uint32_t &hashFileOnDisk=partialHashListMain.at(indexInDatapackList);
-                            QFileInfo file(QString::fromStdString(mDatapackMain+fileString));
-                            if(!file.exists())
+                            if(!FacilityLibGeneral::isFile(mDatapackMain+fileString))
                             {
                                 if(!getHttpFileMain(selectedMirror+fileString,fileString))
                                 {
@@ -456,7 +463,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
             index=0;
             while(index<datapackFilesListMain.size())
             {
-                if(!QFile(QString::fromStdString(mDatapackMain+datapackFilesListMain.at(index))).remove())
+                if(::remove((mDatapackMain+datapackFilesListMain.at(index)).c_str())!=0)
                 {
                     std::cerr << "Unable to remove" << datapackFilesListMain.at(index) << std::endl;
                     abort();
@@ -480,29 +487,27 @@ const std::vector<std::string> DatapackDownloaderMainSub::listDatapackMain(std::
         return std::vector<std::string>();
 
     std::vector<std::string> returnFile;
-    QDir finalDatapackFolder(QString::fromStdString(mDatapackMain+suffix));
-    QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
+    const std::vector<FacilityLibGeneral::InodeDescriptor> &entryList=FacilityLibGeneral::listFolderNotRecursive(mDatapackMain+suffix);//possible wait time here
     int sizeEntryList=entryList.size();
     for(int index=0;index<sizeEntryList;++index)
     {
-        QFileInfo fileInfo=entryList.at(index);
-        if(fileInfo.isDir())
+        const FacilityLibGeneral::InodeDescriptor &fileInfo=entryList.at(index);
+        if(fileInfo.type==FacilityLibGeneral::InodeDescriptor::Dir)
         {
-            const std::vector<std::string> &newReturnFile=listDatapackMain(suffix+fileInfo.fileName().toStdString()+'/');
+            const std::vector<std::string> &newReturnFile=listDatapackMain(suffix+fileInfo.name+'/');
             returnFile.insert(returnFile.cend(),newReturnFile.cbegin(),newReturnFile.cend());//put unix separator because it's transformed into that's under windows too
         }
         else
         {
             //if match with correct file name, considere as valid
-            if(regex_search(suffix+fileInfo.fileName().toStdString(),DatapackDownloaderMainSub::regex_DATAPACK_FILE_REGEX) && extensionAllowed.find(fileInfo.suffix().toStdString())!=extensionAllowed.cend())
-                returnFile.push_back(suffix+fileInfo.fileName().toStdString());
+            if(regex_search(suffix+fileInfo.name,DatapackDownloaderMainSub::regex_DATAPACK_FILE_REGEX) && extensionAllowed.find(FacilityLibGeneral::getSuffix(fileInfo.name))!=extensionAllowed.cend())
+                returnFile.push_back(suffix+fileInfo.name);
             //is invalid
             else
             {
-                std::cerr << "listDatapack(): remove invalid file: " << suffix << fileInfo.fileName().toStdString() << std::endl;
-                QFile file(QString::fromStdString(mDatapackMain+suffix+fileInfo.fileName().toStdString()));
-                if(!file.remove())
-                    std::cerr << "listDatapack(): unable remove invalid file: " << suffix << fileInfo.fileName().toStdString() << ": " << file.errorString().toStdString() << std::endl;
+                std::cerr << "listDatapack(): remove invalid file: " << suffix << fileInfo.absoluteFilePath << std::endl;
+                if(::remove((mDatapackMain+suffix+fileInfo.name).c_str())!=0)
+                    std::cerr << "listDatapack(): unable remove invalid file: " << suffix << fileInfo.absoluteFilePath << ": " << errno << std::endl;
             }
         }
     }
@@ -512,20 +517,19 @@ const std::vector<std::string> DatapackDownloaderMainSub::listDatapackMain(std::
 
 void DatapackDownloaderMainSub::cleanDatapackMain(std::string suffix)
 {
-    QDir finalDatapackFolder(QString::fromStdString(mDatapackMain+suffix));
-    QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
+    std::vector<FacilityLibGeneral::InodeDescriptor> entryList=FacilityLibGeneral::listFolderNotRecursive(mDatapackMain+suffix);//possible wait time here
     int sizeEntryList=entryList.size();
     for (int index=0;index<sizeEntryList;++index)
     {
-        QFileInfo fileInfo=entryList.at(index);
-        if(fileInfo.isDir())
-            cleanDatapackMain(suffix+fileInfo.fileName().toStdString()+'/');//put unix separator because it's transformed into that's under windows too
+        const FacilityLibGeneral::InodeDescriptor &fileInfo=entryList.at(index);
+        if(fileInfo.type==FacilityLibGeneral::InodeDescriptor::Dir)
+            cleanDatapackMain(suffix+fileInfo.name+'/');//put unix separator because it's transformed into that's under windows too
         else
             return;
     }
-    entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
+    entryList=FacilityLibGeneral::listFolderNotRecursive(mDatapackMain+suffix);//possible wait time here
     if(entryList.size()==0)
-        finalDatapackFolder.rmpath(QString::fromStdString(mDatapackMain+suffix));
+        FacilityLibGeneral::rmpath(mDatapackMain+suffix);
 }
 
 void DatapackDownloaderMainSub::sendDatapackContentMain()
