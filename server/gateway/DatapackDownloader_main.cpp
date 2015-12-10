@@ -18,6 +18,11 @@ using namespace CatchChallenger;
 
 void DatapackDownloaderMainSub::writeNewFileMain(const std::string &fileName,const std::vector<char> &data)
 {
+    if(data.size()>CATCHCHALLENGER_MAX_FILE_SIZE)
+    {
+        std::cerr << "file too big: " << fileName << std::endl;
+        abort();
+    }
     std::string fullPath=mDatapackMain+'/'+fileName;
     stringreplaceAll(fullPath,"//","/");
     //to be sure the QFile is destroyed
@@ -70,6 +75,7 @@ bool DatapackDownloaderMainSub::getHttpFileMain(const std::string &url, const st
         const CURLcode res = curl_easy_perform(curl);
         long http_code = 0;
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+        /// \todo control the downloaded max size
         fclose(fp);
         if(res!=CURLE_OK || http_code!=200)
         {

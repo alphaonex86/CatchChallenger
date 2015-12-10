@@ -39,7 +39,7 @@ std::unordered_map<std::string,EpollClientLoginSlave::DatapackCacheFile> EpollCl
             if(!fileInfo.suffix().isEmpty() && DatapackDownloaderBase::extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())!=DatapackDownloaderBase::extensionAllowed.cend())
             {
                 QFile file(QString::fromStdString(path+returnList.at(index)));
-                if(file.size()<=8*1024*1024)
+                if(file.size()<=CATCHCHALLENGER_MAX_FILE_SIZE)
                 {
                     if(file.open(QIODevice::ReadOnly))
                     {

@@ -85,9 +85,9 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
             if(!stringStartWith(datapack_file_temp.at(index),text_exclude))
             {
                 struct stat buf;
-                if(stat((text_datapack+datapack_file_temp.at(index)).c_str(),&buf)!=-1)
+                if(stat((text_datapack+datapack_file_temp.at(index)).c_str(),&buf)==0)
                 {
-                    if(buf.st_size<=8*1024*1024)
+                    if(buf.st_size<=CATCHCHALLENGER_MAX_FILE_SIZE)
                     {
                         FILE *filedesc = fopen((text_datapack+datapack_file_temp.at(index)).c_str(), "rb");
                         if(filedesc!=NULL)

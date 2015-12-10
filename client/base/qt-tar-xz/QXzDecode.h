@@ -6,6 +6,9 @@
 #ifndef QXZDECODE_H
 #define QXZDECODE_H
 
+#include <vector>
+#include <string>
+
 //comment this to check integrity of compressed file, compressed via: xz --check=crc32 YourFile
 //#define XZ_DEC_ANY_CHECK
 
