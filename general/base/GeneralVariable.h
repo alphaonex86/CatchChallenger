@@ -45,6 +45,7 @@
 //if need more than this size and receive less, bug with the preivous message, reset
 #define CATCHCHALLENGER_MIN_PACKET_SIZE 128
 #define CATCHCHALLENGER_MAX_PACKET_SIZE 1024*1024
+#define CATCHCHALLENGER_MAX_FILE_SIZE 8*1024*1024
 //here to ProtocolParsingGeneral
 #define TOKEN_SIZE_FOR_MASTERAUTH 32
 #define TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT 16
