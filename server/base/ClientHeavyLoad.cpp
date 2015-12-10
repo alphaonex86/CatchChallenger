@@ -1416,9 +1416,9 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
                     !=BaseServerMasterSendDatapack::extensionAllowed.cend())
             {
                 struct stat buf;
-                if(stat((path+returnList.at(index)).c_str(),&buf)!=-1)
+                if(stat((path+returnList.at(index)).c_str(),&buf)==0)
                 {
-                    if(buf.st_size<=8*1024*1024)
+                    if(buf.st_size<=CATCHCHALLENGER_MAX_FILE_SIZE)
                     {
                         FILE *filedesc = fopen((path+returnList.at(index)).c_str(), "rb");
                         if(filedesc!=NULL)

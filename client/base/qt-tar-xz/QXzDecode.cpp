@@ -6,7 +6,6 @@
 \licence GPL3, see the file COPYING */
 
 #include "QXzDecode.h"
-#include <QDebug>
 extern "C" {
 #include "xz.h"
 }

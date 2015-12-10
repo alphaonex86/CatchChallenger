@@ -6,7 +6,8 @@
 \licence GPL3, see the file COPYING */
 
 #include "QTarDecode.h"
-#include <QDebug>
+
+#include <cstring>
 
 QTarDecode::QTarDecode()
 {
