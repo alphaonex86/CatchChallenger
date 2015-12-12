@@ -22,7 +22,10 @@ bool FacilityLibGateway::dolocalfolder(const std::string &dir)
 
 bool FacilityLibGateway::mkpath(const std::string &dir)
 {
-    char temppath[dir.size()+1];
+#ifndef __linux__
+#error this only work on linux
+#endif
+    char *temppath=(char *)malloc(dir.size()+1);
     strcpy(temppath,dir.c_str());
     char *separator=NULL;
     while((separator=strchr(temppath,'/'))!=0)
@@ -31,13 +34,14 @@ bool FacilityLibGateway::mkpath(const std::string &dir)
         {
             *separator='\0';
             if(!dolocalfolder(dir))
+            {
+                delete temppath;
                 return false;
-            #ifndef __linux__
-            #error this only work on linux
-            #endif
+            }
             *separator='/';
         }
         temppath=separator+1;
     }
+    delete temppath;
     return dolocalfolder(dir);
 }
