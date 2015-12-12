@@ -6,6 +6,10 @@
 #include <iostream>
 #include <vector>
 #include <regex>
+#include <openssl/sha.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 using namespace CatchChallenger;
 
@@ -34,25 +38,27 @@ std::unordered_map<std::string,EpollClientLoginSlave::DatapackCacheFile> EpollCl
         {
             if(DatapackDownloaderBase::extensionAllowed.find(FacilityLibGeneral::getSuffix(fileName))!=DatapackDownloaderBase::extensionAllowed.cend())
             {
-                QFile file(QString::fromStdString(path+returnList.at(index)));
-                if(file.size()<=CATCHCHALLENGER_MAX_FILE_SIZE)
+                if(withHash)
                 {
-                    if(file.open(QIODevice::ReadOnly))
+                    const std::string &fullPath=path+returnList.at(index);
+                    FILE *file=fopen(fullPath.c_str(),"wb");
+                    if(file!=NULL)
                     {
                         DatapackCacheFile datapackCacheFile;
                         #ifdef _WIN32
                         fileName.replace(EpollClientLoginSlave::text_antislash,EpollClientLoginSlave::text_slash);//remplace if is under windows server
                         #endif
-                        if(withHash)
-                        {
-                            QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                            hashFile.addData(file.readAll());
-                            datapackCacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
-                        }
-                        else
-                            datapackCacheFile.partialHash=0;
+
+                        const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(file);
+                        SHA224(reinterpret_cast<const unsigned char *>(data.data()),data.size(),reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
+                        datapackCacheFile.partialHash=*reinterpret_cast<const int *>(ProtocolParsingBase::tempBigBufferForOutput);
+
                         filesList[fileName]=datapackCacheFile;
-                        file.close();
+                    }
+                    else
+                    {
+                        std::cerr << "Can't open: " << fileName << ": " << errno << std::endl;
+                        return std::unordered_map<std::string,EpollClientLoginSlave::DatapackCacheFile>();
                     }
                 }
             }
@@ -150,19 +156,19 @@ void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vect
         {
             const std::string &fileName=files.at(index);
             const uint32_t &clientPartialHash=partialHashList.at(index);
-            if(fileName.find(Client::text_dotslash) != std::string::npos)
+            if(fileName.find(text_dotslash) != std::string::npos)
             {
-                errorOutput("file name contains illegale char (1): "+fileName);
+                std::cerr << "file name contains illegale char (1): " << fileName << std::endl;
                 return;
             }
-            if(fileName.find(Client::text_antislash) != std::string::npos)
+            if(fileName.find(text_antislash) != std::string::npos)
             {
-                errorOutput("file name contains illegale char (2): "+fileName);
+                std::cerr << "file name contains illegale char (2): " << fileName << std::endl;
                 return;
             }
-            if(fileName.find(Client::text_double_slash) != std::string::npos)
+            if(fileName.find(text_double_slash) != std::string::npos)
             {
-                errorOutput("file name contains illegale char (3): "+fileName);
+                std::cerr << "file name contains illegale char (3): " << fileName << std::endl;
                 return;
             }
             if(regex_search(fileName,fileNameStartStringRegex) || stringStartWith(fileName,text_slash))
@@ -189,16 +195,16 @@ void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vect
                     addDatapackListReply(false);//file found don't need be updated
                 else
                 {
-                    QFile file(QString::fromStdString(datapackPath+fileName));
-                    if(file.open(QIODevice::ReadOnly))
+                    //todo: be sure at the startup sll the file is readable
+                    struct stat myStat;
+                    if(::stat((datapackPath+fileName).c_str(),&myStat)==0)
                     {
                         addDatapackListReply(false);//found but need an update
                         datapckFileNumber++;
-                        datapckFileSize+=file.size();
+                        datapckFileSize+=myStat.st_size;
                         FileToSend fileToSend;
                         fileToSend.file=fileName;
                         fileToSendList.push_back(fileToSend);
-                        file.close();
                     }
                 }
                 filesListForSize.erase(fileName);
@@ -213,15 +219,14 @@ void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vect
         auto i=filesListForSize.begin();
         while(i!=filesListForSize.cend())
         {
-            QFile file(QString::fromStdString(datapackPath+i->first));
-            if(file.open(QIODevice::ReadOnly))
+            struct stat myStat;
+            if(::stat((datapackPath+i->first).c_str(),&myStat)==0)
             {
                 datapckFileNumber++;
-                datapckFileSize+=file.size();
+                datapckFileSize+=myStat.st_size;
                 FileToSend fileToSend;
                 fileToSend.file=i->first;
                 fileToSendList.push_back(fileToSend);
-                file.close();
             }
             ++i;
         }
