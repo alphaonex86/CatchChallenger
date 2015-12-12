@@ -1,6 +1,8 @@
 #ifndef TINYXMLSETTINGS_H
 #define TINYXMLSETTINGS_H
 
+#include <string>
+
 #include "../../general/base/tinyXML/tinyxml.h"
 
 class TinyXMLSettings
