@@ -3,6 +3,7 @@
 
 QT       -= gui widgets sql xml network core
 
+DEFINES += TIXML_USE_STL
 DEFINES += SERVERNOBUFFER
 #DEFINES += SERVERSSL
 
@@ -10,8 +11,8 @@ DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT
 #DEFINES += EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 DEFINES += CATCHCHALLENGER_CLASS_GATEWAY
 
-#LIBS += -lssl -lcrypto
-LIBS    += -llzma
+LIBS += -lssl -lcrypto
+LIBS    += -llzma -lz
 LIBS += -lcurl
 
 CONFIG += c++11
@@ -62,7 +63,8 @@ SOURCES += \
     EpollClientLoginSlaveDatapack.cpp \
     ../../general/base/lz4/lz4.c \
     ../../general/base/cpp11addition.cpp \
-    FacilityLibGateway.cpp
+    FacilityLibGateway.cpp \
+    ../base/TinyXMLSettings.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \
@@ -97,4 +99,5 @@ HEADERS += \
     ../../general/base/CommonSettingsCommon.h \
     ../../general/base/CommonSettingsServer.h \
     ../../general/base/lz4/lz4.h \
-    FacilityLibGateway.h
+    FacilityLibGateway.h \
+    ../base/TinyXMLSettings.h
