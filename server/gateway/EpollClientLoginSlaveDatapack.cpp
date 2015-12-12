@@ -4,9 +4,6 @@
 #include "DatapackDownloaderMainSub.h"
 
 #include <iostream>
-#include <QCryptographicHash>
-#include <QFileInfo>
-#include <QFile>
 #include <vector>
 #include <regex>
 
@@ -35,8 +32,7 @@ std::unordered_map<std::string,EpollClientLoginSlave::DatapackCacheFile> EpollCl
         #endif
         if(regex_search(fileName,datapack_rightFileName))
         {
-            QFileInfo fileInfo(QString::fromStdString(fileName));
-            if(!fileInfo.suffix().isEmpty() && DatapackDownloaderBase::extensionAllowed.find(QFileInfo(QString::fromStdString(fileName)).suffix().toStdString())!=DatapackDownloaderBase::extensionAllowed.cend())
+            if(DatapackDownloaderBase::extensionAllowed.find(FacilityLibGeneral::getSuffix(fileName))!=DatapackDownloaderBase::extensionAllowed.cend())
             {
                 QFile file(QString::fromStdString(path+returnList.at(index)));
                 if(file.size()<=CATCHCHALLENGER_MAX_FILE_SIZE)
