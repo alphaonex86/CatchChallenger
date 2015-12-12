@@ -6,11 +6,13 @@
 \licence GPL3, see the file COPYING */
 
 #include "QXzDecode.h"
+
+#include <cstring>
+
 extern "C" {
 #include "xz.h"
 }
 
-static uint8_t in[BUFSIZ];
 static uint8_t out[BUFSIZ];
 
 QXzDecode::QXzDecode(std::vector<char> data,uint64_t maxSize)
@@ -25,10 +27,6 @@ bool QXzDecode::decode()
 {
     if(data.size() < 32) // check the minimal size
         error="The input data is too short";
-    QByteArray outputData;
-    QByteArray qtData(data.data(),data.size());
-    QDataStream stream_xz_decode_in(&qtData,QIODevice::ReadOnly);
-    QDataStream stream_xz_decode_out(&outputData,QIODevice::WriteOnly);
 
     isDecoded=false;
     struct xz_buf b;
@@ -48,33 +46,15 @@ bool QXzDecode::decode()
         return isDecoded;
     }
 
-    b.in = in;
+    b.in = reinterpret_cast<const unsigned char *>(data.data());
     b.in_pos = 0;
-    b.in_size = 0;
+    b.in_size = data.size();
     b.out = out;
     b.out_pos = 0;
     b.out_size = BUFSIZ;
 
     while (true) {
-        //input of data
-        if (b.in_pos == b.in_size) {
-            b.in_size = stream_xz_decode_in.readRawData((char *)in,sizeof(in));
-            b.in_pos = 0;
-        }
-
         ret = xz_dec_run(s, &b);
-
-        //output of data
-        if (b.out_pos == sizeof(out))
-        {
-            if (stream_xz_decode_out.writeRawData((char *)out,b.out_pos) != (int)b.out_pos)
-            {
-                error="Write error";
-                xz_dec_end(s);
-                return isDecoded;
-            }
-            b.out_pos = 0;
-        }
 
         if (ret == XZ_OK)
             continue;
@@ -84,13 +64,6 @@ bool QXzDecode::decode()
             continue;
         }
 #endif
-
-        if (stream_xz_decode_out.writeRawData((char *)out,b.out_pos) != (int)b.out_pos)
-        {
-            error="Write error";
-            xz_dec_end(s);
-            return isDecoded;
-        }
 
         switch (ret) {
         case XZ_STREAM_END:
@@ -125,8 +98,8 @@ bool QXzDecode::decode()
         }
     }
 
-    data.resize(outputData.size());
-    memcpy(data.data(),outputData.constData(),outputData.size());
+    data.resize(b.out_pos);
+    memcpy(data.data(),b.out,b.out_pos);
     return isDecoded;
 }
 
