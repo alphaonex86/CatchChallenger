@@ -1,6 +1,8 @@
 #include "FacilityLibGateway.h"
 
 #include <sys/stat.h>
+#include <stdio.h>
+#include <string.h>
 
 using namespace CatchChallenger;
 
@@ -21,7 +23,7 @@ bool FacilityLibGateway::dolocalfolder(const std::string &dir)
 bool FacilityLibGateway::mkpath(const std::string &dir)
 {
     char temppath[dir.size()+1];
-    strcat(temppath,dir.c_str(),dir.size()+1);
+    strcpy(temppath,dir.c_str());
     char *separator=NULL;
     while((separator=strchr(temppath,'/'))!=0)
     {

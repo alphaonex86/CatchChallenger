@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <algorithm>
 
 using namespace CatchChallenger;
 
@@ -249,7 +250,7 @@ void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vect
         std::cerr << "Ask datapack list where the checksum match" << std::endl;
         return;
     }
-    qSort(fileToSendList);
+    std::sort(fileToSendList.begin(),fileToSendList.end());
     //validate, remove or update the file actualy on the client
     if(tempDatapackListReplyTestCount!=files.size())
     {
@@ -398,11 +399,11 @@ void EpollClientLoginSlave::sendFileContent()
         posOutput+=1+4;
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(EpollClientLoginSlave::rawFilesBuffer.size());//set the dynamic size
 
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=BaseServerMasterSendDatapack::rawFilesBufferCount;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=EpollClientLoginSlave::rawFilesBufferCount;
         posOutput+=1;
-        if(BaseServerMasterSendDatapack::rawFilesBuffer.size()>CATCHCHALLENGER_MAX_PACKET_SIZE)
+        if(EpollClientLoginSlave::rawFilesBuffer.size()>CATCHCHALLENGER_MAX_PACKET_SIZE)
         {
-            errorOutput("Client::sendFileContent too big to reply");
+            std::cerr << "Client::sendFileContent too big to reply" << std::endl;
             return;
         }
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,EpollClientLoginSlave::rawFilesBuffer.data(),EpollClientLoginSlave::rawFilesBuffer.size());
@@ -427,11 +428,11 @@ void EpollClientLoginSlave::sendCompressedFileContent()
         posOutput+=1+4;
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(EpollClientLoginSlave::compressedFilesBuffer.size());//set the dynamic size
 
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=BaseServerMasterSendDatapack::compressedFilesBufferCount;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=EpollClientLoginSlave::compressedFilesBufferCount;
         posOutput+=1;
-        if(BaseServerMasterSendDatapack::compressedFilesBuffer.size()>CATCHCHALLENGER_MAX_PACKET_SIZE)
+        if(EpollClientLoginSlave::compressedFilesBuffer.size()>CATCHCHALLENGER_MAX_PACKET_SIZE)
         {
-            errorOutput("Client::sendFileContent too big to reply");
+            std::cerr << "Client::sendFileContent too big to reply" << std::endl;
             return;
         }
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,EpollClientLoginSlave::compressedFilesBuffer.data(),EpollClientLoginSlave::compressedFilesBuffer.size());
@@ -452,18 +453,13 @@ bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::
         return false;
     }
 
-    QFile file(QString::fromStdString(datapackPath+fileName));
-    if(file.open(QIODevice::ReadOnly))
+    FILE *file=fopen((datapackPath+fileName).c_str(),"rb");
+    if(file!=NULL)
     {
-        std::vector<char> content;
-        {
-            const QByteArray &mQtData=file.readAll();
-            content.resize(mQtData.size());
-            memcpy(content.data(),mQtData.constData(),mQtData.size());
-        }
+        std::vector<char> content=FacilityLibGeneral::readAllFileAndClose(file);
         const int &contentsize=content.size();
 
-        const std::string &suffix=QFileInfo(file).suffix().toStdString();
+        const std::string &suffix=FacilityLibGeneral::getSuffix(fileName);
         if(EpollClientLoginSlave::compressedExtension.find(suffix)!=EpollClientLoginSlave::compressedExtension.cend() &&
                 ProtocolParsing::compressionTypeServer!=ProtocolParsing::CompressionType::None &&
                 (
@@ -562,12 +558,11 @@ bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::
                     sendFileContent();
             }
         }
-        file.close();
         return true;
     }
     else
     {
-        errorParsingLayer("Unable to open into CatchChallenger::sendFile(): "+file.errorString().toStdString());
+        errorParsingLayer("Unable to open into CatchChallenger::sendFile(): "+std::to_string(errno)+" for :"+datapackPath+fileName);
         return false;
     }
 }
