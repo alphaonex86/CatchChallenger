@@ -44,6 +44,7 @@ public:
 private:
     static std::regex regex_DATAPACK_FILE_REGEX;
     /// \todo group into one thread by change for queue
+    Drop the thread:
     QXzDecodeThread xzDecodeThreadBase;
     bool datapackTarXzBase;
     CatchChallenger::DatapackChecksum datapackChecksum;
