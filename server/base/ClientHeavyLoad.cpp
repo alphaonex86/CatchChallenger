@@ -1415,31 +1415,46 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
                     BaseServerMasterSendDatapack::extensionAllowed.find(suffix)
                     !=BaseServerMasterSendDatapack::extensionAllowed.cend())
             {
-                struct stat buf;
-                if(stat((path+returnList.at(index)).c_str(),&buf)==0)
+                if(withHash)
                 {
-                    if(buf.st_size<=CATCHCHALLENGER_MAX_FILE_SIZE)
+                    struct stat buf;
+                    if(stat((path+returnList.at(index)).c_str(),&buf)==0)
                     {
-                        FILE *filedesc = fopen((path+returnList.at(index)).c_str(), "rb");
-                        if(filedesc!=NULL)
+                        if(buf.st_size<=CATCHCHALLENGER_MAX_FILE_SIZE)
                         {
-                            DatapackCacheFile datapackCacheFile;
-                            #ifdef _WIN32
-                            fileName.replace(Client::text_antislash,Client::text_slash);//remplace if is under windows server
-                            #endif
-                            if(withHash)
+                            FILE *filedesc = fopen((path+returnList.at(index)).c_str(), "rb");
+                            if(filedesc!=NULL)
                             {
+                                DatapackCacheFile datapackCacheFile;
+                                #ifdef _WIN32
+                                fileName.replace(Client::text_antislash,Client::text_slash);//remplace if is under windows server
+                                #endif
                                 const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
                                 SHA224(reinterpret_cast<const unsigned char *>(data.data()),data.size(),reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
                                 datapackCacheFile.partialHash=*reinterpret_cast<const uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput);
+                                filesList[fileName]=datapackCacheFile;
+                                fclose(filedesc);
                             }
                             else
+                            {
+                                errorOutput("Client::datapack_file_list fopen failed on " +path+returnList.at(index)+ ":"+std::to_string(errno));
                                 datapackCacheFile.partialHash=0;
-                            filesList[fileName]=datapackCacheFile;
-                            fclose(filedesc);
+                            }
+                        }
+                        else
+                        {
+                            errorOutput("Client::datapack_file_list file too big failed on " +path+returnList.at(index)+ ":"+std::to_string(buf.st_size));
+                            datapackCacheFile.partialHash=0;
                         }
                     }
+                    else
+                    {
+                        errorOutput("Client::datapack_file_list stat failed on " +path+returnList.at(index)+ ":"+std::to_string(errno));
+                        datapackCacheFile.partialHash=0;
+                    }
                 }
+                else
+                    datapackCacheFile.partialHash=0;
             }
         }
         index++;
@@ -1612,20 +1627,16 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
                     addDatapackListReply(false);//file found don't need be updated
                 else
                 {
-                    FILE *filedesc = fopen((datapackPath+fileName).c_str(), "rb");
-                    if(filedesc!=NULL)
+                    //todo: be sure at the startup sll the file is readable
+                    struct stat buf;
+                    if(stat((datapackPath+fileName).c_str(),&buf)!=-1)
                     {
-                        struct stat buf;
-                        if(stat((datapackPath+fileName).c_str(),&buf)!=-1)
-                        {
-                            addDatapackListReply(false);//found but need an update
-                            datapckFileNumber++;
-                            datapckFileSize+=buf.st_size;
-                            FileToSend fileToSend;
-                            fileToSend.file=fileName;
-                            fileToSendList.push_back(fileToSend);
-                        }
-                        fclose(filedesc);
+                        addDatapackListReply(false);//found but need an update
+                        datapckFileNumber++;
+                        datapckFileSize+=buf.st_size;
+                        FileToSend fileToSend;
+                        fileToSend.file=fileName;
+                        fileToSendList.push_back(fileToSend);
                     }
                 }
                 filesListForSize.erase(fileName);
