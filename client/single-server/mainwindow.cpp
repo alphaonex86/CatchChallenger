@@ -38,7 +38,13 @@ MainWindow::MainWindow(QWidget *parent) :
     CatchChallenger::Api_client_real::client=NULL;
     ui->setupUi(this);
     ui->update->setVisible(false);
-    ui->news->setVisible(false);
+    if(settings.contains("news"))
+    {
+        ui->news->setVisible(true);
+        ui->news->setText(settings.value("news").toString());
+    }
+    else
+        ui->news->setVisible(false);
     server_name=SERVER_NAME;
     server_dns_or_ip=SERVER_DNS_OR_IP;
     server_port=SERVER_PORT;
@@ -503,7 +509,10 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::rssEntryList(const QList<RssNews::RssEntry> &entryList)
 {
     if(entryList.isEmpty())
+    {
+        ui->news->setVisible(false);
         return;
+    }
     if(entryList.size()==1)
         ui->news->setText(tr("Latest news:")+QStringLiteral(" ")+QStringLiteral("<a href=\"%1\">%2</a>").arg(entryList.at(0).link).arg(entryList.at(0).title));
     else
@@ -517,6 +526,8 @@ void MainWindow::rssEntryList(const QList<RssNews::RssEntry> &entryList)
         }
         ui->news->setText(tr("Latest news:")+QStringLiteral("<br />")+entryHtmlList.join(QStringLiteral("<br />")));
     }
+    settings.setValue("news",ui->news->text());
+    ui->news->setStyleSheet("background-color:rgb(220,220,240);border:1px solid rgb(100,150,240);border-radius:5px;color:rgb(0,0,0);");
     ui->news->setVisible(true);
 }
 
