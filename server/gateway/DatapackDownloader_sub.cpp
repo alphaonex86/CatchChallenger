@@ -301,13 +301,13 @@ void DatapackDownloaderMainSub::test_mirror_sub()
     }
 }
 
-void DatapackDownloaderMainSub::decodedIsFinishSub()
+void DatapackDownloaderMainSub::decodedIsFinishSub(QXzDecode &xzDecodeSub)
 {
-    if(xzDecodeThreadSub.errorFound())
+    if(!xzDecodeSub.decode())
         test_mirror_sub();
     else
     {
-        const std::vector<char> &decodedData=xzDecodeThreadSub.decodedData();
+        const std::vector<char> &decodedData=xzDecodeSub.decodedData();
         QTarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
@@ -391,9 +391,8 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListSub(const std::vector
         {
             std::cerr << "datapack.tar.xz size:" << data.size()/1000 << "KB" << std::endl;
             datapackTarXzSub=true;
-            xzDecodeThreadSub.setData(data,16*1024*1024);
-            xzDecodeThreadSub.run();
-            decodedIsFinishSub();
+            QXzDecode xzDecodeSub(data,16*1024*1024);
+            decodedIsFinishSub(xzDecodeSub);
             return;
         }
         else

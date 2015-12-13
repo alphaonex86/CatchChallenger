@@ -288,13 +288,13 @@ void DatapackDownloaderMainSub::test_mirror_main()
     }
 }
 
-void DatapackDownloaderMainSub::decodedIsFinishMain()
+void DatapackDownloaderMainSub::decodedIsFinishMain(QXzDecode &xzDecodeMain)
 {
-    if(xzDecodeThreadMain.errorFound())
+    if(!xzDecodeMain.decode())
         test_mirror_main();
     else
     {
-        const std::vector<char> &decodedData=xzDecodeThreadMain.decodedData();
+        const std::vector<char> &decodedData=xzDecodeMain.decodedData();
         QTarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
@@ -378,9 +378,8 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
         {
             std::cerr << "datapack.tar.xz size:" << data.size()/1000 << "KB" << std::endl;
             datapackTarXzMain=true;
-            xzDecodeThreadMain.setData(data,16*1024*1024);
-            xzDecodeThreadMain.run();
-            decodedIsFinishMain();
+            QXzDecode xzDecodeMain(data,16*1024*1024);
+            decodedIsFinishMain(xzDecodeMain);
             return;
         }
         else

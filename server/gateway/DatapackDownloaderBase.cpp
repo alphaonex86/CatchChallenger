@@ -428,13 +428,13 @@ void DatapackDownloaderBase::test_mirror_base()
     }
 }
 
-void DatapackDownloaderBase::decodedIsFinishBase()
+void DatapackDownloaderBase::decodedIsFinishBase(QXzDecode &xzDecodeBase)
 {
-    if(xzDecodeThreadBase.errorFound())
+    if(!xzDecodeBase.decode())
         test_mirror_base();
     else
     {
-        const std::vector<char> &decodedData=xzDecodeThreadBase.decodedData();
+        const std::vector<char> &decodedData=xzDecodeBase.decodedData();
         QTarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
@@ -518,9 +518,8 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
         {
             std::cerr << "datapack.tar.xz size:" << data.size()/1000 << "KB" << std::endl;
             datapackTarXzBase=true;
-            xzDecodeThreadBase.setData(data,16*1024*1024);
-            xzDecodeThreadBase.run();
-            decodedIsFinishBase();
+            QXzDecode xzDecodeBase(data,16*1024*1024);
+            decodedIsFinishBase(xzDecodeBase);
             return;
         }
         else
