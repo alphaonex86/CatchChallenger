@@ -332,8 +332,31 @@ uint16_t Api_client_real::getPort()
     return port;
 }
 
-void Api_client_real::sendDatapackContentMainSub()
+void Api_client_real::sendDatapackContentMainSub(const QByteArray &hashMain,const QByteArray &hashSub)
 {
+    bool mainNeedUpdate=true;
+    if(!hashMain.isEmpty())
+        if((unsigned int)hashMain.size()==(unsigned int)CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size() &&
+                memcmp(hashMain.constData(),CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),hashMain.size())==0)
+        {
+            mainNeedUpdate=false;
+        }
+    bool subNeedUpdate=true;
+    if(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.empty() && hashSub.isEmpty())
+        subNeedUpdate=false;
+    else if(!hashSub.isEmpty())
+        if((unsigned int)hashSub.size()==(unsigned int)CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size() &&
+                memcmp(hashSub.constData(),CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),hashSub.size())==0)
+        {
+            subNeedUpdate=false;
+        }
+    if(!mainNeedUpdate && !subNeedUpdate)
+    {
+        datapackStatus=DatapackStatus::Finished;
+        haveTheDatapackMainSub();
+        return;
+    }
+
     sendDatapackContentMain();
 }
 

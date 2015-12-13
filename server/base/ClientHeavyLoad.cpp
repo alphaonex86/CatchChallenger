@@ -1415,6 +1415,7 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
                     BaseServerMasterSendDatapack::extensionAllowed.find(suffix)
                     !=BaseServerMasterSendDatapack::extensionAllowed.cend())
             {
+                DatapackCacheFile datapackCacheFile;
                 if(withHash)
                 {
                     struct stat buf;
@@ -1425,36 +1426,34 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
                             FILE *filedesc = fopen((path+returnList.at(index)).c_str(), "rb");
                             if(filedesc!=NULL)
                             {
-                                DatapackCacheFile datapackCacheFile;
                                 #ifdef _WIN32
                                 fileName.replace(Client::text_antislash,Client::text_slash);//remplace if is under windows server
                                 #endif
                                 const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
                                 SHA224(reinterpret_cast<const unsigned char *>(data.data()),data.size(),reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
                                 datapackCacheFile.partialHash=*reinterpret_cast<const uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput);
-                                filesList[fileName]=datapackCacheFile;
-                                fclose(filedesc);
                             }
                             else
                             {
-                                errorOutput("Client::datapack_file_list fopen failed on " +path+returnList.at(index)+ ":"+std::to_string(errno));
                                 datapackCacheFile.partialHash=0;
+                                std::cerr << "Client::datapack_file_list fopen failed on " +path+returnList.at(index)+ ":"+std::to_string(errno) << std::endl;
                             }
                         }
                         else
                         {
-                            errorOutput("Client::datapack_file_list file too big failed on " +path+returnList.at(index)+ ":"+std::to_string(buf.st_size));
                             datapackCacheFile.partialHash=0;
+                            std::cerr << "Client::datapack_file_list file too big failed on " +path+returnList.at(index)+ ":"+std::to_string(buf.st_size) << std::endl;
                         }
                     }
                     else
                     {
-                        errorOutput("Client::datapack_file_list stat failed on " +path+returnList.at(index)+ ":"+std::to_string(errno));
                         datapackCacheFile.partialHash=0;
+                        std::cerr << "Client::datapack_file_list stat failed on " +path+returnList.at(index)+ ":"+std::to_string(errno) << std::endl;
                     }
                 }
                 else
                     datapackCacheFile.partialHash=0;
+                filesList[fileName]=datapackCacheFile;
             }
         }
         index++;
@@ -1683,7 +1682,22 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
     }
     if(fileToSendList.empty() && fileToDelete==0)
     {
-        errorOutput("Ask datapack list where the checksum match");
+        switch(datapackStatus)
+        {
+            #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+            case DatapackStatus::Base:
+                errorOutput("Ask datapack list where the checksum match Base");
+            break;
+            #endif
+            case DatapackStatus::Main:
+                errorOutput("Ask datapack list where the checksum match Main");
+            break;
+            case DatapackStatus::Sub:
+                errorOutput("Ask datapack list where the checksum match Sub");
+            break;
+            default:
+            return;
+        }
         return;
     }
     std::sort(fileToSendList.begin(),fileToSendList.end());

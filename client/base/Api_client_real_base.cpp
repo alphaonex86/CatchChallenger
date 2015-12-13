@@ -208,7 +208,7 @@ void Api_client_real::datapackChecksumDoneBase(const std::vector<std::string> &d
             qDebug() << "Datapack checksum done but not send by the server";
             return;//need CommonSettings::commonSettings.datapackHash send by the server
         }
-        qDebug() << "Datapack is empty or hash don't match, get from server, hash local: " << QString::fromStdString(binarytoHexa(hash)) << ", hash on server: " << QString::fromStdString(binarytoHexa(CommonSettingsCommon::commonSettingsCommon.datapackHashBase));
+        qDebug() << "Base: Datapack is empty or hash don't match, get from server, hash local: " << QString::fromStdString(binarytoHexa(hash)) << ", hash on server: " << QString::fromStdString(binarytoHexa(CommonSettingsCommon::commonSettingsCommon.datapackHashBase));
         uint8_t datapack_content_query_number=queryNumber();
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -577,13 +577,21 @@ void Api_client_real::httpErrorEventBase()
     return;
 }
 
-void Api_client_real::sendDatapackContentBase()
+void Api_client_real::sendDatapackContentBase(const QByteArray &hashBase)
 {
     if(wait_datapack_content_base)
     {
         qDebug() << (QStringLiteral("already in wait of datapack content"));
         return;
     }
+    if(!hashBase.isEmpty())
+        if((unsigned int)hashBase.size()==(unsigned int)CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size() &&
+                memcmp(hashBase.constData(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),hashBase.size())==0)
+        {
+            qDebug() << "Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote";
+            datapackDownloadFinishedBase();
+            return;
+        }
 
     //compute the mirror
     {
