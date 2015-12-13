@@ -1466,6 +1466,11 @@ void BaseServer::preload_the_datapack()
             abort();
         }
         const std::unordered_map<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"map/main/",false);
+        if(pair.size()==0)
+        {
+            std::cout << "Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,\"map/main/\",false) empty (abort)" << std::endl;
+            abort();
+        }
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         {
             auto i=pair.begin();
@@ -1708,6 +1713,17 @@ void BaseServer::preload_the_datapack()
         }
         CommonSettingsServer::commonSettingsServer.datapackHashServerSub.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
         SHA224_Final(reinterpret_cast<unsigned char *>(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data()),&hashSub);
+    }
+
+    if(Client::datapack_file_hash_cache_base.size()==0)
+    {
+        std::cout << "0 file for datapack loaded base (abort)" << std::endl;
+        abort();
+    }
+    if(Client::datapack_file_hash_cache_main.size()==0)
+    {
+        std::cout << "0 file for datapack loaded main (abort)" << std::endl;
+        abort();
     }
 
     std::cout << Client::datapack_file_hash_cache_base.size()

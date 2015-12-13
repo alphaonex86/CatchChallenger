@@ -42,8 +42,8 @@ public:
     uint16_t getPort();
 
     //datapack related
-    void sendDatapackContentBase();
-    void sendDatapackContentMainSub();
+    void sendDatapackContentBase(const QByteArray &hashBase=QByteArray());
+    void sendDatapackContentMainSub(const QByteArray &hashMain=QByteArray(),const QByteArray &hashSub=QByteArray());
     void sendDatapackContentMain();
     void sendDatapackContentSub();
     void test_mirror_base();

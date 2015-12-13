@@ -8,6 +8,11 @@
 
 #include "QXzDecode.h"
 
+#ifndef QT_NO_EMIT
+#include <QThread>
+#include <QObject>
+#endif
+
 /// \brief to decode the xz via a thread
 class QXzDecodeThread
         #ifndef QT_NO_EMIT
