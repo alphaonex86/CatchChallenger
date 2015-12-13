@@ -34,7 +34,16 @@
     <property name="spacing">
      <number>0</number>
     </property>
-    <property name="margin">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
      <number>0</number>
     </property>
     <item>
@@ -103,7 +112,16 @@
              <property name="spacing">
               <number>0</number>
              </property>
-             <property name="margin">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
               <number>0</number>
              </property>
              <item>
@@ -369,7 +387,10 @@ padding: 0 5px;</string>
            <string notr="true">background-color: rgb(220, 220, 240);
 border: 1px solid rgb(100, 150, 240);
 border-radius:5px;
-color: rgb(0, 0, 0);</string>
+color: rgb(0, 0, 0);
+background-image: url(:/images/multi/busy.png);
+background-repeat: no-repeat;
+background-position: right;</string>
           </property>
           <property name="text">
            <string/>

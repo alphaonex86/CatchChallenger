@@ -94,7 +94,13 @@ MainWindow::MainWindow(QWidget *parent) :
     spacerServer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
     ui->setupUi(this);
     ui->update->setVisible(false);
-    ui->news->setVisible(false);
+    if(settings.contains("news"))
+    {
+        ui->news->setVisible(true);
+        ui->news->setText(settings.value("news").toString());
+    }
+    else
+        ui->news->setVisible(false);
     InternetUpdater::internetUpdater=new InternetUpdater();
     connect(InternetUpdater::internetUpdater,&InternetUpdater::newUpdate,this,&MainWindow::newUpdate);
     RssNews::rssNews=new RssNews();
@@ -1672,7 +1678,10 @@ void MainWindow::newUpdate(const QString &version)
 void MainWindow::rssEntryList(const QList<RssNews::RssEntry> &entryList)
 {
     if(entryList.isEmpty())
+    {
+        ui->news->setVisible(false);
         return;
+    }
     if(entryList.size()==1)
         ui->news->setText(tr("Latest news:")+QStringLiteral(" ")+QStringLiteral("<a href=\"%1\">%2</a>").arg(entryList.at(0).link).arg(entryList.at(0).title));
     else
@@ -1686,6 +1695,8 @@ void MainWindow::rssEntryList(const QList<RssNews::RssEntry> &entryList)
         }
         ui->news->setText(tr("Latest news:")+QStringLiteral("<br />")+entryHtmlList.join("<br />"));
     }
+    settings.setValue("news",ui->news->text());
+    ui->news->setStyleSheet("background-color:rgb(220,220,240);border:1px solid rgb(100,150,240);border-radius:5px;color:rgb(0,0,0);");
     ui->news->setVisible(true);
 }
 
