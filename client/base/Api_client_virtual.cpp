@@ -20,13 +20,16 @@ Api_client_virtual::~Api_client_virtual()
 {
 }
 
-void Api_client_virtual::sendDatapackContentBase()
+void Api_client_virtual::sendDatapackContentBase(const QByteArray &hashBase)
 {
+    Q_UNUSED(hashBase);
     /*emit */haveTheDatapack();
 }
 
-void Api_client_virtual::sendDatapackContentMainSub()
+void Api_client_virtual::sendDatapackContentMainSub(const QByteArray &hashMain,const QByteArray &hashSub)
 {
+    Q_UNUSED(hashMain);
+    Q_UNUSED(hashSub);
     /*emit */haveTheDatapackMainSub();
 }
 

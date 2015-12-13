@@ -192,7 +192,10 @@ void BaseWindow::logged(const QList<ServerFromPoolForDisplay *> &serverOrdenedLi
 {
     this->serverOrdenedList=serverOrdenedList;
     this->characterListForSelection=characterEntryList;
-    CatchChallenger::Api_client_real::client->sendDatapackContentBase();
+    if(settings.contains("DatapackHashBase"))
+        CatchChallenger::Api_client_real::client->sendDatapackContentBase(settings.value("DatapackHashBase").toByteArray());
+    else
+        CatchChallenger::Api_client_real::client->sendDatapackContentBase();
     isLogged=true;
     updateConnectingStatus();
 }
@@ -234,9 +237,17 @@ void BaseWindow::haveCharacter()
     haveCharacterInformation=true;
 
     if(haveInventory && haveCharacterPosition && haveCharacterInformation)
-        CatchChallenger::Api_client_real::client->sendDatapackContentMainSub();
+        sendDatapackContentMainSub();
 
     updateConnectingStatus();
+}
+
+void BaseWindow::sendDatapackContentMainSub()
+{
+    if(settings.contains("DatapackHashMain") && settings.contains("DatapackHashSub"))
+        CatchChallenger::Api_client_real::client->sendDatapackContentMainSub(settings.value("DatapackHashMain").toByteArray(),settings.value("DatapackHashSub").toByteArray());
+    else
+        CatchChallenger::Api_client_real::client->sendDatapackContentMainSub();
 }
 
 void BaseWindow::have_character_position()
@@ -250,7 +261,7 @@ void BaseWindow::have_character_position()
     haveCharacterPosition=true;
 
     if(haveInventory && haveCharacterPosition && haveCharacterInformation)
-        CatchChallenger::Api_client_real::client->sendDatapackContentMainSub();
+        sendDatapackContentMainSub();
 
     updateConnectingStatus();
 }
@@ -301,6 +312,12 @@ void BaseWindow::haveTheDatapack()
     if(haveDatapack)
         return;
     haveDatapack=true;
+    settings.setValue("DatapackHashBase",
+                      QByteArray(
+                          CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),
+                          CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()
+                                  )
+                      );
 
     if(CatchChallenger::Api_client_real::client!=NULL)
         emit parseDatapack(CatchChallenger::Api_client_real::client->datapackPathBase());
@@ -314,6 +331,18 @@ void BaseWindow::haveTheDatapackMainSub()
     if(haveDatapackMainSub)
         return;
     haveDatapackMainSub=true;
+    settings.setValue("DatapackHashMain",
+                      QByteArray(
+                          CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),
+                          CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()
+                                  )
+                      );
+    settings.setValue("DatapackHashSub",
+                      QByteArray(
+                          CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),
+                          CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()
+                                  )
+                      );
 
     if(CatchChallenger::Api_client_real::client!=NULL)
         emit parseDatapackMainSub(CatchChallenger::Api_client_real::client->mainDatapackCode(),CatchChallenger::Api_client_real::client->subDatapackCode());
@@ -349,7 +378,7 @@ void BaseWindow::have_inventory(const std::unordered_map<uint16_t,uint32_t> &ite
     this->warehouse_items=warehouse_items;
     haveInventory=true;
     if(haveInventory && haveCharacterPosition && haveCharacterInformation)
-        CatchChallenger::Api_client_real::client->sendDatapackContentMainSub();
+        sendDatapackContentMainSub();
     updateConnectingStatus();
 }
 

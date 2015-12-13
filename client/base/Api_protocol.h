@@ -45,8 +45,8 @@ public:
     QString getPseudo();
     uint16_t getId();
 
-    virtual void sendDatapackContentBase() = 0;
-    virtual void sendDatapackContentMainSub() = 0;
+    virtual void sendDatapackContentBase(const QByteArray &hashBase=QByteArray()) = 0;
+    virtual void sendDatapackContentMainSub(const QByteArray &hashMain=QByteArray(),const QByteArray &hashSub=QByteArray()) = 0;
     virtual void tryDisconnect() = 0;
     virtual QString datapackPathBase() const;
     virtual QString datapackPathMain() const;
