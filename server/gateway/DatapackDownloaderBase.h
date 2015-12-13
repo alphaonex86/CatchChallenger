@@ -3,6 +3,7 @@
 
 #include "../../general/base/GeneralVariable.h"
 #include "../../client/base/DatapackChecksum.h"
+#include "../../client/base/qt-tar-xz/QXzDecode.h"
 
 #include <string>
 #include <vector>
@@ -12,7 +13,6 @@
 #include <curl/curl.h>
 
 #include "../../general/base/GeneralStructures.h"
-#include "../../client/base/qt-tar-xz/QXzDecodeThread.h"
 
 namespace CatchChallenger {
 class DatapackDownloaderBase
@@ -30,7 +30,7 @@ public:
     //datapack related
     void sendDatapackContentBase();
     void test_mirror_base();
-    void decodedIsFinishBase();
+    void decodedIsFinishBase(QXzDecode &xzDecodeBase);
     bool mirrorTryNextBase();
     void httpFinishedForDatapackListBase(const std::vector<char> data=std::vector<char>());
     const std::vector<std::string> listDatapackBase(std::string suffix);
@@ -43,9 +43,6 @@ public:
     static std::vector<std::string> httpDatapackMirrorBaseList;
 private:
     static std::regex regex_DATAPACK_FILE_REGEX;
-    /// \todo group into one thread by change for queue
-    Drop the thread:
-    QXzDecodeThread xzDecodeThreadBase;
     bool datapackTarXzBase;
     CatchChallenger::DatapackChecksum datapackChecksum;
     unsigned int index_mirror_base;
