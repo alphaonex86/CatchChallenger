@@ -64,7 +64,11 @@ SOURCES += \
     ../../general/base/lz4/lz4.c \
     ../../general/base/cpp11addition.cpp \
     FacilityLibGateway.cpp \
-    ../base/TinyXMLSettings.cpp
+    ../base/TinyXMLSettings.cpp \
+    ../../general/base/tinyXML/tinystr.cpp \
+    ../../general/base/tinyXML/tinyxml.cpp \
+    ../../general/base/tinyXML/tinyxmlerror.cpp \
+    ../../general/base/tinyXML/tinyxmlparser.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \
@@ -100,4 +104,6 @@ HEADERS += \
     ../../general/base/CommonSettingsServer.h \
     ../../general/base/lz4/lz4.h \
     FacilityLibGateway.h \
-    ../base/TinyXMLSettings.h
+    ../base/TinyXMLSettings.h \
+    ../../general/base/tinyXML/tinystr.h \
+    ../../general/base/tinyXML/tinyxml.h
