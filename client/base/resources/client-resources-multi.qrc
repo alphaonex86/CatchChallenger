@@ -30,5 +30,6 @@
         <file>images/interface/server_list/stat3.png</file>
         <file>images/interface/server_list/stat4.png</file>
         <file>images/interface/server_list/bug.png</file>
+        <file>images/multi/busy.png</file>
     </qresource>
 </RCC>
