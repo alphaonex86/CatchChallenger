@@ -218,17 +218,34 @@ bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType,const char 
     }
     if(stat==EpollClientLoginStat::GameServerConnected)
     {
-        //send the network message
-        uint32_t posOutput=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
-        posOutput+=1+4;
+        uint8_t fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType];
+        if(fixedSize!=0xFE)
+        {
+            //fixed size
+            //send the network message
+            uint32_t posOutput=0;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+            posOutput+=1;
 
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
-        posOutput+=size;
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,data,size);
+            posOutput+=size;
 
-        linkToGameServer->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-        return true;
+            return linkToGameServer->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+        }
+        else
+        {
+            //dynamic size
+            //send the network message
+            uint32_t posOutput=0;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+            posOutput+=1+4;
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
+            posOutput+=size;
+
+            return linkToGameServer->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+        }
     }
     (void)data;
     (void)size;
@@ -450,19 +467,39 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
             break;
         }
 
-        //send the network query
         linkToGameServer->registerOutputQuery(queryNumber,mainCodeType);
-        uint32_t posOutput=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
-        posOutput+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
-        posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
+        uint8_t fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType];
+        if(fixedSize!=0xFE)
+        {
+            //fixed size
+            //send the network message
+            uint32_t posOutput=0;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+            posOutput+=1;
 
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
-        posOutput+=size;
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,data,size);
+            posOutput+=size;
 
-        return linkToGameServer->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+            return linkToGameServer->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+        }
+        else
+        {
+            //dynamic size
+            //send the network message
+            uint32_t posOutput=0;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+            posOutput+=1+4;
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
+            posOutput+=size;
+
+            return linkToGameServer->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+        }
     }
 
     return parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
@@ -491,19 +528,39 @@ bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
     {
         if(Q_LIKELY(linkToGameServer))
         {
-            //send the network reply
-            removeFromQueryReceived(queryNumber);
-            uint32_t posOutput=0;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-            posOutput+=1;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
-            posOutput+=1+4;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
+            linkToGameServer->removeFromQueryReceived(queryNumber);
+            const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType+128];
+            if(fixedSize!=0xFE)
+            {
+                //fixed size
+                //send the network message
+                uint32_t posOutput=0;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+                posOutput+=1;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+                posOutput+=1;
 
-            memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
-            posOutput+=size;
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,data,size);
+                posOutput+=size;
 
-            return linkToGameServer->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                return linkToGameServer->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+            }
+            else
+            {
+                //dynamic size
+                //send the network message
+                uint32_t posOutput=0;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+                posOutput+=1;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+                posOutput+=1+4;
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
+                posOutput+=size;
+
+                return linkToGameServer->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+            }
         }
         else
         {

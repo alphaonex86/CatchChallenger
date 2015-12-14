@@ -17,6 +17,7 @@ using namespace CatchChallenger;
 #include "EpollClientLoginSlave.h"
 #include "../base/DictionaryLogin.h"
 #include "../../general/base/ProtocolParsing.h"
+#include "../epoll/EpollSocket.h"
 
 EpollServerLoginSlave *EpollServerLoginSlave::epollServerLoginSlave=NULL;
 
@@ -366,7 +367,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             LinkToMaster::linkToMaster->stat=LinkToMaster::Stat::Connected;
             LinkToMaster::linkToMaster->readTheFirstSslHeader();
             LinkToMaster::linkToMaster->setConnexionSettings();
-            int s = EpollSocket::make_non_blocking(socketFd);
+            const int &s = EpollSocket::make_non_blocking(linkfd);
             if(s == -1)
                 std::cerr << "unable to make to socket non blocking" << std::endl;
         }

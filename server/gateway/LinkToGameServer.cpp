@@ -387,3 +387,8 @@ bool LinkToGameServer::sendRawSmallPacket(const char * const data,const int &siz
 {
     return internalSendRawSmallPacket(data,size);
 }
+
+bool LinkToGameServer::removeFromQueryReceived(const uint8_t &queryNumber)
+{
+    return ProtocolParsingBase::removeFromQueryReceived(queryNumber);
+}
