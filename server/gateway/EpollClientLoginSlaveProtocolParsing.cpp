@@ -1,6 +1,7 @@
 #include "EpollClientLoginSlave.h"
 #include "EpollServerLoginSlave.h"
 #include "../base/BaseServerLogin.h"
+#include "../epoll/EpollSocket.h"
 #include "../../general/base/CommonSettingsCommon.h"
 
 #include <iostream>
@@ -147,6 +148,9 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                     //wait readTheFirstSslHeader() to sendProtocolHeader();
                     linkToGameServer->setConnexionSettings();
                     linkToGameServer->parseIncommingData();
+                    int s = EpollSocket::make_non_blocking(socketFd);
+                    if(s == -1)
+                        std::cerr << "unable to make to socket non blocking" << std::endl;
                 }
                 else
                 {

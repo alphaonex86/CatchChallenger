@@ -136,7 +136,8 @@ void ProtocolParsingInputOutput::closeSocket()
 /// \todo drop (check login as proxy), reason: bypass the DDOS filter
 bool ProtocolParsingBase::forwardTo(ProtocolParsingBase * const destination)
 {
-    uint32_t size=0;
+    /// \todo limit the DDOS here!
+    ssize_t size=0;
     if(!header_cut.empty())
     {
         const unsigned int &size_to_get=CATCHCHALLENGER_COMMONBUFFERSIZE-header_cut.size();
@@ -147,6 +148,8 @@ bool ProtocolParsingBase::forwardTo(ProtocolParsingBase * const destination)
             //std::vector<char> tempDataToDebug(ProtocolParsingInputOutput::commonBuffer+header_cut.size(),size-header_cut.size());
             //qDebug() << "with header cut" << header_cut << tempDataToDebug.toHex() << "and size" << size;
         }
+        if(size<0)
+            return true;
         header_cut.clear();
     }
     else
@@ -157,6 +160,8 @@ bool ProtocolParsingBase::forwardTo(ProtocolParsingBase * const destination)
             //std::vector<char> tempDataToDebug(ProtocolParsingInputOutput::commonBuffer,size);
             //qDebug() << "without header cut" << tempDataToDebug.toHex() << "and size" << size;
         }
+        if(size<0)
+            return true;
     }
     if(size>0)
         destination->internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,size);
@@ -185,13 +190,20 @@ void ProtocolParsingInputOutput::parseIncommingData()
 
     while(1)
     {
-        int32_t size;
+        ssize_t size;//bytesAvailable() and then read() can return negative value
         uint32_t cursor=0;
         if(!header_cut.empty())
         {
             const unsigned int &size_to_get=CATCHCHALLENGER_COMMONBUFFERSIZE-header_cut.size();
             memcpy(ProtocolParsingInputOutput::tempBigBufferForInput,header_cut.data(),header_cut.size());
             size=read(ProtocolParsingInputOutput::tempBigBufferForInput,size_to_get)+header_cut.size();
+            if(size<0)
+            {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                parseIncommingDataCount--;
+                #endif
+                return;
+            }
             if(size>0)
             {
                 //std::vector<char> tempDataToDebug(ProtocolParsingInputOutput::commonBuffer+header_cut.size(),size-header_cut.size());
@@ -202,6 +214,13 @@ void ProtocolParsingInputOutput::parseIncommingData()
         else
         {
             size=read(ProtocolParsingInputOutput::tempBigBufferForInput,CATCHCHALLENGER_COMMONBUFFERSIZE);
+            if(size<0)
+            {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                parseIncommingDataCount--;
+                #endif
+                return;
+            }
             if(size>0)
             {
                 //std::vector<char> tempDataToDebug(ProtocolParsingInputOutput::commonBuffer,size);
