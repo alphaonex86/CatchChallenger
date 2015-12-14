@@ -188,9 +188,10 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
         const int &listSize=map_loader.map_to_send.teleport.size();
         while(index<listSize)
         {
-            tempMapObject->logicalMap.teleport_semi << map_loader.map_to_send.teleport.at(index);
+            const CatchChallenger::Map_semi_teleport &teleport=map_loader.map_to_send.teleport.at(index);
+            tempMapObject->logicalMap.teleport_semi << teleport;
             tempMapObject->logicalMap.teleport_semi[index].map                      = QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+QString::fromStdString(tempMapObject->logicalMap.teleport_semi.at(index).map)).absoluteFilePath().toStdString();
-            const TiXmlElement * item=map_loader.map_to_send.teleport.at(index).conditionUnparsed;
+            const TiXmlElement * item=teleport.conditionUnparsed;
             QString conditionText;
             {
                 if(item!=NULL)
@@ -915,5 +916,7 @@ void MapVisualiserThread::loadBotFile(const std::string &file)
 
 void MapVisualiserThread::resetAll()
 {
+    CatchChallenger::Map_loader::teleportConditionsUnparsed.clear();
+
     botFiles.clear();
 }
