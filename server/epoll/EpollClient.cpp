@@ -10,8 +10,11 @@
 #include <cstring>
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include "Epoll.h"
 #include "EpollSocket.h"
+#include "../../general/base/GeneralVariable.h"
 
 using namespace CatchChallenger;
 
@@ -57,13 +60,26 @@ ssize_t EpollClient::read(char *buffer,const size_t &bufferSize)
 {
     if(infd==-1)
         return -1;
+    const auto &bytesAvailableVar=bytesAvailable();
+    //need more performance? change the API for 0 copy API
+    if(bytesAvailableVar<=0)//non blocking for read
     {
-        //need more performance? change the API for 0 copy API
-        const auto &bytesAvailableVar=bytesAvailable();
-        if(bytesAvailableVar<=0)//non blocking for read
-            return bytesAvailableVar;
+        const int &flags = fcntl(infd, F_GETFL, 0);
+        if(flags == -1)
+        {
+            std::cerr << "fcntl get flags error" << std::endl;
+            return -1;
+        }
+
+        if(flags & O_NONBLOCK)
+            return ::read(infd, buffer, bufferSize);
+        return bytesAvailableVar;
     }
-    const ssize_t &count=::read(infd, buffer, bufferSize);
+    ssize_t count;
+    if(bytesAvailableVar>0 && bytesAvailableVar<(ssize_t)bufferSize)
+        count=::read(infd, buffer, bytesAvailableVar);
+    else
+        count=::read(infd, buffer, bufferSize);
     if(count == -1)
     {
         /* If errno == EAGAIN, that means we have read all
@@ -180,10 +196,18 @@ long int EpollClient::bytesAvailable() const
 {
     if(infd==-1)
         return -1;
-    unsigned long int nbytes;
+    long int nbytes;
     // gives shorter than true amounts on Unix domain sockets.
     if(ioctl(infd, FIONREAD, &nbytes)>=0)
+    {
+        if(nbytes<0 || nbytes>1024*1024*1024)
+        {
+            if(errno!=11)
+                std::cerr << "ioctl(infd, FIONREAD, &nbytes) return incorrect value: " << nbytes << ", errno: " << errno << std::endl;
+            return -1;
+        }
         return nbytes;
+    }
     else
         return -1;
 }

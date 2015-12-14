@@ -51,6 +51,7 @@ LinkToGameServer::LinkToGameServer(
         reply0205inWaitQueryNumber(0),
         queryIdToReconnect(0)
 {
+    flags|=0x08;
 }
 
 LinkToGameServer::~LinkToGameServer()
@@ -305,14 +306,14 @@ void LinkToGameServer::parseIncommingData()
 
 void LinkToGameServer::sendProtocolHeader()
 {
-    removeFromQueryReceived(protocolQueryNumber);
+    registerOutputQuery(protocolQueryNumber,0xA0);
     protocolHeaderToMatchLogin[0x01]=protocolQueryNumber;
     sendRawSmallPacket(reinterpret_cast<const char *>(protocolHeaderToMatchLogin),sizeof(protocolHeaderToMatchLogin));
 }
 
 void LinkToGameServer::sendProtocolHeaderGameServer()
 {
-    removeFromQueryReceived(protocolQueryNumber);
+    registerOutputQuery(protocolQueryNumber,0xA0);
     protocolHeaderToMatchLogin[0x01]=protocolQueryNumber;
     sendRawSmallPacket(reinterpret_cast<const char *>(protocolHeaderToMatchGameServer),sizeof(protocolHeaderToMatchGameServer));
 }
