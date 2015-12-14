@@ -880,7 +880,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
     if(mainCodeType==0x93)
         client->fastForward=true;
     //send the network reply
-    removeFromQueryReceived(queryNumber);
+    client->removeFromQueryReceived(queryNumber);
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
     posOutput+=1;
