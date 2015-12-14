@@ -391,6 +391,7 @@ bool Map_loader::tryLoadMap(const std::string &file)
                                         Map_semi_teleport new_tp;
                                         new_tp.condition.type=MapConditionType_None;
                                         new_tp.condition.value=0;
+                                        new_tp.conditionUnparsed=NULL;
                                         new_tp.destination_x = stringtouint8(property_text.at(Map_loader::text_x),&ok);
                                         if(ok)
                                         {
