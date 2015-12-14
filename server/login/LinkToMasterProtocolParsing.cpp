@@ -1,11 +1,12 @@
 #include "LinkToMaster.h"
 #include "EpollClientLoginSlave.h"
-#include <iostream>
 #include "EpollServerLoginSlave.h"
 #include "EpollClientLoginSlave.h"
 #include "CharactersGroupForLogin.h"
 #include "../../general/base/CommonSettingsCommon.h"
+#include "../epoll/EpollSocket.h"
 
+#include <iostream>
 #include <openssl/sha.h>
 
 using namespace CatchChallenger;
@@ -1039,7 +1040,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                                     //wait readTheFirstSslHeader() to sendProtocolHeader();
                                     linkToGameServer->setConnexionSettings();
                                     linkToGameServer->parseIncommingData();
-                                    int s = EpollSocket::make_non_blocking(socketFd);
+                                    const int &s = EpollSocket::make_non_blocking(socketFd);
                                     if(s == -1)
                                         std::cerr << "unable to make to socket non blocking" << std::endl;
                                 }

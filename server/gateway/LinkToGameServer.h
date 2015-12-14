@@ -66,6 +66,7 @@ public:
     void disconnectClient();
     uint8_t freeQueryNumberToServer();
     bool sendRawSmallPacket(const char * const data,const int &size);
+    bool removeFromQueryReceived(const uint8_t &queryNumber);
 protected:
     void errorParsingLayer(const std::string &error);
     void messageParsingLayer(const std::string &message) const;
