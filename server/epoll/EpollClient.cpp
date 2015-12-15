@@ -204,8 +204,8 @@ long int EpollClient::bytesAvailable() const
     {
         if(nbytes<0 || nbytes>1024*1024*1024)
         {
-            if(errno!=11)
-                std::cerr << "ioctl(infd, FIONREAD, &nbytes) return incorrect value: " << nbytes << ", errno: " << errno << std::endl;
+            /*if(errno!=11)
+                std::cerr << "ioctl(infd, FIONREAD, &nbytes) return incorrect value: " << nbytes << ", errno: " << errno << std::endl;*/
             return -1;
         }
         return nbytes;

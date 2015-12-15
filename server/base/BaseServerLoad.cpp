@@ -1715,11 +1715,13 @@ void BaseServer::preload_the_datapack()
         SHA224_Final(reinterpret_cast<unsigned char *>(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data()),&hashSub);
     }
 
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     if(Client::datapack_file_hash_cache_base.size()==0)
     {
         std::cout << "0 file for datapack loaded base (abort)" << std::endl;
         abort();
     }
+    #endif
     if(Client::datapack_file_hash_cache_main.size()==0)
     {
         std::cout << "0 file for datapack loaded main (abort)" << std::endl;
