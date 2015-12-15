@@ -515,7 +515,7 @@ int main(int argc, char *argv[])
         LinkToMaster::linkToMaster->setSettings(settings);
         LinkToMaster::linkToMaster->readTheFirstSslHeader();
         LinkToMaster::linkToMaster->setConnexionSettings();
-        int s = EpollSocket::make_non_blocking(infd);
+        const int &s = EpollSocket::make_non_blocking(linkfd);
         if(s == -1)
             std::cerr << "unable to make to socket non blocking" << std::endl;
     }
