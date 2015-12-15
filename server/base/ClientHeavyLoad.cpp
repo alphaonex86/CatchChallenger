@@ -2009,7 +2009,6 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
                     sendFileContent();
             }
         }
-        fclose(filedesc);
         return true;
     }
     else
