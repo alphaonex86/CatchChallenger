@@ -537,7 +537,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
                 return;
             }
             std::vector<std::string> content;
-            std::vector<char> partialHashListRaw(data.cbegin()+endOfText+3,data.cend()-endOfText-3);
+            std::vector<char> partialHashListRaw(data.cbegin()+endOfText+3,data.cend());
             {
                 if(partialHashListRaw.size()%4!=0)
                 {
@@ -590,6 +590,8 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
                                     return;
                                 }
                             }
+                            partialHashListBase.erase(partialHashListBase.cbegin()+indexInDatapackList);
+                            datapackFilesListBase.erase(datapackFilesListBase.cbegin()+indexInDatapackList);
                         }
                         else
                         {
@@ -599,8 +601,6 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
                                 return;
                             }
                         }
-                        partialHashListBase.erase(partialHashListBase.cbegin()+indexInDatapackList);
-                        datapackFilesListBase.erase(datapackFilesListBase.cbegin()+indexInDatapackList);
                     }
                 }
                 index++;
@@ -687,6 +687,7 @@ void DatapackDownloaderBase::sendDatapackContentBase()
 
     datapackTarXzBase=false;
     wait_datapack_content_base=true;
+    FacilityLibGateway::mkpath(mDatapackBase);
     datapackFilesListBase=listDatapackBase(std::string());
     std::sort(datapackFilesListBase.begin(),datapackFilesListBase.end());
     const DatapackChecksum::FullDatapackChecksumReturn &fullDatapackChecksumReturn=DatapackChecksum::doFullSyncChecksumBase(mDatapackBase);
