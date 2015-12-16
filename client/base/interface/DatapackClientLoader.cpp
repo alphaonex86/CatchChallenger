@@ -136,6 +136,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
         const std::vector<char> &hash=CatchChallenger::DatapackChecksum::doChecksumBase(datapackPath.toStdString());
         if(hash.empty())
         {
+            std::cerr << "DatapackClientLoader::parseDatapack(): hash is empty" << std::endl;
             emit datapackChecksumError();
             inProgress=false;
             return;
@@ -192,6 +193,7 @@ void DatapackClientLoader::parseDatapackMainSub(const QString &mainDatapackCode,
             const std::vector<char> &hash=CatchChallenger::DatapackChecksum::doChecksumMain((datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN).toStdString());
             if(hash.empty())
             {
+                std::cerr << "DatapackClientLoader::parseDatapackMainSub(): hash is empty" << std::endl;
                 emit datapackChecksumError();
                 inProgress=false;
                 return;
@@ -212,6 +214,7 @@ void DatapackClientLoader::parseDatapackMainSub(const QString &mainDatapackCode,
             const std::vector<char> &hash=CatchChallenger::DatapackChecksum::doChecksumSub((datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB).toStdString());
             if(hash.empty())
             {
+                std::cerr << "DatapackClientLoader::parseDatapackSub(): hash is empty" << std::endl;
                 emit datapackChecksumError();
                 inProgress=false;
                 return;
