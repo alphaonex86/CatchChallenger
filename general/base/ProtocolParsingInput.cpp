@@ -164,7 +164,12 @@ bool ProtocolParsingBase::forwardTo(ProtocolParsingBase * const destination)
             return true;
     }
     if(size>0)
+    {
+        #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
+        std::cout << "Forwarded packet size: " << size << ": " << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,size) << std::endl;
+        #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
         destination->internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,size);
+    }
     return true;
 }
 

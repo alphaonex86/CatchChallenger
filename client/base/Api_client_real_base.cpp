@@ -425,6 +425,7 @@ void Api_client_real::httpFinishedForDatapackListBase()
         }
         else
         {
+            /// \todo to fix
             int sizeToGet=0;
             int fileToGet=0;
             httpError=false;

@@ -535,7 +535,7 @@ bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
                 //fixed size
                 //send the network message
                 uint32_t posOutput=0;
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_CLIENT_TO_SERVER;
                 posOutput+=1;
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
                 posOutput+=1;
@@ -550,7 +550,7 @@ bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
                 //dynamic size
                 //send the network message
                 uint32_t posOutput=0;
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_CLIENT_TO_SERVER;
                 posOutput+=1;
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
                 posOutput+=1+4;
