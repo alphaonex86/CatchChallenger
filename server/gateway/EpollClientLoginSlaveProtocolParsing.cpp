@@ -493,9 +493,9 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
             posOutput+=1;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
             posOutput+=1+4;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
 
-            memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
             posOutput+=size;
 
             return linkToGameServer->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -540,7 +540,7 @@ bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
                 posOutput+=1;
 
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,data,size);
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,data,size);
                 posOutput+=size;
 
                 return linkToGameServer->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -554,9 +554,9 @@ bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
                 posOutput+=1;
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
                 posOutput+=1+4;
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
 
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
                 posOutput+=size;
 
                 return linkToGameServer->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
