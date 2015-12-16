@@ -8,6 +8,7 @@ using namespace CatchChallenger;
 #include <sys/stat.h>
 #endif
 
+#include <iostream>
 #include <cmath>
 #include <QRegularExpression>
 #include <QNetworkReply>
@@ -196,7 +197,7 @@ void Api_client_real::datapackChecksumDoneBase(const std::vector<std::string> &d
     this->partialHashListBase=partialHashList;
     if(!datapackFilesListBase.empty() && hash==CommonSettingsCommon::commonSettingsCommon.datapackHashBase)
     {
-        qDebug() << "Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote";
+        std::cerr << "Base: Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote" << binarytoHexa(hash) << std::endl;
         datapackDownloadFinishedBase();
         return;
     }
