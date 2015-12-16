@@ -192,8 +192,8 @@ void BaseWindow::logged(const QList<ServerFromPoolForDisplay *> &serverOrdenedLi
 {
     this->serverOrdenedList=serverOrdenedList;
     this->characterListForSelection=characterEntryList;
-    if(settings.contains("DatapackHashBase"))
-        CatchChallenger::Api_client_real::client->sendDatapackContentBase(settings.value("DatapackHashBase").toByteArray());
+    if(settings.contains("DatapackHashBase-"+CatchChallenger::Api_client_real::client->datapackPathBase()))
+        CatchChallenger::Api_client_real::client->sendDatapackContentBase(settings.value("DatapackHashBase-"+CatchChallenger::Api_client_real::client->datapackPathBase()).toByteArray());
     else
         CatchChallenger::Api_client_real::client->sendDatapackContentBase();
     isLogged=true;
@@ -244,8 +244,10 @@ void BaseWindow::haveCharacter()
 
 void BaseWindow::sendDatapackContentMainSub()
 {
-    if(settings.contains("DatapackHashMain") && settings.contains("DatapackHashSub"))
-        CatchChallenger::Api_client_real::client->sendDatapackContentMainSub(settings.value("DatapackHashMain").toByteArray(),settings.value("DatapackHashSub").toByteArray());
+    if(settings.contains("DatapackHashMain-"+CatchChallenger::Api_client_real::client->datapackPathMain()) &&
+            settings.contains("DatapackHashSub-"+CatchChallenger::Api_client_real::client->datapackPathSub()))
+        CatchChallenger::Api_client_real::client->sendDatapackContentMainSub(settings.value("DatapackHashMain"+CatchChallenger::Api_client_real::client->datapackPathMain()).toByteArray(),
+                                                                             settings.value("DatapackHashSub"+CatchChallenger::Api_client_real::client->datapackPathSub()).toByteArray());
     else
         CatchChallenger::Api_client_real::client->sendDatapackContentMainSub();
 }
@@ -312,7 +314,7 @@ void BaseWindow::haveTheDatapack()
     if(haveDatapack)
         return;
     haveDatapack=true;
-    settings.setValue("DatapackHashBase",
+    settings.setValue("DatapackHashBase-"+CatchChallenger::Api_client_real::client->datapackPathBase(),
                       QByteArray(
                           CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),
                           CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()
@@ -331,13 +333,13 @@ void BaseWindow::haveTheDatapackMainSub()
     if(haveDatapackMainSub)
         return;
     haveDatapackMainSub=true;
-    settings.setValue("DatapackHashMain",
+    settings.setValue("DatapackHashMain-"+CatchChallenger::Api_client_real::client->datapackPathMain(),
                       QByteArray(
                           CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),
                           CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()
                                   )
                       );
-    settings.setValue("DatapackHashSub",
+    settings.setValue("DatapackHashSub-"+CatchChallenger::Api_client_real::client->datapackPathSub(),
                       QByteArray(
                           CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),
                           CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()
