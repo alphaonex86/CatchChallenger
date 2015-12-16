@@ -294,8 +294,21 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                     case 0x01:
                     break;
                     case 0x02:
+                    {
                         gameServerMode=GameServerMode::Proxy;
-                    return true;
+                        //all right but need reemit
+                        //send the network message
+                        uint32_t posOutput=0;
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+                        posOutput+=1+4;
+                        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+
+                        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
+                        posOutput+=size;
+
+                        return client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                    }
+                    break;
                     default:
                         parseNetworkReadError("parseFullMessage() wrong server list mode: "+std::to_string(mainCodeType));
                     return false;
@@ -503,16 +516,34 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
         break;
     }
 
-    //send the network message
-    uint32_t posOutput=0;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
-    posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+    uint8_t fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType];
+    if(fixedSize!=0xFE)
+    {
+        //fixed size
+        //send the network message
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+        posOutput+=1;
 
-    memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
-    posOutput+=size;
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,data,size);
+        posOutput+=size;
 
-    return client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+        return client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    }
+    else
+    {
+        //dynamic size
+        //send the network message
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+        posOutput+=1+4;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
+        posOutput+=size;
+
+        return client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    }
 }
 
 //have query with reply
@@ -526,19 +557,39 @@ bool LinkToGameServer::parseQuery(const uint8_t &mainCodeType,const uint8_t &que
     if(stat!=Stat::ProtocolGood)
         return parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
 
-    //send the network message
-    uint32_t posOutput=0;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
-    posOutput+=1;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
-    posOutput+=1;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
-    posOutput+=4;
-    memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
-    posOutput+=size;
-
     client->registerOutputQuery(queryNumber,mainCodeType);
-    return client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    uint8_t fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType];
+    if(fixedSize!=0xFE)
+    {
+        //fixed size
+        //send the network message
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+        posOutput+=1;
+
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,data,size);
+        posOutput+=size;
+
+        return client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    }
+    else
+    {
+        //dynamic size
+        //send the network message
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+        posOutput+=1+4;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
+
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
+        posOutput+=size;
+
+        return client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    }
 }
 
 //send reply
@@ -879,19 +930,41 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
 
     if(mainCodeType==0x93)
         client->fastForward=true;
+
     //send the network reply
     client->removeFromQueryReceived(queryNumber);
-    uint32_t posOutput=0;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-    posOutput+=1;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
-    posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
+    const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType+128];
+    if(fixedSize!=0xFE)
+    {
+        //fixed size
+        //send the network message
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+        posOutput+=1;
 
-    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data,size);
-    posOutput+=size;
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,data,size);
+        posOutput+=size;
 
-    client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+        return client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    }
+    else
+    {
+        //dynamic size
+        //send the network message
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+        posOutput+=1+4;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
+        posOutput+=size;
+
+        return client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    }
 
     return true;
 }
