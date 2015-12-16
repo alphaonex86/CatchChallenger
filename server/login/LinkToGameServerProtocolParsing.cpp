@@ -249,7 +249,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     //fixed size
                     //send the network message
                     uint32_t posOutput=0;
-                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
                     posOutput+=1;
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
                     posOutput+=1;
@@ -264,7 +264,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     //dynamic size
                     //send the network message
                     uint32_t posOutput=0;
-                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
                     posOutput+=1;
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
                     posOutput+=1+4;

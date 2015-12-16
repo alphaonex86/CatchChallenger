@@ -1,8 +1,10 @@
 #include "FacilityLibGateway.h"
+#include "../../general/base/cpp11addition.h"
 
 #include <sys/stat.h>
 #include <stdio.h>
 #include <string.h>
+#include <iostream>
 
 using namespace CatchChallenger;
 
@@ -25,23 +27,23 @@ bool FacilityLibGateway::mkpath(const std::string &dir)
 #ifndef __linux__
 #error this only work on linux
 #endif
-    char *temppath=(char *)malloc(dir.size()+1);
-    strcpy(temppath,dir.c_str());
-    char *separator=NULL;
-    while((separator=strchr(temppath,'/'))!=0)
+    std::string tempdir=dir;
+    stringreplaceAll(tempdir,"//","/");
+    const std::vector<std::string> &folderdir=stringsplit(dir,'/');
+    unsigned int index=2;
+    while(index<folderdir.size())
     {
-        if(separator!=temppath)
+        std::vector<std::string> tempsplit;
+        std::copy(folderdir.cbegin(),folderdir.cbegin()+index,std::back_inserter(tempsplit));
+        const std::string &pathtodo=stringimplode(tempsplit,'/');
+        if(pathtodo.size()<2)
         {
-            *separator='\0';
-            if(!dolocalfolder(dir))
-            {
-                delete temppath;
-                return false;
-            }
-            *separator='/';
+            std::cerr << "FacilityLibGateway::mkpath(" << dir << "): pathtodo.size()<2" << std::endl;
+            return false;
         }
-        temppath=separator+1;
+        if(!dolocalfolder(pathtodo))
+            return false;
+        index++;
     }
-    delete temppath;
-    return dolocalfolder(dir);
+    return dolocalfolder(tempdir);
 }
