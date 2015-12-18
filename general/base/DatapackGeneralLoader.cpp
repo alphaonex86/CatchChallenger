@@ -54,7 +54,7 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
                     {
                         if(level->Attribute("point")!=NULL)
                         {
-                            const int32_t &point=stringtouint32(*level->Attribute(std::string("point")),&ok);
+                            const int32_t &point=stringtoint32(*level->Attribute(std::string("point")),&ok);
                             std::string text_val;
                             if(ok)
                             {
