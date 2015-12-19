@@ -991,7 +991,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                                         if(monsters.find(botFightMonster.id)==monsters.cend())
                                         {
                                             entryValid=false;
-                                            std::cerr << "Monster not found into the monster list: " << botFightMonster.id << " into the ValueStr(): " << monster->ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
+                                            std::cerr << "Monster not found into the monster list: " << botFightMonster.id << " into the ValueStr(): " << monster->ValueStr() << " (at line: " << monster->Row() << "), file: " << file << std::endl;
                                             break;
                                         }
                                         if(monster->Attribute(FightLoader::text_level)!=NULL)
@@ -999,12 +999,12 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                                             botFightMonster.level=stringtouint16(*monster->Attribute(FightLoader::text_level),&ok);
                                             if(!ok)
                                             {
-                                                std::cerr << "The level is not a number: type: " << monster->Attribute(FightLoader::text_type) << " ValueStr(): " << monster->ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
+                                                std::cerr << "The level is not a number: type: " << monster->Attribute(FightLoader::text_type) << " ValueStr(): " << monster->ValueStr() << " (at line: " << monster->Row() << "), file: " << file << std::endl;
                                                 botFightMonster.level=1;
                                             }
                                             if(botFightMonster.level<1)
                                             {
-                                                std::cerr << "Can't be 0 or negative: type: " << monster->Attribute(FightLoader::text_type) << " ValueStr(): " << monster->ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
+                                                std::cerr << "Can't be 0 or negative: type: " << monster->Attribute(FightLoader::text_type) << " ValueStr(): " << monster->ValueStr() << " (at line: " << monster->Row() << "), file: " << file << std::endl;
                                                 botFightMonster.level=1;
                                             }
                                         }
@@ -1013,9 +1013,9 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                                         {
                                             uint8_t attackLevel=1;
                                             if(attack->Attribute(FightLoader::text_id)==NULL)
-                                                std::cerr << "Has not attribute \"type\": ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
+                                                std::cerr << "Has not attribute \"type\": ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << "), file: " << file << std::endl;
                                             else if(attack->Type()!=TiXmlNode::NodeType::TINYXML_ELEMENT)
-                                                std::cerr << "Is not an element: ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
+                                                std::cerr << "Is not an element: ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << "), file: " << file << std::endl;
                                             else
                                             {
                                                 uint32_t attackId=stringtouint32(*attack->Attribute(FightLoader::text_id),&ok);
@@ -1024,7 +1024,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                                                     if(monsterSkills.find(attackId)==monsterSkills.cend())
                                                     {
                                                         entryValid=false;
-                                                        std::cerr << "Monster attack not found: %1 into the ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
+                                                        std::cerr << "Monster attack not found: %1 into the ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << "), file: " << file << std::endl;
                                                         break;
                                                     }
                                                     if(attack->Attribute(FightLoader::text_level)!=NULL)
@@ -1032,20 +1032,20 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                                                         attackLevel=stringtouint16(*attack->Attribute(FightLoader::text_level),&ok);
                                                         if(!ok)
                                                         {
-                                                            std::cerr << "The level is not a number: ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
+                                                            std::cerr << "The level is not a number: ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << "), file: " << file << std::endl;
                                                             entryValid=false;
                                                             break;
                                                         }
                                                         if(attackLevel<1)
                                                         {
-                                                            std::cerr << "Can't be 0 or negative: ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
+                                                            std::cerr << "Can't be 0 or negative: ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << "), file: " << file << std::endl;
                                                             entryValid=false;
                                                             break;
                                                         }
                                                     }
                                                     if(attackLevel>monsterSkills.at(attackId).level.size())
                                                     {
-                                                        std::cerr << "Level out of range: ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << ")" << std::endl;
+                                                        std::cerr << "Level out of range: ValueStr(): " << attack->ValueStr() << " (at line: " << attack->Row() << "), file: " << file << std::endl;
                                                         entryValid=false;
                                                         break;
                                                     }
@@ -1061,7 +1061,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                                             botFightMonster.attacks=loadDefaultAttack(botFightMonster.id,botFightMonster.level,monsters,monsterSkills);
                                         if(botFightMonster.attacks.empty())
                                         {
-                                            std::cerr << "Empty attack list: ValueStr(): " << monster->ValueStr() << " (at line: " << monster->Row() << ")" << std::endl;
+                                            std::cerr << "Empty attack list: ValueStr(): " << monster->ValueStr() << " (at line: " << monster->Row() << "), file: " << file << std::endl;
                                             entryValid=false;
                                             break;
                                         }
