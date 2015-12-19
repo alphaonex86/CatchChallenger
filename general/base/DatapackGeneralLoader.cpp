@@ -370,7 +370,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                         {
                             if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
                             {
-                                const int32_t &point=stringtouint32(reputationItem->Attribute("point"),&ok);
+                                const int32_t &point=stringtoint32(reputationItem->Attribute("point"),&ok);
                                 if(ok)
                                 {
                                     CatchChallenger::ReputationRewards reputation;
