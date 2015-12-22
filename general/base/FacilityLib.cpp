@@ -1,6 +1,7 @@
 #include "FacilityLib.h"
 #include "CommonDatapack.h"
 #include "CommonSettingsServer.h"
+#include "PortableEndian.h"
 
 #include <ctime>
 #include <time.h>
