@@ -1,4 +1,5 @@
 #include "FacilityLibGeneral.h"
+#include "PortableEndian.h"
 
 #include <cstring>
 #include <string>

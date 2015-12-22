@@ -55,7 +55,8 @@ HEADERS  += $$PWD/base/GeneralStructures.h \
     $$PWD/base/CommonSettingsServer.h \
     $$PWD/base/GeneralType.h \
     $$PWD/base/cpp11addition.h \
-    $$PWD/base/GeneralStructuresXml.h
+    $$PWD/base/GeneralStructuresXml.h \
+    $$PWD/base/PortableEndian.h
 
 HEADERS += \
     $$PWD/base/lz4/lz4.h \
