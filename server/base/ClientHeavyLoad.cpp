@@ -1427,7 +1427,7 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
                             if(filedesc!=NULL)
                             {
                                 #ifdef _WIN32
-                                fileName.replace(Client::text_antislash,Client::text_slash);//remplace if is under windows server
+                                stringreplaceAll(fileName,Client::text_antislash,Client::text_slash);//remplace if is under windows server
                                 #endif
                                 const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
                                 SHA224(reinterpret_cast<const unsigned char *>(data.data()),data.size(),reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
