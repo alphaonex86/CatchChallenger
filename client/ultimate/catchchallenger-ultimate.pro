@@ -6,6 +6,3 @@ include(../../server/catchchallenger-server-qt.pri)
 include(specific.pri)
 
 TARGET = catchchallenger-ultimate
-
-QMAKE_CXXFLAGS += -fsanitize=address -fno-omit-frame-pointer
-QMAKE_LFLAGS_DEBUG     += -fsanitize=address -fno-omit-frame-pointer
