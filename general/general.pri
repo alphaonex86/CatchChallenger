@@ -70,14 +70,7 @@ SOURCES += \
     $$PWD/base/tinyXML/tinyxmlerror.cpp \
     $$PWD/base/tinyXML/tinyxmlparser.cpp
 
+win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc
 mac:INCLUDEPATH += /usr/local/include/
 mac:LIBS += -L/usr/local/lib/
 win32:LIBS += -lWs2_32
-
-#LIBS += -stdlib=libc++
-#QMAKE_CXXFLAGS += -stdlib=libc++
-#QMAKE_CXXFLAGS += -std=c++11
-
-#QMAKE_CFLAGS_DEBUG     += -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer
-#QMAKE_CXXFLAGS_DEBUG   += -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer
-#QMAKE_LFLAGS_DEBUG     += -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer
