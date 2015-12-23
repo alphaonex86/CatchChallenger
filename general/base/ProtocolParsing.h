@@ -4,6 +4,8 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <vector>
+#include <stdint.h>
+#include <string>
 
 #include "GeneralVariable.h"
 #ifdef EPOLLCATCHCHALLENGERSERVER
