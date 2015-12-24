@@ -1,4 +1,6 @@
+#ifndef CATCHCHALLENGER_NOAUDIO
 #include <vlc/vlc.h>
+#endif
 #include <QWidget>
 #include <QMessageBox>
 #include <QAbstractSocket>
@@ -668,7 +670,9 @@ private:
 
     struct Ambiance
     {
+        #ifndef CATCHCHALLENGER_NOAUDIO
         libvlc_media_player_t *player;
+        #endif
         QString file;
     };
     QList<Ambiance> ambianceList;

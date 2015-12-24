@@ -1,3 +1,4 @@
+#ifndef CATCHCHALLENGER_NOAUDIO
 #include "Audio.h"
 #include "PlatformMacro.h"
 #include "../../general/base/GeneralVariable.h"
@@ -72,3 +73,4 @@ Audio::~Audio()
     if(vlcInstance)
         libvlc_release(vlcInstance);
 }
+#endif

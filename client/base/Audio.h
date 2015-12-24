@@ -1,7 +1,9 @@
 #ifndef Audio_H
 #define Audio_H
 
+#ifndef CATCHCHALLENGER_NOAUDIO
 #include <vlc/vlc.h>
+
 #include <QString>
 #include <QList>
 
@@ -20,5 +22,6 @@ private:
     QList<libvlc_media_player_t *> playerList;
     int volume;
 };
+#endif
 
 #endif // RSSNEWS_H

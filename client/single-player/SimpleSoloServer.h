@@ -2,10 +2,12 @@
 #define SIMPLESOLOSERVER_H
 
 #include <QMainWindow>
+#ifndef CATCHCHALLENGER_NOAUDIO
 #include <vlc/vlc.h>
 #include <vlc/libvlc_structures.h>
-#include "../base/solo/SoloWindow.h"
 #include "../base/Audio.h"
+#endif
+#include "../base/solo/SoloWindow.h"
 
 namespace Ui {
 class SimpleSoloServer;
