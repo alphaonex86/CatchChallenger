@@ -20,6 +20,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkProxy>
 #include <QRegularExpression>
+#include <QDataStream>
 
 #include "../../general/base/GeneralStructures.h"
 #include "ClientStructures.h"
