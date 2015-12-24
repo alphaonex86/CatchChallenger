@@ -11,14 +11,18 @@
 #include "../FacilityLibClient.h"
 #include "../../fight/interface/ClientFightEngine.h"
 #include "../Options.h"
+#ifndef CATCHCHALLENGER_NOAUDIO
 #include "../Audio.h"
+#endif
 
 #include <QListWidgetItem>
 #include <QBuffer>
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QQmlContext>
+#ifndef CATCHCHALLENGER_NOAUDIO
 #include <vlc/vlc.h>
+#endif
 #include <iostream>
 #include <QStandardPaths>
 
@@ -135,8 +139,10 @@ void BaseWindow::resetAll()
     add_to_inventoryGainExtraTime.clear();
     while(!ambianceList.isEmpty())
     {
+        #ifndef CATCHCHALLENGER_NOAUDIO
         libvlc_media_player_stop(ambianceList.first().player);
         libvlc_media_player_release(ambianceList.first().player);
+        #endif
         ambianceList.removeFirst();
     }
     industryStatus.products.clear();
@@ -497,7 +503,11 @@ void BaseWindow::datapackChecksumError()
 
 void BaseWindow::loadSoundSettings()
 {
+    #ifndef CATCHCHALLENGER_NOAUDIO
     const QStringList &outputDeviceNames=Audio::audio.output_list();
+    #else
+    const QStringList outputDeviceNames;
+    #endif
     Options::options.setAudioDeviceList(outputDeviceNames);
     ui->audiodevice->clear();
     if(outputDeviceNames.isEmpty())

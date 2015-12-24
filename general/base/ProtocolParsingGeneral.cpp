@@ -7,12 +7,7 @@
 #include <cstring>
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-#ifdef EPOLLCATCHCHALLENGERSERVER
 #include <lzma.h>
-#else
-#include "embeddedxz/xz.h"
-#include "embeddedxz/xz_stream.h"
-#endif
 #include "lz4/lz4.h"
 #endif
 

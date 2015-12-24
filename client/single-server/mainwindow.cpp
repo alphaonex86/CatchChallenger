@@ -4,7 +4,9 @@
 #include "../base/render/MapVisualiserPlayer.h"
 #include "../base/LanguagesSelect.h"
 #include "../base/InternetUpdater.h"
+#ifndef CATCHCHALLENGER_NOAUDIO
 #include "../base/Audio.h"
+#endif
 #include "../../general/base/CommonSettings.h"
 #include "../base/SslCert.h"
 #include <QNetworkProxy>
