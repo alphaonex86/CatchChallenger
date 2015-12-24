@@ -29,7 +29,11 @@ SOURCES += $$PWD/base/ChatParsing.cpp \
     $$PWD/fight/CommonFightEngineBase.cpp \
     $$PWD/base/CommonSettingsCommon.cpp \
     $$PWD/base/CommonSettingsServer.cpp \
-    $$PWD/base/cpp11addition.cpp
+    $$PWD/base/cpp11addition.cpp \
+    $$PWD/base/embeddedxz/xz_crc32.c \
+    $$PWD/base/embeddedxz/xz_dec_bcj.c \
+    $$PWD/base/embeddedxz/xz_dec_lzma2.c \
+    $$PWD/base/embeddedxz/xz_dec_stream.c
 
 HEADERS  += $$PWD/base/GeneralStructures.h \
     $$PWD/base/ClientBase.h \
@@ -56,7 +60,12 @@ HEADERS  += $$PWD/base/GeneralStructures.h \
     $$PWD/base/GeneralType.h \
     $$PWD/base/cpp11addition.h \
     $$PWD/base/GeneralStructuresXml.h \
-    $$PWD/base/PortableEndian.h
+    $$PWD/base/PortableEndian.h \
+    $$PWD/base/embeddedxz/xz_config.h \
+    $$PWD/base/embeddedxz/xz_lzma2.h \
+    $$PWD/base/embeddedxz/xz_private.h \
+    $$PWD/base/embeddedxz/xz_stream.h \
+    $$PWD/base/embeddedxz/xz.h
 
 HEADERS += \
     $$PWD/base/lz4/lz4.h \
