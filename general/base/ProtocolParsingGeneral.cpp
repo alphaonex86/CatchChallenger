@@ -7,7 +7,12 @@
 #include <cstring>
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+#ifdef EPOLLCATCHCHALLENGERSERVER
 #include <lzma.h>
+#else
+#include "embeddedxz/xz.h"
+#include "embeddedxz/xz_stream.h"
+#endif
 #include "lz4/lz4.h"
 #endif
 
@@ -176,7 +181,7 @@ uint32_t ProtocolParsing::decompressXz(const char * const input, const uint32_t 
 {
     lzma_stream strm = LZMA_STREAM_INIT; /* alloc and init lzma_stream struct */
     const uint32_t flags = LZMA_TELL_UNSUPPORTED_CHECK;
-    const uint64_t memory_limit = UINT64_MAX; /* no memory limit */
+    const uint64_t memory_limit = 64*1024*1024; /* no memory limit */
     lzma_ret ret_xz;
 
     ret_xz = lzma_stream_decoder (&strm, memory_limit, flags);
