@@ -1,3 +1,6 @@
+//to have winsock2 include before Windows.h, prevent mingw warn
+#include "../Api_client_real.h"
+
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include <vlc/vlc.h>
 #endif
@@ -22,7 +25,6 @@
 #include "../../crafting/interface/QmlInterface/CraftingAnimation.h"
 #include "../../../general/base/ChatParsing.h"
 #include "../../../general/base/GeneralStructures.h"
-#include "../Api_client_real.h"
 #include "../Api_protocol.h"
 #include "MapController.h"
 #include "Chat.h"
