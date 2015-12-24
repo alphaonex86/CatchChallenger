@@ -4,6 +4,7 @@
 #include "ProtocolParsingCheck.h"
 #include <zlib.h>
 #include <iostream>
+#include <cstring>
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 #include <lzma.h>
