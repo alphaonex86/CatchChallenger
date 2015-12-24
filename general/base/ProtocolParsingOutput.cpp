@@ -3,6 +3,7 @@
 #include "ProtocolParsingCheck.h"
 #include "cpp11addition.h"
 #include <iostream>
+#include <cstring>
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 #include <lzma.h>
