@@ -14,7 +14,9 @@
 #include "GetPrice.h"
 #include "../LanguagesSelect.h"
 #include "../Options.h"
+#ifndef CATCHCHALLENGER_NOAUDIO
 #include "../Audio.h"
+#endif
 
 #include <QListWidgetItem>
 #include <QBuffer>
@@ -26,7 +28,9 @@
 #include <QScriptEngine>
 #include <QtQml>
 #include <QComboBox>
+#ifndef CATCHCHALLENGER_NOAUDIO
 #include <vlc/vlc.h>
+#endif
 
 //do buy queue
 //do sell queue
@@ -250,7 +254,9 @@ BaseWindow::BaseWindow() :
     }
     #endif
 
+    #ifndef CATCHCHALLENGER_NOAUDIO
     Audio::audio.setVolume(Options::options.getAudioVolume());
+    #endif
 }
 
 BaseWindow::~BaseWindow()
@@ -268,9 +274,11 @@ BaseWindow::~BaseWindow()
     }
     while(!ambianceList.isEmpty())
     {
+        #ifndef CATCHCHALLENGER_NOAUDIO
         libvlc_media_player_stop(ambianceList.first().player);
         libvlc_media_player_release(ambianceList.first().player);
         Audio::audio.removePlayer(ambianceList.first().player);
+        #endif
         ambianceList.removeFirst();
     }
     if(movie!=NULL)
@@ -1750,9 +1758,11 @@ void BaseWindow::currentMapLoaded()
         {
             while(!ambianceList.isEmpty())
             {
+                #ifndef CATCHCHALLENGER_NOAUDIO
                 libvlc_media_player_stop(ambianceList.first().player);
                 libvlc_media_player_release(ambianceList.first().player);
                 Audio::audio.removePlayer(ambianceList.first().player);
+                #endif
                 ambianceList.removeFirst();
             }
             noSound=true;
@@ -1771,13 +1781,16 @@ void BaseWindow::currentMapLoaded()
                     noSound=true;
                     break;
                 }
+                #ifndef CATCHCHALLENGER_NOAUDIO
                 libvlc_media_player_stop(ambianceList.first().player);
                 libvlc_media_player_release(ambianceList.first().player);
                 Audio::audio.removePlayer(ambianceList.first().player);
+                #endif
                 ambianceList.removeFirst();
             }
             if(!noSound)
             {
+                #ifndef CATCHCHALLENGER_NOAUDIO
                 if(Audio::audio.vlcInstance && QFileInfo(file).isFile())
                 {
                     // Create a new Media
@@ -1799,6 +1812,7 @@ void BaseWindow::currentMapLoaded()
                         Audio::audio.addPlayer(ambiance.player);
                     }
                 }
+                #endif
             }
         }
     }

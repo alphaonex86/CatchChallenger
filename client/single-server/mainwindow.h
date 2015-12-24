@@ -8,8 +8,10 @@
 #include <QTimer>
 #include <QSslError>
 #include <QSslSocket>
+#ifndef CATCHCHALLENGER_NOAUDIO
 #include <vlc/vlc.h>
 #include <vlc/libvlc_structures.h>
+#endif
 
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"

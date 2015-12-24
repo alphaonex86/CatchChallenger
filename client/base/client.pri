@@ -1,10 +1,12 @@
 include(../tiled/tiled.pri)
 
-LIBS += -lvlc
 QT       += script opengl widgets qml quick
 QT       += gui network xml core
 
 DEFINES += CATCHCHALLENGER_CLIENT
+
+DEFINES += CATCHCHALLENGER_NOAUDIO
+#LIBS += -lvlc
 
 SOURCES += $$PWD/Api_client_virtual.cpp \
     $$PWD/DatapackChecksum.cpp \
@@ -67,7 +69,11 @@ SOURCES += $$PWD/Api_client_virtual.cpp \
     $$PWD/render/PreparedLayer.cpp \
     $$PWD/render/MapMark.cpp \
     $$PWD/interface/PathFinding.cpp \
-    $$PWD/FacilityLibClient.cpp
+    $$PWD/FacilityLibClient.cpp \
+    $$PWD/qt-tar-xz/xz_crc32.c \
+    $$PWD/qt-tar-xz/xz_dec_bcj.c \
+    $$PWD/qt-tar-xz/xz_dec_lzma2.c \
+    $$PWD/qt-tar-xz/xz_dec_stream.c
 
 HEADERS  += $$PWD/ClientStructures.h \
     $$PWD/DatapackChecksum.h \
@@ -114,7 +120,12 @@ HEADERS  += $$PWD/ClientStructures.h \
     $$PWD/render/PreparedLayer.h \
     $$PWD/render/MapMark.h \
     $$PWD/interface/PathFinding.h \
-    $$PWD/FacilityLibClient.h
+    $$PWD/FacilityLibClient.h \
+    $$PWD/qt-tar-xz/xz_config.h \
+    $$PWD/qt-tar-xz/xz_lzma2.h \
+    $$PWD/qt-tar-xz/xz_private.h \
+    $$PWD/qt-tar-xz/xz_stream.h \
+    $$PWD/qt-tar-xz/xz.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \
