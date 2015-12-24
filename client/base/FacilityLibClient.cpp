@@ -1,4 +1,5 @@
 #include "FacilityLibClient.h"
+#include <QObject>
 
 using namespace CatchChallenger;
 
