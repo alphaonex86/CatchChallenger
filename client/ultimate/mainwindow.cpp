@@ -136,6 +136,7 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowTitle(QStringLiteral("CatchChallenger Ultimate"));
     downloadFile();
 
+    #ifndef CATCHCHALLENGER_NOAUDIO
     vlcPlayer=NULL;
     if(Audio::audio.vlcInstance!=NULL)
     {
@@ -185,6 +186,7 @@ MainWindow::MainWindow(QWidget *parent) :
         if(string!=NULL)
             qDebug() << string;
     }
+    #endif
     connect(CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::gameIsLoaded,this,&MainWindow::gameIsLoaded);
     #ifdef CATCHCHALLENGER_GITCOMMIT
     ui->version->setText(QStringLiteral(CATCHCHALLENGER_VERSION)+QStringLiteral(" - ")+QStringLiteral(CATCHCHALLENGER_GITCOMMIT));
@@ -195,11 +197,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    #ifndef CATCHCHALLENGER_NOAUDIO
     if(vlcPlayer!=NULL)
     {
         libvlc_media_player_stop(vlcPlayer);
         Audio::audio.removePlayer(vlcPlayer);
     }
+    #endif
     if(CatchChallenger::BaseWindow::baseWindow!=NULL)
     {
         CatchChallenger::BaseWindow::baseWindow->deleteLater();
@@ -219,8 +223,10 @@ MainWindow::~MainWindow()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    #ifndef CATCHCHALLENGER_NOAUDIO
     if(vlcPlayer!=NULL)
         libvlc_media_player_stop(vlcPlayer);
+    #endif
     event->ignore();
     hide();
     if(socket!=NULL || internalServer!=NULL)
@@ -828,8 +834,10 @@ void MainWindow::serverListEntryEnvoluedDoubleClicked()
 
 void MainWindow::resetAll()
 {
+    #ifndef CATCHCHALLENGER_NOAUDIO
     if(vlcPlayer!=NULL)
         libvlc_media_player_play(vlcPlayer);
+    #endif
     if(CatchChallenger::Api_client_real::client!=NULL)
     {
         CatchChallenger::Api_client_real::client->resetAll();
@@ -1716,8 +1724,10 @@ void MainWindow::logged()
 
 void MainWindow::gameIsLoaded()
 {
+    #ifndef CATCHCHALLENGER_NOAUDIO
     if(vlcPlayer!=NULL)
         libvlc_media_player_stop(vlcPlayer);
+    #endif
 }
 
 void MainWindow::updateTheOkButton()
@@ -1765,6 +1775,7 @@ void MainWindow::updateTheOkButton()
     }
 }
 
+#ifndef CATCHCHALLENGER_NOAUDIO
 void MainWindow::vlcevent(const libvlc_event_t *event, void *ptr)
 {
     qDebug() << "vlc event";
@@ -1784,6 +1795,7 @@ void MainWindow::vlcevent(const libvlc_event_t *event, void *ptr)
         break;
     }
 }
+#endif
 
 void MainWindow::on_server_edit_clicked()
 {

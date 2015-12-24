@@ -11,14 +11,18 @@
 #include <QNetworkReply>
 #include <QDateTime>
 #include <QSet>
+#ifndef CATCHCHALLENGER_NOAUDIO
 #include <vlc/vlc.h>
 #include <vlc/libvlc_structures.h>
+#endif
 
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/ConnectedSocket.h"
 #include "../base/RssNews.h"
+#ifndef CATCHCHALLENGER_NOAUDIO
 #include "../base/Audio.h"
+#endif
 #include "../base/Api_client_real.h"
 #include "../base/interface/MapController.h"
 #include "../base/interface/BaseWindow.h"
@@ -112,7 +116,9 @@ private slots:
     void logged();
     void gameIsLoaded();
     void updateTheOkButton();
+    #ifndef CATCHCHALLENGER_NOAUDIO
     static void vlcevent(const libvlc_event_t* event, void* ptr);
+    #endif
     void on_server_edit_clicked();
 
 private:
@@ -160,7 +166,9 @@ private:
     QHash<QString,uint32_t> lastServerWaitBeforeConnectAfterKick;
     QHash<QString,bool> lastServerIsKick;
     QTimer updateTheOkButtonTimer;
+    #ifndef CATCHCHALLENGER_NOAUDIO
     libvlc_media_player_t *vlcPlayer;
+    #endif
 };
 
 #endif // MAINWINDOW_H

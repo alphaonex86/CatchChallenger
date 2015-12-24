@@ -1,7 +1,9 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
 #include "../Options.h"
+#ifndef CATCHCHALLENGER_NOAUDIO
 #include "../Audio.h"
+#endif
 
 using namespace CatchChallenger;
 
@@ -49,7 +51,9 @@ void BaseWindow::on_spinBoxMaxFPS_editingFinished()
 void CatchChallenger::BaseWindow::on_audioVolume_valueChanged(int value)
 {
     Options::options.setAudioVolume(value);
+    #ifndef CATCHCHALLENGER_NOAUDIO
     Audio::audio.setVolume(value);
+    #endif
 }
 
 void BaseWindow::loadSettings()
