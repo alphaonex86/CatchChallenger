@@ -7,12 +7,12 @@
 #include <stdlib.h>
 #include <iostream>
 
-static const std::regex isaunsignednumber("^[0-9]+$");
-static const std::regex isasignednumber("^-?[0-9]+$");
-static const std::regex isadouble("^-?[0-9]+(\\.[0-9]+)?$");
-static const std::regex ishexa("^([0-9a-fA-F][0-9a-fA-F])+$");
+static const std::regex isaunsignednumber("^[0-9]+$",std::regex::optimize);
+static const std::regex isasignednumber("^-?[0-9]+$",std::regex::optimize);
+static const std::regex isadouble("^-?[0-9]+(\\.[0-9]+)?$",std::regex::optimize);
+static const std::regex ishexa("^([0-9a-fA-F][0-9a-fA-F])+$",std::regex::optimize);
 #if defined(_WIN32) || defined(CATCHCHALLENGER_EXTRA_CHECK)
-static const std::regex regexseparators("[/\\\\]+");
+static const std::regex regexseparators("[/\\\\]+",std::regex::optimize);
 #endif
 
 static const std::string base64_chars =
