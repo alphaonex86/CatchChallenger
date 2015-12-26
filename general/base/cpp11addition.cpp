@@ -1,4 +1,5 @@
 #include "cpp11addition.h"
+#include "GeneralVariable.h"
 #include <sstream>
 #include <cassert>
 #include <stdlib.h>
@@ -10,8 +11,8 @@ static const std::regex isaunsignednumber("^[0-9]+$");
 static const std::regex isasignednumber("^-?[0-9]+$");
 static const std::regex isadouble("^-?[0-9]+(\\.[0-9]+)?$");
 static const std::regex ishexa("^([0-9a-fA-F][0-9a-fA-F])+$");
-#ifdef _WIN32
-static const std::regex regexseparators("[/\\]+");
+#if defined(_WIN32) || defined(CATCHCHALLENGER_EXTRA_CHECK)
+static const std::regex regexseparators("[/\\\\]+");
 #endif
 
 static const std::string base64_chars =
