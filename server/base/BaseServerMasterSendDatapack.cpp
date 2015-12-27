@@ -120,7 +120,7 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
             }
         }
         else
-            std::cerr << "File excluded because don't match the regex: " << datapack_file_temp.at(index) << std::endl;
+            std::cerr << "File excluded because don't match the regex (4): " << datapack_file_temp.at(index) << std::endl;
         index++;
     }
 

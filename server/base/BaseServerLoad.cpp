@@ -1545,7 +1545,7 @@ void BaseServer::preload_the_datapack()
                 }
             }
             else
-                std::cerr << "File excluded because don't match the regex: " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << std::endl;
+                std::cerr << "File excluded because don't match the regex (1): " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << std::endl;
             index++;
         }
         CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
@@ -1638,7 +1638,7 @@ void BaseServer::preload_the_datapack()
                 }
             }
             else
-                std::cerr << "File excluded because don't match the regex: " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << std::endl;
+                std::cerr << "File excluded because don't match the regex (2): " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << std::endl;
             index++;
         }
         CommonSettingsServer::commonSettingsServer.datapackHashServerMain.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
@@ -1708,7 +1708,7 @@ void BaseServer::preload_the_datapack()
                 }
             }
             else
-                std::cerr << "File excluded because don't match the regex: " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << std::endl;
+                std::cerr << "File excluded because don't match the regex (3): " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << std::endl;
             index++;
         }
         CommonSettingsServer::commonSettingsServer.datapackHashServerSub.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
