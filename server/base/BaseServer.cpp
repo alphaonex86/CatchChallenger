@@ -35,7 +35,7 @@
 
 using namespace CatchChallenger;
 
-std::regex BaseServer::regexXmlFile=std::regex("^[a-zA-Z0-9\\- _]+\\.xml$");
+std::regex BaseServer::regexXmlFile=std::regex("^[a-zA-Z0-9 _-]+\\.xml$");
 const std::string BaseServer::text_dotxml=".xml";
 const std::string BaseServer::text_zone="zone";
 const std::string BaseServer::text_capture="capture";
