@@ -174,7 +174,15 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,4);
                         if(charactersGroupIndex>=CharactersGroupForLogin::list.size())
                         {
-                            std::cerr << "C210 CharactersGroupForLogin not found (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                            std::cerr << "C210 CharactersGroupForLogin not found, charactersGroupIndex: " << charactersGroupIndex << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                            std::cerr << "CharactersGroupForLogin found:" << std::endl;
+                            auto it=CharactersGroupForLogin::hash.begin();
+                            while(it!=CharactersGroupForLogin::hash.cend())
+                            {
+                                std::cerr << "- " << it->first << std::endl;
+                                ++it;
+                            }
+                            std::cerr << "Data:" << binarytoHexa(rawData,pos) << " " << binarytoHexa(rawData+pos,(size-pos)) << std::endl;
                             abort();
                         }
                         serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+pos)));
@@ -228,15 +236,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             std::cerr << "C210 size logicalGroupString 8Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                             abort();
                         }
-                        const uint8_t &logicalGroupStringSize=rawData[pos];
-                        if((size-pos)<static_cast<unsigned int>(logicalGroupStringSize+1))
-                        {
-                            std::cerr << "C210 size logicalGroupString + size 8Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
-                            abort();
-                        }
-                        memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,1+logicalGroupStringSize);
-                        pos+=1+logicalGroupStringSize;
-                        EpollClientLoginSlave::serverServerListSize+=1+logicalGroupStringSize;
+                        EpollClientLoginSlave::serverServerList[EpollClientLoginSlave::serverServerListSize]=rawData[pos];
+                        pos+=1;
+                        EpollClientLoginSlave::serverServerListSize+=1;
                     }
 
                     //copy the max player
@@ -287,7 +289,15 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,4);
                         if(charactersGroupIndex>=CharactersGroupForLogin::list.size())
                         {
-                            std::cerr << "C210 CharactersGroupForLogin not found (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                            std::cerr << "C210 CharactersGroupForLogin not found, charactersGroupIndex: " << charactersGroupIndex << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                            std::cerr << "CharactersGroupForLogin found:" << std::endl;
+                            auto it=CharactersGroupForLogin::hash.begin();
+                            while(it!=CharactersGroupForLogin::hash.cend())
+                            {
+                                std::cerr << "- " << it->first << std::endl;
+                                ++it;
+                            }
+                            std::cerr << "Data:" << binarytoHexa(rawData,pos) << " " << binarytoHexa(rawData+pos,(size-pos)) << std::endl;
                             abort();
                         }
                         serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+pos)));
