@@ -135,9 +135,9 @@ private slots:
     void writeNewFileMain(const QString &fileName, const QByteArray &data);
     void writeNewFileSub(const QString &fileName, const QByteArray &data);
     void checkIfContinueOrFinished();
-    void getHttpFileBase(const QString &url, const QString &fileName);
-    void getHttpFileMain(const QString &url, const QString &fileName);
-    void getHttpFileSub(const QString &url, const QString &fileName);
+    bool getHttpFileBase(const QString &url, const QString &fileName);
+    bool getHttpFileMain(const QString &url, const QString &fileName);
+    bool getHttpFileSub(const QString &url, const QString &fileName);
     void httpFinishedBase();
     void httpFinishedMain();
     void httpFinishedSub();
