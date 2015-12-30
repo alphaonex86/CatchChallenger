@@ -384,6 +384,8 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
         }
         else
         {
+            /*ref crash here*/const std::string selectedMirror=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index_mirror_main);
+
             httpError=false;
 
             size_t endOfText;
@@ -415,16 +417,15 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
                 }
             }
 
-            /*ref crash here*/const std::string selectedMirror=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index_mirror_main);
             unsigned int correctContent=0;
             unsigned int index=0;
             while(index<content.size())
             {
-                size_t const &found=content.at(index).find(' ');
+                const std::string &line=content.at(index);
+                size_t const &found=line.find(' ');
                 if(found!=std::string::npos)
                 {
                     correctContent++;
-                    const std::string &line=content.at(index);
                     const std::string &fileString=line.substr(0,found);
                     const uint32_t &partialHashString=*reinterpret_cast<uint32_t *>(partialHashListRaw.data()+index*4);
                     //const std::string &sizeString=line.substr(found+1,line.size()-found-1);
