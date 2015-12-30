@@ -61,10 +61,10 @@ void Api_client_real::writeNewFileMain(const QString &fileName,const QByteArray 
     }
 }
 
-void Api_client_real::getHttpFileMain(const QString &url, const QString &fileName)
+bool Api_client_real::getHttpFileMain(const QString &url, const QString &fileName)
 {
     if(httpError)
-        return;
+        return false;
     if(!httpModeMain)
         httpModeMain=true;
     QNetworkRequest networkRequest(url);
@@ -94,6 +94,7 @@ void Api_client_real::getHttpFileMain(const QString &url, const QString &fileNam
     urlInWaiting.fileName=fileName;
     urlInWaitingListMain[reply]=urlInWaiting;
     connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedMain);
+    return true;
 }
 
 void Api_client_real::httpFinishedMain()
@@ -441,65 +442,98 @@ void Api_client_real::httpFinishedForDatapackListMain()
         }
         else
         {
-            /// \todo to fix
             int sizeToGet=0;
             int fileToGet=0;
+            std::regex datapack_rightFileName(DATAPACK_FILE_REGEX);
+            /*ref crash here*/const std::string selectedMirror=stringsplit(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer,';').at(index_mirror_main)+
+                    "map/main/"+
+                    CommonSettingsServer::commonSettingsServer.mainDatapackCode
+                    +"/";
+            std::vector<char> data;
+            QByteArray olddata=reply->readAll();
+            data.resize(olddata.size());
+            memcpy(data.data(),olddata.constData(),olddata.size());
+
             httpError=false;
-            const QStringList &content=QString::fromUtf8(reply->readAll()).split(QRegularExpression("[\n\r]+"));
-            unsigned int index=0;
-            QRegularExpression splitReg("^(.*) (([0-9a-f][0-9a-f])+) ([0-9]+)$");
-            QRegularExpression fileMatchReg(DATAPACK_FILE_REGEX);
-            if(datapackFilesListMain.size()!=partialHashListMain.size())
+
+            size_t endOfText;
             {
-                qDebug() << "datapackFilesListMain.size()!=partialHashListMain.size(), CRITICAL";
-                abort();
+                std::string text(data.data(),data.size());
+                endOfText=text.find("\n-\n");
+            }
+            if(endOfText==std::string::npos)
+            {
+                std::cerr << "not text delimitor into file list" << std::endl;
                 return;
             }
-            /*ref crash here*/const QString selectedMirror=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer)
-                    .split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+
-                    "map/main/"+
-                    QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)
-                    +"/";
-            int correctContent=0;
-            while(index<(uint32_t)content.size())
+            std::vector<std::string> content;
+            std::vector<char> partialHashListRaw(data.cbegin()+endOfText+3,data.cend());
             {
-                if(content.at(index).contains(splitReg))
+                if(partialHashListRaw.size()%4!=0)
+                {
+                    std::cerr << "partialHashList not divisible by 4" << std::endl;
+                    return;
+                }
+                {
+                    std::string text(data.data(),endOfText);
+                    content=stringsplit(text,'\n');
+                }
+                if(partialHashListRaw.size()/4!=content.size())
+                {
+                    std::cerr << "partialHashList/4!=content.size()" << std::endl;
+                    return;
+                }
+            }
+
+            unsigned int correctContent=0;
+            unsigned int index=0;
+            while(index<content.size())
+            {
+                const std::string &line=content.at(index);
+                size_t const &found=line.find(' ');
+                if(found!=std::string::npos)
                 {
                     correctContent++;
-                    QString fileString=content.at(index);
-                    QString partialHashString=content.at(index);
-                    QString sizeString=content.at(index);
-                    fileString.replace(splitReg,"\\1");
-                    partialHashString.replace(splitReg,"\\2");
-                    sizeString.replace(splitReg,"\\4");
-                    if(fileString.contains(fileMatchReg))
+                    const std::string &fileString=line.substr(0,found);
+                    sizeToGet+=stringuint8(line.substr(found+1,(line.size()-1-found)));
+                    const uint32_t &partialHashString=*reinterpret_cast<uint32_t *>(partialHashListRaw.data()+index*4);
+                    //const std::string &sizeString=line.substr(found+1,line.size()-found-1);
+                    if(regex_search(fileString,datapack_rightFileName))
                     {
-                        int indexInDatapackList=vectorindexOf(datapackFilesListMain,fileString.toStdString());
+                        int indexInDatapackList=vectorindexOf(datapackFilesListMain,fileString);
                         if(indexInDatapackList!=-1)
                         {
                             const uint32_t &hashFileOnDisk=partialHashListMain.at(indexInDatapackList);
-                            QFileInfo file(mDatapackMain+fileString);
-                            if(!file.exists())
+                            if(!FacilityLibGeneral::isFile(mDatapackMain.toStdString()+fileString))
                             {
-                                getHttpFileMain(selectedMirror+fileString,fileString);
                                 fileToGet++;
-                                sizeToGet+=sizeString.toUInt();
+                                if(!getHttpFileMain(QString::fromStdString(selectedMirror+fileString),QString::fromStdString(fileString)))
+                                {
+                                    datapackDownloadError();
+                                    return;
+                                }
                             }
-                            else if(hashFileOnDisk!=*reinterpret_cast<const uint32_t *>(QByteArray::fromHex(partialHashString.toLatin1()).constData()))
+                            else if(hashFileOnDisk!=partialHashString)
                             {
-                                getHttpFileMain(selectedMirror+fileString,fileString);
                                 fileToGet++;
-                                sizeToGet+=sizeString.toUInt();
+                                if(!getHttpFileMain(QString::fromStdString(selectedMirror+fileString),QString::fromStdString(fileString)))
+                                {
+                                    datapackDownloadError();
+                                    return;
+                                }
                             }
+                            partialHashListMain.erase(partialHashListMain.cbegin()+indexInDatapackList);
+                            datapackFilesListMain.erase(datapackFilesListMain.cbegin()+indexInDatapackList);
                         }
                         else
                         {
-                            getHttpFileMain(selectedMirror+fileString,fileString);
                             fileToGet++;
-                            sizeToGet+=sizeString.toUInt();
+                            if(!getHttpFileMain(QString::fromStdString(selectedMirror+fileString),QString::fromStdString(fileString)))
+                            {
+                                datapackDownloadError();
+                                return;
+                            }
                         }
-                        partialHashListMain.erase(partialHashListMain.begin()+indexInDatapackList);
-                        datapackFilesListMain.erase(datapackFilesListMain.begin()+indexInDatapackList);
                     }
                 }
                 index++;
@@ -517,7 +551,7 @@ void Api_client_real::httpFinishedForDatapackListMain()
             datapackFilesListMain.clear();
             if(correctContent==0)
             {
-                qDebug() << "Error, no valid content: correctContent==0\n" << content.join("\n") << "\nFor:" << reply->url().toString();
+                qDebug() << "Error, no valid content: correctContent==0\n" << QString::fromStdString(stringimplode(content,"\n")) << "\nFor:" << reply->url().toString();
                 abort();
                 return;
             }
