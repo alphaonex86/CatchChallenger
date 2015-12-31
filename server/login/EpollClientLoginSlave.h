@@ -146,7 +146,7 @@ public:
     static char serverLogicalGroupAndServerList[512*1024];
     static unsigned int serverLogicalGroupAndServerListSize;
 
-    static unsigned char loginIsWrongBufferReply[7];
+    static unsigned char loginIsWrongBufferReply[1+1+4+1];
 private:
     std::queue<DatabaseBase::CallBack *> callbackRegistred;
     std::queue<void *> paramToPassToCallBack;
