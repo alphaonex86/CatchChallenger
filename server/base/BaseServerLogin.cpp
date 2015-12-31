@@ -52,7 +52,7 @@ void BaseServerLogin::preload_the_randomData()
     //to have previsible data
     /*if(GlobalServerData::serverSettings.benchmark)
     {
-        srand(0);
+        srand(time(NULL));
         QDataStream randomDataStream(&GlobalServerData::serverPrivateVariables.randomData, QIODevice::WriteOnly);
         randomDataStream.setVersion(QDataStream::Qt_4_4);
         int index=0;

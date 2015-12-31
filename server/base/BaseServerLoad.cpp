@@ -114,11 +114,11 @@ void BaseServer::preload_other()
             else
             {
                 if(GlobalServerData::serverSettings.max_players<=255)
-                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(255);
+                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65534);
                 else
                     *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65535);
                 posOutput+=2;
-                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(255/2);
+                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(0);
                 posOutput+=2;
             }
             Client::protocolMessageLogicalGroupAndServerListSize+=posOutput;
@@ -200,7 +200,7 @@ void BaseServer::preload_other()
         else
         {
             if(GlobalServerData::serverSettings.max_players<=255)
-                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(255);
+                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65534);
             else
                 *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65535);
         }
@@ -1758,6 +1758,7 @@ void BaseServer::preload_the_players()
                 Client::simplifiedIdList.push_back(index);
                 index++;
             }
+            std::random_shuffle(Client::simplifiedIdList.begin(),Client::simplifiedIdList.end());
         }
         break;
         case MapVisibilityAlgorithmSelection_None:
