@@ -118,6 +118,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             std::vector<char> tempAddedToken;
+            std::vector<char> secretTokenBinary;
             #endif
             {
                 int32_t tokenForAuthIndex=0;
@@ -127,25 +128,27 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                     if(tokenLink.client==this)
                     {
                         const std::string &secretToken(databaseBaseLogin.value(1));
-                        const std::vector<char> &secretTokenBinary=hexatoBinary(secretToken);
+                        std::vector<char> secretTokenBinary=hexatoBinary(secretToken);
                         if(secretTokenBinary.empty() || secretTokenBinary.size()!=CATCHCHALLENGER_SHA224HASH_SIZE)
                         {
                             std::cerr << "convertion to binary for pass failed for: " << databaseBaseLogin.value(1) << std::endl;
                             abort();
                         }
-                        SHA256_CTX hash;
-                        if(SHA224_Init(&hash)!=1)
-                        {
-                            std::cerr << "SHA224_Init(&hash)!=1" << std::endl;
-                            abort();
-                        }
-                        SHA224_Update(&hash,secretTokenBinary.data(),secretTokenBinary.size());
+
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        //append the token
+                        secretTokenBinary.resize(secretTokenBinary.size()+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        memcpy(secretTokenBinary.data()+CATCHCHALLENGER_SHA224HASH_SIZE,tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+
                         tempAddedToken.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         memcpy(tempAddedToken.data(),tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        if(secretTokenBinary.size()!=(CATCHCHALLENGER_SHA224HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+                        {
+                            std::cerr << "secretTokenBinary.size()!=(CATCHCHALLENGER_SHA224HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)" << std::endl;
+                            abort();
+                        }
                         #endif
-                        SHA224_Update(&hash,tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hash);
+                        SHA224(reinterpret_cast<const unsigned char *>(secretTokenBinary.data()),secretTokenBinary.size(),reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
 
                         BaseServerLogin::tokenForAuthSize--;
                         //see to do with SIMD
@@ -176,9 +179,24 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
             if(memcmp(ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                loginIsWrong(askLoginParam->query_id,0x03,"Password wrong: "+binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE)+" with token "+binarytoHexa(tempAddedToken)+" for the login: "+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE));
+                loginIsWrong(askLoginParam->query_id,0x03,"Password wrong: "+
+                             binarytoHexa(secretTokenBinary)+
+                             " + token "+
+                             binarytoHexa(tempAddedToken)+
+                             " = "+
+                             " hashedToken: "+
+                             binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,CATCHCHALLENGER_SHA224HASH_SIZE)+
+                             " for the login: "+
+                             binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)+
+                             "sended pass + token: "+
+                             binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE)
+                             );
                 #else
-                loginIsWrong(askLoginParam->query_id,0x03,"Password wrong: "+binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE)+" for the login: "+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE));
+                loginIsWrong(askLoginParam->query_id,0x03,"Password wrong: "+
+                             binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE)+
+                             " for the login: "+
+                             binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)
+                             );
                 #endif
                 paramToPassToCallBack.pop();
                 paramToPassToCallBackType.pop();
@@ -377,7 +395,7 @@ void EpollClientLoginSlave::createAccount(const uint8_t &query_id, const char *r
         return;
     }
     AskLoginParam *askLoginParam=new AskLoginParam;
-    SHA224(reinterpret_cast<const unsigned char *>(rawdata),CATCHCHALLENGER_SHA224HASH_SIZE,reinterpret_cast<unsigned char *>(askLoginParam->login));
+    memcpy(askLoginParam->login,rawdata,CATCHCHALLENGER_SHA224HASH_SIZE);
     askLoginParam->query_id=query_id;
     memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
     askLoginParam->query_id=query_id;
