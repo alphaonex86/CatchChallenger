@@ -488,7 +488,7 @@ void Api_client_real::httpFinishedForDatapackListSub()
                 {
                     correctContent++;
                     const std::string &fileString=line.substr(0,found);
-                    sizeToGet+=stringuint8(line.substr(found+1,(line.size()-1-found)));
+                    sizeToGet+=stringtouint8(line.substr(found+1,(line.size()-1-found)));
                     const uint32_t &partialHashString=*reinterpret_cast<uint32_t *>(partialHashListRaw.data()+index*4);
                     //const std::string &sizeString=line.substr(found+1,line.size()-found-1);
                     if(regex_search(fileString,datapack_rightFileName))
