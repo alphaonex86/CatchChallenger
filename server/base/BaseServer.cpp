@@ -865,6 +865,11 @@ void BaseServer::loadAndFixSettings()
         std::cerr << "GlobalServerData::serverSettings.max_players<1" << std::endl;
         GlobalServerData::serverSettings.max_players=200;
     }
+    if(GlobalServerData::serverSettings.max_players>65533)
+    {
+        std::cerr << "GlobalServerData::serverSettings.max_players>65533: " << GlobalServerData::serverSettings.max_players << std::endl;
+        GlobalServerData::serverSettings.max_players=65533;
+    }
     ProtocolParsing::setMaxPlayers(GlobalServerData::serverSettings.max_players);
 
 /*    uint8_t player_list_size;
