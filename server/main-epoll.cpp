@@ -468,6 +468,8 @@ int main(int argc, char *argv[])
     }
     CatchChallenger::FacilityLibGeneral::applicationDirPath=argv[0];
 
+    srand(time(NULL));
+
     bool datapack_loaded=false;
 
     if(!CatchChallenger::FacilityLibGeneral::isFile(FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/informations.xml"))

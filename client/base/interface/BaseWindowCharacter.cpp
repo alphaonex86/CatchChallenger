@@ -371,26 +371,29 @@ void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *
                 }
 
             }
-            //do server.currentPlayer/server.maxPlayer icon
-            if(server.maxPlayer<=0 || server.currentPlayer>server.maxPlayer)
-                itemServer->setIcon(1,BaseWindow::icon_server_list_bug);
-            else
+            if(server.maxPlayer<=65533)
             {
-                //to be very sure
-                if(server.maxPlayer>0)
+                //do server.currentPlayer/server.maxPlayer icon
+                if(server.maxPlayer<=0 || server.currentPlayer>server.maxPlayer)
+                    itemServer->setIcon(1,BaseWindow::icon_server_list_bug);
+                else
                 {
-                    int percent=(server.currentPlayer*100)/server.maxPlayer;
-                    if(server.currentPlayer==server.maxPlayer || (server.maxPlayer>50 && percent>98))
-                        itemServer->setIcon(1,BaseWindow::icon_server_list_stat4);
-                    else if(server.currentPlayer>30 && percent>50)
-                        itemServer->setIcon(1,BaseWindow::icon_server_list_stat3);
-                    else if(server.currentPlayer>5 && percent>20)
-                        itemServer->setIcon(1,BaseWindow::icon_server_list_stat2);
-                    else
-                        itemServer->setIcon(1,BaseWindow::icon_server_list_stat1);
+                    //to be very sure
+                    if(server.maxPlayer>0)
+                    {
+                        int percent=(server.currentPlayer*100)/server.maxPlayer;
+                        if(server.currentPlayer==server.maxPlayer || (server.maxPlayer>50 && percent>98))
+                            itemServer->setIcon(1,BaseWindow::icon_server_list_stat4);
+                        else if(server.currentPlayer>30 && percent>50)
+                            itemServer->setIcon(1,BaseWindow::icon_server_list_stat3);
+                        else if(server.currentPlayer>5 && percent>20)
+                            itemServer->setIcon(1,BaseWindow::icon_server_list_stat2);
+                        else
+                            itemServer->setIcon(1,BaseWindow::icon_server_list_stat1);
+                    }
                 }
+                itemServer->setText(1,QStringLiteral("%1/%2").arg(server.currentPlayer).arg(server.maxPlayer));
             }
-            itemServer->setText(1,QStringLiteral("%1/%2").arg(server.currentPlayer).arg(server.maxPlayer));
             itemServer->setData(99,99,server.serverOrdenedListIndex);
             index++;
         }
