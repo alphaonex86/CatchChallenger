@@ -91,7 +91,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                 //removeFromQueryReceived(askLoginParam->query_id);//all list dropped at client destruction
                 #endif
                 *(EpollClientLoginSlave::loginIsWrongBufferReply+1)=(uint8_t)askLoginParam->query_id;
-                *(EpollClientLoginSlave::loginIsWrongBufferReply+3)=(uint8_t)0x07;
+                *(EpollClientLoginSlave::loginIsWrongBufferReply+1+1+4)=(uint8_t)0x07;
                 removeFromQueryReceived(askLoginParam->query_id);
                 internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBufferReply),sizeof(EpollClientLoginSlave::loginIsWrongBufferReply));
                 stat=EpollClientLoginStat::ProtocolGood;
@@ -529,7 +529,7 @@ void EpollClientLoginSlave::loginIsWrong(const uint8_t &query_id, const uint8_t 
 {
     //network send
     EpollClientLoginSlave::loginIsWrongBufferReply[1]=query_id;
-    EpollClientLoginSlave::loginIsWrongBufferReply[3]=returnCode;
+    EpollClientLoginSlave::loginIsWrongBufferReply[1+1+4]=returnCode;
     removeFromQueryReceived(query_id);
     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBufferReply),sizeof(EpollClientLoginSlave::loginIsWrongBufferReply));
 
@@ -669,7 +669,7 @@ void EpollClientLoginSlave::removeCharacter(const uint8_t &query_id, const uint8
     if(!CharactersGroupForLogin::list.at(characterGroupIndex)->removeCharacter(this,query_id,characterId))
     {
         EpollClientLoginSlave::loginIsWrongBufferReply[1]=query_id;
-        EpollClientLoginSlave::loginIsWrongBufferReply[3]=0x02;
+        EpollClientLoginSlave::loginIsWrongBufferReply[1+1+4]=0x02;
         removeFromQueryReceived(query_id);
         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBufferReply),sizeof(EpollClientLoginSlave::loginIsWrongBufferReply));
         errorParsingLayer("EpollClientLoginSlave::selectCharacter() out of query for request the master server");
