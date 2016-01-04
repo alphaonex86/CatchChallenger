@@ -1,3 +1,4 @@
+#if ! defined (ONLYMAPRENDER)
 #include "ProtocolParsing.h"
 #include "GeneralVariable.h"
 #include "ProtocolParsingCheck.h"
@@ -127,3 +128,4 @@ bool ProtocolParsingBase::removeFromQueryReceived(const uint8_t &queryNumber)
     inputQueryNumberToPacketCode[queryNumber]=0x00;
     return true;
 }
+#endif

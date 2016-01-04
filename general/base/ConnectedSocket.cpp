@@ -1,4 +1,4 @@
-#ifndef EPOLLCATCHCHALLENGERSERVER
+#if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER)
 
 #include "ConnectedSocket.h"
 #include <QSslSocket>

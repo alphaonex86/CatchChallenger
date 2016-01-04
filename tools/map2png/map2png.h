@@ -88,6 +88,7 @@ public:
     void displayMap();
     static QStringList listFolder(const QString& folder,const QString& suffix=QString());
     QString baseDatapack;
+    QString mainDatapack;
     static QString text_slash;
     static QString text_dottmx;
     static QString text_dotpng;
@@ -112,6 +113,7 @@ public:
     static QString text_object;
     QRegularExpression regexMs;
     QRegularExpression regexFrames;
+    QStringList folderListSkin;
 private:
     struct Map_full
     {
