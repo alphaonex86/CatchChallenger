@@ -13,9 +13,16 @@ then
 		else
             if [ -x /usr/bin/pngcrush ]
             then
-                /usr/bin/pngcrush -rem gAMA -rem cHRM -rem iCCP -rem sRGB -force /tmp/tmp${TEMPRANDOM}.png "${VARIABLE}" > /dev/null 2>&1
+                /usr/bin/pngcrush -rem gAMA -rem cHRM -rem iCCP -rem sRGB -force /tmp/tmp${TEMPRANDOM}.png /tmp/tmp${TEMPRANDOM}2.png > /dev/null 2>&1
             else
-                mv /tmp/tmp${TEMPRANDOM}.png "${VARIABLE}"
+                mv /tmp/tmp${TEMPRANDOM}.png /tmp/tmp${TEMPRANDOM}2.png
+            fi
+            if [ -x /usr/local/bin/zopfli ]
+            then
+                #/usr/local/bin/zopflipng --iterations=500 --filters=01234mepb --lossy_8bit --lossy_transparent /tmp/tmp${TEMPRANDOM}2.png "${VARIABLE}" > /dev/null 2>&1
+                /usr/local/bin/zopfli --iterations=50 -c --png /tmp/tmp${TEMPRANDOM}2.png > "${VARIABLE}" 2> /dev/null
+            else
+                mv /tmp/tmp${TEMPRANDOM}2.png "${VARIABLE}"
             fi
 		fi
 	done

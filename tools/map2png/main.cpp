@@ -36,6 +36,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QTime>
+#include <QDebug>
 
 int main(int argc, char *argv[])
 {
@@ -67,22 +68,40 @@ int main(int argc, char *argv[])
     if(arguments.size()>1 && dir.isDir())
     {
         QString baseDatapack;
+        QString mainDatapack;
         {
             QString previousFolder;
-            bool found=true;
-            QFileInfo dirDatapack(QFileInfo(dir.absoluteFilePath()+Map2Png::text_slash).absolutePath());
-            while(!QFileInfo(dirDatapack.absoluteFilePath()+QStringLiteral("/informations.xml")).exists())
+            bool found1=true,found2=true;
+
+            QFileInfo dirDatapack1(QFileInfo(dir.absoluteFilePath()+Map2Png::text_slash).absolutePath());
+            while(!QFileInfo(dirDatapack1.absoluteFilePath()+QStringLiteral("/informations.xml")).exists() || dirDatapack1.absoluteFilePath().contains("map/main/"))
             {
-                previousFolder=dirDatapack.absoluteFilePath();
-                dirDatapack=QFileInfo(dirDatapack.absolutePath());
-                if(previousFolder==dirDatapack.absoluteFilePath())
+                previousFolder=dirDatapack1.absoluteFilePath();
+                dirDatapack1=QFileInfo(dirDatapack1.absolutePath());
+                if(previousFolder==dirDatapack1.absoluteFilePath())
                 {
-                    found=false;
+                    found1=false;
                     break;
                 }
             }
-            if(found)
-                baseDatapack=dirDatapack.absoluteFilePath();
+
+            QFileInfo dirDatapack2(QFileInfo(dir.absoluteFilePath()+Map2Png::text_slash).absolutePath());
+            while(!QFileInfo(dirDatapack2.absoluteFilePath()+QStringLiteral("/informations.xml")).exists())
+            {
+                previousFolder=dirDatapack2.absoluteFilePath();
+                dirDatapack2=QFileInfo(dirDatapack2.absolutePath());
+                if(previousFolder==dirDatapack2.absoluteFilePath())
+                {
+                    found2=false;
+                    break;
+                }
+            }
+
+            if(found1 && found2)
+            {
+                baseDatapack=dirDatapack1.absoluteFilePath();
+                mainDatapack=dirDatapack2.absoluteFilePath();
+            }
         }
         QTime time;
         time.restart();
@@ -97,7 +116,17 @@ int main(int argc, char *argv[])
                 destination.replace(Map2Png::text_dottmx,Map2Png::text_dotpng);
                 Map2Png w;
                 if(!baseDatapack.isEmpty())
+                {
                     w.baseDatapack=baseDatapack;
+                    QDir folderList(QStringLiteral("%1/skin/").arg(w.baseDatapack));
+                    w.mainDatapack=mainDatapack;
+                    w.folderListSkin=folderList.entryList(QDir::Dirs|QDir::NoDotAndDotDot);
+                    if(w.folderListSkin.isEmpty())
+                    {
+                        qDebug() << "Not found: " << QStringLiteral("%1/skin/").arg(baseDatapack);
+                        abort();
+                    }
+                }
                 w.viewMap(false,dir.absoluteFilePath()+Map2Png::text_slash+fileToOpen,destination);
             }
             index++;
@@ -153,20 +182,44 @@ int main(int argc, char *argv[])
         }
         {
             QString previousFolder;
-            bool found=true;
-            QFileInfo dir(QFileInfo(fileToOpen).absolutePath());
-            while(!QFileInfo(dir.absoluteFilePath()+QStringLiteral("/informations.xml")).exists())
+            bool found1=true,found2=true;
+
+            QFileInfo dir1(QFileInfo(fileToOpen).absolutePath());
+            while(!QFileInfo(dir1.absoluteFilePath()+QStringLiteral("/informations.xml")).exists() || dir1.absoluteFilePath().contains("map/main/"))
             {
-                previousFolder=dir.absoluteFilePath();
-                dir=QFileInfo(dir.absolutePath());
-                if(previousFolder==dir.absoluteFilePath())
+                previousFolder=dir1.absoluteFilePath();
+                dir1=QFileInfo(dir1.absolutePath());
+                if(previousFolder==dir1.absoluteFilePath())
                 {
-                    found=false;
+                    found1=false;
                     break;
                 }
             }
-            if(found)
-                w.baseDatapack=dir.absoluteFilePath();
+
+            QFileInfo dir2(QFileInfo(fileToOpen).absolutePath());
+            while(!QFileInfo(dir2.absoluteFilePath()+QStringLiteral("/informations.xml")).exists())
+            {
+                previousFolder=dir2.absoluteFilePath();
+                dir2=QFileInfo(dir2.absolutePath());
+                if(previousFolder==dir2.absoluteFilePath())
+                {
+                    found2=false;
+                    break;
+                }
+            }
+
+            if(found1 && found2)
+            {
+                w.baseDatapack=dir1.absoluteFilePath();
+                QDir folderList(QStringLiteral("%1/skin/").arg(w.baseDatapack));
+                w.mainDatapack=dir2.absoluteFilePath();
+                w.folderListSkin=folderList.entryList(QDir::Dirs|QDir::NoDotAndDotDot);
+                if(w.folderListSkin.isEmpty())
+                {
+                    qDebug() << "Not found: " << QStringLiteral("%1/skin/").arg(w.baseDatapack);
+                    abort();
+                }
+            }
         }
 
         if(arguments.size()==1)

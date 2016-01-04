@@ -1,3 +1,4 @@
+#if ! defined (ONLYMAPRENDER)
 #include "ProtocolParsingCheck.h"
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
 
@@ -133,4 +134,5 @@ ProtocolParsing::CompressionType ProtocolParsingCheck::getCompressType() const
 }
 #endif
 
+#endif
 #endif

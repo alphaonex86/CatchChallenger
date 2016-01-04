@@ -38,6 +38,7 @@
 
 namespace CatchChallenger {
 
+#if ! defined (ONLYMAPRENDER)
 class ProtocolParsingCheck;
 
 class ProtocolParsing
@@ -181,7 +182,7 @@ class ProtocolParsingInputOutput : public ProtocolParsingBase
 {
 public:
     ProtocolParsingInputOutput(
-        #ifdef EPOLLCATCHCHALLENGERSERVER
+        #if defined(EPOLLCATCHCHALLENGERSERVER) || defined (ONLYMAPRENDER)
             #ifdef SERVERSSL
                 const int &infd, SSL_CTX *ctx
             #else
@@ -209,10 +210,10 @@ protected:
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     ProtocolParsing::CompressionType getCompressType() const;
     #endif
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #if defined(EPOLLCATCHCHALLENGERSERVER) || defined (ONLYMAPRENDER)
         #ifdef SERVERSSL
             EpollSslClient epollSocket;
-        #else
+        #elif ! defined (ONLYMAPRENDER)
             EpollClient epollSocket;
         #endif
     #else
@@ -234,6 +235,17 @@ protected:
     int parseIncommingDataCount;//by object
     #endif
 };
+#else
+class ProtocolParsing
+{
+public:
+    static uint8_t compressionLevel;
+    static uint32_t decompressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
+    static uint32_t compressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
+    static uint32_t decompressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
+    static uint32_t compressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
+};
+#endif
 
 }
 

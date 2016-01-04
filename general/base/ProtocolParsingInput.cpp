@@ -1,3 +1,4 @@
+#if ! defined (ONLYMAPRENDER)
 #include "ProtocolParsing.h"
 #include "ProtocolParsingCheck.h"
 #include "GeneralVariable.h"
@@ -761,3 +762,4 @@ void ProtocolParsingInputOutput::storeInputQuery(const uint8_t &packetCode,const
     //register the size of the reply to send
     inputQueryNumberToPacketCode[queryNumber]=packetCode;
 }
+#endif

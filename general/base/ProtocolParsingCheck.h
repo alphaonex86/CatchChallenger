@@ -1,3 +1,4 @@
+#if ! defined (ONLYMAPRENDER)
 #ifndef CATCHCHALLENGER_PROTOCOLPARSINGCHECK_H
 #define CATCHCHALLENGER_PROTOCOLPARSINGCHECK_H
 
@@ -45,3 +46,4 @@ class ProtocolParsingCheck : public ProtocolParsingBase
 #endif
 
 #endif // PROTOCOLPARSING_H
+#endif
