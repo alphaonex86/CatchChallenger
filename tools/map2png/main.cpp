@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
             bool found1=true,found2=true;
 
             QFileInfo dirDatapack1(QFileInfo(dir.absoluteFilePath()+Map2Png::text_slash).absolutePath());
-            while(!QFileInfo(dirDatapack1.absoluteFilePath()+QStringLiteral("/informations.xml")).exists() || dirDatapack1.absoluteFilePath().contains("map/main/"))
+            while(!QFileInfo(dirDatapack1.absoluteFilePath()+QStringLiteral("/informations.xml")).exists() || dirDatapack1.absoluteFilePath().contains("map/main/") || !QFileInfo(dirDatapack1.absoluteFilePath()+QStringLiteral("/skin")).exists())
             {
                 previousFolder=dirDatapack1.absoluteFilePath();
                 dirDatapack1=QFileInfo(dirDatapack1.absolutePath());
@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
             bool found1=true,found2=true;
 
             QFileInfo dir1(QFileInfo(fileToOpen).absolutePath());
-            while(!QFileInfo(dir1.absoluteFilePath()+QStringLiteral("/informations.xml")).exists() || dir1.absoluteFilePath().contains("map/main/"))
+            while(!QFileInfo(dir1.absoluteFilePath()+QStringLiteral("/informations.xml")).exists() || dir1.absoluteFilePath().contains("map/main/") || !QFileInfo(dir1.absoluteFilePath()+QStringLiteral("/skin")).exists())
             {
                 previousFolder=dir1.absoluteFilePath();
                 dir1=QFileInfo(dir1.absolutePath());
