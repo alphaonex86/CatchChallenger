@@ -110,7 +110,10 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
                             SHA224_Update(&hashBase,data.data(),data.size());
                         }
                         else
+                        {
                             std::cerr << "Stop now! Unable to open the file " << text_datapack+datapack_file_temp.at(index) << " to do the datapack checksum for the mirror" << std::endl;
+                            abort();
+                        }
                     }
                     else
                         std::cerr << "File to big: " << text_datapack+datapack_file_temp.at(index) << " size: " << buf.st_size << std::endl;

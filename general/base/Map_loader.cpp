@@ -1449,7 +1449,7 @@ TiXmlElement *Map_loader::getXmlCondition(const std::string &fileName,const std:
 {
     (void)fileName;
     #ifdef ONLYMAPRENDER
-    return TiXmlDocument();
+    return NULL;
     #endif
     if(teleportConditionsUnparsed.find(file)!=teleportConditionsUnparsed.cend())
     {

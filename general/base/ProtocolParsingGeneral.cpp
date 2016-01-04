@@ -6,6 +6,10 @@
 #include <iostream>
 #include <cstring>
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
+#include <QMetaType>
+#endif
+
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 #include <lzma.h>
 #include "lz4/lz4.h"
@@ -13,23 +17,9 @@
 
 using namespace CatchChallenger;
 
-char ProtocolParsingBase::tempBigBufferForOutput[];
-char ProtocolParsingBase::tempBigBufferForInput[];//to store the input buffer on linux READ() interface or with Qt
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-char ProtocolParsingBase::tempBigBufferForUncompressedInput[];
-char ProtocolParsingBase::tempBigBufferForCompressedOutput[];
-#endif
-uint8_t ProtocolParsing::packetFixedSize[];
 
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-#ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-ProtocolParsing::CompressionType    ProtocolParsing::compressionTypeClient=CompressionType::None;
-#endif
-ProtocolParsing::CompressionType    ProtocolParsing::compressionTypeServer=CompressionType::None;
 uint8_t ProtocolParsing::compressionLevel=6;
-#endif
-
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 
 extern "C" void *lz_alloc(void *, size_t , size_t size)
 {
@@ -294,6 +284,22 @@ uint32_t ProtocolParsing::compressXz(const char * const input, const uint32_t &i
 
 #endif
 
+#if ! defined (ONLYMAPRENDER)
+char ProtocolParsingBase::tempBigBufferForOutput[];
+char ProtocolParsingBase::tempBigBufferForInput[];//to store the input buffer on linux READ() interface or with Qt
+#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+char ProtocolParsingBase::tempBigBufferForUncompressedInput[];
+char ProtocolParsingBase::tempBigBufferForCompressedOutput[];
+#endif
+uint8_t ProtocolParsing::packetFixedSize[];
+
+#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+#ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+ProtocolParsing::CompressionType    ProtocolParsing::compressionTypeClient=CompressionType::None;
+#endif
+ProtocolParsing::CompressionType    ProtocolParsing::compressionTypeServer=CompressionType::None;
+#endif
+
 ProtocolParsing::ProtocolParsing()
 {
 }
@@ -495,7 +501,9 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             qRegisterMetaType<std::vector<Skill::AttackReturn> >("std::vector<Skill::AttackReturn>");//for battleAcceptedByOther(stat,publicPlayerMonster);
             qRegisterMetaType<std::vector<MarketMonster> >("std::vector<MarketMonster>");
             qRegisterMetaType<std::vector<CharacterEntry> >("std::vector<CharacterEntry>");
+            #if ! defined (ONLYMAPRENDER)
             qRegisterMetaType<QSslSocket::SslMode>("QSslSocket::SslMode");
+            #endif
             #endif
         break;
     }
@@ -568,7 +576,7 @@ void ProtocolParsingBase::reset()
 }
 
 ProtocolParsingInputOutput::ProtocolParsingInputOutput(
-        #ifdef EPOLLCATCHCHALLENGERSERVER
+        #if defined(EPOLLCATCHCHALLENGERSERVER) || defined (ONLYMAPRENDER)
             #ifdef SERVERSSL
                 const int &infd, SSL_CTX *ctx
             #else
@@ -588,15 +596,17 @@ ProtocolParsingInputOutput::ProtocolParsingInputOutput(
         ),
     #ifdef EPOLLCATCHCHALLENGERSERVER
         #ifdef SERVERSSL
-            epollSocket(infd,ctx)
+            epollSocket(infd,ctx),
         #else
-            epollSocket(infd)
+            epollSocket(infd),
         #endif
     #else
-    socket(socket)
+        #if ! defined (ONLYMAPRENDER)
+        socket(socket),
+        #endif
     #endif
       #ifdef CATCHCHALLENGER_EXTRA_CHECK
-      ,parseIncommingDataCount(0)
+      parseIncommingDataCount(0)
       #endif
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -634,4 +644,5 @@ ProtocolParsing::CompressionType ProtocolParsingInputOutput::getCompressType() c
     #endif
         return compressionTypeServer;
 }
+#endif
 #endif
