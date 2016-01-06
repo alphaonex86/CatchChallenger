@@ -457,6 +457,7 @@ void Api_client_real::httpFinishedForDatapackListSub()
             if(endOfText==std::string::npos)
             {
                 std::cerr << "not text delimitor into file list" << std::endl;
+                newError("Wrong datapack format","not text delimitor into file list");
                 return;
             }
             std::vector<std::string> content;
@@ -465,6 +466,7 @@ void Api_client_real::httpFinishedForDatapackListSub()
                 if(partialHashListRaw.size()%4!=0)
                 {
                     std::cerr << "partialHashList not divisible by 4" << std::endl;
+                    newError("Wrong datapack format","partialHashList not divisible by 4");
                     return;
                 }
                 {
@@ -474,6 +476,7 @@ void Api_client_real::httpFinishedForDatapackListSub()
                 if(partialHashListRaw.size()/4!=content.size())
                 {
                     std::cerr << "partialHashList/4!=content.size()" << std::endl;
+                    newError("Wrong datapack format","partialHashList/4!=content.size()");
                     return;
                 }
             }
@@ -502,6 +505,7 @@ void Api_client_real::httpFinishedForDatapackListSub()
                                 fileToGet++;
                                 if(!getHttpFileSub(QString::fromStdString(selectedMirror+fileString),QString::fromStdString(fileString)))
                                 {
+                                    newError(tr("Unable to get datapack file"),"");
                                     return;
                                 }
                             }
@@ -510,6 +514,7 @@ void Api_client_real::httpFinishedForDatapackListSub()
                                 fileToGet++;
                                 if(!getHttpFileSub(QString::fromStdString(selectedMirror+fileString),QString::fromStdString(fileString)))
                                 {
+                                    newError(tr("Unable to get datapack file"),"");
                                     return;
                                 }
                             }
@@ -521,6 +526,7 @@ void Api_client_real::httpFinishedForDatapackListSub()
                             fileToGet++;
                             if(!getHttpFileSub(QString::fromStdString(selectedMirror+fileString),QString::fromStdString(fileString)))
                             {
+                                newError(tr("Unable to get datapack file"),"");
                                 return;
                             }
                         }

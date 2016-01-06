@@ -31,7 +31,7 @@ CREATE TABLE account (
 CREATE TABLE account_register (
     login bytea,
     password bytea,
-    email text
+    email text,
     key text,
     date bigint
 );
