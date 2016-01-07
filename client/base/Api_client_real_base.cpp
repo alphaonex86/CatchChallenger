@@ -628,7 +628,7 @@ void Api_client_real::sendDatapackContentBase(const QByteArray &hashBase)
         if((unsigned int)hashBase.size()==(unsigned int)CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size() &&
                 memcmp(hashBase.constData(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),hashBase.size())==0)
         {
-            qDebug() << "Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote";
+            qDebug() << "Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote" << QString(hashBase.toHex());
             datapackDownloadFinishedBase();
             return;
         }

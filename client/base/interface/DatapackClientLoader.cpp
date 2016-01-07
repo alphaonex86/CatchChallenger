@@ -144,7 +144,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
 
         if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase!=hash)
         {
-            qDebug() << QStringLiteral("DatapackClientLoader::parseDatapack() CommonSettings::commonSettings.datapackHash!=hash.result(): %1!=%2")
+            qDebug() << QStringLiteral("DatapackClientLoader::parseDatapack() CommonSettingsCommon::commonSettingsCommon.datapackHashBase!=hash.result(): %1!=%2")
                         .arg(QString::fromStdString(binarytoHexa(CommonSettingsCommon::commonSettingsCommon.datapackHashBase)))
                         .arg(QString::fromStdString(binarytoHexa(hash)));
             emit datapackChecksumError();
