@@ -73,6 +73,7 @@ private:
 private:
     void preload_profile();
     void generateToken(TinyXMLSettings &settings);
+    void generateTokenStatClient(TinyXMLSettings &settings);
     void SQL_common_load_finish();
 };
 }

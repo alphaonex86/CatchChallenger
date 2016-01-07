@@ -212,6 +212,8 @@ struct GameServerSettings
         uint16_t offset;//mins
     };
     std::unordered_map<std::string/*type, example: day*/,std::unordered_map<std::string/*groupName, example: day/night*/,ProgrammedEvent> > programmedEventList;
+
+    char private_token_statclient[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
 };
 
 struct CityStatus

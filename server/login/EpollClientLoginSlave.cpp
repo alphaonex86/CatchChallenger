@@ -58,6 +58,7 @@ EpollClientLoginSlave::EpollClientLoginSlave(
 
 EpollClientLoginSlave::~EpollClientLoginSlave()
 {
+    if(stat!=EpollClientLoginStat::LoggedStatClient)
     {
         unsigned int index=0;
         while(index<client_list.size())
@@ -66,6 +67,20 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
             if(this==client)
             {
                 client_list.erase(client_list.begin()+index);
+                break;
+            }
+            index++;
+        }
+    }
+    else
+    {
+        unsigned int index=0;
+        while(index<stat_client_list.size())
+        {
+            const EpollClientLoginSlave * const client=stat_client_list.at(index);
+            if(this==client)
+            {
+                stat_client_list.erase(stat_client_list.begin()+index);
                 break;
             }
             index++;
