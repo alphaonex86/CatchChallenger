@@ -5,6 +5,8 @@
 #include "../../general/base/GeneralType.h"
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "../game-server-alone/LinkToMaster.h"
+#else
+#include <openssl/sha.h>
 #endif
 
 #include "BaseServerLogin.h"
@@ -44,6 +46,7 @@ Client::Client(
         ),
     character_loaded(false),
     character_loaded_in_progress(false),
+    stat_client(false),
     account_id(0),
     character_id(0),
     market_cash(0),
@@ -222,6 +225,20 @@ void Client::disconnectClient()
     }
     #endif
 
+    if(stat_client)
+    {
+        unsigned int index=0;
+        while(index<stat_client_list.size())
+        {
+            const Client * const client=stat_client_list.at(index);
+            if(this==client)
+            {
+                stat_client_list.erase(stat_client_list.begin()+index);
+                break;
+            }
+            index++;
+        }
+    }
     if(character_loaded_in_progress)
     {
         character_loaded_in_progress=false;
@@ -539,3 +556,111 @@ void Client::disconnectClientById(const uint32_t &characterId)
     if(playerById.find(characterId)!=playerById.cend())
         playerById.at(characterId)->disconnectClient();
 }
+
+#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(PreparedDBQueryLogin::db_query_login.empty())
+    {
+        errorParsingLayer("askLogin() Query login is empty, bug");
+        return;
+    }
+    #endif
+
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::vector<char> tempAddedToken;
+    std::vector<char> secretTokenBinary;
+    #endif
+    {
+        int32_t tokenForAuthIndex=0;
+        while((uint32_t)tokenForAuthIndex<BaseServerLogin::tokenForAuthSize)
+        {
+            const BaseServerLogin::TokenLink &tokenLink=BaseServerLogin::tokenForAuth[tokenForAuthIndex];
+            if(tokenLink.client==this)
+            {
+                //append the token
+                memcpy(Client::private_token_statclient+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                tempAddedToken.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                memcpy(tempAddedToken.data(),tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                if(secretTokenBinary.size()!=(CATCHCHALLENGER_SHA224HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+                {
+                    std::cerr << "secretTokenBinary.size()!=(CATCHCHALLENGER_SHA224HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)" << std::endl;
+                    abort();
+                }
+                #endif
+                SHA224(reinterpret_cast<const unsigned char *>(secretTokenBinary.data()),secretTokenBinary.size(),reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
+
+                BaseServerLogin::tokenForAuthSize--;
+                //see to do with SIMD
+                if(BaseServerLogin::tokenForAuthSize>0)
+                {
+                    while((uint32_t)tokenForAuthIndex<BaseServerLogin::tokenForAuthSize)
+                    {
+                        BaseServerLogin::tokenForAuth[tokenForAuthIndex]=BaseServerLogin::tokenForAuth[tokenForAuthIndex+1];
+                        tokenForAuthIndex++;
+                    }
+                    //don't work:memmove(BaseServerLogin::tokenForAuth+index*sizeof(TokenLink),BaseServerLogin::tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*(BaseServerLogin::tokenForAuthSize-index));
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    if(BaseServerLogin::tokenForAuth[0].client==NULL)
+                        abort();
+                    #endif
+                }
+                tokenForAuthIndex--;
+                break;
+            }
+            tokenForAuthIndex++;
+        }
+        if(tokenForAuthIndex>=(int32_t)BaseServerLogin::tokenForAuthSize)
+        {
+            removeFromQueryReceived(query_id);//all list dropped at client destruction
+            ProtocolParsingBase::tempBigBufferForOutput[0x00]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+            ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
+            ProtocolParsingBase::tempBigBufferForOutput[0x02]=0x02;
+            internalSendRawSmallPacket(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),sizeof(ProtocolParsingBase::tempBigBufferForOutput));
+            errorParsingLayer("No temp auth token found");
+            return;
+        }
+    }
+    if(memcmp(ProtocolParsingBase::tempBigBufferForOutput,rawdata,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
+    {
+        removeFromQueryReceived(query_id);//all list dropped at client destruction
+        ProtocolParsingBase::tempBigBufferForOutput[0x00]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
+        ProtocolParsingBase::tempBigBufferForOutput[0x02]=0x02;
+        internalSendRawSmallPacket(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),sizeof(ProtocolParsingBase::tempBigBufferForOutput));
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        errorParsingLayer("Password wrong: "+
+                     binarytoHexa(secretTokenBinary)+
+                     " + token "+
+                     binarytoHexa(tempAddedToken)+
+                     " = "+
+                     " hashedToken: "+
+                     binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,CATCHCHALLENGER_SHA224HASH_SIZE)+
+                     "sended pass + token: "+
+                     binarytoHexa(rawdata,CATCHCHALLENGER_SHA224HASH_SIZE)
+                     );
+        #else
+        errorParsingLayer("Password wrong: "+
+                     binarytoHexa(rawdata,CATCHCHALLENGER_SHA224HASH_SIZE)
+                     );
+        #endif
+        return;
+    }
+    else
+    {
+        removeFromQueryReceived(query_id);//all list dropped at client destruction
+        ProtocolParsingBase::tempBigBufferForOutput[0x00]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
+        ProtocolParsingBase::tempBigBufferForOutput[0x02]=0x01;
+        internalSendRawSmallPacket(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),sizeof(ProtocolParsingBase::tempBigBufferForOutput));
+        internalSendRawSmallPacket((char *)Client::protocolMessageLogicalGroupAndServerList,Client::protocolMessageLogicalGroupAndServerListSize);
+
+        stat_client=true;
+        //flags|=0x08;->just listen
+
+        stat_client_list.push_back(this);
+    }
+}
+#endif
