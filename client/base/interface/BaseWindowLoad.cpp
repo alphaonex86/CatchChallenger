@@ -498,6 +498,10 @@ void BaseWindow::datapackChecksumError()
     qDebug() << "BaseWindow::datapackChecksumError()";
     #endif
     datapackIsParsed=false;
+    //reset all the cached hash
+    settings.remove("DatapackHashBase-"+CatchChallenger::Api_client_real::client->datapackPathBase());
+    settings.remove("DatapackHashMain-"+CatchChallenger::Api_client_real::client->datapackPathMain());
+    settings.remove("DatapackHashSub-"+CatchChallenger::Api_client_real::client->datapackPathSub());
     emit newError(tr("Datapack on mirror is corrupted"),QStringLiteral("The checksum sended by the server is not the same than have on the mirror"));
 }
 
