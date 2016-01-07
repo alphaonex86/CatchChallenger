@@ -364,6 +364,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
             }
         break;
         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+        //Get first data and send the login
         case 0xA8:
             if(!have_send_protocol)
             {
@@ -385,6 +386,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                 return askLogin(queryNumber,data);
             }
         break;
+        //create account
         case 0xA9:
             if(!have_send_protocol)
             {
@@ -418,6 +420,29 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                     errorOutput("Account creation not premited");
                     return false;
                 }
+            }
+        break;
+        //stat client
+        case 0xAD:
+            if(!have_send_protocol)
+            {
+                errorOutput("send login before the protocol");
+                return false;
+            }
+            if(is_logging_in_progess)
+            {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                //removeFromQueryReceived(queryNumber);//all list dropped at client destruction
+                #endif
+                //replyOutputSize.remove(queryNumber);//all list dropped at client destruction
+                //not reply to prevent DDOS attack
+                errorOutput("Loggin already in progress at create account");
+                return false;
+            }
+            else
+            {
+                askStatClient(queryNumber,data);
+                return false;
             }
         break;
         #else

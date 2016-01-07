@@ -63,19 +63,39 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
     //token
     settings.beginGroup("master");
-    if(!settings.contains("token"))
-        generateToken(settings);
-    std::string token=settings.value("token");
-    if(token.size()!=TOKEN_SIZE_FOR_MASTERAUTH*2/*String Hexa, not binary*/)
-        generateToken(settings);
-    token=settings.value("token");
-    const std::vector<char> &tokenBinary=hexatoBinary(token);
-    if(tokenBinary.empty())
     {
-        std::cerr << "convertion to binary for pass failed for: " << token << std::endl;
-        abort();
+        if(!settings.contains("token"))
+            generateToken(settings);
+        std::string token=settings.value("token");
+        if(token.size()!=TOKEN_SIZE_FOR_MASTERAUTH*2/*String Hexa, not binary*/)
+            generateToken(settings);
+        token=settings.value("token");
+        const std::vector<char> &tokenBinary=hexatoBinary(token);
+        if(tokenBinary.empty())
+        {
+            std::cerr << "convertion to binary for pass failed for: " << token << std::endl;
+            abort();
+        }
+        memcpy(LinkToMaster::private_token_master,tokenBinary.data(),TOKEN_SIZE_FOR_MASTERAUTH);
     }
-    memcpy(LinkToMaster::private_token,tokenBinary.data(),TOKEN_SIZE_FOR_MASTERAUTH);
+    settings.endGroup();
+
+    settings.beginGroup("statclient");
+    {
+        if(!settings.contains("token"))
+            generateTokenStatClient(settings);
+        std::string token=settings.value("token");
+        if(token.size()!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT*2/*String Hexa, not binary*/)
+            generateTokenStatClient(settings);
+        token=settings.value("token");
+        const std::vector<char> &tokenBinary=hexatoBinary(token);
+        if(tokenBinary.empty())
+        {
+            std::cerr << "convertion to binary for pass failed for: " << token << std::endl;
+            abort();
+        }
+        memcpy(LinkToMaster::private_token_statclient,tokenBinary.data(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+    }
     settings.endGroup();
 
     //mode
@@ -391,7 +411,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
 EpollServerLoginSlave::~EpollServerLoginSlave()
 {
-    memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));
+    memset(LinkToMaster::private_token_master,0x00,sizeof(LinkToMaster::private_token_master));
     if(LinkToMaster::linkToMaster!=NULL)
     {
         delete LinkToMaster::linkToMaster;
@@ -455,13 +475,33 @@ void EpollServerLoginSlave::generateToken(TinyXMLSettings &settings)
         std::cerr << "Unable to open " << RANDOMFILEDEVICE << " to generate random token" << std::endl;
         abort();
     }
-    const int &returnedSize=fread(LinkToMaster::private_token,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
+    const int &returnedSize=fread(LinkToMaster::private_token_master,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
     if(returnedSize!=TOKEN_SIZE_FOR_MASTERAUTH)
     {
         std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from " << RANDOMFILEDEVICE << std::endl;
         abort();
     }
-    settings.setValue("token",binarytoHexa(reinterpret_cast<char *>(LinkToMaster::private_token)
+    settings.setValue("token",binarytoHexa(reinterpret_cast<char *>(LinkToMaster::private_token_master)
+                                           ,TOKEN_SIZE_FOR_MASTERAUTH).c_str());
+    fclose(fpRandomFile);
+    settings.sync();
+}
+
+void EpollServerLoginSlave::generateTokenStatClient(TinyXMLSettings &settings)
+{
+    FILE *fpRandomFile = fopen(RANDOMFILEDEVICE,"rb");
+    if(fpRandomFile==NULL)
+    {
+        std::cerr << "Unable to open " << RANDOMFILEDEVICE << " to generate random token" << std::endl;
+        abort();
+    }
+    const int &returnedSize=fread(LinkToMaster::private_token_master,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
+    if(returnedSize!=TOKEN_SIZE_FOR_MASTERAUTH)
+    {
+        std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from " << RANDOMFILEDEVICE << std::endl;
+        abort();
+    }
+    settings.setValue("token",binarytoHexa(reinterpret_cast<char *>(LinkToMaster::private_token_master)
                                            ,TOKEN_SIZE_FOR_MASTERAUTH).c_str());
     fclose(fpRandomFile);
     settings.sync();

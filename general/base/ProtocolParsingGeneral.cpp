@@ -431,6 +431,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             writePacketFixedSize[0xAA]=0xFE;
             writePacketFixedSize[0xAB]=1+4;
             writePacketFixedSize[0xAC]=1+4+4;
+            writePacketFixedSize[0xAD]=CATCHCHALLENGER_SHA224HASH_SIZE;
             writePacketFixedSize[0xB0]=0;
             writePacketFixedSize[0xB1]=0;
             writePacketFixedSize[0xB2]=0xFE;
@@ -474,6 +475,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             writePacketFixedSize[128+0xAA]=0xFE;
             writePacketFixedSize[128+0xAB]=0xFE;
             writePacketFixedSize[128+0xAC]=0xFE;
+            writePacketFixedSize[128+0xAD]=0x01;
             writePacketFixedSize[128+0xB0]=50*4;
             writePacketFixedSize[128+0xB1]=5*4;
             writePacketFixedSize[128+0xB2]=0xFE;

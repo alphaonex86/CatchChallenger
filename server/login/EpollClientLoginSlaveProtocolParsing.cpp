@@ -277,6 +277,26 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                 }
             }
         break;
+        //Stat client
+        case 0xAD:
+            if(stat==EpollClientLoginStat::LoginInProgress)
+            {
+                removeFromQueryReceived(queryNumber);//all list dropped at client destruction
+                //not reply to prevent DDOS attack
+                parseNetworkReadError("Loggin already in progress");
+                return false;
+            }
+            else if(stat!=EpollClientLoginStat::ProtocolGood)
+            {
+                parseNetworkReadError("send login before the protocol");
+                return false;
+            }
+            else
+            {
+                askStatClient(queryNumber,data);
+                return false;
+            }
+        break;
         default:
             parseNetworkReadError("wrong data before login with mainIdent: "+std::to_string(mainCodeType));
         break;
