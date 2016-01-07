@@ -579,18 +579,23 @@ void BaseWindow::stdmessage(std::string message) const
 
 void BaseWindow::number_of_player(uint16_t number,uint16_t max)
 {
-    ui->frame_main_display_interface_player->show();
-    QString stringMax;
-    if(max>1000)
-        stringMax=QStringLiteral("%1K").arg(max/1000);
+    if(max>=65534)
+        ui->frame_main_display_interface_player->hide();
     else
-        stringMax=QString::number(max);
-    QString stringNumber;
-    if(number>1000)
-        stringNumber=QStringLiteral("%1K").arg(number/1000);
-    else
-        stringNumber=QString::number(number);
-    ui->label_interface_number_of_player->setText(QStringLiteral("%1/%2").arg(stringNumber).arg(stringMax));
+    {
+        ui->frame_main_display_interface_player->show();
+        QString stringMax;
+        if(max>1000)
+            stringMax=QStringLiteral("%1K").arg(max/1000);
+        else
+            stringMax=QString::number(max);
+        QString stringNumber;
+        if(number>1000)
+            stringNumber=QStringLiteral("%1K").arg(number/1000);
+        else
+            stringNumber=QString::number(number);
+        ui->label_interface_number_of_player->setText(QStringLiteral("%1/%2").arg(stringNumber).arg(stringMax));
+    }
 }
 
 void BaseWindow::on_toolButton_interface_quit_clicked()

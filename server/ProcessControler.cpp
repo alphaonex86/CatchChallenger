@@ -270,6 +270,10 @@ void ProcessControler::send_settings()
     }
     settings->endGroup();
 
+#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+memcpy(settings.private_token_statclient,Client::private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+#endif
+
     server.setSettings(formatedServerSettings);
     server.setNormalSettings(formatedServerNormalSettings);
 }

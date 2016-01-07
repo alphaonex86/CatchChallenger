@@ -25,7 +25,10 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
 
     uint16_t max_players;
     in >> max_players;
-    setMaxPlayers(max_players);
+    if(max_players==65534)
+        setMaxPlayers(255);
+    else
+        setMaxPlayers(max_players);
     this->max_players=max_players;
 
     uint32_t captureRemainingTime;

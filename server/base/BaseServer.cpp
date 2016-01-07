@@ -643,6 +643,9 @@ void BaseServer::setSettings(const GameServerSettings &settings)
 {
     //load it
     GlobalServerData::serverSettings=settings;
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    memcpy(Client::private_token_statclient,settings.private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+    #endif
 
     loadAndFixSettings();
 }

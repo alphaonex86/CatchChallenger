@@ -95,6 +95,7 @@ public:
         ProtocolGood,
         LoginInProgress,
         Logged,
+        LoggedStatClient,
         CharacterSelecting,
         CharacterSelected,
         GameServerConnecting,
@@ -135,6 +136,7 @@ public:
     static char baseDatapackSum[28];
     static char loginGood[256*1024];
     static unsigned int loginGoodSize;
+    static std::vector<EpollClientLoginSlave *> stat_client_list;
 
     static char serverServerList[256*1024];
     static unsigned int serverServerListSize;
@@ -188,6 +190,7 @@ private:
 public:
     void askLogin_cancel();
     void askLogin(const uint8_t &query_id,const char *rawdata);
+    void askStatClient(const uint8_t &query_id,const char *rawdata);
     static void askLogin_static(void *object);
     void askLogin_object();
     void askLogin_return(AskLoginParam *askLoginParam);

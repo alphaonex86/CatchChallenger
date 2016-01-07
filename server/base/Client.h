@@ -108,6 +108,8 @@ public:
     static unsigned char protocolReplyCompresssionZlib[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     static unsigned char protocolReplyCompressionXz[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     static unsigned char protocolReplyCompressionLz4[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static std::vector<Client *> stat_client_list;
+    static unsigned char private_token_statclient[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
 
     static unsigned char *protocolReplyCharacterList;
     static uint16_t protocolReplyCharacterListSize;
@@ -127,7 +129,7 @@ public:
 
     static const unsigned char protocolHeaderToMatch[5];
 protected:
-    bool character_loaded,character_loaded_in_progress;
+    bool character_loaded,character_loaded_in_progress,stat_client;
     std::queue<CatchChallenger::DatabaseBase::CallBack *> callbackRegistred;
 
     struct ClanActionParam
@@ -731,6 +733,7 @@ private:
     void characterIsRightFinalStep();
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     void loginIsWrong(const uint8_t &query_id,const uint8_t &returnCode,const std::string &debugMessage);
+    void askStatClient(const uint8_t &query_id,const char *rawdata);
     #endif
     void characterSelectionIsWrong(const uint8_t &query_id,const uint8_t &returnCode,const std::string &debugMessage);
     //load linked data (like item, quests, ...)

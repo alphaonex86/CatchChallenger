@@ -639,6 +639,9 @@ void MainWindow::load_settings()
         ui->comboBox_city_capture_day->setCurrentIndex(capture_day_int);
         ui->timeEdit_city_capture_time->setTime(QTime(capture_time_hours,capture_time_minutes));
     }
+#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+memcpy(settings.private_token_statclient,Client::private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+#endif
 
     send_settings();
 }
@@ -843,6 +846,10 @@ void MainWindow::send_settings()
     QTime time=ui->timeEdit_city_capture_time->time();
     formatedServerSettings.city.capture.hour=time.hour();
     formatedServerSettings.city.capture.minute=time.minute();
+
+#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+memcpy(settings.private_token_statclient,Client::private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+#endif
 
     server.setSettings(formatedServerSettings);
     server.setNormalSettings(formatedServerNormalSettings);

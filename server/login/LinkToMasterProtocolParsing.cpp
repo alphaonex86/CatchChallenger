@@ -426,6 +426,16 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 if(EpollClientLoginSlave::serverServerListComputedMessageSize>0)
                     memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList+EpollClientLoginSlave::serverLogicalGroupListSize,EpollClientLoginSlave::serverServerListComputedMessage,EpollClientLoginSlave::serverServerListComputedMessageSize);
             }
+
+            {
+                unsigned int index=0;
+                while(index<EpollClientLoginSlave::stat_client_list.size())
+                {
+                    EpollClientLoginSlave * const client=EpollClientLoginSlave::stat_client_list.at(index);
+                    client->sendRawBlock(EpollClientLoginSlave::serverServerListComputedMessage,EpollClientLoginSlave::serverServerListComputedMessageSize);
+                    index++;
+                }
+            }
         }
         break;
         case 0x46:
@@ -806,6 +816,20 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList+EpollClientLoginSlave::serverLogicalGroupListSize,EpollClientLoginSlave::serverServerListComputedMessage,EpollClientLoginSlave::serverServerListComputedMessageSize);
                 }
             }
+
+            {
+                ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x47;
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,rawData,size);
+
+                unsigned int index=0;
+                while(index<EpollClientLoginSlave::stat_client_list.size())
+                {
+                    EpollClientLoginSlave * const client=EpollClientLoginSlave::stat_client_list.at(index);
+                    client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+4+size);
+                    index++;
+                }
+            }
         return true;
         default:
             parseNetworkReadError("unknown main ident: "+std::to_string(mainCodeType)+", file:"+__FILE__+":"+std::to_string(__LINE__));
@@ -894,12 +918,12 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                         std::cerr << "SHA224_Init(&hash)!=1" << std::endl;
                         abort();
                     }
-                    SHA224_Update(&hash,reinterpret_cast<const char *>(LinkToMaster::private_token),TOKEN_SIZE_FOR_MASTERAUTH);
+                    SHA224_Update(&hash,reinterpret_cast<const char *>(LinkToMaster::private_token_master),TOKEN_SIZE_FOR_MASTERAUTH);
                     SHA224_Update(&hash,data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                     unsigned char tempHashResult[CATCHCHALLENGER_SHA224HASH_SIZE];
                     SHA224_Final(tempHashResult,&hash);
 
-                    memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));
+                    memset(LinkToMaster::private_token_master,0x00,sizeof(LinkToMaster::private_token_master));
 
                     //send the network query
                     registerOutputQuery(queryNumberList.back(),0xBD);

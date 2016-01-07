@@ -59,6 +59,8 @@ unsigned char Client::protocolReplyCompressionLz4[]={0x7F/*reply server to clien
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 unsigned char Client::loginIsWrongBuffer[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size, little endian*/,0x00/*temp return code*/};
+std::vector<Client *> Client::stat_client_list;
+unsigned char Client::private_token_statclient[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
 #endif
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

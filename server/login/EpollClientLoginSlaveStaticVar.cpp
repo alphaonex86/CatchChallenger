@@ -5,6 +5,7 @@
 using namespace CatchChallenger;
 
 std::vector<EpollClientLoginSlave *> EpollClientLoginSlave::client_list;
+std::vector<EpollClientLoginSlave *> EpollClientLoginSlave::stat_client_list;
 std::vector<unsigned int> EpollClientLoginSlave::maxAccountIdList;
 std::vector<unsigned int> EpollClientLoginSlave::maxCharacterIdList;
 std::vector<unsigned int> EpollClientLoginSlave::maxClanIdList;

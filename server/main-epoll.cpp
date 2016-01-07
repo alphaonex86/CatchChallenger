@@ -54,6 +54,28 @@ uint16_t master_port;
 uint8_t master_tryInterval;
 uint8_t master_considerDownAfterNumberOfTry;
 
+#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+void generateTokenStatClient(TinyXMLSettings &settings,char * const data)
+{
+    FILE *fpRandomFile = fopen(RANDOMFILEDEVICE,"rb");
+    if(fpRandomFile==NULL)
+    {
+        std::cerr << "Unable to open " << RANDOMFILEDEVICE << " to generate random token" << std::endl;
+        abort();
+    }
+    const int &returnedSize=fread(data,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
+    if(returnedSize!=TOKEN_SIZE_FOR_MASTERAUTH)
+    {
+        std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from " << RANDOMFILEDEVICE << std::endl;
+        abort();
+    }
+    settings.setValue("token",binarytoHexa(reinterpret_cast<char *>(data)
+                                           ,TOKEN_SIZE_FOR_MASTERAUTH).c_str());
+    fclose(fpRandomFile);
+    settings.sync();
+}
+#endif
+
 void send_settings()
 {
     GameServerSettings formatedServerSettings=server->getSettings();
@@ -450,6 +472,26 @@ void send_settings()
         }
     }
     settings->endGroup();
+
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    settings->beginGroup("statclient");
+    {
+        if(!settings->contains("token"))
+            generateTokenStatClient(*settings,formatedServerSettings.private_token_statclient);
+        std::string token=settings->value("token");
+        if(token.size()!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT*2/*String Hexa, not binary*/)
+            generateTokenStatClient(*settings,formatedServerSettings.private_token_statclient);
+        token=settings->value("token");
+        const std::vector<char> &tokenBinary=hexatoBinary(token);
+        if(tokenBinary.empty())
+        {
+            std::cerr << "convertion to binary for pass failed for: " << token << std::endl;
+            abort();
+        }
+        memcpy(formatedServerSettings.private_token_statclient,tokenBinary.data(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+    }
+    settings->endGroup();
+    #endif
 
     /*if(QCoreApplication::arguments().contains("--benchmark"))
         GlobalServerData::serverSettings.benchmark=true;*/
