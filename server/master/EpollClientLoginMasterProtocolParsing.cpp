@@ -302,6 +302,10 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hash);
                 if(memcmp(ProtocolParsingBase::tempBigBufferForOutput,data+pos,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
                 {
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    std::cout << "SHA224(" << binarytoHexa(EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH)
+                              << " " << binarytoHexa(tokenForAuth) << ") to auth on master failed: " << __FILE__ << ":" << __LINE__ << std::endl;
+                    #endif
                     *(EpollClientLoginMaster::protocolReplyWrongAuth+1)=queryNumber;
                     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyWrongAuth),sizeof(EpollClientLoginMaster::protocolReplyWrongAuth));
                     errorParsingLayer("Wrong protocol token");
@@ -628,6 +632,10 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hash);
                 if(memcmp(ProtocolParsingBase::tempBigBufferForOutput,data,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
                 {
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    std::cout << "SHA224(" << binarytoHexa(EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH)
+                              << " " << binarytoHexa(tokenForAuth) << ") to auth on master failed: " << __FILE__ << ":" << __LINE__ << std::endl;
+                    #endif
                     *(EpollClientLoginMaster::protocolReplyWrongAuth+1)=queryNumber;
                     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyWrongAuth),sizeof(EpollClientLoginMaster::protocolReplyWrongAuth));
                     errorParsingLayer("Wrong protocol token");
