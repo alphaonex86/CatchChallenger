@@ -129,7 +129,10 @@ public:
 
     static const unsigned char protocolHeaderToMatch[5];
 protected:
-    bool character_loaded,character_loaded_in_progress,stat_client;
+    bool character_loaded,character_loaded_in_progress;
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    bool stat_client;
+    #endif
     std::queue<CatchChallenger::DatabaseBase::CallBack *> callbackRegistred;
 
     struct ClanActionParam
