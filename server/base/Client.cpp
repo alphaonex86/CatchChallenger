@@ -46,7 +46,9 @@ Client::Client(
         ),
     character_loaded(false),
     character_loaded_in_progress(false),
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     stat_client(false),
+    #endif
     account_id(0),
     character_id(0),
     market_cash(0),
@@ -223,8 +225,6 @@ void Client::disconnectClient()
             index++;
         }
     }
-    #endif
-
     if(stat_client)
     {
         unsigned int index=0;
@@ -239,6 +239,8 @@ void Client::disconnectClient()
             index++;
         }
     }
+    #endif
+
     if(character_loaded_in_progress)
     {
         character_loaded_in_progress=false;
