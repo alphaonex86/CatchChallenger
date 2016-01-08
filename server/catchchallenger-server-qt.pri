@@ -4,7 +4,8 @@ QT       += sql core
 
 RESOURCES += $$PWD/all-server-resources.qrc
 
-win32:RC_FILE += $$PWD/resources-windows.rc
+#now in generale, only linux is C only, mac, windows, other is in Qt for compatibility
+#win32:RC_FILE += $$PWD/resources-windows.rc
 
 QT       += gui network xml
 
