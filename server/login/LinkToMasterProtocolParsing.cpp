@@ -920,6 +920,10 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     }
                     SHA224_Update(&hash,reinterpret_cast<const char *>(LinkToMaster::private_token_master),TOKEN_SIZE_FOR_MASTERAUTH);
                     SHA224_Update(&hash,data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    std::cout << "SHA224(" << binarytoHexa(reinterpret_cast<const char *>(LinkToMaster::private_token_master),TOKEN_SIZE_FOR_MASTERAUTH)
+                              << " " << binarytoHexa(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT) << ") to auth on master" << std::endl;
+                    #endif
                     unsigned char tempHashResult[CATCHCHALLENGER_SHA224HASH_SIZE];
                     SHA224_Final(tempHashResult,&hash);
 

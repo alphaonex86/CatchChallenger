@@ -63,14 +63,14 @@ void generateTokenStatClient(TinyXMLSettings &settings,char * const data)
         std::cerr << "Unable to open " << RANDOMFILEDEVICE << " to generate random token" << std::endl;
         abort();
     }
-    const int &returnedSize=fread(data,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
-    if(returnedSize!=TOKEN_SIZE_FOR_MASTERAUTH)
+    const int &returnedSize=fread(data,1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,fpRandomFile);
+    if(returnedSize!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
     {
-        std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from " << RANDOMFILEDEVICE << std::endl;
+        std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT << " needed to do the token from " << RANDOMFILEDEVICE << std::endl;
         abort();
     }
     settings.setValue("token",binarytoHexa(reinterpret_cast<char *>(data)
-                                           ,TOKEN_SIZE_FOR_MASTERAUTH).c_str());
+                                           ,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT).c_str());
     fclose(fpRandomFile);
     settings.sync();
 }
