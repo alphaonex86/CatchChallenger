@@ -535,11 +535,11 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     qDebug() << QStringLiteral("new token to go on game server: %1").arg(QString(tokenForGameServer.toHex()));
                     if(tokenForGameServer.size()==CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
                     {
-                        connectingOnGameServer();
                         have_send_protocol=false;
                         stageConnexion=StageConnexion::Stage2;
                         if(socket!=NULL)
                             socket->disconnectFromHost();
+                        connectingOnGameServer();
                         return false;
                     }
                     else
