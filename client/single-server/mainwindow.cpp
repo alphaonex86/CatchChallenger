@@ -381,7 +381,10 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
     {
         if(CatchChallenger::Api_client_real::client!=NULL)
             if(CatchChallenger::Api_client_real::client->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage2)
+            {
+                CatchChallenger::Api_client_real::client->socketDisconnectedForReconnect();
                 return;
+            }
         if(!isVisible())
         {
             QCoreApplication::quit();

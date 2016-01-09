@@ -72,7 +72,6 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
 
     connect(socket,&ConnectedSocket::destroyed,this,&Api_protocol::socketDestroyed,Qt::DirectConnection);
     //connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::DirectConnection);-> why direct?
-    connect(socket,&ConnectedSocket::disconnected,this,&Api_protocol::socketDisconnectedForReconnect,Qt::QueuedConnection);
     if(socket->sslSocket!=NULL)
     {
         connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::readForFirstHeader,Qt::DirectConnection);
@@ -213,7 +212,6 @@ void Api_protocol::socketDisconnectedForReconnect()
         newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::socketDisconnectedForReconnect() "));
         return;
     }
-    qDebug() << "Api_protocol::socketDisconnectedForReconnect()";
     if(selectedServerIndex==-1)
     {
         parseError(QStringLiteral("Internal error"),QStringLiteral("selectedServerIndex==-1 with Api_protocol::socketDisconnectedForReconnect()"));
@@ -230,7 +228,9 @@ void Api_protocol::socketDisconnectedForReconnect()
         parseError(QStringLiteral("Internal error"),QStringLiteral("socket==NULL with Api_protocol::socketDisconnectedForReconnect()"));
         return;
     }
+    stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage3;//prevent loop in stage2
     haveFirstHeader=false;
+    qDebug() << "Api_protocol::socketDisconnectedForReconnect(), Try connect to: " << serverFromPoolForDisplay.host << ":" << serverFromPoolForDisplay.port;
     socket->connectToHost(serverFromPoolForDisplay.host,serverFromPoolForDisplay.port);
 }
 
