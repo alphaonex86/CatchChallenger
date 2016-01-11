@@ -10,7 +10,7 @@ class PurgeTheLockedAccount
         : public EpollTimer
 {
 public:
-    explicit PurgeTheLockedAccount();
+    explicit PurgeTheLockedAccount(unsigned int intervalInSeconds);
 private:
     void exec();
 };

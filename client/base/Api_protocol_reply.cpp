@@ -85,7 +85,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     have_receive_protocol=true;
                     protocol_is_good();
                 }
-                else if(stageConnexion==StageConnexion::Stage3)
+                else if(stageConnexion==StageConnexion::Stage4)
                 {
                     if(data.size()!=(sizeof(uint8_t)))
                     {
@@ -522,7 +522,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             }
             else
             {
-                if(stageConnexion==StageConnexion::Stage3 || serverFromPoolForDisplay.host.isEmpty())
+                if(stageConnexion==StageConnexion::Stage4 || serverFromPoolForDisplay.host.isEmpty())
                 {
                     return parseCharacterBlock(
                                 packetCode,queryNumber,

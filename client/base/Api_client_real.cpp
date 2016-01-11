@@ -307,7 +307,7 @@ void Api_client_real::tryConnect(QString host,uint16_t port)
 
 void Api_client_real::disconnected()
 {
-    if(stage()==StageConnexion::Stage1 || stage()==StageConnexion::Stage3)
+    if(stage()==StageConnexion::Stage1 || stage()==StageConnexion::Stage4)
     {
         wait_datapack_content_base=false;
         wait_datapack_content_main=false;

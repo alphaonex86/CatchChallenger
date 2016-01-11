@@ -199,7 +199,10 @@ bool Api_protocol::sendProtocol()
     if(stageConnexion==StageConnexion::Stage1)
         packOutcommingQuery(0xA0,queryNumber(),reinterpret_cast<const char *>(protocolHeaderToMatchLogin),sizeof(protocolHeaderToMatchLogin));
     else if(stageConnexion==StageConnexion::Stage3)
+    {
+        stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage4;
         packOutcommingQuery(0xA0,queryNumber(),reinterpret_cast<const char *>(protocolHeaderToMatchGameServer),sizeof(protocolHeaderToMatchGameServer));
+    }
     else
         newError(QStringLiteral("Internal problem"),QStringLiteral("stageConnexion!=StageConnexion::Stage1/3"));
     return true;
@@ -2035,7 +2038,7 @@ void Api_protocol::connectTheExternalSocketInternal()
         QFile certFile;
         if(stageConnexion==StageConnexion::Stage1)
             certFile.setFileName(datapackCert.absolutePath()+"/"+socket->peerName()+"-"+QString::number(socket->peerPort()));
-        else if(stageConnexion==StageConnexion::Stage3)
+        else if(stageConnexion==StageConnexion::Stage3 || stageConnexion==StageConnexion::Stage4)
         {
             if(selectedServerIndex==-1)
             {

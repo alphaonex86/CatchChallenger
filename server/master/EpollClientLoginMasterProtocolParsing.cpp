@@ -124,7 +124,7 @@ bool EpollClientLoginMaster::parseMessage(const uint8_t &mainCodeType, const cha
             }
             const uint32_t &characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(parseMessagedata)));
             charactersGroupForGameServer->unlockTheCharacter(characterId);
-            charactersGroupForGameServerInformation->lockedAccount.erase(characterId);
+            charactersGroupForGameServerInformation->lockedAccountByGameserver.erase(characterId);
             return true;
         }
         break;
@@ -489,7 +489,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                     unsigned int characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
                     pos+=sizeof(uint32_t);
                     connectedPlayer.insert(characterId);
-                    charactersGroupForGameServerInformation->lockedAccount.erase(characterId);
+                    charactersGroupForGameServerInformation->lockedAccountByGameserver.erase(characterId);
                     index++;
                 }
             }
@@ -883,13 +883,13 @@ bool EpollClientLoginMaster::parseReplyData(const uint8_t &mainCodeType,const ui
                     {
                         //internal error, no more token, ...
                         charactersGroupForGameServer->unlockTheCharacter(dataForSelectedCharacterReturn.characterId);
-                        charactersGroupForGameServerInformation->lockedAccount.erase(dataForSelectedCharacterReturn.characterId);
+                        charactersGroupForGameServerInformation->lockedAccountByGameserver.erase(dataForSelectedCharacterReturn.characterId);
                     }
                     else
                     {
                         //account already locked
                         charactersGroupForGameServer->lockTheCharacter(dataForSelectedCharacterReturn.characterId);
-                        charactersGroupForGameServerInformation->lockedAccount.insert(dataForSelectedCharacterReturn.characterId);
+                        charactersGroupForGameServerInformation->lockedAccountByGameserver.insert(dataForSelectedCharacterReturn.characterId);
                         std::cerr << "The master have not detected nothing but the game server " << charactersGroupForGameServerInformation->host << ":" << charactersGroupForGameServerInformation->port << " have reply than the account " << dataForSelectedCharacterReturn.characterId << " is already locked" << std::endl;
                     }
                     if(dataForSelectedCharacterReturn.loginServer!=NULL)

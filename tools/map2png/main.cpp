@@ -220,6 +220,14 @@ int main(int argc, char *argv[])
                     abort();
                 }
             }
+            else
+            {
+                if(!found1)
+                    qDebug() << "found1";
+                if(!found2)
+                    qDebug() << "found2";
+                abort();
+            }
         }
 
         if(arguments.size()==1)
