@@ -361,6 +361,7 @@ void CharactersGroup::waitBeforeReconnect(const uint32_t &characterId)
 
 void CharactersGroup::purgeTheLockedAccount()
 {
+    /// \todo solve this scalability issue
     bool clockDriftDetected=false;
     std::vector<uint32_t> charactedToUnlock;
     auto i=lockedAccount.begin();

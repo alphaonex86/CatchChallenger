@@ -25,11 +25,17 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
 
     uint16_t max_players;
     in >> max_players;
+    max_players_real=max_players;
     if(max_players==65534)
+    {
+        this->max_players=255;
         setMaxPlayers(255);
+    }
     else
+    {
         setMaxPlayers(max_players);
-    this->max_players=max_players;
+        this->max_players=max_players;
+    }
 
     uint32_t captureRemainingTime;
     uint8_t captureFrequencyType;
@@ -303,7 +309,7 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
             CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.clear();
     }
 
-    if(max_players<=255)
+    if(this->max_players<=255)
     {
         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
         {

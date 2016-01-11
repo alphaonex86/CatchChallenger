@@ -167,6 +167,7 @@ protected:
 
     //stored local player info
     uint16_t max_players;
+    uint16_t max_players_real;
     uint32_t number_of_map;
 
     //to send trame
