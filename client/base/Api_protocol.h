@@ -60,7 +60,8 @@ public:
     {
         Stage1=0x01,//Connect on login server
         Stage2=0x02,//reconnexion in progress
-        Stage3=0x03,//connected on game server
+        Stage3=0x03,//connecting on game server
+        Stage4=0x04,//connected on game server
     };
     StageConnexion stage() const;
     enum DatapackStatus

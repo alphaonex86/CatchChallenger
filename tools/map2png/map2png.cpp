@@ -342,7 +342,10 @@ QString Map2Png::loadOtherMap(const QString &fileName)
                                 entryListIndex++;
                             }
                             if(entryListIndex>=folderListSkin.size())
+                            {
                                 qDebug() << "Skin bot not found: " << tilesetPath;
+                                //abort();
+                            }
                         }
                         if(tileset!=NULL)
                         {
