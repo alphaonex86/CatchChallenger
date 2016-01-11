@@ -184,6 +184,7 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
                                                                               const uint16_t &port, const std::string &metaData, const uint32_t &logicalGroupIndex,
                                                                               const uint16_t &currentPlayer, const uint16_t &maxPlayer,const std::unordered_set<uint32_t> &lockedAccount)
 {
+    const uint64_t &now=(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     //old locked account
     if(lockedAccountByDisconnectedServer.find(uniqueKey)!=lockedAccountByDisconnectedServer.cend())
     {
@@ -194,7 +195,7 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
             if(lockedAccount.find(*i)==lockedAccount.cend())
             {
                 //was disconnected from the last game server disconnection
-                this->lockedAccount[*i]=(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()+5;//wait 5s before reconnect
+                this->lockedAccount[*i]=now+5;//wait 5s before reconnect
             }
             ++i;
         }
@@ -222,7 +223,7 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
             {
                 const uint64_t &timeLock=this->lockedAccount.at(*i);
                 //drop the timeouted lock
-                if(timeLock>0 && timeLock<(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count())
+                if(timeLock>0 && timeLock<now)
                 {
                     tempServer.lockedAccountByGameserver.insert(*i);
                     this->lockedAccount[*i]=0;
@@ -243,7 +244,8 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
                             }
                             ++j;
                         }
-                        this->lockedAccount[*i]=(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()+5*60;//wait 5min before reconnect
+                        this->lockedAccount[*i]=now+CharactersGroup::maxLockAge;//wait 5min before reconnect
+                        addToCacheLockToDelete(*i,now+CharactersGroup::maxLockAge);
                         static_cast<EpollClientLoginMaster *>(client)->disconnectForDuplicateConnexionDetected(*i);
                     }
                     else
@@ -292,6 +294,7 @@ bool CharactersGroup::characterIsLocked(const uint32_t &characterId)
         if(lockedAccount.at(characterId)<(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count())
         {
             lockedAccount.erase(characterId);
+            deleteToCacheLockToDelete(characterId);
             return false;
         }
         else
@@ -343,7 +346,9 @@ void CharactersGroup::unlockTheCharacter(const uint32_t &characterId)
     else if(lockedAccount.at(characterId)!=0)
         std::cerr << "unlock " << characterId << " already planned into: " << lockedAccount.at(characterId) << " (reset for 5s)" << std::endl;
     #endif
-    lockedAccount[characterId]=(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()+CharactersGroup::maxLockAge;
+    const uint64_t &now=(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    lockedAccount[characterId]=now+CharactersGroup::maxLockAge;
+    addToCacheLockToDelete(characterId,now+CharactersGroup::maxLockAge);
     //std::cerr << "unlock the char " << std::to_string(characterId) << " total locked: " << std::to_string(lockedAccount.size()) << std::endl;
 }
 
@@ -355,41 +360,50 @@ void CharactersGroup::waitBeforeReconnect(const uint32_t &characterId)
     else if(lockedAccount.at(characterId)!=0)
         std::cerr << "lockedAccount contains set timeout: " << characterId << std::endl;
     #endif
-    lockedAccount[characterId]=(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()+5;
+    const uint64_t &now=(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    lockedAccount[characterId]=now+5;
+    addToCacheLockToDelete(characterId,now+CharactersGroup::maxLockAge);
     //std::cerr << "waitBeforeReconnect the char " << std::to_string(characterId) << " total locked: " << std::to_string(lockedAccount.size()) << std::endl;
 }
 
 void CharactersGroup::purgeTheLockedAccount()
 {
-    /// \todo solve this scalability issue
-    bool clockDriftDetected=false;
-    std::vector<uint32_t> charactedToUnlock;
-    auto i=lockedAccount.begin();
+    if(cacheLockToDeleteList.empty())
+        return;
+
     const uint64_t &now=(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    while(i!=lockedAccount.cbegin())
+
+    //time drift
+    if(cacheLockToDeleteList.front().timestampsToDelete>(now+3600))
     {
-        if(i->second!=0)
+        uint64_t newDate=now+CharactersGroup::maxLockAge;
+        unsigned int index=0;
+        while(index<cacheLockToDeleteList.size())
         {
-            if(i->second<now)
-                charactedToUnlock.push_back(i->first);
-            else if(i->second>(now+3600))
-            {
-                i->second=now+CharactersGroup::maxLockAge;
-                clockDriftDetected=true;
-            }
+            CacheLockToDelete &cacheLockToDelete=cacheLockToDeleteList.at(index);
+            cacheLockToDelete.timestampsToDelete=newDate;
+            index++;
         }
-        ++i;
+        std::cerr << "Some locked account for more than 1h, clock drift?" << std::endl;
+        return;
     }
+
     unsigned int index=0;
-    while(index<charactedToUnlock.size())
+    while(index<cacheLockToDeleteList.size())
     {
-        lockedAccount.erase(charactedToUnlock.at(index));
+        const CacheLockToDelete &cacheLockToDelete=cacheLockToDeleteList.at(index);
+        if(cacheLockToDelete.timestampsToDelete>now)
+            break;
+        lockedAccount.erase(cacheLockToDelete.uniqueKey);
         index++;
     }
-    if(clockDriftDetected)
-        std::cerr << "Some locked account for more than 1h, clock drift?" << std::endl;
-    if(charactedToUnlock.empty())
-        std::cerr << "purged char number " << std::to_string(charactedToUnlock.size()) << " total locked: " << std::to_string(lockedAccount.size()) << std::endl;
+    if(index>=cacheLockToDeleteList.size())
+        cacheLockToDeleteList.clear();
+    if(index>0)
+    {
+        cacheLockToDeleteList.erase(cacheLockToDeleteList.cbegin(),cacheLockToDeleteList.cbegin()+index);
+        std::cerr << "purged char number " << std::to_string(index) << ", total locked: " << std::to_string(lockedAccount.size()) << ", remaining time locked: " << std::to_string(cacheLockToDeleteList.size()) << std::endl;
+    }
 }
 
 void CharactersGroup::setMaxLockAge(const uint16_t &maxLockAge)
@@ -405,4 +419,27 @@ void CharactersGroup::setMaxLockAge(const uint16_t &maxLockAge)
         return;
     }
     CharactersGroup::maxLockAge=maxLockAge;
+}
+
+void CharactersGroup::addToCacheLockToDelete(const uint32_t &uniqueKey,const uint64_t &timestampsToDelete)
+{
+    CacheLockToDelete cacheLockToDelete;
+    cacheLockToDelete.uniqueKey=uniqueKey;
+    cacheLockToDelete.timestampsToDelete=timestampsToDelete;
+    cacheLockToDeleteList.push_back(cacheLockToDelete);
+}
+
+void CharactersGroup::deleteToCacheLockToDelete(const uint32_t &uniqueKey)
+{
+    unsigned int index=0;
+    while(index<cacheLockToDeleteList.size())
+    {
+        const CacheLockToDelete &cacheLockToDelete=cacheLockToDeleteList.at(index);
+        if(cacheLockToDelete.uniqueKey==uniqueKey)
+        {
+            cacheLockToDeleteList.erase(cacheLockToDeleteList.cbegin()+index);
+            return;
+        }
+        index++;
+    }
 }

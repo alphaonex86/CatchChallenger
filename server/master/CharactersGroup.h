@@ -69,11 +69,20 @@ private:
     void load_clan_max_id();
     static void load_clan_max_id_static(void *object);
     void load_clan_max_id_return();
-    static uint16_t maxLockAge;
+    void addToCacheLockToDelete(const uint32_t &uniqueKey,const uint64_t &timestampsToDelete);
+    void deleteToCacheLockToDelete(const uint32_t &uniqueKey);
 private:
+    static uint16_t maxLockAge;
     EpollPostgresql *databaseBaseCommon;
     std::unordered_map<uint32_t/*uniqueKey*/,uint64_t/*can reconnect after this time stamps if !=0, else locked*/> lockedAccount;
     std::unordered_map<uint32_t/*uniqueKey*/,std::unordered_set<uint32_t/*lockedAccount*/> > lockedAccountByDisconnectedServer;
+
+    struct CacheLockToDelete
+    {
+        uint32_t uniqueKey;
+        uint64_t timestampsToDelete;
+    };
+    std::vector<CacheLockToDelete> cacheLockToDeleteList;//presume cacheLockToDeleteList size remain small
 };
 }
 
