@@ -1665,6 +1665,7 @@ void Api_protocol::resetAll()
     have_send_protocol=false;
     have_receive_protocol=false;
     max_players=65535;
+    max_players_real=65535;
     number_of_map=0;
     selectedServerIndex=-1;
     player_informations.allow.clear();
@@ -1984,7 +1985,7 @@ void Api_protocol::readForFirstHeader()
         newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::readForFirstHeader() socket->sslSocket==NULL"));
         return;
     }
-    if(stageConnexion!=StageConnexion::Stage1 && stageConnexion!=StageConnexion::Stage2)
+    if(stageConnexion!=StageConnexion::Stage1 && stageConnexion!=StageConnexion::Stage2 && stageConnexion!=StageConnexion::Stage3)
     {
         newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::readForFirstHeader() stageConnexion!=StageConnexion::Stage1 && stageConnexion!=StageConnexion::Stage2"));
         return;
