@@ -62,7 +62,7 @@ EpollClientLoginMaster::~EpollClientLoginMaster()
             if(dataForSelectedCharacterReturn.loginServer!=NULL)
             {
                 charactersGroupForGameServer->unlockTheCharacter(dataForSelectedCharacterReturn.characterId);
-                charactersGroupForGameServerInformation->lockedAccount.erase(dataForSelectedCharacterReturn.characterId);
+                charactersGroupForGameServerInformation->lockedAccountByGameserver.erase(dataForSelectedCharacterReturn.characterId);
                 dataForSelectedCharacterReturn.loginServer->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,0x04);
             }
             index++;
@@ -184,7 +184,7 @@ void EpollClientLoginMaster::selectCharacter(const uint8_t &query_id,const uint3
         return;
     }
     CharactersGroup::list[charactersGroupIndex]->lockTheCharacter(characterId);
-    gameServer->charactersGroupForGameServerInformation->lockedAccount.insert(characterId);
+    gameServer->charactersGroupForGameServerInformation->lockedAccountByGameserver.insert(characterId);
 }
 
 bool EpollClientLoginMaster::trySelectCharacterGameServer(EpollClientLoginMaster * const loginServer,const uint8_t &client_query_id,const uint32_t &serverUniqueKey,const uint8_t &charactersGroupIndex,const uint32_t &characterId, const uint32_t &accountId)

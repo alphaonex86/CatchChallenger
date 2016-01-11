@@ -29,12 +29,15 @@ using namespace CatchChallenger;
 EpollServerLoginMaster *EpollServerLoginMaster::epollServerLoginMaster=NULL;
 
 EpollServerLoginMaster::EpollServerLoginMaster() :
+    purgeTheLockedAccount(NULL),
     server_ip(NULL),
     server_port(NULL),
     rawServerListForC211(static_cast<char *>(malloc(sizeof(EpollClientLoginMaster::loginSettingsAndCharactersGroup)))),
     rawServerListForC211Size(0),
     databaseBaseLogin(NULL),
-    databaseBaseBase(NULL)
+    databaseBaseBase(NULL),
+    purgeLockPeriod(3*60),
+    maxLockAge(10*60)
 {
     CommonSettingsCommon::commonSettingsCommon.automatic_account_creation   = false;
     CommonSettingsCommon::commonSettingsCommon.character_delete_time        = 3600;
@@ -111,6 +114,11 @@ EpollServerLoginMaster::~EpollServerLoginMaster()
         ++i;
     }
     CharactersGroup::hash.clear();
+    if(purgeTheLockedAccount!=NULL)
+    {
+        delete purgeTheLockedAccount;
+        purgeTheLockedAccount=NULL;
+    }
 }
 
 void EpollServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
@@ -166,6 +174,10 @@ void EpollServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
         settings.setValue("max_character",3);
     if(!settings.contains("min_character"))
         settings.setValue("min_character",1);
+    if(!settings.contains("maxLockAge"))
+        settings.setValue("maxLockAge",10*60);
+    if(!settings.contains("purgeLockPeriod"))
+        settings.setValue("purgeLockPeriod",3*60);
     CommonSettingsCommon::commonSettingsCommon.automatic_account_creation=stringtobool(settings.value("automatic_account_creation"));
     bool ok;
     CommonSettingsCommon::commonSettingsCommon.character_delete_time=stringtouint32(settings.value("character_delete_time"),&ok);
@@ -197,6 +209,21 @@ void EpollServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
         std::cerr << "max_pseudo_size==0 (abort)" << std::endl;
         abort();
     }
+    maxLockAge=stringtouint16(settings.value("maxLockAge"),&ok);
+    if(maxLockAge<1 || maxLockAge>3600 || !ok)
+    {
+        std::cerr << "maxLockAge<1 || maxLockAge>3600 || not number (abort)" << std::endl;
+        abort();
+    }
+    purgeLockPeriod=stringtouint16(settings.value("purgeLockPeriod"),&ok);
+    if(purgeLockPeriod<1 || purgeLockPeriod>3600 || purgeLockPeriod>maxLockAge || !ok)
+    {
+        std::cerr << "purgeLockPeriod<1 || purgeLockPeriod>3600 || purgeLockPeriod>maxLockAge || not number (abort)" << std::endl;
+        abort();
+    }
+    if(purgeTheLockedAccount!=NULL)
+        delete purgeTheLockedAccount;
+    purgeTheLockedAccount=new PurgeTheLockedAccount(purgeLockPeriod);
     if(!settings.contains("maxPlayerMonsters"))
         settings.setValue("maxPlayerMonsters",8);
     if(!settings.contains("maxWarehousePlayerMonsters"))
@@ -436,6 +463,7 @@ std::vector<std::string> EpollServerLoginMaster::loadCharactersGroup(TinyXMLSett
                     abort();
                 }
                 CharactersGroup::hash[charactersGroup]=new CharactersGroup(db.c_str(),host.c_str(),login.c_str(),pass.c_str(),considerDownAfterNumberOfTry,tryInterval,charactersGroup);
+                CharactersGroup::hash[charactersGroup]->setMaxLockAge(maxLockAge);
                 charactersGroupList.push_back(charactersGroup);
             }
             else

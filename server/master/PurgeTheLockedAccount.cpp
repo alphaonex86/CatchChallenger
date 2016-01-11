@@ -3,9 +3,9 @@
 
 using namespace CatchChallenger;
 
-PurgeTheLockedAccount::PurgeTheLockedAccount()
+PurgeTheLockedAccount::PurgeTheLockedAccount(unsigned int intervalInSeconds)
 {
-    setInterval(15*60*1000);
+    setInterval(intervalInSeconds*1000);
 }
 
 void PurgeTheLockedAccount::exec()

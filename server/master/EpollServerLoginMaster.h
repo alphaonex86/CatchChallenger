@@ -10,6 +10,7 @@
 #include "../base/BaseServerMasterLoadDictionary.h"
 #include "../base/BaseServerMasterSendDatapack.h"
 #include "../base/TinyXMLSettings.h"
+#include "PurgeTheLockedAccount.h"
 
 #include <string>
 #include <vector>
@@ -25,6 +26,7 @@ public:
     void doTheReplyCache();
     static EpollServerLoginMaster *epollServerLoginMaster;
 private:
+    PurgeTheLockedAccount * purgeTheLockedAccount;
     char * server_ip;
     char * server_port;
     char * rawServerListForC211;
@@ -34,6 +36,8 @@ private:
     CatchChallenger::DatabaseBase *databaseBaseBase;
 
     BaseServerMasterSendDatapack baseServerMasterSendDatapack;
+    uint16_t purgeLockPeriod;
+    uint16_t maxLockAge;
 private:
     void generateToken(TinyXMLSettings &settings);
 

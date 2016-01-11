@@ -29,7 +29,7 @@ public:
         uint16_t currentPlayer;
         uint16_t maxPlayer;
 
-        std::unordered_set<uint32_t> lockedAccount;
+        std::unordered_set<uint32_t> lockedAccountByGameserver;
     };
 
     BaseClassSwitch::EpollObjectType getType() const;
@@ -46,6 +46,7 @@ public:
     void unlockTheCharacter(const uint32_t &characterId);
     void waitBeforeReconnect(const uint32_t &characterId);
     void purgeTheLockedAccount();
+    void setMaxLockAge(const uint16_t &maxLockAge);
 
     uint32_t maxClanId;
     uint32_t maxCharacterId;
@@ -68,7 +69,7 @@ private:
     void load_clan_max_id();
     static void load_clan_max_id_static(void *object);
     void load_clan_max_id_return();
-
+    static uint16_t maxLockAge;
 private:
     EpollPostgresql *databaseBaseCommon;
     std::unordered_map<uint32_t/*uniqueKey*/,uint64_t/*can reconnect after this time stamps if !=0, else locked*/> lockedAccount;
