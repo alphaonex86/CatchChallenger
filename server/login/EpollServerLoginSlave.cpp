@@ -230,7 +230,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         }
         if(!EpollClientLoginSlave::databaseBaseLogin.syncConnect(host.c_str(),db.c_str(),login.c_str(),pass.c_str()))
         {
-            std::cerr << "Connect to login database failed:" << EpollClientLoginSlave::databaseBaseLogin.errorMessage() << std::endl;
+            std::cerr << "Connect to login database failed:" << EpollClientLoginSlave::databaseBaseLogin.errorMessage() << ", host: " << host << ", db: " << db << ", login: " << login << std::endl;
             abort();
         }
         settings.endGroup();

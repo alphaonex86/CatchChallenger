@@ -317,7 +317,7 @@ void EpollServerLoginMaster::loadDBLoginSettings(TinyXMLSettings &settings)
             }
             if(!databaseBaseLogin->syncConnect(host.c_str(),db.c_str(),login.c_str(),pass.c_str()))
             {
-                std::cerr << "Connect to login database failed:" << databaseBaseLogin->errorMessage() << std::endl;
+                std::cerr << "Connect to login database failed:" << databaseBaseLogin->errorMessage() << ", host: " << host << ", db: " << db << ", login: " << login << std::endl;
                 abort();
             }
         }
@@ -387,7 +387,7 @@ void EpollServerLoginMaster::loadDBLoginSettings(TinyXMLSettings &settings)
             }
             if(!databaseBaseBase->syncConnect(host.c_str(),db.c_str(),login.c_str(),pass.c_str()))
             {
-                std::cerr << "Connect to login database failed:" << databaseBaseBase->errorMessage() << std::endl;
+                std::cerr << "Connect to base database failed:" << databaseBaseBase->errorMessage() << ", host: " << host << ", db: " << db << ", login: " << login << std::endl;
                 abort();
             }
         }

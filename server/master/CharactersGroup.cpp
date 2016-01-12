@@ -19,7 +19,7 @@ CharactersGroup::CharactersGroup(const char * const db, const char * const host,
     databaseBaseCommon->tryInterval=tryInterval;
     if(!databaseBaseCommon->syncConnect(host,db,login,pass))
     {
-        std::cerr << "Connect to login database failed:" << databaseBaseCommon->errorMessage() << std::endl;
+        std::cerr << "Connect to common database failed:" << databaseBaseCommon->errorMessage() << ", host: " << host << ", db: " << db << ", login: " << login << std::endl;
         abort();
     }
 
