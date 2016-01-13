@@ -927,7 +927,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     unsigned char tempHashResult[CATCHCHALLENGER_SHA224HASH_SIZE];
                     SHA224_Final(tempHashResult,&hash);
 
-                    memset(LinkToMaster::private_token_master,0x00,sizeof(LinkToMaster::private_token_master));
+                    //memset(LinkToMaster::private_token_master,0x00,sizeof(LinkToMaster::private_token_master));//To reauth after disconnexion
 
                     //send the network query
                     registerOutputQuery(queryNumberList.back(),0xBD);
