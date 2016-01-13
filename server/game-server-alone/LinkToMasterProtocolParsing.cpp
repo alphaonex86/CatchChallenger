@@ -183,6 +183,8 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     const uint32_t &uniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
                     pos+=4;
                     settings->setValue("uniqueKey",std::to_string(uniqueKey));
+                    std::cerr << "unique key conflict, renew it by: " << uniqueKey << std::endl;
+                    settings->sync();
                 }
                 case 0x01:
                 {
