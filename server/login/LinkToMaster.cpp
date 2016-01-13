@@ -94,7 +94,7 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
          server->h_length);
     serv_addr.sin_port = htons(port);
 
-    std::cout << "Try connect to master..." << std::endl;
+    std::cout << "Try connect to master " << host << ":" << port << " ..." << std::endl;
     int connStatusType=::connect(LinkToMaster::linkToMasterSocketFd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
     if(connStatusType<0)
     {

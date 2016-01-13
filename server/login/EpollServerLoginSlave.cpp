@@ -39,6 +39,8 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     TinyXMLSettings settings(FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/login.xml");
 
     {
+        memset(LinkToMaster::private_token_master,0x00,sizeof(LinkToMaster::private_token_master));
+        memset(LinkToMaster::private_token_statclient,0x00,sizeof(LinkToMaster::private_token_statclient));
         memset(EpollClientLoginSlave::serverServerList,0x00,sizeof(EpollClientLoginSlave::serverServerList));
         memset(EpollClientLoginSlave::serverLogicalGroupList,0x00,sizeof(EpollClientLoginSlave::serverLogicalGroupList));
         memset(EpollClientLoginSlave::serverLogicalGroupAndServerList,0x00,sizeof(EpollClientLoginSlave::serverLogicalGroupAndServerList));
@@ -412,6 +414,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 EpollServerLoginSlave::~EpollServerLoginSlave()
 {
     memset(LinkToMaster::private_token_master,0x00,sizeof(LinkToMaster::private_token_master));
+    memset(LinkToMaster::private_token_statclient,0x00,sizeof(LinkToMaster::private_token_statclient));
     if(LinkToMaster::linkToMaster!=NULL)
     {
         delete LinkToMaster::linkToMaster;

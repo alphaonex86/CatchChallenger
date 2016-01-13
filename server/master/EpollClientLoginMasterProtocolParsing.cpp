@@ -514,7 +514,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                     std::cerr << "Generate new unique key for a game server" << std::endl;
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
                     posOutput+=1;
-                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=(uint32_t)htole32(newUniqueKey);
+                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=(uint32_t)htole32(newUniqueKey);
                     posOutput+=4;
                 }
                 else
