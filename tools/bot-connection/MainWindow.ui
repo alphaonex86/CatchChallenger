@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>488</width>
-    <height>685</height>
+    <height>759</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -256,7 +256,37 @@
      </widget>
     </item>
     <item>
-     <widget class="QGroupBox" name="groupBox_4">
+     <widget class="QGroupBox" name="groupBox_Server">
+      <property name="title">
+       <string>Servers</string>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_8">
+       <item>
+        <widget class="QTreeWidget" name="serverList">
+         <column>
+          <property name="text">
+           <string>Server</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Players</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="serverListSelect">
+         <property name="text">
+          <string>Select</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QGroupBox" name="groupBox_char">
       <property name="title">
        <string>Character</string>
       </property>
