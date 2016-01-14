@@ -10,6 +10,7 @@ public:
     explicit MultipleBotConnectionImplFoprGui();
     ~MultipleBotConnectionImplFoprGui();
     void characterSelect(const quint32 &charId);
+    void serverSelect(const quint32 &uniqueKey);
 public slots:
     void detectSlowDown();
 public:
@@ -38,7 +39,7 @@ private:
     quint16 port();
 private:
     virtual void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
-    virtual void logged(const QList<CatchChallenger::CharacterEntry> &characterEntryList);
+    virtual void logged(const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList);
     virtual void sslHandcheckIsFinished();
     virtual void readForFirstHeader();
     virtual void newCharacterId(const quint8 &returnCode, const quint32 &characterId);
@@ -53,7 +54,7 @@ private:
 
     virtual void connectTheExternalSocket(CatchChallengerClient * client);
 signals:
-    void loggedDone(const QList<CatchChallenger::CharacterEntry> &characterEntryList,bool haveTheDatapack);
+    void loggedDone(const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack);
     void statusError(QString error);
     void chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type) const;
     void emit_detectSlowDown(QString text);

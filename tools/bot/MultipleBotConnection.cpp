@@ -1,5 +1,6 @@
-#include "../../general/base/CommonSettings.h"
+#include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/FacilityLib.h"
+#include "../../general/base/FacilityLibGeneral.h"
 #include "MultipleBotConnection.h"
 
 #include <QNetworkProxy>
@@ -7,7 +8,10 @@
 
 MultipleBotConnection::MultipleBotConnection() :
     botInterface(NULL),
-    haveEnError(false)
+    haveEnError(false),
+    charactersGroupIndex(0),
+    uniqueKey(0),
+    serverIsSelected(false)
 {
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
@@ -123,9 +127,13 @@ void MultipleBotConnection::haveCharacter()
 {
 }
 
-void MultipleBotConnection::logged_with_client(CatchChallengerClient *client,const QList<CatchChallenger::CharacterEntry> &characterEntryList)
+void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
 {
-    Q_UNUSED(characterEntryList);
+    if(!serverIsSelected)
+    {
+        qDebug() << "!serverIsSelected";
+        return;
+    }
     if(client->charactersList.count()<=0)
     {
         qDebug() << client->login << "have not character";
@@ -133,14 +141,14 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client,con
         {
             qDebug() << client->login << "create new character";
             quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
-            QString pseudo="bot"+CatchChallenger::FacilityLib::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettings::commonSettings.max_pseudo_size-3);
+            QString pseudo="bot"+QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettingsCommon::commonSettingsCommon.max_pseudo_size-3));
             quint32 skinId;
             const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
-            if(!profile.forcedskin.isEmpty())
+            if(!profile.forcedskin.empty())
                 skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
             else
                 skinId=rand()%skinsList.size();
-            client->api->addCharacter(profileIndex,pseudo,skinId);
+            client->api->addCharacter(charactersGroupIndex,profileIndex,pseudo,skinId);
         }
         return;
     }
@@ -150,7 +158,7 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client,con
         if(!characterOnMap.contains(character_id))
         {
             characterOnMap << character_id;
-            if(!client->api->selectCharacter(character_id))
+            if(!client->api->selectCharacter(charactersGroupIndex,uniqueKey,character_id))
                 qDebug() << "Unable to do automatic character selection:" << character_id;
             /*else
                 qDebug() << "Automatic select character:" << character_id;*/
@@ -164,7 +172,7 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
     qDebug() << "Bot version:" << botInterface->name() << botInterface->version();
     //load the datapack
     {
-        CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/"));
+        CatchChallenger::CommonDatapack::commonDatapack.parseDatapack((QCoreApplication::applicationDirPath()+"/datapack/").toStdString());
         //load the skins list
         QDir dir(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/skin/fighter/"));
         QFileInfoList entryList=dir.entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
@@ -175,7 +183,7 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
             index++;
         }
     }
-    if(CatchChallenger::CommonDatapack::commonDatapack.profileList.isEmpty())
+    if(CatchChallenger::CommonDatapack::commonDatapack.profileList.empty())
     {
         qDebug() << "Profile list is empty";
         return;
@@ -188,14 +196,14 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
         {
             qDebug() << client->login << "create new character";
             quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
-            QString pseudo="bot"+CatchChallenger::FacilityLib::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettings::commonSettings.max_pseudo_size-3);
+            QString pseudo="bot"+QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettingsCommon::commonSettingsCommon.max_pseudo_size-3));
             quint32 skinId;
             const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
-            if(!profile.forcedskin.isEmpty())
+            if(!profile.forcedskin.empty())
                 skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
             else
                 skinId=rand()%skinsList.size();
-            client->api->addCharacter(profileIndex,pseudo,skinId);
+            client->api->addCharacter(charactersGroupIndex,profileIndex,pseudo,skinId);
         }
         return;
     }
@@ -207,7 +215,7 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
         characterOnMap << character_id;
         if(multipleConnexion())
         {
-            if(!client->api->selectCharacter(character_id))
+            if(!client->api->selectCharacter(charactersGroupIndex,uniqueKey,character_id))
                 qDebug() << "Unable to select character after datapack loading:" << character_id;
             else
                 qDebug() << "Select character after datapack loading:" << character_id;
@@ -251,7 +259,7 @@ void MultipleBotConnection::newCharacterId_with_client(MultipleBotConnection::Ca
     if(!characterOnMap.contains(characterId))
     {
         characterOnMap << characterId;
-        if(!client->api->selectCharacter(characterId))
+        if(!client->api->selectCharacter(charactersGroupIndex,uniqueKey,characterId))
             qDebug() << "Unable to select character after creation:" << characterId;
         else
         {

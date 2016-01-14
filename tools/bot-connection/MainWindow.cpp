@@ -1,8 +1,9 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 
-#include "../../general/base/CommonSettings.h"
+#include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/FacilityLib.h"
+#include "../../client/base/FacilityLibClient.h"
 #include "../bot/simple/SimpleAction.h"
 
 #include <QNetworkProxy>
@@ -57,6 +58,10 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     if(settings.contains("autoCreateCharacter"))
         ui->autoCreateCharacter->setChecked(settings.value("autoCreateCharacter").toBool());
+    ui->serverList->header()->setSectionResizeMode(QHeaderView::Fixed);
+    ui->serverList->header()->resizeSection(0,680);
+    ui->groupBox_char->setEnabled(false);
+    ui->groupBox_Server->setEnabled(false);
 }
 
 MainWindow::~MainWindow()
@@ -99,29 +104,26 @@ void MainWindow::detectSlowDown(QString text)
         ui->labelQueryList->setText(tr("Running query: %1 Query with worse time: %2ms").arg(queryCount).arg(worseTime));*/
 }
 
-void MainWindow::logged(const QList<CatchChallenger::CharacterEntry> &characterEntryList,bool haveTheDatapack)
+void MainWindow::logged(const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack)
 {
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(senderObject==NULL)
+    {
+        qDebug() << "MainWindow::logged(): qobject_cast<CatchChallenger::Api_client_real *>(sender())==NULL";
         return;
+    }
 
     ui->characterList->clear();
-    if(!ui->multipleConnexion->isChecked())
-    {
-        int index=0;
-        while(index<characterEntryList.size())fix this
-        {
-            const CatchChallenger::CharacterEntry &character=characterEntryList.at(index);
-            ui->characterList->addItem(character.pseudo,character.character_id);
-            index++;
-        }
-    }
+    this->serverOrdenedList=serverOrdenedList;
+    this->characterEntryList=characterEntryList;
+
     ui->characterList->setEnabled(ui->characterList->count()>0 && !ui->multipleConnexion->isChecked());
     ui->characterSelect->setEnabled(ui->characterList->count()>0 && !ui->multipleConnexion->isChecked());
+    ui->groupBox_Server->setEnabled(true);
 
     if(!haveTheDatapack)
     {
-        if(!CommonSettings::commonSettings.chat_allow_all && !CommonSettings::commonSettings.chat_allow_local)
+        if(!CommonSettingsServer::commonSettingsServer.chat_allow_all && !CommonSettingsServer::commonSettingsServer.chat_allow_local)
         {
             ui->randomText->setEnabled(false);
             ui->randomText->setChecked(false);
@@ -130,6 +132,50 @@ void MainWindow::logged(const QList<CatchChallenger::CharacterEntry> &characterE
         }
         return;
     }
+
+    ui->serverList->header()->setSectionResizeMode(QHeaderView::Fixed);
+    ui->serverList->header()->resizeSection(0,680);
+    updateServerList();
+}
+
+void MainWindow::updateServerList()
+{
+    //do the grouping for characterGroup count
+    {
+        serverByCharacterGroup.clear();
+        int index=0;
+        int serverByCharacterGroupTempIndexToDisplay=1;
+        while(index<serverOrdenedList.size())
+        {
+            const CatchChallenger::ServerFromPoolForDisplay &server=*serverOrdenedList.at(index);
+            if(serverByCharacterGroup.contains(server.charactersGroupIndex))
+                serverByCharacterGroup[server.charactersGroupIndex].first++;
+            else
+            {
+                serverByCharacterGroup[server.charactersGroupIndex].first=1;
+                serverByCharacterGroup[server.charactersGroupIndex].second=serverByCharacterGroupTempIndexToDisplay;
+                serverByCharacterGroupTempIndexToDisplay++;
+            }
+            index++;
+        }
+    }
+
+    //clear and determine what kind of view
+    ui->serverList->clear();
+    CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
+    if(senderObject==NULL)
+    {
+        qDebug() << "MainWindow::updateServerList(): qobject_cast<CatchChallenger::Api_client_real *>(sender())==NULL";
+        return;
+    }
+    CatchChallenger::LogicialGroup logicialGroup=senderObject->getLogicialGroup();
+    bool fullView=true;
+    if(serverOrdenedList.size()>10)
+        fullView=false;
+    const uint64_t &current__date=QDateTime::currentDateTime().toTime_t();
+
+    addToServerList(logicialGroup,ui->serverList->invisibleRootItem(),current__date,fullView);
+    ui->serverList->expandAll();
 }
 
 void MainWindow::statusError(QString error)
@@ -234,4 +280,108 @@ void MainWindow::on_chatRandomReply_toggled(bool checked)
 void MainWindow::on_bugInDirection_toggled(bool checked)
 {
     multipleBotConnexion.botInterface->setValue("bugInDirection",checked);
+}
+
+void MainWindow::on_serverList_activated(const QModelIndex &index)
+{
+    Q_UNUSED(index);
+    on_serverListSelect_clicked();
+}
+
+void MainWindow::on_serverListSelect_clicked()
+{
+    const QList<QTreeWidgetItem *> &selectedItems=ui->serverList->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+
+    const QTreeWidgetItem * const selectedItem=selectedItems.at(0);
+    unsigned int serverSelected=selectedItem->data(99,99).toUInt();
+
+    multipleBotConnexion.serverSelect(serverSelected);
+
+    ui->groupBox_char->setEnabled(true);
+    ui->groupBox_Server->setEnabled(false);
+    if(!ui->multipleConnexion->isChecked())
+    {
+        int index=0;
+        while(index<characterEntryList.size())
+        {
+            const CatchChallenger::CharacterEntry &character=characterEntryList.at(index);
+            ui->characterList->addItem(QString::fromStdString(character.pseudo),character.character_id);
+            index++;
+        }
+    }
+}
+
+void MainWindow::addToServerList(CatchChallenger::LogicialGroup &logicialGroup, QTreeWidgetItem *item, const uint64_t &currentDate, const bool &fullView)
+{
+    item->setText(0,logicialGroup.name);
+    {
+        //to order the group
+        QStringList keys=logicialGroup.logicialGroupList.keys();
+        keys.sort();
+        //list the group
+        int index=0;
+        while(index<keys.size())
+        {
+            QTreeWidgetItem * const itemGroup=new QTreeWidgetItem(item);
+            addToServerList(logicialGroup.logicialGroupList[keys.value(index)],itemGroup,currentDate,fullView);
+            index++;
+        }
+    }
+    {
+        qSort(logicialGroup.servers);
+        //list the server
+        int index=0;
+        while(index<logicialGroup.servers.size())
+        {
+            const CatchChallenger::ServerFromPoolForDisplay &server=logicialGroup.servers.at(index);
+            QTreeWidgetItem *itemServer=new QTreeWidgetItem(item);
+            QString text;
+            QString groupText;
+            if(serverByCharacterGroup.size()>1)
+                groupText=QStringLiteral(" (%1)").arg(serverByCharacterGroup.value(server.charactersGroupIndex).second);
+            QString name=server.name;
+            if(name.isEmpty())
+                name=tr("Default server");
+            if(fullView)
+            {
+                text=name+groupText;
+                if(server.playedTime>0)
+                {
+                    if(!server.description.isEmpty())
+                        text+=" "+tr("%1 played").arg(CatchChallenger::FacilityLibClient::timeToString(server.playedTime));
+                    else
+                        text+="\n"+tr("%1 played").arg(CatchChallenger::FacilityLibClient::timeToString(server.playedTime));
+                }
+                if(!server.description.isEmpty())
+                    text+="\n"+server.description;
+            }
+            else
+            {
+                if(server.description.isEmpty())
+                    text=name+groupText;
+                else
+                    text=name+groupText+" - "+server.description;
+            }
+            itemServer->setText(0,text);
+
+            //do the icon here
+            if(server.playedTime>5*365*24*3600)
+                itemServer->setToolTip(0,tr("Played time greater than 5y, bug?"));
+            else if(server.lastConnect>0 && server.lastConnect<1420070400)
+                itemServer->setToolTip(0,tr("Played before 2015, bug?"));
+            else if(server.maxPlayer<=65533 && (server.maxPlayer<server.currentPlayer || server.maxPlayer==0))
+            {
+                if(server.maxPlayer<server.currentPlayer)
+                    itemServer->setToolTip(0,tr("maxPlayer<currentPlayer"));
+                else
+                    itemServer->setToolTip(0,tr("maxPlayer==0"));
+            }
+            if(server.maxPlayer<=65533)
+                itemServer->setText(1,QStringLiteral("%1/%2").arg(server.currentPlayer).arg(server.maxPlayer));
+            itemServer->setData(99,99,server.serverOrdenedListIndex);
+            index++;
+        }
+    }
 }

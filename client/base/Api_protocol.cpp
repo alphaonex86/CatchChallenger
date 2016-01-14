@@ -530,13 +530,28 @@ bool Api_protocol::removeCharacter(const uint8_t &charactersGroupIndex,const uin
     return true;
 }
 
-bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex,const uint32_t &serverUniqueKey,const uint32_t &characterId,const uint8_t &selectedServerIndex)
+bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const uint32_t &serverUniqueKey, const uint32_t &characterId)
+{
+    int index=0;
+    while(index<serverOrdenedList.size())
+    {
+        const ServerFromPoolForDisplay * const server=serverOrdenedList.at(index);
+        if(server->uniqueKey==serverUniqueKey)
+            return selectCharacter(charactersGroupIndex,serverUniqueKey,characterId,index);
+        index++;
+    }
+    std::cerr << "index of server not found, line: " << __FILE__ << __LINE__ << std::endl;
+    return false;
+}
+
+bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const uint32_t &serverUniqueKey, const uint32_t &characterId,const uint32_t &serverIndex)
 {
     if(!is_logged)
     {
         std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
         return false;
     }
+
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
@@ -544,7 +559,7 @@ bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex,const uin
     out << (uint32_t)serverUniqueKey;
     out << characterId;
     is_logged=packOutcommingQuery(0xAC,queryNumber(),outputData.constData(),outputData.size());
-    this->selectedServerIndex=selectedServerIndex;
+    this->selectedServerIndex=serverIndex;
     return true;
 }
 
