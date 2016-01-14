@@ -11,7 +11,6 @@
 #include <QStringList>
 
 #include "../../client/base/Api_protocol.h"
-#include "../../general/base/CommonSettings.h"
 
 /// \brief To define the interface, to pass the facility object from Ultracopier to the plugins without compatibility problem
 //not possible to be static, because in the plugin it's not resolved

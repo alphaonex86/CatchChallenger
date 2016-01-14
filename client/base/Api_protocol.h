@@ -338,7 +338,8 @@ public:
     //character
     bool addCharacter(const uint8_t &charactersGroupIndex,const uint8_t &profileIndex, const QString &pseudo, const uint8_t &skinId);
     bool removeCharacter(const uint8_t &charactersGroupIndex,const uint32_t &characterId);
-    bool selectCharacter(const uint8_t &charactersGroupIndex, const uint32_t &serverUniqueKey, const uint32_t &characterId, const uint8_t &selectedServerIndex);
+    bool selectCharacter(const uint8_t &charactersGroupIndex, const uint32_t &serverUniqueKey, const uint32_t &characterId);
+    bool selectCharacter(const uint8_t &charactersGroupIndex, const uint32_t &serverUniqueKey, const uint32_t &characterId,const uint32_t &serverIndex);
     LogicialGroup getLogicialGroup() const;
 
     //plant, can do action only if the previous is finish
