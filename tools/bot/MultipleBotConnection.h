@@ -28,7 +28,7 @@ protected:
         bool have_informations;
         bool haveShowDisconnectionReason;
         //CatchChallenger::Direction direction;
-        QList<CatchChallenger::CharacterEntry> charactersList;
+        QList<QList<CatchChallenger::CharacterEntry> > charactersList;
         quint16 number;
         QString login;
         QString pass;
@@ -49,7 +49,7 @@ protected:
     quint16 numberOfSelectedCharacter;
     bool haveEnError;
     uint8_t charactersGroupIndex;
-    quint32 uniqueKey;
+    quint32 serverUniqueKey;
     bool serverIsSelected;
 protected:
     virtual void insert_player_with_client(CatchChallengerClient *client,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
@@ -64,6 +64,7 @@ protected:
     virtual void tryLink(CatchChallengerClient *client);
     virtual void protocol_is_good_with_client(CatchChallengerClient *client);
     virtual void haveTheDatapack_with_client(CatchChallengerClient *client);
+    virtual void haveTheDatapackMainSub_with_client(CatchChallengerClient *client);
     virtual void ifMultipleConnexionStartCreation();
     virtual void connectTimerSlot();
     void newCharacterId_with_client(CatchChallengerClient *client,const quint8 &returnCode, const quint32 &characterId);
