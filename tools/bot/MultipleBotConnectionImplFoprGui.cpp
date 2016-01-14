@@ -93,10 +93,15 @@ void MultipleBotConnectionImplFoprGui::detectSlowDown()
 
 void MultipleBotConnectionImplFoprGui::characterSelect(const quint32 &charId)
 {
+    if(!serverIsSelected)
+    {
+        qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): !serverIsSelected (abort)";
+        abort();
+    }
     QHashIterator<CatchChallenger::Api_client_real *,CatchChallengerClient *> i(apiToCatchChallengerClient);
     while (i.hasNext()) {
         i.next();
-        if(!i.value()->api->selectCharacter(charactersGroupIndex,uniqueKey,charId))
+        if(!i.value()->api->selectCharacter(charactersGroupIndex,serverUniqueKey,charId))
             qDebug() << "Unable to manual select character:" << charId;
         else
         {
@@ -104,6 +109,13 @@ void MultipleBotConnectionImplFoprGui::characterSelect(const quint32 &charId)
             qDebug() << "Manual select character:" << charId;
         }
     }
+}
+
+void MultipleBotConnectionImplFoprGui::serverSelect(const uint8_t &charactersGroupIndex,const quint32 &uniqueKey)
+{
+    this->charactersGroupIndex=charactersGroupIndex;
+    this->serverUniqueKey=uniqueKey;
+    serverIsSelected=true;
 }
 
 void MultipleBotConnectionImplFoprGui::insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
@@ -128,7 +140,7 @@ void MultipleBotConnectionImplFoprGui::logged(const QList<CatchChallenger::Serve
     if(apiToCatchChallengerClient.size()==1)
     {
         //get the datapack
-        apiToCatchChallengerClient.value(senderObject)->api->sendDatapackContent();
+        apiToCatchChallengerClient.value(senderObject)->api->sendDatapackContentBase();
         emit loggedDone(serverOrdenedList,characterEntryList,false);
         return;
     }
@@ -138,6 +150,13 @@ void MultipleBotConnectionImplFoprGui::logged(const QList<CatchChallenger::Serve
         emit loggedDone(serverOrdenedList,characterEntryList,true);
         return;
     }
+}
+
+void MultipleBotConnectionImplFoprGui::haveCharacter()
+{
+    if(apiToCatchChallengerClient.size()==1)
+        CatchChallenger::Api_client_real::client->sendDatapackContentMainSub();
+    MultipleBotConnection::haveCharacter();
 }
 
 void MultipleBotConnectionImplFoprGui::sslHandcheckIsFinished()
@@ -203,11 +222,20 @@ void MultipleBotConnectionImplFoprGui::haveTheDatapack()
         return;
 
     MultipleBotConnection::haveTheDatapack_with_client(apiToCatchChallengerClient.value(senderObject));
-    if(CatchChallenger::CommonDatapack::commonDatapack.profileList.isEmpty())
+    if(CatchChallenger::CommonDatapack::commonDatapack.profileList.empty())
     {
         qDebug() << "Profile list is empty";
         return;
     }
+}
+
+void MultipleBotConnectionImplFoprGui::haveTheDatapackMainSub()
+{
+    CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
+    if(senderObject==NULL)
+        return;
+
+    MultipleBotConnection::haveTheDatapackMainSub_with_client(apiToCatchChallengerClient.value(senderObject));
 }
 
 void MultipleBotConnectionImplFoprGui::sslErrors(const QList<QSslError> &errors)
@@ -244,17 +272,17 @@ void MultipleBotConnectionImplFoprGui::newSocketError(QAbstractSocket::SocketErr
 
     if(error==0)
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("MultipleBotConnectionImplFoprGui::newError() Connection refused"));
+        qDebug() << "MultipleBotConnectionImplFoprGui::newError() Connection refused";
         statusError(QStringLiteral("Connection refused"));
     }
     else if(error==13)
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("MultipleBotConnectionImplFoprGui::newError() SslHandshakeFailedError"));
+        qDebug() << "MultipleBotConnectionImplFoprGui::newError() SslHandshakeFailedError";
         statusError(QStringLiteral("SslHandshakeFailedError"));
     }
     else
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("MultipleBotConnectionImplFoprGui::newError() error: %1").arg(error));
+        qDebug() << QString("MultipleBotConnectionImplFoprGui::newError() error: %1").arg(error);
         statusError(QStringLiteral("Error: %1").arg(error));
     }
     CatchChallenger::ConnectedSocket *senderObject = qobject_cast<CatchChallenger::ConnectedSocket *>(sender());
@@ -278,7 +306,7 @@ void MultipleBotConnectionImplFoprGui::newError(QString error,QString detailedEr
 
     apiToCatchChallengerClient[senderObject]->haveShowDisconnectionReason=true;
     statusError(QStringLiteral("Error: %1, detailedError: %2").arg(error).arg(detailedError));
-    CatchChallenger::DebugClass::debugConsole(QStringLiteral("MultipleBotConnectionImplFoprGui::newError() error: %1, detailedError: %2").arg(error).arg(detailedError));
+    qDebug() << QString("MultipleBotConnectionImplFoprGui::newError() error: %1, detailedError: %2").arg(error).arg(detailedError);
     MultipleBotConnection::newError_with_client(apiToCatchChallengerClient[senderObject],error,detailedError);
 }
 

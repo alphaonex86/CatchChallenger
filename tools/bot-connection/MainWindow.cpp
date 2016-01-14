@@ -297,7 +297,8 @@ void MainWindow::on_serverListSelect_clicked()
     const QTreeWidgetItem * const selectedItem=selectedItems.at(0);
     unsigned int serverSelected=selectedItem->data(99,99).toUInt();
 
-    multipleBotConnexion.serverSelect(serverSelected);
+    const uint8_t &charactersGroupIndex=serverOrdenedList.at(serverSelected)->charactersGroupIndex;
+    multipleBotConnexion.serverSelect(charactersGroupIndex,serverSelected);
 
     ui->groupBox_char->setEnabled(true);
     ui->groupBox_Server->setEnabled(false);
@@ -306,7 +307,7 @@ void MainWindow::on_serverListSelect_clicked()
         int index=0;
         while(index<characterEntryList.size())
         {
-            const CatchChallenger::CharacterEntry &character=characterEntryList.at(index);
+            const CatchChallenger::CharacterEntry &character=characterEntryList.at(charactersGroupIndex).at(index);
             ui->characterList->addItem(QString::fromStdString(character.pseudo),character.character_id);
             index++;
         }

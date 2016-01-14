@@ -10,7 +10,7 @@ public:
     explicit MultipleBotConnectionImplFoprGui();
     ~MultipleBotConnectionImplFoprGui();
     void characterSelect(const quint32 &charId);
-    void serverSelect(const quint32 &uniqueKey);
+    void serverSelect(const uint8_t &charactersGroupIndex,const quint32 &serverUniqueKey);
 public slots:
     void detectSlowDown();
 public:
@@ -44,6 +44,7 @@ private:
     virtual void readForFirstHeader();
     virtual void newCharacterId(const quint8 &returnCode, const quint32 &characterId);
     virtual void haveTheDatapack();
+    virtual void haveTheDatapackMainSub();
     virtual void sslErrors(const QList<QSslError> &errors);
     virtual void protocol_is_good();
     virtual void newSocketError(QAbstractSocket::SocketError error);
@@ -51,6 +52,7 @@ private:
     virtual void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
     virtual void disconnected();
     virtual void connectTimerSlot();
+    virtual void haveCharacter();
 
     virtual void connectTheExternalSocket(CatchChallengerClient * client);
 signals:

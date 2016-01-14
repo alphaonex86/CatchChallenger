@@ -10,7 +10,7 @@ MultipleBotConnection::MultipleBotConnection() :
     botInterface(NULL),
     haveEnError(false),
     charactersGroupIndex(0),
-    uniqueKey(0),
+    serverUniqueKey(0),
     serverIsSelected(false)
 {
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
@@ -154,14 +154,12 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
     }
     if(multipleConnexion())
     {
-        const quint32 &character_id=client->charactersList.at(rand()%client->charactersList.size()).character_id;
+        const quint32 &character_id=client->charactersList.at(charactersGroupIndex).at(rand()%client->charactersList.size()).character_id;
         if(!characterOnMap.contains(character_id))
         {
             characterOnMap << character_id;
-            if(!client->api->selectCharacter(charactersGroupIndex,uniqueKey,character_id))
+            if(!client->api->selectCharacter(charactersGroupIndex,serverUniqueKey,character_id))
                 qDebug() << "Unable to do automatic character selection:" << character_id;
-            /*else
-                qDebug() << "Automatic select character:" << character_id;*/
         }
         return;
     }
@@ -207,20 +205,31 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
         }
         return;
     }
-    ifMultipleConnexionStartCreation();
+    //ifMultipleConnexionStartCreation();
     //the actual client
-    const quint32 &character_id=client->charactersList.at(rand()%client->charactersList.size()).character_id;
+    const quint32 &character_id=client->charactersList.at(charactersGroupIndex).at(rand()%client->charactersList.size()).character_id;
     if(!characterOnMap.contains(character_id))
     {
         characterOnMap << character_id;
         if(multipleConnexion())
         {
-            if(!client->api->selectCharacter(charactersGroupIndex,uniqueKey,character_id))
+            if(!client->api->selectCharacter(charactersGroupIndex,serverUniqueKey,character_id))
                 qDebug() << "Unable to select character after datapack loading:" << character_id;
             else
                 qDebug() << "Select character after datapack loading:" << character_id;
         }
     }
+}
+
+void MultipleBotConnection::haveTheDatapackMainSub_with_client(CatchChallengerClient *client)
+{
+    Q_UNUSED(client);
+    qDebug() << "Bot version:" << botInterface->name() << botInterface->version();
+    //load the datapack
+    {
+        CatchChallenger::CommonDatapack::commonDatapack.parseDatapack((QCoreApplication::applicationDirPath()+"/datapack/").toStdString());
+    }
+    ifMultipleConnexionStartCreation();
 }
 
 void MultipleBotConnection::ifMultipleConnexionStartCreation()
@@ -259,7 +268,7 @@ void MultipleBotConnection::newCharacterId_with_client(MultipleBotConnection::Ca
     if(!characterOnMap.contains(characterId))
     {
         characterOnMap << characterId;
-        if(!client->api->selectCharacter(charactersGroupIndex,uniqueKey,characterId))
+        if(!client->api->selectCharacter(charactersGroupIndex,serverUniqueKey,characterId))
             qDebug() << "Unable to select character after creation:" << characterId;
         else
         {
