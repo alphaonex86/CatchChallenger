@@ -279,7 +279,7 @@ bool Api_protocol::tryLogin(const QString &login, const QString &pass)
     QCryptographicHash hashAndToken(QCryptographicHash::Sha224);
     {
         QCryptographicHash hashPass(QCryptographicHash::Sha224);
-        hashPass.addData((pass+/*salt*/"AwjDvPIzfJPTTgHs").toUtf8());
+        hashPass.addData((pass+/*salt*/"AwjDvPIzfJPTTgHs"+login/*add unique salt*/).toUtf8());
         passHash=hashPass.result();
 
         hashAndToken.addData(passHash);
