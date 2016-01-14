@@ -1,4 +1,5 @@
 #include "SimpleAction.h"
+#include "../../general/base/CommonSettingsServer.h"
 
 SimpleAction::SimpleAction()
 {
@@ -100,7 +101,7 @@ void SimpleAction::doText()
     //DebugClass::debugConsole(QStringLiteral("MainWindow::doStep(), do_step: %1, socket->isValid():%2, map!=NULL: %3").arg(do_step).arg(socket->isValid()).arg(map!=NULL));
     if(api->getCaracterSelected())
     {
-        if(CommonSettings::commonSettings.chat_allow_local && rand()%10==0)
+        if(CommonSettingsServer::commonSettingsServer.chat_allow_local && rand()%10==0)
         {
             switch(rand()%3)
             {
@@ -117,7 +118,7 @@ void SimpleAction::doText()
         }
         else
         {
-            if(CommonSettings::commonSettings.chat_allow_all && rand()%100==0)
+            if(CommonSettingsServer::commonSettingsServer.chat_allow_all && rand()%100==0)
             {
                 switch(rand()%4)
                 {
@@ -156,7 +157,7 @@ void SimpleAction::new_chat_text(const CatchChallenger::Chat_type &chat_type,con
     switch(chat_type)
     {
         case CatchChallenger::Chat_type_all:
-        if(CommonSettings::commonSettings.chat_allow_all)
+        if(CommonSettingsServer::commonSettingsServer.chat_allow_all)
             switch(rand()%(100*clientList.size()))
             {
                 case 0:
@@ -167,7 +168,7 @@ void SimpleAction::new_chat_text(const CatchChallenger::Chat_type &chat_type,con
             }
         break;
         case CatchChallenger::Chat_type_local:
-        if(CommonSettings::commonSettings.chat_allow_local)
+        if(CommonSettingsServer::commonSettingsServer.chat_allow_local)
             switch(rand()%(3*clientList.size()))
             {
                 case 0:
@@ -176,7 +177,7 @@ void SimpleAction::new_chat_text(const CatchChallenger::Chat_type &chat_type,con
             }
         break;
         case CatchChallenger::Chat_type_pm:
-        if(CommonSettings::commonSettings.chat_allow_private)
+        if(CommonSettingsServer::commonSettingsServer.chat_allow_private)
         {
             if(text==QStringLiteral("version"))
                 api->sendPM(QStringLiteral("Version %1 %2").arg(name()).arg(version()),pseudo);

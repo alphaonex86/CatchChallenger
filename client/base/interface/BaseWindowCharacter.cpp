@@ -325,6 +325,14 @@ void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *
                 itemServer->setIcon(0,BaseWindow::icon_server_list_bug);
                 itemServer->setToolTip(0,tr("Played before 2015, bug?"));
             }
+            else if(server.maxPlayer<=65533 && (server.maxPlayer<server.currentPlayer || server.maxPlayer==0))
+            {
+                itemServer->setIcon(0,BaseWindow::icon_server_list_bug);
+                if(server.maxPlayer<server.currentPlayer)
+                    itemServer->setToolTip(0,tr("maxPlayer<currentPlayer"));
+                else
+                    itemServer->setToolTip(0,tr("maxPlayer==0"));
+            }
             else if(server.playedTime>0 || server.lastConnect>0)
             {
                 uint64_t dateDiff=0;

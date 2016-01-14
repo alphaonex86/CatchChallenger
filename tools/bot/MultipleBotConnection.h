@@ -5,6 +5,7 @@
 #include "../../general/base/ConnectedSocket.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../../client/base/Api_client_real.h"
+#include "../../client/base/ClientStructures.h"
 #include "BotInterface.h"
 
 #include <QTimer>
@@ -47,10 +48,13 @@ protected:
     quint16 numberOfBotConnected;
     quint16 numberOfSelectedCharacter;
     bool haveEnError;
+    uint8_t charactersGroupIndex;
+    quint32 uniqueKey;
+    bool serverIsSelected;
 protected:
     virtual void insert_player_with_client(CatchChallengerClient *client,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
     virtual void haveCharacter();
-    virtual void logged_with_client(CatchChallengerClient *client,const QList<CatchChallenger::CharacterEntry> &characterEntryList);
+    virtual void logged_with_client(CatchChallengerClient *client);
     void have_current_player_info_with_client(CatchChallengerClient *client, const CatchChallenger::Player_private_and_public_informations &informations);
     void newError_with_client(CatchChallengerClient *client, QString error,QString detailedError);
     void newSocketError_with_client(CatchChallengerClient *client, QAbstractSocket::SocketError error);
@@ -66,7 +70,7 @@ protected:
     virtual void connectTheExternalSocket(CatchChallengerClient *client);
 
     virtual void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction) = 0;
-    virtual void logged(const QList<CatchChallenger::CharacterEntry> &characterEntryList) = 0;
+    virtual void logged(const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList) = 0;
     virtual void sslHandcheckIsFinished() = 0;
     virtual void readForFirstHeader() = 0;
     virtual void newCharacterId(const quint8 &returnCode, const quint32 &characterId) = 0;

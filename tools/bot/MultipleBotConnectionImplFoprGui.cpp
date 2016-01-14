@@ -96,7 +96,7 @@ void MultipleBotConnectionImplFoprGui::characterSelect(const quint32 &charId)
     QHashIterator<CatchChallenger::Api_client_real *,CatchChallengerClient *> i(apiToCatchChallengerClient);
     while (i.hasNext()) {
         i.next();
-        if(!i.value()->api->selectCharacter(charId))
+        if(!i.value()->api->selectCharacter(charactersGroupIndex,uniqueKey,charId))
             qDebug() << "Unable to manual select character:" << charId;
         else
         {
@@ -118,7 +118,7 @@ void MultipleBotConnectionImplFoprGui::insert_player(const CatchChallenger::Play
         botInterface->insert_player(apiToCatchChallengerClient.value(senderObject)->api,player,mapId,x,y,direction);
 }
 
-void MultipleBotConnectionImplFoprGui::logged(const QList<CatchChallenger::CharacterEntry> &characterEntryList)
+void MultipleBotConnectionImplFoprGui::logged(const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList)
 {
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(senderObject==NULL)
@@ -129,13 +129,13 @@ void MultipleBotConnectionImplFoprGui::logged(const QList<CatchChallenger::Chara
     {
         //get the datapack
         apiToCatchChallengerClient.value(senderObject)->api->sendDatapackContent();
-        emit loggedDone(characterEntryList,false);
+        emit loggedDone(serverOrdenedList,characterEntryList,false);
         return;
     }
     else
     {
-        logged_with_client(apiToCatchChallengerClient.value(senderObject),characterEntryList);
-        emit loggedDone(characterEntryList,true);
+        logged_with_client(apiToCatchChallengerClient.value(senderObject));
+        emit loggedDone(serverOrdenedList,characterEntryList,true);
         return;
     }
 }
