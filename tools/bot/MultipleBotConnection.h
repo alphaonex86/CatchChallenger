@@ -33,7 +33,7 @@ protected:
         QString login;
         QString pass;
         bool selectedCharacter;
-        bool haveFirstHeader;
+        //bool haveFirstHeader;->put into Api_protocol
     };
     BotInterface *pluginLoaderInstance;
     QHash<CatchChallenger::Api_client_real *,CatchChallengerClient *> apiToCatchChallengerClient;
@@ -72,8 +72,6 @@ protected:
 
     virtual void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction) = 0;
     virtual void logged(const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList) = 0;
-    virtual void sslHandcheckIsFinished() = 0;
-    virtual void readForFirstHeader() = 0;
     virtual void newCharacterId(const quint8 &returnCode, const quint32 &characterId) = 0;
     virtual void haveTheDatapack() = 0;
     virtual void sslErrors(const QList<QSslError> &errors) = 0;

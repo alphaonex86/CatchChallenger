@@ -75,6 +75,7 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     if(socket->sslSocket!=NULL)
     {
         connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::readForFirstHeader,Qt::DirectConnection);
+        //connect(socket->sslSocket,&QSslSocket::readyRead,this,&Api_protocol::readForFirstHeader,Qt::DirectConnection);
         if(socket->bytesAvailable())
             readForFirstHeader();
     }

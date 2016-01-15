@@ -122,6 +122,8 @@ LanguagesSelect::~LanguagesSelect()
 
 QString LanguagesSelect::getCurrentLanguages()
 {
+    if(this==NULL)
+        return "en";
     return currentLanguage;
 }
 

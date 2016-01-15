@@ -1463,7 +1463,11 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
             selectedServerIndex=-1;
             serverOrdenedList.clear();
             characterListForSelection.clear();
-            const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+            QString language;
+            if(LanguagesSelect::languagesSelect==NULL)
+                language="en";
+            else
+                language=LanguagesSelect::languagesSelect->getCurrentLanguages();
             serverListIndex=0;
             while(serverListIndex<serverListSize)
             {
@@ -1495,7 +1499,11 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
             in >> logicalGroupSize;
             if(logicalGroupSize>0)
             {
-                const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+                QString language;
+                if(LanguagesSelect::languagesSelect==NULL)
+                    language="en";
+                else
+                    language=LanguagesSelect::languagesSelect->getCurrentLanguages();
                 while(logicalGroupIndex<logicalGroupSize)
                 {
                     QString path;
