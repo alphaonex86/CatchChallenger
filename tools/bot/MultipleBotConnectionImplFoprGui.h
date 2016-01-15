@@ -40,8 +40,6 @@ private:
 private:
     virtual void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
     virtual void logged(const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList);
-    virtual void sslHandcheckIsFinished();
-    virtual void readForFirstHeader();
     virtual void newCharacterId(const quint8 &returnCode, const quint32 &characterId);
     virtual void haveTheDatapack();
     virtual void haveTheDatapackMainSub();

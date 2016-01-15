@@ -4,8 +4,7 @@ include(../../client/base/multi.pri)
 include(../bot/simple/Simple.pri)
 
 QT       += core gui xml network sql
-
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+QT += widgets
 
 TARGET = bot-connection
 TEMPLATE = app
