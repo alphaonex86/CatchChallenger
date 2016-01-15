@@ -5,3 +5,8 @@ Security impact: low: master -> login, medium: master -> game, very low: server 
 Description:
 The client is poorly controled on some part (trust on server, but can be improved), but correctly controled on most part
 Security impact: client: low: exploit only on some part
+
+Description:
+The client link to master don't support encryption. Then the communications to master server is clear.
+Security impact: medium
+Workaround: use ssh tunnel
