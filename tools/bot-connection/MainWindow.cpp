@@ -13,6 +13,12 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    qRegisterMetaType<std::string>("std::string");
+    qRegisterMetaType<std::vector<std::string> >("std::vector<std::string>");
+    qRegisterMetaType<std::vector<char> >("std::vector<char>");
+    qRegisterMetaType<std::vector<uint32_t> >("std::vector<uint32_t>");
+    qRegisterMetaType<QList<QList<CatchChallenger::CharacterEntry> > >("QList<QList<CatchChallenger::CharacterEntry> >");
+    qRegisterMetaType<QList<CatchChallenger::ServerFromPoolForDisplay*> >("QList<CatchChallenger::ServerFromPoolForDisplay*>");
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
     ui->setupUi(this);
