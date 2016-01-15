@@ -80,5 +80,5 @@ QString SimpleBotInterface::name()
 
 QString SimpleBotInterface::version()
 {
-    return QStringLiteral("0.0.1.0");
+    return QStringLiteral("2.0.0.1");
 }
