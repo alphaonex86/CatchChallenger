@@ -54,10 +54,11 @@ private:
 
     virtual void connectTheExternalSocket(CatchChallengerClient * client);
 signals:
-    void loggedDone(const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack);
+    void loggedDone(CatchChallenger::Api_client_real *senderObject,const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack);
     void statusError(QString error);
     void chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type) const;
     void emit_detectSlowDown(QString text);
+    void datapackIsReady();
 };
 
 #endif // MULTIPLEBOTCONNECTIONIMPLFOPRGUI_H

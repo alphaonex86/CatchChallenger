@@ -134,26 +134,30 @@ void MultipleBotConnectionImplFoprGui::logged(const QList<CatchChallenger::Serve
 {
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(senderObject==NULL)
+    {
+        qDebug() << "MultipleBotConnectionImplFoprGui::logged(): sender()==NULL";
         return;
+    }
 
     apiToCatchChallengerClient.value(senderObject)->charactersList=characterEntryList;
     if(apiToCatchChallengerClient.size()==1)
     {
         //get the datapack
         apiToCatchChallengerClient.value(senderObject)->api->sendDatapackContentBase();
-        emit loggedDone(serverOrdenedList,characterEntryList,false);
+        emit loggedDone(senderObject,serverOrdenedList,characterEntryList,false);
         return;
     }
     else
     {
         logged_with_client(apiToCatchChallengerClient.value(senderObject));
-        emit loggedDone(serverOrdenedList,characterEntryList,true);
+        emit loggedDone(senderObject,serverOrdenedList,characterEntryList,true);
         return;
     }
 }
 
 void MultipleBotConnectionImplFoprGui::haveCharacter()
 {
+    qDebug() << "MultipleBotConnectionImplFoprGui::haveCharacter()";
     if(apiToCatchChallengerClient.size()==1)
     {
         CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
@@ -191,6 +195,7 @@ void MultipleBotConnectionImplFoprGui::newCharacterId(const quint8 &returnCode, 
 
 void MultipleBotConnectionImplFoprGui::haveTheDatapack()
 {
+    qDebug() << "MultipleBotConnectionImplFoprGui::haveTheDatapack()";
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(senderObject==NULL)
         return;
@@ -201,10 +206,12 @@ void MultipleBotConnectionImplFoprGui::haveTheDatapack()
         qDebug() << "Profile list is empty";
         return;
     }
+    emit datapackIsReady();
 }
 
 void MultipleBotConnectionImplFoprGui::haveTheDatapackMainSub()
 {
+    qDebug() << "MultipleBotConnectionImplFoprGui::haveTheDatapackMainSub()";
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(senderObject==NULL)
         return;

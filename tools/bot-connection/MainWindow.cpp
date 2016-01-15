@@ -26,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent) :
     CatchChallenger::ProtocolParsing::setMaxPlayers(65535);
 
     connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::loggedDone,this,&MainWindow::logged,Qt::QueuedConnection);
+    connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::datapackIsReady,this,&MainWindow::datapackIsReady,Qt::QueuedConnection);
     connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::statusError,this,&MainWindow::statusError,Qt::QueuedConnection);
     connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::emit_numberOfSelectedCharacter,this,&MainWindow::display_numberOfSelectedCharacter,Qt::QueuedConnection);
     connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::emit_numberOfBotConnected,this,&MainWindow::display_numberOfBotConnected,Qt::QueuedConnection);
@@ -110,9 +111,8 @@ void MainWindow::detectSlowDown(QString text)
         ui->labelQueryList->setText(tr("Running query: %1 Query with worse time: %2ms").arg(queryCount).arg(worseTime));*/
 }
 
-void MainWindow::logged(const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack)
+void MainWindow::logged(CatchChallenger::Api_client_real *senderObject,const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack)
 {
-    CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(senderObject==NULL)
     {
         qDebug() << "MainWindow::logged(): qobject_cast<CatchChallenger::Api_client_real *>(sender())==NULL";
@@ -124,8 +124,6 @@ void MainWindow::logged(const QList<CatchChallenger::ServerFromPoolForDisplay *>
     this->characterEntryList=characterEntryList;
 
     ui->characterList->setEnabled(ui->characterList->count()>0 && !ui->multipleConnexion->isChecked());
-    ui->characterSelect->setEnabled(ui->characterList->count()>0 && !ui->multipleConnexion->isChecked());
-    ui->groupBox_Server->setEnabled(true);
 
     if(!haveTheDatapack)
     {
@@ -136,15 +134,14 @@ void MainWindow::logged(const QList<CatchChallenger::ServerFromPoolForDisplay *>
             ui->chatRandomReply->setEnabled(false);
             ui->chatRandomReply->setChecked(false);
         }
-        return;
     }
 
     ui->serverList->header()->setSectionResizeMode(QHeaderView::Fixed);
     ui->serverList->header()->resizeSection(0,680);
-    updateServerList();
+    updateServerList(senderObject);
 }
 
-void MainWindow::updateServerList()
+void MainWindow::updateServerList(CatchChallenger::Api_client_real *senderObject)
 {
     //do the grouping for characterGroup count
     {
@@ -168,12 +165,7 @@ void MainWindow::updateServerList()
 
     //clear and determine what kind of view
     ui->serverList->clear();
-    CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
-    if(senderObject==NULL)
-    {
-        qDebug() << "MainWindow::updateServerList(): qobject_cast<CatchChallenger::Api_client_real *>(sender())==NULL";
-        return;
-    }
+
     CatchChallenger::LogicialGroup logicialGroup=senderObject->getLogicialGroup();
     bool fullView=true;
     if(serverOrdenedList.size()>10)
@@ -254,8 +246,7 @@ void MainWindow::on_characterSelect_clicked()
     if(ui->characterList->count()<=0 || !ui->characterSelect->isEnabled())
         return;
     multipleBotConnexion.characterSelect(ui->characterList->currentData().toUInt());
-    ui->characterSelect->setEnabled(false);
-    ui->characterList->setEnabled(false);
+    ui->groupBox_char->setEnabled(false);
 }
 
 void MainWindow::display_numberOfBotConnected(quint16 numberOfBotConnected)
@@ -318,6 +309,7 @@ void MainWindow::on_serverListSelect_clicked()
             index++;
         }
     }
+    ui->characterSelect->setEnabled(ui->characterList->count()>0 && !ui->multipleConnexion->isChecked());
 }
 
 void MainWindow::addToServerList(CatchChallenger::LogicialGroup &logicialGroup, QTreeWidgetItem *item, const uint64_t &currentDate, const bool &fullView)
@@ -391,4 +383,15 @@ void MainWindow::addToServerList(CatchChallenger::LogicialGroup &logicialGroup, 
             index++;
         }
     }
+}
+
+void MainWindow::datapackIsReady()
+{
+    ui->groupBox_Server->setEnabled(true);
+}
+
+void MainWindow::on_autoCreateCharacter_stateChanged(int arg1)
+{
+    Q_UNUSED(arg1);
+    settings.setValue("autoCreateCharacter",ui->autoCreateCharacter->isChecked());
 }

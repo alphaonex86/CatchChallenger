@@ -40,7 +40,7 @@ private slots:
     void lastReplyTime(const quint32 &time);
     void on_connect_clicked();
     void on_characterSelect_clicked();
-    void logged(const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack);
+    void logged(CatchChallenger::Api_client_real *senderObject,const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack);
     void statusError(QString error);
     void display_numberOfBotConnected(quint16 numberOfBotConnected);
     void display_numberOfSelectedCharacter(quint16 numberOfSelectedCharacter);
@@ -50,8 +50,11 @@ private slots:
     void on_bugInDirection_toggled(bool checked);
     void on_serverList_activated(const QModelIndex &index);
     void on_serverListSelect_clicked();
-    void updateServerList();
+    void updateServerList(CatchChallenger::Api_client_real *senderObject);
     void addToServerList(CatchChallenger::LogicialGroup &logicialGroup, QTreeWidgetItem *item, const uint64_t &currentDate, const bool &fullView=true);
+    void datapackIsReady();
+    void on_autoCreateCharacter_stateChanged(int arg1);
+
 signals:
     void isDisconnected();
 private:
