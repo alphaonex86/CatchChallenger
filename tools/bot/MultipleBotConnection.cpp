@@ -88,7 +88,6 @@ void MultipleBotConnection::tryLink(CatchChallengerClient * client)
     {
         client->login=login();
         client->pass=pass();
-        client->api->sendProtocol();
     }
     else
     {
@@ -98,7 +97,6 @@ void MultipleBotConnection::tryLink(CatchChallengerClient * client)
         passString.replace(QLatin1Literal("%NUMBER%"),QString::number(client->number));
         client->login=loginString;
         client->pass=passString;
-        client->api->sendProtocol();
     }
 }
 
@@ -187,7 +185,7 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
         return;
     }
 
-    if(client->charactersList.count()<=0)
+    if(client->charactersList.count()<=0 || charactersGroupIndex>=client->charactersList.size() || client->charactersList.at(charactersGroupIndex).empty())
     {
         qDebug() << client->login << "have not character";
         if(autoCreateCharacter())
@@ -326,20 +324,19 @@ void MultipleBotConnection::createClient()
         sslSocket->setProxy(proxyObject);
     }
 
-    client->haveFirstHeader=false;
     client->sslSocket=sslSocket;
     sslSocketToCatchChallengerClient[client->sslSocket]=client;
+    client->socket=new CatchChallenger::ConnectedSocket(client->sslSocket);
+    client->api=new CatchChallenger::Api_client_real(client->socket,false);
 
-    connect(sslSocket,&QSslSocket::readyRead,this,&MultipleBotConnection::readForFirstHeader,Qt::DirectConnection);
     connect(sslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),this,&MultipleBotConnection::sslErrors,Qt::QueuedConnection);
     connect(sslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::error),this,&MultipleBotConnection::newSocketError);
     sslSocket->connectToHost(host(),port());
+    connectTheExternalSocket(client);
 }
 
 void MultipleBotConnection::connectTheExternalSocket(CatchChallengerClient * client)
 {
-    client->socket=new CatchChallenger::ConnectedSocket(client->sslSocket);
-    client->api=new CatchChallenger::Api_client_real(client->socket,false);
     client->api->setDatapackPath(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/"));
     connect(client->api,&CatchChallenger::Api_client_real::insert_player,            this,&MultipleBotConnection::insert_player);
     connect(client->api,&CatchChallenger::Api_client_real::haveCharacter,            this,&MultipleBotConnection::haveCharacter);

@@ -155,48 +155,22 @@ void MultipleBotConnectionImplFoprGui::logged(const QList<CatchChallenger::Serve
 void MultipleBotConnectionImplFoprGui::haveCharacter()
 {
     if(apiToCatchChallengerClient.size()==1)
-        CatchChallenger::Api_client_real::client->sendDatapackContentMainSub();
+    {
+        CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
+        if(senderObject==NULL)
+        {
+            qDebug() << "MultipleBotConnectionImplFoprGui::haveCharacter(): sender()==NULL";
+            return;
+        }
+        senderObject->sendDatapackContentMainSub();
+    }
     MultipleBotConnection::haveCharacter();
-}
-
-void MultipleBotConnectionImplFoprGui::sslHandcheckIsFinished()
-{
-    QSslSocket *socket=qobject_cast<QSslSocket *>(sender());
-    if(socket==NULL)
-        return;
-    connectTheExternalSocket(sslSocketToCatchChallengerClient.value(socket));
 }
 
 void MultipleBotConnectionImplFoprGui::connectTheExternalSocket(CatchChallengerClient * client)
 {
     MultipleBotConnection::connectTheExternalSocket(client);
     connect(client->api,&CatchChallenger::Api_client_real::new_chat_text,            this,&MultipleBotConnectionImplFoprGui::chat_text,Qt::QueuedConnection);
-}
-
-void MultipleBotConnectionImplFoprGui::readForFirstHeader()
-{
-    QSslSocket *socket=qobject_cast<QSslSocket *>(sender());
-    if(socket==NULL)
-        return;
-    if(!sslSocketToCatchChallengerClient.contains(socket))
-        return;
-    CatchChallengerClient * client=sslSocketToCatchChallengerClient.value(socket);
-    if(client->haveFirstHeader)
-        return;
-    quint8 value;
-    if(socket->read((char*)&value,sizeof(value))==sizeof(value))
-    {
-        client->haveFirstHeader=true;
-        if(value==0x01)
-        {
-            socket->setPeerVerifyMode(QSslSocket::VerifyNone);
-            socket->ignoreSslErrors();
-            socket->startClientEncryption();
-            connect(socket,&QSslSocket::encrypted,this,&MultipleBotConnectionImplFoprGui::sslHandcheckIsFinished);
-        }
-        else
-            connectTheExternalSocket(client);
-    }
 }
 
 void MultipleBotConnectionImplFoprGui::newCharacterId(const quint8 &returnCode, const quint32 &characterId)
