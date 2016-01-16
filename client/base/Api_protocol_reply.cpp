@@ -30,7 +30,15 @@ using namespace CatchChallenger;
 //send reply
 bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
-    return parseReplyData(packetCode,queryNumber,QByteArray(data,size));
+    const bool &returnValue=parseReplyData(packetCode,queryNumber,QByteArray(data,size));
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(!returnValue)
+    {
+        errorParsingLayer("Api_protocol::parseReplyData(): return false (abort), need be aborted before");
+        abort();
+    }
+    #endif
+    return returnValue;
 }
 
 bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const QByteArray &data)
@@ -146,7 +154,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                 else if(returnCode==0x07)
                 {
                     tryCreateAccount();
-                    return false;
+                    return true;
                 }
                 else
                     string=tr("Unknown error %1").arg(returnCode);
@@ -540,7 +548,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                         if(socket!=NULL)
                             socket->disconnectFromHost();
                         connectingOnGameServer();
-                        return false;
+                        return true;
                     }
                     else
                     {

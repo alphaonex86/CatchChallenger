@@ -64,8 +64,11 @@ ssize_t EpollClient::read(char *buffer,const size_t &bufferSize)
     //need more performance? change the API for 0 copy API
     if(bytesAvailableVar<=0)//non blocking for read
     {
-        /*good alternative?: if(errno == 11)
+        //good alternative?: Not work
+        /*if(errno == 11)
             return ::read(infd, buffer, bufferSize);*/
+
+        //valid but can be slow:
         const int &flags = fcntl(infd, F_GETFL, 0);
         if(flags == -1)
         {
