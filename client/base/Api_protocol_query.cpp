@@ -28,7 +28,15 @@ using namespace CatchChallenger;
 //have query with reply
 bool Api_protocol::parseQuery(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
 {
-    return parseQuery(packetCode,queryNumber,QByteArray(data,size));
+    const bool &returnValue=parseQuery(packetCode,queryNumber,QByteArray(data,size));
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(!returnValue)
+    {
+        errorParsingLayer("Api_protocol::parseQuery(): return false (abort), need be aborted before");
+        abort();
+    }
+    #endif
+    return returnValue;
 }
 
 bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const QByteArray &data)

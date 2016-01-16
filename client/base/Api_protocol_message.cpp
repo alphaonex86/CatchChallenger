@@ -29,7 +29,15 @@ using namespace CatchChallenger;
 //have message without reply
 bool Api_protocol::parseMessage(const uint8_t &packetCode,const char * const data,const unsigned int &size)
 {
-    return parseMessage(packetCode,QByteArray(data,size));
+    const bool &returnValue=parseMessage(packetCode,QByteArray(data,size));
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(!returnValue)
+    {
+        errorParsingLayer("Api_protocol::parseMessage(): return false (abort), need be aborted before");
+        abort();
+    }
+    #endif
+    return returnValue;
 }
 
 //have message without reply
@@ -367,6 +375,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
             }
         }
         #else
+        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("packet not allow in benchmark main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return false;
         #endif
         break;
@@ -426,6 +435,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
             }
         }
         #else
+        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("packet not allow in benchmark main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return false;
         #endif
         break;
@@ -457,6 +467,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
             }
         }
         #else
+        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("packet not allow in benchmark main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return false;
         #endif
         break;
@@ -465,6 +476,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
         #ifndef BENCHMARKMUTIPLECLIENT
             dropAllPlayerOnTheMap();
         #else
+        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("packet not allow in benchmark main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return false;
         #endif
         break;
@@ -549,6 +561,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
             }
         }
         #else
+        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("packet not allow in benchmark main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return false;
         #endif
         break;
@@ -683,6 +696,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
 
         }
         #else
+        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("packet not allow in benchmark main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return false;
         #endif
         break;
@@ -1020,7 +1034,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
 
                 index++;
             }
-            return false;//no remaining data, because all remaing is used as file data
+            return true;//no remaining data, because all remaing is used as file data
         }
         break;
         //kicked/ban and reason
@@ -2524,7 +2538,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                 return false;
             }
             random_seeds(data);
-            return false;//quit here because all data is always used
+            return true;//quit here because all data is always used
         }
         break;
 
