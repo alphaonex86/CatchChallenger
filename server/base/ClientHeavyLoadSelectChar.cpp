@@ -30,6 +30,8 @@ void Client::characterSelectionIsWrong(const uint8_t &query_id,const uint8_t &re
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
     posOutput+=1;
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(1);
+    posOutput+=4;
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=returnCode;
     posOutput+=1;
