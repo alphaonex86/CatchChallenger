@@ -22,13 +22,21 @@ public:
     virtual void connectAllSignals();
     void setScale(const float &scaleSize);
 public slots:
-    //map move
+    //map move Qt
     void insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
-    void move_player(const uint16_t &id,const QList<QPair<uint8_t,CatchChallenger::Direction> > &movement);
+    void move_player(const uint16_t &id, const QList<QPair<uint8_t,CatchChallenger::Direction> > &movement);
     void remove_player(const uint16_t &id);
-    void reinsert_player(const uint16_t &id,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
-    void full_reinsert_player(const uint16_t &id,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
+    void reinsert_player(const uint16_t &id, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction);
+    void full_reinsert_player(const uint16_t &id, const uint32_t &mapId, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction);
     void dropAllPlayerOnTheMap();
+    //map move
+    void insert_player_final(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction,bool inReplayMode);
+    void move_player_final(const uint16_t &id, const QList<QPair<uint8_t,CatchChallenger::Direction> > &movement, bool inReplayMode);
+    void remove_player_final(const uint16_t &id, bool inReplayMode);
+    void reinsert_player_final(const uint16_t &id, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction, bool inReplayMode);
+    void full_reinsert_player_final(const uint16_t &id, const uint32_t &mapId, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction, bool inReplayMode);
+    void dropAllPlayerOnTheMap_final(bool inReplayMode);
+
     void teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
     virtual bool asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full * tempMapObject);
 
