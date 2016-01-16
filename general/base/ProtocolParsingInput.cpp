@@ -148,7 +148,7 @@ bool ProtocolParsingBase::forwardTo(ProtocolParsingBase * const destination)
         if(size>0)
         {
             //std::vector<char> tempDataToDebug(ProtocolParsingInputOutput::commonBuffer+header_cut.size(),size-header_cut.size());
-            //qDebug() << "with header cut" << header_cut << tempDataToDebug.toHex() << "and size" << size;
+            //qDebug() << "with header cut" << header_cut << tempDataToDebug.toHex() << " and size " << size;
         }
         if(size<0)
             return true;
@@ -160,7 +160,7 @@ bool ProtocolParsingBase::forwardTo(ProtocolParsingBase * const destination)
         if(size>0)
         {
             //std::vector<char> tempDataToDebug(ProtocolParsingInputOutput::commonBuffer,size);
-            //qDebug() << "without header cut" << tempDataToDebug.toHex() << "and size" << size;
+            //qDebug() << "without header cut " << tempDataToDebug.toHex() << " and size " << size;
         }
         if(size<0)
             return true;
@@ -191,7 +191,7 @@ void ProtocolParsingInputOutput::parseIncommingData()
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                 std::to_string(flags & 0x10)+
                 #endif
-                std::stringLiteral(" parseIncommingData(): socket->bytesAvailable(): %1, header_cut: %2").arg(socket->bytesAvailable()).arg(header_cut.size()));
+                std::string(" parseIncommingData(): socket->bytesAvailable(): ")+std::to_string(socket->bytesAvailable())+(", header_cut: ")+std::to_string(header_cut.size()));
     #endif
     #endif
 
@@ -213,8 +213,17 @@ void ProtocolParsingInputOutput::parseIncommingData()
             }
             if(size>0)
             {
-                //std::vector<char> tempDataToDebug(ProtocolParsingInputOutput::commonBuffer+header_cut.size(),size-header_cut.size());
-                //qDebug() << "with header cut" << header_cut << tempDataToDebug.toHex() << "and size" << size;
+                size+=header_cut.size();
+                #ifdef PROTOCOLPARSINGDEBUG
+                std::cout << "with header cut" << binarytoHexa(ProtocolParsingInputOutput::tempBigBufferForInput,size) << " and size " << size << std::endl;
+                #endif
+            }
+            else
+            {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                parseIncommingDataCount--;
+                #endif
+                return;
             }
             header_cut.clear();
         }
@@ -230,8 +239,9 @@ void ProtocolParsingInputOutput::parseIncommingData()
             }
             if(size>0)
             {
-                //std::vector<char> tempDataToDebug(ProtocolParsingInputOutput::commonBuffer,size);
-                //qDebug() << "without header cut" << tempDataToDebug.toHex() << "and size" << size;
+                #ifdef PROTOCOLPARSINGDEBUG
+                std::cout << "without header cut " << binarytoHexa(ProtocolParsingInputOutput::tempBigBufferForInput,size) << " and size " << size << std::endl;
+                #endif
             }
         }
         if(size<=0)
@@ -240,7 +250,7 @@ void ProtocolParsingInputOutput::parseIncommingData()
 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
 std::to_string(flags & 0x10)+
 #endif
-std::stringLiteral(" parseIncommingData(): size returned is 0!"));*/
+std::string(" parseIncommingData(): size returned is 0!"));*/
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             parseIncommingDataCount--;
             #endif
@@ -252,6 +262,9 @@ std::stringLiteral(" parseIncommingData(): size returned is 0!"));*/
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             const uint32_t oldcursor=cursor;
+            #endif
+            #ifdef PROTOCOLPARSINGDEBUG
+            std::cout << "Start split: " << binarytoHexa(ProtocolParsingInputOutput::tempBigBufferForInput+cursor,size-cursor) << " and size " << size-cursor << std::endl;
             #endif
             returnVar=parseIncommingDataRaw(ProtocolParsingInputOutput::tempBigBufferForInput,size,cursor);
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -276,7 +289,7 @@ std::stringLiteral(" parseIncommingData(): size returned is 0!"));*/
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                 std::to_string(flags & 0x10)+
                 #endif
-    std::stringLiteral(" parseIncommingData(): finish parse the input"));
+    std::string(" parseIncommingData(): finish parse the input"));
     #endif
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     parseIncommingDataCount--;
@@ -471,7 +484,7 @@ int8_t ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                     std::to_string(flags & 0x10)+
                     #endif
-        std::stringLiteral(" parseIncommingData(): !haveData_dataSize"));
+        std::string(" parseIncommingData(): !haveData_dataSize"));
         #endif
         //temp data
         if((size-cursor)<sizeof(uint32_t))
@@ -537,7 +550,8 @@ int8_t ProtocolParsingBase::parseData(const char * const commonBuffer, const uin
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                         std::to_string(flags & 0x10)+
                         #endif
-            std::stringLiteral(" parseIncommingData(): remaining data: %1").arg((size-cursor)));
+            std::string(" parseIncommingData(): remaining data: ")+std::to_string(size-cursor)+
+                        ", returnVal: "+std::to_string(returnVal));
             #endif
             dataClear();
             if(returnVal)
@@ -557,7 +571,8 @@ int8_t ProtocolParsingBase::parseData(const char * const commonBuffer, const uin
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                     std::to_string(flags & 0x10)+
                     #endif
-        std::stringLiteral(" parseIncommingData(): remaining data: %1, buffer data: %2").arg((size-cursor)).arg(std::string(std::vector<char>(commonBuffer,sizeof(commonBuffer)).toHex())));
+        std::string(" parseIncommingData(): remaining data: ")+std::to_string(size-cursor)+
+                    (", buffer data: ")+binarytoHexa(commonBuffer,sizeof(commonBuffer)));
         #endif
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(dataSize!=(uint32_t)dataToWithoutHeader.size())
@@ -581,7 +596,7 @@ int8_t ProtocolParsingBase::parseData(const char * const commonBuffer, const uin
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                     std::to_string(flags & 0x10)+
                     #endif
-        std::stringLiteral(" parseIncommingData(): need more to recompose: %1").arg(dataSize-dataToWithoutHeader.size()));
+        std::string(" parseIncommingData(): need more to recompose: ")+std::to_string(dataSize-dataToWithoutHeader.size()));
         #endif
         cursor=size;
         return 0;
@@ -650,70 +665,94 @@ uint32_t ProtocolParsing::computeCompression(const char* const source, char* con
 
 bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size)
 {
-    #ifdef ProtocolParsingInputOutputDEBUG
+    #ifdef PROTOCOLPARSINGINPUTOUTPUTDEBUG
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     if(flags & 0x10)
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                     std::to_string(flags & 0x10)+
                     #endif
-        std::stringLiteral(" parseIncommingData(): parse message as client"));
+        std::string(" parseIncommingData(): parse message as client"));
     else
     #else
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                     std::to_string(flags & 0x10)+
                     #endif
-        std::stringLiteral(" parseIncommingData(): parse message as server"));
+        std::string(" parseIncommingData(): parse message as server"));
     #endif
     #endif
-    #ifdef ProtocolParsingInputOutputDEBUG
+    #ifdef PROTOCOLPARSINGINPUTOUTPUTDEBUG
     messageParsingLayer(
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                 std::to_string(flags & 0x10)+
                 #endif
-    std::stringLiteral(" parseIncommingData(): data: %1").arg(std::string(data.toHex())));
+    std::string(" parseIncommingData(): data: ")+binarytoHexa(data,size));
     #endif
     //message
     if(isReply())
     {
-        #ifdef ProtocolParsingInputOutputDEBUG
-        messageParsingLayer(
-                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    std::to_string(flags & 0x10)+
-                    #endif
-        std::stringLiteral(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, packetCode: %2").arg(queryNumber).arg(packetCode));
-        #endif
         //copy because can resend query with same queryNumber, in this case the outputQueryNumberToPacketCode[queryNumber] need be 0x00
         const uint8_t replyTo=outputQueryNumberToPacketCode[queryNumber];
         outputQueryNumberToPacketCode[queryNumber]=0x00;
 
         const bool &returnValue=parseReplyData(replyTo,queryNumber,data,size);
+        #ifdef PROTOCOLPARSINGINPUTOUTPUTDEBUG
+        messageParsingLayer(
+                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                    std::to_string(flags & 0x10)+
+                    #endif
+        std::string(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: ")+
+                    std::to_string(queryNumber)+(", packetCode: ")+std::to_string(packetCode));
+        #endif
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(!returnValue)
+        {
+            errorParsingLayer("parseReplyData(): return false (abort), need be aborted before");
+            abort();
+        }
+        #endif
         return returnValue;
     }
     if(packetCode<0x80)
     {
-        #ifdef ProtocolParsingInputOutputDEBUG
+        #ifdef PROTOCOLPARSINGINPUTOUTPUTDEBUG
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                     std::to_string(flags & 0x10)+
                     #endif
-        std::stringLiteral(" parseIncommingData(): !need_query_number && !need_subCodeType, packetCode: %1").arg(packetCode));
+        std::string(" parseIncommingData(): !need_query_number && !need_subCodeType, packetCode: ")+std::to_string(packetCode));
         #endif
-        return parseMessage(packetCode,data,size);
+        const bool &returnValue=parseMessage(packetCode,data,size);
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(!returnValue)
+        {
+            errorParsingLayer("parseMessage(): return false (abort), need be aborted before");
+            abort();
+        }
+        #endif
+        return returnValue;
     }
     else
     {
         //query
-        #ifdef ProtocolParsingInputOutputDEBUG
+        #ifdef PROTOCOLPARSINGINPUTOUTPUTDEBUG
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                     std::to_string(flags & 0x10)+
                     #endif
-        std::stringLiteral(" parseIncommingData(): need_query_number && !is_reply, packetCode: %1").arg(packetCode));
+        std::string(" parseIncommingData(): need_query_number && !is_reply, packetCode: ")+std::to_string(packetCode));
         #endif
         storeInputQuery(packetCode,queryNumber);
-        return parseQuery(packetCode,queryNumber,data,size);
+        const bool &returnValue=parseQuery(packetCode,queryNumber,data,size);
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(!returnValue)
+        {
+            errorParsingLayer("parseQuery(): return false (abort), need be aborted before");
+            abort();
+        }
+        #endif
+        return returnValue;
     }
 }
 

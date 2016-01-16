@@ -26,7 +26,7 @@
    <string notr="true">CatchChallenger</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../../server/all-server-resources.qrc">
+   <iconset resource="../resources/client-resources.qrc">
     <normaloff>:/images/catchchallenger.png</normaloff>:/images/catchchallenger.png</iconset>
   </property>
   <property name="styleSheet">
@@ -71,7 +71,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -1007,37 +1007,6 @@ background-image: url(:/images/light-white.png);
              </widget>
             </item>
             <item>
-             <widget class="QToolButton" name="toolButton_interface_quit">
-              <property name="minimumSize">
-               <size>
-                <width>22</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>22</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="toolTip">
-               <string>Quit</string>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QToolButton::hover {
-background-position:left center;
-}
-QToolButton::pressed {
-background-position:left bottom;
-}
-QToolButton { 
-background-image: url(:/images/interface/quit.png);
-border-image: url(:/images/empty.png);
-}</string>
-              </property>
-             </widget>
-            </item>
-            <item>
              <widget class="QFrame" name="frame_main_display_interface_player">
               <property name="minimumSize">
                <size>
@@ -1107,6 +1076,37 @@ color: rgb(0, 0, 0);</string>
                 </widget>
                </item>
               </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QToolButton" name="toolButton_interface_quit">
+              <property name="minimumSize">
+               <size>
+                <width>22</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>22</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Quit</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QToolButton::hover {
+background-position:left center;
+}
+QToolButton::pressed {
+background-position:left bottom;
+}
+QToolButton { 
+background-image: url(:/images/interface/quit.png);
+border-image: url(:/images/empty.png);
+}</string>
+              </property>
              </widget>
             </item>
            </layout>
@@ -7074,10 +7074,9 @@ padding-bottom:3px;
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="../resources/client-resources-multi.qrc"/>
-  <include location="../../../server/all-server-resources.qrc"/>
   <include location="../../fight/resources/client-resources-fight.qrc"/>
   <include location="../resources/client-resources.qrc"/>
+  <include location="../resources/client-resources-multi.qrc"/>
  </resources>
  <connections>
   <connection>

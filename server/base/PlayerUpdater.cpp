@@ -175,20 +175,8 @@ void PlayerUpdater::exec()
         sended_connected_players=connected_players;
         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         *reinterpret_cast<uint16_t *>(Client::protocolMessageLogicalGroupAndServerList+Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber)=htole16(connected_players);
-        {
-            ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x47;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(2);
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+4)=htole16(connected_players);
-
-            unsigned int index=0;
-            while(index<Client::stat_client_list.size())
-            {
-                auto client=Client::stat_client_list.at(index);
-                client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+4+2);
-                index++;
-            }
-        }
         #endif
+
         #ifndef EPOLLCATCHCHALLENGERSERVER
         /*emit */newConnectedPlayer(connected_players);
         #else

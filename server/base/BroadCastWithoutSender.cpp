@@ -56,6 +56,9 @@ void BroadCastWithoutSender::receive_instant_player_number(const int16_t &connec
 
         int index=0;
         const int &list_size=Client::clientBroadCastList.size();
+        #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
+        std::cout << "Send to " << Client::clientBroadCastList.size() << " players: " << binarytoHexa(reinterpret_cast<char *>(bufferSendPlayer),outputSize) << std::endl;
+        #endif
         while(index<list_size)
         {
             Client::clientBroadCastList.at(index)->receive_instant_player_number(connected_players,reinterpret_cast<char *>(bufferSendPlayer),outputSize);

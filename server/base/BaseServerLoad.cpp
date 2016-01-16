@@ -107,7 +107,7 @@ void BaseServer::preload_other()
             {
                 *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(GlobalServerData::serverSettings.max_players);
                 posOutput+=2;
-                Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber=posOutput;
+                Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber=Client::protocolMessageLogicalGroupAndServerListSize+posOutput;
                 *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
                 posOutput+=2;
             }
