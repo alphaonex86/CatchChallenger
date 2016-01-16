@@ -18,7 +18,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
 {
     if(send_drop_all)
     {
-        unsigned const char mainCode[]={0xC4};
+        unsigned const char mainCode[]={0x65};
         unsigned int index=0;
         while(index<clients.size())
         {
@@ -33,11 +33,12 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
     if(!show)
         return;
     /// \todo use simplified id with max visible player and updater http://catchchallenger.first-world.info/wiki/Base_protocol_messages#C0
+    //Insert player on map (Fast)
     if(send_reinsert_all)
     {
         //send the network message
         uint32_t posOutput=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x68;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x6B;
         posOutput+=1+4;
 
         //prepare the data
@@ -132,6 +133,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
     unsigned int clientsToSendDataSizeNewClients=0;
     unsigned int clientsToSendDataSizeOldClients=0;
     /// \todo use simplified id with max visible player and updater http://catchchallenger.first-world.info/wiki/Base_protocol_messages#C0
+    //Insert player on map (Fast)
     if(to_send_insert)
     {
         //insert new on old
@@ -149,7 +151,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             }
             //send the network message
             uint32_t posOutput=0;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x68;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x6B;
             posOutput+=1+4;
 
             if(insert_player>0)
@@ -267,7 +269,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                 {
                     //send the network message
                     uint32_t posOutput=0;
-                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x68;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x6B;
                     posOutput+=1+4;
 
                     //////////////////////////// insert //////////////////////////
@@ -422,7 +424,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         }
     }
 
-    //send small reinsert
+    //send small reinsert, used to remplace move and improve the performance
     const int &small_reinsert_count=clientsToSendDataSizeOldClients;
     if(small_reinsert_count>1)//then player who is not drop/insert
     {
