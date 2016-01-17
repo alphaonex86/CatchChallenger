@@ -20,7 +20,7 @@ void Client::sendLocalChatText(const std::string &text)
 
     uint32_t posOutput=0;
     {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5C;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5F;
         posOutput=1+4;
 
         //type

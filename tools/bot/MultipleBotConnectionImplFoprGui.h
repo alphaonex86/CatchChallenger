@@ -59,6 +59,7 @@ signals:
     void chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type) const;
     void emit_detectSlowDown(QString text);
     void datapackIsReady();
+    void datapackMainSubIsReady();
 };
 
 #endif // MULTIPLEBOTCONNECTIONIMPLFOPRGUI_H

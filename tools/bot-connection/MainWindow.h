@@ -53,6 +53,7 @@ private slots:
     void updateServerList(CatchChallenger::Api_client_real *senderObject);
     void addToServerList(CatchChallenger::LogicialGroup &logicialGroup, QTreeWidgetItem *item, const uint64_t &currentDate, const bool &fullView=true);
     void datapackIsReady();
+    void datapackMainSubIsReady();
     void on_autoCreateCharacter_stateChanged(int arg1);
 
 signals:
