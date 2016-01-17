@@ -269,7 +269,8 @@ void Client::disconnectClient()
         #endif
         playerByPseudo.erase(public_and_private_informations.public_informations.pseudo);
         clanChangeWithoutDb(0);
-        vectorremoveOne(clientBroadCastList,this);
+        if(!vectorremoveOne(clientBroadCastList,this))
+            std::cout << "Client::disconnectClient(): vectorremoveOne(clientBroadCastList,this)" << std::endl;
         playerByPseudo.erase(public_and_private_informations.public_informations.pseudo);
         playerById.erase(character_id);
         leaveTheCityCapture();
