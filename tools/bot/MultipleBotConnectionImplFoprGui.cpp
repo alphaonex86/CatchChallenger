@@ -217,6 +217,7 @@ void MultipleBotConnectionImplFoprGui::haveTheDatapackMainSub()
         return;
 
     MultipleBotConnection::haveTheDatapackMainSub_with_client(apiToCatchChallengerClient.value(senderObject));
+    emit datapackMainSubIsReady();
 }
 
 void MultipleBotConnectionImplFoprGui::sslErrors(const QList<QSslError> &errors)

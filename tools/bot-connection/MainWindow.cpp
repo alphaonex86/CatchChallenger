@@ -27,6 +27,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::loggedDone,this,&MainWindow::logged,Qt::QueuedConnection);
     connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::datapackIsReady,this,&MainWindow::datapackIsReady,Qt::QueuedConnection);
+    connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::datapackMainSubIsReady,this,&MainWindow::datapackMainSubIsReady,Qt::QueuedConnection);
     connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::statusError,this,&MainWindow::statusError,Qt::QueuedConnection);
     connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::emit_numberOfSelectedCharacter,this,&MainWindow::display_numberOfSelectedCharacter,Qt::QueuedConnection);
     connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::emit_numberOfBotConnected,this,&MainWindow::display_numberOfBotConnected,Qt::QueuedConnection);
@@ -113,6 +114,7 @@ void MainWindow::detectSlowDown(QString text)
 
 void MainWindow::logged(CatchChallenger::Api_client_real *senderObject,const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack)
 {
+    Q_UNUSED(haveTheDatapack);
     if(senderObject==NULL)
     {
         qDebug() << "MainWindow::logged(): qobject_cast<CatchChallenger::Api_client_real *>(sender())==NULL";
@@ -124,17 +126,6 @@ void MainWindow::logged(CatchChallenger::Api_client_real *senderObject,const QLi
     this->characterEntryList=characterEntryList;
 
     ui->characterList->setEnabled(ui->characterList->count()>0 && !ui->multipleConnexion->isChecked());
-
-    if(!haveTheDatapack)
-    {
-        if(!CommonSettingsServer::commonSettingsServer.chat_allow_all && !CommonSettingsServer::commonSettingsServer.chat_allow_local)
-        {
-            ui->randomText->setEnabled(false);
-            ui->randomText->setChecked(false);
-            ui->chatRandomReply->setEnabled(false);
-            ui->chatRandomReply->setChecked(false);
-        }
-    }
 
     ui->serverList->header()->setSectionResizeMode(QHeaderView::Fixed);
     ui->serverList->header()->resizeSection(0,680);
@@ -388,6 +379,17 @@ void MainWindow::addToServerList(CatchChallenger::LogicialGroup &logicialGroup, 
 void MainWindow::datapackIsReady()
 {
     ui->groupBox_Server->setEnabled(true);
+}
+
+void MainWindow::datapackMainSubIsReady()
+{
+    if(!CommonSettingsServer::commonSettingsServer.chat_allow_all && !CommonSettingsServer::commonSettingsServer.chat_allow_local)
+    {
+        ui->randomText->setEnabled(false);
+        ui->randomText->setChecked(false);
+        ui->chatRandomReply->setEnabled(false);
+        ui->chatRandomReply->setChecked(false);
+    }
 }
 
 void MainWindow::on_autoCreateCharacter_stateChanged(int arg1)
