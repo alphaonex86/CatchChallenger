@@ -508,13 +508,6 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         {
             unsigned int real_reinsert_count=0;
             unsigned int index_subindex=0;
-            unsigned int bufferCursor;
-            unsigned int bufferBaseCursor;
-            unsigned int bufferSizeToHave;
-            if(GlobalServerData::serverSettings.max_players<=255)
-                bufferBaseCursor=sizeof(uint8_t);
-            else
-                bufferBaseCursor=sizeof(uint16_t);
 
             while(index_subindex<clientsToSendDataSizeOldClients)
             {
@@ -524,16 +517,19 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             }
             if(real_reinsert_count>0)
             {
-                //send the network message
-                uint32_t posOutput=0;
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x66;
-                posOutput+=1+4;
-
+                uint32_t bufferSizeToHave;
                 if(GlobalServerData::serverSettings.max_players<=255)
                     bufferSizeToHave=sizeof(uint8_t)+real_reinsert_count*(sizeof(uint8_t)+sizeof(uint8_t)*3);
                 else
                     bufferSizeToHave=sizeof(uint16_t)+real_reinsert_count*(sizeof(uint16_t)+sizeof(uint8_t)*3);
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(bufferSizeToHave);//set the dynamic size
+
+                //send the network message
+                uint32_t posOutput=0;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x66;
+                posOutput+=1;
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(bufferSizeToHave);//set the dynamic size
+                posOutput+=4;
+
                 if(bufferSizeToHave<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
                 {
                     unsigned int index=0;
@@ -544,24 +540,24 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                             unsigned int temp_reinsert=real_reinsert_count;
                             if(clientsToSendDataOldClients[index]->haveNewMove)
                                 temp_reinsert--;
-                            bufferCursor=bufferBaseCursor;
                             if(temp_reinsert>0)
                             {
                                 index_subindex=0;
-                                ProtocolParsingBase::tempBigBufferForOutput[0]=(uint8_t)temp_reinsert;
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)temp_reinsert;
+                                posOutput+=1;
                                 while(index_subindex<clientsToSendDataSizeOldClients)
                                 {
                                     if(index!=index_subindex && clientsToSendDataOldClients[index_subindex]->haveNewMove)
                                     {
-                                        ProtocolParsingBase::tempBigBufferForOutput[bufferCursor+0]=(uint8_t)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
-                                        ProtocolParsingBase::tempBigBufferForOutput[bufferCursor+1]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getX();
-                                        ProtocolParsingBase::tempBigBufferForOutput[bufferCursor+2]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getY();
-                                        ProtocolParsingBase::tempBigBufferForOutput[bufferCursor+3]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getLastDirection();
-                                        bufferCursor+=sizeof(uint8_t)+sizeof(uint8_t)*3;
+                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+0]=(uint8_t)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
+                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+1]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getX();
+                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+2]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getY();
+                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+3]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                        posOutput+=sizeof(uint8_t)+sizeof(uint8_t)*3;
                                     }
                                     index_subindex++;
                                 }
-                                clientsToSendDataOldClients[index]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,bufferCursor);
+                                clientsToSendDataOldClients[index]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                             }
                             index++;
                         }
@@ -573,24 +569,24 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                             unsigned int temp_reinsert=real_reinsert_count;
                             if(clientsToSendDataOldClients[index]->haveNewMove)
                                 temp_reinsert--;
-                            bufferCursor=bufferBaseCursor;
                             if(temp_reinsert>0)
                             {
                                 index_subindex=0;
-                                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+0)=(uint16_t)htole16((uint16_t)temp_reinsert);
+                                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16((uint16_t)temp_reinsert);
+                                posOutput+=2;
                                 while(index_subindex<clientsToSendDataSizeOldClients)
                                 {
                                     if(index!=index_subindex && clientsToSendDataOldClients[index_subindex]->haveNewMove)
                                     {
-                                        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+bufferCursor)=(uint16_t)htole16((uint16_t)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
-                                        ProtocolParsingBase::tempBigBufferForOutput[bufferCursor+sizeof(uint16_t)+0]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getX();
-                                        ProtocolParsingBase::tempBigBufferForOutput[bufferCursor+sizeof(uint16_t)+1]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getY();
-                                        ProtocolParsingBase::tempBigBufferForOutput[bufferCursor+sizeof(uint16_t)+2]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getLastDirection();
-                                        bufferCursor+=sizeof(uint16_t)+sizeof(uint8_t)*3;
+                                        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=(uint16_t)htole16((uint16_t)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
+                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+0]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getX();
+                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+1]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getY();
+                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+2]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                        posOutput+=sizeof(uint16_t)+sizeof(uint8_t)*3;
                                     }
                                     index_subindex++;
                                 }
-                                clientsToSendDataOldClients[index]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,bufferCursor);
+                                clientsToSendDataOldClients[index]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                             }
                             index++;
                         }
