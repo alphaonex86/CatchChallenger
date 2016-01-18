@@ -455,12 +455,12 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     //////////////////////////// insert //////////////////////////
                     if(GlobalServerData::serverSettings.max_players<=255)
                     {
-                        ProtocolParsingBase::tempBigBufferForOutput[0]=(uint8_t)real_reinsert_count;
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)real_reinsert_count;
                         posOutput+=sizeof(uint8_t);
                     }
                     else
                     {
-                        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+0)=(uint16_t)htole16((uint16_t)real_reinsert_count);
+                        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=(uint16_t)htole16((uint16_t)real_reinsert_count);
                         posOutput+=sizeof(uint16_t);
                     }
                     index_subindex=0;
@@ -559,6 +559,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                                 }
                                 *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
                                 clientsToSendDataOldClients[index]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                                posOutput=1+4;
                             }
                             index++;
                         }
@@ -589,6 +590,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                                 }
                                 *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
                                 clientsToSendDataOldClients[index]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                                posOutput=1+4;
                             }
                             index++;
                         }
