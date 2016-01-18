@@ -214,7 +214,10 @@ void MultipleBotConnectionImplFoprGui::haveTheDatapackMainSub()
     qDebug() << "MultipleBotConnectionImplFoprGui::haveTheDatapackMainSub()";
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(senderObject==NULL)
+    {
+        qDebug() << "MultipleBotConnectionImplFoprGui::haveTheDatapackMainSub(): sender()==NULL";
         return;
+    }
 
     MultipleBotConnection::haveTheDatapackMainSub_with_client(apiToCatchChallengerClient.value(senderObject));
     emit datapackMainSubIsReady();

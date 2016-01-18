@@ -74,6 +74,7 @@ protected:
     virtual void logged(const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList) = 0;
     virtual void newCharacterId(const quint8 &returnCode, const quint32 &characterId) = 0;
     virtual void haveTheDatapack() = 0;
+    virtual void haveTheDatapackMainSub() = 0;
     virtual void sslErrors(const QList<QSslError> &errors) = 0;
     virtual void protocol_is_good() = 0;
     virtual void newSocketError(QAbstractSocket::SocketError error) = 0;
