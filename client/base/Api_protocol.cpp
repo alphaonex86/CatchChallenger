@@ -157,7 +157,10 @@ void Api_protocol::parseError(const QString &userMessage,const QString &errorStr
     if(tolerantMode)
         std::cerr << "packet ignored due to: " << errorString.toStdString() << std::endl;
     else
+    {
+        std::cerr << userMessage.toStdString() << " " << errorString.toStdString() << std::endl;
         newError(userMessage,errorString);
+    }
 }
 
 Player_private_and_public_informations Api_protocol::get_player_informations()
