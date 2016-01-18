@@ -288,16 +288,29 @@ void MainWindow::on_serverListSelect_clicked()
     const uint8_t &charactersGroupIndex=serverOrdenedList.at(serverSelected)->charactersGroupIndex;
     multipleBotConnexion.serverSelect(charactersGroupIndex,serverSelected);
 
-    ui->groupBox_char->setEnabled(true);
     ui->groupBox_Server->setEnabled(false);
     if(!ui->multipleConnexion->isChecked())
     {
+        ui->groupBox_char->setEnabled(true);
         int index=0;
         while(index<characterEntryList.size())
         {
             const CatchChallenger::CharacterEntry &character=characterEntryList.at(charactersGroupIndex).at(index);
             ui->characterList->addItem(QString::fromStdString(character.pseudo),character.character_id);
             index++;
+        }
+    }
+    else
+    {
+        ui->groupBox_char->setEnabled(false);
+        if(characterEntryList.size()>0)
+        {
+            const CatchChallenger::CharacterEntry &character=characterEntryList.at(charactersGroupIndex).first();
+            multipleBotConnexion.characterSelect(character.character_id);
+        }
+        else
+        {
+            qDebug() << "MainWindow::on_serverListSelect_clicked(): ui->characterList->count()==0";
         }
     }
     ui->characterSelect->setEnabled(ui->characterList->count()>0 && !ui->multipleConnexion->isChecked());

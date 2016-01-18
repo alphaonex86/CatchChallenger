@@ -132,10 +132,10 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
         qDebug() << "!serverIsSelected";
         return;
     }
-    if(client->charactersList.count()<=0)
+    if(client->charactersList.at(charactersGroupIndex).count()<=0)
     {
         qDebug() << client->login << "have not character";
-        if(autoCreateCharacter())
+        if((autoCreateCharacter() || multipleConnexion()) && serverIsSelected)
         {
             qDebug() << client->login << "create new character";
             quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
@@ -150,9 +150,9 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
         }
         return;
     }
-    if(multipleConnexion())
+    if(multipleConnexion() && serverIsSelected)
     {
-        const quint32 &character_id=client->charactersList.at(charactersGroupIndex).at(rand()%client->charactersList.size()).character_id;
+        const quint32 &character_id=client->charactersList.at(charactersGroupIndex).at(rand()%client->charactersList.at(charactersGroupIndex).size()).character_id;
         if(!characterOnMap.contains(character_id))
         {
             characterOnMap << character_id;
@@ -205,12 +205,17 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
     }
     //ifMultipleConnexionStartCreation();
     //the actual client
-    const quint32 &character_id=client->charactersList.at(charactersGroupIndex).at(rand()%client->charactersList.size()).character_id;
+    const quint32 &character_id=client->charactersList.at(charactersGroupIndex).at(rand()%client->charactersList.at(charactersGroupIndex).size()).character_id;
     if(!characterOnMap.contains(character_id))
     {
         characterOnMap << character_id;
-        if(multipleConnexion())
+        if(multipleConnexion() && serverIsSelected)
         {
+            if(!serverIsSelected)
+            {
+                qDebug() << "if(!serverIsSelected) for multipleConnexion()";
+                abort();
+            }
             if(!client->api->selectCharacter(charactersGroupIndex,serverUniqueKey,character_id))
                 qDebug() << "Unable to select character after datapack loading:" << character_id;
             else
@@ -348,7 +353,10 @@ void MultipleBotConnection::connectTheExternalSocket(CatchChallengerClient * cli
     connect(client->api,&CatchChallenger::Api_client_real::notLogged,                this,&MultipleBotConnection::notLogged);
     connect(client->socket,&CatchChallenger::ConnectedSocket::disconnected,          this,&MultipleBotConnection::disconnected);
     if(apiToCatchChallengerClient.isEmpty())
+    {
         connect(client->api,&CatchChallenger::Api_client_real::haveTheDatapack,      this,&MultipleBotConnection::haveTheDatapack);
+        connect(client->api,&CatchChallenger::Api_client_real::haveTheDatapackMainSub,      this,&MultipleBotConnection::haveTheDatapackMainSub);
+    }
     client->haveShowDisconnectionReason=false;
     client->have_informations=false;
     client->number=numberToChangeLoginForMultipleConnexion;

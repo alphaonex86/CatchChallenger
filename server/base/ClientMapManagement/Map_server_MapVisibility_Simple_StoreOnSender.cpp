@@ -527,7 +527,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                 uint32_t posOutput=0;
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x66;
                 posOutput+=1;
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(bufferSizeToHave);//set the dynamic size
+                //Can't be here, need exclude him self to know the size:*reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(bufferSizeToHave-1-4);//set the dynamic size
                 posOutput+=4;
 
                 if(bufferSizeToHave<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
@@ -557,6 +557,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                                     }
                                     index_subindex++;
                                 }
+                                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
                                 clientsToSendDataOldClients[index]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                             }
                             index++;
@@ -586,6 +587,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                                     }
                                     index_subindex++;
                                 }
+                                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
                                 clientsToSendDataOldClients[index]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                             }
                             index++;
