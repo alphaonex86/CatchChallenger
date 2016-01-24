@@ -53,6 +53,13 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
         if(sfd == -1)
             continue;
 
+        int one=1;
+        if(setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one)!=0)
+            std::cerr << "Unable to apply SO_REUSEADDR" << std::endl;
+        one=1;
+        if(setsockopt(sfd, SOL_SOCKET, SO_REUSEPORT, &one, sizeof one)!=0)
+            std::cerr << "Unable to apply SO_REUSEPORT" << std::endl;
+
         s = bind(sfd, rp->ai_addr, rp->ai_addrlen);
         if (s == 0)
         {
@@ -88,6 +95,13 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
                 std::cerr << "socket not created:" << sfd << ", error (errno): " << errno << ", error string: " << strerror(errno) << std::endl;
             else
             {
+                int one=1;
+                if(setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one)!=0)
+                    std::cerr << "Unable to apply SO_REUSEADDR" << std::endl;
+                one=1;
+                if(setsockopt(sfd, SOL_SOCKET, SO_REUSEPORT, &one, sizeof one)!=0)
+                    std::cerr << "Unable to apply SO_REUSEPORT" << std::endl;
+
                 s = bind(sfd, rp->ai_addr, rp->ai_addrlen);
                 std::cerr << "bind failed:" << s << ", error (errno): " << errno << ", error string: " << strerror(errno) << std::endl;
                 ::close(sfd);
@@ -105,13 +119,6 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
         std::cerr << "Can't put in non blocking" << std::endl;
         return false;
     }
-    bool yes=1;
-    if(setsockopt(sfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)))
-    {
-        close();
-        std::cerr << "Can't put in reuse" << std::endl;
-        return false;
-    }
 
     s = listen(sfd, SOMAXCONN);
     if(s == -1)
@@ -120,12 +127,6 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
         std::cerr << "Unable to listen" << std::endl;
         return false;
     }
-    int one=1;
-    if(setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one)!=0)
-        std::cerr << "Unable to apply SO_REUSEADDR" << std::endl;
-    one=1;
-    if(setsockopt(sfd, SOL_SOCKET, SO_REUSEPORT, &one, sizeof one)!=0)
-        std::cerr << "Unable to apply SO_REUSEPORT" << std::endl;
 
     epoll_event event;
     event.data.ptr = this;

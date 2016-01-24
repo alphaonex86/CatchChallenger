@@ -1035,8 +1035,6 @@ void Client::characterIsRightFinalStep()
     const uint8_t &query_id=selectCharacterQueryId.front();
     selectCharacterQueryId.erase(selectCharacterQueryId.begin());
 
-    std::cout << binarytoHexa(reinterpret_cast<char *>(Client::characterIsRightFinalStepHeader),Client::characterIsRightFinalStepHeaderSize) << ", " << __FILE__ << ":" << __LINE__ << std::endl;
-
     //send the network reply
     removeFromQueryReceived(query_id);
 
@@ -1133,8 +1131,6 @@ void Client::characterIsRightFinalStep()
             ++i;
         }
     }
-
-    std::cout << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << ", " << __FILE__ << ":" << __LINE__ << std::endl;
 
     //send plant on map
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
@@ -1251,8 +1247,6 @@ void Client::characterIsRightFinalStep()
         mapToDebug+=this->map->map_file;
     }
     #endif
-
-    std::cout << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << ", " << __FILE__ << ":" << __LINE__ << std::endl;
 
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
