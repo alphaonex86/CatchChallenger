@@ -286,6 +286,12 @@ void MainWindow::on_serverListSelect_clicked()
     unsigned int serverSelected=selectedItem->data(99,99).toUInt();
 
     const uint8_t &charactersGroupIndex=serverOrdenedList.at(serverSelected)->charactersGroupIndex;
+    if(charactersGroupIndex>=characterEntryList.size())
+    {
+        ui->groupBox_Server->setEnabled(false);
+        QMessageBox::critical(this,tr("Error"),tr("The group index is wrong, maybe the server list have change"));
+        return;
+    }
     multipleBotConnexion.serverSelect(charactersGroupIndex,serverSelected);
 
     ui->groupBox_Server->setEnabled(false);
