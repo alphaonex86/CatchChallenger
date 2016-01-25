@@ -188,7 +188,7 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
     if(client->charactersList.count()<=0 || charactersGroupIndex>=client->charactersList.size() || client->charactersList.at(charactersGroupIndex).empty())
     {
         qDebug() << client->login << "have not character";
-        if(autoCreateCharacter())
+        if(autoCreateCharacter() || multipleConnexion())
         {
             qDebug() << client->login << "create new character";
             quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
