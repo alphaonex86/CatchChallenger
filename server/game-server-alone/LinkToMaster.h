@@ -51,6 +51,8 @@ public:
     static unsigned char header_magic_number[9];
     static unsigned char private_token[TOKEN_SIZE_FOR_MASTERAUTH];
 
+    static uint16_t purgeLockPeriod;
+    static uint16_t maxLockAge;
     static LinkToMaster *linkToMaster;
     static int linkToMasterSocketFd;
     static bool haveTheFirstSslHeader;

@@ -57,6 +57,18 @@ void MultipleBotConnection::disconnected()
     haveEnError=true;
     numberOfBotConnected--;
     emit emit_numberOfBotConnected(numberOfBotConnected);
+
+    CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(QObject::sender());
+    if(senderObject!=NULL)
+    {
+        if(senderObject->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage2 || senderObject->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage3)
+        {
+            senderObject->socketDisconnectedForReconnect();
+            return;
+        }
+    }
+    else
+        qDebug() << "disconnected(): error, from unknown";
 }
 
 void MultipleBotConnection::lastReplyTime(const quint32 &time)
