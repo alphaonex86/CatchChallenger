@@ -113,9 +113,26 @@ void MultipleBotConnectionImplFoprGui::characterSelect(const quint32 &charId)
 
 void MultipleBotConnectionImplFoprGui::serverSelect(const uint8_t &charactersGroupIndex,const quint32 &uniqueKey)
 {
+    if(uniqueKey==0)
+        qDebug() << "MultipleBotConnectionImplFoprGui::serverSelect(): uniqueKey==0, suspect bug";
     this->charactersGroupIndex=charactersGroupIndex;
     this->serverUniqueKey=uniqueKey;
     serverIsSelected=true;
+
+    if(multipleConnexion())
+    {
+        QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *>::const_iterator i = apiToCatchChallengerClient.constBegin();
+        if(i != apiToCatchChallengerClient.constEnd())
+        {
+            logged_with_client(i.value());
+            return;
+        }
+        else
+        {
+            qDebug() << "MultipleBotConnectionImplFoprGui::serverSelect(): ui->characterList->count()==0 and no client found, abort()";
+            abort();
+        }
+    }
 }
 
 void MultipleBotConnectionImplFoprGui::insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)

@@ -349,12 +349,12 @@ void Api_protocol::send_player_move(const uint8_t &moved_unit,const Direction &d
     #endif
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     uint8_t directionInt=static_cast<uint8_t>(direction);
@@ -375,12 +375,12 @@ void Api_protocol::send_player_direction(const Direction &the_direction)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     newDirection(the_direction);
@@ -390,12 +390,12 @@ void Api_protocol::sendChatText(const Chat_type &chatType, const QString &text)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(chatType!=Chat_type_local && chatType!=Chat_type_all && chatType!=Chat_type_clan && chatType!=Chat_type_aliance && chatType!=Chat_type_system && chatType!=Chat_type_system_important)
@@ -411,7 +411,7 @@ void Api_protocol::sendChatText(const Chat_type &chatType, const QString &text)
         const QByteArray &tempText=text.toUtf8();
         if(tempText.size()>255)
         {
-            std::cerr << "text in Utf8 too big, line: " << __FILE__ << __LINE__ << std::endl;
+            std::cerr << "text in Utf8 too big, line: " << __FILE__ << ": " << __LINE__ << std::endl;
             return;
         }
         out << (uint8_t)tempText.size();
@@ -425,12 +425,12 @@ void Api_protocol::sendPM(const QString &text,const QString &pseudo)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(this->player_informations.public_informations.pseudo==pseudo.toStdString())
@@ -443,7 +443,7 @@ void Api_protocol::sendPM(const QString &text,const QString &pseudo)
         const QByteArray &tempText=text.toUtf8();
         if(tempText.size()>255)
         {
-            std::cerr << "text in Utf8 too big, line: " << __FILE__ << __LINE__ << std::endl;
+            std::cerr << "text in Utf8 too big, line: " << __FILE__ << ": " << __LINE__ << std::endl;
             return;
         }
         out << (uint8_t)tempText.size();
@@ -454,7 +454,7 @@ void Api_protocol::sendPM(const QString &text,const QString &pseudo)
         const QByteArray &tempText=pseudo.toUtf8();
         if(tempText.size()>255)
         {
-            std::cerr << "text in Utf8 too big, line: " << __FILE__ << __LINE__ << std::endl;
+            std::cerr << "text in Utf8 too big, line: " << __FILE__ << ": " << __LINE__ << std::endl;
             return;
         }
         out << (uint8_t)tempText.size();
@@ -468,12 +468,12 @@ void Api_protocol::teleportDone()
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     is_logged=character_selected=postReplyData(teleportList.first(),NULL,0);
@@ -484,7 +484,7 @@ bool Api_protocol::addCharacter(const uint8_t &charactersGroupIndex,const uint8_
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;
     }
     if(skinId>=CommonDatapack::commonDatapack.skins.size())
@@ -522,7 +522,7 @@ bool Api_protocol::removeCharacter(const uint8_t &charactersGroupIndex,const uin
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;
     }
     QByteArray outputData;
@@ -540,11 +540,11 @@ bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const ui
     while(index<serverOrdenedList.size())
     {
         const ServerFromPoolForDisplay * const server=serverOrdenedList.at(index);
-        if(server->uniqueKey==serverUniqueKey)
+        if(server->uniqueKey==serverUniqueKey && server->charactersGroupIndex==charactersGroupIndex)
             return selectCharacter(charactersGroupIndex,serverUniqueKey,characterId,index);
         index++;
     }
-    std::cerr << "index of server not found, line: " << __FILE__ << __LINE__ << std::endl;
+    std::cerr << "index of server not found, charactersGroupIndex: " << (uint32_t)charactersGroupIndex << ", serverUniqueKey: " << serverUniqueKey << ", line: " << __FILE__ << ": " << __LINE__ << std::endl;
     return false;
 }
 
@@ -552,7 +552,7 @@ bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const ui
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;
     }
 
@@ -571,12 +571,12 @@ void Api_protocol::useSeed(const uint8_t &plant_id)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -591,12 +591,12 @@ void Api_protocol::monsterMoveUp(const uint8_t &number)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -611,12 +611,12 @@ void Api_protocol::confirmEvolution(const uint32_t &monterId)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -630,12 +630,12 @@ void Api_protocol::monsterMoveDown(const uint8_t &number)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -651,12 +651,12 @@ void Api_protocol::destroyObject(const uint16_t &object, const uint32_t &quantit
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -671,12 +671,12 @@ void Api_protocol::useObject(const uint16_t &object)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -691,12 +691,12 @@ void Api_protocol::useObjectOnMonster(const uint16_t &object,const uint32_t &mon
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -712,12 +712,12 @@ void Api_protocol::wareHouseStore(const qint64 &cash, const QList<QPair<uint16_t
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -761,12 +761,12 @@ void Api_protocol::getShopList(const uint32_t &shopId)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -780,12 +780,12 @@ void Api_protocol::buyObject(const uint32_t &shopId,const uint32_t &objectId,con
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -802,12 +802,12 @@ void Api_protocol::sellObject(const uint32_t &shopId,const uint32_t &objectId,co
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -824,12 +824,12 @@ void Api_protocol::getFactoryList(const uint16_t &factoryId)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -843,12 +843,12 @@ void Api_protocol::buyFactoryProduct(const uint16_t &factoryId,const uint16_t &o
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -865,12 +865,12 @@ void Api_protocol::sellFactoryResource(const uint16_t &factoryId,const uint16_t 
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -887,12 +887,12 @@ void Api_protocol::tryEscape()
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     is_logged=character_selected=packOutcommingData(0x07,NULL,0);
@@ -902,12 +902,12 @@ void Api_protocol::heal()
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     is_logged=character_selected=packOutcommingData(0x0B,NULL,0);
@@ -917,12 +917,12 @@ void Api_protocol::requestFight(const uint32_t &fightId)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -936,12 +936,12 @@ void Api_protocol::changeOfMonsterInFight(const uint32_t &monsterId)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -955,12 +955,12 @@ void Api_protocol::useSkill(const uint16_t &skill)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -974,12 +974,12 @@ void Api_protocol::learnSkill(const uint32_t &monsterId,const uint16_t &skill)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -994,12 +994,12 @@ void Api_protocol::startQuest(const uint16_t &questId)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1013,12 +1013,12 @@ void Api_protocol::finishQuest(const uint16_t &questId)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1032,12 +1032,12 @@ void Api_protocol::cancelQuest(const uint16_t &questId)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1051,12 +1051,12 @@ void Api_protocol::nextQuestStep(const uint16_t &questId)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1070,12 +1070,12 @@ void Api_protocol::createClan(const QString &name)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1099,12 +1099,12 @@ void Api_protocol::leaveClan()
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1118,12 +1118,12 @@ void Api_protocol::dissolveClan()
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1137,12 +1137,12 @@ void Api_protocol::inviteClan(const QString &pseudo)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1166,12 +1166,12 @@ void Api_protocol::ejectClan(const QString &pseudo)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1195,12 +1195,12 @@ void Api_protocol::inviteAccept(const bool &accept)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1217,12 +1217,12 @@ void Api_protocol::waitingForCityCapture(const bool &cancel)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1240,12 +1240,12 @@ void Api_protocol::getMarketList()
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     is_logged=character_selected=packOutcommingQuery(0x8D,queryNumber(),NULL,0);
@@ -1255,12 +1255,12 @@ void Api_protocol::buyMarketObject(const uint32_t &marketObjectId, const uint32_
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1276,12 +1276,12 @@ void Api_protocol::buyMarketMonster(const uint32_t &monsterId)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1296,12 +1296,12 @@ void Api_protocol::putMarketObject(const uint32_t &objectId,const uint32_t &quan
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1318,12 +1318,12 @@ void Api_protocol::putMarketMonster(const uint32_t &monsterId,const uint32_t &pr
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1339,12 +1339,12 @@ void Api_protocol::recoverMarketCash()
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     is_logged=character_selected=packOutcommingQuery(0x90,queryNumber(),NULL,0);
@@ -1354,12 +1354,12 @@ void Api_protocol::withdrawMarketObject(const uint32_t &objectId,const uint32_t 
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1375,12 +1375,12 @@ void Api_protocol::withdrawMarketMonster(const uint32_t &monsterId)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1395,12 +1395,12 @@ void Api_protocol::collectMaturePlant()
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
@@ -1414,12 +1414,12 @@ void Api_protocol::useRecipe(const uint16_t &recipeId)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     QByteArray outputData;
@@ -1438,12 +1438,12 @@ void Api_protocol::battleRefused()
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(battleRequestId.isEmpty())
@@ -1463,12 +1463,12 @@ void Api_protocol::battleAccepted()
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(battleRequestId.isEmpty())
@@ -1489,12 +1489,12 @@ void Api_protocol::tradeRefused()
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(tradeRequestId.isEmpty())
@@ -1514,12 +1514,12 @@ void Api_protocol::tradeAccepted()
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(tradeRequestId.isEmpty())
@@ -1540,12 +1540,12 @@ void Api_protocol::tradeCanceled()
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!isInTrade)
@@ -1561,12 +1561,12 @@ void Api_protocol::tradeFinish()
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!isInTrade)
@@ -1581,12 +1581,12 @@ void Api_protocol::addTradeCash(const quint64 &cash)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(cash==0)
@@ -1611,12 +1611,12 @@ void Api_protocol::addObject(const uint16_t &item, const uint32_t &quantity)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(quantity==0)
@@ -1642,12 +1642,12 @@ void Api_protocol::addMonster(const uint32_t &monsterId)
 {
     if(!is_logged)
     {
-        std::cerr << "is not logged, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!character_selected)
     {
-        std::cerr << "character not selected, line: " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     if(!isInTrade)
