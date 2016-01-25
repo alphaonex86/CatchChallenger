@@ -442,7 +442,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
             else
             {
                 askStatClient(queryNumber,data);
-                return false;
+                return true;
             }
         break;
         #else

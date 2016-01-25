@@ -131,7 +131,10 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
         }
     }
     else
+    {
+        parseNetworkReadError("parseFullMessage() no client attached: "+std::to_string(mainCodeType));
         return false;
+    }
 }
 
 //have query with reply
@@ -177,7 +180,10 @@ bool LinkToGameServer::parseQuery(const uint8_t &mainCodeType,const uint8_t &que
         return true;
     }
     else
+    {
+        parseNetworkReadError("parseQuery() no client attached: "+std::to_string(mainCodeType));
         return false;
+    }
 }
 
 //send reply
@@ -277,12 +283,17 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 }
                 return true;
             }
-        return false;
+            else
+            {
+                parseNetworkReadError("parseQuery() no client attached: "+std::to_string(mainCodeType));
+                return false;
+            }
     }
     return true;
 }
 
 void LinkToGameServer::parseNetworkReadError(const std::string &errorString)
 {
+    std::cerr << "EpollClientLoginMaster::parseNetworkReadError(): " << errorString << std::endl;
     errorParsingLayer(errorString);
 }
