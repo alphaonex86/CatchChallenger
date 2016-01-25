@@ -240,7 +240,7 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
             {
                 stat=EpollClientLoginStat::LoginInProgress;
                 askLogin(queryNumber,data);
-                return false;
+                return true;
             }
         break;
         //create account
@@ -294,7 +294,7 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
             else
             {
                 askStatClient(queryNumber,data);
-                return false;
+                return true;
             }
         break;
         default:
@@ -613,5 +613,6 @@ bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
 
 void EpollClientLoginSlave::parseNetworkReadError(const std::string &errorString)
 {
+    std::cerr << "EpollClientLoginMaster::parseNetworkReadError(): " << errorString << std::endl;
     errorParsingLayer(errorString);
 }
