@@ -58,6 +58,7 @@ LinkToMaster::LinkToMaster(
 
 LinkToMaster::~LinkToMaster()
 {
+    memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));
     LinkToMaster::linkToMasterSocketFd=-1;
     closeSocket();
     //critical bug, need be reopened, never closed
@@ -114,11 +115,12 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
         }
         if(connStatusType<0)
         {
+            memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));
             std::cerr << "ERROR connecting to master server (abort)" << std::endl;
             abort();
         }
     }
-    std::cout << "Connected to master" << std::endl;
+    std::cout << "Connected to master " << host << ":" << port << std::endl;
     haveTheFirstSslHeader=false;
 
     return LinkToMaster::linkToMasterSocketFd;
@@ -354,6 +356,7 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
         posOutput+=CATCHCHALLENGER_SHA224HASH_SIZE;
         //memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));->to reconnect after be disconnected
     }
+    std::cout << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << ": " << __LINE__ << std::endl;
 
     std::string server_ip=settings->value("server-ip");
     std::string server_port=settings->value("server-port");
@@ -392,6 +395,7 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(uniqueKey);
         posOutput+=4;
     }
+    std::cout << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << ": " << __LINE__ << std::endl;
 
     //the external information to connect the client or the login server as proxy
     {
@@ -407,6 +411,7 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
         unsigned int newSizeText=FacilityLibGeneral::toUTF8WithHeader(externalServerIp,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
         posOutput+=newSizeText;
     }
+    std::cout << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << ": " << __LINE__ << std::endl;
     {
         unsigned short int externalServerPort;
         if(!settings->contains("external-server-port"))
@@ -425,6 +430,7 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
         posOutput+=2;
     }
     settings->endGroup();
+    std::cout << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << ": " << __LINE__ << std::endl;
 
     //the xml with name and description
     {
@@ -433,11 +439,13 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
         else
         {
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput+1]=0x00;
             newSizeCharactersGroup=2;
         }
         posOutput+=newSizeCharactersGroup;
     }
 
+    std::cout << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << ": " << __LINE__ << std::endl;
     settings->beginGroup("master");
     //logical group
     {
@@ -453,6 +461,7 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
     settings->endGroup();
 
     settings->sync();
+    std::cout << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << ": " << __LINE__ << std::endl;
 
     //current player number and max player
     if(GlobalServerData::serverSettings.sendPlayerNumber)
@@ -475,6 +484,7 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
             *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65535);
         posOutput+=2;
     }
+    std::cout << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << ": " << __LINE__ << std::endl;
 
     //send the connected player
     {
@@ -497,6 +507,7 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
         }
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+sizePos)=htole16(character_count);
     }
+    std::cout << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << ": " << __LINE__ << std::endl;
 
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
     internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);

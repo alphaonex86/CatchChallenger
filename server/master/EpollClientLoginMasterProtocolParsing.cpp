@@ -325,7 +325,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             {
                 if((size-pos)<(int)sizeof(uint8_t))
                 {
-                    parseNetworkReadError("wrong utf8 to std::string size for text size");
+                    parseNetworkReadError("Register game server, charactersGroup, wrong utf8 to std::string size for text size");
                     return false;
                 }
                 const uint8_t &textSize=data[pos];
@@ -334,7 +334,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 {
                     if((size-pos)<textSize)
                     {
-                        parseNetworkReadError("wrong utf8 to std::string size for text");
+                        parseNetworkReadError("Register game server, charactersGroup, wrong utf8 to std::string size for text");
                         return false;
                     }
                     charactersGroup=std::string(data+pos,textSize);
@@ -373,7 +373,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             {
                 if((size-pos)<(int)sizeof(uint8_t))
                 {
-                    parseNetworkReadError("wrong utf8 to std::string size for text size");
+                    parseNetworkReadError("Register game server, host, wrong utf8 to std::string size for text size");
                     return false;
                 }
                 const uint8_t &textSize=data[pos];
@@ -382,7 +382,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 {
                     if((size-pos)<textSize)
                     {
-                        parseNetworkReadError("wrong utf8 to std::string size for text");
+                        parseNetworkReadError("Register game server, host, wrong utf8 to std::string size for text");
                         return false;
                     }
                     host=std::string(data+pos,textSize);
@@ -406,7 +406,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             {
                 if((size-pos)<(int)sizeof(uint16_t))
                 {
-                    parseNetworkReadError("wrong utf8 to std::string size for text size");
+                    parseNetworkReadError("Register game server, xml, wrong utf8 to std::string size for text size");
                     return false;
                 }
                 const uint16_t textSize=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
@@ -415,7 +415,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 {
                     if((size-pos)<textSize)
                     {
-                        parseNetworkReadError("wrong utf8 to std::string size for text");
+                        parseNetworkReadError("Register game server, xml, wrong utf8 to std::string size for text");
                         return false;
                     }
                     xml=std::string(data+pos,textSize);
@@ -426,7 +426,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             {
                 if((size-pos)<(int)sizeof(uint8_t))
                 {
-                    parseNetworkReadError("wrong utf8 to std::string size for text size");
+                    parseNetworkReadError("Register game server, logical group, wrong utf8 to std::string size for text size");
                     return false;
                 }
                 std::string logicalGroup;
@@ -436,7 +436,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 {
                     if((size-pos)<textSize)
                     {
-                        parseNetworkReadError("wrong utf8 to std::string size for text");
+                        parseNetworkReadError("Register game server, logical group, wrong utf8 to std::string size for text");
                         return false;
                     }
                     logicalGroup=std::string(data+pos,textSize);
@@ -447,8 +447,26 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 else
                 {
                     logicalGroupIndex=0;
+                    /*
+                    //send the network reply
+                    removeFromQueryReceived(queryNumber);
+                    uint32_t posOutput=0;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+                    posOutput+=1;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+                    posOutput+=1+4;
+                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x05;
+                    posOutput+=1;
+
+                    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
                     parseNetworkReadError(std::string("logicalGroup \"")+logicalGroup+"\" not found for "+host+":"+std::to_string(port)+" at "+__FILE__+":"+std::to_string(__LINE__));
-                    return false;
+                    return false;*/
+
+                    //be more tolerant
+                    messageParsingLayer(std::string("logicalGroup \"")+logicalGroup+"\" not found for "+host+":"+std::to_string(port)+" at "+__FILE__+":"+std::to_string(__LINE__));
                 }
             }
             //current player
