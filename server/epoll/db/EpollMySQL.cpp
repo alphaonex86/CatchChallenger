@@ -91,10 +91,10 @@ bool EpollMySQL::syncConnectInternal()
             connectionisbad=mysql_real_connect(conn,strCohost,strCouser,strCopass,strCodatabase,3306,NULL,0);
             auto end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> elapsed = end-start;
-            if(elapsed.count()<5*tryInterval && connectionisbad)
+            if(elapsed.count()<(uint32_t)tryInterval*1000 && connectionisbad)
             {
-                const unsigned int ms=5*tryInterval-elapsed.count();
-                std::this_thread::sleep_for(std::chrono::seconds(ms));
+                const unsigned int ms=(uint32_t)tryInterval*1000-elapsed.count();
+                std::this_thread::sleep_for(std::chrono::milliseconds(ms));
             }
             index++;
         }

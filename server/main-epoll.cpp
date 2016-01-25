@@ -418,13 +418,13 @@ void send_settings()
             abort();
         }
         master_tryInterval=stringtouint8(settings->value("tryInterval"),&ok);
-        if(master_tryInterval==0 || !ok)
+        if(master_tryInterval<=0 || master_tryInterval>=60 || !ok)
         {
-            std::cerr << "tryInterval==0 (abort)" << std::endl;
+            std::cerr << "master_tryInterval<=0 || master_tryInterval>=60 || !ok (abort)" << std::endl;
             abort();
         }
         master_considerDownAfterNumberOfTry=stringtouint8(settings->value("considerDownAfterNumberOfTry"),&ok);
-        if(master_considerDownAfterNumberOfTry==0 || !ok)
+        if(master_considerDownAfterNumberOfTry<=0 || master_considerDownAfterNumberOfTry>=60 || !ok)
         {
             std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
             abort();
@@ -558,7 +558,7 @@ int main(int argc, char *argv[])
         LinkToMaster::linkToMaster->stat=LinkToMaster::Stat::Connected;
         LinkToMaster::linkToMaster->setSettings(settings);
         LinkToMaster::linkToMaster->readTheFirstSslHeader();
-        LinkToMaster::linkToMaster->setConnexionSettings();
+        LinkToMaster::linkToMaster->setConnexionSettings(master_tryInterval,master_considerDownAfterNumberOfTry);
         const int &s = EpollSocket::make_non_blocking(linkfd);
         if(s == -1)
             std::cerr << "unable to make to socket non blocking" << std::endl;
