@@ -52,6 +52,7 @@ LinkToMaster::LinkToMaster(
 
 LinkToMaster::~LinkToMaster()
 {
+    memset(LinkToMaster::private_token_master,0x00,sizeof(LinkToMaster::private_token_master));
     closeSocket();
 }
 
@@ -115,11 +116,12 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
         }
         if(connStatusType<0)
         {
+            memset(LinkToMaster::private_token_master,0x00,sizeof(LinkToMaster::private_token_master));
             std::cerr << "ERROR connecting to master server (abort)" << std::endl;
             abort();
         }
     }
-    std::cout << "Connected to master" << std::endl;
+    std::cout << "Connected to master " << host << ":" << port << std::endl;
     haveTheFirstSslHeader=false;
 
     return LinkToMaster::linkToMasterSocketFd;
