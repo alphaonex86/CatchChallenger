@@ -749,10 +749,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
         const bool &returnValue=parseQuery(packetCode,queryNumber,data,size);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!returnValue)
-        {
             errorParsingLayer("parseQuery(): return false (abort), need be aborted before");
-            abort();
-        }
         #endif
         return returnValue;
     }
