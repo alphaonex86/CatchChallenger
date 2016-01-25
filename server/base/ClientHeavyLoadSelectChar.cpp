@@ -50,7 +50,7 @@ void Client::selectCharacter(const uint8_t &query_id, const char * const token)
     while(index<tokenAuthList.size())
     {
         const TokenAuth &tokenAuth=tokenAuthList.at(index);
-        if(tokenAuth.createTime>(time-CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVERMAXTIME))
+        if(tokenAuth.createTime>(time-LinkToMaster::maxLockAge))
         {
             if(memcmp(tokenAuth.token,token,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)==0)
             {
@@ -80,7 +80,7 @@ void Client::purgeTokenAuthList()
     while(index<tokenAuthList.size())
     {
         const TokenAuth &tokenAuth=tokenAuthList.at(index);
-        if(tokenAuth.createTime>(time-CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVERMAXTIME))
+        if(tokenAuth.createTime>(time-LinkToMaster::maxLockAge))
             index++;
         else
         {

@@ -429,6 +429,18 @@ void send_settings()
             std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
             abort();
         }
+        LinkToMaster::maxLockAge=stringtouint16(settings->value("maxLockAge"),&ok);
+        if(LinkToMaster::maxLockAge<1 || LinkToMaster::maxLockAge>3600 || !ok)
+        {
+            std::cerr << "maxLockAge<1 || maxLockAge>3600 || not number (abort)" << std::endl;
+            abort();
+        }
+        LinkToMaster::purgeLockPeriod=stringtouint16(settings->value("purgeLockPeriod"),&ok);
+        if(LinkToMaster::purgeLockPeriod<1 || LinkToMaster::purgeLockPeriod>3600 || LinkToMaster::purgeLockPeriod>LinkToMaster::maxLockAge || !ok)
+        {
+            std::cerr << "purgeLockPeriod<1 || purgeLockPeriod>3600 || purgeLockPeriod>maxLockAge || not number (abort)" << std::endl;
+            abort();
+        }
         settings->endGroup();
     }
     #endif
@@ -830,7 +842,7 @@ int main(int argc, char *argv[])
     }
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     {
-        if(!timerPurgeTokenAuthList.start(15*60*1000))
+        if(!timerPurgeTokenAuthList.start(LinkToMaster::purgeLockPeriod))
         {
             std::cerr << "timerPurgeTokenAuthList fail to set" << std::endl;
             return EXIT_FAILURE;
