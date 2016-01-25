@@ -283,17 +283,16 @@ void MainWindow::on_serverListSelect_clicked()
         return;
 
     const QTreeWidgetItem * const selectedItem=selectedItems.at(0);
-    unsigned int serverSelectedIndex=selectedItem->data(99,99).toUInt();
+    unsigned int serverSelected=selectedItem->data(99,99).toUInt();
 
-    CatchChallenger::ServerFromPoolForDisplay * const serverSelected=serverOrdenedList.at(serverSelectedIndex);
-    const uint8_t &charactersGroupIndex=serverSelected->charactersGroupIndex;
+    const uint8_t &charactersGroupIndex=serverOrdenedList.at(serverSelected)->charactersGroupIndex;
     if(charactersGroupIndex>=characterEntryList.size())
     {
         ui->groupBox_Server->setEnabled(false);
         QMessageBox::critical(this,tr("Error"),tr("The group index is wrong, maybe the server list have change"));
         return;
     }
-    multipleBotConnexion.serverSelect(serverSelected->charactersGroupIndex,serverSelected->uniqueKey);
+    multipleBotConnexion.serverSelect(charactersGroupIndex,serverSelected);
 
     ui->groupBox_Server->setEnabled(false);
     if(!ui->multipleConnexion->isChecked())
@@ -315,6 +314,7 @@ void MainWindow::on_serverListSelect_clicked()
             if(characterEntryList.at(charactersGroupIndex).empty())
             {
                 qDebug() << "MainWindow::on_serverListSelect_clicked(): ui->characterList->count()==0";
+                logged_with_client(multipleBotConnexion.fi);
                 return;
             }
             const CatchChallenger::CharacterEntry &character=characterEntryList.at(charactersGroupIndex).first();
