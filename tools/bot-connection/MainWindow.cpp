@@ -311,6 +311,12 @@ void MainWindow::on_serverListSelect_clicked()
         ui->groupBox_char->setEnabled(false);
         if(characterEntryList.size()>0)
         {
+            if(characterEntryList.at(charactersGroupIndex).empty())
+            {
+                qDebug() << "MainWindow::on_serverListSelect_clicked(): ui->characterList->count()==0";
+                to do
+                abort();
+            }
             const CatchChallenger::CharacterEntry &character=characterEntryList.at(charactersGroupIndex).first();
             multipleBotConnexion.characterSelect(character.character_id);
         }

@@ -59,7 +59,7 @@ public:
     void parseIncommingData();
     static int tryConnect(const char * const host,const uint16_t &port,const uint8_t &tryInterval=1,const uint8_t &considerDownAfterNumberOfTry=30);
     void connectInternal();
-    void setConnexionSettings();
+    void setConnexionSettings(const uint8_t &tryInterval, const uint8_t &considerDownAfterNumberOfTry);
     bool registerGameServer(const std::string &exportedXml,const char * const dynamicToken);
     void generateToken();
     void sendProtocolHeader();
@@ -91,6 +91,8 @@ private:
     TinyXMLSettings * settings;
     std::mt19937 rng;
     static sockaddr_in serv_addr;
+    uint8_t tryInterval;
+    uint8_t considerDownAfterNumberOfTry;
 };
 }
 

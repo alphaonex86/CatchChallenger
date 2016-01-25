@@ -113,10 +113,10 @@ bool EpollPostgresql::syncConnectInternal()
             connStatusType=PQstatus(conn);
             auto end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> elapsed = end-start;
-            if(elapsed.count()<5*tryInterval && connStatusType==CONNECTION_BAD)
+            if(elapsed.count()<(uint32_t)tryInterval*1000 && connStatusType==CONNECTION_BAD)
             {
-                const unsigned int ms=5*tryInterval-elapsed.count();
-                std::this_thread::sleep_for(std::chrono::seconds(ms));
+                const unsigned int ms=(uint32_t)tryInterval*1000-elapsed.count();
+                std::this_thread::sleep_for(std::chrono::milliseconds(ms));
             }
             index++;
         }
