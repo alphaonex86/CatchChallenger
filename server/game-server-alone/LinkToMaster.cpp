@@ -41,7 +41,9 @@ LinkToMaster::LinkToMaster(
             ,PacketModeTransmission_Client
             #endif
             ),
-        stat(Stat::Unconnected)
+        stat(Stat::Unconnected),
+        tryInterval(5),
+        considerDownAfterNumberOfTry(3)
 {
     flags|=0x08;
     rng.seed(time(0));
@@ -107,7 +109,7 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
             if(elapsed.count()<(uint32_t)tryInterval*1000 && index<considerDownAfterNumberOfTry && connStatusType<0)
             {
                 const unsigned int ms=(uint32_t)tryInterval*1000-elapsed.count();
-                std::this_thread::sleep_for(std::chrono::seconds(ms));
+                std::this_thread::sleep_for(std::chrono::milliseconds(ms));
             }
         }
         if(connStatusType<0)
@@ -122,8 +124,12 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
     return LinkToMaster::linkToMasterSocketFd;
 }
 
-void LinkToMaster::setConnexionSettings()
+void LinkToMaster::setConnexionSettings(const uint8_t &tryInterval,const uint8_t &considerDownAfterNumberOfTry)
 {
+    if(tryInterval>0 && tryInterval<60)
+        this->tryInterval=tryInterval;
+    if(considerDownAfterNumberOfTry>0 && considerDownAfterNumberOfTry<60)
+        this->considerDownAfterNumberOfTry=considerDownAfterNumberOfTry;
     if(LinkToMaster::linkToMasterSocketFd==-1)
     {
         std::cerr << "LoginLinkToMaster::setConnexionSettings() LoginLinkToMaster::linkToMasterSocketFd==-1 (abort)" << std::endl;
@@ -200,7 +206,7 @@ void LinkToMaster::connectInternal()
         stat=Stat::Connecting;
         std::cout << "(Re)Connecting in progress to master" << std::endl;
     }
-    setConnexionSettings();
+    setConnexionSettings(this->tryInterval,this->considerDownAfterNumberOfTry);
 }
 
 void LinkToMaster::readTheFirstSslHeader()
@@ -346,7 +352,7 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
         SHA224_Update(&hashFile,dynamicToken,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
         SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput),&hashFile);
         posOutput+=CATCHCHALLENGER_SHA224HASH_SIZE;
-        memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));
+        //memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));->to reconnect after be disconnected
     }
 
     std::string server_ip=settings->value("server-ip");
@@ -546,6 +552,10 @@ void LinkToMaster::tryReconnect()
     else
     {
         std::cout << "Try reconnect to master..." << std::endl;
+        if(tryInterval<=0 || tryInterval>=60)
+            this->tryInterval=5;
+        if(considerDownAfterNumberOfTry<=0 && considerDownAfterNumberOfTry>=60)
+            this->considerDownAfterNumberOfTry=3;
         do
         {
             stat=Stat::Connecting;
@@ -554,10 +564,10 @@ void LinkToMaster::tryReconnect()
             connectInternal();
             auto end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> elapsed = end-start;
-            if(elapsed.count()<5000 && stat!=Stat::Connected)
+            if(elapsed.count()<(uint32_t)tryInterval*1000 && stat!=Stat::Connected)
             {
-                const unsigned int ms=5000-elapsed.count();
-                std::this_thread::sleep_for(std::chrono::seconds(ms));
+                const unsigned int ms=(uint32_t)tryInterval*1000-elapsed.count();
+                std::this_thread::sleep_for(std::chrono::milliseconds(ms));
             }
         } while(stat!=Stat::Connected);
         readTheFirstSslHeader();
