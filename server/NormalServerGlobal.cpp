@@ -172,6 +172,10 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings, const std
         settings->setValue("tryInterval",5);
     if(!settings->contains("token"))
         settings->setValue("token","");
+    if(!settings->contains("maxLockAge"))
+        settings->setValue("maxLockAge",10*60);
+    if(!settings->contains("purgeLockPeriod"))
+        settings->setValue("purgeLockPeriod",3*60);
     settings->endGroup();
     #endif
 
