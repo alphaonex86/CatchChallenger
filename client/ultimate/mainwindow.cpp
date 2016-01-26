@@ -2,6 +2,7 @@
 #include "AddServer.h"
 #include "ui_mainwindow.h"
 #include "../base/InternetUpdater.h"
+#include "../base/BlacklistPassword.h"
 #include <QStandardPaths>
 #include <QNetworkProxy>
 #include <QCoreApplication>
@@ -945,6 +946,19 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     {
         QMessageBox::warning(this,tr("Error"),tr("Your password need to be at minimum of 6 characters"));
         return;
+    }
+    {
+        const std::string &pass=ui->lineEditPass->text().toStdString();
+        unsigned int index=0;
+        while(index<BlacklistPassword::list.size())
+        {
+            if(BlacklistPassword::list.at(index)==pass)
+            {
+                QMessageBox::warning(this,tr("Error"),tr("Your password is into the most common password in the world, too easy to crack dude! Change it!"));
+                return;
+            }
+            index++;
+        }
     }
     if(ui->lineEditLogin->text().size()<3)
     {
