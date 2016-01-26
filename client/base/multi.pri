@@ -6,6 +6,7 @@ SOURCES += $$PWD/RssNews.cpp \
     $$PWD/qt-tar-xz/QXzDecodeThread.cpp \
     $$PWD/qt-tar-xz/QXzDecode.cpp \
     $$PWD/qt-tar-xz/QTarDecode.cpp \
+    $$PWD/BlacklistPassword.cpp \
     $$PWD/SslCert.cpp
 
 HEADERS  += $$PWD/RssNews.h \
@@ -13,6 +14,7 @@ HEADERS  += $$PWD/RssNews.h \
     $$PWD/qt-tar-xz/QXzDecodeThread.h \
     $$PWD/qt-tar-xz/QXzDecode.h \
     $$PWD/qt-tar-xz/QTarDecode.h \
+    $$PWD/BlacklistPassword.h \
     $$PWD/SslCert.h
 
 RESOURCES += $$PWD/resources/client-resources-multi.qrc
