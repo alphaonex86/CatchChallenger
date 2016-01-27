@@ -74,6 +74,9 @@ bool LinkToMaster::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNu
             }
             else
             {
+                //send the network reply
+                removeFromQueryReceived(queryNumber);
+
                 const uint32_t &characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data)));
                 if(Q_LIKELY(!Client::characterConnected(characterId)))
                 {

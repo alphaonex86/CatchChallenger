@@ -883,7 +883,7 @@ bool EpollClientLoginMaster::parseReplyData(const uint8_t &mainCodeType,const ui
 {
     (void)data;
     (void)size;
-    //queryNumberList << queryNumber;
+    queryNumberList.push_back(queryNumber);
     //do the work here
     switch(mainCodeType)
     {
