@@ -87,7 +87,7 @@ protected:
     virtual bool multipleConnexion() = 0;
     virtual bool autoCreateCharacter() = 0;
     virtual int connectBySeconds() = 0;
-    virtual int connexionCount() = 0;
+    virtual int connexionCountTarget() = 0;
     virtual int maxDiffConnectedSelected() = 0;
     virtual QString proxy() = 0;
     virtual quint16 proxyport() = 0;

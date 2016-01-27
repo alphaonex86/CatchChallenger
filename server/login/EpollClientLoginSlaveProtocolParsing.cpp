@@ -298,7 +298,7 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
             }
         break;
         default:
-            parseNetworkReadError("wrong data before login with mainIdent: "+std::to_string(mainCodeType));
+            parseNetworkReadError("wrong data before login with mainIdent: "+std::to_string(mainCodeType)+", stat: "+std::to_string(stat));
         break;
     }
     return true;

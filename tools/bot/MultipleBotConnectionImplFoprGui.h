@@ -19,19 +19,20 @@ public:
     bool mMultipleConnexion;
     bool mAutoCreateCharacter;
     int mConnectBySeconds;
-    int mConnexionCount;
+    int mConnexionCountTarget;
     int mMaxDiffConnectedSelected;
     QString mProxy;
     quint16 mProxyport;
     QString mHost;
     quint16 mPort;
+    bool firstCharacterSelected;
 private:
     QString login();
     QString pass();
     bool multipleConnexion();
     bool autoCreateCharacter();
     int connectBySeconds();
-    int connexionCount();
+    int connexionCountTarget();
     int maxDiffConnectedSelected();
     QString proxy();
     quint16 proxyport();
