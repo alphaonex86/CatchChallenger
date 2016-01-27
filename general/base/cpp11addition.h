@@ -152,4 +152,20 @@ unsigned int vectorDuplicatesForBigList(std::vector<T> &list)
     return removedEntryNumber;
 }
 
+template <class T>
+bool vectorHaveDuplicatesForSmallList(std::vector<T> &list)
+{
+    std::unordered_set<T> s;
+    unsigned int index=0;
+    while(index<list.size())
+    {
+        if(s.find(list.at(index))==s.cend())
+            s.insert(list.at(index));
+        else
+            return true;
+        index++;
+    }
+    return false;
+}
+
 #endif

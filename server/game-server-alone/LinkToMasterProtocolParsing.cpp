@@ -113,6 +113,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
     //do the work here
     switch(mainCodeType)
     {
+        //Protocol initialization and auth for master
         case 0xB8:
         {
             if(size<1)
@@ -163,6 +164,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
             }
         }
         return true;
+        //Register game server
         case 0xB2:
         {
             if(size<1)
@@ -250,6 +252,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
             }
         }
         return true;
+        //get maxMonsterId block
         case 0xB0:
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(size!=CATCHCHALLENGER_SERVER_MAXIDBLOCK*4)
@@ -268,7 +271,13 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                 index++;
             }
         }
+        if(vectorHaveDuplicatesForSmallList(GlobalServerData::serverPrivateVariables.maxMonsterId))
+        {
+            std::cerr << "reply to 08: duplicate maxMonsterId in " << __FILE__ << ":" <<__LINE__ << std::endl;
+            abort();
+        }
         return true;
+        //get maxClanId block
         case 0xB1:
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(size!=CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK*4)
@@ -286,6 +295,11 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                             );
                 index++;
             }
+        }
+        if(vectorHaveDuplicatesForSmallList(GlobalServerData::serverPrivateVariables.maxClanId))
+        {
+            std::cerr << "reply to 08: duplicate maxClanId in " << __FILE__ << ":" <<__LINE__ << std::endl;
+            abort();
         }
         return true;
         default:
