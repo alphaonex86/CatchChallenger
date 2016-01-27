@@ -91,15 +91,15 @@ public:
     static ProxyMode proxyMode;
     enum EpollClientLoginStat
     {
-        None,
-        ProtocolGood,
-        LoginInProgress,
-        Logged,
-        LoggedStatClient,
-        CharacterSelecting,
-        CharacterSelected,
-        GameServerConnecting,
-        GameServerConnected,
+        None=0x00,
+        ProtocolGood=0x01,
+        LoginInProgress=0x02,
+        Logged=0x03,
+        LoggedStatClient=0x04,
+        CharacterSelecting=0x05,
+        CharacterSelected=0x06,
+        GameServerConnecting=0x07,
+        GameServerConnected=0x08 ,
     };
     EpollClientLoginStat stat;
 

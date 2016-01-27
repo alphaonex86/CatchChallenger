@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>488</width>
-    <height>759</height>
+    <height>904</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -187,12 +187,12 @@
                <bool>false</bool>
               </property>
               <property name="text">
-               <string>Connexion count:</string>
+               <string>Connexion count target:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QSpinBox" name="connexionCount">
+             <widget class="QSpinBox" name="connexionCountTarget">
               <property name="enabled">
                <bool>false</bool>
               </property>
@@ -422,7 +422,7 @@
   <connection>
    <sender>multipleConnexion</sender>
    <signal>toggled(bool)</signal>
-   <receiver>connexionCount</receiver>
+   <receiver>connexionCountTarget</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">

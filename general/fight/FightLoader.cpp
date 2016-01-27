@@ -336,7 +336,9 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                 if(attributeIsOk)
                 {
                     Monster monster;
+                    #ifndef CATCHCHALLENGER_CLASS_MASTER
                     monster.catch_rate=100;
+                    #endif
                     uint32_t id=stringtouint32(*item->Attribute(FightLoader::text_id),&ok);
                     if(!ok)
                         std::cerr << "Unable to open the xml file: " << file << ", id not a number: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
@@ -799,6 +801,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                 std::cerr << "Unable to open the xml file: " << file << ", is not an element: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
             item = item->NextSiblingElement("monster");
         }
+        #ifndef CATCHCHALLENGER_CLASS_MASTER
         //check the evolveTo
         auto i = monsters.begin();
         while(i!=monsters.cend())
@@ -854,6 +857,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
             }
             ++i;
         }
+        #endif
         file_index++;
     }
     return monsters;
