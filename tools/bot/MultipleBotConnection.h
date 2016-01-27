@@ -27,6 +27,7 @@ protected:
         CatchChallenger::Api_client_real *api;
         bool have_informations;
         bool haveShowDisconnectionReason;
+        bool haveBeenDiscounted;
         //CatchChallenger::Direction direction;
         QList<QList<CatchChallenger::CharacterEntry> > charactersList;
         quint16 number;

@@ -98,4 +98,5 @@ HEADERS += \
     ../../general/base/cpp11addition.h \
     ../../general/base/tinyXML/tinystr.h \
     ../../general/base/tinyXML/tinyxml.h \
-    ../base/TinyXMLSettings.h
+    ../base/TinyXMLSettings.h \
+    ../../general/base/GeneralVariable.h

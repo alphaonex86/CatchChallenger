@@ -55,17 +55,31 @@ void MultipleBotConnection::disconnected()
 {
     qDebug() << "disconnected()";
     haveEnError=true;
-    numberOfBotConnected--;
-    emit emit_numberOfBotConnected(numberOfBotConnected);
 
-    CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(QObject::sender());
+    CatchChallenger::ConnectedSocket *senderObject = qobject_cast<CatchChallenger::ConnectedSocket *>(QObject::sender());
     if(senderObject!=NULL)
     {
-        if(senderObject->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage2 || senderObject->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage3)
+        if(connectedSocketToCatchChallengerClient.contains(senderObject))
         {
-            senderObject->socketDisconnectedForReconnect();
-            return;
+            if(connectedSocketToCatchChallengerClient.value(senderObject)->api->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage2 ||
+                    connectedSocketToCatchChallengerClient.value(senderObject)->api->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage3)
+            {
+                connectedSocketToCatchChallengerClient.value(senderObject)->api->socketDisconnectedForReconnect();
+                return;
+            }
+            else
+            {
+                if(connectedSocketToCatchChallengerClient.value(senderObject)->haveBeenDiscounted==false)
+                {
+                    qDebug() << "disconnected(): I note it: " << connectedSocketToCatchChallengerClient[senderObject];
+                    connectedSocketToCatchChallengerClient[senderObject]->haveBeenDiscounted=true;
+                    numberOfBotConnected--;
+                    emit emit_numberOfBotConnected(numberOfBotConnected);
+                }
+            }
         }
+        else
+            qDebug() << "disconnected(): error, from unknown (not found)";
     }
     else
         qDebug() << "disconnected(): error, from unknown";
@@ -80,8 +94,6 @@ void MultipleBotConnection::notLogged(const QString &reason)
 {
     Q_UNUSED(reason);
     haveEnError=true;
-    numberOfBotConnected--;
-    emit emit_numberOfBotConnected(numberOfBotConnected);
 
     QHashIterator<CatchChallenger::Api_client_real *,CatchChallengerClient *> i(apiToCatchChallengerClient);
     while (i.hasNext()) {
@@ -370,6 +382,7 @@ void MultipleBotConnection::connectTheExternalSocket(CatchChallengerClient * cli
         connect(client->api,&CatchChallenger::Api_client_real::haveTheDatapackMainSub,      this,&MultipleBotConnection::haveTheDatapackMainSub);
     }
     client->haveShowDisconnectionReason=false;
+    client->haveBeenDiscounted=false;
     client->have_informations=false;
     client->number=numberToChangeLoginForMultipleConnexion;
     client->selectedCharacter=false;
