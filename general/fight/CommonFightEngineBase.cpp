@@ -41,34 +41,40 @@ Monster::Stat CommonFightEngineBase::getStat(const Monster &monster, const uint8
 {
     //get the normal stats
     Monster::Stat stat=monster.stat;
+    stat.hp=stat.hp*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
     stat.attack=stat.attack*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
     stat.defense=stat.defense*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-    stat.hp=stat.hp*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
     stat.special_attack=stat.special_attack*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
     stat.special_defense=stat.special_defense*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
     stat.speed=stat.speed*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+    #endif
 
     //add a base
+    stat.hp+=3;
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
     stat.speed+=2;
     stat.defense+=3;
     stat.attack+=2;
-    stat.hp+=3;
     stat.special_defense+=3;
     stat.special_attack+=2;
+    #endif
 
     //drop the 0 value
+    if(stat.hp==0)
+        stat.hp=1;
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
     if(stat.speed==0)
         stat.speed=1;
     if(stat.defense==0)
         stat.defense=1;
     if(stat.attack==0)
         stat.attack=1;
-    if(stat.hp==0)
-        stat.hp=1;
     if(stat.special_defense==0)
         stat.special_defense=1;
     if(stat.special_attack==0)
         stat.special_attack=1;
+    #endif
 
     return stat;
 }
