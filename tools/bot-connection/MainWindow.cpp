@@ -30,7 +30,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::datapackMainSubIsReady,this,&MainWindow::datapackMainSubIsReady,Qt::QueuedConnection);
     connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::statusError,this,&MainWindow::statusError,Qt::QueuedConnection);
     connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::emit_numberOfSelectedCharacter,this,&MainWindow::display_numberOfSelectedCharacter,Qt::QueuedConnection);
-    connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::emit_numberOfBotConnected,this,&MainWindow::display_numberOfBotConnected,Qt::QueuedConnection);
+    connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::emit_numberOfBotConnected,this,&MainWindow::display_numberOfBotConnected);//,Qt::QueuedConnection
     connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::emit_detectSlowDown,this,&MainWindow::detectSlowDown,Qt::QueuedConnection);
     connect(&multipleBotConnexion,&MultipleBotConnection::emit_lastReplyTime,this,&MainWindow::lastReplyTime,Qt::QueuedConnection);
     connect(&slowDownTimer,&QTimer::timeout,&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::detectSlowDown,Qt::QueuedConnection);
