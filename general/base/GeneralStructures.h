@@ -621,6 +621,28 @@ enum Place : uint8_t
 
 struct Monster
 {
+    int8_t ratio_gender;///< -1 for no gender, 0 only male, 100 only female
+    struct Stat
+    {
+        uint32_t hp;
+        #ifndef CATCHCHALLENGER_CLASS_MASTER
+        uint32_t attack;
+        uint32_t defense;
+        uint32_t special_attack;
+        uint32_t special_defense;
+        uint32_t speed;
+        #endif
+    };
+    Stat stat;
+    struct AttackToLearn
+    {
+        uint8_t learnAtLevel;
+        uint16_t learnSkill;
+        uint8_t learnSkillLevel;
+    };
+    std::vector<AttackToLearn> learn;
+
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
     enum EvolutionType : uint8_t
     {
         EvolutionType_Level,
@@ -635,38 +657,21 @@ struct Monster
     };
 
     std::vector<uint8_t> type;
-    int8_t ratio_gender;///< -1 for no gender, 0 only male, 100 only female
     uint8_t catch_rate;///< 0 to 255 (255 = very easy)
     uint32_t egg_step;///< step to hatch, 0 to no egg and never hatch
     uint32_t xp_for_max_level;///< xp to be level 100
     uint32_t give_sp;
     uint32_t give_xp;
-    struct Stat
-    {
-        uint32_t hp;
-        uint32_t attack;
-        uint32_t defense;
-        uint32_t special_attack;
-        uint32_t special_defense;
-        uint32_t speed;
-    };
-    Stat stat;
     std::vector<uint32_t> level_to_xp;//first is xp to level 1
 
-    struct AttackToLearn
-    {
-        uint8_t learnAtLevel;
-        uint16_t learnSkill;
-        uint8_t learnSkillLevel;
-    };
     struct AttackToLearnByItem
     {
         uint16_t learnSkill;
         uint8_t learnSkillLevel;
     };
-    std::vector<AttackToLearn> learn;
     std::unordered_map<CATCHCHALLENGER_TYPE_ITEM/*item*/,AttackToLearnByItem/*skill*/> learnByItem;
     std::vector<Evolution> evolutions;
+    #endif
 };
 
 struct ItemToSellOrBuy

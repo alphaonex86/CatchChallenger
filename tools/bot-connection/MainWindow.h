@@ -55,7 +55,8 @@ private slots:
     void datapackIsReady();
     void datapackMainSubIsReady();
     void on_autoCreateCharacter_stateChanged(int arg1);
-
+    void all_player_connected();
+    void all_player_on_map();
 signals:
     void isDisconnected();
 private:

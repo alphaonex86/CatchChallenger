@@ -930,6 +930,11 @@ void EpollServerLoginMaster::loadTheProfile()
                     *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(playerMonster.captured_with);
                     rawServerListForC211Size+=sizeof(uint16_t);
 
+                    if(CommonDatapack::commonDatapack.monsters.find(playerMonster.id)==CommonDatapack::commonDatapack.monsters.cend())
+                    {
+                        std::cerr << "For profile the monster " << playerMonster.id << " is not found (abort)" << std::endl;
+                        abort();
+                    }
                     const Monster &monster=CommonDatapack::commonDatapack.monsters.at(playerMonster.id);
                     const Monster::Stat &monsterStat=CommonFightEngineBase::getStat(monster,playerMonster.level);
                     const std::vector<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngineBase::generateWildSkill(monster,playerMonster.level);
@@ -948,6 +953,11 @@ void EpollServerLoginMaster::loadTheProfile()
                     while(skillListIndex<skills.size())
                     {
                         const CatchChallenger::PlayerMonster::PlayerSkill &skill=skills.at(skillListIndex);
+                        if(CommonDatapack::commonDatapack.monsterSkills.find(skill.skill)==CommonDatapack::commonDatapack.monsterSkills.cend())
+                        {
+                            std::cerr << "For profile the monster skill " << skill.skill << " is not found (abort)" << std::endl;
+                            abort();
+                        }
                         //skill
                         *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(skill.skill);
                         rawServerListForC211Size+=sizeof(uint16_t);
@@ -972,8 +982,13 @@ void EpollServerLoginMaster::loadTheProfile()
                 while(reputationIndex<profile.reputation.size())
                 {
                     const Profile::Reputation &reputation=profile.reputation.at(reputationIndex);
+                    if(reputation.reputationId>=CommonDatapack::commonDatapack.reputation.size())
+                    {
+                        std::cerr << "For profile the reputation " << reputation.reputationId << " is not found (abort)" << std::endl;
+                        abort();
+                    }
                     //type
-                    *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(CommonDatapack::commonDatapack.reputation[reputation.reputationId].reverse_database_id);
+                    *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(CommonDatapack::commonDatapack.reputation.at(reputation.reputationId).reverse_database_id);
                     rawServerListForC211Size+=sizeof(uint16_t);
                     //level
                     rawServerListForC211[rawServerListForC211Size]=reputation.level;
@@ -992,12 +1007,18 @@ void EpollServerLoginMaster::loadTheProfile()
                 unsigned int reputationIndex=0;
                 while(reputationIndex<profile.items.size())
                 {
-                    const Profile::Item &reputation=profile.items.at(reputationIndex);
+                    const Profile::Item &item=profile.items.at(reputationIndex);
+                    /* no item list loaded to check here
+                    if(CommonDatapack::commonDatapack.items.find(item.id)==CommonDatapack::commonDatapack.items.cend())
+                    {
+                        std::cerr << "For profile the item " << item.id << " is not found (abort)" << std::endl;
+                        abort();
+                    }*/
                     //item id
-                    *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(reputation.id);
+                    *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(item.id);
                     rawServerListForC211Size+=sizeof(uint16_t);
                     //quantity
-                    *reinterpret_cast<uint32_t *>(rawServerListForC211+rawServerListForC211Size)=htole32(reputation.quantity);
+                    *reinterpret_cast<uint32_t *>(rawServerListForC211+rawServerListForC211Size)=htole32(item.quantity);
                     rawServerListForC211Size+=sizeof(uint32_t);
                     reputationIndex++;
                 }

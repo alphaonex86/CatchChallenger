@@ -2,6 +2,7 @@
 
 MultipleBotConnectionImplFoprGui::MultipleBotConnectionImplFoprGui()
 {
+    firstCharacterSelected=false;
 }
 
 MultipleBotConnectionImplFoprGui::~MultipleBotConnectionImplFoprGui()
@@ -33,9 +34,9 @@ int MultipleBotConnectionImplFoprGui::connectBySeconds()
     return mConnectBySeconds;
 }
 
-int MultipleBotConnectionImplFoprGui::connexionCount()
+int MultipleBotConnectionImplFoprGui::connexionCountTarget()
 {
-    return mConnexionCount;
+    return mConnexionCountTarget;
 }
 
 int MultipleBotConnectionImplFoprGui::maxDiffConnectedSelected()
@@ -98,17 +99,28 @@ void MultipleBotConnectionImplFoprGui::characterSelect(const quint32 &charId)
         qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): !serverIsSelected (abort)";
         abort();
     }
+    if(firstCharacterSelected)
+    {
+        qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): firstCharacterSelected already selected";
+        return;
+    }
+    else
+        firstCharacterSelected=true;
     QHashIterator<CatchChallenger::Api_client_real *,CatchChallengerClient *> i(apiToCatchChallengerClient);
-    while (i.hasNext()) {
+    if(i.hasNext())
+    {
         i.next();
         if(!i.value()->api->selectCharacter(charactersGroupIndex,serverUniqueKey,charId))
-            qDebug() << "Unable to manual select character:" << charId;
+            qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): Unable to manual select character:" << charId;
         else
         {
             characterOnMap << charId;
-            qDebug() << "Manual select character:" << charId;
+            qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): Manual select character:" << charId;
         }
+        return;
     }
+    else
+        qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): Have any first char to select:" << charId;
 }
 
 void MultipleBotConnectionImplFoprGui::serverSelect(const uint8_t &charactersGroupIndex,const quint32 &uniqueKey)
@@ -341,12 +353,5 @@ void MultipleBotConnectionImplFoprGui::disconnected()
 
 void MultipleBotConnectionImplFoprGui::connectTimerSlot()
 {
-    if(apiToCatchChallengerClient.size()<connexionCount())
-    {
-        const quint32 &diff=numberOfBotConnected-numberOfSelectedCharacter;
-        if(diff<=(quint32)maxDiffConnectedSelected())
-            createClient();
-    }
-    else
-        connectTimer.stop();
+    MultipleBotConnection::connectTimerSlot();
 }

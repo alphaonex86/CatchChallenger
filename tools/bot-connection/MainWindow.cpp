@@ -32,6 +32,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::emit_numberOfSelectedCharacter,this,&MainWindow::display_numberOfSelectedCharacter,Qt::QueuedConnection);
     connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::emit_numberOfBotConnected,this,&MainWindow::display_numberOfBotConnected);//,Qt::QueuedConnection
     connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::emit_detectSlowDown,this,&MainWindow::detectSlowDown,Qt::QueuedConnection);
+    connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::emit_all_player_connected,this,&MainWindow::all_player_connected,Qt::QueuedConnection);
+    connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::emit_all_player_on_map,this,&MainWindow::all_player_on_map,Qt::QueuedConnection);
     connect(&multipleBotConnexion,&MultipleBotConnection::emit_lastReplyTime,this,&MainWindow::lastReplyTime,Qt::QueuedConnection);
     connect(&slowDownTimer,&QTimer::timeout,&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::detectSlowDown,Qt::QueuedConnection);
     slowDownTimer.start(200);
@@ -57,7 +59,7 @@ MainWindow::MainWindow(QWidget *parent) :
         else
         {
             ui->multipleConnexion->setChecked(true);
-            ui->connexionCount->setValue(settings.value("multipleConnexion").toUInt());
+            ui->connexionCountTarget->setValue(settings.value("multipleConnexion").toUInt());
         }
         if(settings.contains("connectBySeconds"))
             ui->connectBySeconds->setValue(settings.value("connectBySeconds").toUInt());
@@ -195,7 +197,7 @@ void MainWindow::on_connect_clicked()
     settings.setValue("proxy",ui->proxy->text());
     settings.setValue("proxyport",ui->proxyport->value());
     if(ui->multipleConnexion->isChecked())
-        settings.setValue("multipleConnexion",ui->connexionCount->value());
+        settings.setValue("multipleConnexion",ui->connexionCountTarget->value());
     else
         settings.setValue("multipleConnexion",0);
     settings.setValue("connectBySeconds",ui->connectBySeconds->value());
@@ -207,7 +209,7 @@ void MainWindow::on_connect_clicked()
     multipleBotConnexion.mMultipleConnexion=ui->multipleConnexion->isChecked();
     multipleBotConnexion.mAutoCreateCharacter=ui->autoCreateCharacter->isChecked();
     multipleBotConnexion.mConnectBySeconds=ui->connectBySeconds->value();
-    multipleBotConnexion.mConnexionCount=ui->connexionCount->value();
+    multipleBotConnexion.mConnexionCountTarget=ui->connexionCountTarget->value();
     multipleBotConnexion.mMaxDiffConnectedSelected=ui->maxDiffConnectedSelected->value();
     multipleBotConnexion.mProxy=ui->proxy->text();
     multipleBotConnexion.mProxyport=ui->proxyport->value();
@@ -421,4 +423,14 @@ void MainWindow::on_autoCreateCharacter_stateChanged(int arg1)
 {
     Q_UNUSED(arg1);
     settings.setValue("autoCreateCharacter",ui->autoCreateCharacter->isChecked());
+}
+
+void MainWindow::all_player_connected()
+{
+    qDebug() << "MainWindow::all_player_connected()";
+}
+
+void MainWindow::all_player_on_map()
+{
+    qDebug() << "MainWindow::all_player_on_map()";
 }

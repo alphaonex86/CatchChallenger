@@ -54,7 +54,6 @@ QString MultipleBotConnection::getResolvedPluginName(const QString &name)
 void MultipleBotConnection::disconnected()
 {
     qDebug() << "disconnected()";
-    haveEnError=true;
 
     CatchChallenger::ConnectedSocket *senderObject = qobject_cast<CatchChallenger::ConnectedSocket *>(QObject::sender());
     if(senderObject!=NULL)
@@ -69,9 +68,10 @@ void MultipleBotConnection::disconnected()
             }
             else
             {
+                qDebug() << "disconnected(): For reason: " << connectedSocketToCatchChallengerClient[senderObject];
+                haveEnError=true;
                 if(connectedSocketToCatchChallengerClient.value(senderObject)->haveBeenDiscounted==false)
                 {
-                    qDebug() << "disconnected(): I note it: " << connectedSocketToCatchChallengerClient[senderObject];
                     connectedSocketToCatchChallengerClient[senderObject]->haveBeenDiscounted=true;
                     numberOfBotConnected--;
                     emit emit_numberOfBotConnected(numberOfBotConnected);
@@ -79,10 +79,16 @@ void MultipleBotConnection::disconnected()
             }
         }
         else
+        {
+            haveEnError=true;
             qDebug() << "disconnected(): error, from unknown (not found)";
+        }
     }
     else
+    {
+        haveEnError=true;
         qDebug() << "disconnected(): error, from unknown";
+    }
 }
 
 void MultipleBotConnection::lastReplyTime(const quint32 &time)
@@ -189,7 +195,7 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
 
 void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *client)
 {
-    qDebug() << "Bot version:" << botInterface->name() << botInterface->version();
+    qDebug() << "MultipleBotConnection::haveTheDatapack_with_client(): Bot version:" << botInterface->name() << botInterface->version();
     //load the datapack
     {
         CatchChallenger::CommonDatapack::commonDatapack.parseDatapack((QCoreApplication::applicationDirPath()+"/datapack/").toStdString());
@@ -251,7 +257,7 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
 void MultipleBotConnection::haveTheDatapackMainSub_with_client(CatchChallengerClient *client)
 {
     Q_UNUSED(client);
-    qDebug() << "Bot version:" << botInterface->name() << botInterface->version();
+    qDebug() << "MultipleBotConnection::haveTheDatapackMainSub_with_client(): Bot version:" << botInterface->name() << botInterface->version();
     //load the datapack
     {
         CatchChallenger::CommonDatapack::commonDatapack.parseDatapack((QCoreApplication::applicationDirPath()+"/datapack/").toStdString());
@@ -261,24 +267,47 @@ void MultipleBotConnection::haveTheDatapackMainSub_with_client(CatchChallengerCl
 
 void MultipleBotConnection::ifMultipleConnexionStartCreation()
 {
-    if(multipleConnexion() && !connectTimer.isActive())
+    if(multipleConnexion())
     {
-        connect(&connectTimer,&QTimer::timeout,this,&MultipleBotConnection::connectTimerSlot);
-        connectTimer.start(1000/connectBySeconds());
-        return;
+        if(!connectTimer.isActive())
+        {
+            qDebug() << "MultipleBotConnection::ifMultipleConnexionStartCreation(): start the multiple timer co";
+            connect(&connectTimer,&QTimer::timeout,this,&MultipleBotConnection::connectTimerSlot);
+            connectTimer.start(1000/connectBySeconds());
+            return;
+        }
+        else
+            qDebug() << "MultipleBotConnection::ifMultipleConnexionStartCreation(): connectTimer.isActive()";
     }
+    else
+        qDebug() << "MultipleBotConnection::ifMultipleConnexionStartCreation(): !multipleConnexion()";
 }
 
 void MultipleBotConnection::connectTimerSlot()
 {
-    if(apiToCatchChallengerClient.size()<connexionCount() && numberOfBotConnected<connexionCount())
+    const auto connexionCountVar=connexionCountTarget();
+    if(apiToCatchChallengerClient.size()<connexionCountVar && numberOfBotConnected<connexionCountVar)
     {
-        const quint32 &diff=numberOfBotConnected-numberOfSelectedCharacter;
-        if(diff<=(quint32)maxDiffConnectedSelected())
-            createClient();
+        if(numberOfBotConnected>numberOfSelectedCharacter)
+        {
+            qDebug() << "MultipleBotConnection::connectTimerSlot(): numberOfBotConnected>numberOfSelectedCharacter";
+            haveEnError=true;
+            connectTimer.stop();
+        }
+        else
+        {
+            qDebug() << "MultipleBotConnection::connectTimerSlot(): ping";
+            const quint32 &diff=numberOfBotConnected-numberOfSelectedCharacter;
+            if(diff<=(quint32)maxDiffConnectedSelected())
+            {
+                createClient();
+                qDebug() << "MultipleBotConnection::connectTimerSlot(): createClient()";
+            }
+        }
     }
     else
     {
+        qDebug() << "MultipleBotConnection::connectTimerSlot(): finish, stop it";
         emit emit_all_player_connected();
         connectTimer.stop();
     }
@@ -314,7 +343,7 @@ void MultipleBotConnection::have_current_player_info_with_client(CatchChallenger
     emit emit_numberOfSelectedCharacter(numberOfSelectedCharacter);
 
     const quint32 &diff=numberOfBotConnected-numberOfSelectedCharacter;
-    if(diff==0 && numberOfSelectedCharacter>=connexionCount())
+    if(diff==0 && numberOfSelectedCharacter>=connexionCountTarget())
         emit emit_all_player_on_map();
 
     Q_UNUSED(informations);
@@ -339,7 +368,10 @@ void MultipleBotConnection::newSocketError_with_client(CatchChallengerClient *cl
 void MultipleBotConnection::createClient()
 {
     if(haveEnError)
+    {
+        connectTimer.stop();
         return;
+    }
     CatchChallengerClient * client=new CatchChallengerClient;
 
     QSslSocket *sslSocket=new QSslSocket();

@@ -555,6 +555,11 @@ bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const ui
         std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;
     }
+    if(character_selected)
+    {
+        std::cerr << "character already selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return false;
+    }
 
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -564,6 +569,7 @@ bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const ui
     out << characterId;
     is_logged=packOutcommingQuery(0xAC,queryNumber(),outputData.constData(),outputData.size());
     this->selectedServerIndex=serverIndex;
+    std::cerr << "select char: " << characterId << ", charactersGroupIndex: " << (uint32_t)charactersGroupIndex << ", serverUniqueKey: " << serverUniqueKey << ", line: " << __FILE__ << ": " << __LINE__ << std::endl;
     return true;
 }
 
