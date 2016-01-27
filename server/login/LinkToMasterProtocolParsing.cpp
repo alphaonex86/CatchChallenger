@@ -874,6 +874,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
     //do the work here
     switch(mainCodeType)
     {
+        //Protocol initialization and auth for master
         case 0xB8:
         {
             if(size<1)
@@ -953,6 +954,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
             }
         }
         break;
+        //Register login server
         case 0xBD:
         {
             if(CharactersGroupForLogin::list.size()==0)
@@ -988,6 +990,11 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     pos+=4;
                     index++;
                 }
+                if(vectorHaveDuplicatesForSmallList(EpollClientLoginSlave::maxAccountIdList))
+                {
+                    std::cerr << "reply to 08: duplicate maxAccountIdList in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    abort();
+                }
             }
             {
                 unsigned int groupIndex=0;
@@ -1006,6 +1013,12 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                         pos+=4;
                         index++;
                     }
+                    if(vectorHaveDuplicatesForSmallList(CharactersGroupForLogin::list[groupIndex]->maxCharacterId))
+                    {
+                        std::cerr << "reply to 08: duplicate maxCharacterId in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        abort();
+                    }
+
                     CharactersGroupForLogin::list[groupIndex]->maxMonsterId.reserve(CharactersGroupForLogin::list[groupIndex]->maxMonsterId.size()+CATCHCHALLENGER_SERVER_MAXIDBLOCK);
                     index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
@@ -1019,6 +1032,12 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                         pos+=4;
                         index++;
                     }
+                    if(vectorHaveDuplicatesForSmallList(CharactersGroupForLogin::list[groupIndex]->maxMonsterId))
+                    {
+                        std::cerr << "reply to 08: duplicate maxMonsterId in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        abort();
+                    }
+
                     groupIndex++;
                 }
             }
@@ -1028,6 +1047,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     abort();
         }
         return true;
+        //Select character on master
         case 0xBE:
         {
             if(selectCharacterClients.find(queryNumber)!=selectCharacterClients.cend())
