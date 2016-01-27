@@ -113,7 +113,6 @@ public:
     #ifndef EPOLLCATCHCHALLENGERSERVER
     std::vector<std::string> getQueryRunningList();
     #endif
-    bool forwardTo(ProtocolParsingBase * const destination);
 protected:
     #ifdef EPOLLCATCHCHALLENGERSERVER
     #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)

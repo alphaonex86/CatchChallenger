@@ -137,46 +137,6 @@ void ProtocolParsingInputOutput::closeSocket()
     #endif
 }
 
-/// \todo drop (check login as proxy), reason: bypass the DDOS filter
-bool ProtocolParsingBase::forwardTo(ProtocolParsingBase * const destination)
-{
-    /// \todo limit the DDOS here!
-    ssize_t size=0;
-    if(!header_cut.empty())
-    {
-        const unsigned int &size_to_get=CATCHCHALLENGER_COMMONBUFFERSIZE-header_cut.size();
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput,header_cut.data(),header_cut.size());
-        size=read(ProtocolParsingBase::tempBigBufferForOutput,size_to_get)+header_cut.size();
-        if(size>0)
-        {
-            //std::vector<char> tempDataToDebug(ProtocolParsingInputOutput::commonBuffer+header_cut.size(),size-header_cut.size());
-            //qDebug() << "with header cut" << header_cut << tempDataToDebug.toHex() << " and size " << size;
-        }
-        if(size<0)
-            return true;
-        header_cut.clear();
-    }
-    else
-    {
-        size=read(ProtocolParsingBase::tempBigBufferForOutput,CATCHCHALLENGER_COMMONBUFFERSIZE);
-        if(size>0)
-        {
-            //std::vector<char> tempDataToDebug(ProtocolParsingInputOutput::commonBuffer,size);
-            //qDebug() << "without header cut " << tempDataToDebug.toHex() << " and size " << size;
-        }
-        if(size<0)
-            return true;
-    }
-    if(size>0)
-    {
-        #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
-        std::cout << "Forwarded packet size: " << size << ": " << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,size) << std::endl;
-        #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
-        destination->internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,size);
-    }
-    return true;
-}
-
 void ProtocolParsingInputOutput::parseIncommingData()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK

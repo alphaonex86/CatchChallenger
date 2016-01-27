@@ -1150,6 +1150,6 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
 
 void LinkToMaster::parseNetworkReadError(const std::string &errorString)
 {
-    std::cerr << "EpollClientLoginMaster::parseNetworkReadError(): " << errorString << std::endl;
+    std::cerr << "LinkToMaster::parseNetworkReadError(): " << errorString << std::endl;
     errorParsingLayer(errorString);
 }

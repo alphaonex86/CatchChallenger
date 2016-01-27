@@ -294,6 +294,6 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
 
 void LinkToGameServer::parseNetworkReadError(const std::string &errorString)
 {
-    std::cerr << "EpollClientLoginMaster::parseNetworkReadError(): " << errorString << std::endl;
+    std::cerr << "LinkToGameServer::parseNetworkReadError(): " << errorString << std::endl;
     errorParsingLayer(errorString);
 }
