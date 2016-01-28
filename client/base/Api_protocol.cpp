@@ -569,7 +569,7 @@ bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const ui
     out << characterId;
     is_logged=packOutcommingQuery(0xAC,queryNumber(),outputData.constData(),outputData.size());
     this->selectedServerIndex=serverIndex;
-    std::cerr << "select char: " << characterId << ", charactersGroupIndex: " << (uint32_t)charactersGroupIndex << ", serverUniqueKey: " << serverUniqueKey << ", line: " << __FILE__ << ": " << __LINE__ << std::endl;
+    std::cerr << "this: " << this << ", socket: " << socket << ", select char: " << characterId << ", charactersGroupIndex: " << (uint32_t)charactersGroupIndex << ", serverUniqueKey: " << serverUniqueKey << ", line: " << __FILE__ << ": " << __LINE__ << std::endl;
     return true;
 }
 
