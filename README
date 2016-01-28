@@ -19,14 +19,14 @@ Asynchronous protocol with no influence of internet and server latency. Thread i
 Qt programming to have multi-platform and assembly access. Internal implementation with event. CLI and GUI server, but no epoll server.
 SGBD for Qt version: Mysql 5+, SQLite, PostgreSQL 9+. SGBD for epoll version (async to high performance): Mysql 5.5+, PostgreSQL 9+.
 The code source is into 3 part: server, client, datapack.
-Use C++11, you need compatible compiler with good std::regex support, like llvm/clang 3.5+, gcc 4.9+, libssl, libcrypt (openssl), liblzma
+Use C++11, you need compatible compiler with good std::regex support, like llvm/clang 3.5+, gcc 4.9+.
 Epoll server use libpg (postgresql).
 The gateway need too curl.
 
 ====================================================
 Compiling
 
-Dep: zlib, xz-utils, openssl and Qt openssl enabled to have QSslSocket, libvlc for the client, Qt5
+Dep: zlib, xz-utils, openssl and Qt openssl enabled to have QSslSocket, libvlc for the client, Qt5. libssl, libcrypt (openssl), liblzma.
 For the server: db, db driver (mysql, sqlite for game solo, postgresql, depands of you choice)
 
 For the Gui server:
