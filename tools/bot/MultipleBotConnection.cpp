@@ -288,9 +288,9 @@ void MultipleBotConnection::connectTimerSlot()
     const auto connexionCountVar=connexionCountTarget();
     if(apiToCatchChallengerClient.size()<connexionCountVar && numberOfBotConnected<connexionCountVar)
     {
-        if(numberOfBotConnected>numberOfSelectedCharacter)
+        if(numberOfBotConnected<numberOfSelectedCharacter)
         {
-            qDebug() << "MultipleBotConnection::connectTimerSlot(): numberOfBotConnected>numberOfSelectedCharacter";
+            qDebug() << "MultipleBotConnection::connectTimerSlot(): numberOfBotConnected(" << numberOfBotConnected << ")<numberOfSelectedCharacter(" << numberOfSelectedCharacter << ")";
             haveEnError=true;
             connectTimer.stop();
         }
