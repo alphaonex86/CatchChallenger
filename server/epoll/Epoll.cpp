@@ -14,7 +14,7 @@ bool Epoll::init()
     efd = epoll_create1(0);
     if(efd == -1)
     {
-        std::cerr << "epoll_create" << std::endl;
+        std::cerr << "epoll_create failed" << std::endl;
         return false;
     }
     return true;

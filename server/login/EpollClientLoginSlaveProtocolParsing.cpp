@@ -209,9 +209,6 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                 #endif
                 BaseServerLogin::tokenForAuthSize++;
                 stat=EpollClientLoginStat::ProtocolGood;
-                #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-                messageParsingLayer("Protocol sended and replied");
-                #endif
             }
             else
             {
@@ -613,6 +610,5 @@ bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
 
 void EpollClientLoginSlave::parseNetworkReadError(const std::string &errorString)
 {
-    std::cerr << "EpollClientLoginSlave::parseNetworkReadError(): " << errorString << std::endl;
     errorParsingLayer(errorString);
 }

@@ -764,8 +764,21 @@ void EpollClientLoginSlave::selectCharacter_ReturnFailed(const uint8_t &query_id
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,7);
 
-    if(errorCode!=0x05)
-        errorParsingLayer("EpollClientLoginSlave::selectCharacter_ReturnFailed() errorCode:"+std::to_string(errorCode));
+    //closeSocket(); do into LinkToMaster::parseReplyData()
+    switch(errorCode)
+    {
+        case 0x03:
+            errorParsingLayer("Character already connected/online");
+        break;
+        case 0x05:
+        break;
+        case 0x08:
+            errorParsingLayer("Character too recently disconnected");
+        break;
+        default:
+            errorParsingLayer("EpollClientLoginSlave::selectCharacter_ReturnFailed() errorCode:"+std::to_string(errorCode));
+        break;
+    }
 }
 
 void EpollClientLoginSlave::addCharacter(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &skinId)

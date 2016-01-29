@@ -939,6 +939,5 @@ bool EpollClientLoginMaster::parseReplyData(const uint8_t &mainCodeType,const ui
 
 void EpollClientLoginMaster::parseNetworkReadError(const std::string &errorString)
 {
-    std::cerr << "EpollClientLoginMaster::parseNetworkReadError(): " << errorString << std::endl;
     errorParsingLayer(errorString);
 }

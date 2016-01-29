@@ -148,22 +148,36 @@ void EpollClientLoginMaster::selectCharacter(const uint8_t &query_id,const uint3
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
     }
-    if(CharactersGroup::list.at(charactersGroupIndex)->characterIsLocked(characterId))
     {
-        //send the network reply
-        removeFromQueryReceived(query_id);
-        uint32_t posOutput=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-        posOutput+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
-        posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+        const CharactersGroup::CharacterLock &lockResult=CharactersGroup::list.at(charactersGroupIndex)->characterIsLocked(characterId);
+        if(lockResult!=CharactersGroup::CharacterLock::Unlocked)
+        {
+            //send the network reply
+            removeFromQueryReceived(query_id);
+            uint32_t posOutput=0;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+            posOutput+=1+4;
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
 
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)0x03;
-        posOutput+=1;
+            switch(lockResult)
+            {
+                case CharactersGroup::CharacterLock::RecentlyUnlocked:
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)0x08;
+                break;
+                case CharactersGroup::CharacterLock::Locked:
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)0x03;
+                break;
+                default:
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)0x04;
+                break;
+            }
+            posOutput+=1;
 
-        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-        return;
+            sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+            return;
+        }
     }
     EpollClientLoginMaster * gameServer=static_cast<EpollClientLoginMaster *>(CharactersGroup::list.at(charactersGroupIndex)->gameServers.at(serverUniqueKey).link);
     if(!gameServer->trySelectCharacterGameServer(this,query_id,serverUniqueKey,charactersGroupIndex,characterId,accountId))

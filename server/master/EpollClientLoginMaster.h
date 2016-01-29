@@ -31,7 +31,7 @@ public:
     void disconnectForDuplicateConnexionDetected(const uint32_t &characterId);
     static void broadcastGameServerChange();
     bool sendRawBlock(const char * const data,const int &size);
-    enum EpollClientLoginMasterStat
+    enum EpollClientLoginMasterStat : std::uint8_t
     {
         None,
         Logged,
