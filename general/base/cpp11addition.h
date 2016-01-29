@@ -53,6 +53,8 @@ void binaryAppend(std::vector<char> &data, const char * const add, const uint32_
 std::vector<char> base64toBinary(const std::string &string);
 std::string FSabsoluteFilePath(const std::string &string);
 std::string FSabsolutePath(const std::string &string);
+uint64_t msFrom1970();
+uint64_t sFrom1970();
 
 template <class T, class U>
 int vectorindexOf(const std::vector<T> &list,const U &item)

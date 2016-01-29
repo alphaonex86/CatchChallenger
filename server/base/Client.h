@@ -256,7 +256,7 @@ private:
         char *token;
         uint32_t characterId;
         uint32_t accountIdRequester;
-        uint32_t createTime;
+        uint64_t createTime;
     };
     static std::vector<TokenAuth> tokenAuthList;
     #endif

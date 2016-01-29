@@ -45,7 +45,7 @@ void Client::characterSelectionIsWrong(const uint8_t &query_id,const uint8_t &re
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void Client::selectCharacter(const uint8_t &query_id, const char * const token)
 {
-    const uint64_t &time=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    const auto &time=sFrom1970();
     unsigned int index=0;
     while(index<tokenAuthList.size())
     {
@@ -75,7 +75,7 @@ void Client::selectCharacter(const uint8_t &query_id, const char * const token)
 
 void Client::purgeTokenAuthList()
 {
-    const uint64_t &time=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    const auto &time=sFrom1970();
     unsigned int index=0;
     while(index<tokenAuthList.size())
     {
@@ -233,7 +233,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     }
     std::string queryText=PreparedDBQueryCommon::db_query_update_character_last_connect;
     stringreplaceOne(queryText,"%1",std::to_string(characterId));
-    stringreplaceOne(queryText,"%2",std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()));
+    stringreplaceOne(queryText,"%2",std::to_string(sFrom1970()));
     dbQueryWriteCommon(queryText);
 
     const uint32_t &skin_database_id=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
@@ -431,12 +431,12 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         dbQueryWriteServer(serverProfileInternal.preparedQueryAddCharacterForServer.at(0)+
                      std::to_string(characterId)+
                      serverProfileInternal.preparedQueryAddCharacterForServer.at(1)+
-                     std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count())+
+                     std::to_string(sFrom1970())+
                      serverProfileInternal.preparedQueryAddCharacterForServer.at(2)
                      );
         std::string queryText=PreparedDBQueryCommon::db_query_update_character_last_connect;
         stringreplaceOne(queryText,"%1",std::to_string(characterId));
-        stringreplaceOne(queryText,"%2",std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()));
+        stringreplaceOne(queryText,"%2",std::to_string(sFrom1970()));
         dbQueryWriteCommon(queryText);
 
         characterIsRightWithParsedRescue(query_id,
@@ -784,7 +784,7 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
         public_and_private_informations.public_informations.simplifiedId = 0;
         break;
     }
-    connectedSince=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    connectedSince=sFrom1970();
     this->map=map;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
@@ -1134,7 +1134,7 @@ void Client::characterIsRightFinalStep()
 
     //send plant on map
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-    const uint64_t &time=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    const auto &time=sFrom1970();
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.plantOnMap.size();
     posOutput+=1;
     auto i=public_and_private_informations.plantOnMap.begin();

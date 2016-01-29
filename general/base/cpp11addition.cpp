@@ -6,6 +6,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <iostream>
+#include <chrono>
 
 static const std::regex isaunsignednumber("^[0-9]+$",std::regex::optimize);
 static const std::regex isasignednumber("^-?[0-9]+$",std::regex::optimize);
@@ -630,4 +631,14 @@ std::string FSabsolutePath(const std::string &string)
         return tempFile.substr(0,found)+'/';
     else
         return tempFile;
+}
+
+uint64_t msFrom1970()
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
+uint64_t sFrom1970()
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()/1000;
 }

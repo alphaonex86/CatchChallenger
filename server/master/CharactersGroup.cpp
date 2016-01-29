@@ -184,7 +184,7 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
                                                                               const uint16_t &port, const std::string &metaData, const uint32_t &logicalGroupIndex,
                                                                               const uint16_t &currentPlayer, const uint16_t &maxPlayer,const std::unordered_set<uint32_t> &lockedAccount)
 {
-    const uint64_t &now=(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    const auto &now=sFrom1970();
     //old locked account
     if(lockedAccountByDisconnectedServer.find(uniqueKey)!=lockedAccountByDisconnectedServer.cend())
     {
@@ -291,7 +291,7 @@ CharactersGroup::CharacterLock CharactersGroup::characterIsLocked(const uint32_t
     {
         if(lockedAccount.at(characterId)==0)
             return CharactersGroup::CharacterLock::Locked;
-        if(lockedAccount.at(characterId)<(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count())
+        if(lockedAccount.at(characterId)<sFrom1970())
         {
             lockedAccount.erase(characterId);
             deleteToCacheLockToDelete(characterId);
@@ -316,7 +316,7 @@ void CharactersGroup::lockTheCharacter(const uint32_t &characterId)
             std::cerr << "lockedAccount already contains: " << std::to_string(characterId) << std::endl;
             return;
         }
-        if(lockedAccount.at(characterId)>(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count())
+        if(lockedAccount.at(characterId)>sFrom1970())
         {
             std::cerr << "lockedAccount already contains not finished timeout: " << std::to_string(characterId) << std::endl;
             return;
@@ -346,7 +346,7 @@ void CharactersGroup::unlockTheCharacter(const uint32_t &characterId)
     else if(lockedAccount.at(characterId)!=0)
         std::cerr << "unlock " << characterId << " already planned into: " << lockedAccount.at(characterId) << " (reset for 5s)" << std::endl;
     #endif
-    const uint64_t &now=(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    const uint64_t &now=sFrom1970();
     lockedAccount[characterId]=now+CharactersGroup::maxLockAge;
     addToCacheLockToDelete(characterId,now+CharactersGroup::maxLockAge);
     //std::cerr << "unlock the char " << std::to_string(characterId) << " total locked: " << std::to_string(lockedAccount.size()) << std::endl;
@@ -360,7 +360,7 @@ void CharactersGroup::waitBeforeReconnect(const uint32_t &characterId)
     else if(lockedAccount.at(characterId)!=0)
         std::cerr << "lockedAccount contains set timeout: " << characterId << std::endl;
     #endif
-    const uint64_t &now=(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    const uint64_t &now=sFrom1970();
     lockedAccount[characterId]=now+5;
     addToCacheLockToDelete(characterId,now+CharactersGroup::maxLockAge);
     //std::cerr << "waitBeforeReconnect the char " << std::to_string(characterId) << " total locked: " << std::to_string(lockedAccount.size()) << std::endl;
@@ -371,7 +371,7 @@ void CharactersGroup::purgeTheLockedAccount()
     if(cacheLockToDeleteList.empty())
         return;
 
-    const uint64_t &now=(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    const uint64_t &now=sFrom1970();
 
     //time drift
     if(cacheLockToDeleteList.front().timestampsToDelete>(now+3600))
