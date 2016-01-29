@@ -242,13 +242,13 @@ void BaseServer::preload_the_data()
     std::cout << "Datapack, base: " << GlobalServerData::serverSettings.datapack_basePath
               << std::endl;
     {
-        const double &now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        const auto &now = msFrom1970();
         CommonDatapack::commonDatapack.parseDatapack(GlobalServerData::serverSettings.datapack_basePath);
         CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(GlobalServerData::serverSettings.datapack_basePath,CommonSettingsServer::commonSettingsServer.mainDatapackCode);
-        double after = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        const auto &after = msFrom1970();
         std::cout << "Loaded the common datapack into " << (after-now) << "ms" << std::endl;
     }
-    timeDatapack = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    timeDatapack = msFrom1970();
     preload_the_randomData();
     preload_randomBlock();
     preload_the_events();
@@ -313,7 +313,7 @@ void BaseServer::preload_finish()
 {
     std::cout << plant_on_the_map << " SQL plant on map" << std::endl;
     std::cout << GlobalServerData::serverPrivateVariables.marketItemList.size() << " SQL market item" << std::endl;
-    const double &now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    const auto &now = sFrom1970();
     std::cout << "Loaded the server SQL datapack into " << (now-timeDatapack) << "ms" << std::endl;
     preload_other();
     #if defined(EPOLLCATCHCHALLENGERSERVER) && ! defined(CATCHCHALLENGER_CLIENT)

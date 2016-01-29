@@ -104,8 +104,8 @@ void BaseServer::preload_pointOnMap_sql()
         preload_the_city_capture();
         preload_zone();
 
-        double now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        std::cout << "Loaded the server static datapack into " << (timeDatapack-now) << "ms" << std::endl;
+        const auto now=msFrom1970();
+        std::cout << "Loaded the server static datapack into " << (now-timeDatapack) << "ms" << std::endl;
         timeDatapack=now;
 
         //start SQL load
@@ -212,8 +212,8 @@ void BaseServer::preload_pointOnMap_return()
             return;
         if(!preload_zone())
             return;
-        double now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        std::cout << "Loaded the server static datapack into " << (timeDatapack-now) << "ms" << std::endl;
+        const auto now = msFrom1970();
+        std::cout << "Loaded the server static datapack into " << (now-timeDatapack) << "ms" << std::endl;
         timeDatapack=now;
 
         //start SQL load
