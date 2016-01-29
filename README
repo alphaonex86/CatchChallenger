@@ -28,6 +28,9 @@ Compiling
 
 Dep: zlib, xz-utils, openssl and Qt openssl enabled to have QSslSocket, libvlc for the client, Qt5. libssl, libcrypt (openssl), liblzma.
 For the server: db, db driver (mysql, sqlite for game solo, postgresql, depands of you choice)
+Ubuntu 16.04 add to the .pro:
+QMAKE_CFLAGS="-std=c++0x"
+QMAKE_CXXFLAGS="-std=c++0x"
 
 For the Gui server:
 cd server/

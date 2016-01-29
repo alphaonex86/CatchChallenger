@@ -303,6 +303,11 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         QMessageBox::warning(this,tr("Error"),tr("Your login need to be at minimum of 3 characters"));
         return;
     }
+    if(ui->lineEditPass->text()==ui->lineEditLogin->text())
+    {
+        QMessageBox::warning(this,tr("Error"),tr("Your login can't be same as your login"));
+        return;
+    }
     lastServerConnect[server_dns_or_ip]=QDateTime::currentDateTime();
     lastServerIsKick[server_dns_or_ip]=false;
     QStringList loginList=settings.value("login").toStringList();
