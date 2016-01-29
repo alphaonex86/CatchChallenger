@@ -31,6 +31,12 @@ public:
 
         std::unordered_set<uint32_t> lockedAccountByGameserver;
     };
+    enum CharacterLock : std::uint8_t
+    {
+        Unlocked=0x00,
+        Locked=0x01,
+        RecentlyUnlocked=0x02
+    };
 
     BaseClassSwitch::EpollObjectType getType() const;
     InternalGameServer * addGameServerUniqueKey(void * const client, const uint32_t &uniqueKey, const std::string &host, const uint16_t &port,
@@ -38,7 +44,7 @@ public:
                                 const uint16_t &currentPlayer, const uint16_t &maxPlayer, const std::unordered_set<uint32_t> &lockedAccount);
     void removeGameServerUniqueKey(void * const client);
     bool containsGameServerUniqueKey(const uint32_t &serverUniqueKey) const;
-    bool characterIsLocked(const uint32_t &characterId);
+    CharacterLock characterIsLocked(const uint32_t &characterId);
     //need check if is already locked before this call
     //don't apply on InternalGameServer
     void lockTheCharacter(const uint32_t &characterId);

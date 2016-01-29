@@ -285,23 +285,23 @@ bool CharactersGroup::containsGameServerUniqueKey(const uint32_t &serverUniqueKe
     return gameServers.find(serverUniqueKey)!=gameServers.cend();
 }
 
-bool CharactersGroup::characterIsLocked(const uint32_t &characterId)
+CharactersGroup::CharacterLock CharactersGroup::characterIsLocked(const uint32_t &characterId)
 {
     if(lockedAccount.find(characterId)!=lockedAccount.cend())
     {
         if(lockedAccount.at(characterId)==0)
-            return true;
+            return CharactersGroup::CharacterLock::Locked;
         if(lockedAccount.at(characterId)<(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count())
         {
             lockedAccount.erase(characterId);
             deleteToCacheLockToDelete(characterId);
-            return false;
+            return CharactersGroup::CharacterLock::Unlocked;
         }
         else
-            return true;
+            return CharactersGroup::CharacterLock::RecentlyUnlocked;
     }
     else
-        return false;
+        return CharactersGroup::CharacterLock::Unlocked;
 }
 
 //need check if is already locked before this call
