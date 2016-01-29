@@ -158,10 +158,7 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                     return false;
                 }
 
-                #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-                std::cout << "Protocol sended and replied" << std::endl;
                 return true;
-                #endif
             }
             else
             {
