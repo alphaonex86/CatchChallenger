@@ -94,7 +94,7 @@ int main()
                 if(timediffms<900 || timediffms>1100)//drift >10%
                     std::cerr << "Time drift more than +/-10% detected, timer on 1000ms, but time diff detected is: " << timediffms << "ms" << std::endl;
                 else
-                    std::cout << "Timer and time match, all is good" << std::endl;
+                    std::cout << "Timer and time match, all is good, drift is: " << (100-100*(float)timediffms/1000) << "%" << std::endl;
             }
         }
     }
