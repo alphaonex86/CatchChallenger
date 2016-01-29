@@ -41,7 +41,7 @@ void CharactersGroupForLogin::character_list_object()
     //memset(tempRawData,0x00,sizeof(4*1024));//performance
     int tempRawDataSize=0x01;
 
-    const uint64_t &current_time=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    const auto &current_time=sFrom1970();
     bool ok;
     uint8_t validCharaterCount=0;
     while(databaseBaseCommon->next() && validCharaterCount<CommonSettingsCommon::commonSettingsCommon.max_character)
@@ -186,7 +186,7 @@ void CharactersGroupForLogin::server_list_object()
     //memset(tempRawData,0x00,sizeof(4*1024));
     int tempRawDataSize=0x00;
 
-    const uint64_t &current_time=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    const auto &current_time=sFrom1970();
     bool ok;
     uint8_t validServerCount=0;
     while(databaseBaseCommon->next() && validServerCount<CommonSettingsCommon::commonSettingsCommon.max_character)
@@ -531,7 +531,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[4],profile.preparedQuerySize[4]);
     tempBufferSize+=profile.preparedQuerySize[4];
 
-    numberBuffer=std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+    numberBuffer=std::to_string(sFrom1970());
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.data(),numberBuffer.size());
     tempBufferSize+=numberBuffer.size();
 
@@ -694,12 +694,13 @@ void CharactersGroupForLogin::removeCharacter_return(EpollClientLoginSlave * con
         client->removeCharacter_ReturnFailed(query_id,0x02,"Character: "+std::to_string(characterId)+" is already in deleting for the account: "+std::to_string(account_id));
         return;
     }
+    /// \todo don't and failed if timedrift
     std::string queryText=PreparedDBQueryCommon::db_query_update_character_time_to_delete_by_id;
     stringreplaceOne(queryText,"%1",std::to_string(characterId));
     stringreplaceOne(queryText,"%2",
                   //date to delete, not time (no sens on database, delete the date of removing
                   std::to_string(
-                        std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()+
+                        sFrom1970()+
                         CommonSettingsCommon::commonSettingsCommon.character_delete_time
                     )
                   );

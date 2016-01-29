@@ -219,7 +219,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                 return;
 /*                PreparedDBQuery::maxAccountId++;
                 account_id=PreparedDBQuery::maxAccountId;
-                dbQueryWrite(PreparedDBQuery::db_query_insert_login.arg(account_id).arg(std::string(askLoginParam->login.toHex())).arg(std::string(askLoginParam->pass.toHex())).arg(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()));*/
+                dbQueryWrite(PreparedDBQuery::db_query_insert_login.arg(account_id).arg(std::string(askLoginParam->login.toHex())).arg(std::string(askLoginParam->pass.toHex())).arg(sFrom1970()));*/
             }
             else
             {
@@ -621,7 +621,7 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
             stringreplaceOne(queryText,"%1",std::to_string(account_id));
             stringreplaceOne(queryText,"%2",binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE));
             stringreplaceOne(queryText,"%3",binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE));
-            stringreplaceOne(queryText,"%4",std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()));
+            stringreplaceOne(queryText,"%4",std::to_string(sFrom1970()));
             dbQueryWriteLogin(queryText);
         }
         //send the network reply

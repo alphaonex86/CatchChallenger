@@ -157,7 +157,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                 return;
 /*                GlobalServerData::serverPrivateVariables.maxAccountId++;
                 account_id=GlobalServerData::serverPrivateVariables.maxAccountId;
-                dbQueryWrite(PreparedDBQuery::db_query_insert_login.arg(account_id).arg(std::string(askLoginParam->login.toHex())).arg(std::string(askLoginParam->pass.toHex())).arg(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()));*/
+                dbQueryWrite(PreparedDBQuery::db_query_insert_login.arg(account_id).arg(std::string(askLoginParam->login.toHex())).arg(sFrom1970()));*/
             }
             else
             {
@@ -397,7 +397,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         stringreplaceOne(queryText,"%1",std::to_string(account_id));
         stringreplaceOne(queryText,"%2",binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE));
         stringreplaceOne(queryText,"%3",binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE));
-        stringreplaceOne(queryText,"%4",std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()));
+        stringreplaceOne(queryText,"%4",std::to_string(sFrom1970()));
         dbQueryWriteLogin(queryText);
 
         //send the network reply
@@ -476,7 +476,7 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
     uint32_t posOutput=0;
 
     {
-        const uint64_t &current_time=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        const auto &current_time=sFrom1970();
         std::vector<CharacterEntry> characterEntryList;
         bool ok;
         while(GlobalServerData::serverPrivateVariables.db_common->next() && characterEntryList.size()<CommonSettingsCommon::commonSettingsCommon.max_character)
@@ -659,7 +659,7 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
     int tempRawDataSizeToSetServerCount=posOutput;
     posOutput+=1;
 
-    const uint64_t &current_time=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    const auto &current_time=sFrom1970();
     bool ok;
     uint8_t validServerCount=0;
     if(GlobalServerData::serverPrivateVariables.db_common->next())
@@ -696,13 +696,13 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
         std::string queryText=PreparedDBQueryCommon::db_query_insert_server_time;
         stringreplaceOne(queryText,"%1","0");
         stringreplaceOne(queryText,"%2",std::to_string(account_id));
-        stringreplaceOne(queryText,"%3",std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()));
+        stringreplaceOne(queryText,"%3",std::to_string(sFrom1970()));
         dbQueryWriteCommon(queryText);
     }
     else
     {
         std::string queryText=PreparedDBQueryCommon::db_query_update_server_time_last_connect;
-        stringreplaceOne(queryText,"%1",std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()));
+        stringreplaceOne(queryText,"%1",std::to_string(sFrom1970()));
         stringreplaceOne(queryText,"%2","0");
         stringreplaceOne(queryText,"%3",std::to_string(account_id));
         dbQueryWriteCommon(queryText);
@@ -1143,7 +1143,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
                  serverProfileInternal.preparedQueryAddCharacter.at(3)+
                  std::to_string(DictionaryLogin::dictionary_skin_internal_to_database.at(skinId))+
                  serverProfileInternal.preparedQueryAddCharacter.at(4)+
-                 std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count())+
+                 std::to_string(sFrom1970())+
                  serverProfileInternal.preparedQueryAddCharacter.at(5)
                  );
     while(index<profile.monsters.size())
@@ -1350,12 +1350,13 @@ void Client::removeCharacterLater_return(const uint8_t &query_id,const uint32_t 
         characterSelectionIsWrong(query_id,0x02,"Character: "+std::to_string(characterId)+" is already in deleting for the account: "+std::to_string(account_id));
         return;
     }
+    /// \todo don't save and failed if timedrift detected
     std::string queryText=PreparedDBQueryCommon::db_query_update_character_time_to_delete_by_id;
     stringreplaceOne(queryText,"%1",std::to_string(characterId));
     stringreplaceOne(queryText,"%2",
                   //date to delete, not time (no sens on database, delete the date of removing
                   std::to_string(
-                        std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()+
+                        sFrom1970()+
                         CommonSettingsCommon::commonSettingsCommon.character_delete_time
                     )
                   );
@@ -1462,14 +1463,14 @@ std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file
     {
         if(Client::datapack_list_cache_timestamp_base==0)
         {
-            Client::datapack_list_cache_timestamp_base=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+            Client::datapack_list_cache_timestamp_base=sFrom1970();
             Client::datapack_file_hash_cache_base=datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"map/main/");
         }
         return Client::datapack_file_hash_cache_base;
     }
     else
     {
-        const uint64_t &currentTime=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        const uint64_t &currentTime=sFrom1970();
         if(Client::datapack_list_cache_timestamp_base<(currentTime-GlobalServerData::serverSettings.datapackCache))
         {
             Client::datapack_list_cache_timestamp_base=currentTime;
@@ -1487,14 +1488,14 @@ std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file
     {
         if(Client::datapack_list_cache_timestamp_main==0)
         {
-            Client::datapack_list_cache_timestamp_main=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+            Client::datapack_list_cache_timestamp_main=sFrom1970();
             Client::datapack_file_hash_cache_main=datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,"sub/");
         }
         return Client::datapack_file_hash_cache_main;
     }
     else
     {
-        const uint64_t &currentTime=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        const auto &currentTime=sFrom1970();
         if(Client::datapack_list_cache_timestamp_main<(currentTime-GlobalServerData::serverSettings.datapackCache))
         {
             Client::datapack_list_cache_timestamp_main=currentTime;
@@ -1512,14 +1513,14 @@ std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file
     {
         if(Client::datapack_list_cache_timestamp_sub==0)
         {
-            Client::datapack_list_cache_timestamp_sub=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+            Client::datapack_list_cache_timestamp_sub=sFrom1970();
             Client::datapack_file_hash_cache_sub=datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,"");
         }
         return Client::datapack_file_hash_cache_sub;
     }
     else
     {
-        const uint64_t &currentTime=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        const auto &currentTime=sFrom1970();
         if(Client::datapack_list_cache_timestamp_sub<(currentTime-GlobalServerData::serverSettings.datapackCache))
         {
             Client::datapack_list_cache_timestamp_sub=currentTime;

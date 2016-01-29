@@ -274,7 +274,7 @@ void Client::disconnectClient()
         playerByPseudo.erase(public_and_private_informations.public_informations.pseudo);
         playerById.erase(character_id);
         leaveTheCityCapture();
-        const uint32_t &addTime=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()-connectedSince;
+        const uint64_t &addTime=sFrom1970()-connectedSince;
         if(addTime>5)
         {
             std::string queryText=PreparedDBQueryCommon::db_query_played_time;
@@ -479,7 +479,7 @@ char *Client::addAuthGetToken(const uint32_t &characterId, const uint32_t &accou
     TokenAuth newEntry;
     newEntry.characterId=characterId;
     newEntry.accountIdRequester=accountIdRequester;
-    newEntry.createTime=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    newEntry.createTime=sFrom1970();
     newEntry.token=new char[CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
     const int &returnedSize=fread(newEntry.token,1,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER,BaseServerLogin::fpRandomFile);
     if(returnedSize!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
