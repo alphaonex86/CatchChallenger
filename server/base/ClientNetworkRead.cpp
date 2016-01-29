@@ -350,9 +350,6 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                 BaseServerLogin::tokenForAuthSize++;
                 #endif
                 have_send_protocol=true;
-                #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-                normalOutput("Protocol sended and replied");
-                #endif
             }
             else
             {
