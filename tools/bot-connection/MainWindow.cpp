@@ -238,7 +238,7 @@ void MainWindow::on_characterSelect_clicked()
 {
     if(ui->characterList->count()<=0 || !ui->characterSelect->isEnabled())
         return;
-    multipleBotConnexion.characterSelect(ui->characterList->currentData().toUInt());
+    multipleBotConnexion.characterSelectForFirstCharacter(ui->characterList->currentData().toUInt());
     ui->groupBox_char->setEnabled(false);
 }
 
@@ -320,7 +320,7 @@ void MainWindow::on_serverListSelect_clicked()
                 return;
             }
             const CatchChallenger::CharacterEntry &character=characterEntryList.at(charactersGroupIndex).first();
-            multipleBotConnexion.characterSelect(character.character_id);
+            multipleBotConnexion.characterSelectForFirstCharacter(character.character_id);
         }
         else
         {
