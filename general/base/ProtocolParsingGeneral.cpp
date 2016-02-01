@@ -5,6 +5,7 @@
 #include <zlib.h>
 #include <iostream>
 #include <cstring>
+#include <openssl/sha.h>
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QMetaType>
@@ -307,6 +308,19 @@ ProtocolParsing::ProtocolParsing()
 /// \note Nomination is: function, direction
 void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &initialiseTheVariableType)
 {
+    //test the sha224 lib
+    {
+        static const unsigned char ibuf[]={0xBA,0xD9,0x39,0xE0,0x62,0x4C,0x48,0x1B,0x6B,0x60,0x49,0x63,0x18,0x77,0x01,0xBA,0x0A,0x37,0x2C,0x15,0x4D,0xA4,0x0C,0x1D,0x82,0x8A,0xE8,0xF2};
+        static const unsigned char requiredResult[]={0x1c,0x82,0x16,0x18,0xa8,0xaa,0xd1,0x00,0xf7,0x41,0xba,0xfc,0x84,0x0f,0xcd,0x61,0x3a,0x9d,0xee,0x51,0x84,0xe0,0x5e,0xfd,0x45,0x8c,0x8f,0x9d};
+        unsigned char obuf[sizeof(requiredResult)];
+        SHA224(ibuf,sizeof(ibuf),obuf);
+        if(memcmp(requiredResult,obuf,sizeof(requiredResult))!=0)
+        {
+            std::cerr << "Sha224 lib don't return the correct result" << std::endl;
+            abort();
+        }
+    }
+
     switch(initialiseTheVariableType)
     {
         case InitialiseTheVariableType::MasterServer:
@@ -476,15 +490,15 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             writePacketFixedSize[128+0xAB]=0xFE;
             writePacketFixedSize[128+0xAC]=0xFE;
             writePacketFixedSize[128+0xAD]=0x01;
-            writePacketFixedSize[128+0xB0]=50*4;
+            writePacketFixedSize[128+0xB0]=CATCHCHALLENGER_SERVER_MAXIDBLOCK*4;
             writePacketFixedSize[128+0xB1]=5*4;
             writePacketFixedSize[128+0xB2]=0xFE;
             writePacketFixedSize[128+0xB8]=0xFE;
             writePacketFixedSize[128+0xBD]=0xFE;
             writePacketFixedSize[128+0xBE]=0xFE;
-            writePacketFixedSize[128+0xBF]=50*4;
-            writePacketFixedSize[128+0xC0]=50*4;
-            writePacketFixedSize[128+0xC1]=50*4;
+            writePacketFixedSize[128+0xBF]=CATCHCHALLENGER_SERVER_MAXIDBLOCK*4;
+            writePacketFixedSize[128+0xC0]=CATCHCHALLENGER_SERVER_MAXIDBLOCK*4;
+            writePacketFixedSize[128+0xC1]=CATCHCHALLENGER_SERVER_MAXIDBLOCK*4;
 
             writePacketFixedSize[128+0xE0]=1;
             writePacketFixedSize[128+0xE1]=0;

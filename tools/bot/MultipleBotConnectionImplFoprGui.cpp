@@ -92,7 +92,7 @@ void MultipleBotConnectionImplFoprGui::detectSlowDown()
         emit emit_detectSlowDown(tr("Running query: %1 Query with worse time: %2ms").arg(queryCount).arg(worseTime));
 }
 
-void MultipleBotConnectionImplFoprGui::characterSelect(const quint32 &charId)
+void MultipleBotConnectionImplFoprGui::characterSelectForFirstCharacter(const quint32 &charId)
 {
     if(!serverIsSelected)
     {
@@ -106,21 +106,30 @@ void MultipleBotConnectionImplFoprGui::characterSelect(const quint32 &charId)
     }
     else
         firstCharacterSelected=true;
+
+    if(apiToCatchChallengerClient.size()!=1)
+        qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): apiToCatchChallengerClient.size()!=1";
+
     QHashIterator<CatchChallenger::Api_client_real *,CatchChallengerClient *> i(apiToCatchChallengerClient);
-    if(i.hasNext())
+    while(i.hasNext())
     {
         i.next();
-        if(!i.value()->api->selectCharacter(charactersGroupIndex,serverUniqueKey,charId))
-            qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): Unable to manual select character:" << charId;
-        else
+        if(!characterOnMap.contains(charId))
         {
-            characterOnMap << charId;
-            qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): Manual select character:" << charId;
+            if(!i.value()->api->selectCharacter(charactersGroupIndex,serverUniqueKey,charId))
+                qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): Unable to manual select character:" << charId;
+            else
+            {
+                characterOnMap << charId;
+                qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): Manual select character:" << charId;
+            }
+            return;
         }
-        return;
+        else
+            qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): BUG: characterOnMap.contains(charId): " << charId;
     }
-    else
-        qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): Have any first char to select:" << charId;
+
+    qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): Have any first char to select:" << charId;
 }
 
 void MultipleBotConnectionImplFoprGui::serverSelect(const uint8_t &charactersGroupIndex,const quint32 &uniqueKey)

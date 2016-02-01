@@ -67,7 +67,10 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
             protocolParsingCheck->flags|=0x08;
             if(protocolParsingCheck->parseIncommingDataRaw(data,size,cursor)!=1)
             {
-                std::cerr << "Bug at data-sending: " << binarytoHexa(data+cursor,size-cursor) << std::endl;
+                if(cursor>0)
+                    std::cerr << "Bug at data-sending: " << binarytoHexa(data,cursor) << " " << binarytoHexa(data+cursor,size-cursor) << ", cursor:" << cursor << std::endl;
+                else
+                    std::cerr << "Bug at data-sending: " << binarytoHexa(data+cursor,size-cursor) << std::endl;
                 abort();
             }
             if(!protocolParsingCheck->valid)
@@ -669,10 +672,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
         #endif
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!returnValue)
-        {
-            errorParsingLayer("parseReplyData(): return false (abort), need be aborted before");
-            abort();
-        }
+            errorParsingLayer("parseReplyData(): return false, need be aborted before");
         #endif
         return returnValue;
     }
@@ -688,10 +688,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
         const bool &returnValue=parseMessage(packetCode,data,size);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!returnValue)
-        {
-            errorParsingLayer("parseMessage(): return false (abort), need be aborted before");
-            abort();
-        }
+            errorParsingLayer("parseMessage(): return false, need be aborted before");
         #endif
         return returnValue;
     }
@@ -709,7 +706,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
         const bool &returnValue=parseQuery(packetCode,queryNumber,data,size);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!returnValue)
-            errorParsingLayer("parseQuery(): return false (abort), need be aborted before");
+            errorParsingLayer("parseQuery(): return false, need be aborted before");
         #endif
         return returnValue;
     }
