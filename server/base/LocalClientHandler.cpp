@@ -369,12 +369,13 @@ bool Client::singleMove(const Direction &direction)
         return false;
     }
 
-    uint16_t index_search=0;
+    const CommonMap::Teleporter* const teleporter_list=map->teleporter;
+    uint8_t index_search=0;
     while(index_search<map->teleporter_list_size)
     {
-        if(map->teleporter[index_search].source_x==x && map->teleporter[index_search].source_y==y)
+        const CommonMap::Teleporter &teleporter=teleporter_list[index_search];
+        if(teleporter.source_x==x && teleporter.source_y==y)
         {
-            const CommonMap::Teleporter &teleporter=map->teleporter[index_search];
             switch(teleporter.condition.type)
             {
                 case CatchChallenger::MapConditionType_None:

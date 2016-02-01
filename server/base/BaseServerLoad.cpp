@@ -989,6 +989,7 @@ bool BaseServer::preload_the_map()
     }
     {
         GlobalServerData::serverPrivateVariables.flat_map_list=static_cast<CommonMap **>(malloc(sizeof(CommonMap *)*flat_map_list_temp.size()));
+        memset(GlobalServerData::serverPrivateVariables.flat_map_list,0x00,sizeof(CommonMap *)*flat_map_list_temp.size());
         unsigned int index=0;
         while(index<flat_map_list_temp.size())
         {
@@ -1037,6 +1038,7 @@ bool BaseServer::preload_the_map()
         map_semi.map->teleporter_list_size=0;
         /*The datapack dev should fix it and then drop duplicate teleporter, if well done then the final size is map_semi.old_map.teleport.size()*/
         map_semi.map->teleporter=(CommonMap::Teleporter *)malloc(sizeof(CommonMap::Teleporter)*map_semi.old_map.teleport.size());
+        memset(map_semi.map->teleporter,0x00,sizeof(CommonMap::Teleporter)*map_semi.old_map.teleport.size());
         while(sub_index<map_semi.old_map.teleport.size() && sub_index<127)//code not ready for more than 127
         {
             const auto &teleport=map_semi.old_map.teleport.at(sub_index);
@@ -1090,6 +1092,8 @@ bool BaseServer::preload_the_map()
                         #endif
                         CommonMap::Teleporter teleporter;
                         teleporter.map=GlobalServerData::serverPrivateVariables.map_list.at(teleportString);
+                        teleporter.source_x=teleport.source_x;
+                        teleporter.source_y=teleport.source_y;
                         teleporter.destination_x=teleport.destination_x;
                         teleporter.destination_y=teleport.destination_y;
                         teleporter.condition=teleport.condition;

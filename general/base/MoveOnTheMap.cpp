@@ -278,7 +278,7 @@ bool MoveOnTheMap::teleport(CommonMap **map, COORD_TYPE *x, COORD_TYPE *y)
 {
     const CommonMap::Teleporter * const teleporter=(*map)->teleporter;
     const uint8_t &teleporter_list_size=(*map)->teleporter_list_size;
-    int8_t index=0;
+    uint8_t index=0;
     while(index<teleporter_list_size)
     {
         if(teleporter[index].source_x==*x && teleporter[index].source_y==*y)
@@ -296,7 +296,7 @@ bool MoveOnTheMap::teleport(CommonMap **map, COORD_TYPE *x, COORD_TYPE *y)
 int8_t MoveOnTheMap::indexOfTeleporter(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y)
 {
     const CommonMap::Teleporter * const teleporter=map.teleporter;
-    int8_t index=0;
+    uint8_t index=0;
     while(index<map.teleporter_list_size)
     {
         if(teleporter[index].source_x==x && teleporter[index].source_y==y)

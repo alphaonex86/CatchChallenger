@@ -297,9 +297,9 @@ void LinkToGameServer::parseIncommingData()
         readTheFirstSslHeader();
     if(haveTheFirstSslHeader)
     {
-        if(client!=NULL && client->fastForward)
+        /*if(client!=NULL && client->fastForward)
             forwardTo(client);
-        else
+        else*/
             ProtocolParsingInputOutput::parseIncommingData();
     }
 }
