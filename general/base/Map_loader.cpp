@@ -389,6 +389,8 @@ bool Map_loader::tryLoadMap(const std::string &file)
                                     if(property_text.find(Map_loader::text_map)!=property_text.cend() && property_text.find(Map_loader::text_x)!=property_text.cend() && property_text.find(Map_loader::text_y)!=property_text.cend())
                                     {
                                         Map_semi_teleport new_tp;
+                                        new_tp.source_x=object_x;
+                                        new_tp.source_y=object_y;
                                         new_tp.condition.type=MapConditionType_None;
                                         new_tp.condition.value=0;
                                         new_tp.conditionUnparsed=NULL;
@@ -416,8 +418,6 @@ bool Map_loader::tryLoadMap(const std::string &file)
                                                         new_tp.condition=xmlConditionToMapCondition(conditionFile,new_tp.conditionUnparsed);
                                                     }
                                                 }
-                                                new_tp.source_x=object_x;
-                                                new_tp.source_y=object_y;
                                                 new_tp.map=property_text.at(Map_loader::text_map);
                                                 if(!stringEndsWith(new_tp.map,Map_loader::text_dottmx) && !new_tp.map.empty())
                                                     new_tp.map+=Map_loader::text_dottmx;
