@@ -9,7 +9,7 @@ class MultipleBotConnectionImplFoprGui : public MultipleBotConnection
 public:
     explicit MultipleBotConnectionImplFoprGui();
     ~MultipleBotConnectionImplFoprGui();
-    void characterSelect(const quint32 &charId);
+    void characterSelectForFirstCharacter(const quint32 &charId);
     void serverSelect(const uint8_t &charactersGroupIndex,const quint32 &serverUniqueKey);
 public slots:
     void detectSlowDown();
