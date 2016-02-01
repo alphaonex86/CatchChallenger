@@ -44,12 +44,6 @@
 //the % of the price change when the resource/product if full/empty
 #define CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE 20
 
-//server cluster
-#define CATCHCHALLENGER_SERVER_MINIDBLOCK 20
-#define CATCHCHALLENGER_SERVER_MAXIDBLOCK 50
-#define CATCHCHALLENGER_SERVER_MINCLANIDBLOCK 1
-#define CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK 5
-
 #define RANDOMFILEDEVICE "/dev/urandom"
 
 /** map visibility bandwith optimisation
