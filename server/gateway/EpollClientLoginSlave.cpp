@@ -122,10 +122,7 @@ BaseClassSwitch::EpollObjectType EpollClientLoginSlave::getType() const
 
 void EpollClientLoginSlave::parseIncommingData()
 {
-    if(linkToGameServer!=NULL && fastForward)
-        forwardTo(linkToGameServer);
-    else
-        ProtocolParsingInputOutput::parseIncommingData();
+    ProtocolParsingInputOutput::parseIncommingData();
 }
 
 bool EpollClientLoginSlave::sendRawBlock(const char * const data,const int &size)

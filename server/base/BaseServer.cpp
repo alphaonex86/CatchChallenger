@@ -313,7 +313,7 @@ void BaseServer::preload_finish()
 {
     std::cout << plant_on_the_map << " SQL plant on map" << std::endl;
     std::cout << GlobalServerData::serverPrivateVariables.marketItemList.size() << " SQL market item" << std::endl;
-    const auto &now = sFrom1970();
+    const auto &now = msFrom1970();
     std::cout << "Loaded the server SQL datapack into " << (now-timeDatapack) << "ms" << std::endl;
     preload_other();
     #if defined(EPOLLCATCHCHALLENGERSERVER) && ! defined(CATCHCHALLENGER_CLIENT)
