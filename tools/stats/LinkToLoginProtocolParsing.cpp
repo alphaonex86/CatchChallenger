@@ -221,8 +221,8 @@ bool LinkToLogin::parseReplyData(const uint8_t &mainCodeType,const uint8_t &quer
     //do the work here
     switch(mainCodeType)
     {
-        //Protocol initialization and auth for master
-        case 0xB8:
+        //Protocol initialization and auth for login
+        case 0xA0:
         {
             if(size<1)
             {

@@ -51,6 +51,7 @@ int main(int argc, char *argv[])
     applicationDirPath=argv[0];
 
     srand(time(NULL));
+    ProtocolParsing::initialiseTheVariable();
 
     LinkToLogin::linkToLogin=NULL;
     {
@@ -95,7 +96,7 @@ int main(int argc, char *argv[])
                     );
         if(linkfd<0)
         {
-            std::cerr << "Unable to connect on master" << std::endl;
+            std::cerr << "Unable to connect on login" << std::endl;
             abort();
         }
 
