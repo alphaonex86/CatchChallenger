@@ -58,6 +58,11 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
     //control the content BEFORE send
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
+        if(ProtocolParsingBase::packetFixedSize[0x02]!=2)
+        {
+            std::cerr << "parseIncommingDataRaw() You have never call: ProtocolParsing::initialiseTheVariable()" << std::endl;
+            abort();
+        }
         uint32_t cursor=0;
         #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
         uint32_t old_cursor=0;
@@ -264,6 +269,13 @@ std::string(" parseIncommingData(): size returned is 0!"));*/
 //this interface allow 0 copy method
 int8_t ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer, const uint32_t &size, uint32_t &cursor)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(ProtocolParsingBase::packetFixedSize[0x02]!=2)
+    {
+        std::cerr << "parseIncommingDataRaw() You have never call: ProtocolParsing::initialiseTheVariable()" << std::endl;
+        abort();
+    }
+    #endif
     {
         const int8_t &returnVar=parseHeader(commonBuffer,size,cursor);
         if(returnVar!=1)
