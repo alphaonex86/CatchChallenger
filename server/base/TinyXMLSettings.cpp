@@ -1,4 +1,5 @@
 #include "TinyXMLSettings.h"
+#include <iostream>
 
 TinyXMLSettings::TinyXMLSettings()
 {
