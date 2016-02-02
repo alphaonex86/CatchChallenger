@@ -59,7 +59,7 @@ public:
 
     //to unordered reply
     std::unordered_map<uint8_t/*queryNumber*/,DataForSelectedCharacterReturn> selectCharacterClients;
-    static unsigned char header_magic_number[9];
+    static unsigned char header_magic_number[5];
     static unsigned char private_token_statclient[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
 
     static LinkToLogin *linkToLogin;

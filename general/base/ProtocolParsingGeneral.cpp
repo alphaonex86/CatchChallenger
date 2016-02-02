@@ -327,7 +327,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
         case InitialiseTheVariableType::LoginServer:
         case InitialiseTheVariableType::AllInOne:
         default:
-            if(ProtocolParsingBase::tempBigBufferForOutput[0x02]==2)
+            if(ProtocolParsingBase::packetFixedSize[0x02]==2)
                 return;
 
             memset(ProtocolParsingBase::tempBigBufferForOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForOutput));
@@ -340,170 +340,169 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             #endif
             #endif
 
-            uint8_t *writePacketFixedSize=const_cast<uint8_t *>(ProtocolParsingBase::packetFixedSize);
-            memset(writePacketFixedSize,0xFF,sizeof(ProtocolParsingBase::packetFixedSize));
+            memset(ProtocolParsingBase::packetFixedSize,0xFF,sizeof(ProtocolParsingBase::packetFixedSize));
 
             //Value: 0xFF not found (blocked), 0xFE not fixed size
-            writePacketFixedSize[0x02]=2;
-            writePacketFixedSize[0x03]=0xFE;
-            writePacketFixedSize[0x04]=1;
-            writePacketFixedSize[0x05]=0xFE;
-            writePacketFixedSize[0x06]=0xFE;
-            writePacketFixedSize[0x07]=0;
-            writePacketFixedSize[0x08]=1;
-            writePacketFixedSize[0x09]=4+2;
-            writePacketFixedSize[0x0A]=0xFE;
-            writePacketFixedSize[0x0B]=0;
-            writePacketFixedSize[0x0C]=2;
-            writePacketFixedSize[0x0D]=2;
-            writePacketFixedSize[0x0E]=4;//monster id in db
-            writePacketFixedSize[0x0F]=0xFE;
-            writePacketFixedSize[0x10]=0xFE;
-            writePacketFixedSize[0x11]=2;
-            writePacketFixedSize[0x12]=0xFE;
-            writePacketFixedSize[0x13]=2+4;
-            writePacketFixedSize[0x14]=0xFE;
-            writePacketFixedSize[0x15]=0;
-            writePacketFixedSize[0x16]=0;
-            writePacketFixedSize[0x17]=0xFE;
-            writePacketFixedSize[0x18]=0;
-            writePacketFixedSize[0x19]=1;
-            writePacketFixedSize[0x1A]=0;
-            writePacketFixedSize[0x1B]=2;
-            writePacketFixedSize[0x1C]=2;
-            writePacketFixedSize[0x1D]=2;
-            writePacketFixedSize[0x1E]=2;
-            writePacketFixedSize[0x1F]=1;
-            writePacketFixedSize[0x3E]=4;
-            writePacketFixedSize[0x3F]=2;
+            ProtocolParsingBase::packetFixedSize[0x02]=2;
+            ProtocolParsingBase::packetFixedSize[0x03]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x04]=1;
+            ProtocolParsingBase::packetFixedSize[0x05]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x06]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x07]=0;
+            ProtocolParsingBase::packetFixedSize[0x08]=1;
+            ProtocolParsingBase::packetFixedSize[0x09]=4+2;
+            ProtocolParsingBase::packetFixedSize[0x0A]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x0B]=0;
+            ProtocolParsingBase::packetFixedSize[0x0C]=2;
+            ProtocolParsingBase::packetFixedSize[0x0D]=2;
+            ProtocolParsingBase::packetFixedSize[0x0E]=4;//monster id in db
+            ProtocolParsingBase::packetFixedSize[0x0F]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x10]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x11]=2;
+            ProtocolParsingBase::packetFixedSize[0x12]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x13]=2+4;
+            ProtocolParsingBase::packetFixedSize[0x14]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x15]=0;
+            ProtocolParsingBase::packetFixedSize[0x16]=0;
+            ProtocolParsingBase::packetFixedSize[0x17]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x18]=0;
+            ProtocolParsingBase::packetFixedSize[0x19]=1;
+            ProtocolParsingBase::packetFixedSize[0x1A]=0;
+            ProtocolParsingBase::packetFixedSize[0x1B]=2;
+            ProtocolParsingBase::packetFixedSize[0x1C]=2;
+            ProtocolParsingBase::packetFixedSize[0x1D]=2;
+            ProtocolParsingBase::packetFixedSize[0x1E]=2;
+            ProtocolParsingBase::packetFixedSize[0x1F]=1;
+            ProtocolParsingBase::packetFixedSize[0x3E]=4;
+            ProtocolParsingBase::packetFixedSize[0x3F]=2;
 
-            writePacketFixedSize[0x40]=0xFE;
-            writePacketFixedSize[0x44]=0xFE;
-            writePacketFixedSize[0x45]=0xFE;
-            writePacketFixedSize[0x46]=0xFE;
-            writePacketFixedSize[0x47]=0xFE;
-            writePacketFixedSize[0x4D]=4;
-            writePacketFixedSize[0x50]=0xFE;
-            writePacketFixedSize[0x51]=0;
-            writePacketFixedSize[0x52]=0xFE;
-            writePacketFixedSize[0x53]=0xFE;
-            writePacketFixedSize[0x54]=0xFE;
-            writePacketFixedSize[0x55]=0xFE;
-            writePacketFixedSize[0x56]=0xFE;
-            writePacketFixedSize[0x57]=0xFE;
-            writePacketFixedSize[0x58]=0xFE;
-            writePacketFixedSize[0x59]=0;
-            writePacketFixedSize[0x5A]=0;
-            writePacketFixedSize[0x5B]=0;
+            ProtocolParsingBase::packetFixedSize[0x40]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x44]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x45]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x46]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x47]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x4D]=4;
+            ProtocolParsingBase::packetFixedSize[0x50]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x51]=0;
+            ProtocolParsingBase::packetFixedSize[0x52]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x53]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x54]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x55]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x56]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x57]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x58]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x59]=0;
+            ProtocolParsingBase::packetFixedSize[0x5A]=0;
+            ProtocolParsingBase::packetFixedSize[0x5B]=0;
 
-            writePacketFixedSize[0x5C]=0xFE;
-            writePacketFixedSize[0x5D]=0xFE;
-            writePacketFixedSize[0x5E]=0;
-            writePacketFixedSize[0x5F]=0xFE;
-            writePacketFixedSize[0x60]=0xFE;
-            writePacketFixedSize[0x61]=0xFE;
-            writePacketFixedSize[0x62]=0xFE;
-            writePacketFixedSize[0x63]=0xFE;
-            writePacketFixedSize[0x64]=2;//default like is was more than 255 players
-            writePacketFixedSize[0x65]=0;
-            writePacketFixedSize[0x66]=0xFE;
-            writePacketFixedSize[0x67]=0xFE;
-            writePacketFixedSize[0x68]=0xFE;
-            writePacketFixedSize[0x69]=0xFE;
-            writePacketFixedSize[0x6A]=0;
-            writePacketFixedSize[0x6B]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x5C]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x5D]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x5E]=0;
+            ProtocolParsingBase::packetFixedSize[0x5F]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x60]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x61]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x62]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x63]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x64]=2;//default like is was more than 255 players
+            ProtocolParsingBase::packetFixedSize[0x65]=0;
+            ProtocolParsingBase::packetFixedSize[0x66]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x67]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x68]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x69]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x6A]=0;
+            ProtocolParsingBase::packetFixedSize[0x6B]=0xFE;
 
-            writePacketFixedSize[0x75]=4+4;
-            writePacketFixedSize[0x76]=0xFE;
-            writePacketFixedSize[0x77]=0xFE;
-            writePacketFixedSize[0x7F]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x75]=4+4;
+            ProtocolParsingBase::packetFixedSize[0x76]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x77]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x7F]=0xFE;
 
-            writePacketFixedSize[0x80]=0xFE;
-            writePacketFixedSize[0x81]=0xFE;
-            writePacketFixedSize[0x82]=0xFE;
-            writePacketFixedSize[0x83]=0xFE;
-            writePacketFixedSize[0x84]=0;
-            writePacketFixedSize[0x85]=2;
-            writePacketFixedSize[0x86]=2;
-            writePacketFixedSize[0x87]=2;
-            writePacketFixedSize[0x88]=2*2+2*4;
-            writePacketFixedSize[0x89]=2*2+2*4;
-            writePacketFixedSize[0x8A]=2;
-            writePacketFixedSize[0x8B]=2*2+2*4;
-            writePacketFixedSize[0x8C]=2*2+2*4;
-            writePacketFixedSize[0x8D]=0;
-            writePacketFixedSize[0x8E]=0xFE;
-            writePacketFixedSize[0x8F]=0xFE;
-            writePacketFixedSize[0x90]=0;
-            writePacketFixedSize[0x91]=0xFE;
-            writePacketFixedSize[0x92]=0xFE;
-            writePacketFixedSize[0x93]=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER;
-            writePacketFixedSize[0xA0]=5;
-            writePacketFixedSize[0xA1]=0xFE;
-            writePacketFixedSize[0xA8]=CATCHCHALLENGER_SHA224HASH_SIZE+CATCHCHALLENGER_SHA224HASH_SIZE;
-            writePacketFixedSize[0xA9]=CATCHCHALLENGER_SHA224HASH_SIZE+CATCHCHALLENGER_SHA224HASH_SIZE;
-            writePacketFixedSize[0xAA]=0xFE;
-            writePacketFixedSize[0xAB]=1+4;
-            writePacketFixedSize[0xAC]=1+4+4;
-            writePacketFixedSize[0xAD]=CATCHCHALLENGER_SHA224HASH_SIZE;
-            writePacketFixedSize[0xB0]=0;
-            writePacketFixedSize[0xB1]=0;
-            writePacketFixedSize[0xB2]=0xFE;
-            writePacketFixedSize[0xB8]=9;
-            writePacketFixedSize[0xBD]=CATCHCHALLENGER_SHA224HASH_SIZE;
-            writePacketFixedSize[0xBE]=1+4+4+4;
-            writePacketFixedSize[0xBF]=0;
-            writePacketFixedSize[0xC0]=4;
-            writePacketFixedSize[0xC1]=4;
+            ProtocolParsingBase::packetFixedSize[0x80]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x81]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x82]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x83]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x84]=0;
+            ProtocolParsingBase::packetFixedSize[0x85]=2;
+            ProtocolParsingBase::packetFixedSize[0x86]=2;
+            ProtocolParsingBase::packetFixedSize[0x87]=2;
+            ProtocolParsingBase::packetFixedSize[0x88]=2*2+2*4;
+            ProtocolParsingBase::packetFixedSize[0x89]=2*2+2*4;
+            ProtocolParsingBase::packetFixedSize[0x8A]=2;
+            ProtocolParsingBase::packetFixedSize[0x8B]=2*2+2*4;
+            ProtocolParsingBase::packetFixedSize[0x8C]=2*2+2*4;
+            ProtocolParsingBase::packetFixedSize[0x8D]=0;
+            ProtocolParsingBase::packetFixedSize[0x8E]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x8F]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x90]=0;
+            ProtocolParsingBase::packetFixedSize[0x91]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x92]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x93]=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER;
+            ProtocolParsingBase::packetFixedSize[0xA0]=5;
+            ProtocolParsingBase::packetFixedSize[0xA1]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0xA8]=CATCHCHALLENGER_SHA224HASH_SIZE+CATCHCHALLENGER_SHA224HASH_SIZE;
+            ProtocolParsingBase::packetFixedSize[0xA9]=CATCHCHALLENGER_SHA224HASH_SIZE+CATCHCHALLENGER_SHA224HASH_SIZE;
+            ProtocolParsingBase::packetFixedSize[0xAA]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0xAB]=1+4;
+            ProtocolParsingBase::packetFixedSize[0xAC]=1+4+4;
+            ProtocolParsingBase::packetFixedSize[0xAD]=CATCHCHALLENGER_SHA224HASH_SIZE;
+            ProtocolParsingBase::packetFixedSize[0xB0]=0;
+            ProtocolParsingBase::packetFixedSize[0xB1]=0;
+            ProtocolParsingBase::packetFixedSize[0xB2]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0xB8]=9;
+            ProtocolParsingBase::packetFixedSize[0xBD]=CATCHCHALLENGER_SHA224HASH_SIZE;
+            ProtocolParsingBase::packetFixedSize[0xBE]=1+4+4+4;
+            ProtocolParsingBase::packetFixedSize[0xBF]=0;
+            ProtocolParsingBase::packetFixedSize[0xC0]=4;
+            ProtocolParsingBase::packetFixedSize[0xC1]=4;
 
-            writePacketFixedSize[0xE0]=0xFE;
-            writePacketFixedSize[0xE1]=0xFE;
-            writePacketFixedSize[0xE2]=2;
-            writePacketFixedSize[0xF8]=4+4;
+            ProtocolParsingBase::packetFixedSize[0xE0]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0xE1]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0xE2]=2;
+            ProtocolParsingBase::packetFixedSize[0xF8]=4+4;
 
             //define the size of the reply
-            writePacketFixedSize[128+0x80]=0xFE;
-            writePacketFixedSize[128+0x81]=0xFE;
-            writePacketFixedSize[128+0x82]=0xFE;
-            writePacketFixedSize[128+0x83]=1;
-            writePacketFixedSize[128+0x84]=0xFE;
-            writePacketFixedSize[128+0x85]=0xFE;
-            writePacketFixedSize[128+0x86]=0xFE;
-            writePacketFixedSize[128+0x87]=0xFE;
-            writePacketFixedSize[128+0x88]=0xFE;
-            writePacketFixedSize[128+0x89]=0xFE;
-            writePacketFixedSize[128+0x8A]=0xFE;
-            writePacketFixedSize[128+0x8B]=0xFE;
-            writePacketFixedSize[128+0x8C]=0xFE;
-            writePacketFixedSize[128+0x8D]=0xFE;
-            writePacketFixedSize[128+0x8E]=0xFE;
-            writePacketFixedSize[128+0x8F]=0xFE;
-            writePacketFixedSize[128+0x90]=0xFE;
-            writePacketFixedSize[128+0x91]=0xFE;
-            writePacketFixedSize[128+0x92]=0xFE;
-            writePacketFixedSize[128+0x93]=0xFE;
-            writePacketFixedSize[128+0xA0]=0xFE;
-            writePacketFixedSize[128+0xA1]=0xFE;
-            writePacketFixedSize[128+0xA8]=0xFE;
-            writePacketFixedSize[128+0xA9]=0xFE;
-            writePacketFixedSize[128+0xAA]=0xFE;
-            writePacketFixedSize[128+0xAB]=0xFE;
-            writePacketFixedSize[128+0xAC]=0xFE;
-            writePacketFixedSize[128+0xAD]=0x01;
-            writePacketFixedSize[128+0xB0]=CATCHCHALLENGER_SERVER_MAXIDBLOCK*4;
-            writePacketFixedSize[128+0xB1]=5*4;
-            writePacketFixedSize[128+0xB2]=0xFE;
-            writePacketFixedSize[128+0xB8]=0xFE;
-            writePacketFixedSize[128+0xBD]=0xFE;
-            writePacketFixedSize[128+0xBE]=0xFE;
-            writePacketFixedSize[128+0xBF]=CATCHCHALLENGER_SERVER_MAXIDBLOCK*4;
-            writePacketFixedSize[128+0xC0]=CATCHCHALLENGER_SERVER_MAXIDBLOCK*4;
-            writePacketFixedSize[128+0xC1]=CATCHCHALLENGER_SERVER_MAXIDBLOCK*4;
+            ProtocolParsingBase::packetFixedSize[128+0x80]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0x81]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0x82]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0x83]=1;
+            ProtocolParsingBase::packetFixedSize[128+0x84]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0x85]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0x86]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0x87]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0x88]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0x89]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0x8A]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0x8B]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0x8C]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0x8D]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0x8E]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0x8F]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0x90]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0x91]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0x92]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0x93]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0xA0]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0xA1]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0xA8]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0xA9]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0xAA]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0xAB]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0xAC]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0xAD]=0x01;
+            ProtocolParsingBase::packetFixedSize[128+0xB0]=CATCHCHALLENGER_SERVER_MAXIDBLOCK*4;
+            ProtocolParsingBase::packetFixedSize[128+0xB1]=5*4;
+            ProtocolParsingBase::packetFixedSize[128+0xB2]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0xB8]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0xBD]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0xBE]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0xBF]=CATCHCHALLENGER_SERVER_MAXIDBLOCK*4;
+            ProtocolParsingBase::packetFixedSize[128+0xC0]=CATCHCHALLENGER_SERVER_MAXIDBLOCK*4;
+            ProtocolParsingBase::packetFixedSize[128+0xC1]=CATCHCHALLENGER_SERVER_MAXIDBLOCK*4;
 
-            writePacketFixedSize[128+0xE0]=1;
-            writePacketFixedSize[128+0xE1]=0;
-            writePacketFixedSize[128+0xE2]=0;
-            writePacketFixedSize[128+0xF8]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0xE0]=1;
+            ProtocolParsingBase::packetFixedSize[128+0xE1]=0;
+            ProtocolParsingBase::packetFixedSize[128+0xE2]=0;
+            ProtocolParsingBase::packetFixedSize[128+0xF8]=0xFE;
 
             //register meta type
             #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -558,14 +557,12 @@ ProtocolParsingBase::ProtocolParsingBase(
 
 void ProtocolParsing::setMaxPlayers(const uint16_t &maxPlayers)
 {
-    uint8_t *writePacketFixedSize=const_cast<uint8_t *>(ProtocolParsingBase::packetFixedSize);
-
     if(maxPlayers<=255)
-        writePacketFixedSize[0x64]=1;
+        ProtocolParsingBase::packetFixedSize[0x64]=1;
     else
         //NO: this case do into initialiseTheVariable()
         //YES: reinitialise because the initialise already done, but this object can be reused
-        writePacketFixedSize[0x64]=2;
+        ProtocolParsingBase::packetFixedSize[0x64]=2;
 }
 
 ProtocolParsingBase::~ProtocolParsingBase()
