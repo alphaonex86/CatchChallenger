@@ -78,14 +78,14 @@ int LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const 
     LinkToLogin::linkToLoginSocketFd=socket(AF_INET, SOCK_STREAM, 0);
     if(LinkToLogin::linkToLoginSocketFd<0)
     {
-        std::cerr << "ERROR opening socket to master server (abort)" << std::endl;
+        std::cerr << "ERROR opening socket to login server (abort)" << std::endl;
         abort();
     }
     struct hostent *server;
     server=gethostbyname(host);
     if(server==NULL)
     {
-        std::cerr << "ERROR, no such host to master server (abort)" << std::endl;
+        std::cerr << "ERROR, no such host to login server (abort)" << std::endl;
         abort();
     }
     sockaddr_in serv_addr;
@@ -121,7 +121,7 @@ int LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const 
             abort();
         }
     }
-    std::cout << "Connected to master " << host << ":" << port << std::endl;
+    std::cout << "Connected to login " << host << ":" << port << std::endl;
     haveTheFirstSslHeader=false;
 
     return LinkToLogin::linkToLoginSocketFd;
@@ -145,7 +145,7 @@ void LinkToLogin::setConnexionSettings(const uint8_t &tryInterval,const uint8_t 
         int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, LinkToLogin::linkToLoginSocketFd, &event);
         if(s == -1)
         {
-            std::cerr << "epoll_ctl on socket (master link) error" << std::endl;
+            std::cerr << "epoll_ctl on socket (login link) error" << std::endl;
             abort();
         }
     }
@@ -187,7 +187,7 @@ void LinkToLogin::connectInternal()
     LinkToLogin::linkToLoginSocketFd=socket(AF_INET, SOCK_STREAM, 0);
     if(LinkToLogin::linkToLoginSocketFd<0)
     {
-        std::cerr << "ERROR opening socket to master server (abort)" << std::endl;
+        std::cerr << "ERROR opening socket to login server (abort)" << std::endl;
         abort();
     }
     epollSocket.reopen(LinkToLogin::linkToLoginSocketFd);
@@ -196,7 +196,7 @@ void LinkToLogin::connectInternal()
     server=gethostbyname(LinkToLogin::host);
     if(server==NULL)
     {
-        std::cerr << "ERROR, no such host to master server (abort)" << std::endl;
+        std::cerr << "ERROR, no such host to login server (abort)" << std::endl;
         abort();
     }
     sockaddr_in serv_addr;
@@ -216,12 +216,12 @@ void LinkToLogin::connectInternal()
     if(connStatusType==0)
     {
         stat=Stat::Connected;
-        std::cout << "(Re)Connected to master" << std::endl;
+        std::cout << "(Re)Connected to login" << std::endl;
     }
     else
     {
         stat=Stat::Connecting;
-        std::cout << "(Re)Connecting in progress to master" << std::endl;
+        std::cout << "(Re)Connecting in progress to login" << std::endl;
     }
     setConnexionSettings(this->tryInterval,this->considerDownAfterNumberOfTry);
 }
@@ -234,7 +234,7 @@ void LinkToLogin::readTheFirstSslHeader()
     char buffer[1];
     if(::read(LinkToLogin::linkToLoginSocketFd,buffer,1)<0)
     {
-        std::cerr << "ERROR reading from socket to master server (abort)" << std::endl;
+        std::cerr << "ERROR reading from socket to login server (abort)" << std::endl;
         abort();
         return;
     }
@@ -260,7 +260,7 @@ void LinkToLogin::readTheFirstSslHeader()
 void LinkToLogin::disconnectClient()
 {
     epollSocket.close();
-    messageParsingLayer("Disconnected master link... try connect in loop");
+    messageParsingLayer("Disconnected login link... try connect in loop");
 }
 
 //input/ouput layer
@@ -340,7 +340,7 @@ void LinkToLogin::tryReconnect()
         return;
     else
     {
-        std::cout << "Try reconnect to master..." << std::endl;
+        std::cout << "Try reconnect to login..." << std::endl;
         if(tryInterval<=0 || tryInterval>=60)
             this->tryInterval=5;
         if(considerDownAfterNumberOfTry<=0 && considerDownAfterNumberOfTry>=60)
@@ -366,9 +366,9 @@ void LinkToLogin::tryReconnect()
 void LinkToLogin::sendProtocolHeader()
 {
     //send the network query
-    registerOutputQuery(queryNumberList.back(),0xB8);
+    registerOutputQuery(queryNumberList.back(),0xA0);
     uint32_t posOutput=0;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xB8;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xA0;
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumberList.back();
     queryNumberList.pop_back();
