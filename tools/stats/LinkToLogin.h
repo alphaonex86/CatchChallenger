@@ -55,6 +55,9 @@ public:
         std::string xml;
         uint16_t maxPlayer;
         uint16_t currentPlayer;
+
+        //other
+        uint8_t groupIndex;
     };
 
     //to unordered reply

@@ -399,6 +399,8 @@ void LinkToLogin::updateJsonFile()
     if(pFile!=NULL)
     {
         std::string content;
+
+        std::unordered_map<uint8_t/*group index*/,std::string > serverByGroup;
         unsigned int index=0;
         while(index<serverList.size())
         {
@@ -412,11 +414,21 @@ void LinkToLogin::updateJsonFile()
             serverString+="\"connectedPlayer\":"+std::to_string(server.currentPlayer)+",";
             serverString+="\"maxPlayer\":"+std::to_string(server.maxPlayer)+"";
             serverString+="}";
-            if(content.empty())
-                content=serverString;
+            if(serverByGroup.find(server.groupIndex)==serverByGroup.cend())
+                serverByGroup[server.groupIndex]=serverString;
             else
-                content=content+","+serverString;
+                serverByGroup[server.groupIndex]+=","+serverString;
             index++;
+        }
+
+        auto serverByGroupIndex=serverByGroup.begin();
+        while(serverByGroupIndex!=serverByGroup.cend())
+        {
+            if(content.empty())
+                content="\""+std::to_string(serverByGroupIndex->first)+"\":{"+serverByGroupIndex->second+"}";
+            else
+                content+=",\""+std::to_string(serverByGroupIndex->first)+"\":{"+serverByGroupIndex->second+"}";
+            ++serverByGroupIndex;
         }
         content="{"+content+"}";
 

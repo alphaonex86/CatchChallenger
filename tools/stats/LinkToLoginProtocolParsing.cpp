@@ -68,6 +68,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                         errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                         return false;
                     }
+                    server.groupIndex=data[pos];
                     pos+=1;
                 }
                 //uniquekey
