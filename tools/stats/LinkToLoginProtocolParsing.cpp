@@ -54,6 +54,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
             serverListSize=data[pos];
             pos+=1;
             serverListIndex=0;
+            serverList.clear();
             while(serverListIndex<serverListSize)
             {
                 ServerFromPoolForDisplay server;
@@ -162,7 +163,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
             serverListIndex=0;
             while(serverListIndex<serverList.size())
             {
-                serverList[serverListIndex].maxPlayer=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+                serverList[serverListIndex].currentPlayer=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
                 pos+=2;
                 serverListIndex++;
             }
@@ -181,7 +182,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
             uint8_t serverListIndex=0;
             while(serverListIndex<serverList.size())
             {
-                serverList[serverListIndex].maxPlayer=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+                serverList[serverListIndex].currentPlayer=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
                 pos+=2;
                 serverListIndex++;
             }

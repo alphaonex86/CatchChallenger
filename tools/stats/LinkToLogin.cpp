@@ -395,4 +395,50 @@ void LinkToLogin::moveClientFastPath(const uint8_t &,const uint8_t &)
 void LinkToLogin::updateJsonFile()
 {
     std::cout << "Update the json file..." << std::endl;
+
+    if(pFile!=NULL)
+    {
+        std::string content;
+        unsigned int index=0;
+        while(index<serverList.size())
+        {
+            const ServerFromPoolForDisplay &server=serverList.at(index);
+            std::string serverString;
+            serverString+="\""+std::to_string(server.uniqueKey)+"\":{";
+            std::string tempXml=server.xml;
+            stringreplaceAll(tempXml,"/","\\/");
+            stringreplaceAll(tempXml,"\"","\\\"");
+            serverString+="\"xml\":\""+tempXml+"\",";
+            serverString+="\"connectedPlayer\":"+std::to_string(server.currentPlayer)+",";
+            serverString+="\"maxPlayer\":"+std::to_string(server.maxPlayer)+"";
+            serverString+="}";
+            if(content.empty())
+                content=serverString;
+            else
+                content=content+","+serverString;
+            index++;
+        }
+        content="{"+content+"}";
+
+        if(fseek(pFile,0,SEEK_SET)!=0)
+        {
+            std::cerr << "unable to seek the output file: " << errno << std::endl;
+            abort();
+        }
+        if(fwrite(content.data(),1,content.size(),pFile)!=content.size())
+        {
+            std::cerr << "unable to write the output file: " << errno << std::endl;
+            abort();
+        }
+        if(fflush(pFile)!=0)
+        {
+            std::cerr << "unable to flush the output file: " << errno << std::endl;
+            abort();
+        }
+        if(ftruncate(fileno(pFile),content.size())!=0)
+        {
+            std::cerr << "unable to resize the output file: " << errno << std::endl;
+            abort();
+        }
+    }
 }
