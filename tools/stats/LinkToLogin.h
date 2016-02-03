@@ -62,6 +62,7 @@ public:
     static unsigned char header_magic_number[5];
     static unsigned char private_token_statclient[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
 
+    FILE * pFile;
     static LinkToLogin *linkToLogin;
     static int linkToLoginSocketFd;
     static bool haveTheFirstSslHeader;
