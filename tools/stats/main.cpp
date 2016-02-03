@@ -54,6 +54,7 @@ int main(int argc, char *argv[])
     ProtocolParsing::initialiseTheVariable();
 
     LinkToLogin::linkToLogin=NULL;
+    std::string outputFile;
     {
         TinyXMLSettings settings(FacilityLibGeneral::getFolderFromFile(applicationDirPath)+"/stats-client.xml");
 
@@ -71,12 +72,19 @@ int main(int argc, char *argv[])
             settings.setValue("considerDownAfterNumberOfTry","5");
         const uint8_t considerDownAfterNumberOfTry=stringtouint8(settings.value("considerDownAfterNumberOfTry"));
 
+        if(!settings.contains("outputFile"))
+            settings.setValue("outputFile","gameserver.json");
+
         if(!settings.contains("token"))
             generateTokenStatClient(settings);
         std::string token=settings.value("token");
         if(token.size()!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT*2/*String Hexa, not binary*/)
             generateTokenStatClient(settings);
         token=settings.value("token");
+
+        settings.sync();
+
+        outputFile=settings.value("outputFile");
         const std::vector<char> &tokenBinary=hexatoBinary(token);
         if(tokenBinary.empty())
         {
@@ -110,6 +118,20 @@ int main(int argc, char *argv[])
         LinkToLogin::linkToLogin->stat=LinkToLogin::Stat::Connected;
         LinkToLogin::linkToLogin->readTheFirstSslHeader();
         LinkToLogin::linkToLogin->setConnexionSettings(tryInterval,considerDownAfterNumberOfTry);
+    }
+
+    {
+        if(outputFile.empty())
+        {
+            std::cerr << "The output file can't be emtpy" << std::endl;
+            abort();
+        }
+        LinkToLogin::linkToLogin->pFile = fopen(outputFile.c_str(),"wb");
+        if(LinkToLogin::linkToLogin->pFile==NULL)
+        {
+            std::cerr << "Unable to open the output file: " << outputFile << std::endl;
+            abort();
+        }
     }
 
     char buf[4096];
@@ -168,6 +190,7 @@ int main(int argc, char *argv[])
             }
         }
     }
+    fclose(LinkToLogin::linkToLogin->pFile);
     LinkToLogin::linkToLogin->closeSocket();
     delete LinkToLogin::linkToLogin;
     return EXIT_SUCCESS;
