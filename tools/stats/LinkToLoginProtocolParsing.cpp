@@ -275,10 +275,10 @@ bool LinkToLogin::parseReplyData(const uint8_t &mainCodeType,const uint8_t &quer
             }
             switch(data[0x00])
             {
-                case 0x02:
                 case 0x01:
                 stat=Stat::Logged;
                 return true;
+                case 0x02:
                 default:
                     std::cerr << "reply return code error (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                     abort();

@@ -582,18 +582,22 @@ void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
             const BaseServerLogin::TokenLink &tokenLink=BaseServerLogin::tokenForAuth[tokenForAuthIndex];
             if(tokenLink.client==this)
             {
+                secretTokenBinary.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+
                 //append the token
                 memcpy(Client::private_token_statclient+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                memcpy(secretTokenBinary.data(),tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 tempAddedToken.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                 memcpy(tempAddedToken.data(),tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                if(secretTokenBinary.size()!=(CATCHCHALLENGER_SHA224HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+                if(secretTokenBinary.size()!=(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
                 {
                     std::cerr << "secretTokenBinary.size()!=(CATCHCHALLENGER_SHA224HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)" << std::endl;
                     abort();
                 }
                 #endif
-                SHA224(reinterpret_cast<const unsigned char *>(secretTokenBinary.data()),secretTokenBinary.size(),reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
+                SHA224(Client::private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
 
                 BaseServerLogin::tokenForAuthSize--;
                 //see to do with SIMD
@@ -621,7 +625,7 @@ void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
             ProtocolParsingBase::tempBigBufferForOutput[0x00]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
             ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
             ProtocolParsingBase::tempBigBufferForOutput[0x02]=0x02;
-            internalSendRawSmallPacket(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),sizeof(ProtocolParsingBase::tempBigBufferForOutput));
+            internalSendRawSmallPacket(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),3);
             errorParsingLayer("No temp auth token found");
             return;
         }
@@ -632,7 +636,7 @@ void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
         ProtocolParsingBase::tempBigBufferForOutput[0x00]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
         ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
         ProtocolParsingBase::tempBigBufferForOutput[0x02]=0x02;
-        internalSendRawSmallPacket(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),sizeof(ProtocolParsingBase::tempBigBufferForOutput));
+        internalSendRawSmallPacket(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),3);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         errorParsingLayer("Password wrong: "+
                      binarytoHexa(secretTokenBinary)+
@@ -657,7 +661,7 @@ void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
         ProtocolParsingBase::tempBigBufferForOutput[0x00]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
         ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
         ProtocolParsingBase::tempBigBufferForOutput[0x02]=0x01;
-        internalSendRawSmallPacket(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),sizeof(ProtocolParsingBase::tempBigBufferForOutput));
+        internalSendRawSmallPacket(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),3);
         internalSendRawSmallPacket((char *)Client::protocolMessageLogicalGroupAndServerList,Client::protocolMessageLogicalGroupAndServerListSize);
 
         stat_client=true;
