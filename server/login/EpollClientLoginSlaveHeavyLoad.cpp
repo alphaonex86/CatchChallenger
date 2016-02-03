@@ -64,23 +64,22 @@ void EpollClientLoginSlave::askStatClient(const uint8_t &query_id,const char *ra
             const BaseServerLogin::TokenLink &tokenLink=BaseServerLogin::tokenForAuth[tokenForAuthIndex];
             if(tokenLink.client==this)
             {
-                std::vector<char> secretTokenBinary;
                 secretTokenBinary.resize(CATCHCHALLENGER_SHA224HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
 
                 //append the token
                 memcpy(LinkToMaster::private_token_statclient+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                memcpy(secretTokenBinary.data()+CATCHCHALLENGER_SHA224HASH_SIZE,tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                memcpy(secretTokenBinary.data(),tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
 
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 tempAddedToken.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                 memcpy(tempAddedToken.data(),tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                if(secretTokenBinary.size()!=(CATCHCHALLENGER_SHA224HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+                if(secretTokenBinary.size()!=(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
                 {
                     std::cerr << "secretTokenBinary.size()!=(CATCHCHALLENGER_SHA224HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)" << std::endl;
                     abort();
                 }
                 #endif
-                SHA224(reinterpret_cast<const unsigned char *>(secretTokenBinary.data()),secretTokenBinary.size(),reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
+                SHA224(LinkToMaster::private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
 
                 BaseServerLogin::tokenForAuthSize--;
                 //see to do with SIMD
@@ -108,7 +107,7 @@ void EpollClientLoginSlave::askStatClient(const uint8_t &query_id,const char *ra
             ProtocolParsingBase::tempBigBufferForOutput[0x00]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
             ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
             ProtocolParsingBase::tempBigBufferForOutput[0x02]=0x02;
-            internalSendRawSmallPacket(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),sizeof(ProtocolParsingBase::tempBigBufferForOutput));
+            internalSendRawSmallPacket(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),3);
             errorParsingLayer("No temp auth token found");
             return;
         }
@@ -119,7 +118,7 @@ void EpollClientLoginSlave::askStatClient(const uint8_t &query_id,const char *ra
         ProtocolParsingBase::tempBigBufferForOutput[0x00]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
         ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
         ProtocolParsingBase::tempBigBufferForOutput[0x02]=0x02;
-        internalSendRawSmallPacket(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),sizeof(ProtocolParsingBase::tempBigBufferForOutput));
+        internalSendRawSmallPacket(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),3);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         errorParsingLayer("Password wrong: "+
                      binarytoHexa(secretTokenBinary)+
@@ -144,7 +143,7 @@ void EpollClientLoginSlave::askStatClient(const uint8_t &query_id,const char *ra
         ProtocolParsingBase::tempBigBufferForOutput[0x00]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
         ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
         ProtocolParsingBase::tempBigBufferForOutput[0x02]=0x01;
-        internalSendRawSmallPacket(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),sizeof(ProtocolParsingBase::tempBigBufferForOutput));
+        internalSendRawSmallPacket(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),3);
         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::serverLogicalGroupAndServerList),EpollClientLoginSlave::serverLogicalGroupAndServerListSize);
 
         stat=EpollClientLoginStat::LoggedStatClient;

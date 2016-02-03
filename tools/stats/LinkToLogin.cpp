@@ -324,6 +324,14 @@ bool LinkToLogin::registerStatsClient(const char * const dynamicToken)
         SHA224_Update(&hashFile,reinterpret_cast<const char *>(LinkToLogin::private_token_statclient),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
         SHA224_Update(&hashFile,dynamicToken,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
         SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput),&hashFile);
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        std::cerr << "Hash this to reply: " << binarytoHexa(reinterpret_cast<const char *>(LinkToLogin::private_token_statclient),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+                  << " + "
+                  << binarytoHexa(dynamicToken,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+                  << " = "
+                  << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput+posOutput,CATCHCHALLENGER_SHA224HASH_SIZE)
+                  << std::endl;
+        #endif
         posOutput+=CATCHCHALLENGER_SHA224HASH_SIZE;
         //memset(LinkToLogin::private_token,0x00,sizeof(LinkToLogin::private_token));->to reconnect after be disconnected
     }
