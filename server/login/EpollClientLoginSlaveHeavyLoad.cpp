@@ -64,13 +64,12 @@ void EpollClientLoginSlave::askStatClient(const uint8_t &query_id,const char *ra
             const BaseServerLogin::TokenLink &tokenLink=BaseServerLogin::tokenForAuth[tokenForAuthIndex];
             if(tokenLink.client==this)
             {
-                secretTokenBinary.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-
                 //append the token
                 memcpy(LinkToMaster::private_token_statclient+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                memcpy(secretTokenBinary.data(),tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
 
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                secretTokenBinary.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                memcpy(secretTokenBinary.data(),LinkToMaster::private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                 tempAddedToken.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                 memcpy(tempAddedToken.data(),tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                 if(secretTokenBinary.size()!=(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
@@ -127,7 +126,7 @@ void EpollClientLoginSlave::askStatClient(const uint8_t &query_id,const char *ra
                      " = "+
                      " hashedToken: "+
                      binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,CATCHCHALLENGER_SHA224HASH_SIZE)+
-                     "sended pass + token: "+
+                     " sended pass + token: "+
                      binarytoHexa(rawdata,CATCHCHALLENGER_SHA224HASH_SIZE)
                      );
         #else
@@ -249,7 +248,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                     if(tokenLink.client==this)
                     {
                         const std::string &secretToken(databaseBaseLogin.value(1));
-                        std::vector<char> secretTokenBinary=hexatoBinary(secretToken);
+                        secretTokenBinary=hexatoBinary(secretToken);
                         if(secretTokenBinary.empty() || secretTokenBinary.size()!=CATCHCHALLENGER_SHA224HASH_SIZE)
                         {
                             std::cerr << "convertion to binary for pass failed for: " << databaseBaseLogin.value(1) << std::endl;
@@ -308,7 +307,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                              binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,CATCHCHALLENGER_SHA224HASH_SIZE)+
                              " for the login: "+
                              binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)+
-                             "sended pass + token: "+
+                             " sended pass + token: "+
                              binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE)
                              );
                 #else
