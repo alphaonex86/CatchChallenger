@@ -566,8 +566,8 @@ void Map2Png::viewMap(const bool &renderAll,const QString &fileName,const QStrin
     newImage.fill(Qt::transparent);
     QPainter painter(&newImage);
     mScene->render(&painter);//,mScene->sceneRect()
-    //qDebug() << QStringLiteral("mScene size: %1,%2").arg(mScene->sceneRect().size().width()).arg(mScene->sceneRect().size().height());
-    //qDebug() << QStringLiteral("save as: %1").arg(destination);
+    /*qDebug() << QStringLiteral("mScene size: %1,%2").arg(mScene->sceneRect().size().width()).arg(mScene->sceneRect().size().height());
+    qDebug() << QStringLiteral("save as: %1").arg(destination);*/
 
     if(!destination.isEmpty())
     {
