@@ -184,7 +184,7 @@ void Client::loadItemsWarehouse_return()
     loadRecipes();
 }
 
-void Client::sendInventory()
+bool Client::sendInventory()
 {
     //send the network message
     uint32_t posOutput=0;
@@ -219,5 +219,5 @@ void Client::sendInventory()
     }
 
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
-    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    return sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }

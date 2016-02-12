@@ -3,12 +3,12 @@
 
 #include "MultipleBotConnection.h"
 
-class MultipleBotConnectionImplFoprGui : public MultipleBotConnection
+class MultipleBotConnectionImplForGui : public MultipleBotConnection
 {
     Q_OBJECT
 public:
-    explicit MultipleBotConnectionImplFoprGui();
-    ~MultipleBotConnectionImplFoprGui();
+    explicit MultipleBotConnectionImplForGui();
+    ~MultipleBotConnectionImplForGui();
     void characterSelectForFirstCharacter(const quint32 &charId);
     void serverSelect(const uint8_t &charactersGroupIndex,const quint32 &serverUniqueKey);
 public slots:

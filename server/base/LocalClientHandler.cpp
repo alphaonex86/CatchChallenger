@@ -215,7 +215,8 @@ void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE 
     //set the dynamic size
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);
 
-    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    if(!sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput))
+        return;
 
     //load the first time the random number list
     generateRandomNumber();

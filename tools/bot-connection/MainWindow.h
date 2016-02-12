@@ -30,7 +30,7 @@ private:
     QSettings settings;
     QTimer slowDownTimer;
 
-    MultipleBotConnectionImplFoprGui multipleBotConnexion;
+    MultipleBotConnectionImplForGui multipleBotConnexion;
     QHash<uint8_t/*character group index*/,QPair<uint8_t/*server count*/,uint8_t/*temp Index to display*/> > serverByCharacterGroup;
     QList<CatchChallenger::ServerFromPoolForDisplay *> serverOrdenedList;
     QList<QList<CatchChallenger::CharacterEntry> > characterEntryList;

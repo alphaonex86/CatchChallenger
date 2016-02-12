@@ -185,6 +185,7 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
         const quint32 &character_id=client->charactersList.at(charactersGroupIndex).at(rand()%client->charactersList.at(charactersGroupIndex).size()).character_id;
         if(!characterOnMap.contains(character_id))
         {
+            qDebug() << "MultipleBotConnection::logged_with_client(): Manual select character:" << character_id;
             characterOnMap << character_id;
             if(!client->api->selectCharacter(charactersGroupIndex,serverUniqueKey,character_id))
                 qDebug() << "Unable to do automatic character selection:" << character_id;
