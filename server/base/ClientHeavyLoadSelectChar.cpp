@@ -1023,6 +1023,8 @@ void Client::loadPlantOnMap_return()
 void Client::characterIsRightFinalStep()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(this->map==NULL)
+        return;
     {
         std::string mapToDebug=this->map->map_file;
         mapToDebug+=this->map->map_file;
@@ -1242,6 +1244,8 @@ void Client::characterIsRightFinalStep()
     }
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(this->map==NULL)
+        return;
     {
         std::string mapToDebug=this->map->map_file;
         mapToDebug+=this->map->map_file;
@@ -1249,12 +1253,19 @@ void Client::characterIsRightFinalStep()
     #endif
 
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
-    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    if(!sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput))
+        return;
 
-    sendInventory();
+    if(this->map==NULL)
+        return;
+
+    if(!sendInventory())
+        return;
     updateCanDoFight();
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(this->map==NULL)
+        return;
     {
         std::string mapToDebug=this->map->map_file;
         mapToDebug+=this->map->map_file;
@@ -1263,6 +1274,8 @@ void Client::characterIsRightFinalStep()
 
     //send signals into the server
     #ifndef SERVERBENCHMARK
+    if(this->map==NULL)
+        return;
     normalOutput("Logged: "+public_and_private_informations.public_informations.pseudo+
                  " on the map: "+map->map_file+
                  " ("+std::to_string(x)+","+std::to_string(y)+")");
@@ -1282,11 +1295,15 @@ void Client::characterIsRightFinalStep()
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
+        if(this->map==NULL)
+            return;
         std::string mapToDebug=this->map->map_file;
         mapToDebug+=this->map->map_file;
     }
     #endif
 
+    if(this->map==NULL)
+        return;
     put_on_the_map(
                 map,//map pointer
         x,
@@ -1296,6 +1313,8 @@ void Client::characterIsRightFinalStep()
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
+        if(this->map==NULL)
+            return;
         std::string mapToDebug=this->map->map_file;
         mapToDebug+=this->map->map_file;
     }
