@@ -77,7 +77,7 @@ public:
     uint32_t getClanId() const;
     bool haveAClan() const;
 
-    void sendRawBlock(const char * const data,const unsigned int &size);
+    bool sendRawBlock(const char * const data,const unsigned int &size);
 
     static std::vector<int> generalChatDrop;
     static int generalChatDropTotalCache;
@@ -791,7 +791,7 @@ private:
     bool changeOfMonsterInFight(const uint32_t &monsterId);
     void confirmEvolutionTo(PlayerMonster * playerMonster,const uint32_t &monster);
 
-    void sendInventory();
+    bool sendInventory();
 
     void generateRandomNumber();
     uint32_t randomSeedsSize() const;
