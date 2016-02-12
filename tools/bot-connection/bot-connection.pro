@@ -13,10 +13,10 @@ TEMPLATE = app
 SOURCES += main.cpp\
         MainWindow.cpp \
     ../bot/MultipleBotConnection.cpp \
-    ../bot/MultipleBotConnectionImplFoprGui.cpp
+    ../bot/MultipleBotConnectionImplForGui.cpp
 HEADERS  += MainWindow.h \
     ../bot/MultipleBotConnection.h \
-    ../bot/MultipleBotConnectionImplFoprGui.h \
+    ../bot/MultipleBotConnectionImplForGui.h \
     ../bot/BotInterface.h
 
 FORMS    += MainWindow.ui

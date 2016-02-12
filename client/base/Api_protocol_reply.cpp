@@ -519,6 +519,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     string=tr("Server internal problem");
                 else if(returnCode==0x05)
                     string=tr("Server not found");
+                else if(returnCode==0x08)
+                    string=tr("Too recently disconnected");
                 else
                     string=tr("Unknown error: %1").arg(returnCode);
                 std::cerr << "Selected character not found, reason: " << string.toStdString() << ", data: " << binarytoHexa(data.constData(),data.size()) << std::endl;
@@ -532,6 +534,10 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             {
                 if(stageConnexion==StageConnexion::Stage4 || serverFromPoolForDisplay.host.isEmpty())
                 {
+                    if(stageConnexion==StageConnexion::Stage4)
+                        qDebug() << QStringLiteral("stageConnexion==StageConnexion::Stage4");
+                    if(serverFromPoolForDisplay.host.isEmpty())
+                        qDebug() << QStringLiteral("serverFromPoolForDisplay.host.isEmpty()");
                     return parseCharacterBlock(
                                 packetCode,queryNumber,
                                 data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos()))

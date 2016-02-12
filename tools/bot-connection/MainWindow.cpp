@@ -25,17 +25,17 @@ MainWindow::MainWindow(QWidget *parent) :
     CatchChallenger::ProtocolParsing::initialiseTheVariable();
     CatchChallenger::ProtocolParsing::setMaxPlayers(65535);
 
-    connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::loggedDone,this,&MainWindow::logged,Qt::QueuedConnection);
-    connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::datapackIsReady,this,&MainWindow::datapackIsReady,Qt::QueuedConnection);
-    connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::datapackMainSubIsReady,this,&MainWindow::datapackMainSubIsReady,Qt::QueuedConnection);
-    connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::statusError,this,&MainWindow::statusError,Qt::QueuedConnection);
-    connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::emit_numberOfSelectedCharacter,this,&MainWindow::display_numberOfSelectedCharacter,Qt::QueuedConnection);
-    connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::emit_numberOfBotConnected,this,&MainWindow::display_numberOfBotConnected);//,Qt::QueuedConnection
-    connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::emit_detectSlowDown,this,&MainWindow::detectSlowDown,Qt::QueuedConnection);
-    connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::emit_all_player_connected,this,&MainWindow::all_player_connected,Qt::QueuedConnection);
-    connect(&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::emit_all_player_on_map,this,&MainWindow::all_player_on_map,Qt::QueuedConnection);
+    connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::loggedDone,this,&MainWindow::logged,Qt::QueuedConnection);
+    connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::datapackIsReady,this,&MainWindow::datapackIsReady,Qt::QueuedConnection);
+    connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::datapackMainSubIsReady,this,&MainWindow::datapackMainSubIsReady,Qt::QueuedConnection);
+    connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::statusError,this,&MainWindow::statusError,Qt::QueuedConnection);
+    connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_numberOfSelectedCharacter,this,&MainWindow::display_numberOfSelectedCharacter,Qt::QueuedConnection);
+    connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_numberOfBotConnected,this,&MainWindow::display_numberOfBotConnected);//,Qt::QueuedConnection
+    connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_detectSlowDown,this,&MainWindow::detectSlowDown,Qt::QueuedConnection);
+    connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_all_player_connected,this,&MainWindow::all_player_connected,Qt::QueuedConnection);
+    connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_all_player_on_map,this,&MainWindow::all_player_on_map,Qt::QueuedConnection);
     connect(&multipleBotConnexion,&MultipleBotConnection::emit_lastReplyTime,this,&MainWindow::lastReplyTime,Qt::QueuedConnection);
-    connect(&slowDownTimer,&QTimer::timeout,&multipleBotConnexion,&MultipleBotConnectionImplFoprGui::detectSlowDown,Qt::QueuedConnection);
+    connect(&slowDownTimer,&QTimer::timeout,&multipleBotConnexion,&MultipleBotConnectionImplForGui::detectSlowDown,Qt::QueuedConnection);
     slowDownTimer.start(200);
 
     multipleBotConnexion.botInterface=new SimpleAction();
