@@ -27,7 +27,8 @@ EpollClientLoginMaster::EpollClientLoginMaster(
         stat(None),
         uniqueKey(0),
         charactersGroupForGameServer(NULL),
-        charactersGroupForGameServerInformation(NULL)
+        charactersGroupForGameServerInformation(NULL),
+        queryNumberInConflicWithTheMainServer(0)
 {
     rng.seed(time(0));
 }
@@ -70,6 +71,11 @@ EpollClientLoginMaster::~EpollClientLoginMaster()
         EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
         EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();
         EpollClientLoginMaster::broadcastGameServerChange();
+    }
+    if(inConflicWithTheMainServer!=NULL)
+    {
+        vectorremoveOne(inConflicWithTheMainServer->secondServerInConflict,this);
+        inConflicWithTheMainServer=NULL;
     }
     updateConsoleCountServer();
 }
@@ -325,4 +331,128 @@ void EpollClientLoginMaster::disconnectForDuplicateConnexionDetected(const uint3
 {
     *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::duplicateConnexionDetected+0x02)=htole32(characterId);
     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::duplicateConnexionDetected),sizeof(EpollClientLoginMaster::duplicateConnexionDetected));
+}
+
+bool EpollClientLoginMaster::sendGameServerRegistrationReply(bool generateNewUniqueKey)
+{
+    //send the network reply
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumberInConflicWithTheMainServer;
+    posOutput+=1+4;
+
+    queryNumberInConflicWithTheMainServer=0;
+    inConflicWithTheMainServer=NULL;
+
+    if(generateNewUniqueKey)
+    {
+        uint32_t newUniqueKey;
+        do
+        {
+            newUniqueKey = rng();
+        } while(Q_UNLIKELY(charactersGroupForGameServer->gameServers.find(newUniqueKey)!=charactersGroupForGameServer->gameServers.cend()));
+        uniqueKey=newUniqueKey;
+        std::cerr << "Generate new unique key for a game server" << std::endl;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+        posOutput+=1;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=(uint32_t)htole32(newUniqueKey);
+        posOutput+=4;
+    }
+    else
+    {
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+        posOutput+=1;
+    }
+
+    //monster id list
+    {
+        if((posOutput+4*CATCHCHALLENGER_SERVER_MAXIDBLOCK)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+        {
+            std::cerr << "ProtocolParsingBase::tempBigBufferForOutput out of buffer, file: " << __FILE__ << ":" << __LINE__ << std::endl;
+            abort();
+        }
+        int index=0;
+        while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
+        {
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput+index*4/*size of int*/)=(uint32_t)htole32(charactersGroupForGameServer->maxMonsterId+1+index);
+            index++;
+        }
+        posOutput+=4*CATCHCHALLENGER_SERVER_MAXIDBLOCK;
+        charactersGroupForGameServer->maxMonsterId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
+    }
+    //clan id list
+    {
+        if((posOutput+4*CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+        {
+            std::cerr << "ProtocolParsingBase::tempBigBufferForOutput out of buffer, file: " << __FILE__ << ":" << __LINE__ << std::endl;
+            abort();
+        }
+        int index=0;
+        while(index<CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)
+        {
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput+index*4/*size of int*/)=(uint32_t)htole32(charactersGroupForGameServer->maxClanId+1+index);
+            index++;
+        }
+        posOutput+=4*CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK;
+        charactersGroupForGameServer->maxClanId+=CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK;
+    }
+    if((posOutput+1+2+1+2)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+    {
+        std::cerr << "ProtocolParsingBase::tempBigBufferForOutput out of buffer, file: " << __FILE__ << ":" << __LINE__ << std::endl;
+        abort();
+    }
+    //Max player monsters
+    {
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
+        posOutput+=1;
+    }
+    //Max warehouse player monsters
+    {
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
+        posOutput+=2;
+    }
+    //Max player items
+    {
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
+        posOutput+=1;
+    }
+    //Max warehouse player monsters
+    {
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
+        posOutput+=2;
+    }
+
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+    gameserver->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
+    //only game server will receive query
+    {
+        gameserver->queryNumberList.reserve(CATCHCHALLENGER_MAXPROTOCOLQUERY);
+        int index=0;
+        while(index<CATCHCHALLENGER_MAXPROTOCOLQUERY)
+        {
+            gameserver->queryNumberList.push_back(index);
+            index++;
+        }
+    }
+    EpollClientLoginMaster::gameServers.push_back(gameserver);
+    charactersGroupForGameServerInformation=charactersGroupForGameServer->addGameServerUniqueKey(
+                this,uniqueKey,host,port,xml,logicalGroupIndex,currentPlayer,maxPlayer,connectedPlayer);
+    gameserver->stat=EpollClientLoginMasterStat::GameServer;
+    gameserver->currentPlayerForGameServerToUpdate=false;
+}
+
+bool EpollClientLoginMaster::sendGameServerPing()
+{
+    if(pingInProgress==true)
+        return;
+    pingInProgress=true;
+
+    const uint8_t &queryNumber=queryNumberList.back();
+    registerOutputQuery(queryNumber,0xF9);
+    ProtocolParsingBase::tempBigBufferForOutput[0xF9]=queryNumber;
+    ProtocolParsingBase::tempBigBufferForOutput[0x01]=queryNumber;
+    queryNumberList.pop_back();
+    return sendRawBlock(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),sizeof(2));
 }

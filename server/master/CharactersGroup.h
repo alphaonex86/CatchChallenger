@@ -8,6 +8,8 @@
 #include <unordered_set>
 
 namespace CatchChallenger {
+class EpollClientLoginMaster;
+
 class CharactersGroup : public BaseClassSwitch
 {
 public:
@@ -18,7 +20,7 @@ public:
     {
         std::string host;
         uint16_t port;
-        void * link;
+        EpollClientLoginMaster * link;
 
         //stored into EpollClientLoginMaster
         //CharactersGroup * charactersGroup;
@@ -30,6 +32,8 @@ public:
         uint16_t maxPlayer;
 
         std::unordered_set<uint32_t> lockedAccountByGameserver;
+
+        bool pingInProgress;
         uint64_t lastPingStarted;
     };
     enum CharacterLock : std::uint8_t

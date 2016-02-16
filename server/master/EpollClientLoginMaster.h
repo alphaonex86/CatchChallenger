@@ -30,6 +30,8 @@ public:
     void selectCharacter_ReturnFailed(const uint8_t &query_id, const uint8_t &errorCode);
     void disconnectForDuplicateConnexionDetected(const uint32_t &characterId);
     static void broadcastGameServerChange();
+    bool sendGameServerRegistrationReply(bool generateNewUniqueKey=false);
+    bool sendGameServerPing();
     bool sendRawBlock(const char * const data,const int &size);
     enum EpollClientLoginMasterStat : std::uint8_t
     {
@@ -48,6 +50,11 @@ public:
     uint32_t uniqueKey;
     CharactersGroup *charactersGroupForGameServer;
     CharactersGroup::InternalGameServer *charactersGroupForGameServerInformation;
+
+    EpollClientLoginMaster * inConflicWithTheMainServer;
+    std::vector<EpollClientLoginMaster *> secondServerInConflict;
+    uint8_t queryNumberInConflicWithTheMainServer;
+
     struct DataForSelectedCharacterReturn
     {
         EpollClientLoginMaster * loginServer;
