@@ -30,6 +30,7 @@ public:
         uint16_t maxPlayer;
 
         std::unordered_set<uint32_t> lockedAccountByGameserver;
+        uint64_t lastPingStarted;
     };
     enum CharacterLock : std::uint8_t
     {
@@ -53,6 +54,7 @@ public:
     void waitBeforeReconnect(const uint32_t &characterId);
     void purgeTheLockedAccount();
     void setMaxLockAge(const uint16_t &maxLockAge);
+    void pingDone(CharactersGroup::InternalGameServer * const charactersGroupForGameServerInformation);
 
     uint32_t maxClanId;
     uint32_t maxCharacterId;
@@ -60,9 +62,12 @@ public:
 
     std::unordered_map<uint32_t/*serverUniqueKey*/,InternalGameServer> gameServers;
 
+    static uint64_t lastPingStarted;
     static int serverWaitedToBeReady;
     static std::unordered_map<std::string,CharactersGroup *> hash;
     static std::vector<CharactersGroup *> list;
+    static uint16_t gameserverTimeoutms;
+    static uint32_t pingMSecond;
     std::string name;
     uint8_t index;
 private:

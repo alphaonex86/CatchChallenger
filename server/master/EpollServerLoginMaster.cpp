@@ -30,6 +30,7 @@ EpollServerLoginMaster *EpollServerLoginMaster::epollServerLoginMaster=NULL;
 
 EpollServerLoginMaster::EpollServerLoginMaster() :
     purgeTheLockedAccount(NULL),
+    checkTimeoutGameServer(NULL),
     server_ip(NULL),
     server_port(NULL),
     rawServerListForC211(static_cast<char *>(malloc(sizeof(EpollClientLoginMaster::loginSettingsAndCharactersGroup)))),
@@ -108,16 +109,31 @@ EpollServerLoginMaster::~EpollServerLoginMaster()
         rawServerListForC211=NULL;
         rawServerListForC211Size=0;
     }
+    /*
     auto i = CharactersGroup::hash.begin();
     while (i != CharactersGroup::hash.cend()) {
         delete i->second;
         ++i;
+    }*/
+    {
+        unsigned int index=0;
+        while(index<CharactersGroup::list.size())
+        {
+            delete CharactersGroup::list.at(index);
+            index++;
+        }
     }
     CharactersGroup::hash.clear();
+    CharactersGroup::list.clear();
     if(purgeTheLockedAccount!=NULL)
     {
         delete purgeTheLockedAccount;
         purgeTheLockedAccount=NULL;
+    }
+    if(checkTimeoutGameServer!=NULL)
+    {
+        delete checkTimeoutGameServer;
+        checkTimeoutGameServer=NULL;
     }
 }
 
@@ -178,6 +194,7 @@ void EpollServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
         settings.setValue("maxLockAge",10*60);
     if(!settings.contains("purgeLockPeriod"))
         settings.setValue("purgeLockPeriod",3*60);
+    settings.sync();
     CommonSettingsCommon::commonSettingsCommon.automatic_account_creation=stringtobool(settings.value("automatic_account_creation"));
     bool ok;
     CommonSettingsCommon::commonSettingsCommon.character_delete_time=stringtouint32(settings.value("character_delete_time"),&ok);
@@ -232,6 +249,7 @@ void EpollServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
         settings.setValue("maxPlayerItems",30);
     if(!settings.contains("maxWarehousePlayerItems"))
         settings.setValue("maxWarehousePlayerItems",150);
+    settings.sync();
     CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters=stringtouint8(settings.value("maxPlayerMonsters"),&ok);
     if(CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters==0 || !ok)
     {
@@ -255,6 +273,31 @@ void EpollServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
     {
         std::cerr << "maxWarehousePlayerItems==0 (abort)" << std::endl;
         abort();
+    }
+
+    {
+        CharactersGroup::lastPingStarted=msFrom1970();
+        settings.beginGroup("gameserver");
+        if(!settings.contains("pingSecond"))
+            settings.setValue("pingSecond",60);
+        CharactersGroup::pingMSecond=stringtouint16(settings.value("pingSecond"),&ok)*1000;
+        if(CharactersGroup::pingMSecond==0 || !ok)
+        {
+            std::cerr << "gameserver pingSecond (abort)" << std::endl;
+            abort();
+        }
+        checkTimeoutGameServer=new CheckTimeoutGameServer(CharactersGroup::pingMSecond);
+
+        if(!settings.contains("gameserverTimeoutms"))
+            settings.setValue("gameserverTimeoutms",1000);
+        CharactersGroup::gameserverTimeoutms=stringtouint16(settings.value("gameserverTimeoutms"),&ok);
+        if(CharactersGroup::gameserverTimeoutms==0 || CharactersGroup::gameserverTimeoutms>CharactersGroup::pingMSecond*1000 || !ok)
+        {
+            std::cerr << "gameserver gameserverTimeoutms (abort)" << std::endl;
+            abort();
+        }
+        settings.sync();
+        settings.endGroup();
     }
 }
 
@@ -478,6 +521,7 @@ std::vector<std::string> EpollServerLoginMaster::loadCharactersGroup(TinyXMLSett
         settings.endGroup();
     }
     std::sort(charactersGroupList.begin(),charactersGroupList.end());
+    CharactersGroup::lastPingStarted=msFrom1970();
     return charactersGroupList;
 }
 
