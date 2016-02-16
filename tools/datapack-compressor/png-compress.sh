@@ -46,7 +46,7 @@ then
                     rm -f ${VARIABLE}
                     #! \warn /usr/bin/zopflipng -> disabled because froze at idle, 0% of cpu, do nothing, all blocked, temporal solution: remove the file before do it
                     #${ZOPFLI} --iterations=50 --splitting=3 --filters=01234mepb --lossy_8bit --lossy_transparent /tmp/tmp${TEMPRANDOM}2.png "${VARIABLE}" > /tmp/png-compress.log 2>&1
-                    ${ZOPFLI} -m /tmp/tmp${TEMPRANDOM}2.png "${VARIABLE}" > /tmp/png-compress.log 2>&1
+                    ${ZOPFLI} /tmp/tmp${TEMPRANDOM}2.png "${VARIABLE}" > /tmp/png-compress.log 2>&1
                     # not work for big image size, ehoeks-zopfli-png give: uncompress returned Z_BUF_ERROR
                     #${ZOPFLI} --iterations=50 -c --png /tmp/tmp${TEMPRANDOM}2.png > "${VARIABLE}" 2> /tmp/png-compress.log
                     actualsize=$(wc -c <"${VARIABLE}")

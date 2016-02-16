@@ -459,6 +459,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             ProtocolParsingBase::packetFixedSize[0xE1]=0xFE;
             ProtocolParsingBase::packetFixedSize[0xE2]=2;
             ProtocolParsingBase::packetFixedSize[0xF8]=4+4;
+            ProtocolParsingBase::packetFixedSize[0xF9]=0;
 
             //define the size of the reply
             ProtocolParsingBase::packetFixedSize[128+0x80]=0xFE;
@@ -503,6 +504,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             ProtocolParsingBase::packetFixedSize[128+0xE1]=0;
             ProtocolParsingBase::packetFixedSize[128+0xE2]=0;
             ProtocolParsingBase::packetFixedSize[128+0xF8]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0xF9]=0;
 
             //register meta type
             #ifndef EPOLLCATCHCHALLENGERSERVER
