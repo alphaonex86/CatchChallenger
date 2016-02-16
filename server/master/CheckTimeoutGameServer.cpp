@@ -25,7 +25,11 @@ void CheckTimeoutGameServer::exec()
                     if(msecondFrom1970>gameServer->lastPingStarted)
                     {
                         std::cerr << "Locale timedrift detected" << std::endl;
-                        send the ping
+                        if(gameserver->pingInProgress==false)
+                        {
+                            gameserver->pingInProgress=true;
+                            gameserver->sendGameServerPing();
+                        }
                         gameServer->lastPingStarted=msecondFrom1970;
                     }
                     else
@@ -35,7 +39,29 @@ void CheckTimeoutGameServer::exec()
                         {
                             std::cerr << "Game server don't reponds to ping, remove it" << std::endl;
                             gameServer->close();
-                            reply unikey key is ok
+
+                            removeFromQueryReceived(queryNumber);
+                            newServerToBeMaster->sendGameServerRegistrationReply(false);
+
+                            if(!gameServer->secondServerInConflict.empty())
+                            {
+                                EpollClientLoginMaster * newServerToBeMaster=gameserver->secondServerInConflict->front();
+                                gameserver->secondServerInConflict->removeFront();
+
+                                if(!gameserver->secondServerInConflict.empty())
+                                {
+                                    newServerToBeMaster->secondServerInConflict=gameserver->secondServerInConflict;
+
+                                    unsigned int indexServerToUpdate=0;
+                                    while(indexServerToUpdate<newServerToBeMaster->secondServerInConflict.size())
+                                    {
+                                        newServerToBeMaster->secondServerInConflict->at(indexServerToUpdate).inConflicWithTheMainServer=newServerToBeMaster;
+                                        indexServerToUpdate++;
+                                    }
+
+                                    newServerToBeMaster->sendGameServerPing();
+                                }
+                            }
                         }
                     }
                 }
@@ -58,7 +84,11 @@ void CheckTimeoutGameServer::timeDrift()
         CharactersGroup::InternalGameServer * gameServer=EpollClientLoginMaster::gameServers.at(index).charactersGroupForGameServerInformation;
         if(gameServer!=NULL)
         {
-            send the ping
+            if(gameserver->pingInProgress==false)
+            {
+                gameserver->pingInProgress=true;
+                gameserver->sendGameServerPing();
+            }
             gameServer->lastPingStarted=msFrom1970();
         }
         index++;

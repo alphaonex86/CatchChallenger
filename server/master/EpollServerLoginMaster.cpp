@@ -280,7 +280,7 @@ void EpollServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
         settings.beginGroup("gameserver");
         if(!settings.contains("pingSecond"))
             settings.setValue("pingSecond",60);
-        CharactersGroup::pingMSecond=stringtouint16(settings.value("pingSecond"),&ok)*1000;
+        CharactersGroup::pingMSecond=stringtouint32(settings.value("pingSecond"),&ok)*1000;
         if(CharactersGroup::pingMSecond==0 || !ok)
         {
             std::cerr << "gameserver pingSecond (abort)" << std::endl;
@@ -291,7 +291,7 @@ void EpollServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
         if(!settings.contains("gameserverTimeoutms"))
             settings.setValue("gameserverTimeoutms",1000);
         CharactersGroup::gameserverTimeoutms=stringtouint16(settings.value("gameserverTimeoutms"),&ok);
-        if(CharactersGroup::gameserverTimeoutms==0 || CharactersGroup::gameserverTimeoutms>CharactersGroup::pingMSecond*1000 || !ok)
+        if(CharactersGroup::gameserverTimeoutms==0 || !ok)
         {
             std::cerr << "gameserver gameserverTimeoutms (abort)" << std::endl;
             abort();
