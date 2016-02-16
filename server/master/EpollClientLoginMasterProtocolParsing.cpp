@@ -521,6 +521,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
 
                 if(Q_UNLIKELY(charactersGroupForGameServer->gameServers.find(uniqueKey)!=charactersGroupForGameServer->gameServers.cend()))
                 {
+                    wait the other server reply
                     uint32_t newUniqueKey;
                     do
                     {
@@ -920,6 +921,22 @@ bool EpollClientLoginMaster::parseReplyData(const uint8_t &mainCodeType,const ui
                 else
                     parseNetworkReadError("main ident: "+std::to_string(mainCodeType)+", reply size for 8101 wrong");
                 loginServerReturnForCharaterSelect.erase(loginServerReturnForCharaterSelect.begin());
+            }
+            /*orderned mode else
+                std::cerr << "parseFullReplyData() !loginServerReturnForCharaterSelect.contains(queryNumber): mainCodeType: " << mainCodeType << ", subCodeType: " << subCodeType << ", queryNumber: " << queryNumber << std::endl;*/
+        }
+        return true;
+        //reply to ping
+        case 0xF9:
+        {
+            if(stat!=EpollClientLoginMasterStat::GameServer)
+            {
+                parseNetworkReadError("stat!=EpollClientLoginMasterStat::GameServer: "+std::to_string(stat)+" EpollClientLoginMaster::parseFullQuery()"+std::to_string(mainCodeType));
+                return false;
+            }
+            //orderned mode drop: if(loginServerReturnForCharaterSelect.contains(queryNumber)), use first
+            {
+                charactersGroupForGameServer->pingDone(charactersGroupForGameServerInformation);
             }
             /*orderned mode else
                 std::cerr << "parseFullReplyData() !loginServerReturnForCharaterSelect.contains(queryNumber): mainCodeType: " << mainCodeType << ", subCodeType: " << subCodeType << ", queryNumber: " << queryNumber << std::endl;*/

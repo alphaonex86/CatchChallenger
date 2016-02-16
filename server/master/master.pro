@@ -65,7 +65,8 @@ SOURCES += \
     ../../general/base/tinyXML/tinyxml.cpp \
     ../../general/base/tinyXML/tinyxmlerror.cpp \
     ../../general/base/tinyXML/tinyxmlparser.cpp \
-    ../base/TinyXMLSettings.cpp
+    ../base/TinyXMLSettings.cpp \
+    CheckTimeoutGameServer.cpp
 
 HEADERS += \
     EpollClientLoginMaster.h \
@@ -99,4 +100,5 @@ HEADERS += \
     ../../general/base/tinyXML/tinystr.h \
     ../../general/base/tinyXML/tinyxml.h \
     ../base/TinyXMLSettings.h \
-    ../../general/base/GeneralVariable.h
+    ../../general/base/GeneralVariable.h \
+    CheckTimeoutGameServer.h

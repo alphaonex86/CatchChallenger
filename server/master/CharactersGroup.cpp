@@ -5,10 +5,13 @@
 
 using namespace CatchChallenger;
 
+uint64_t CharactersGroup::lastPingStarted=0;
 int CharactersGroup::serverWaitedToBeReady=0;
 std::unordered_map<std::string,CharactersGroup *> CharactersGroup::hash;
 std::vector<CharactersGroup *> CharactersGroup::list;
 uint16_t CharactersGroup::maxLockAge=60;
+uint16_t CharactersGroup::gameserverTimeoutms=1000;
+uint32_t CharactersGroup::pingMSecond=60*1000;
 
 CharactersGroup::CharactersGroup(const char * const db, const char * const host, const char * const login, const char * const pass, const uint8_t &considerDownAfterNumberOfTry, const uint8_t &tryInterval, const std::string &name) :
     databaseBaseCommon(new EpollPostgresql())
@@ -205,6 +208,7 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
     tempServer.host=host;//std::string::fromUtf8(hostData,hostDataSize)
     tempServer.port=port;
     tempServer.link=client;
+    tempServer.lastPingStarted=msFrom1970();
 
     tempServer.logicalGroupIndex=logicalGroupIndex;
     tempServer.metaData=metaData;
@@ -419,6 +423,11 @@ void CharactersGroup::setMaxLockAge(const uint16_t &maxLockAge)
         return;
     }
     CharactersGroup::maxLockAge=maxLockAge;
+}
+
+void CharactersGroup::pingDone(CharactersGroup::InternalGameServer * const charactersGroupForGameServerInformation)
+{
+    reply unikey key is not valid, renew
 }
 
 void CharactersGroup::addToCacheLockToDelete(const uint32_t &uniqueKey,const uint64_t &timestampsToDelete)
