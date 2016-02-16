@@ -208,7 +208,9 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
     tempServer.host=host;//std::string::fromUtf8(hostData,hostDataSize)
     tempServer.port=port;
     tempServer.link=client;
+
     tempServer.lastPingStarted=msFrom1970();
+    tempServer.pingInProgress=false;
 
     tempServer.logicalGroupIndex=logicalGroupIndex;
     tempServer.metaData=metaData;
@@ -427,6 +429,7 @@ void CharactersGroup::setMaxLockAge(const uint16_t &maxLockAge)
 
 void CharactersGroup::pingDone(CharactersGroup::InternalGameServer * const charactersGroupForGameServerInformation)
 {
+
     reply unikey key is not valid, renew
 }
 
