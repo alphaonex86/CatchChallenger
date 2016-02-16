@@ -101,6 +101,12 @@ bool LinkToMaster::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNu
                 }
             }
         break;
+        case 0xF9:
+            //reply to ping
+            removeFromQueryReceived(queryNumber);
+            LinkToMaster::protocolReplyPing[0x01]=queryNumber;
+            internalSendRawSmallPacket(LinkToMaster::protocolReplyPing,sizeof(LinkToMaster::protocolReplyPing));
+        break;
         default:
             parseNetworkReadError("unknown main ident: "+std::to_string(mainCodeType));
             return false;

@@ -11,6 +11,7 @@
 #include "../base/BaseServerMasterSendDatapack.h"
 #include "../base/TinyXMLSettings.h"
 #include "PurgeTheLockedAccount.h"
+#include "CheckTimeoutGameServer.h"
 
 #include <string>
 #include <vector>
@@ -27,6 +28,7 @@ public:
     static EpollServerLoginMaster *epollServerLoginMaster;
 private:
     PurgeTheLockedAccount * purgeTheLockedAccount;
+    CheckTimeoutGameServer * checkTimeoutGameServer;
     char * server_ip;
     char * server_port;
     char * rawServerListForC211;

@@ -46,6 +46,7 @@ public:
     static char protocolReplyNoMoreToken[7];
     static char protocolReplyAlreadyConnectedToken[7];
     static char protocolReplyGetToken[6+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
+    static char protocolReplyPing[2];
     static char sendDisconnectedPlayer[1+4];
     static char sendCurrentPlayer[1+2];
     static unsigned char header_magic_number[9];
