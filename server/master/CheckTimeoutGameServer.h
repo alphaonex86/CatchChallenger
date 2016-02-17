@@ -4,6 +4,7 @@
 #ifdef EPOLLCATCHCHALLENGERSERVER
 
 #include "../epoll/EpollTimer.h"
+#include <stdint.h>
 
 namespace CatchChallenger {
 class CheckTimeoutGameServer
