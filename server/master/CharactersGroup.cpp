@@ -183,7 +183,7 @@ BaseClassSwitch::EpollObjectType CharactersGroup::getType() const
     return BaseClassSwitch::EpollObjectType::Client;
 }
 
-CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(void * const client, const uint32_t &uniqueKey, const std::string &host,
+CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(EpollClientLoginMaster * const client, const uint32_t &uniqueKey, const std::string &host,
                                                                               const uint16_t &port, const std::string &metaData, const uint32_t &logicalGroupIndex,
                                                                               const uint16_t &currentPlayer, const uint16_t &maxPlayer,const std::unordered_set<uint32_t> &lockedAccount)
 {
@@ -425,12 +425,6 @@ void CharactersGroup::setMaxLockAge(const uint16_t &maxLockAge)
         return;
     }
     CharactersGroup::maxLockAge=maxLockAge;
-}
-
-void CharactersGroup::pingDone(CharactersGroup::InternalGameServer * const charactersGroupForGameServerInformation)
-{
-
-    reply unikey key is not valid, renew
 }
 
 void CharactersGroup::addToCacheLockToDelete(const uint32_t &uniqueKey,const uint64_t &timestampsToDelete)

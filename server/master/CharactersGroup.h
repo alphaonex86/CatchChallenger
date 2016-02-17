@@ -44,7 +44,7 @@ public:
     };
 
     BaseClassSwitch::EpollObjectType getType() const;
-    InternalGameServer * addGameServerUniqueKey(void * const client, const uint32_t &uniqueKey, const std::string &host, const uint16_t &port,
+    InternalGameServer * addGameServerUniqueKey(EpollClientLoginMaster * const client, const uint32_t &uniqueKey, const std::string &host, const uint16_t &port,
                                 const std::string &metaData, const uint32_t &logicalGroupIndex,
                                 const uint16_t &currentPlayer, const uint16_t &maxPlayer, const std::unordered_set<uint32_t> &lockedAccount);
     void removeGameServerUniqueKey(void * const client);
@@ -58,7 +58,6 @@ public:
     void waitBeforeReconnect(const uint32_t &characterId);
     void purgeTheLockedAccount();
     void setMaxLockAge(const uint16_t &maxLockAge);
-    void pingDone(CharactersGroup::InternalGameServer * const charactersGroupForGameServerInformation);
 
     uint32_t maxClanId;
     uint32_t maxCharacterId;
