@@ -43,8 +43,7 @@ void CheckTimeoutGameServer::exec()
                                 EpollClientLoginMaster * newServerToBeMaster=gameServer->secondServerInConflict.front();
                                 gameServer->secondServerInConflict.erase(gameServer->secondServerInConflict.cbegin());
 
-                                newServerToBeMaster->removeFromQueryReceived(newServerToBeMaster->queryNumberInConflicWithTheMainServer);
-                                newServerToBeMaster->sendGameServerRegistrationReply(false);
+                                newServerToBeMaster->sendGameServerRegistrationReply(newServerToBeMaster->queryNumberInConflicWithTheMainServer,false);
 
                                 CharactersGroup::InternalGameServer tempData;
                                 if(newServerToBeMaster->charactersGroupForGameServerInformation!=NULL)

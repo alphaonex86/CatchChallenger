@@ -334,13 +334,15 @@ void EpollClientLoginMaster::disconnectForDuplicateConnexionDetected(const uint3
     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::duplicateConnexionDetected),sizeof(EpollClientLoginMaster::duplicateConnexionDetected));
 }
 
-bool EpollClientLoginMaster::sendGameServerRegistrationReply(bool generateNewUniqueKey)
+bool EpollClientLoginMaster::sendGameServerRegistrationReply(const uint8_t queryNumber, bool generateNewUniqueKey)
 {
+    removeFromQueryReceived(queryNumber);
+
     //send the network reply
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
     posOutput+=1;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumberInConflicWithTheMainServer;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
     posOutput+=1+4;
 
     queryNumberInConflicWithTheMainServer=0;
@@ -455,8 +457,8 @@ bool EpollClientLoginMaster::sendGameServerPing()
 
     const uint8_t &queryNumber=queryNumberList.back();
     registerOutputQuery(queryNumber,0xF9);
-    ProtocolParsingBase::tempBigBufferForOutput[0xF9]=queryNumber;
+    ProtocolParsingBase::tempBigBufferForOutput[0x00]=0xF9;
     ProtocolParsingBase::tempBigBufferForOutput[0x01]=queryNumber;
     queryNumberList.pop_back();
-    return sendRawBlock(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),sizeof(2));
+    return sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,2);
 }
