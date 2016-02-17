@@ -30,7 +30,7 @@ public:
     void selectCharacter_ReturnFailed(const uint8_t &query_id, const uint8_t &errorCode);
     void disconnectForDuplicateConnexionDetected(const uint32_t &characterId);
     static void broadcastGameServerChange();
-    bool sendGameServerRegistrationReply(bool generateNewUniqueKey=false);
+    bool sendGameServerRegistrationReply(const uint8_t queryNumber,bool generateNewUniqueKey);
     bool sendGameServerPing();
     bool sendRawBlock(const char * const data,const int &size);
     enum EpollClientLoginMasterStat : std::uint8_t
