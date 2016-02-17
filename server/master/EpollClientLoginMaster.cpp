@@ -1,5 +1,6 @@
 #include "EpollClientLoginMaster.h"
 #include "EpollServerLoginMaster.h"
+#include "../../general/base/CommonSettingsCommon.h"
 
 #include <iostream>
 #include <string>
@@ -424,30 +425,33 @@ bool EpollClientLoginMaster::sendGameServerRegistrationReply(bool generateNewUni
     }
 
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
-    gameserver->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
     //only game server will receive query
+    if(queryNumberList.empty())
     {
-        gameserver->queryNumberList.reserve(CATCHCHALLENGER_MAXPROTOCOLQUERY);
+        queryNumberList.reserve(CATCHCHALLENGER_MAXPROTOCOLQUERY);
         int index=0;
         while(index<CATCHCHALLENGER_MAXPROTOCOLQUERY)
         {
-            gameserver->queryNumberList.push_back(index);
+            queryNumberList.push_back(index);
             index++;
         }
     }
-    EpollClientLoginMaster::gameServers.push_back(gameserver);
-    charactersGroupForGameServerInformation=charactersGroupForGameServer->addGameServerUniqueKey(
-                this,uniqueKey,host,port,xml,logicalGroupIndex,currentPlayer,maxPlayer,connectedPlayer);
-    gameserver->stat=EpollClientLoginMasterStat::GameServer;
-    gameserver->currentPlayerForGameServerToUpdate=false;
+    EpollClientLoginMaster::gameServers.push_back(this);
+    stat=EpollClientLoginMasterStat::GameServer;
+    currentPlayerForGameServerToUpdate=false;
+
+    return true;
 }
 
 bool EpollClientLoginMaster::sendGameServerPing()
 {
-    if(pingInProgress==true)
-        return;
-    pingInProgress=true;
+    if(charactersGroupForGameServerInformation==NULL)
+        return false;
+    if(charactersGroupForGameServerInformation->pingInProgress==true)
+        return false;
+    charactersGroupForGameServerInformation->pingInProgress=true;
 
     const uint8_t &queryNumber=queryNumberList.back();
     registerOutputQuery(queryNumber,0xF9);

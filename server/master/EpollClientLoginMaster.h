@@ -119,6 +119,8 @@ private:
     bool parseInputBeforeLogin(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
     void disconnectClient();
     void updateConsoleCountServer();
+
+    friend class CheckTimeoutGameServer;
 };
 }
 
