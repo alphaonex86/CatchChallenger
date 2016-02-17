@@ -536,11 +536,12 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
 
                     charactersGroupForGameServerInformation->lockedAccountByGameserver=connectedPlayer;
 
+                    queryNumberInConflicWithTheMainServer=queryNumber;
+
                     return true;
                 }
 
-                removeFromQueryReceived(queryNumber);
-                sendGameServerRegistrationReply();
+                sendGameServerRegistrationReply(queryNumber,false);
                 charactersGroupForGameServerInformation=charactersGroupForGameServer->addGameServerUniqueKey(
                             this,uniqueKey,host,port,metaData,logicalGroupIndex,currentPlayer,maxPlayer,connectedPlayer);
 
@@ -871,24 +872,23 @@ bool EpollClientLoginMaster::parseReplyData(const uint8_t &mainCodeType,const ui
                 unsigned int index=0;
                 while(index<secondServerInConflict.size())
                 {
-                    EpollClientLoginMaster * const gameserver=secondServerInConflict.at(index);
+                    EpollClientLoginMaster * const gameServer=secondServerInConflict.at(index);
 
-                    removeFromQueryReceived(queryNumber);
-                    gameserver->sendGameServerRegistrationReply(true);
+                    gameServer->sendGameServerRegistrationReply(gameServer->queryNumberInConflicWithTheMainServer,true);
 
                     CharactersGroup::InternalGameServer tempData;
-                    if(charactersGroupForGameServerInformation!=NULL)
+                    if(gameServer->charactersGroupForGameServerInformation!=NULL)
                     {
-                        tempData=*charactersGroupForGameServerInformation;
-                        delete charactersGroupForGameServerInformation;
-                        charactersGroupForGameServerInformation=NULL;
+                        tempData=*gameServer->charactersGroupForGameServerInformation;
+                        delete gameServer->charactersGroupForGameServerInformation;
+                        gameServer->charactersGroupForGameServerInformation=NULL;
                     }
                     else
                     {
                         std::cerr << "charactersGroupForGameServerInformation==NULL at " << __FILE__ << ":" << __LINE__ << std::endl;
                         abort();
                     }
-                    charactersGroupForGameServerInformation=charactersGroupForGameServer->addGameServerUniqueKey(
+                    gameServer->charactersGroupForGameServerInformation=charactersGroupForGameServer->addGameServerUniqueKey(
                                 this,tempData.uniqueKey,tempData.host,tempData.port,tempData.metaData,tempData.logicalGroupIndex,tempData.currentPlayer,tempData.maxPlayer,tempData.lockedAccountByGameserver);
 
                     index++;
