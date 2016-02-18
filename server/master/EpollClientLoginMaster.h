@@ -33,6 +33,7 @@ public:
     bool sendGameServerRegistrationReply(const uint8_t queryNumber,bool generateNewUniqueKey);
     bool sendGameServerPing();
     bool sendRawBlock(const char * const data,const int &size);
+    void passUniqueKeyToNextGameServer();
     enum EpollClientLoginMasterStat : std::uint8_t
     {
         None,
