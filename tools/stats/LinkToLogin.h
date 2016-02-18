@@ -65,7 +65,8 @@ public:
     static unsigned char header_magic_number[5];
     static unsigned char private_token_statclient[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
 
-    FILE * pFile;
+    static FILE * pFile;
+    static std::string pFilePath;
     static LinkToLogin *linkToLogin;
     static int linkToLoginSocketFd;
     static bool haveTheFirstSslHeader;
@@ -81,6 +82,7 @@ public:
     void readTheFirstSslHeader();
     void moveClientFastPath(const uint8_t &, const uint8_t &);
     void updateJsonFile();
+    static void removeJsonFile();
 protected:
     void disconnectClient();
     void errorParsingLayer(const std::string &error);
