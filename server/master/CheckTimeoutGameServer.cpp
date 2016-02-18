@@ -5,9 +5,9 @@
 
 using namespace CatchChallenger;
 
-CheckTimeoutGameServer::CheckTimeoutGameServer(const uint16_t pingSecond)
+CheckTimeoutGameServer::CheckTimeoutGameServer(const uint32_t pingMSecond)
 {
-    setInterval(pingSecond*1000);
+    start(pingMSecond);
 }
 
 void CheckTimeoutGameServer::exec()
@@ -25,7 +25,7 @@ void CheckTimeoutGameServer::exec()
                 CharactersGroup::InternalGameServer * const gameServerInternal=gameServer->charactersGroupForGameServerInformation;
                 if(gameServerInternal!=NULL)
                 {
-                    if(msecondFrom1970>gameServerInternal->lastPingStarted)
+                    if(msecondFrom1970<gameServerInternal->lastPingStarted)
                     {
                         std::cerr << "Locale timedrift detected" << std::endl;
                         gameServer->sendGameServerPing();
@@ -33,65 +33,36 @@ void CheckTimeoutGameServer::exec()
                     }
                     else
                     {
-                        const uint64_t diff=(msecondFrom1970-gameServerInternal->lastPingStarted);
-                        if(diff>CharactersGroup::gameserverTimeoutms)
+                        if(gameServerInternal->pingInProgress)
                         {
-                            gameServer->errorParsingLayer("Game server don't reponds to ping, remove it");
-
-                            if(!gameServer->secondServerInConflict.empty())
+                            const uint64_t diff=(msecondFrom1970-gameServerInternal->lastPingStarted);
+                            if(diff>CharactersGroup::gameserverTimeoutms)
                             {
-                                EpollClientLoginMaster * newServerToBeMaster=gameServer->secondServerInConflict.front();
-                                gameServer->secondServerInConflict.erase(gameServer->secondServerInConflict.cbegin());
-
-                                newServerToBeMaster->sendGameServerRegistrationReply(newServerToBeMaster->queryNumberInConflicWithTheMainServer,false);
-
-                                CharactersGroup::InternalGameServer tempData;
-                                if(newServerToBeMaster->charactersGroupForGameServerInformation!=NULL)
-                                {
-                                    tempData=*newServerToBeMaster->charactersGroupForGameServerInformation;
-                                    delete newServerToBeMaster->charactersGroupForGameServerInformation;
-                                    newServerToBeMaster->charactersGroupForGameServerInformation=NULL;
-                                }
-                                else
-                                {
-                                    std::cerr << "newServerToBeMaster->charactersGroupForGameServerInformation==NULL at " << __FILE__ << ":" << __LINE__ << std::endl;
-                                    abort();
-                                }
-                                newServerToBeMaster->charactersGroupForGameServerInformation=newServerToBeMaster->charactersGroupForGameServer->addGameServerUniqueKey(
-                                            newServerToBeMaster,tempData.uniqueKey,tempData.host,tempData.port,tempData.metaData,tempData.logicalGroupIndex,tempData.currentPlayer,tempData.maxPlayer,tempData.lockedAccountByGameserver);
-
-
-                                if(!gameServer->secondServerInConflict.empty())
-                                {
-                                    newServerToBeMaster->secondServerInConflict=gameServer->secondServerInConflict;
-
-                                    unsigned int indexServerToUpdate=0;
-                                    while(indexServerToUpdate<newServerToBeMaster->secondServerInConflict.size())
-                                    {
-                                        EpollClientLoginMaster * const serverToMasterUpdate=newServerToBeMaster->secondServerInConflict.at(indexServerToUpdate);
-                                        serverToMasterUpdate->inConflicWithTheMainServer=newServerToBeMaster;
-                                        indexServerToUpdate++;
-                                    }
-
-                                    newServerToBeMaster->sendGameServerPing();
-                                }
+                                gameServer->errorParsingLayer("Game server don't reponds to ping, remove it, not responds into: "+std::to_string(diff)+", max: "+std::to_string(CharactersGroup::gameserverTimeoutms));
+                                gameServer->passUniqueKeyToNextGameServer();
                             }
                         }
                     }
                 }
                 index++;
             }
+            CharactersGroup::lastPingStarted=msFrom1970();
         }
         else
+        {
+            std::cerr << "Timedrift detected (diff " << diff << "> CharactersGroup::pingMSecond " << CharactersGroup::pingMSecond << ")" << std::endl;
             timeDrift();
+        }
     }
     else
+    {
+        std::cerr << "Timedrift detected (msecondFrom1970<CharactersGroup::lastPingStarted)" << std::endl;
         timeDrift();
+    }
 }
 
 void CheckTimeoutGameServer::timeDrift()
 {
-    std::cerr << "Timedrift detected" << std::endl;
     unsigned int index=0;
     while(index<EpollClientLoginMaster::gameServers.size())
     {
