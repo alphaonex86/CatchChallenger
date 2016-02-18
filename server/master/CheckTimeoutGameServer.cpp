@@ -5,18 +5,18 @@
 
 using namespace CatchChallenger;
 
-CheckTimeoutGameServer::CheckTimeoutGameServer(const uint32_t pingMSecond)
+CheckTimeoutGameServer::CheckTimeoutGameServer(const uint32_t checkTimeoutGameServerMSecond)
 {
-    start(pingMSecond);
+    start(checkTimeoutGameServerMSecond);
 }
 
 void CheckTimeoutGameServer::exec()
 {
     const uint64_t &msecondFrom1970=msFrom1970();
-    if(msecondFrom1970>CharactersGroup::lastPingStarted)
+    if(msecondFrom1970>=CharactersGroup::lastPingStarted)
     {
         const uint64_t diff=(msecondFrom1970-CharactersGroup::lastPingStarted)*100/120;//-20%
-        if(diff<CharactersGroup::pingMSecond)
+        if(diff<CharactersGroup::checkTimeoutGameServerMSecond)
         {
             unsigned int index=0;
             while(index<EpollClientLoginMaster::gameServers.size())
@@ -27,8 +27,8 @@ void CheckTimeoutGameServer::exec()
                 {
                     if(msecondFrom1970<gameServerInternal->lastPingStarted)
                     {
-                        std::cerr << "Locale timedrift detected" << std::endl;
-                        gameServer->sendGameServerPing();
+                        std::cerr << "CheckTimeoutGameServer::exec(): Locale timedrift detected" << std::endl;
+                        gameServer->sendGameServerPing(msecondFrom1970);
                         gameServerInternal->lastPingStarted=msecondFrom1970;
                     }
                     else
@@ -50,19 +50,20 @@ void CheckTimeoutGameServer::exec()
         }
         else
         {
-            std::cerr << "Timedrift detected (diff " << diff << "> CharactersGroup::pingMSecond " << CharactersGroup::pingMSecond << ")" << std::endl;
+            std::cerr << "CheckTimeoutGameServer::exec(): Timedrift detected (diff " << diff << "> CharactersGroup::checkTimeoutGameServerMSecond " << CharactersGroup::checkTimeoutGameServerMSecond << ")" << std::endl;
             timeDrift();
         }
     }
     else
     {
-        std::cerr << "Timedrift detected (msecondFrom1970<CharactersGroup::lastPingStarted)" << std::endl;
+        std::cerr << "CheckTimeoutGameServer::exec(): Timedrift detected (msecondFrom1970 " << msecondFrom1970 << " < CharactersGroup::lastPingStarted " << CharactersGroup::lastPingStarted << " )" << std::endl;
         timeDrift();
     }
 }
 
 void CheckTimeoutGameServer::timeDrift()
 {
+    const uint64_t &msecondFrom1970=msFrom1970();
     unsigned int index=0;
     while(index<EpollClientLoginMaster::gameServers.size())
     {
@@ -70,8 +71,8 @@ void CheckTimeoutGameServer::timeDrift()
         CharactersGroup::InternalGameServer * const gameServerInternal=gameServer->charactersGroupForGameServerInformation;
         if(gameServer!=NULL)
         {
-            gameServer->sendGameServerPing();
-            gameServerInternal->lastPingStarted=msFrom1970();
+            gameServer->sendGameServerPing(msecondFrom1970);
+            gameServerInternal->lastPingStarted=msecondFrom1970;
         }
         index++;
     }
