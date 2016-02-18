@@ -11,7 +11,7 @@ class CheckTimeoutGameServer
         : public EpollTimer
 {
 public:
-    explicit CheckTimeoutGameServer(const uint32_t pingMSecond);
+    explicit CheckTimeoutGameServer(const uint32_t checkTimeoutGameServerMSecond);
 private:
     void exec();
     void timeDrift();

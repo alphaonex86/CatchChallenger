@@ -12,6 +12,7 @@
 #include "../base/TinyXMLSettings.h"
 #include "PurgeTheLockedAccount.h"
 #include "CheckTimeoutGameServer.h"
+#include "AutomaticPingSend.h"
 
 #include <string>
 #include <vector>
@@ -29,6 +30,7 @@ public:
 private:
     PurgeTheLockedAccount * purgeTheLockedAccount;
     CheckTimeoutGameServer * checkTimeoutGameServer;
+    AutomaticPingSend * automaticPingSend;
     char * server_ip;
     char * server_port;
     char * rawServerListForC211;
