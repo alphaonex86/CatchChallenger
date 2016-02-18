@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
                             }
                             epoll_event event;
                             event.data.ptr = client;
-                            event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
+                            event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP | EPOLLOUT /* CLOSE_WAIT */;//EPOLLET | EPOLLOUT
                             s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
                             if(s == -1)
                             {

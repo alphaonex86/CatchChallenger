@@ -71,6 +71,7 @@ public:
     static std::vector<CharactersGroup *> list;
     static uint16_t gameserverTimeoutms;
     static uint32_t pingMSecond;
+    static uint32_t checkTimeoutGameServerMSecond;
     std::string name;
     uint8_t index;
 private:

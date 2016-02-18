@@ -36,7 +36,11 @@ EpollClientLoginMaster::EpollClientLoginMaster(
 
 EpollClientLoginMaster::~EpollClientLoginMaster()
 {
-    never pass here for Game server don't reponds to ping
+    resetToDisconnect();
+}
+
+void EpollClientLoginMaster::resetToDisconnect()
+{
     if(stat==EpollClientLoginMasterStat::LoginServer)
     {
         vectorremoveOne(EpollClientLoginMaster::loginServers,this);
@@ -70,6 +74,7 @@ EpollClientLoginMaster::~EpollClientLoginMaster()
             }
             index++;
         }
+        charactersGroupForGameServerInformation=NULL;
         EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
         EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();
         EpollClientLoginMaster::broadcastGameServerChange();
@@ -81,6 +86,8 @@ EpollClientLoginMaster::~EpollClientLoginMaster()
         inConflicWithTheMainServer=NULL;
     }
     passUniqueKeyToNextGameServer();
+
+    stat=EpollClientLoginMasterStat::None;
 
     updateConsoleCountServer();
 }
@@ -125,7 +132,7 @@ void EpollClientLoginMaster::passUniqueKeyToNextGameServer()
                 indexServerToUpdate++;
             }
 
-            newServerToBeMaster->sendGameServerPing();
+            newServerToBeMaster->sendGameServerPing(msFrom1970());
         }
         secondServerInConflict.clear();
     }
@@ -133,6 +140,7 @@ void EpollClientLoginMaster::passUniqueKeyToNextGameServer()
 
 void EpollClientLoginMaster::disconnectClient()
 {
+    resetToDisconnect();
     updateConsoleCountServer();
     epollSocket.close();
     messageParsingLayer("Disconnected client");
@@ -497,14 +505,14 @@ bool EpollClientLoginMaster::sendGameServerRegistrationReply(const uint8_t query
     return true;
 }
 
-bool EpollClientLoginMaster::sendGameServerPing()
+bool EpollClientLoginMaster::sendGameServerPing(const uint64_t &msecondFrom1970)
 {
     if(charactersGroupForGameServerInformation==NULL)
         return false;
     if(charactersGroupForGameServerInformation->pingInProgress==true)
         return false;
     charactersGroupForGameServerInformation->pingInProgress=true;
-    charactersGroupForGameServerInformation->lastPingStarted=msFrom1970();
+    charactersGroupForGameServerInformation->lastPingStarted=msecondFrom1970;
 
     const uint8_t &queryNumber=queryNumberList.back();
     registerOutputQuery(queryNumber,0xF9);

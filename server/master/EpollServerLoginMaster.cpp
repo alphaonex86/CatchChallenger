@@ -31,6 +31,7 @@ EpollServerLoginMaster *EpollServerLoginMaster::epollServerLoginMaster=NULL;
 EpollServerLoginMaster::EpollServerLoginMaster() :
     purgeTheLockedAccount(NULL),
     checkTimeoutGameServer(NULL),
+    automaticPingSend(NULL),
     server_ip(NULL),
     server_port(NULL),
     rawServerListForC211(static_cast<char *>(malloc(sizeof(EpollClientLoginMaster::loginSettingsAndCharactersGroup)))),
@@ -134,6 +135,11 @@ EpollServerLoginMaster::~EpollServerLoginMaster()
     {
         delete checkTimeoutGameServer;
         checkTimeoutGameServer=NULL;
+    }
+    if(automaticPingSend!=NULL)
+    {
+        delete automaticPingSend;
+        automaticPingSend=NULL;
     }
 }
 
@@ -278,6 +284,16 @@ void EpollServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
     {
         CharactersGroup::lastPingStarted=msFrom1970();
         settings.beginGroup("gameserver");
+        if(!settings.contains("checkTimeoutGameServerSecond"))
+            settings.setValue("checkTimeoutGameServerSecond",1);
+        CharactersGroup::checkTimeoutGameServerMSecond=stringtouint32(settings.value("checkTimeoutGameServerSecond"),&ok)*1000;
+        if(CharactersGroup::checkTimeoutGameServerMSecond==0 || !ok)
+        {
+            std::cerr << "gameserver pingSecond (abort)" << std::endl;
+            abort();
+        }
+        checkTimeoutGameServer=new CheckTimeoutGameServer(CharactersGroup::checkTimeoutGameServerMSecond);
+
         if(!settings.contains("pingSecond"))
             settings.setValue("pingSecond",60);
         CharactersGroup::pingMSecond=stringtouint32(settings.value("pingSecond"),&ok)*1000;
@@ -286,7 +302,7 @@ void EpollServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
             std::cerr << "gameserver pingSecond (abort)" << std::endl;
             abort();
         }
-        checkTimeoutGameServer=new CheckTimeoutGameServer(CharactersGroup::pingMSecond);
+        automaticPingSend=new AutomaticPingSend(CharactersGroup::pingMSecond);
 
         if(!settings.contains("gameserverTimeoutms"))
             settings.setValue("gameserverTimeoutms",1000);
