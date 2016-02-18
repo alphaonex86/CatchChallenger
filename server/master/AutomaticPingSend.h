@@ -1,5 +1,5 @@
-#ifndef CATCHCHALLENGER_CheckTimeoutGameServer_H
-#define CATCHCHALLENGER_CheckTimeoutGameServer_H
+#ifndef CATCHCHALLENGER_AutomaticPingSend_H
+#define CATCHCHALLENGER_AutomaticPingSend_H
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
 
@@ -7,11 +7,11 @@
 #include <stdint.h>
 
 namespace CatchChallenger {
-class CheckTimeoutGameServer
+class AutomaticPingSend
         : public EpollTimer
 {
 public:
-    explicit CheckTimeoutGameServer(const uint32_t checkTimeoutGameServerMSecond);
+    explicit AutomaticPingSend(const uint32_t pingMSecond);
 private:
     void exec();
     void timeDrift();

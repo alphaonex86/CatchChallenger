@@ -31,9 +31,10 @@ public:
     void disconnectForDuplicateConnexionDetected(const uint32_t &characterId);
     static void broadcastGameServerChange();
     bool sendGameServerRegistrationReply(const uint8_t queryNumber,bool generateNewUniqueKey);
-    bool sendGameServerPing();
+    bool sendGameServerPing(const uint64_t &msecondFrom1970);
     bool sendRawBlock(const char * const data,const int &size);
     void passUniqueKeyToNextGameServer();
+    void resetToDisconnect();
     enum EpollClientLoginMasterStat : std::uint8_t
     {
         None,

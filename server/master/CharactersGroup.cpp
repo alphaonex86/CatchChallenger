@@ -12,6 +12,7 @@ std::vector<CharactersGroup *> CharactersGroup::list;
 uint16_t CharactersGroup::maxLockAge=60;
 uint16_t CharactersGroup::gameserverTimeoutms=1000;
 uint32_t CharactersGroup::pingMSecond=60*1000;
+uint32_t CharactersGroup::checkTimeoutGameServerMSecond=1000;
 
 CharactersGroup::CharactersGroup(const char * const db, const char * const host, const char * const login, const char * const pass, const uint8_t &considerDownAfterNumberOfTry, const uint8_t &tryInterval, const std::string &name) :
     databaseBaseCommon(new EpollPostgresql())

@@ -514,7 +514,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 if(Q_UNLIKELY(charactersGroupForGameServer->gameServers.find(uniqueKey)!=charactersGroupForGameServer->gameServers.cend()))
                 {
                     CharactersGroup::InternalGameServer * theMainGameserver=&charactersGroupForGameServer->gameServers[uniqueKey];
-                    theMainGameserver->link->sendGameServerPing();
+                    theMainGameserver->link->sendGameServerPing(msFrom1970());
                     theMainGameserver->link->secondServerInConflict.push_back(this);
 
                     inConflicWithTheMainServer=theMainGameserver->link;
