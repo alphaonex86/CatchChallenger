@@ -85,6 +85,8 @@ int main(int argc, char *argv[])
         settings.sync();
 
         outputFile=settings.value("outputFile");
+        LinkToLogin::linkToLogin->pFilePath=outputFile;
+
         const std::vector<char> &tokenBinary=hexatoBinary(token);
         if(tokenBinary.empty())
         {

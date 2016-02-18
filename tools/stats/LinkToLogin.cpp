@@ -85,6 +85,7 @@ int LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const 
     server=gethostbyname(host);
     if(server==NULL)
     {
+        removeJsonFile();
         std::cerr << "ERROR, no such host to login server (abort)" << std::endl;
         abort();
     }
@@ -117,6 +118,7 @@ int LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const 
         }
         if(connStatusType<0)
         {
+            removeJsonFile();
             std::cerr << "ERROR connecting to login server (abort)" << std::endl;
             abort();
         }
@@ -234,6 +236,7 @@ void LinkToLogin::readTheFirstSslHeader()
     char buffer[1];
     if(::read(LinkToLogin::linkToLoginSocketFd,buffer,1)<0)
     {
+        removeJsonFile();
         std::cerr << "ERROR reading from socket to login server (abort)" << std::endl;
         abort();
         return;
@@ -349,6 +352,7 @@ void LinkToLogin::tryReconnect()
     else
     {
         std::cout << "Try reconnect to login..." << std::endl;
+        removeJsonFile();
         if(tryInterval<=0 || tryInterval>=60)
             this->tryInterval=5;
         if(considerDownAfterNumberOfTry<=0 && considerDownAfterNumberOfTry>=60)
@@ -394,7 +398,7 @@ void LinkToLogin::moveClientFastPath(const uint8_t &,const uint8_t &)
 
 void LinkToLogin::updateJsonFile()
 {
-    std::cout << "Update the json file..." << std::endl;
+    //std::cout << "Update the json file..." << std::endl;
 
     if(pFile!=NULL)
     {
@@ -452,5 +456,14 @@ void LinkToLogin::updateJsonFile()
             std::cerr << "unable to resize the output file: " << errno << std::endl;
             abort();
         }
+    }
+}
+
+void LinkToLogin::removeJsonFile()
+{
+    if(remove(pFilePath.c_str())!=0)
+    {
+        std::cerr << "Error deleting file: " << pFilePath << ", errno: " << errno << std::endl;
+        abort();
     }
 }
