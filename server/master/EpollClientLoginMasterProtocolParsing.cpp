@@ -867,7 +867,10 @@ bool EpollClientLoginMaster::parseReplyData(const uint8_t &mainCodeType,const ui
             //orderned mode drop: if(loginServerReturnForCharaterSelect.contains(queryNumber)), use first
             {
                 if(charactersGroupForGameServerInformation!=NULL)
+                {
                     charactersGroupForGameServerInformation->pingInProgress=false;
+                    charactersGroupForGameServerInformation->lastPingStarted=msFrom1970();/// \note Can be dropped to performance improvement
+                }
 
                 unsigned int index=0;
                 while(index<secondServerInConflict.size())

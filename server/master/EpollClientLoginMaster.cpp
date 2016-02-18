@@ -36,6 +36,7 @@ EpollClientLoginMaster::EpollClientLoginMaster(
 
 EpollClientLoginMaster::~EpollClientLoginMaster()
 {
+    never pass here for Game server don't reponds to ping
     if(stat==EpollClientLoginMasterStat::LoginServer)
     {
         vectorremoveOne(EpollClientLoginMaster::loginServers,this);
@@ -75,10 +76,59 @@ EpollClientLoginMaster::~EpollClientLoginMaster()
     }
     if(inConflicWithTheMainServer!=NULL)
     {
+        vectorremoveOne(EpollClientLoginMaster::gameServers,this);
         vectorremoveOne(inConflicWithTheMainServer->secondServerInConflict,this);
         inConflicWithTheMainServer=NULL;
     }
+    passUniqueKeyToNextGameServer();
+
     updateConsoleCountServer();
+}
+
+void EpollClientLoginMaster::passUniqueKeyToNextGameServer()
+{
+    if(!secondServerInConflict.empty())
+    {
+        std::cout << "Server with same unique key in waiting..." << std::endl;
+
+        EpollClientLoginMaster * newServerToBeMaster=secondServerInConflict.front();
+        secondServerInConflict.erase(secondServerInConflict.cbegin());
+
+        newServerToBeMaster->sendGameServerRegistrationReply(newServerToBeMaster->queryNumberInConflicWithTheMainServer,false);
+
+        CharactersGroup::InternalGameServer tempData;
+        if(newServerToBeMaster->charactersGroupForGameServerInformation!=NULL)
+        {
+            tempData=*newServerToBeMaster->charactersGroupForGameServerInformation;
+            delete newServerToBeMaster->charactersGroupForGameServerInformation;
+            newServerToBeMaster->charactersGroupForGameServerInformation=NULL;
+        }
+        else
+        {
+            std::cerr << "newServerToBeMaster->charactersGroupForGameServerInformation==NULL at " << __FILE__ << ":" << __LINE__ << std::endl;
+            abort();
+        }
+        newServerToBeMaster->charactersGroupForGameServerInformation=newServerToBeMaster->charactersGroupForGameServer->addGameServerUniqueKey(
+                    newServerToBeMaster,tempData.uniqueKey,tempData.host,tempData.port,tempData.metaData,tempData.logicalGroupIndex,tempData.currentPlayer,tempData.maxPlayer,tempData.lockedAccountByGameserver);
+
+        if(!secondServerInConflict.empty())
+        {
+            std::cout << "Server with same unique key in waiting... and even more" << std::endl;
+
+            newServerToBeMaster->secondServerInConflict=secondServerInConflict;
+
+            unsigned int indexServerToUpdate=0;
+            while(indexServerToUpdate<newServerToBeMaster->secondServerInConflict.size())
+            {
+                EpollClientLoginMaster * const serverToMasterUpdate=newServerToBeMaster->secondServerInConflict.at(indexServerToUpdate);
+                serverToMasterUpdate->inConflicWithTheMainServer=newServerToBeMaster;
+                indexServerToUpdate++;
+            }
+
+            newServerToBeMaster->sendGameServerPing();
+        }
+        secondServerInConflict.clear();
+    }
 }
 
 void EpollClientLoginMaster::disconnectClient()
@@ -454,6 +504,7 @@ bool EpollClientLoginMaster::sendGameServerPing()
     if(charactersGroupForGameServerInformation->pingInProgress==true)
         return false;
     charactersGroupForGameServerInformation->pingInProgress=true;
+    charactersGroupForGameServerInformation->lastPingStarted=msFrom1970();
 
     const uint8_t &queryNumber=queryNumberList.back();
     registerOutputQuery(queryNumber,0xF9);
