@@ -175,6 +175,16 @@ protected:
     {
         uint32_t index;
     };
+    enum ClientStat
+    {
+        None=0x00,
+        ProtocolGood=0x01,
+        LoginInProgress=0x02,
+        Logged=0x03,
+        LoggedStatClient=0x04,
+        CharacterSelecting=0x05,
+        CharacterSelected=0x06,
+    };
 private:
     //-------------------
     uint32_t account_id;//0 if not logged
@@ -185,6 +195,7 @@ private:
     #endif
     uint16_t randomIndex,randomSize;
     uint8_t number_of_character;
+    ClientStat stat;
 
     PlayerOnMap map_entry;
     PlayerOnMap rescue;
@@ -220,8 +231,6 @@ private:
     static std::vector<uint8_t> selectCharacterQueryId;
 
     // for status
-    bool have_send_protocol;
-    bool is_logging_in_progess;
     bool stopIt;
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     uint8_t movePacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];

@@ -226,6 +226,11 @@ bool LinkToLogin::parseReplyData(const uint8_t &mainCodeType,const uint8_t &quer
         //Protocol initialization and auth for login
         case 0xA0:
         {
+            if(stat!=Stat::ProtocolSent)
+            {
+                std::cerr << "ERROR 0xA0 reply: stat!=Stat::ProtocolSent (abort)" << std::endl;
+                abort();
+            }
             if(size<1)
             {
                 std::cerr << "Need more size for protocol header " << std::endl;

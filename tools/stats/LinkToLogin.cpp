@@ -377,6 +377,11 @@ void LinkToLogin::tryReconnect()
 
 void LinkToLogin::sendProtocolHeader()
 {
+    if(stat!=Stat::Connected)
+    {
+        std::cerr << "ERROR LinkToLogin::sendProtocolHeader() already send (abort)" << std::endl;
+        abort();
+    }
     //send the network query
     registerOutputQuery(queryNumberList.back(),0xA0);
     uint32_t posOutput=0;
@@ -390,6 +395,8 @@ void LinkToLogin::sendProtocolHeader()
     posOutput+=sizeof(LinkToLogin::header_magic_number);
 
     internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
+    stat=ProtocolSent;
 }
 
 void LinkToLogin::moveClientFastPath(const uint8_t &,const uint8_t &)
