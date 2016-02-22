@@ -29,6 +29,7 @@ EpollClientLoginMaster::EpollClientLoginMaster(
         uniqueKey(0),
         charactersGroupForGameServer(NULL),
         charactersGroupForGameServerInformation(NULL),
+        inConflicWithTheMainServer(NULL),
         queryNumberInConflicWithTheMainServer(0)
 {
     rng.seed(time(0));
