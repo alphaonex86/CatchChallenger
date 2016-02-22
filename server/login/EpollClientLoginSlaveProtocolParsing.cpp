@@ -128,6 +128,11 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
             if(memcmp(data,EpollClientLoginSlave::protocolHeaderToMatch,sizeof(EpollClientLoginSlave::protocolHeaderToMatch))==0)
             {
                 removeFromQueryReceived(queryNumber);
+                if(stat!=EpollClientLoginStat::None)
+                {
+                    parseNetworkReadError("stat!=EpollClientLoginStat::None for case 0xA0");
+                    return false;
+                }
                 //if lot of un logged connection, remove the first
                 if(BaseServerLogin::tokenForAuthSize>=CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION)
                 {

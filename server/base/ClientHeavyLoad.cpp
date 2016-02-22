@@ -142,6 +142,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         bool ok;
         if(!GlobalServerData::serverPrivateVariables.db_login->next())
         {
+            //return creation query to client
             if(GlobalServerData::serverSettings.automatic_account_creation)
             {
                 //network send
@@ -153,7 +154,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                 inputQueryNumberToPacketCode[askLoginParam->query_id]=0;
                 internalSendRawSmallPacket(reinterpret_cast<char *>(Client::loginIsWrongBuffer),sizeof(Client::loginIsWrongBuffer));
                 delete askLoginParam;
-                is_logging_in_progess=false;
+                stat=ClientStat::ProtocolGood;
                 return;
 /*                GlobalServerData::serverPrivateVariables.maxAccountId++;
                 account_id=GlobalServerData::serverPrivateVariables.maxAccountId;
@@ -326,7 +327,7 @@ bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_login->asyncRead(queryText,this,&Client::createAccount_static);
     if(callback==NULL)
     {
-        is_logging_in_progess=false;
+        stat=ClientStat::ProtocolGood;
         loginIsWrong(askLoginParam->query_id,0x03,"Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_login->errorMessage());
         delete askLoginParam;
         return false;
@@ -414,7 +415,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
-        is_logging_in_progess=false;
+        stat=ClientStat::ProtocolGood;
     }
     else
         loginIsWrong(askLoginParam->query_id,0x02,"Login already used: "+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE));
@@ -1412,7 +1413,7 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
                 if(withHash)
                 {
                     struct stat buf;
-                    if(stat((path+returnList.at(index)).c_str(),&buf)==0)
+                    if(::stat((path+returnList.at(index)).c_str(),&buf)==0)
                     {
                         if(buf.st_size<=CATCHCHALLENGER_MAX_FILE_SIZE)
                         {
@@ -1621,7 +1622,7 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
                 {
                     //todo: be sure at the startup sll the file is readable
                     struct stat buf;
-                    if(stat((datapackPath+fileName).c_str(),&buf)!=-1)
+                    if(::stat((datapackPath+fileName).c_str(),&buf)!=-1)
                     {
                         addDatapackListReply(false);//found but need an update
                         datapckFileNumber++;
@@ -1647,7 +1648,7 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
             if(filedesc!=NULL)
             {
                 struct stat buf;
-                if(stat((datapackPath+i->first).c_str(),&buf)!=-1)
+                if(::stat((datapackPath+i->first).c_str(),&buf)!=-1)
                 {
                     datapckFileNumber++;
                     datapckFileSize+=buf.st_size;

@@ -28,6 +28,7 @@ public:
         Unconnected,
         Connecting,
         Connected,
+        ProtocolSent,
         ProtocolGood,
         LoginInProgress,
         Logged,
