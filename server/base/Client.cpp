@@ -58,14 +58,13 @@ Client::Client(
     randomIndex(0),
     randomSize(0),
     number_of_character(0),
+    stat(ClientStat::None),
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     datapackStatus(DatapackStatus::Main),
     #else
     datapackStatus(DatapackStatus::Base),
     #endif
     connected_players(0),
-    have_send_protocol(false),
-    is_logging_in_progess(false),
     stopIt(false),
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     movePacketKickTotalCache(0),
@@ -173,6 +172,8 @@ void Client::connectionError(QAbstractSocket::SocketError error)
 void Client::disconnectClient()
 {
     closeSocket();
+    if(stat==ClientStat::None)
+        return;
     if(account_id==0)
         return;
     account_id=0;
@@ -366,7 +367,7 @@ void Client::messageParsingLayer(const std::string &message) const
 //* do the message by the general broadcast */
 void Client::errorOutput(const std::string &errorString)
 {
-    if(account_id==0)
+    if(stat==ClientStat::None)
     {
         std::cerr << headerOutput() << "Kicked by: " << errorString << std::endl;
         disconnectClient();
@@ -668,6 +669,8 @@ void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
         //flags|=0x08;->just listen
 
         stat_client_list.push_back(this);
+
+        stat=ClientStat::LoggedStatClient;
     }
 }
 #endif

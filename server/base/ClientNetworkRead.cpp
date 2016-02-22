@@ -224,6 +224,11 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
         case 0xA0:
             if(memcmp(data,Client::protocolHeaderToMatch,sizeof(Client::protocolHeaderToMatch))==0)
             {
+                if(stat!=ClientStat::None)
+                {
+                    errorOutput("stat!=EpollClientLoginStat::None for case 0xA0");
+                    return false;
+                }
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 removeFromQueryReceived(queryNumber);
                 #endif
@@ -349,7 +354,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
                 BaseServerLogin::tokenForAuthSize++;
                 #endif
-                have_send_protocol=true;
+                stat=ClientStat::ProtocolGood;
             }
             else
             {
@@ -363,12 +368,12 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         //Get first data and send the login
         case 0xA8:
-            if(!have_send_protocol)
+            if(stat!=ClientStat::ProtocolGood)
             {
                 errorOutput("send login before the protocol");
                 return false;
             }
-            if(is_logging_in_progess)
+            if(stat==ClientStat::LoginInProgress)
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 //removeFromQueryReceived(queryNumber);
@@ -379,18 +384,18 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
             }
             else
             {
-                is_logging_in_progess=true;
+                stat=ClientStat::LoginInProgress;
                 return askLogin(queryNumber,data);
             }
         break;
         //create account
         case 0xA9:
-            if(!have_send_protocol)
+            if(stat!=ClientStat::ProtocolGood)
             {
                 errorOutput("send login before the protocol");
                 return false;
             }
-            if(is_logging_in_progess)
+            if(stat==ClientStat::LoginInProgress)
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 //removeFromQueryReceived(queryNumber);//all list dropped at client destruction
@@ -404,7 +409,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
             {
                 if(GlobalServerData::serverSettings.automatic_account_creation)
                 {
-                    is_logging_in_progess=true;
+                    stat=ClientStat::LoginInProgress;
                     return createAccount(queryNumber,data);
                 }
                 else
@@ -421,12 +426,12 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
         break;
         //stat client
         case 0xAD:
-            if(!have_send_protocol)
+            if(stat!=ClientStat::ProtocolGood)
             {
                 errorOutput("send login before the protocol");
                 return false;
             }
-            if(is_logging_in_progess)
+            if(stat==ClientStat::LoginInProgress)
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 //removeFromQueryReceived(queryNumber);//all list dropped at client destruction
@@ -446,7 +451,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
         //Select character on game server
         case 0x93:
         {
-            if(character_loaded)
+            if(stat!=EpollClientLoginStat::Logged)
             {
                 errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+")");
                 return false;
@@ -479,7 +484,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
 {
     if(stopIt)
         return false;
-    if(account_id==0)
+    if(stat==ClientStat::None)
     {
         disconnectClient();
         return false;
@@ -1270,7 +1275,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             packetCode==0x93 //login by token + Select character (Get first data and send the login)
             #endif
             ;
-    if(account_id==0 || goodQueryBeforeLoginLoaded)
+    if(stat==ClientStat::None || goodQueryBeforeLoginLoaded)
         return parseInputBeforeLogin(packetCode,queryNumber,data,size);
     const bool goodQueryBeforeCharacterLoaded=
             //before character selected (but after login), accept:
@@ -2028,7 +2033,7 @@ bool Client::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber
     queryNumberList.push_back(queryNumber);
     if(stopIt)
         return false;
-    if(account_id==0)
+    if(stat==ClientStat::None)
     {
         disconnectClient();
         return false;
