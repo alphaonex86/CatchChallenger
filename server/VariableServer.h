@@ -64,7 +64,8 @@
 #define CATCHCHALLENGER_SERVER_MIN_RANDOM_LIST_SIZE 32
 
 /// check more, then use more cpu, it's to develop and detect the internal bug
-#define CATCHCHALLENGER_SERVER_EXTRA_CHECK
+//#define CATCHCHALLENGER_SERVER_EXTRA_CHECK
+#define CATCHCHALLENGER_SERVER_TRUSTINTODATABASENUMBERRETURN
 
 //to have static code, this greatly improve the memory and performance (no branch prediction needed, ...)
 #define CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER

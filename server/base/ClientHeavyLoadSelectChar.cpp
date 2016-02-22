@@ -9,6 +9,7 @@
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/ProtocolParsingCheck.h"
 #include "../../general/base/cpp11addition.h"
+#include "DatabaseFunction.h"
 #include "SqlFunction.h"
 #include "PreparedDBQuery.h"
 #include "DictionaryLogin.h"
@@ -181,13 +182,13 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     }
 
     bool ok;
-    public_and_private_informations.clan=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(4),&ok);
+    public_and_private_informations.clan=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(4),&ok);
     if(!ok)
     {
         //normalOutput(std::stringLiteral("clan id is not an number, clan disabled"));
         public_and_private_informations.clan=0;//no clan
     }
-    public_and_private_informations.clan_leader=(stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(7),&ok)==1);
+    public_and_private_informations.clan_leader=(DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(7),&ok)==1);
     if(!ok)
     {
         //normalOutput(std::stringLiteral("clan_leader id is not an number, clan_leader disabled"));
@@ -199,7 +200,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         characterSelectionIsWrong(query_id,0x03,"character_loaded already to true");
         return;
     }
-    const uint32_t &account_id=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
+    const uint32_t &account_id=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
     if(!ok)
     {
         characterSelectionIsWrong(query_id,0x02,"Account for character: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" is not an id");
@@ -224,7 +225,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     else
         normalOutput("Charater is logged: "+GlobalServerData::serverPrivateVariables.db_common->value(1));
     #endif
-    const uint32_t &time_to_delete=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(8),&ok);
+    const uint32_t &time_to_delete=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(8),&ok);
     if(!ok || time_to_delete>0)
     {
         std::string queryText=PreparedDBQueryCommon::db_query_update_character_time_to_delete;
@@ -236,7 +237,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     stringreplaceOne(queryText,"%2",std::to_string(sFrom1970()));
     dbQueryWriteCommon(queryText);
 
-    const uint32_t &skin_database_id=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
+    const uint32_t &skin_database_id=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
     if(!ok)
     {
         normalOutput("Skin is not a number");
@@ -252,7 +253,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             public_and_private_informations.public_informations.skinId=0;
         }
     }
-    const uint32_t &type=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(3),&ok);
+    const uint32_t &type=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(3),&ok);
     if(!ok)
     {
         normalOutput("Player type is not a number, default to normal");
@@ -268,13 +269,13 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             public_and_private_informations.public_informations.type=Player_type_normal;
         }
     }
-    public_and_private_informations.cash=stringtouint64(GlobalServerData::serverPrivateVariables.db_common->value(5),&ok);
+    public_and_private_informations.cash=DatabaseFunction::stringtouint64(GlobalServerData::serverPrivateVariables.db_common->value(5),&ok);
     if(!ok)
     {
         normalOutput("cash id is not an number, cash set to 0");
         public_and_private_informations.cash=0;
     }
-    public_and_private_informations.warehouse_cash=stringtouint64(GlobalServerData::serverPrivateVariables.db_common->value(6),&ok);
+    public_and_private_informations.warehouse_cash=DatabaseFunction::stringtouint64(GlobalServerData::serverPrivateVariables.db_common->value(6),&ok);
     if(!ok)
     {
         normalOutput("warehouse cash id is not an number, warehouse cash set to 0");
@@ -283,7 +284,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
 
     public_and_private_informations.public_informations.speed=CATCHCHALLENGER_SERVER_NORMAL_SPEED;
 
-    const uint8_t &starter=stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(9),&ok);
+    const uint8_t &starter=DatabaseFunction::stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(9),&ok);
     if(!ok)
     {
         characterSelectionIsWrong(query_id,0x04,"start from base selection");
@@ -475,7 +476,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         break;
     }
 
-    market_cash=stringtouint64(GlobalServerData::serverPrivateVariables.db_server->value(12),&ok);
+    market_cash=DatabaseFunction::stringtouint64(GlobalServerData::serverPrivateVariables.db_server->value(12),&ok);
     if(!ok)
     {
         characterSelectionIsWrong(query_id,0x04,"Market cash wrong: "+GlobalServerData::serverPrivateVariables.db_server->value(22));
@@ -484,7 +485,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
 
     public_and_private_informations.public_informations.speed=CATCHCHALLENGER_SERVER_NORMAL_SPEED;
     Orientation orientation;
-    const uint32_t &orientationInt=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(3),&ok);
+    const uint32_t &orientationInt=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(3),&ok);
     if(ok)
     {
         if(orientationInt>=1 && orientationInt<=4)
@@ -501,7 +502,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         normalOutput("Wrong orientation (not number) corrected with bottom: "+GlobalServerData::serverPrivateVariables.db_server->value(5));
     }
     //all is rights
-    const uint32_t &map_database_id=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
+    const uint32_t &map_database_id=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
     if(!ok)
     {
         characterSelectionIsWrong(query_id,0x04,"map_database_id is not a number");
@@ -518,13 +519,13 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         characterSelectionIsWrong(query_id,0x04,"map_database_id have not reverse");
         return;
     }
-    const uint8_t &x=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
+    const uint8_t &x=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
     if(!ok)
     {
         characterSelectionIsWrong(query_id,0x04,"x coord is not a number");
         return;
     }
-    const uint8_t &y=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok);
+    const uint8_t &y=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok);
     if(!ok)
     {
         characterSelectionIsWrong(query_id,0x04,"y coord is not a number");
@@ -597,7 +598,7 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
                                              )
 {
     bool ok;
-    const uint32_t &rescue_map_database_id=stringtouint32(rescue_map,&ok);
+    const uint32_t &rescue_map_database_id=DatabaseFunction::stringtouint32(rescue_map,&ok);
     if(!ok)
     {
         normalOutput("rescue_map_database_id is not a number");
@@ -623,14 +624,14 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    const uint8_t &rescue_new_x=stringtouint32(rescue_x,&ok);
+    const uint8_t &rescue_new_x=DatabaseFunction::stringtouint32(rescue_x,&ok);
     if(!ok)
     {
         normalOutput("rescue x coord is not a number");
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    const uint8_t &rescue_new_y=stringtouint32(rescue_y,&ok);
+    const uint8_t &rescue_new_y=DatabaseFunction::stringtouint32(rescue_y,&ok);
     if(!ok)
     {
         normalOutput("rescue y coord is not a number");
@@ -649,7 +650,7 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    const uint32_t &orientationInt=stringtouint32(rescue_orientation,&ok);
+    const uint32_t &orientationInt=DatabaseFunction::stringtouint32(rescue_orientation,&ok);
     Orientation rescue_new_orientation;
     if(ok)
     {
@@ -671,7 +672,7 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
 
 
 
-    const uint32_t &unvalidated_rescue_map_database_id=stringtouint32(unvalidated_rescue_map,&ok);
+    const uint32_t &unvalidated_rescue_map_database_id=DatabaseFunction::stringtouint32(unvalidated_rescue_map,&ok);
     if(!ok)
     {
         normalOutput("unvalidated_rescue_map_database_id is not a number");
@@ -697,14 +698,14 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    const uint8_t &unvalidated_rescue_new_x=stringtouint32(unvalidated_rescue_x,&ok);
+    const uint8_t &unvalidated_rescue_new_x=DatabaseFunction::stringtouint32(unvalidated_rescue_x,&ok);
     if(!ok)
     {
         normalOutput("unvalidated rescue x coord is not a number");
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    const uint8_t &unvalidated_rescue_new_y=stringtouint32(unvalidated_rescue_y,&ok);
+    const uint8_t &unvalidated_rescue_new_y=DatabaseFunction::stringtouint32(unvalidated_rescue_y,&ok);
     if(!ok)
     {
         normalOutput("unvalidated rescue y coord is not a number");
@@ -724,7 +725,7 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
         return;
     }
     Orientation unvalidated_rescue_new_orientation;
-    const uint32_t &unvalidated_orientationInt=stringtouint32(unvalidated_rescue_orientation,&ok);
+    const uint32_t &unvalidated_orientationInt=DatabaseFunction::stringtouint32(unvalidated_rescue_orientation,&ok);
     if(ok)
     {
         if(unvalidated_orientationInt>=1 && unvalidated_orientationInt<=4)
@@ -889,7 +890,7 @@ void Client::loadItemOnMap_return()
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
-        const uint16_t &pointOnMapDatabaseId=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
+        const uint16_t &pointOnMapDatabaseId=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
         if(!ok)
         {
             normalOutput("wrong value type for item on map, skip: "+std::to_string(pointOnMapDatabaseId));
@@ -962,7 +963,7 @@ void Client::loadPlantOnMap_return()
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
-        const uint16_t &pointOnMapDatabaseId=stringtouint16(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
+        const uint16_t &pointOnMapDatabaseId=DatabaseFunction::stringtouint16(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
         if(!ok)
         {
             normalOutput("wrong value type for dirt on map, skip: "+std::to_string(pointOnMapDatabaseId));
@@ -990,7 +991,7 @@ void Client::loadPlantOnMap_return()
             continue;
         }
 
-        const uint32_t &plant=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
+        const uint32_t &plant=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
         if(!ok)
         {
             normalOutput("wrong value type for dirt plant id on map, skip: "+std::to_string(pointOnMapDatabaseId));
@@ -1001,7 +1002,7 @@ void Client::loadPlantOnMap_return()
             normalOutput("wrong value type for plant dirt on map, skip: "+std::to_string(plant));
             continue;
         }
-        const uint32_t &plant_timestamps=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok);
+        const uint32_t &plant_timestamps=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok);
         if(!ok)
         {
             normalOutput("wrong value type for plant timestamps on map, skip: "+std::to_string(pointOnMapDatabaseId));
@@ -1335,7 +1336,7 @@ void Client::selectClan_return()
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         bool ok;
-        uint64_t cash=stringtouint64(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
+        uint64_t cash=DatabaseFunction::stringtouint64(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
         if(!ok)
         {
             cash=0;
@@ -1398,7 +1399,7 @@ void Client::loadPlayerAllow_return()
     bool ok;
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        const uint32_t &allowCode=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
+        const uint32_t &allowCode=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(ok)
         {
             if(allowCode<(uint32_t)DictionaryLogin::dictionary_allow_database_to_internal.size())

@@ -8,8 +8,9 @@ HEADERS  += $$PWD/solo/InternalServer.h \
 
 FORMS    += $$PWD/solo/solowindow.ui
 
-RESOURCES += $$PWD/resources/resources-single-player.qrc \
-    $$PWD/../../server/databases/resources-db-sqlite.qrc
+RESOURCES += $$PWD/../../server/databases/resources-db-sqlite.qrc
+
+#RESOURCES += $$PWD/resources/resources-single-player.qrc
 
 TRANSLATIONS    = $$PWD/resources/languages/en/solo.ts \
     $$PWD/languages/fr/solo.ts
