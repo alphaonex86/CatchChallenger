@@ -3,8 +3,10 @@
 
 TimerDdos::TimerDdos()
 {
+    //todo start it
 }
 
 void TimerDdos::exec()
 {
+    //todo
 }
