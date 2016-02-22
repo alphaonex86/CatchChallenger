@@ -611,17 +611,17 @@ ProtocolParsingInputOutput::ProtocolParsingInputOutput(
         ),
     #ifdef EPOLLCATCHCHALLENGERSERVER
         #ifdef SERVERSSL
-            epollSocket(infd,ctx),
+            epollSocket(infd,ctx)
         #else
-            epollSocket(infd),
+            epollSocket(infd)
         #endif
     #else
         #if ! defined (ONLYMAPRENDER)
-        socket(socket),
+        socket(socket)
         #endif
     #endif
       #ifdef CATCHCHALLENGER_EXTRA_CHECK
-      parseIncommingDataCount(0)
+      ,parseIncommingDataCount(0)
       #endif
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK

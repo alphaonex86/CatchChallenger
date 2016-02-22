@@ -451,7 +451,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
         //Select character on game server
         case 0x93:
         {
-            if(stat!=EpollClientLoginStat::Logged)
+            if(stat!=ClientStat::Logged)
             {
                 errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+")");
                 return false;
@@ -2028,7 +2028,11 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
 }
 
 //send reply
-bool Client::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
+bool Client::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            size
+                            #endif
+                            )
 {
     queryNumberList.push_back(queryNumber);
     if(stopIt)

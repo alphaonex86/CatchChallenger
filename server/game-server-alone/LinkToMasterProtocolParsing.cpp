@@ -139,6 +139,11 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     std::cerr << "wrong size for protocol header " << returnCode << std::endl;
                     abort();
                 }
+                #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+                    #ifdef CATCHCHALLENGERSERVERDROPIFCLENT
+                        #error Can t be CATCHCHALLENGER_CLASS_ONLYGAMESERVER and CATCHCHALLENGERSERVERDROPIFCLENT
+                    #endif
+                #endif
                 switch(returnCode)
                 {
                     case 0x04:
