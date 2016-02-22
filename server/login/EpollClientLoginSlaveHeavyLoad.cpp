@@ -335,7 +335,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
             }
             else
             {
-                account_id=stringtouint32(databaseBaseLogin.value(0),&ok);
+                account_id=DatabaseFunction::stringtouint32(databaseBaseLogin.value(0),&ok);
                 if(!ok)
                 {
                     account_id=0;

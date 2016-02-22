@@ -58,7 +58,7 @@ void BaseServer::preload_plant_on_map_return()
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
         bool ok;
-        const uint32_t &id=std::string(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
+        const uint32_t &id=DatabaseFunction::std::string(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(std::stringLiteral("Plant id ignored because is not a number: %1").arg(GlobalServerData::serverPrivateVariables.db_server->value(0)));
@@ -83,7 +83,7 @@ void BaseServer::preload_plant_on_map_return()
             }
             GlobalServerData::serverPrivateVariables.maxPlantId=id;
         }
-        const uint32_t &map_database_id=std::string(GlobalServerData::serverPrivateVariables.db_server->value(1)).toUInt(&ok);
+        const uint32_t &map_database_id=DatabaseFunction::std::string(GlobalServerData::serverPrivateVariables.db_server->value(1)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(std::stringLiteral("Plant ignored because the map is not a number"));
@@ -105,7 +105,7 @@ void BaseServer::preload_plant_on_map_return()
             DebugClass::debugConsole(std::stringLiteral("Plant ignored because the map have 255 or more plant: %1").arg(mapForPlantOnServer->map_file));
             continue;
         }
-        const uint8_t &x=std::string(GlobalServerData::serverPrivateVariables.db_server->value(2)).toUInt(&ok);
+        const uint8_t &x=DatabaseFunction::std::string(GlobalServerData::serverPrivateVariables.db_server->value(2)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(std::stringLiteral("Plant ignored because the x is not a number"));
@@ -116,7 +116,7 @@ void BaseServer::preload_plant_on_map_return()
             DebugClass::debugConsole(std::stringLiteral("Plant ignored because the x>%1 for the map %2: %3").arg(mapForPlantOnServer->width).arg(mapForPlantOnServer->map_file).arg(x));
             continue;
         }
-        const uint8_t &y=std::string(GlobalServerData::serverPrivateVariables.db_server->value(3)).toUInt(&ok);
+        const uint8_t &y=DatabaseFunction::std::string(GlobalServerData::serverPrivateVariables.db_server->value(3)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(std::stringLiteral("Plant ignored because the y is not a number"));
@@ -127,7 +127,7 @@ void BaseServer::preload_plant_on_map_return()
             DebugClass::debugConsole(std::stringLiteral("Plant ignored because the y>%1 for the map %2: %3").arg(mapForPlantOnServer->height).arg(mapForPlantOnServer->map_file).arg(y));
             continue;
         }
-        const uint8_t &plant=std::string(GlobalServerData::serverPrivateVariables.db_server->value(4)).toUInt(&ok);
+        const uint8_t &plant=DatabaseFunction::std::string(GlobalServerData::serverPrivateVariables.db_server->value(4)).toUInt(&ok);
         if(!ok)
             continue;
         if(!CommonDatapack::commonDatapack.plants.contains(plant))
@@ -135,7 +135,7 @@ void BaseServer::preload_plant_on_map_return()
             DebugClass::debugConsole(std::stringLiteral("Plant dropped to not block the player, due to missing plant into the list: %1").arg(plant));
             continue;
         }
-        const uint32_t &character=std::string(GlobalServerData::serverPrivateVariables.db_server->value(5)).toUInt(&ok);
+        const uint32_t &character=DatabaseFunction::std::string(GlobalServerData::serverPrivateVariables.db_server->value(5)).toUInt(&ok);
         if(!ok)
             continue;
         if(!MoveOnTheMap::isDirt(*mapForPlantOnServer,x,y))
@@ -143,7 +143,7 @@ void BaseServer::preload_plant_on_map_return()
             DebugClass::debugConsole(std::stringLiteral("Plant ignored because is not into dirt layer: %1 (%2,%3)").arg(mapForPlantOnServer->map_file).arg(x).arg(y));
             continue;
         }
-        const uint64_t &plant_timestamps=std::string(GlobalServerData::serverPrivateVariables.db_server->value(6)).toULongLong(&ok);
+        const uint64_t &plant_timestamps=DatabaseFunction::std::string(GlobalServerData::serverPrivateVariables.db_server->value(6)).toULongLong(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(std::stringLiteral("Plant timestamps is not a number: %1 (%2,%3)").arg(mapForPlantOnServer->map_file).arg(x).arg(y));

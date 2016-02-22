@@ -7,6 +7,7 @@
 #include "../../general/fight/CommonFightEngine.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/cpp11addition.h"
+#include "../base/DatabaseFunction.h"
 
 using namespace CatchChallenger;
 
@@ -45,14 +46,14 @@ void Client::loadMonsters_return()
     Monster monster;
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        monster.give_sp=88889;
+        monster.give_sp=0;
         PlayerMonster playerMonster;
-        playerMonster.id=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
+        playerMonster.id=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(!ok)
             normalOutput("monsterId: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" is not a number");
         if(ok)
         {
-            playerMonster.monster=stringtouint16(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
+            playerMonster.monster=DatabaseFunction::stringtouint16(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
             if(ok)
             {
                 if(CommonDatapack::commonDatapack.monsters.find(playerMonster.monster)==CommonDatapack::commonDatapack.monsters.cend())
@@ -68,7 +69,7 @@ void Client::loadMonsters_return()
         }
         if(ok)
         {
-            playerMonster.level=stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(3),&ok);
+            playerMonster.level=DatabaseFunction::stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(3),&ok);
             if(ok)
             {
                 if(playerMonster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
@@ -82,7 +83,7 @@ void Client::loadMonsters_return()
         }
         if(ok)
         {
-            playerMonster.remaining_xp=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(4),&ok);
+            playerMonster.remaining_xp=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(4),&ok);
             if(ok)
             {
                 if(playerMonster.level>monster.level_to_xp.size())
@@ -103,7 +104,7 @@ void Client::loadMonsters_return()
         {
             if(CommonSettingsServer::commonSettingsServer.useSP)
             {
-                playerMonster.sp=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(5),&ok);
+                playerMonster.sp=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(5),&ok);
                 if(!ok)
                     normalOutput("monster sp: "+GlobalServerData::serverPrivateVariables.db_common->value(5)+" is not a number");
             }
@@ -117,7 +118,7 @@ void Client::loadMonsters_return()
             sp_offset=-1;
         if(ok)
         {
-            playerMonster.catched_with=stringtouint16(GlobalServerData::serverPrivateVariables.db_common->value(6+sp_offset),&ok);
+            playerMonster.catched_with=DatabaseFunction::stringtouint16(GlobalServerData::serverPrivateVariables.db_common->value(6+sp_offset),&ok);
             if(ok)
             {
                 if(CommonDatapack::commonDatapack.items.item.find(playerMonster.catched_with)==CommonDatapack::commonDatapack.items.item.cend())
@@ -128,7 +129,7 @@ void Client::loadMonsters_return()
         }
         if(ok)
         {
-            const uint32_t &genderInt=stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(7+sp_offset),&ok);
+            const uint32_t &genderInt=DatabaseFunction::stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(7+sp_offset),&ok);
             if(ok)
             {
                 if(genderInt>=1 && genderInt<=3)
@@ -149,20 +150,20 @@ void Client::loadMonsters_return()
         }
         if(ok)
         {
-            playerMonster.egg_step=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(8+sp_offset),&ok);
+            playerMonster.egg_step=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(8+sp_offset),&ok);
             if(!ok)
                 normalOutput("monster egg_step: "+GlobalServerData::serverPrivateVariables.db_common->value(8+sp_offset)+" is not a number");
         }
         if(ok)
         {
-            playerMonster.character_origin=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(9+sp_offset),&ok);
+            playerMonster.character_origin=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(9+sp_offset),&ok);
             if(!ok)
                 normalOutput("monster character_origin: "+GlobalServerData::serverPrivateVariables.db_common->value(9+sp_offset)+" is not a number");
         }
         //stats
         if(ok)
         {
-            playerMonster.hp=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
+            playerMonster.hp=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
             if(ok)
             {
                 const Monster::Stat &stat=CommonFightEngine::getStat(monster,playerMonster.level);
@@ -223,12 +224,12 @@ void Client::loadMonstersWarehouse_return()
     {
         monster.give_sp=88889;
         PlayerMonster playerMonster;
-        playerMonster.id=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
+        playerMonster.id=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(!ok)
             normalOutput("monsterId: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" is not a number");
         if(ok)
         {
-            playerMonster.monster=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
+            playerMonster.monster=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
             if(ok)
             {
                 if(CommonDatapack::commonDatapack.monsters.find(playerMonster.monster)==CommonDatapack::commonDatapack.monsters.cend())
@@ -244,7 +245,7 @@ void Client::loadMonstersWarehouse_return()
         }
         if(ok)
         {
-            playerMonster.level=stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(3),&ok);
+            playerMonster.level=DatabaseFunction::stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(3),&ok);
             if(ok)
             {
                 if(playerMonster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
@@ -258,7 +259,7 @@ void Client::loadMonstersWarehouse_return()
         }
         if(ok)
         {
-            playerMonster.remaining_xp=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(4),&ok);
+            playerMonster.remaining_xp=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(4),&ok);
             if(ok)
             {
                 if(playerMonster.level>monster.level_to_xp.size())
@@ -282,7 +283,7 @@ void Client::loadMonstersWarehouse_return()
         {
             if(CommonSettingsServer::commonSettingsServer.useSP)
             {
-                playerMonster.sp=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(5),&ok);
+                playerMonster.sp=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(5),&ok);
                 if(!ok)
                 {
                     playerMonster.sp=0;
@@ -299,7 +300,7 @@ void Client::loadMonstersWarehouse_return()
             sp_offset=-1;
         if(ok)
         {
-            playerMonster.catched_with=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(6+sp_offset),&ok);
+            playerMonster.catched_with=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(6+sp_offset),&ok);
             if(ok)
             {
                 if(CommonDatapack::commonDatapack.items.item.find(playerMonster.catched_with)==CommonDatapack::commonDatapack.items.item.cend())
@@ -310,7 +311,7 @@ void Client::loadMonstersWarehouse_return()
         }
         if(ok)
         {
-            const uint32_t &genderInt=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(7+sp_offset),&ok);
+            const uint32_t &genderInt=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(7+sp_offset),&ok);
             if(ok)
             {
                 if(genderInt>=1 && genderInt<=3)
@@ -331,20 +332,20 @@ void Client::loadMonstersWarehouse_return()
         }
         if(ok)
         {
-            playerMonster.egg_step=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(8+sp_offset),&ok);
+            playerMonster.egg_step=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(8+sp_offset),&ok);
             if(!ok)
                 normalOutput("monster egg_step: "+GlobalServerData::serverPrivateVariables.db_common->value(8+sp_offset)+" is not a number");
         }
         if(ok)
         {
-            playerMonster.character_origin=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(9+sp_offset),&ok);
+            playerMonster.character_origin=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(9+sp_offset),&ok);
             if(!ok)
                 normalOutput("monster character_origin: "+GlobalServerData::serverPrivateVariables.db_common->value(9+sp_offset)+" is not a number");
         }
         //stats
         if(ok)
         {
-            playerMonster.hp=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
+            playerMonster.hp=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
             if(ok)
             {
                 const Monster::Stat &stat=CommonFightEngine::getStat(monster,playerMonster.level);
@@ -471,7 +472,7 @@ void Client::loadPlayerMonsterBuffs_return(const uint32_t &index)
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         PlayerBuff buff;
-        buff.buff=stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
+        buff.buff=DatabaseFunction::stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(ok)
         {
             if(CommonDatapack::commonDatapack.monsterBuffs.find(buff.buff)==CommonDatapack::commonDatapack.monsterBuffs.cend())
@@ -484,7 +485,7 @@ void Client::loadPlayerMonsterBuffs_return(const uint32_t &index)
             normalOutput("buff id: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" is not a number");
         if(ok)
         {
-            buff.level=stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
+            buff.level=DatabaseFunction::stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
             if(ok)
             {
                 if(buff.level>CommonDatapack::commonDatapack.monsterBuffs.at(buff.buff).level.size())
@@ -598,7 +599,7 @@ void Client::loadPlayerMonsterSkills_return(const uint32_t &index)
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         PlayerMonster::PlayerSkill skill;
-        skill.skill=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
+        skill.skill=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(ok)
         {
             if(CommonDatapack::commonDatapack.monsterSkills.find(skill.skill)==CommonDatapack::commonDatapack.monsterSkills.cend())
@@ -611,7 +612,7 @@ void Client::loadPlayerMonsterSkills_return(const uint32_t &index)
             normalOutput("skill id: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" is not a number");
         if(ok)
         {
-            skill.level=stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
+            skill.level=DatabaseFunction::stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
             if(ok)
             {
                 if(skill.level>CommonDatapack::commonDatapack.monsterSkills.at(skill.skill).level.size())
@@ -625,7 +626,7 @@ void Client::loadPlayerMonsterSkills_return(const uint32_t &index)
         }
         if(ok)
         {
-            skill.endurance=stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
+            skill.endurance=DatabaseFunction::stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
             if(ok)
             {
                 if(skill.endurance>CommonDatapack::commonDatapack.monsterSkills.at(skill.skill).level.at(skill.level-1).endurance)
@@ -723,7 +724,7 @@ void Client::loadBotAlreadyBeaten_return()
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
-        const uint32_t &id=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
+        const uint32_t &id=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
         if(!ok)
         {
             normalOutput("wrong value type for quest, skip: "+std::to_string(id));
