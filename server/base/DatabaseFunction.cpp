@@ -7,28 +7,28 @@ using namespace CatchChallenger;
 #ifdef CATCHCHALLENGER_SERVER_TRUSTINTODATABASENUMBERRETURN
 uint8_t DatabaseFunction::stringtouint8(const std::string &string,bool *ok)
 {
-    if(Q_LIKELY(ok!))
+    if(ok!=NULL)
         *ok=true;
     return std::stoull(string);
 }
 
 uint16_t DatabaseFunction::stringtouint16(const std::string &string,bool *ok)
 {
-    if(Q_LIKELY(ok!))
+    if(ok!=NULL)
         *ok=true;
     return std::stoull(string);
 }
 
 uint32_t DatabaseFunction::stringtouint32(const std::string &string,bool *ok)
 {
-    if(Q_LIKELY(ok!))
+    if(ok!=NULL)
         *ok=true;
     return std::stoull(string);
 }
 
 bool DatabaseFunction::stringtobool(const std::string &string,bool *ok)
 {
-    if(ok!)
+    if(ok!=NULL)
         *ok=true;
     if(string=="1" || string=="true" || string=="TRUE")
         return true;
@@ -38,49 +38,49 @@ bool DatabaseFunction::stringtobool(const std::string &string,bool *ok)
 
 uint64_t DatabaseFunction::stringtouint64(const std::string &string,bool *ok)
 {
-    if(Q_LIKELY(ok!))
+    if(ok!=NULL)
         *ok=true;
     return std::stoull(string);
 }
 
 int8_t DatabaseFunction::stringtoint8(const std::string &string,bool *ok)
 {
-    if(Q_LIKELY(ok!))
+    if(ok!=NULL)
         *ok=true;
     return std::stoi(string);
 }
 
 int16_t DatabaseFunction::stringtoint16(const std::string &string,bool *ok)
 {
-    if(Q_LIKELY(ok!))
+    if(ok!=NULL)
         *ok=true;
     return std::stoi(string);
 }
 
 int32_t DatabaseFunction::stringtoint32(const std::string &string,bool *ok)
 {
-    if(Q_LIKELY(ok!))
+    if(ok!=NULL)
         *ok=true;
     return std::stoi(string);
 }
 
 int64_t DatabaseFunction::stringtoint64(const std::string &string,bool *ok)
 {
-    if(Q_LIKELY(ok!))
+    if(ok!=NULL)
         *ok=true;
     return std::stoll(string);
 }
 
 float DatabaseFunction::stringtofloat(const std::string &string,bool *ok)
 {
-    if(Q_LIKELY(ok!))
+    if(ok!=NULL)
         *ok=true;
     return std::stof(string);
 }
 
 double DatabaseFunction::stringtodouble(const std::string &string,bool *ok)
 {
-    if(Q_LIKELY(ok!))
+    if(ok!=NULL)
         *ok=true;
     return std::stod(string);
 }
