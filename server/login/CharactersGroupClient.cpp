@@ -46,11 +46,11 @@ void CharactersGroupForLogin::character_list_object()
     uint8_t validCharaterCount=0;
     while(databaseBaseCommon->next() && validCharaterCount<CommonSettingsCommon::commonSettingsCommon.max_character)
     {
-        unsigned int character_id=stringtouint32(databaseBaseCommon->value(0),&ok);
+        unsigned int character_id=DatabaseFunction::stringtouint32(databaseBaseCommon->value(0),&ok);
         if(ok)
         {
             //delete
-            uint32_t time_to_delete=stringtouint32(databaseBaseCommon->value(3),&ok);
+            uint32_t time_to_delete=DatabaseFunction::stringtouint32(databaseBaseCommon->value(3),&ok);
             if(!ok)
             {
                 std::cerr << "time_to_delete is not number: " << databaseBaseCommon->value(3) << " for " << character_id << " fixed by 0" << std::endl;
@@ -84,7 +84,7 @@ void CharactersGroupForLogin::character_list_object()
 
                 //skin
                 {
-                    const uint32_t databaseSkinId=stringtouint32(databaseBaseCommon->value(2),&ok);
+                    const uint32_t databaseSkinId=DatabaseFunction::stringtouint32(databaseBaseCommon->value(2),&ok);
                     if(!ok)//if not number
                     {
                         std::cerr << "character return skin is not number: " << databaseBaseCommon->value(2) << " for " << character_id << " fixed by 0" << std::endl;
@@ -119,7 +119,7 @@ void CharactersGroupForLogin::character_list_object()
 
                 //played_time
                 {
-                    unsigned int played_time=stringtouint32(databaseBaseCommon->value(4),&ok);
+                    unsigned int played_time=DatabaseFunction::stringtouint32(databaseBaseCommon->value(4),&ok);
                     if(!ok)
                     {
                         std::cerr << "played_time is not number: " << databaseBaseCommon->value(4) << " for " << character_id << " fixed by 0" << std::endl;
@@ -131,7 +131,7 @@ void CharactersGroupForLogin::character_list_object()
 
                 //last_connect
                 {
-                    unsigned int last_connect=stringtouint32(databaseBaseCommon->value(5),&ok);
+                    unsigned int last_connect=DatabaseFunction::stringtouint32(databaseBaseCommon->value(5),&ok);
                     if(!ok)
                     {
                         std::cerr << "last_connect is not number: " << databaseBaseCommon->value(5) << " for " << character_id << " fixed by 0" << std::endl;
@@ -191,7 +191,7 @@ void CharactersGroupForLogin::server_list_object()
     uint8_t validServerCount=0;
     while(databaseBaseCommon->next() && validServerCount<CommonSettingsCommon::commonSettingsCommon.max_character)
     {
-        const unsigned int server_id=stringtouint32(databaseBaseCommon->value(0),&ok);
+        const unsigned int server_id=DatabaseFunction::stringtouint32(databaseBaseCommon->value(0),&ok);
         if(ok)
         {
             //global over the server group
@@ -202,7 +202,7 @@ void CharactersGroupForLogin::server_list_object()
                 tempRawDataSize+=1;
 
                 //played_time
-                unsigned int played_time=stringtouint32(databaseBaseCommon->value(1),&ok);
+                unsigned int played_time=DatabaseFunction::stringtouint32(databaseBaseCommon->value(1),&ok);
                 if(!ok)
                 {
                     std::cerr << "played_time is not number: " << databaseBaseCommon->value(1) << " fixed by 0" << std::endl;
@@ -212,7 +212,7 @@ void CharactersGroupForLogin::server_list_object()
                 tempRawDataSize+=sizeof(uint32_t);
 
                 //last_connect
-                unsigned int last_connect=stringtouint32(databaseBaseCommon->value(2),&ok);
+                unsigned int last_connect=DatabaseFunction::stringtouint32(databaseBaseCommon->value(2),&ok);
                 if(!ok)
                 {
                     std::cerr << "last_connect is not number: " << databaseBaseCommon->value(2) << " fixed by 0" << std::endl;
@@ -308,7 +308,7 @@ void CharactersGroupForLogin::deleteCharacterNow_return(const uint32_t &characte
     std::string queryText;
     while(databaseBaseCommon->next())
     {
-        const uint32_t &monsterId=stringtouint32(databaseBaseCommon->value(0),&ok);
+        const uint32_t &monsterId=DatabaseFunction::stringtouint32(databaseBaseCommon->value(0),&ok);
         if(ok)
         {
             queryText=PreparedDBQueryCommon::db_query_delete_monster_buff;
@@ -435,7 +435,7 @@ void CharactersGroupForLogin::addCharacterStep1_return(EpollClientLoginSlave * c
         return;
     }
     bool ok;
-    uint32_t characterCount=stringtouint32(databaseBaseCommon->value(0),&ok);
+    uint32_t characterCount=DatabaseFunction::stringtouint32(databaseBaseCommon->value(0),&ok);
     if(!ok)
     {
         std::cerr << "Character count query return not a number" << std::endl;
@@ -677,7 +677,7 @@ void CharactersGroupForLogin::removeCharacter_return(EpollClientLoginSlave * con
         return;
     }
     bool ok;
-    const uint32_t &account_id=stringtouint32(databaseBaseCommon->value(0),&ok);
+    const uint32_t &account_id=DatabaseFunction::stringtouint32(databaseBaseCommon->value(0),&ok);
     if(!ok)
     {
         client->removeCharacter_ReturnFailed(query_id,0x02,"Account for character: "+databaseBaseCommon->value(0)+" is not an id");
@@ -688,7 +688,7 @@ void CharactersGroupForLogin::removeCharacter_return(EpollClientLoginSlave * con
         client->removeCharacter_ReturnFailed(query_id,0x02,"Character: "+std::to_string(characterId)+" is not owned by the account: "+std::to_string(account_id));
         return;
     }
-    const uint32_t &time_to_delete=stringtouint32(databaseBaseCommon->value(1),&ok);
+    const uint32_t &time_to_delete=DatabaseFunction::stringtouint32(databaseBaseCommon->value(1),&ok);
     if(ok && time_to_delete>0)
     {
         client->removeCharacter_ReturnFailed(query_id,0x02,"Character: "+std::to_string(characterId)+" is already in deleting for the account: "+std::to_string(account_id));

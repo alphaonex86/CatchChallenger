@@ -6,6 +6,7 @@
 #include "../../general/base/tinyXML/tinyxml.h"
 #include "../base/GlobalServerData.h"
 #include "../VariableServer.h"
+#include "../base/DatabaseFunction.h"
 
 #include <string>
 #include <vector>
@@ -59,7 +60,7 @@ void BaseServer::load_monsters_max_id_return()
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         bool ok;
-        const uint32_t &maxMonsterId=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
+        const uint32_t &maxMonsterId=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(!ok)
         {
             std::cerr << "Max monster id is failed to convert to number" << std::endl;

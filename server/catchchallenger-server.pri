@@ -46,7 +46,8 @@ SOURCES += \
     $$PWD/base/PreparedDBQuery.cpp \
     $$PWD/base/DatabaseBase.cpp \
     $$PWD/base/BaseServerLogin.cpp \
-    $$PWD/base/TinyXMLSettings.cpp
+    $$PWD/base/TinyXMLSettings.cpp \
+    $$PWD/base/DatabaseFunction.cpp
 
 HEADERS += \
     $$PWD/base/GlobalServerData.h \
@@ -77,4 +78,5 @@ HEADERS += \
     $$PWD/base/PreparedDBQuery.h \
     $$PWD/base/DatabaseBase.h \
     $$PWD/base/BaseServerLogin.h \
-    $$PWD/base/TinyXMLSettings.h
+    $$PWD/base/TinyXMLSettings.h \
+    $$PWD/base/DatabaseFunction.h
