@@ -216,7 +216,9 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                 internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBufferReply),sizeof(EpollClientLoginSlave::loginIsWrongBufferReply));
                 stat=EpollClientLoginStat::ProtocolGood;
                 paramToPassToCallBack.pop();
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 paramToPassToCallBackType.pop();
+                #endif
                 delete askLoginParam;
                 askLoginParam=NULL;
                 return;
@@ -228,7 +230,9 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
             {
                 loginIsWrong(askLoginParam->query_id,0x02,"Bad login for: "+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)+", pass: "+binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE));
                 paramToPassToCallBack.pop();
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 paramToPassToCallBackType.pop();
+                #endif
                 delete askLoginParam;
                 askLoginParam=NULL;
                 return;
@@ -248,7 +252,11 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                     if(tokenLink.client==this)
                     {
                         const std::string &secretToken(databaseBaseLogin.value(1));
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
                         secretTokenBinary=hexatoBinary(secretToken);
+                        #else
+                        std::vector<char> secretTokenBinary=hexatoBinary(secretToken);
+                        #endif
                         if(secretTokenBinary.empty() || secretTokenBinary.size()!=CATCHCHALLENGER_SHA224HASH_SIZE)
                         {
                             std::cerr << "convertion to binary for pass failed for: " << databaseBaseLogin.value(1) << std::endl;
@@ -318,7 +326,9 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                              );
                 #endif
                 paramToPassToCallBack.pop();
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 paramToPassToCallBackType.pop();
+                #endif
                 delete askLoginParam;
                 askLoginParam=NULL;
                 return;
@@ -331,7 +341,9 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                     account_id=0;
                     loginIsWrong(askLoginParam->query_id,0x03,"Account id is not a number");
                     paramToPassToCallBack.pop();
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     paramToPassToCallBackType.pop();
+                    #endif
                     delete askLoginParam;
                     askLoginParam=NULL;
                     return;
@@ -477,7 +489,9 @@ void EpollClientLoginSlave::server_list_return(const uint8_t &serverCount,char *
         *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::loginGood+1+1)=htole32(tempSize-1-1-4);//set the dynamic size
         internalSendRawSmallPacket(EpollClientLoginSlave::loginGood,tempSize);
         paramToPassToCallBack.pop();
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
         paramToPassToCallBackType.pop();
+        #endif
         delete askLoginParam;
         askLoginParam=NULL;
         stat=EpollClientLoginStat::Logged;
