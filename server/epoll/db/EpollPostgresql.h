@@ -30,6 +30,9 @@ public:
     bool next();
     const std::string value(const int &value) const;
     bool isConnected() const;
+
+    //over load of: CatchChallenger::DatabaseFunction
+    bool stringtobool(const std::string &string,bool *ok=NULL);
 private:
     PGconn *conn;
     int tuleIndex;

@@ -45,7 +45,7 @@ void Client::loadRecipes_return()
     bool ok;
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        const uint32_t &recipeId=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
+        const uint32_t &recipeId=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(ok)
         {
             if(CommonDatapack::commonDatapack.crafingRecipes.find(recipeId)!=CommonDatapack::commonDatapack.crafingRecipes.cend())
@@ -95,13 +95,13 @@ void Client::loadItems_return()
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        const uint32_t &id=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
+        const uint32_t &id=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(!ok)
         {
             normalOutput("item id is not a number, skip");
             continue;
         }
-        const uint32_t &quantity=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
+        const uint32_t &quantity=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
         if(!ok)
         {
             normalOutput("quantity is not a number, skip");
@@ -158,13 +158,13 @@ void Client::loadItemsWarehouse_return()
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        const uint32_t &id=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
+        const uint32_t &id=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(!ok)
         {
             normalOutput("item id is not a number, skip");
             continue;
         }
-        const uint32_t &quantity=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
+        const uint32_t &quantity=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
         if(!ok)
         {
             normalOutput("quantity is not a number, skip");
