@@ -4,11 +4,12 @@
 #include <stdint.h>
 #include <string>
 #include "../epoll/BaseClassSwitch.h"
+#include "DatabaseFunction.h"
 
 typedef void (*CallBackDatabase)(void *object);
 
 namespace CatchChallenger {
-class DatabaseBase : public BaseClassSwitch
+class DatabaseBase : public BaseClassSwitch, public CatchChallenger::DatabaseFunction
 {
     public:
         enum DatabaseType

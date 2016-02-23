@@ -253,9 +253,9 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                     {
                         const std::string &secretToken(databaseBaseLogin.value(1));
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                        secretTokenBinary=hexatoBinary(secretToken);
+                        secretTokenBinary=databaseBaseLogin.hexatoBinary(secretToken);
                         #else
-                        std::vector<char> secretTokenBinary=hexatoBinary(secretToken);
+                        std::vector<char> secretTokenBinary=databaseBaseLogin.hexatoBinary(secretToken);
                         #endif
                         if(secretTokenBinary.empty() || secretTokenBinary.size()!=CATCHCHALLENGER_SHA224HASH_SIZE)
                         {
@@ -335,7 +335,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
             }
             else
             {
-                account_id=DatabaseFunction::stringtouint32(databaseBaseLogin.value(0),&ok);
+                account_id=databaseBaseLogin.stringtouint32(databaseBaseLogin.value(0),&ok);
                 if(!ok)
                 {
                     account_id=0;

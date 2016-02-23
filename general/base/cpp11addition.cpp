@@ -8,6 +8,13 @@
 #include <iostream>
 #include <chrono>
 
+/// \todo, check number validity by http://en.cppreference.com/w/c/string/byte/strtol
+/* to check: bool my_strtol(const std::string &str, long &v) {
+char *end = nullptr;
+v = strtol(str.c_str(), &end, 10);
+return end != nullptr;
+}*/
+
 static const std::regex isaunsignednumber("^[0-9]+$",std::regex::optimize);
 static const std::regex isasignednumber("^-?[0-9]+$",std::regex::optimize);
 static const std::regex isadouble("^-?[0-9]+(\\.[0-9]+)?$",std::regex::optimize);
@@ -262,13 +269,13 @@ bool stringtobool(const std::string &string,bool *ok)
             *ok=true;
         return false;
     }
-    if(string=="true" || string=="TRUE")
+    if(string=="true" || string=="t" /*postgresql*/ || string=="TRUE")
     {
         if(ok!=NULL)
             *ok=true;
         return true;
     }
-    if(string=="false" || string=="FALSE")
+    if(string=="false" || string=="f" /*postgresql*/ || string=="FALSE")
     {
         if(ok!=NULL)
             *ok=true;

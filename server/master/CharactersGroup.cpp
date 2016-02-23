@@ -75,7 +75,7 @@ void CharactersGroup::load_clan_max_id_return()
     {
         bool ok;
         //not +1 because incremented before use
-        maxClanId=stringtouint32(databaseBaseCommon->value(0),&ok);
+        maxClanId=databaseBaseCommon->stringtouint32(databaseBaseCommon->value(0),&ok);
         if(!ok)
         {
             std::cerr << "Max clan id is failed to convert to number" << std::endl;
@@ -120,7 +120,7 @@ void CharactersGroup::load_character_max_id_return()
     {
         bool ok;
         //not +1 because incremented before use
-        maxCharacterId=stringtouint32(databaseBaseCommon->value(0),&ok);
+        maxCharacterId=databaseBaseCommon->stringtouint32(databaseBaseCommon->value(0),&ok);
         if(!ok)
         {
             std::cerr << "Max character id is failed to convert to number" << std::endl;
@@ -165,7 +165,7 @@ void CharactersGroup::load_monsters_max_id_return()
     {
         bool ok;
         //not +1 because incremented before use
-        maxMonsterId=stringtouint32(databaseBaseCommon->value(0),&ok);
+        maxMonsterId=databaseBaseCommon->stringtouint32(databaseBaseCommon->value(0),&ok);
         if(!ok)
         {
             std::cerr << "Max monster id is failed to convert to number" << std::endl;
