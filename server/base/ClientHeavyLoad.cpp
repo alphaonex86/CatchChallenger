@@ -182,7 +182,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                     if(tokenLink.client==this)
                     {
                         const std::string &secretToken(GlobalServerData::serverPrivateVariables.db_login->value(1));
-                        std::vector<char> secretTokenBinary=hexatoBinary(secretToken);
+                        std::vector<char> secretTokenBinary=GlobalServerData::serverPrivateVariables.db_login->hexatoBinary(secretToken);
                         if(secretTokenBinary.empty() || secretTokenBinary.size()!=CATCHCHALLENGER_SHA224HASH_SIZE)
                         {
                             std::cerr << "convertion to binary for pass failed for: " << GlobalServerData::serverPrivateVariables.db_login->value(1) << std::endl;
@@ -256,7 +256,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
             }
             else
             {
-                account_id=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_login->value(0),&ok);
+                account_id=GlobalServerData::serverPrivateVariables.db_login->stringtouint32(GlobalServerData::serverPrivateVariables.db_login->value(0),&ok);
                 if(!ok)
                 {
                     account_id=0;
@@ -484,22 +484,22 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
         while(GlobalServerData::serverPrivateVariables.db_common->next() && characterEntryList.size()<CommonSettingsCommon::commonSettingsCommon.max_character)
         {
             CharacterEntry characterEntry;
-            characterEntry.character_id=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
+            characterEntry.character_id=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
             if(ok)
             {
-                uint32_t time_to_delete=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(3),&ok);
+                uint32_t time_to_delete=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(3),&ok);
                 if(!ok)
                 {
                     normalOutput("time_to_delete is not number: "+GlobalServerData::serverPrivateVariables.db_common->value(3)+" for "+std::to_string(account_id)+" fixed by 0");
                     time_to_delete=0;
                 }
-                characterEntry.played_time=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(4),&ok);
+                characterEntry.played_time=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(4),&ok);
                 if(!ok)
                 {
                     normalOutput("played_time is not number: "+GlobalServerData::serverPrivateVariables.db_common->value(4)+" for "+std::to_string(account_id)+" fixed by 0");
                     characterEntry.played_time=0;
                 }
-                characterEntry.last_connect=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(5),&ok);
+                characterEntry.last_connect=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(5),&ok);
                 if(!ok)
                 {
                     normalOutput("last_connect is not number: "+GlobalServerData::serverPrivateVariables.db_common->value(5)+" for "+std::to_string(account_id)+" fixed by 0");
@@ -514,7 +514,7 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
                     else
                         characterEntry.delete_time_left=time_to_delete-current_time;
                     characterEntry.pseudo=GlobalServerData::serverPrivateVariables.db_common->value(1);
-                    const uint32_t &skinIdTemp=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
+                    const uint32_t &skinIdTemp=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
                     if(!ok)
                     {
                         normalOutput("character return skin is not number: "+GlobalServerData::serverPrivateVariables.db_common->value(5)+" for "+std::to_string(account_id)+" fixed by 0");
@@ -671,7 +671,7 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
         posOutput+=1;
 
         //played_time
-        unsigned int played_time=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
+        unsigned int played_time=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
         if(!ok)
         {
             std::cerr << "played_time is not number: " << GlobalServerData::serverPrivateVariables.db_common->value(1) << " fixed by 0" << std::endl;
@@ -681,7 +681,7 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
         posOutput+=sizeof(uint32_t);
 
         //last_connect
-        unsigned int last_connect=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
+        unsigned int last_connect=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
         if(!ok)
         {
             std::cerr << "last_connect is not number: " << GlobalServerData::serverPrivateVariables.db_common->value(2) << " fixed by 0" << std::endl;
@@ -847,7 +847,7 @@ void Client::deleteCharacterNow_return(const uint32_t &characterId)
     std::string queryText;
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        const uint32_t &monsterId=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
+        const uint32_t &monsterId=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(ok)
         {
             queryText=PreparedDBQueryCommon::db_query_delete_monster_buff;
@@ -1335,7 +1335,7 @@ void Client::removeCharacterLater_return(const uint8_t &query_id,const uint32_t 
         return;
     }
     bool ok;
-    const uint32_t &account_id=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
+    const uint32_t &account_id=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
     if(!ok)
     {
         characterSelectionIsWrong(query_id,0x02,"Account for character: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" is not an id");
@@ -1346,7 +1346,7 @@ void Client::removeCharacterLater_return(const uint8_t &query_id,const uint32_t 
         characterSelectionIsWrong(query_id,0x02,"Character: "+std::to_string(characterId)+" is not owned by the account: "+std::to_string(account_id)+"");
         return;
     }
-    const uint32_t &time_to_delete=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
+    const uint32_t &time_to_delete=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
     if(ok && time_to_delete>0)
     {
         characterSelectionIsWrong(query_id,0x02,"Character: "+std::to_string(characterId)+" is already in deleting for the account: "+std::to_string(account_id));
@@ -2149,19 +2149,19 @@ void Client::loadReputation_return()
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        const unsigned int &type=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
+        const unsigned int &type=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(!ok)
         {
             normalOutput("reputation type is not a number, skip: "+GlobalServerData::serverPrivateVariables.db_common->value(0));
             continue;
         }
-        int32_t point=DatabaseFunction::stringtoint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
+        int32_t point=GlobalServerData::serverPrivateVariables.db_common->stringtoint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
         if(!ok)
         {
             normalOutput("reputation point is not a number, skip: "+GlobalServerData::serverPrivateVariables.db_common->value(1));
             continue;
         }
-        const int32_t &level=DatabaseFunction::stringtoint32(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
+        const int32_t &level=GlobalServerData::serverPrivateVariables.db_common->stringtoint32(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
         if(!ok)
         {
             normalOutput("reputation level is not a number, skip: "+GlobalServerData::serverPrivateVariables.db_common->value(2));
@@ -2277,9 +2277,9 @@ void Client::loadQuests_return()
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
         PlayerQuest playerQuest;
-        const uint32_t &id=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
-        playerQuest.finish_one_time=DatabaseFunction::stringtobool(GlobalServerData::serverPrivateVariables.db_server->value(1));
-        playerQuest.step=DatabaseFunction::stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok2);
+        const uint32_t &id=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
+        playerQuest.finish_one_time=GlobalServerData::serverPrivateVariables.db_server->stringtobool(GlobalServerData::serverPrivateVariables.db_server->value(1));
+        playerQuest.step=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok2);
         if(!ok || !ok2)
         {
             normalOutput("wrong value type for quest, skip: "+std::to_string(id));

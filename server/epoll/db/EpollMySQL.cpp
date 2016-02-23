@@ -157,6 +157,9 @@ void EpollMySQL::syncDisconnect()
 
 CatchChallenger::DatabaseBase::CallBack * EpollMySQL::asyncRead(const char * const query,void * returnObject, CallBackDatabase method)
 {
+    #ifdef DEBUG_MESSAGE_CLIENT_SQL
+    std::cerr << "query: " << query << std::endl;
+    #endif
     if(conn==NULL)
     {
         std::cerr << "mysql not connected" << std::endl;

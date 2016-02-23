@@ -30,7 +30,7 @@ bool DatabaseFunction::stringtobool(const std::string &string,bool *ok)
 {
     if(ok!=NULL)
         *ok=true;
-    if(string=="1" || string=="true" || string=="TRUE")
+    if(string=="1" || string=="true" || string=="t" /*postgresql*/ || string=="TRUE")
         return true;
     else
         return false;
@@ -83,6 +83,19 @@ double DatabaseFunction::stringtodouble(const std::string &string,bool *ok)
     if(ok!=NULL)
         *ok=true;
     return std::stod(string);
+}
+
+std::vector<char> DatabaseFunction::hexatoBinary(const std::string &data)
+{
+    std::vector<char> out;
+    out.reserve(data.length()/2);
+    for(size_t i=0;i<data.length();i+=2)
+    {
+        const std::string &partpfchain=data.substr(i,2);
+        uint8_t x=::hexToDecUnit(partpfchain);
+        out.push_back(x);
+    }
+    return out;
 }
 #else
 uint8_t DatabaseFunction::stringtouint8(const std::string &string,bool *ok)
@@ -138,5 +151,10 @@ float DatabaseFunction::stringtofloat(const std::string &string,bool *ok)
 double DatabaseFunction::stringtodouble(const std::string &string,bool *ok)
 {
     return ::stringtodouble(string,ok);
+}
+
+std::vector<char> DatabaseFunction::hexatoBinary(const std::string &data)
+{
+    return ::hexatoBinary(data);
 }
 #endif

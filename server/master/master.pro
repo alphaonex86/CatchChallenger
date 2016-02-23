@@ -67,7 +67,8 @@ SOURCES += \
     ../../general/base/tinyXML/tinyxmlparser.cpp \
     ../base/TinyXMLSettings.cpp \
     CheckTimeoutGameServer.cpp \
-    AutomaticPingSend.cpp
+    AutomaticPingSend.cpp \
+    ../base/DatabaseFunction.cpp
 
 HEADERS += \
     EpollClientLoginMaster.h \
@@ -103,4 +104,5 @@ HEADERS += \
     ../base/TinyXMLSettings.h \
     ../../general/base/GeneralVariable.h \
     CheckTimeoutGameServer.h \
-    AutomaticPingSend.h
+    AutomaticPingSend.h \
+    ../base/DatabaseFunction.h

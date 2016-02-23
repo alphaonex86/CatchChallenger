@@ -13,7 +13,7 @@
 #include <time.h>
 #include <QTreeWidgetItem>
 
-#include "../bot/MultipleBotConnectionImplFoprGui.h"
+#include "../bot/MultipleBotConnectionImplForGui.h"
 #include "../../client/base/ClientStructures.h"
 
 namespace Ui {
