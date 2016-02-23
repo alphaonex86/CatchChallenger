@@ -9,6 +9,7 @@
 #include "../Epoll.h"
 #include "../../../general/base/GeneralVariable.h"
 #include "../../../general/base/cpp11addition.h"
+#include "../../VariableServer.h"
 #include <chrono>
 #include <ctime>
 #include <thread>
@@ -182,6 +183,9 @@ void EpollPostgresql::syncDisconnect()
 
 CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncRead(const std::string &query,void * returnObject,CallBackDatabase method)
 {
+    #ifdef DEBUG_MESSAGE_CLIENT_SQL
+    std::cerr << "query: " << query << std::endl;
+    #endif
     if(conn==NULL)
     {
         std::cerr << "pg not connected" << std::endl;
@@ -399,5 +403,36 @@ const std::string EpollPostgresql::value(const int &value) const
     if(result==NULL || tuleIndex<0)
         return emptyString;
     return PQgetvalue(result,tuleIndex,value);
+}
+
+bool EpollPostgresql::stringtobool(const std::string &string,bool *ok)
+{
+    #ifdef CATCHCHALLENGER_SERVER_TRUSTINTODATABASENUMBERRETURN
+    if(ok!=NULL)
+        *ok=true;
+    if(string=="t")
+        return true;
+    else
+        return false;
+    #else
+    if(string=="t")
+    {
+        if(ok!=NULL)
+            *ok=true;
+        return true;
+    }
+    else if(string=="f")
+    {
+        if(ok!=NULL)
+            *ok=true;
+        return false;
+    }
+    else
+    {
+        if(ok!=NULL)
+            *ok=false;
+        return false;
+    }
+    #endif
 }
 #endif

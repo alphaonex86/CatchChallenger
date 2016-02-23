@@ -47,6 +47,7 @@ float stringtofloat(const std::string &string,bool *ok=NULL);
 double stringtodouble(const std::string &string,bool *ok=NULL);
 std::string binarytoHexa(const std::vector<char> &data);
 std::string binarytoHexa(const char * const data,const uint32_t &size);
+uint8_t hexToDecUnit(const std::string& data);
 std::vector<char> hexatoBinary(const std::string &data);
 void binaryAppend(std::vector<char> &data,const std::vector<char> &add);
 void binaryAppend(std::vector<char> &data, const char * const add, const uint32_t &addSize);
