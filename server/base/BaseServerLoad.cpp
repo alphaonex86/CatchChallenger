@@ -996,6 +996,12 @@ bool BaseServer::preload_the_map()
             GlobalServerData::serverPrivateVariables.flat_map_list[index]=flat_map_list_temp.at(index);
             index++;
         }
+        if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm==CatchChallenger::MapVisibilityAlgorithmSelection_Simple)
+        {
+            Map_server_MapVisibility_Simple_StoreOnSender::map_to_update=static_cast<Map_server_MapVisibility_Simple_StoreOnSender **>(malloc(sizeof(CommonMap *)*flat_map_list_temp.size()));
+            memset(Map_server_MapVisibility_Simple_StoreOnSender::map_to_update,0x00,sizeof(CommonMap *)*flat_map_list_temp.size());
+            Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size=0;
+        }
     }
 
     std::sort(map_name_to_do_id.begin(),map_name_to_do_id.end());

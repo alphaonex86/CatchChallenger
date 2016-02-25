@@ -42,8 +42,8 @@ private:
     static MapVisibilityAlgorithm_WithBorder_StoreOnSender *current_client;//static to drop down the memory
     //overwrite
     //remove the move/remove
-    void moveAnotherClientWithMap(MapVisibilityAlgorithm_WithBorder_StoreOnSender *the_another_player,const uint8_t &movedUnit,const Direction &direction);
-    void moveAnotherClientWithMap(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_WithBorder_StoreOnSender *the_another_player,const uint8_t &movedUnit,const Direction &direction);
+    void moveAnotherClientWithMap(MapVisibilityAlgorithm_WithBorder_StoreOnSender * const the_another_player,const uint8_t &movedUnit,const Direction &direction);
+    void moveAnotherClientWithMap(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_WithBorder_StoreOnSender * const the_another_player,const uint8_t &movedUnit,const Direction &direction);
     //for the purge buffer
     void send_insert();
     void send_move();
@@ -83,9 +83,9 @@ private:
 public:
     void purgeBuffer();
     //map, transmited by the current ClientNetworkRead
-    void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
+    void put_on_the_map(CommonMap * const map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
     bool moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction);
-    void teleportValidatedTo(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
+    void teleportValidatedTo(CommonMap * const map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
 private:
     void extraStop();
 };
