@@ -5,17 +5,27 @@ using namespace CatchChallenger;
 
 MapVisibilityAlgorithm_Simple_StoreOnSender * Map_server_MapVisibility_Simple_StoreOnSender::clientsToSendDataNewClients[65535];
 MapVisibilityAlgorithm_Simple_StoreOnSender * Map_server_MapVisibility_Simple_StoreOnSender::clientsToSendDataOldClients[65535];
+Map_server_MapVisibility_Simple_StoreOnSender ** Map_server_MapVisibility_Simple_StoreOnSender::map_to_update=NULL;
+uint32_t Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size=0;
 
 Map_server_MapVisibility_Simple_StoreOnSender::Map_server_MapVisibility_Simple_StoreOnSender() :
     show(true),
     to_send_insert(false),
     send_drop_all(false),
-    send_reinsert_all(false)
+    send_reinsert_all(false),
+    have_change(false)
 {
 }
 
 void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(have_change==false)
+    {
+        std::cerr << "Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer(): have_change==false" << std::endl;
+    }
+    #endif
+    have_change=false;
     if(send_drop_all)
     {
         unsigned const char mainCode[]={0x65};

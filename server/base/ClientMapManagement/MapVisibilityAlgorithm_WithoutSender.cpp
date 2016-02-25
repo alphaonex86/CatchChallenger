@@ -21,13 +21,15 @@ void MapVisibilityAlgorithm_WithoutSender::generalPurgeBuffer()
     {
         case MapVisibilityAlgorithmSelection_Simple:
         {
-            int index=0;
-            const int &list_size=GlobalServerData::serverPrivateVariables.map_list.size();
+            unsigned int index=0;
+            const unsigned int &list_size=Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size;
             while(index<list_size)
             {
-                static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(GlobalServerData::serverPrivateVariables.flat_map_list[index])->purgeBuffer();
+                Map_server_MapVisibility_Simple_StoreOnSender * const map=Map_server_MapVisibility_Simple_StoreOnSender::map_to_update[index];
+                map->purgeBuffer();
                 index++;
             }
+            Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size=0;
         }
         break;
         case MapVisibilityAlgorithmSelection_WithBorder:

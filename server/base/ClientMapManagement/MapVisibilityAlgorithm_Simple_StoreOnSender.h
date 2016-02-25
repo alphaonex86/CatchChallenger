@@ -6,6 +6,8 @@
 #include "../../../general/base/CommonMap.h"
 
 namespace CatchChallenger {
+class Map_server_MapVisibility_Simple_StoreOnSender;
+
 class MapVisibilityAlgorithm_Simple_StoreOnSender : public Client
 {
 public:
@@ -32,6 +34,7 @@ protected:
     void removeClient();
     void mapVisiblity_unloadFromTheMap();
     void reinsertClientForOthersOnSameMap();
+    void saveChange(Map_server_MapVisibility_Simple_StoreOnSender * const map);
 private:
     static MapVisibilityAlgorithm_Simple_StoreOnSender *current_client;//static to drop down the memory
     //map load/unload and change
@@ -54,9 +57,9 @@ public:
     bool                    			haveNewMove;
 public:
     //map slots, transmited by the current ClientNetworkRead
-    void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
+    void put_on_the_map(CommonMap * const map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
     bool moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction);
-    void teleportValidatedTo(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
+    void teleportValidatedTo(CommonMap * const map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
 private:
     void extraStop();
 };
