@@ -239,7 +239,6 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
     const quint32 &character_id=client->charactersList.at(charactersGroupIndex).at(rand()%client->charactersList.at(charactersGroupIndex).size()).character_id;
     if(!characterOnMap.contains(character_id))
     {
-        characterOnMap << character_id;
         if(multipleConnexion() && serverIsSelected)
         {
             if(!serverIsSelected)
@@ -247,6 +246,8 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
                 qDebug() << "if(!serverIsSelected) for multipleConnexion()";
                 abort();
             }
+            qDebug() << "haveTheDatapack_with_client: Manual select character:" << character_id;
+            characterOnMap << character_id;
             if(!client->api->selectCharacter(charactersGroupIndex,serverUniqueKey,character_id))
                 qDebug() << "Unable to select character after datapack loading:" << character_id;
             else

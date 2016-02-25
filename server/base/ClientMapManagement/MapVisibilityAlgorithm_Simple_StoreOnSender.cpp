@@ -45,7 +45,23 @@ MapVisibilityAlgorithm_Simple_StoreOnSender::~MapVisibilityAlgorithm_Simple_Stor
 
 void MapVisibilityAlgorithm_Simple_StoreOnSender::insertClient()
 {
-    Map_server_MapVisibility_Simple_StoreOnSender *temp_map=static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(map);
+    Map_server_MapVisibility_Simple_StoreOnSender * const temp_map=static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(map);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        unsigned int index=0;
+        while(index<GlobalServerData::serverPrivateVariables.map_list.size())
+        {
+            if(GlobalServerData::serverPrivateVariables.flat_map_list[index]==temp_map)
+                break;
+            index++;
+        }
+        if(index>=GlobalServerData::serverPrivateVariables.map_list.size())
+        {
+            std::cerr << "MapVisibilityAlgorithm_Simple_StoreOnSender::insertClient(): !vectorcontainsAtLeastOne(flat_map_list,temp_map)" << std::endl;
+            abort();
+        }
+    }
+    #endif
     if(Q_LIKELY(temp_map->show))
     {
         const int loop_size=temp_map->clients.size();
@@ -87,6 +103,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::insertClient()
             vectorremoveOne(temp_map->to_send_remove,public_and_private_informations.public_informations.simplifiedId);
             temp_map->to_send_insert=true;
         }
+        saveChange(temp_map);
     }
     else
     {
@@ -122,6 +139,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::moveClient(const uint8_t &,con
     }
     else
     {
+        saveChange(temp_map);
         if(to_send_insert)
             return;
         #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_OVER_MOVE
@@ -172,6 +190,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::dropAllClients()
 {
     to_send_insert=false;
     haveNewMove=false;
+    saveChange(static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(map));
 
     Client::dropAllClients();
 }
@@ -197,6 +216,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::removeClient()
                 temp_map->send_reinsert_all=true;
             else
                 temp_map->send_drop_all=false;
+            saveChange(static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(map));
         }
         //nothing removed because all clients are already hide
         else
@@ -221,6 +241,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::removeClient()
             haveNewMove=false;
             temp_map->to_send_remove.push_back(public_and_private_informations.public_informations.simplifiedId);
         }
+        saveChange(static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(map));
     }
 }
 
@@ -300,7 +321,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::unloadFromTheMap()
 }
 
 //map slots, transmited by the current ClientNetworkRead
-void MapVisibilityAlgorithm_Simple_StoreOnSender::put_on_the_map(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation)
+void MapVisibilityAlgorithm_Simple_StoreOnSender::put_on_the_map(CommonMap * const map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation)
 {
     Client::put_on_the_map(map,x,y,orientation);
     loadOnTheMap();
@@ -317,7 +338,7 @@ bool MapVisibilityAlgorithm_Simple_StoreOnSender::moveThePlayer(const uint8_t &p
     return true;
 }
 
-void MapVisibilityAlgorithm_Simple_StoreOnSender::teleportValidatedTo(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
+void MapVisibilityAlgorithm_Simple_StoreOnSender::teleportValidatedTo(CommonMap * const map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
 {
     bool mapChange=(this->map!=map);
     normalOutput("MapVisibilityAlgorithm_Simple_StoreOnSender::teleportValidatedTo() with mapChange: "+std::to_string(mapChange));
@@ -339,4 +360,21 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::teleportValidatedTo(CommonMap 
     }
     else
         haveNewMove=true;
+}
+
+void MapVisibilityAlgorithm_Simple_StoreOnSender::saveChange(Map_server_MapVisibility_Simple_StoreOnSender * const map)
+{
+    if(!map->have_change)
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(Map_server_MapVisibility_Simple_StoreOnSender::map_to_update==NULL)
+        {
+            std::cerr << "Map_server_MapVisibility_Simple_StoreOnSender::map_to_update is null!" << std::endl;
+            abort();
+        }
+        #endif
+        map->have_change=true;
+        Map_server_MapVisibility_Simple_StoreOnSender::map_to_update[Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size]=map;
+        Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size++;
+    }
 }

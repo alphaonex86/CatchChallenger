@@ -27,9 +27,12 @@ public:
     bool to_send_insert;
     bool send_drop_all;
     bool send_reinsert_all;
+    bool have_change;
 
     static MapVisibilityAlgorithm_Simple_StoreOnSender * clientsToSendDataNewClients[65535];
     static MapVisibilityAlgorithm_Simple_StoreOnSender * clientsToSendDataOldClients[65535];
+    static Map_server_MapVisibility_Simple_StoreOnSender ** map_to_update;
+    static uint32_t map_to_update_size;
 };
 }
 
