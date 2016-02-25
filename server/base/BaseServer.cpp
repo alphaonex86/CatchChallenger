@@ -212,6 +212,12 @@ BaseServer::~BaseServer()
         delete GlobalServerData::serverPrivateVariables.flat_map_list;
         GlobalServerData::serverPrivateVariables.flat_map_list=NULL;
     }
+    if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm==CatchChallenger::MapVisibilityAlgorithmSelection_Simple)
+        if(Map_server_MapVisibility_Simple_StoreOnSender::map_to_update!=NULL)
+        {
+            delete Map_server_MapVisibility_Simple_StoreOnSender::map_to_update;
+            Map_server_MapVisibility_Simple_StoreOnSender::map_to_update=NULL;
+        }
 }
 
 void BaseServer::closeDB()
