@@ -1961,8 +1961,14 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 return false;
             }
             const uint8_t &skinId=data[pos];
+            if((size-pos)<(int)sizeof(uint8_t))
+            {
+                errorOutput("error to get skin with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
+                return false;
+            }
+            const uint8_t &monsterGroupId=data[pos];
             pos+=1;
-            addCharacter(queryNumber,profileIndex,pseudo,skinId);
+            addCharacter(queryNumber,profileIndex,pseudo,monsterGroupId,skinId);
             if((size-pos)!=0)
             {
                 errorOutput("remaining data: parseQuery("+

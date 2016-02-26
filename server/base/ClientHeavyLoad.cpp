@@ -895,7 +895,7 @@ void Client::deleteCharacterNow_return(const uint32_t &characterId)
     dbQueryWriteServer(queryText);
 }
 
-void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &skinId)
+void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryCommon::db_query_select_character_by_pseudo.empty())
@@ -993,10 +993,16 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
         errorOutput("skin provided: "+std::to_string(skinId)+" is not into profile "+std::to_string(profileIndex)+" forced skin list");
         return;
     }
+    if(monsterGroupId>=profile.monstergroup.size())
+    {
+        errorOutput("monsterGroupId: "+std::to_string(skinId)+" is not into profile "+std::to_string(profileIndex));
+        return;
+    }
     AddCharacterParam *addCharacterParam=new AddCharacterParam();
     addCharacterParam->query_id=query_id;
     addCharacterParam->profileIndex=profileIndex;
     addCharacterParam->pseudo=pseudo;
+    addCharacterParam->monsterGroupId=monsterGroupId;
     addCharacterParam->skinId=skinId;
 
     std::string queryText=PreparedDBQueryCommon::db_query_select_character_by_pseudo;
@@ -1057,12 +1063,12 @@ void Client::addCharacter_object()
     if(addCharacterParam==NULL)
         abort();
     #endif
-    addCharacter_return(addCharacterParam->query_id,addCharacterParam->profileIndex,addCharacterParam->pseudo,addCharacterParam->skinId);
+    addCharacter_return(addCharacterParam->query_id,addCharacterParam->profileIndex,addCharacterParam->pseudo,addCharacterParam->monsterGroupId,addCharacterParam->skinId);
     delete addCharacterParam;
     GlobalServerData::serverPrivateVariables.db_common->clear();
 }
 
-void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo,const uint8_t &skinId)
+void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo, const uint8_t &monsterGroupId,const uint8_t &skinId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBackType.front()!="AddCharacterParam")
@@ -1094,6 +1100,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
         return;
     }
     const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
+    const std::vector<Profile::Monster> &monsters=profile.monstergroup.at(monsterGroupId);
     //const ServerProfile &serverProfile=CommonDatapack::commonDatapack.serverProfileList.at(profileIndex);
     const ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex);
 
@@ -1104,7 +1111,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     {
         bool ok;
         unsigned int index=0;
-        while(index<profile.monsters.size())
+        while(index<monsters.size())
         {
             monsterIdList.push_back(getMonsterId(&ok));
             if(!ok)
@@ -1148,9 +1155,10 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
                  std::to_string(sFrom1970())+
                  serverProfileInternal.preparedQueryAddCharacter.at(5)
                  );
-    while(index<profile.monsters.size())
+    while(index<monsters.size())
     {
-        const uint32_t &monsterId=profile.monsters.at(index).id;
+        const Profile::Monster &profil_local_monster=monsters.at(index);
+        const uint32_t &monsterId=profil_local_monster.id;
         if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monsterId)!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
         {
             const Monster &monster=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monsterId);
@@ -1162,8 +1170,8 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
                 else
                     gender=Gender_Male;
             }
-            CatchChallenger::Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(monster,profile.monsters.at(index).level);
-            const std::vector<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngine::generateWildSkill(monster,profile.monsters.at(index).level);
+            CatchChallenger::Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(monster,profil_local_monster.level);
+            const std::vector<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngine::generateWildSkill(monster,profil_local_monster.level);
 
             const uint32_t &monster_id=monsterIdList.back();
             monsterIdList.pop_back();
@@ -1173,8 +1181,8 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
                 stringreplaceOne(queryText,"%2",std::to_string(stat.hp));
                 stringreplaceAll(queryText,"%3",std::to_string(characterId));
                 stringreplaceOne(queryText,"%4",std::to_string(monsterId));
-                stringreplaceOne(queryText,"%5",std::to_string(profile.monsters.at(index).level));
-                stringreplaceOne(queryText,"%6",std::to_string(profile.monsters.at(index).captured_with));
+                stringreplaceOne(queryText,"%5",std::to_string(profil_local_monster.level));
+                stringreplaceOne(queryText,"%6",std::to_string(profil_local_monster.captured_with));
                 stringreplaceOne(queryText,"%7",std::to_string(gender));
                 stringreplaceOne(queryText,"%8",std::to_string(monster_position));
                 dbQueryWriteCommon(queryText);

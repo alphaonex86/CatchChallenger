@@ -463,6 +463,7 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
             uint8_t charactersGroupIndex;
             uint8_t profileIndex;
             std::string pseudo;
+            uint8_t monsterGroupId;
             uint8_t skinId;
             uint8_t pseudoSize;
             {
@@ -505,10 +506,19 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
                     parseNetworkReadError("error to get skin with the main ident: "+std::to_string(mainCodeType)+", data: "+binarytoHexa(data,size));
                     return false;
                 }
+                monsterGroupId=data[cursor];
+                cursor+=1;
+            }
+            {
+                if((size-cursor)<(int)sizeof(uint8_t))
+                {
+                    parseNetworkReadError("error to get skin with the main ident: "+std::to_string(mainCodeType)+", data: "+binarytoHexa(data,size));
+                    return false;
+                }
                 skinId=data[cursor];
                 cursor+=1;
             }
-            addCharacter(queryNumber,charactersGroupIndex,profileIndex,pseudo,skinId);
+            addCharacter(queryNumber,charactersGroupIndex,profileIndex,pseudo,monsterGroupId,skinId);
             if((size-cursor)!=0)
             {
                 parseNetworkReadError("remaining data: parseQuery("+std::to_string(mainCodeType)+","+std::to_string(queryNumber)+")");

@@ -63,6 +63,7 @@ void BaseWindow::newProfileFinished()
     //characterEntry.mapId=DatapackClientLoader::datapackLoader.mapToId.value(profile.map);
     characterEntry.played_time=0;
     characterEntry.pseudo=nameGame.pseudo().toStdString();
+    characterEntry.monsterGroupId=nameGame.monsterGroupId();
     characterEntry.skinId=nameGame.skinId();
     Api_client_real::client->addCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,profileIndex,QString::fromStdString(characterEntry.pseudo),characterEntry.skinId);
     characterEntryListInWaiting << characterEntry;

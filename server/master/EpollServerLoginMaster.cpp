@@ -972,65 +972,74 @@ void EpollServerLoginMaster::loadTheProfile()
             rawServerListForC211Size+=sizeof(uint64_t);
 
             //monster
-            rawServerListForC211[rawServerListForC211Size]=profile.monsters.size();
-            rawServerListForC211Size+=1;
             {
-                unsigned int monsterListIndex=0;
-                while(monsterListIndex<profile.monsters.size())
+                rawServerListForC211[rawServerListForC211Size]=profile.monstergroup.size();
+                rawServerListForC211Size+=1;
+                unsigned int monsterGroupListIndex=0;
+                while(monsterGroupListIndex<profile.monstergroup.size())
                 {
-                    const Profile::Monster &playerMonster=profile.monsters.at(monsterListIndex);
-
-                    //monster
-                    *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(playerMonster.id);
-                    rawServerListForC211Size+=sizeof(uint16_t);
-                    //level
-                    rawServerListForC211[rawServerListForC211Size]=playerMonster.level;
+                    const std::vector<Profile::Monster> &monsters=profile.monstergroup.at(monsterGroupListIndex);
+                    rawServerListForC211[rawServerListForC211Size]=monsters.size();
                     rawServerListForC211Size+=1;
-                    //captured with
-                    *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(playerMonster.captured_with);
-                    rawServerListForC211Size+=sizeof(uint16_t);
-
-                    if(CommonDatapack::commonDatapack.monsters.find(playerMonster.id)==CommonDatapack::commonDatapack.monsters.cend())
+                    unsigned int monsterListIndex=0;
+                    while(monsterListIndex<monsters.size())
                     {
-                        std::cerr << "For profile the monster " << playerMonster.id << " is not found (abort)" << std::endl;
-                        abort();
-                    }
-                    const Monster &monster=CommonDatapack::commonDatapack.monsters.at(playerMonster.id);
-                    const Monster::Stat &monsterStat=CommonFightEngineBase::getStat(monster,playerMonster.level);
-                    const std::vector<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngineBase::generateWildSkill(monster,playerMonster.level);
+                        const Profile::Monster &playerMonster=monsters.at(monsterListIndex);
 
-                    //hp
-                    *reinterpret_cast<uint32_t *>(rawServerListForC211+rawServerListForC211Size)=htole32(monsterStat.hp);
-                    rawServerListForC211Size+=sizeof(uint32_t);
-                    //gender
-                    rawServerListForC211[rawServerListForC211Size]=(int8_t)monster.ratio_gender;
-                    rawServerListForC211Size+=sizeof(uint8_t);
+                        //monster
+                        *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(playerMonster.id);
+                        rawServerListForC211Size+=sizeof(uint16_t);
+                        //level
+                        rawServerListForC211[rawServerListForC211Size]=playerMonster.level;
+                        rawServerListForC211Size+=1;
+                        //captured with
+                        *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(playerMonster.captured_with);
+                        rawServerListForC211Size+=sizeof(uint16_t);
 
-                    //skill list
-                    rawServerListForC211[rawServerListForC211Size]=skills.size();
-                    rawServerListForC211Size+=1;
-                    unsigned int skillListIndex=0;
-                    while(skillListIndex<skills.size())
-                    {
-                        const CatchChallenger::PlayerMonster::PlayerSkill &skill=skills.at(skillListIndex);
-                        if(CommonDatapack::commonDatapack.monsterSkills.find(skill.skill)==CommonDatapack::commonDatapack.monsterSkills.cend())
+                        if(CommonDatapack::commonDatapack.monsters.find(playerMonster.id)==CommonDatapack::commonDatapack.monsters.cend())
                         {
-                            std::cerr << "For profile the monster skill " << skill.skill << " is not found (abort)" << std::endl;
+                            std::cerr << "For profile the monster " << playerMonster.id << " is not found (abort)" << std::endl;
                             abort();
                         }
-                        //skill
-                        *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(skill.skill);
-                        rawServerListForC211Size+=sizeof(uint16_t);
-                        //skill level
-                        rawServerListForC211[rawServerListForC211Size]=skill.level;
+                        const Monster &monster=CommonDatapack::commonDatapack.monsters.at(playerMonster.id);
+                        const Monster::Stat &monsterStat=CommonFightEngineBase::getStat(monster,playerMonster.level);
+                        const std::vector<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngineBase::generateWildSkill(monster,playerMonster.level);
+
+                        //hp
+                        *reinterpret_cast<uint32_t *>(rawServerListForC211+rawServerListForC211Size)=htole32(monsterStat.hp);
+                        rawServerListForC211Size+=sizeof(uint32_t);
+                        //gender
+                        rawServerListForC211[rawServerListForC211Size]=(int8_t)monster.ratio_gender;
                         rawServerListForC211Size+=sizeof(uint8_t);
-                        //skill endurance
-                        rawServerListForC211[rawServerListForC211Size]=skill.endurance;
-                        rawServerListForC211Size+=sizeof(uint8_t);
-                        skillListIndex++;
+
+                        //skill list
+                        rawServerListForC211[rawServerListForC211Size]=skills.size();
+                        rawServerListForC211Size+=1;
+                        unsigned int skillListIndex=0;
+                        while(skillListIndex<skills.size())
+                        {
+                            const CatchChallenger::PlayerMonster::PlayerSkill &skill=skills.at(skillListIndex);
+                            if(CommonDatapack::commonDatapack.monsterSkills.find(skill.skill)==CommonDatapack::commonDatapack.monsterSkills.cend())
+                            {
+                                std::cerr << "For profile the monster skill " << skill.skill << " is not found (abort)" << std::endl;
+                                abort();
+                            }
+                            //skill
+                            *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(skill.skill);
+                            rawServerListForC211Size+=sizeof(uint16_t);
+                            //skill level
+                            rawServerListForC211[rawServerListForC211Size]=skill.level;
+                            rawServerListForC211Size+=sizeof(uint8_t);
+                            //skill endurance
+                            rawServerListForC211[rawServerListForC211Size]=skill.endurance;
+                            rawServerListForC211Size+=sizeof(uint8_t);
+                            skillListIndex++;
+                        }
+
+                        monsterListIndex++;
                     }
 
-                    monsterListIndex++;
+                    monsterGroupListIndex++;
                 }
             }
 
