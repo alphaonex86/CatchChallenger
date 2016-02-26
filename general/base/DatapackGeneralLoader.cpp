@@ -1957,7 +1957,7 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
                 const TiXmlElement * monstersElementGroup = startItem->FirstChildElement("monstergroup");
                 while(monstersElementGroup!=NULL)
                 {
-                    std::vector<Profile::Monster> monstergroup;
+                    std::vector<Profile::Monster> monsters_list;
                     const TiXmlElement * monstersElement = monstersElementGroup->FirstChildElement("monster");
                     while(monstersElement!=NULL)
                     {
@@ -2000,22 +2000,24 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
                             }
                             #endif // CATCHCHALLENGER_CLASS_MASTER
                             if(ok)
-                                monstergroup.push_back(monster);
+                                monsters_list.push_back(monster);
                         }
+                        else
+                            std::cerr << "Unable to open the xml file: " << file << ", no monster attribute to load: child->ValueStr(): " << monstersElement->ValueStr() << " (at line: " << monstersElement->Row() << ")" << std::endl;
                         monstersElement = monstersElement->NextSiblingElement("monster");
                     }
-                    if(monstergroup.empty())
+                    if(monsters_list.empty())
                     {
-                        std::cerr << "Unable to open the xml file: " << file << ", not monster to load: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
+                        std::cerr << "Unable to open the xml file: " << file << ", no monster to load: child->ValueStr(): " << monstersElement->ValueStr() << " (at line: " << monstersElement->Row() << ")" << std::endl;
                         startItem = startItem->NextSiblingElement("start");
                         continue;
                     }
-                    profile.monstergroup.push_back(monstergroup);
+                    profile.monstergroup.push_back(monsters_list);
                     monstersElementGroup = monstersElementGroup->NextSiblingElement("monstergroup");
                 }
                 if(profile.monstergroup.empty())
                 {
-                    std::cerr << "Unable to open the xml file: " << file << ", not monstergroup to load: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", no monstergroup to load: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
                     startItem = startItem->NextSiblingElement("start");
                     continue;
                 }
