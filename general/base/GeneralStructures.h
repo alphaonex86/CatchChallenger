@@ -812,7 +812,7 @@ struct Profile
     };
     std::vector<uint8_t> forcedskin;
     uint64_t cash;
-    std::vector<std::vector<Monster> > monstergroup;
+    std::vector<std::vector<Profile::Monster> > monstergroup;
     std::vector<Reputation> reputation;
     std::vector<Item> items;
     std::string id;

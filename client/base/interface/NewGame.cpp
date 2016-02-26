@@ -8,15 +8,18 @@
 #include <QFileInfoList>
 #include <QMessageBox>
 #include <QDebug>
+#include <QLabel>
 
-NewGame::NewGame(const QString &skinPath, const std::vector<uint8_t> &forcedSkin, QWidget *parent) :
+NewGame::NewGame(const QString &skinPath, const QString &monsterPath, std::vector<std::vector<CatchChallenger::Profile::Monster> > monstergroup, const std::vector<uint8_t> &forcedSkin, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::NewGame)
 {
     ui->setupUi(this);
     this->forcedSkin=forcedSkin;
+    this->monsterPath=monsterPath;
+    this->monstergroup=monstergroup;
+    okAccepted=true;
     step=Step1;
-    currentMonsterGroupId=0;
     currentMonsterGroup=0;
     this->skinPath=skinPath.toStdString();
     unsigned int index=0;
@@ -47,6 +50,8 @@ NewGame::NewGame(const QString &skinPath, const std::vector<uint8_t> &forcedSkin
         close();
         return;
     }
+
+    connect(&timer,&QTimer::timeout,      this,&NewGame::timerSlot,    Qt::QueuedConnection);
 }
 
 NewGame::~NewGame()
@@ -58,41 +63,76 @@ void NewGame::updateSkin()
 {
     skinLoaded=false;
 
+    std::vector<std::string> paths;
     if(step==Step1)
     {
         if(currentSkin>=skinList.size())
             return;
         ui->previousSkin->setEnabled(currentSkin>0);
         ui->nextSkin->setEnabled(currentSkin<(skinList.size()-1));
-        std::string path=skinPath+skinList.at(currentSkin)+"/front.png";
+        paths.push_back(skinPath+skinList.at(currentSkin)+"/front.png");
     }
     else if(step==Step2)
     {
-        if(currentMonsterGroup>=skinList.size())
+        if(currentMonsterGroup>=monstergroup.size())
             return;
         ui->previousSkin->setEnabled(currentMonsterGroup>0);
-        ui->nextSkin->setEnabled(currentMonsterGroup<(skinList.size()-1));
-        std::string path=skinPath+skinList.at(currentSkin)+"/front.png";
+        ui->nextSkin->setEnabled(currentMonsterGroup<(monstergroup.size()-1));
+        const std::vector<CatchChallenger::Profile::Monster> &monsters=monstergroup.at(currentMonsterGroup);
+        unsigned int index=0;
+        while(index<monsters.size())
+        {
+            const CatchChallenger::Profile::Monster &monster=monsters.at(index);
+            paths.push_back(monsterPath.toStdString()+std::to_string(monster.id)+"/front.png");
+            index++;
+        }
     }
     else
         return;
 
-    QImage skin=QImage(QString::fromStdString(path));
-    if(skin.isNull())
     {
-        QMessageBox::critical(this,tr("Error"),QStringLiteral("But the skin can't be loaded: %1").arg(QString::fromStdString(path)));
-        return;
+        QLayoutItem *child;
+        while ((child = ui->horizontalLayout->takeAt(0)) != 0)
+        {
+            delete child->widget();
+            delete child;
+        }
     }
-    QImage scaledSkin=skin.scaled(160,160,Qt::IgnoreAspectRatio);
-    QPixmap pixmap;
-    pixmap.convertFromImage(scaledSkin);
-    ui->skin->setPixmap(pixmap);
-    skinLoaded=true;
+    if(!paths.empty())
+    {
+        unsigned int index=0;
+        while(index<paths.size())
+        {
+            const std::string &path=paths.at(index);
+
+            QImage skin=QImage(QString::fromStdString(path));
+            if(skin.isNull())
+            {
+                QMessageBox::critical(this,tr("Error"),QStringLiteral("But the skin can't be loaded: %1").arg(QString::fromStdString(path)));
+                return;
+            }
+            QImage scaledSkin=skin.scaled(160,160,Qt::IgnoreAspectRatio);
+            QPixmap pixmap;
+            pixmap.convertFromImage(scaledSkin);
+            QLabel *label=new QLabel();
+            label->setMinimumSize(160,160);
+            label->setMaximumSize(160,160);
+            ui->horizontalLayout->addWidget(label);
+            label->setPixmap(pixmap);
+            skinLoaded=true;
+
+            index++;
+        }
+    }
+    else
+    {
+        skinLoaded=false;
+    }
 }
 
 bool NewGame::haveTheInformation()
 {
-    return okCanBeEnabled() && ok;
+    return okCanBeEnabled() && step==StepOk;
 }
 
 bool NewGame::okCanBeEnabled()
@@ -117,7 +157,7 @@ uint8_t NewGame::skinId()
 
 uint8_t NewGame::monsterGroupId()
 {
-    return currentMonsterGroupId;
+    return currentMonsterGroup;
 }
 
 bool NewGame::haveSkin()
@@ -127,13 +167,30 @@ bool NewGame::haveSkin()
 
 void NewGame::on_ok_clicked()
 {
-    if(ui->pseudo->text().isEmpty())
-    {
-        QMessageBox::error(this,tr("Error"),tr("Your pseudo can't be empty"));
+    if(!okAccepted)
         return;
+    okAccepted=false;
+    timer.start(20);
+    if(step==Step1)
+    {
+        if(ui->pseudo->text().isEmpty())
+        {
+            QMessageBox::warning(this,tr("Error"),tr("Your pseudo can't be empty"));
+            return;
+        }
+        step=Step2;
+        ui->pseudo->hide();
+        updateSkin();
+        if(monstergroup.size()<2)
+            on_ok_clicked();
     }
-    ok=true;
-    accept();
+    else if(step==Step2)
+    {
+        step=StepOk;
+        accept();
+    }
+    else
+        return;
 }
 
 void NewGame::on_pseudo_textChanged(const QString &)
@@ -158,7 +215,7 @@ void NewGame::on_nextSkin_clicked()
     }
     else if(step==Step2)
     {
-        if(currentMonsterGroup<(skinList.size()-1))
+        if(currentMonsterGroup<(monstergroup.size()-1))
             currentMonsterGroup++;
         else
             return;
@@ -186,4 +243,9 @@ void NewGame::on_previousSkin_clicked()
     }
     else
         return;
+}
+
+void NewGame::timerSlot()
+{
+    okAccepted=true;
 }
