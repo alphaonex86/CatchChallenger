@@ -798,14 +798,14 @@ void EpollClientLoginSlave::selectCharacter_ReturnFailed(const uint8_t &query_id
     }
 }
 
-void EpollClientLoginSlave::addCharacter(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &skinId)
+void EpollClientLoginSlave::addCharacter(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId,const uint8_t &skinId)
 {
     if(characterGroupIndex>=CharactersGroupForLogin::list.size())
     {
         errorParsingLayer("EpollClientLoginSlave::selectCharacter() charactersGroupIndex is out of range");
         return;
     }
-    const int8_t &addCharacter=CharactersGroupForLogin::list.at(characterGroupIndex)->addCharacter(this,query_id,profileIndex,pseudo,skinId);
+    const int8_t &addCharacter=CharactersGroupForLogin::list.at(characterGroupIndex)->addCharacter(this,query_id,profileIndex,pseudo,monsterGroupId,skinId);
     //error case
     if(addCharacter!=0)
     {

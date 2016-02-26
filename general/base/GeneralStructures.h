@@ -373,6 +373,7 @@ struct CharacterEntry
 {
     uint32_t character_id;
     std::string pseudo;
+    uint8_t monsterGroupId;
     uint8_t skinId;
     uint32_t delete_time_left;
     uint32_t played_time;
@@ -811,7 +812,7 @@ struct Profile
     };
     std::vector<uint8_t> forcedskin;
     uint64_t cash;
-    std::vector<Monster> monsters;
+    std::vector<std::vector<Monster> > monstergroup;
     std::vector<Reputation> reputation;
     std::vector<Item> items;
     std::string id;

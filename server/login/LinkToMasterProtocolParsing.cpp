@@ -588,71 +588,31 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         std::cerr << "C211 too small for forcedskinListSize (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                         abort();
                     }
-                    const uint8_t &monsterListSize=rawData[cursor];
+                    const uint8_t &monsterGroupListSize=rawData[cursor];
                     cursor+=1;
-                    uint8_t monsterListIndex=0;
-                    while(monsterListIndex<monsterListSize)
+                    uint8_t monsterGroupListIndex=0;
+                    while(monsterGroupListIndex<monsterGroupListSize)
                     {
-                        EpollServerLoginSlave::LoginProfile::Monster monster;
-                        //monster id
-                        if((size-cursor)<sizeof(uint16_t))
-                        {
-                            std::cerr << "C211 too small for id monster (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
-                            abort();
-                        }
-                        monster.id=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData+cursor)));
-                        cursor+=sizeof(uint16_t);
-                        //level
+                        std::vector<EpollServerLoginSlave::LoginProfile::Monster> monsters;
+                        //monster
                         if((size-cursor)<1)
                         {
-                            std::cerr << "C211 too small for level monster (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                            std::cerr << "C211 too small for forcedskinListSize (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                             abort();
                         }
-                        monster.level=rawData[cursor];
+                        const uint8_t &monsterListSize=rawData[cursor];
                         cursor+=1;
-                        //captured with
-                        if((size-cursor)<sizeof(uint16_t))
+                        uint8_t monsterListIndex=0;
+                        while(monsterListIndex<monsterListSize)
                         {
-                            std::cerr << "C211 too small for captured with monster (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
-                            abort();
-                        }
-                        monster.captured_with=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData+cursor)));
-                        cursor+=sizeof(uint16_t);
-                        //hp
-                        if((size-cursor)<sizeof(uint32_t))
-                        {
-                            std::cerr << "C211 too small for hp monster (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
-                            abort();
-                        }
-                        monster.hp=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+cursor)));
-                        cursor+=sizeof(uint32_t);
-                        //gender
-                        if((size-cursor)<1)
-                        {
-                            std::cerr << "C211 too small for gender monster (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
-                            abort();
-                        }
-                        monster.ratio_gender=rawData[cursor];
-                        cursor+=1;
-                        //skill
-                        if((size-cursor)<1)
-                        {
-                            std::cerr << "C211 too small for skill list (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
-                            abort();
-                        }
-                        const uint8_t &skillListSize=rawData[cursor];
-                        cursor+=1;
-                        uint8_t skillListIndex=0;
-                        while(skillListIndex<skillListSize)
-                        {
-                            EpollServerLoginSlave::LoginProfile::Monster::Skill skill;
-                            //skill id
+                            EpollServerLoginSlave::LoginProfile::Monster monster;
+                            //monster id
                             if((size-cursor)<sizeof(uint16_t))
                             {
                                 std::cerr << "C211 too small for id monster (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                 abort();
                             }
-                            skill.id=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData+cursor)));
+                            monster.id=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData+cursor)));
                             cursor+=sizeof(uint16_t);
                             //level
                             if((size-cursor)<1)
@@ -660,23 +620,78 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                                 std::cerr << "C211 too small for level monster (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                 abort();
                             }
-                            skill.level=rawData[cursor];
+                            monster.level=rawData[cursor];
                             cursor+=1;
-                            //endurance
-                            if((size-cursor)<1)
+                            //captured with
+                            if((size-cursor)<sizeof(uint16_t))
                             {
-                                std::cerr << "C211 too small for endurance monster (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                std::cerr << "C211 too small for captured with monster (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                 abort();
                             }
-                            skill.endurance=rawData[cursor];
+                            monster.captured_with=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData+cursor)));
+                            cursor+=sizeof(uint16_t);
+                            //hp
+                            if((size-cursor)<sizeof(uint32_t))
+                            {
+                                std::cerr << "C211 too small for hp monster (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            monster.hp=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+cursor)));
+                            cursor+=sizeof(uint32_t);
+                            //gender
+                            if((size-cursor)<1)
+                            {
+                                std::cerr << "C211 too small for gender monster (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            monster.ratio_gender=rawData[cursor];
                             cursor+=1;
+                            //skill
+                            if((size-cursor)<1)
+                            {
+                                std::cerr << "C211 too small for skill list (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            const uint8_t &skillListSize=rawData[cursor];
+                            cursor+=1;
+                            uint8_t skillListIndex=0;
+                            while(skillListIndex<skillListSize)
+                            {
+                                EpollServerLoginSlave::LoginProfile::Monster::Skill skill;
+                                //skill id
+                                if((size-cursor)<sizeof(uint16_t))
+                                {
+                                    std::cerr << "C211 too small for id monster (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                    abort();
+                                }
+                                skill.id=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData+cursor)));
+                                cursor+=sizeof(uint16_t);
+                                //level
+                                if((size-cursor)<1)
+                                {
+                                    std::cerr << "C211 too small for level monster (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                    abort();
+                                }
+                                skill.level=rawData[cursor];
+                                cursor+=1;
+                                //endurance
+                                if((size-cursor)<1)
+                                {
+                                    std::cerr << "C211 too small for endurance monster (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                    abort();
+                                }
+                                skill.endurance=rawData[cursor];
+                                cursor+=1;
 
-                            monster.skills.push_back(skill);
-                            skillListIndex++;
+                                monster.skills.push_back(skill);
+                                skillListIndex++;
+                            }
+
+                            monsters.push_back(monster);
+                            monsterListIndex++;
                         }
-
-                        profile.monsters.push_back(monster);
-                        monsterListIndex++;
+                        profile.monstergroup.push_back(monsters);
+                        monsterGroupListIndex++;
                     }
 
                     //reputation

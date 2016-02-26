@@ -480,7 +480,7 @@ void Api_protocol::teleportDone()
     teleportList.removeFirst();
 }
 
-bool Api_protocol::addCharacter(const uint8_t &charactersGroupIndex,const uint8_t &profileIndex, const QString &pseudo, const uint8_t &skinId)
+bool Api_protocol::addCharacter(const uint8_t &charactersGroupIndex,const uint8_t &profileIndex, const QString &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId)
 {
     if(!is_logged)
     {
@@ -513,6 +513,7 @@ bool Api_protocol::addCharacter(const uint8_t &charactersGroupIndex,const uint8_
         outputData+=rawPseudo;
         out.device()->seek(out.device()->size());
     }
+    out << (uint8_t)monsterGroupId;
     out << (uint8_t)skinId;
     is_logged=packOutcommingQuery(0xAA,queryNumber(),outputData.constData(),outputData.size());
     return true;

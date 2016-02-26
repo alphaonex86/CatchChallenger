@@ -15,7 +15,9 @@ NewGame::NewGame(const QString &skinPath, const std::vector<uint8_t> &forcedSkin
 {
     ui->setupUi(this);
     this->forcedSkin=forcedSkin;
-    ok=false;
+    step=Step1;
+    currentMonsterGroupId=0;
+    currentMonsterGroup=0;
     this->skinPath=skinPath.toStdString();
     unsigned int index=0;
     while(index<CatchChallenger::CommonDatapack::commonDatapack.skins.size())
@@ -55,11 +57,26 @@ NewGame::~NewGame()
 void NewGame::updateSkin()
 {
     skinLoaded=false;
-    if(currentSkin>=skinList.size())
+
+    if(step==Step1)
+    {
+        if(currentSkin>=skinList.size())
+            return;
+        ui->previousSkin->setEnabled(currentSkin>0);
+        ui->nextSkin->setEnabled(currentSkin<(skinList.size()-1));
+        std::string path=skinPath+skinList.at(currentSkin)+"/front.png";
+    }
+    else if(step==Step2)
+    {
+        if(currentMonsterGroup>=skinList.size())
+            return;
+        ui->previousSkin->setEnabled(currentMonsterGroup>0);
+        ui->nextSkin->setEnabled(currentMonsterGroup<(skinList.size()-1));
+        std::string path=skinPath+skinList.at(currentSkin)+"/front.png";
+    }
+    else
         return;
-    ui->previousSkin->setEnabled(currentSkin>0);
-    ui->nextSkin->setEnabled(currentSkin<(skinList.size()-1));
-    std::string path=skinPath+skinList.at(currentSkin)+"/front.png";
+
     QImage skin=QImage(QString::fromStdString(path));
     if(skin.isNull())
     {
@@ -93,9 +110,14 @@ QString NewGame::skin()
     return QString::fromStdString(skinList.at(currentSkin));
 }
 
-uint32_t NewGame::skinId()
+uint8_t NewGame::skinId()
 {
     return skinListId.at(currentSkin);
+}
+
+uint8_t NewGame::monsterGroupId()
+{
+    return currentMonsterGroupId;
 }
 
 bool NewGame::haveSkin()
@@ -106,7 +128,10 @@ bool NewGame::haveSkin()
 void NewGame::on_ok_clicked()
 {
     if(ui->pseudo->text().isEmpty())
+    {
+        QMessageBox::error(this,tr("Error"),tr("Your pseudo can't be empty"));
         return;
+    }
     ok=true;
     accept();
 }
@@ -123,17 +148,42 @@ void NewGame::on_pseudo_returnPressed()
 
 void NewGame::on_nextSkin_clicked()
 {
-    if(currentSkin<(skinList.size()-1))
-        currentSkin++;
+    if(step==Step1)
+    {
+        if(currentSkin<(skinList.size()-1))
+            currentSkin++;
+        else
+            return;
+        updateSkin();
+    }
+    else if(step==Step2)
+    {
+        if(currentMonsterGroup<(skinList.size()-1))
+            currentMonsterGroup++;
+        else
+            return;
+        updateSkin();
+    }
     else
         return;
-    updateSkin();
 }
 
 void NewGame::on_previousSkin_clicked()
 {
-    if(currentSkin<=0)
+    if(step==Step1)
+    {
+        if(currentSkin<=0)
+            return;
+        currentSkin--;
+        updateSkin();
+    }
+    else if(step==Step2)
+    {
+        if(currentMonsterGroup<=0)
+            return;
+        currentMonsterGroup--;
+        updateSkin();
+    }
+    else
         return;
-    currentSkin--;
-    updateSkin();
 }
