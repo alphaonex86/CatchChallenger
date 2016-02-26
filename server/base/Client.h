@@ -146,6 +146,7 @@ protected:
         uint8_t query_id;
         uint8_t profileIndex;
         std::string pseudo;
+        uint8_t monsterGroupId;
         uint8_t skinId;
     };
     struct RemoveCharacterParam
@@ -418,10 +419,10 @@ private:
     void dbQueryWriteServer(const std::string &queryText);
     //character
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    void addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &skinId);
+    void addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId);
     static void addCharacter_static(void *object);
     void addCharacter_object();
-    void addCharacter_return(const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &skinId);
+    void addCharacter_return(const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId);
     void removeCharacterLater(const uint8_t &query_id, const uint32_t &characterId);
     static void removeCharacterLater_static(void *object);
     void removeCharacterLater_object();

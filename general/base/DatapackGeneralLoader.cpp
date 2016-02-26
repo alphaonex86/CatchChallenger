@@ -1954,55 +1954,68 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
                         profile.cash=0;
                     }
                 }
-                const TiXmlElement * monstersElement = startItem->FirstChildElement("monster");
-                while(monstersElement!=NULL)
+                const TiXmlElement * monstersElementGroup = startItem->FirstChildElement("monstergroup");
+                while(monstersElementGroup!=NULL)
                 {
-                    Profile::Monster monster;
-                    if(monstersElement->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && monstersElement->Attribute("id")!=NULL && monstersElement->Attribute("level")!=NULL && monstersElement->Attribute("captured_with")!=NULL)
+                    std::vector<Profile::Monster> monstergroup;
+                    const TiXmlElement * monstersElement = monstersElementGroup->FirstChildElement("monster");
+                    while(monstersElement!=NULL)
                     {
-                        monster.id=stringtouint32(monstersElement->Attribute("id"),&ok);
-                        if(!ok)
-                            std::cerr << "Unable to open the xml file: " << file << ", monster id is not a number: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
-                        if(ok)
+                        Profile::Monster monster;
+                        if(monstersElement->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && monstersElement->Attribute("id")!=NULL && monstersElement->Attribute("level")!=NULL && monstersElement->Attribute("captured_with")!=NULL)
                         {
-                            monster.level=stringtouint8(*monstersElement->Attribute(std::string("level")),&ok);
+                            monster.id=stringtouint32(monstersElement->Attribute("id"),&ok);
                             if(!ok)
-                                std::cerr << "Unable to open the xml file: " << file << ", monster level is not a number: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
-                        }
-                        if(ok)
-                        {
-                            if(monster.level==0 || monster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
-                                std::cerr << "Unable to open the xml file: " << file << ", monster level is not into the range: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
-                        }
-                        if(ok)
-                        {
-                            monster.captured_with=stringtouint32(monstersElement->Attribute("captured_with"),&ok);
-                            if(!ok)
-                                std::cerr << "Unable to open the xml file: " << file << ", captured_with is not a number: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
-                        }
-                        if(ok)
-                        {
-                            if(monsters.find(monster.id)==monsters.cend())
+                                std::cerr << "Unable to open the xml file: " << file << ", monster id is not a number: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
+                            if(ok)
                             {
-                                std::cerr << "Unable to open the xml file: " << file << ", starter don't found the monster " << monster.id << ": child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
-                                ok=false;
+                                monster.level=stringtouint8(*monstersElement->Attribute(std::string("level")),&ok);
+                                if(!ok)
+                                    std::cerr << "Unable to open the xml file: " << file << ", monster level is not a number: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
                             }
+                            if(ok)
+                            {
+                                if(monster.level==0 || monster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
+                                    std::cerr << "Unable to open the xml file: " << file << ", monster level is not into the range: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
+                            }
+                            if(ok)
+                            {
+                                monster.captured_with=stringtouint32(monstersElement->Attribute("captured_with"),&ok);
+                                if(!ok)
+                                    std::cerr << "Unable to open the xml file: " << file << ", captured_with is not a number: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
+                            }
+                            if(ok)
+                            {
+                                if(monsters.find(monster.id)==monsters.cend())
+                                {
+                                    std::cerr << "Unable to open the xml file: " << file << ", starter don't found the monster " << monster.id << ": child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
+                                    ok=false;
+                                }
+                            }
+                            #ifndef CATCHCHALLENGER_CLASS_MASTER
+                            if(ok)
+                            {
+                                if(items.find(monster.captured_with)==items.cend())
+                                    std::cerr << "Unable to open the xml file: " << file << ", starter don't found the monster capture item " << monster.id << ": child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
+                            }
+                            #endif // CATCHCHALLENGER_CLASS_MASTER
+                            if(ok)
+                                monstergroup.push_back(monster);
                         }
-                        #ifndef CATCHCHALLENGER_CLASS_MASTER
-                        if(ok)
-                        {
-                            if(items.find(monster.captured_with)==items.cend())
-                                std::cerr << "Unable to open the xml file: " << file << ", starter don't found the monster capture item " << monster.id << ": child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
-                        }
-                        #endif // CATCHCHALLENGER_CLASS_MASTER
-                        if(ok)
-                            profile.monsters.push_back(monster);
+                        monstersElement = monstersElement->NextSiblingElement("monster");
                     }
-                    monstersElement = monstersElement->NextSiblingElement("monster");
+                    if(monstergroup.empty())
+                    {
+                        std::cerr << "Unable to open the xml file: " << file << ", not monster to load: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
+                        startItem = startItem->NextSiblingElement("start");
+                        continue;
+                    }
+                    profile.monstergroup.push_back(monstergroup);
+                    monstersElementGroup = monstersElementGroup->NextSiblingElement("monstergroup");
                 }
-                if(profile.monsters.empty())
+                if(profile.monstergroup.empty())
                 {
-                    std::cerr << "Unable to open the xml file: " << file << ", not monster to load: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", not monstergroup to load: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
                     startItem = startItem->NextSiblingElement("start");
                     continue;
                 }

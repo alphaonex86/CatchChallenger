@@ -17,7 +17,8 @@ public:
     bool haveTheInformation();
     QString pseudo();
     QString skin();
-    uint32_t skinId();
+    uint8_t skinId();
+    uint8_t monsterGroupId();
     bool haveSkin();
     void updateSkin();
 private slots:
@@ -29,11 +30,19 @@ private slots:
 private:
     std::vector<uint8_t> forcedSkin;
     Ui::NewGame *ui;
-    bool ok;
+    enum Step
+    {
+        Step1,
+        Step2,
+        StepOk,
+    };
+    Step step;
     bool skinLoaded;
     std::vector<std::string> skinList;
     std::vector<uint8_t> skinListId;
     unsigned int currentSkin;
+    unsigned int currentMonsterGroup;
+    uint8_t currentMonsterGroupId;
     std::string skinPath;
     bool okCanBeEnabled();
 };

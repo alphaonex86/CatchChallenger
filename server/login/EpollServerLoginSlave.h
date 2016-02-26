@@ -54,7 +54,7 @@ public:
         uint16_t databaseId;
         std::vector<uint8_t> forcedskin;
         uint64_t cash;
-        std::vector<Monster> monsters;
+        std::vector<std::vector<Monster> > monstergroup;
         std::vector<Reputation> reputation;
         std::vector<Item> items;
         char * preparedQueryChar;

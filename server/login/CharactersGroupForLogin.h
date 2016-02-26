@@ -38,6 +38,7 @@ public:
         uint8_t query_id;
         uint8_t profileIndex;
         std::string pseudo;
+        uint8_t monsterGroupId;
         uint8_t skinId;
     };
     std::vector<AddCharacterParam> addCharacterParamList;
@@ -56,13 +57,13 @@ public:
     static void deleteCharacterNow_static(void *object);
     void deleteCharacterNow_object();
     void deleteCharacterNow_return(const uint32_t &characterId);
-    int8_t addCharacter(void * const client,const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &skinId);
+    int8_t addCharacter(void * const client,const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId);
     static void addCharacterStep1_static(void *object);
     void addCharacterStep1_object();
-    void addCharacterStep1_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo,const uint8_t &skinId);
+    void addCharacterStep1_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo, const uint8_t &monsterGroupId,const uint8_t &skinId);
     static void addCharacterStep2_static(void *object);
     void addCharacterStep2_object();
-    void addCharacterStep2_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo,const uint8_t &skinId);
+    void addCharacterStep2_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo, const uint8_t &monsterGroupId,const uint8_t &skinId);
     bool removeCharacter(void * const client,const uint8_t &query_id, const uint32_t &characterId);
     static void removeCharacter_static(void *object);
     void removeCharacter_object();

@@ -205,7 +205,7 @@ public:
     bool sendRawBlock(const char * const data, const unsigned int &size);
 private:
     void deleteCharacterNow(const uint32_t &characterId);
-    void addCharacter(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &skinId);
+    void addCharacter(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId);
     void removeCharacter(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint32_t &characterId);
     void dbQueryWriteLogin(const std::string &queryText);
 
