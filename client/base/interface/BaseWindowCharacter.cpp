@@ -41,7 +41,7 @@ void BaseWindow::newProfileFinished()
     Profile profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
     newProfile->deleteLater();
     newProfile=NULL;
-    NewGame nameGame(datapackPath+DATAPACK_BASE_PATH_SKIN,profile.forcedskin,this);
+    NewGame nameGame(datapackPath+DATAPACK_BASE_PATH_SKIN,datapackPath+DATAPACK_BASE_PATH_MONSTERS,profile.monstergroup,profile.forcedskin,this);
     if(!nameGame.haveSkin())
     {
         if(characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).isEmpty() && CommonSettingsCommon::commonSettingsCommon.min_character>0)
@@ -65,7 +65,7 @@ void BaseWindow::newProfileFinished()
     characterEntry.pseudo=nameGame.pseudo().toStdString();
     characterEntry.monsterGroupId=nameGame.monsterGroupId();
     characterEntry.skinId=nameGame.skinId();
-    Api_client_real::client->addCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,profileIndex,QString::fromStdString(characterEntry.pseudo),characterEntry.skinId);
+    Api_client_real::client->addCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,profileIndex,QString::fromStdString(characterEntry.pseudo),characterEntry.monsterGroupId,characterEntry.skinId);
     characterEntryListInWaiting << characterEntry;
     if((characterEntryListInWaiting.size()+characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).size())>=CommonSettingsCommon::commonSettingsCommon.max_character)
         ui->character_add->setEnabled(false);
