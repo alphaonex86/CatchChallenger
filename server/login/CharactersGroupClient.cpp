@@ -342,7 +342,7 @@ void CharactersGroupForLogin::deleteCharacterNow_return(const uint32_t &characte
     dbQueryWriteCommon(queryText);
 }
 
-int8_t CharactersGroupForLogin::addCharacter(void * const client,const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &skinId)
+int8_t CharactersGroupForLogin::addCharacter(void * const client,const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryCommon::db_query_select_character_by_pseudo.empty())
@@ -394,6 +394,7 @@ int8_t CharactersGroupForLogin::addCharacter(void * const client,const uint8_t &
     addCharacterParam.query_id=query_id;
     addCharacterParam.profileIndex=profileIndex;
     addCharacterParam.pseudo=pseudo;
+    addCharacterParam.monsterGroupId=monsterGroupId;
     addCharacterParam.skinId=skinId;
     addCharacterParam.client=client;
 
@@ -422,11 +423,11 @@ void CharactersGroupForLogin::addCharacterStep1_object()
 {
     AddCharacterParam addCharacterParam=addCharacterParamList.front();
     addCharacterParamList.erase(addCharacterParamList.begin());
-    addCharacterStep1_return(static_cast<EpollClientLoginSlave * const>(addCharacterParam.client),addCharacterParam.query_id,addCharacterParam.profileIndex,addCharacterParam.pseudo,addCharacterParam.skinId);
+    addCharacterStep1_return(static_cast<EpollClientLoginSlave * const>(addCharacterParam.client),addCharacterParam.query_id,addCharacterParam.profileIndex,addCharacterParam.pseudo,addCharacterParam.monsterGroupId,addCharacterParam.skinId);
     databaseBaseCommon->clear();
 }
 
-void CharactersGroupForLogin::addCharacterStep1_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo,const uint8_t &skinId)
+void CharactersGroupForLogin::addCharacterStep1_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo, const uint8_t &monsterGroupId,const uint8_t &skinId)
 {
     if(!databaseBaseCommon->next())
     {
@@ -463,6 +464,7 @@ void CharactersGroupForLogin::addCharacterStep1_return(EpollClientLoginSlave * c
         addCharacterParam.query_id=query_id;
         addCharacterParam.profileIndex=profileIndex;
         addCharacterParam.pseudo=pseudo;
+        addCharacterParam.monsterGroupId=monsterGroupId;
         addCharacterParam.skinId=skinId;
         addCharacterParam.client=client;
         addCharacterParamList.push_back(addCharacterParam);
@@ -480,11 +482,11 @@ void CharactersGroupForLogin::addCharacterStep2_object()
 {
     AddCharacterParam addCharacterParam=addCharacterParamList.front();
     addCharacterParamList.erase(addCharacterParamList.begin());
-    addCharacterStep2_return(static_cast<EpollClientLoginSlave * const>(addCharacterParam.client),addCharacterParam.query_id,addCharacterParam.profileIndex,addCharacterParam.pseudo,addCharacterParam.skinId);
+    addCharacterStep2_return(static_cast<EpollClientLoginSlave * const>(addCharacterParam.client),addCharacterParam.query_id,addCharacterParam.profileIndex,addCharacterParam.pseudo,addCharacterParam.monsterGroupId,addCharacterParam.skinId);
     databaseBaseCommon->clear();
 }
 
-void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo,const uint8_t &skinId)
+void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo, const uint8_t &monsterGroupId,const uint8_t &skinId)
 {
     if(databaseBaseCommon->next())
     {
@@ -541,50 +543,55 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     CharactersGroupForLogin::tempBuffer[tempBufferSize]='\0';
 
     dbQueryWriteCommon(CharactersGroupForLogin::tempBuffer);
-    while(index<profile.monsters.size())
+
     {
-        const EpollServerLoginSlave::LoginProfile::Monster &monster=profile.monsters.at(index);
-        uint32_t gender=Gender_Unknown;
-        if(monster.ratio_gender!=-1)
+        unsigned int index=0;
+        const std::vector<EpollServerLoginSlave::LoginProfile::Monster> &monsters=profile.monstergroup.at(monsterGroupId);
+        while(index<monsters.size())
         {
-            if(rand()%101<monster.ratio_gender)
-                gender=Gender_Female;
-            else
-                gender=Gender_Male;
-        }
+            const EpollServerLoginSlave::LoginProfile::Monster &monster=monsters.at(index);
+            uint32_t gender=Gender_Unknown;
+            if(monster.ratio_gender!=-1)
+            {
+                if(rand()%101<monster.ratio_gender)
+                    gender=Gender_Female;
+                else
+                    gender=Gender_Male;
+            }
 
-        uint32_t monster_id=maxMonsterId.back();
-        maxMonsterId.pop_back();
+            uint32_t monster_id=maxMonsterId.back();
+            maxMonsterId.pop_back();
 
-        //insert the monster is db
-        {
-            std::string queryText=PreparedDBQueryCommon::db_query_insert_monster;
-            stringreplaceOne(queryText,"%1",std::to_string(monster_id));
-            stringreplaceOne(queryText,"%2",std::to_string(monster.hp));
-            stringreplaceAll(queryText,"%3",std::to_string(characterId));
-            stringreplaceOne(queryText,"%4",std::to_string(monster.id));
-            stringreplaceOne(queryText,"%5",std::to_string(monster.level));
-            stringreplaceOne(queryText,"%6",std::to_string(monster.captured_with));
-            stringreplaceOne(queryText,"%7",std::to_string(gender));
-            stringreplaceOne(queryText,"%8",std::to_string(monster_position));
-            dbQueryWriteCommon(queryText);
-            monster_position++;
-        }
+            //insert the monster is db
+            {
+                std::string queryText=PreparedDBQueryCommon::db_query_insert_monster;
+                stringreplaceOne(queryText,"%1",std::to_string(monster_id));
+                stringreplaceOne(queryText,"%2",std::to_string(monster.hp));
+                stringreplaceAll(queryText,"%3",std::to_string(characterId));
+                stringreplaceOne(queryText,"%4",std::to_string(monster.id));
+                stringreplaceOne(queryText,"%5",std::to_string(monster.level));
+                stringreplaceOne(queryText,"%6",std::to_string(monster.captured_with));
+                stringreplaceOne(queryText,"%7",std::to_string(gender));
+                stringreplaceOne(queryText,"%8",std::to_string(monster_position));
+                dbQueryWriteCommon(queryText);
+                monster_position++;
+            }
 
-        //insert the skill
-        unsigned int sub_index=0;
-        while(sub_index<monster.skills.size())
-        {
-            const EpollServerLoginSlave::LoginProfile::Monster::Skill &skill=monster.skills.at(sub_index);
-            std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_skill;
-            stringreplaceOne(queryText,"%1",std::to_string(monster_id));
-            stringreplaceOne(queryText,"%2",std::to_string(skill.id));
-            stringreplaceOne(queryText,"%3",std::to_string(skill.level));
-            stringreplaceOne(queryText,"%4",std::to_string(skill.endurance));
-            dbQueryWriteCommon(queryText);
-            sub_index++;
+            //insert the skill
+            unsigned int sub_index=0;
+            while(sub_index<monster.skills.size())
+            {
+                const EpollServerLoginSlave::LoginProfile::Monster::Skill &skill=monster.skills.at(sub_index);
+                std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_skill;
+                stringreplaceOne(queryText,"%1",std::to_string(monster_id));
+                stringreplaceOne(queryText,"%2",std::to_string(skill.id));
+                stringreplaceOne(queryText,"%3",std::to_string(skill.level));
+                stringreplaceOne(queryText,"%4",std::to_string(skill.endurance));
+                dbQueryWriteCommon(queryText);
+                sub_index++;
+            }
+            index++;
         }
-        index++;
     }
     index=0;
     while(index<profile.reputation.size())
