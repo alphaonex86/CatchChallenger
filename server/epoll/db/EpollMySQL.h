@@ -36,8 +36,7 @@ private:
     int ntuples;
     int nfields;
     MYSQL_RES *result;
-    std::vector<CallBack> queue;
-    std::vector<std::string> queriesList;
+    std::vector<QueryInPogress> queue;
     bool started;
     static char emptyString[1];
     static CallBack emptyCallback;
