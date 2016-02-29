@@ -170,13 +170,14 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
             qDebug() << client->login << "create new character";
             quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
             QString pseudo="bot"+QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettingsCommon::commonSettingsCommon.max_pseudo_size-3));
-            quint32 skinId;
+            uint8_t skinId;
             const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
             if(!profile.forcedskin.empty())
                 skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
             else
                 skinId=rand()%skinsList.size();
-            client->api->addCharacter(charactersGroupIndex,profileIndex,pseudo,skinId);
+            uint8_t monstergroupId=rand()%profile.monstergroup.size();
+            client->api->addCharacter(charactersGroupIndex,profileIndex,pseudo,monstergroupId,skinId);
         }
         return;
     }
@@ -224,13 +225,14 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
             qDebug() << client->login << "create new character";
             quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
             QString pseudo="bot"+QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettingsCommon::commonSettingsCommon.max_pseudo_size-3));
-            quint32 skinId;
+            uint8_t skinId;
             const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
             if(!profile.forcedskin.empty())
                 skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
             else
                 skinId=rand()%skinsList.size();
-            client->api->addCharacter(charactersGroupIndex,profileIndex,pseudo,skinId);
+            uint8_t monstergroupId=rand()%profile.monstergroup.size();
+            client->api->addCharacter(charactersGroupIndex,profileIndex,pseudo,monstergroupId,skinId);
         }
         return;
     }

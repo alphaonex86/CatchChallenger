@@ -182,18 +182,20 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                     if(tokenLink.client==this)
                     {
                         const std::string &secretToken(GlobalServerData::serverPrivateVariables.db_login->value(1));
-                        std::vector<char> secretTokenBinary=GlobalServerData::serverPrivateVariables.db_login->hexatoBinary(secretToken);
-                        if(secretTokenBinary.empty() || secretTokenBinary.size()!=CATCHCHALLENGER_SHA224HASH_SIZE)
+                        #ifndef CATCHCHALLENGER_EXTRA_CHECK
+                        std::vector<char> secretTokenBinary;
+                        #endif
+                        secretTokenBinary=GlobalServerData::serverPrivateVariables.db_login->hexatoBinary(secretToken);
+                        if(secretTokenBinary.size()!=CATCHCHALLENGER_SHA224HASH_SIZE)
                         {
                             std::cerr << "convertion to binary for pass failed for: " << GlobalServerData::serverPrivateVariables.db_login->value(1) << std::endl;
                             abort();
                         }
-
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                        //append the token
                         secretTokenBinary.resize(secretTokenBinary.size()+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         memcpy(secretTokenBinary.data()+CATCHCHALLENGER_SHA224HASH_SIZE,tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
 
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        //append the token
                         tempAddedToken.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         memcpy(tempAddedToken.data(),tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         if(secretTokenBinary.size()!=(CATCHCHALLENGER_SHA224HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
