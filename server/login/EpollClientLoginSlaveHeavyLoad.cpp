@@ -257,7 +257,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                         #else
                         std::vector<char> secretTokenBinary=databaseBaseLogin.hexatoBinary(secretToken);
                         #endif
-                        if(secretTokenBinary.empty() || secretTokenBinary.size()!=CATCHCHALLENGER_SHA224HASH_SIZE)
+                        if(secretTokenBinary.size()!=CATCHCHALLENGER_SHA224HASH_SIZE)
                         {
                             std::cerr << "convertion to binary for pass failed for: " << databaseBaseLogin.value(1) << std::endl;
                             abort();
