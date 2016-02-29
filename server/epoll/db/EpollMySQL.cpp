@@ -178,9 +178,7 @@ CatchChallenger::DatabaseBase::CallBack * EpollMySQL::asyncRead(const char * con
         queriesList << std::string::fromUtf8(query);
         return &queue.last();
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     queriesList << std::string::fromUtf8(query);
-    #endif
     const int &stringlen=strlen(query);
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(stringlen==0)
@@ -212,9 +210,7 @@ bool EpollMySQL::asyncWrite(const char * const query)
         queriesList << std::string::fromUtf8(query);
         return true;
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     queriesList << std::string::fromUtf8(query);
-    #endif
     const int &query_id=mysql_send_query(conn,query,strlen(query));
     if(query_id==0)
     {

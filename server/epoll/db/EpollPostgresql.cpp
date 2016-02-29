@@ -204,9 +204,7 @@ CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncRead(const std::
         queriesList.push_back(query);
         return &queue.back();
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     queriesList.push_back(query);
-    #endif
     const int &query_id=PQsendQuery(conn,query.c_str());
     if(query_id==0)
     {
@@ -230,9 +228,7 @@ bool EpollPostgresql::asyncWrite(const std::string &query)
         queriesList.push_back(query);
         return true;
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     queriesList.push_back(query);
-    #endif
     const int &query_id=PQsendQuery(conn,query.c_str());
     if(query_id==0)
     {
@@ -328,14 +324,10 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                 const ExecStatusType &execStatusType=PQresultStatus(result);
                 if(execStatusType!=PGRES_TUPLES_OK && execStatusType!=PGRES_COMMAND_OK)
                 {
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     if(queriesList.empty())
                         std::cerr << "Query to database failed: " << errorMessage() << std::endl;
                     else
                         std::cerr << "Query to database failed: " << errorMessage() << queriesList.front() << std::endl;
-                    #else
-                    std::cerr << "Query to database failed: " << errorMessage() << std::endl;
-                    #endif
                     tuleIndex=0;
                 }
                 else
