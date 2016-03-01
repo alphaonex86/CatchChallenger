@@ -926,12 +926,12 @@ int main(int argc, char *argv[])
                                 break;
                             }
                         }
-                        /* do at the protocol negociation to send the reason
+                        // do at the protocol negociation to send the reason
                         if(numberOfConnectedClient>=GlobalServerData::serverSettings.max_players)
                         {
                             ::close(infd);
                             break;
-                        }*/
+                        }
 
                         /* Make the incoming socket non-blocking and add it to the
                         list of fds to monitor. */

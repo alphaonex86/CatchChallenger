@@ -769,15 +769,16 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
         return;
     }
     #endif
-    //load the variables
-    character_id=characterId;
-    character_loaded_in_progress=true;
-    GlobalServerData::serverPrivateVariables.connected_players_id_list.insert(characterId);
     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
     {
         default:
         case MapVisibilityAlgorithmSelection_Simple:
         case MapVisibilityAlgorithmSelection_WithBorder:
+        if(simplifiedIdList.empty())
+        {
+            errorOutput("Client::characterIsRightWithParsedRescue(): simplifiedIdList is empty, no more id");
+            return;
+        }
         public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.front();
         simplifiedIdList.erase(simplifiedIdList.begin());
         break;
@@ -785,6 +786,10 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
         public_and_private_informations.public_informations.simplifiedId = 0;
         break;
     }
+    //load the variables
+    character_id=characterId;
+    character_loaded_in_progress=true;
+    GlobalServerData::serverPrivateVariables.connected_players_id_list.insert(characterId);
     connectedSince=sFrom1970();
     this->map=map;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
