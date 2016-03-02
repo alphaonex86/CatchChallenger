@@ -185,7 +185,7 @@ void ProtocolParsingInputOutput::parseIncommingData()
             {
                 size+=header_cut.size();
                 #ifdef PROTOCOLPARSINGDEBUG
-                std::cout << "with header cut" << binarytoHexa(ProtocolParsingInputOutput::tempBigBufferForInput,size) << " and size " << size << std::endl;
+                std::cout << "with header cut " << binarytoHexa(ProtocolParsingInputOutput::tempBigBufferForInput,size) << " and size " << size << std::endl;
                 #endif
             }
             else
@@ -234,7 +234,7 @@ std::string(" parseIncommingData(): size returned is 0!"));*/
             const uint32_t oldcursor=cursor;
             #endif
             #ifdef PROTOCOLPARSINGDEBUG
-            std::cout << "Start split: " << binarytoHexa(ProtocolParsingInputOutput::tempBigBufferForInput+cursor,size-cursor) << " and size " << size-cursor << std::endl;
+            std::cout << "Start split: " << binarytoHexa(ProtocolParsingInputOutput::tempBigBufferForInput+cursor,size-cursor) << " and size " << size-cursor << ", cursor: " << cursor << std::endl;
             #endif
             returnVar=parseIncommingDataRaw(ProtocolParsingInputOutput::tempBigBufferForInput,size,cursor);
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
