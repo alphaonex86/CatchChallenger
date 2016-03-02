@@ -183,9 +183,6 @@ void EpollPostgresql::syncDisconnect()
 
 CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncRead(const std::string &query,void * returnObject,CallBackDatabase method)
 {
-    #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    std::cerr << "query: " << query << std::endl;
-    #endif
     if(conn==NULL)
     {
         std::cerr << "pg not connected" << std::endl;
