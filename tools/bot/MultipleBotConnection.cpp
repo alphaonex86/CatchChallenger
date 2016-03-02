@@ -162,7 +162,7 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
         qDebug() << "!serverIsSelected";
         return;
     }
-    if(client->charactersList.at(charactersGroupIndex).count()<=0)
+    if(client->charactersList.empty() || client->charactersList.at(charactersGroupIndex).count()<=0)
     {
         qDebug() << client->login << "have not character";
         if((autoCreateCharacter() || multipleConnexion()) && serverIsSelected)
@@ -183,13 +183,16 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
     }
     if(multipleConnexion() && serverIsSelected)
     {
-        const quint32 &character_id=client->charactersList.at(charactersGroupIndex).at(rand()%client->charactersList.at(charactersGroupIndex).size()).character_id;
-        if(!characterOnMap.contains(character_id))
+        if(!client->charactersList.empty() && charactersGroupIndex<client->charactersList.size())
         {
-            qDebug() << "MultipleBotConnection::logged_with_client(): Manual select character:" << character_id;
-            characterOnMap << character_id;
-            if(!client->api->selectCharacter(charactersGroupIndex,serverUniqueKey,character_id))
-                qDebug() << "Unable to do automatic character selection:" << character_id;
+            const quint32 &character_id=client->charactersList.at(charactersGroupIndex).at(rand()%client->charactersList.at(charactersGroupIndex).size()).character_id;
+            if(!characterOnMap.contains(character_id))
+            {
+                qDebug() << "MultipleBotConnection::logged_with_client(): Manual select character:" << character_id;
+                characterOnMap << character_id;
+                if(!client->api->selectCharacter(charactersGroupIndex,serverUniqueKey,character_id))
+                    qDebug() << "Unable to do automatic character selection:" << character_id;
+            }
         }
         return;
     }
@@ -300,7 +303,7 @@ void MultipleBotConnection::connectTimerSlot()
         }
         else
         {
-            qDebug() << "MultipleBotConnection::connectTimerSlot(): ping";
+            //qDebug() << "MultipleBotConnection::connectTimerSlot(): ping";
             const quint32 &diff=numberOfBotConnected-numberOfSelectedCharacter;
             if(diff<=(quint32)maxDiffConnectedSelected())
             {
