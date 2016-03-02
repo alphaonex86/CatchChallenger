@@ -302,55 +302,96 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         posOutput+=4;
                     }
                     if(GlobalServerData::serverSettings.max_players<=255)
-                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=clients.size()-1;
-                    else
-                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=clients.size()-1;
-                    posOutput+=1;
-                    unsigned int index_subindex=0;
-                    while(index_subindex<clients.size())
                     {
-                        const MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index_subindex);
-                        if(index!=index_subindex)
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=clients.size()-1;
+                        posOutput+=1;
+                        unsigned int index_subindex=0;
+                        while(index_subindex<clients.size())
                         {
-                            if(GlobalServerData::serverSettings.max_players<=255)
+                            const MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index_subindex);
+                            if(index!=index_subindex)
                             {
                                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.simplifiedId;
                                 posOutput+=1;
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->getX();
+                                posOutput+=1;
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->getY();
+                                posOutput+=1;
+                                /// \todo, put this out of loop
+                                if(GlobalServerData::serverSettings.dontSendPlayerType)
+                                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)client->getLastDirection() | (uint8_t)Player_type_normal);
+                                else
+                                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)client->getLastDirection() | (uint8_t)client->public_and_private_informations.public_informations.type);
+                                posOutput+=1;
+                                /// \todo, put this out of loop
+                                if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
+                                {
+                                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.speed;
+                                    posOutput+=1;
+                                }
+                                /// \todo, put this out of loop
+                                //pseudo
+                                if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
+                                {
+                                    const std::string &text=client->public_and_private_informations.public_informations.pseudo;
+                                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                                    posOutput+=1;
+                                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+                                    posOutput+=text.size();
+                                }
+                                //skin
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.skinId;
+                                posOutput+=1;
                             }
-                            else
+                            ++index_subindex;
+                        }
+                    }
+                    else
+                    {
+                        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(clients.size()-1);
+                        posOutput+=2;
+                        unsigned int index_subindex=0;
+                        while(index_subindex<clients.size())
+                        {
+                            const MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index_subindex);
+                            if(index!=index_subindex)
                             {
                                 *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(client->public_and_private_informations.public_informations.simplifiedId);
                                 posOutput+=2;
-                            }
-                            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->getX();
-                            posOutput+=1;
-                            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->getY();
-                            posOutput+=1;
-                            if(GlobalServerData::serverSettings.dontSendPlayerType)
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)client->getLastDirection() | (uint8_t)Player_type_normal);
-                            else
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)client->getLastDirection() | (uint8_t)client->public_and_private_informations.public_informations.type);
-                            posOutput+=1;
-                            if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
-                            {
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.speed;
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->getX();
+                                posOutput+=1;
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->getY();
+                                posOutput+=1;
+                                /// \todo, put this out of loop
+                                if(GlobalServerData::serverSettings.dontSendPlayerType)
+                                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)client->getLastDirection() | (uint8_t)Player_type_normal);
+                                else
+                                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)client->getLastDirection() | (uint8_t)client->public_and_private_informations.public_informations.type);
+                                posOutput+=1;
+                                /// \todo, put this out of loop
+                                if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
+                                {
+                                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.speed;
+                                    posOutput+=1;
+                                }
+                                /// \todo, put this out of loop
+                                //pseudo
+                                if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
+                                {
+                                    const std::string &text=client->public_and_private_informations.public_informations.pseudo;
+                                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                                    posOutput+=1;
+                                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+                                    posOutput+=text.size();
+                                }
+                                //skin
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.skinId;
                                 posOutput+=1;
                             }
-                            //pseudo
-                            if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
-                            {
-                                const std::string &text=client->public_and_private_informations.public_informations.pseudo;
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
-                                posOutput+=1;
-                                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-                                posOutput+=text.size();
-                            }
-                            //skin
-                            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.skinId;
-                            posOutput+=1;
+                            ++index_subindex;
                         }
-                        ++index_subindex;
                     }
+
                     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
 
                     clients.at(index)->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
