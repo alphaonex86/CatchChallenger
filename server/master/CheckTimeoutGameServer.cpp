@@ -38,7 +38,12 @@ void CheckTimeoutGameServer::exec()
                             const uint64_t diff=(msecondFrom1970-gameServerInternal->lastPingStarted);
                             if(diff>CharactersGroup::gameserverTimeoutms)
                             {
-                                gameServer->errorParsingLayer("Game server don't reponds to ping, remove it, not responds into: "+std::to_string(diff)+", max: "+std::to_string(CharactersGroup::gameserverTimeoutms));
+                                if(gameServerInternal->host.empty())
+                                    gameServer->errorParsingLayer("Game server don't reponds to ping, remove it, not responds into: "+std::to_string(diff)+", max: "+std::to_string(CharactersGroup::gameserverTimeoutms)+", unique key: "+std::to_string(gameServerInternal->uniqueKey));
+                                else if(gameServerInternal->metaData.empty())
+                                    gameServer->errorParsingLayer("Game server don't reponds to ping, remove it, not responds into: "+std::to_string(diff)+", max: "+std::to_string(CharactersGroup::gameserverTimeoutms)+", unique key: "+std::to_string(gameServerInternal->uniqueKey)+", host: "+gameServerInternal->host+":"+std::to_string(gameServerInternal->port));
+                                else
+                                    gameServer->errorParsingLayer("Game server don't reponds to ping, remove it, not responds into: "+std::to_string(diff)+", max: "+std::to_string(CharactersGroup::gameserverTimeoutms)+", unique key: "+std::to_string(gameServerInternal->uniqueKey)+", host: "+gameServerInternal->host+":"+std::to_string(gameServerInternal->port)+", meta data: "+gameServerInternal->metaData);
                                 gameServer->passUniqueKeyToNextGameServer();
                             }
                         }
