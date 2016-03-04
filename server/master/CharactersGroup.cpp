@@ -405,11 +405,14 @@ void CharactersGroup::purgeTheLockedAccount()
         index++;
     }
     if(index>=cacheLockToDeleteList.size())
+    {
+        std::cout << "purged char number: " << std::to_string(cacheLockToDeleteList.size()) << std::endl;
         cacheLockToDeleteList.clear();
-    if(index>0)
+    }
+    else if(index<cacheLockToDeleteList.size() && index>0)
     {
         cacheLockToDeleteList.erase(cacheLockToDeleteList.cbegin(),cacheLockToDeleteList.cbegin()+index);
-        std::cerr << "purged char number " << std::to_string(index) << ", total locked: " << std::to_string(lockedAccount.size()) << ", remaining time locked: " << std::to_string(cacheLockToDeleteList.size()) << std::endl;
+        std::cout << "purged char number " << std::to_string(index) << ", total locked: " << std::to_string(lockedAccount.size()) << ", remaining time locked: " << std::to_string(cacheLockToDeleteList.size()) << std::endl;
     }
 }
 
