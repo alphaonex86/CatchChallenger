@@ -270,6 +270,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                 {
                     flags|=0x08;
                 }
+                stat=ClientStat::Logged;
             }
         }
     }

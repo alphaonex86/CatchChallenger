@@ -303,6 +303,8 @@ void BaseServer::preload_dictionary_map_return()
         std::cerr << "Only obsolete map!" << std::endl;
         abort();
     }
+    if(obsoleteMap>0)
+        std::cerr << "/!\\ Obsolete map, can due to start previously start with another mainDatapackCode" << std::endl;
     std::vector<std::string> map_list_flat=unordered_map_keys_vector(GlobalServerData::serverPrivateVariables.map_list);
     std::sort(map_list_flat.begin(),map_list_flat.end());
     unsigned int index=0;

@@ -44,11 +44,10 @@ Client::Client(
         ,PacketModeTransmission_Server
         #endif
         ),
-    character_loaded(false),
-    character_loaded_in_progress(false),
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     stat_client(false),
     #endif
+    stat(ClientStat::None),
     account_id(0),
     character_id(0),
     market_cash(0),
@@ -58,7 +57,6 @@ Client::Client(
     randomIndex(0),
     randomSize(0),
     number_of_character(0),
-    stat(ClientStat::None),
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     datapackStatus(DatapackStatus::Main),
     #else
@@ -242,13 +240,13 @@ void Client::disconnectClient()
     }
     #endif
 
-    if(character_loaded_in_progress)
+    if(stat==ClientStat::CharacterSelecting)
     {
-        character_loaded_in_progress=false;
+        stat=ClientStat::CharacterSelected;
         GlobalServerData::serverPrivateVariables.connected_players_id_list.erase(character_id);
         simplifiedIdList.push_back(public_and_private_informations.public_informations.simplifiedId);
     }
-    else if(character_loaded)
+    else if(stat==ClientStat::CharacterSelected)
     {
         if(map!=NULL)
             removeClientOnMap(map
@@ -341,7 +339,7 @@ void Client::disconnectClient()
         if(map!=NULL)
             savePosition();
         map=NULL;
-        character_loaded=false;
+        stat=ClientStat::None;
     }
 
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -373,7 +371,7 @@ void Client::errorOutput(const std::string &errorString)
         disconnectClient();
         return;
     }
-    if(character_loaded)
+    if(stat==ClientStat::CharacterSelected)
         sendSystemMessage(public_and_private_informations.public_informations.pseudo+" have been kicked from server, have try hack",false);
 
     std::cerr << headerOutput() << "Kicked by: " << errorString << std::endl;

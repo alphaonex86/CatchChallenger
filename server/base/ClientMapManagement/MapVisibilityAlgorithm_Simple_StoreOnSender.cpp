@@ -252,7 +252,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::mapVisiblity_unloadFromTheMap(
 
 void MapVisibilityAlgorithm_Simple_StoreOnSender::extraStop()
 {
-    if(!character_loaded)
+    if(stat!=ClientStat::CharacterSelected)
         return;
     unloadFromTheMap();//product remove on the map
 
