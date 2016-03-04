@@ -114,6 +114,7 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
     SelectCharacterParam *selectCharacterParam=new SelectCharacterParam;
     selectCharacterParam->query_id=query_id;
     selectCharacterParam->characterId=characterId;
+    stat=ClientStat::CharacterSelecting;
 
     std::string queryText=PreparedDBQueryCommon::db_query_character_by_id;
     stringreplaceOne(queryText,"%1",std::to_string(characterId));
@@ -195,9 +196,9 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         public_and_private_informations.clan_leader=false;//no clan
     }
 
-    if(character_loaded)
+    if(stat!=ClientStat::CharacterSelecting)
     {
-        characterSelectionIsWrong(query_id,0x03,"character_loaded already to true");
+        characterSelectionIsWrong(query_id,0x03,"character_loaded already to true, stat: "+std::to_string(stat));
         return;
     }
     const uint32_t &account_id=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
@@ -516,7 +517,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     CommonMap * const map=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(map_database_id));
     if(map==NULL)
     {
-        characterSelectionIsWrong(query_id,0x04,"map_database_id have not reverse");
+        characterSelectionIsWrong(query_id,0x04,"map_database_id have not reverse: "+std::to_string(map_database_id)+", mostly due to start previously start with another mainDatapackCode");
         return;
     }
     const uint8_t &x=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
@@ -788,7 +789,7 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
     }
     //load the variables
     character_id=characterId;
-    character_loaded_in_progress=true;
+    stat=ClientStat::CharacterSelecting;
     GlobalServerData::serverPrivateVariables.connected_players_id_list.insert(characterId);
     connectedSince=sFrom1970();
     this->map=map;
@@ -1037,8 +1038,7 @@ void Client::characterIsRightFinalStep()
     }
     #endif
 
-    character_loaded_in_progress=false;
-    character_loaded=true;
+    stat=ClientStat::CharacterSelected;
 
     const uint8_t &query_id=selectCharacterQueryId.front();
     selectCharacterQueryId.erase(selectCharacterQueryId.begin());
