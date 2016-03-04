@@ -451,9 +451,9 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
         //Select character on game server
         case 0x93:
         {
-            if(stat!=ClientStat::Logged)
+            if(stat!=ClientStat::ProtocolGood)
             {
-                errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+")");
+                errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+") with stat: "+std::to_string(stat));
                 return false;
             }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -489,7 +489,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         disconnectClient();
         return false;
     }
-    if(!character_loaded)
+    if(stat!=ClientStat::CharacterSelected)
     {
         //wrong protocol
         disconnectClient();
@@ -1286,7 +1286,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             packetCode==0xAC || //Select character
             #endif
             packetCode==0xA1;
-    if(!character_loaded && !goodQueryBeforeCharacterLoaded)
+    if(stat!=ClientStat::CharacterSelected && !goodQueryBeforeCharacterLoaded)
     {
         errorOutput("charaters is not logged, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+")");
         return false;
@@ -1909,9 +1909,9 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         case 0xAA:
         {
             uint32_t pos=0;
-            if(character_loaded)
+            if(stat==ClientStat::CharacterSelected)
             {
-                errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+")");
+                errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+") with stat: "+std::to_string(stat));
                 return false;
             }
 
@@ -1989,9 +1989,9 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         //Remove character
         case 0xAB:
         {
-            if(character_loaded)
+            if(stat==ClientStat::CharacterSelected)
             {
-                errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+")");
+                errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+") with stat: "+std::to_string(stat));
                 return false;
             }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -2009,9 +2009,14 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         //Select character
         case 0xAC:
         {
-            if(character_loaded)
+            if(stat==ClientStat::CharacterSelected)
             {
-                errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+")");
+                errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+") with stat: "+std::to_string(stat));
+                return false;
+            }
+            if(stat!=ClientStat::Logged)
+            {
+                errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+") with stat: "+std::to_string(stat));
                 return false;
             }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -2050,7 +2055,7 @@ bool Client::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber
         disconnectClient();
         return false;
     }
-    if(!character_loaded)
+    if(stat!=ClientStat::CharacterSelected)
     {
         errorOutput("is not logged, parseReplyData("+std::to_string(packetCode)+","+std::to_string(queryNumber)+")");
         return false;

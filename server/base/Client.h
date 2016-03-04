@@ -129,10 +129,21 @@ public:
 
     static const unsigned char protocolHeaderToMatch[5];
 protected:
-    bool character_loaded,character_loaded_in_progress;
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     bool stat_client;
     #endif
+    enum ClientStat : uint8_t
+    {
+        None=0x00,
+        ProtocolGood=0x01,
+        LoginInProgress=0x02,
+        Logged=0x03,
+        LoggedStatClient=0x04,
+        CharacterSelecting=0x05,
+        CharacterSelected=0x06,
+    };
+    ClientStat stat;
+
     std::queue<CatchChallenger::DatabaseBase::CallBack *> callbackRegistred;
 
     struct ClanActionParam
@@ -176,16 +187,6 @@ protected:
     {
         uint32_t index;
     };
-    enum ClientStat
-    {
-        None=0x00,
-        ProtocolGood=0x01,
-        LoginInProgress=0x02,
-        Logged=0x03,
-        LoggedStatClient=0x04,
-        CharacterSelecting=0x05,
-        CharacterSelected=0x06,
-    };
 private:
     //-------------------
     uint32_t account_id;//0 if not logged
@@ -196,7 +197,6 @@ private:
     #endif
     uint16_t randomIndex,randomSize;
     uint8_t number_of_character;
-    ClientStat stat;
 
     PlayerOnMap map_entry;
     PlayerOnMap rescue;
@@ -215,7 +215,7 @@ private:
     };
     OldEvents oldEvents;
 
-    enum DatapackStatus
+    enum DatapackStatus : uint8_t
     {
         Base=0x01,
         Main=0x02,

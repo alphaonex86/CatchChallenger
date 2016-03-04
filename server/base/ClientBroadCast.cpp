@@ -260,7 +260,7 @@ void Client::receive_instant_player_number(const uint16_t &connected_players, co
     if(size!=2 && size!=3)
         return;
     #endif
-    if(!character_loaded)
+    if(stat!=ClientStat::CharacterSelected)
         return;
     if(this->connected_players==connected_players)
         return;

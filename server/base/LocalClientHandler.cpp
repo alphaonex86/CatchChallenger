@@ -3028,7 +3028,7 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
 
 uint32_t Client::getPlayerId() const
 {
-    if(character_loaded)
+    if(stat==ClientStat::CharacterSelected)
         return character_id;
     return 0;
 }
