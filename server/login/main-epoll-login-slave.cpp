@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
                             }
                             epoll_event event;
                             event.data.ptr = client;
-                            event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
+                            event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP;//EPOLLET | EPOLLOUT | EPOLLHUP
                             s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
                             if(s == -1)
                             {
@@ -188,15 +188,29 @@ int main(int argc, char *argv[])
                         ready for reading (why were we notified then?) */
                         if(!(events[i].events & EPOLLHUP))
                             std::cerr << "client epoll error: " << events[i].events << std::endl;
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        std::cerr << "client epoll bye: " << events[i].events << std::endl;
+                        #endif
                         numberOfConnectedClient--;
                         delete client;
                         continue;
                     }
                     //ready to read
-                    if(events[i].events & EPOLLIN)
+                    if(events[i].events & EPOLLIN || events[i].events & EPOLLRDHUP)
                         client->parseIncommingData();
-                    if(events[i].events & EPOLLHUP || events[i].events & EPOLLRDHUP)
+                    /*if(events[i].events & EPOLLHUP)
                     {
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        std::cerr << "client disconnect, EPOLLHUP" << std::endl;
+                        #endif
+                        numberOfConnectedClient--;
+                        delete client;//disconnected, remove the object
+                    }*/
+                    if(events[i].events & EPOLLRDHUP)
+                    {
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        std::cerr << "client disconnect, EPOLLRDHUP" << std::endl;
+                        #endif
                         numberOfConnectedClient--;
                         delete client;//disconnected, remove the object
                     }
@@ -229,14 +243,17 @@ int main(int argc, char *argv[])
                         /* An error has occured on this fd, or the socket is not
                         ready for reading (why were we notified then?) */
                         if(!(events[i].events & EPOLLHUP))
-                            std::cerr << "client epoll error: " << events[i].events << std::endl;
+                            std::cerr << "master epoll error: " << events[i].events << std::endl;
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        std::cerr << "master epoll bye: " << events[i].events << std::endl;
+                        #endif
                         client->tryReconnect();
                         continue;
                     }
                     //ready to read
-                    if(events[i].events & EPOLLIN)
+                    if(events[i].events & EPOLLIN || events[i].events & EPOLLRDHUP)
                         client->parseIncommingData();
-                    if(events[i].events & EPOLLHUP || events[i].events & EPOLLRDHUP)
+                    if(events[i].events & EPOLLRDHUP)
                         client->tryReconnect();
                 }
                 break;

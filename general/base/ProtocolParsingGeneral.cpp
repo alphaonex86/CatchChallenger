@@ -645,7 +645,11 @@ ProtocolParsingInputOutput::ProtocolParsingInputOutput(
 ProtocolParsingInputOutput::~ProtocolParsingInputOutput()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    delete protocolParsingCheck;
+    if(protocolParsingCheck!=NULL)
+    {
+        delete protocolParsingCheck;
+        protocolParsingCheck=NULL;
+    }
     #endif
 }
 

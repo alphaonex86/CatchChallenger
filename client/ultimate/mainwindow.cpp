@@ -117,6 +117,7 @@ MainWindow::MainWindow(QWidget *parent) :
     temp_customConnexionInfoList=loadConfigConnexionInfoList();
     mergedConnexionInfoList=temp_customConnexionInfoList+temp_xmlConnexionInfoList;
     qSort(mergedConnexionInfoList);
+    selectedServer=NULL;
     displayServerList();
     CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
     ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
@@ -549,6 +550,7 @@ void MainWindow::displayServerList()
         else
             unique_code=serverConnexion.value(selectedServer)->unique_code;
     }
+    const ListEntryEnvolued * tempSelectedServer=selectedServer;
     selectedServer=NULL;
     int index=0;
     while(server.size()>0)
@@ -581,7 +583,8 @@ void MainWindow::displayServerList()
         if(connexionInfo.unique_code.isEmpty())
         {
             custom=QStringLiteral(" (%1)").arg(tr("Custom"));
-            if(unique_code==QString("%1:%2").arg(connexionInfoHost).arg(connexionInfo.port))
+            const QString &tempUniqueCode=QString("%1:%2").arg(connexionInfo.host).arg(connexionInfo.port);
+            if(unique_code==tempUniqueCode)
                 selectedServer=newEntry;
         }
         else
@@ -631,6 +634,11 @@ void MainWindow::displayServerList()
         ui->scrollAreaWidgetContentsServer->layout()->addItem(spacerServer);
     }
     serverListEntryEnvoluedUpdate();
+    if(tempSelectedServer!=NULL && selectedServer==NULL)
+    {
+        qDebug() << "tempSelectedServer!=NULL && selectedServer==NULL, fix it!";
+        abort();
+    }
 }
 
 void MainWindow::serverListEntryEnvoluedClicked()
@@ -940,6 +948,16 @@ void MainWindow::on_lineEditPass_returnPressed()
 
 void MainWindow::on_pushButtonTryLogin_clicked()
 {
+    if(selectedServer==NULL)
+    {
+        qDebug() << "selectedServer==NULL, fix it!";
+        abort();
+    }
+    if(!serverConnexion.contains(selectedServer))
+    {
+        qDebug() << "!serverConnexion.contains(selectedServer)";
+        abort();
+    }
     if(!ui->pushButtonTryLogin->isEnabled())
         return;
     if(ui->lineEditPass->text().size()<6)
@@ -971,12 +989,13 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         return;
     }
     serverMode=ServerMode_Remote;
-    lastServerConnect[serverConnexion.value(selectedServer)->host]=QDateTime::currentDateTime();
-    lastServerIsKick[serverConnexion.value(selectedServer)->host]=false;
+    ConnexionInfo * const selectedServerConnexion=serverConnexion.value(selectedServer);
+    lastServerConnect[selectedServerConnexion->host]=QDateTime::currentDateTime();
+    lastServerIsKick[selectedServerConnexion->host]=false;
     if(customServerConnexion.contains(selectedServer))
-        settings.beginGroup(QStringLiteral("%1-%2").arg(serverConnexion.value(selectedServer)->host).arg(serverConnexion.value(selectedServer)->port));
+        settings.beginGroup(QStringLiteral("%1-%2").arg(selectedServerConnexion->host).arg(selectedServerConnexion->port));
     else
-        settings.beginGroup(QStringLiteral("Xml-%1").arg(serverConnexion.value(selectedServer)->unique_code));
+        settings.beginGroup(QStringLiteral("Xml-%1").arg(selectedServerConnexion->unique_code));
 
     QStringList loginList=settings.value("login").toStringList();
     if(serverLoginList.contains(ui->lineEditLogin->text()))
@@ -1006,12 +1025,12 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     realSslSocket=new QSslSocket();
     socket=new CatchChallenger::ConnectedSocket(realSslSocket);
     CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_real(socket);
-    if(!serverConnexion.value(selectedServer)->proxyHost.isEmpty())
+    if(!selectedServerConnexion->proxyHost.isEmpty())
     {
         QNetworkProxy proxy=realSslSocket->proxy();
         proxy.setType(QNetworkProxy::Socks5Proxy);
-        proxy.setHostName(serverConnexion.value(selectedServer)->proxyHost);
-        proxy.setPort(serverConnexion.value(selectedServer)->proxyPort);
+        proxy.setHostName(selectedServerConnexion->proxyHost);
+        proxy.setPort(selectedServerConnexion->proxyPort);
         realSslSocket->setProxy(proxy);
     }
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
@@ -1020,16 +1039,26 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     connect(realSslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),  this,&MainWindow::sslErrors,Qt::QueuedConnection);
     connect(realSslSocket,&QSslSocket::stateChanged,    this,&MainWindow::stateChanged,Qt::DirectConnection);
     connect(realSslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::error),           this,&MainWindow::error,Qt::QueuedConnection);
-    realSslSocket->connectToHost(serverConnexion.value(selectedServer)->host,serverConnexion.value(selectedServer)->port);
-    serverConnexion.value(selectedServer)->connexionCounter++;
-    serverConnexion.value(selectedServer)->lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
+    realSslSocket->connectToHost(selectedServerConnexion->host,selectedServerConnexion->port);
+    selectedServerConnexion->connexionCounter++;
+    selectedServerConnexion->lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
     saveConnexionInfoList();
-    displayServerList();
     connectTheExternalSocket();
+    displayServerList();//need be after connectTheExternalSocket() because it reset selectedServer
 }
 
 void MainWindow::connectTheExternalSocket()
 {
+    if(selectedServer==NULL)
+    {
+        qDebug() << "selectedServer==NULL, fix it!";
+        abort();
+    }
+    if(!serverConnexion.contains(selectedServer))
+    {
+        qDebug() << "!serverConnexion.contains(selectedServer)";
+        abort();
+    }
     //continue the normal procedure
     if(!serverConnexion.value(selectedServer)->proxyHost.isEmpty())
     {
