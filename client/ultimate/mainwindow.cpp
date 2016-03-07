@@ -546,7 +546,20 @@ void MainWindow::displayServerList()
     if(serverConnexion.contains(selectedServer))
     {
         if(serverConnexion.value(selectedServer)->unique_code.isEmpty())
-            unique_code=QString("%1:%2").arg(serverConnexion.value(selectedServer)->host).arg(serverConnexion.value(selectedServer)->port);
+        {
+            if(serverConnexion.value(selectedServer)->proxyHost.isEmpty())
+                unique_code=QString("%1:%2")
+                        .arg(serverConnexion.value(selectedServer)->host)
+                        .arg(serverConnexion.value(selectedServer)->port)
+                        ;
+            else
+                unique_code=QString("%1:%2:%3:%4")
+                        .arg(serverConnexion.value(selectedServer)->host)
+                        .arg(serverConnexion.value(selectedServer)->port)
+                        .arg(serverConnexion.value(selectedServer)->proxyHost)
+                        .arg(serverConnexion.value(selectedServer)->proxyPort)
+                        ;
+        }
         else
             unique_code=serverConnexion.value(selectedServer)->unique_code;
     }
@@ -583,7 +596,19 @@ void MainWindow::displayServerList()
         if(connexionInfo.unique_code.isEmpty())
         {
             custom=QStringLiteral(" (%1)").arg(tr("Custom"));
-            const QString &tempUniqueCode=QString("%1:%2").arg(connexionInfo.host).arg(connexionInfo.port);
+            QString tempUniqueCode;
+            if(connexionInfo.proxyHost.isEmpty())
+                tempUniqueCode=QString("%1:%2")
+                        .arg(connexionInfo.host)
+                        .arg(connexionInfo.port)
+                        ;
+            else
+                tempUniqueCode=QString("%1:%2:%3:%4")
+                        .arg(connexionInfo.host)
+                        .arg(connexionInfo.port)
+                        .arg(connexionInfo.proxyHost)
+                        .arg(connexionInfo.proxyPort)
+                        ;
             if(unique_code==tempUniqueCode)
                 selectedServer=newEntry;
         }
