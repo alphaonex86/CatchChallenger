@@ -220,7 +220,7 @@ int main(int argc, char *argv[])
                         continue;
                     }
                     //ready to read
-                    if(events[i].events & EPOLLIN)
+                    if(events[i].events & EPOLLIN || events[i].events & EPOLLRDHUP)
                         client->parseIncommingData();
                     #ifndef SERVERNOBUFFER
                     //ready to write
@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
                         if(!closed)
                             client->flush();
                     #endif
-                    if(events[i].events & EPOLLHUP || events[i].events & EPOLLRDHUP)
+                    if(events[i].events & EPOLLRDHUP)
                     {
                         numberOfConnectedClient--;
                         delete client;//disconnected, remove the object

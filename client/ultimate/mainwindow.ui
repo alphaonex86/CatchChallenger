@@ -26,7 +26,7 @@
    <string notr="true">CatchChallenger</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../base/resources/client-resources.qrc">
+   <iconset resource="../../server/all-server-resources.qrc">
     <normaloff>:/images/catchchallenger.png</normaloff>:/images/catchchallenger.png</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
@@ -52,7 +52,7 @@
        <string notr="true">#datapack{background-image: url(:/images/background.png);}</string>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="mode">
        <property name="styleSheet">
@@ -1135,6 +1135,7 @@ padding: 0 5px;</string>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
+  <include location="../../server/all-server-resources.qrc"/>
   <include location="../base/resources/client-resources.qrc"/>
  </resources>
  <connections/>

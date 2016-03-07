@@ -181,7 +181,7 @@ int main(int argc, char *argv[])
                         continue;
                     }
                     //ready to read
-                    if(events[i].events & EPOLLIN)
+                    if(events[i].events & EPOLLIN || events[i].events & EPOLLRDHUP)
                         client->parseIncommingData();
                     if(events[i].events & EPOLLHUP || events[i].events & EPOLLRDHUP)
                         client->tryReconnect();

@@ -1003,7 +1003,7 @@ int main(int argc, char *argv[])
                             }
                             epoll_event event;
                             event.data.ptr = client;
-                            event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
+                            event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP;//EPOLLET | EPOLLOUT | EPOLLHUP
                             s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
                             if(s == -1)
                             {
@@ -1070,7 +1070,7 @@ int main(int argc, char *argv[])
 
                             epoll_event event;
                             event.data.ptr = client;
-                            event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
+                            event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP;//EPOLLET | EPOLLOUT | EPOLLHUP
                             s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
                             if(s == -1)
                             {
@@ -1119,7 +1119,7 @@ int main(int argc, char *argv[])
                         continue;
                     }
                     //ready to read
-                    if(events[i].events & EPOLLIN)
+                    if(events[i].events & EPOLLIN || events[i].events & EPOLLRDHUP)
                         client->parseIncommingData();
                     #ifndef SERVERNOBUFFER
                     //ready to write
@@ -1127,7 +1127,7 @@ int main(int argc, char *argv[])
                         if(!closed)
                             client->flush();
                     #endif
-                    if(events[i].events & EPOLLHUP || events[i].events & EPOLLRDHUP)
+                    if(events[i].events & EPOLLRDHUP)
                     {
                         numberOfConnectedClient--;
                         client->disconnectClient();
@@ -1158,9 +1158,9 @@ int main(int argc, char *argv[])
                         continue;
                     }
                     //ready to read
-                    if(events[i].events & EPOLLIN)
+                    if(events[i].events & EPOLLIN || events[i].events & EPOLLRDHUP)
                         client->parseIncommingData();
-                    if(events[i].events & EPOLLHUP || events[i].events & EPOLLRDHUP)
+                    if(events[i].events & EPOLLRDHUP)
                     {
                         numberOfConnectedUnixClient--;
                         client->close();
