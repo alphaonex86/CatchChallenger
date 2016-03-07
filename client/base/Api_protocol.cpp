@@ -2055,7 +2055,9 @@ void Api_protocol::connectTheExternalSocketInternal()
     }
     if(socket->sslSocket->peerAddress()==QHostAddress::Null)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::connectTheExternalSocket() socket->sslSocket->peerAddress()==QHostAddress::Null"));
+        newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::connectTheExternalSocket() socket->sslSocket->peerAddress()==QHostAddress::Null: ")+socket->peerName()+"-"+QString::number(socket->peerPort())+
+                 QString(", state: %1").arg(socket->sslSocket->state())
+                 );
         return;
     }
     //check the certificat
