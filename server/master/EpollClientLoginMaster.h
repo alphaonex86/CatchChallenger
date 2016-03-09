@@ -23,6 +23,7 @@ public:
         #endif
         );
     ~EpollClientLoginMaster();
+    void disconnectClient();
     void parseIncommingData();
     void selectCharacter(const uint8_t &query_id, const uint32_t &serverUniqueKey, const uint8_t &charactersGroupIndex, const uint32_t &characterId, const uint32_t &accountId);
     bool trySelectCharacterGameServer(EpollClientLoginMaster * const loginServer,const uint8_t &client_query_id,const uint32_t &serverUniqueKey,const uint8_t &charactersGroupIndex,const uint32_t &characterId, const uint32_t &accountId);
@@ -119,7 +120,6 @@ private:
     bool parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
 
     bool parseInputBeforeLogin(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
-    void disconnectClient();
     void updateConsoleCountServer();
 
     friend class CheckTimeoutGameServer;

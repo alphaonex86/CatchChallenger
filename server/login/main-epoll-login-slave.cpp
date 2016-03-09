@@ -66,10 +66,31 @@ int main(int argc, char *argv[])
 
     int numberOfConnectedClient=0;
     /* The event loop */
+    std::vector<std::pair<void *,BaseClassSwitch::EpollObjectType> > elementsToDelete;
     int number_of_events, i;
     while(1)
     {
         number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
+        if(!elementsToDelete.empty())
+        {
+            unsigned int index=0;
+            while(index<elementsToDelete.size())
+            {
+                switch(elementsToDelete.at(index).second)
+                {
+                    case BaseClassSwitch::EpollObjectType::Client:
+                        delete static_cast<EpollClientLoginSlave *>(elementsToDelete.at(index).first);
+                    break;
+                    case BaseClassSwitch::EpollObjectType::MasterLink:
+                        delete static_cast<LinkToMaster *>(elementsToDelete.at(index).first);
+                    break;
+                    default:
+                    break;
+                }
+                index++;
+            }
+            elementsToDelete.clear();
+        }
         for(i = 0; i < number_of_events; i++)
         {
             switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
@@ -192,19 +213,30 @@ int main(int argc, char *argv[])
                         std::cerr << "client epoll bye: " << events[i].events << std::endl;
                         #endif
                         numberOfConnectedClient--;
-                        delete client;
+
+                        client->disconnectClient();
+                        std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
+                        tempElementsToDelete.first=events[i].data.ptr;
+                        tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
+                        elementsToDelete.push_back(tempElementsToDelete);
+
                         continue;
                     }
                     //ready to read
-                    if(events[i].events & EPOLLIN || events[i].events & EPOLLRDHUP)
-                        client->parseIncommingData();
+                    client->parseIncommingData();
                     /*if(events[i].events & EPOLLHUP)
                     {
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
                         std::cerr << "client disconnect, EPOLLHUP" << std::endl;
                         #endif
                         numberOfConnectedClient--;
-                        delete client;//disconnected, remove the object
+                        //disconnected, remove the object
+
+                        client->disconnectClient();
+                        std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
+                        tempElementsToDelete.first=events[i].data.ptr;
+                        tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
+                        elementsToDelete.push_back(tempElementsToDelete);
                     }*/
                     if(events[i].events & EPOLLRDHUP)
                     {
@@ -212,7 +244,13 @@ int main(int argc, char *argv[])
                         std::cerr << "client disconnect, EPOLLRDHUP" << std::endl;
                         #endif
                         numberOfConnectedClient--;
-                        delete client;//disconnected, remove the object
+                        //disconnected, remove the object
+
+                        client->disconnectClient();
+                        std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
+                        tempElementsToDelete.first=events[i].data.ptr;
+                        tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
+                        elementsToDelete.push_back(tempElementsToDelete);
                     }
                 }
                 break;
@@ -251,8 +289,7 @@ int main(int argc, char *argv[])
                         continue;
                     }
                     //ready to read
-                    if(events[i].events & EPOLLIN || events[i].events & EPOLLRDHUP)
-                        client->parseIncommingData();
+                    client->parseIncommingData();
                     if(events[i].events & EPOLLRDHUP)
                         client->tryReconnect();
                 }
