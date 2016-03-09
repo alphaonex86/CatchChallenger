@@ -59,6 +59,7 @@ public:
         #endif
         );
     ~EpollClientLoginSlave();
+    void disconnectClient();
     enum EpollClientLoginStat
     {
         None,
@@ -125,7 +126,6 @@ private:
     bool parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
 
     bool parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size);
-    void disconnectClient();
 
     bool sendFile(const std::string &datapackPath, const std::string &fileName);
     void datapackList(const uint8_t &query_id, const std::vector<std::string> &files, const std::vector<uint32_t> &partialHashList);

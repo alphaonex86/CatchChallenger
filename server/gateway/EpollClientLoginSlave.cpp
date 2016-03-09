@@ -66,7 +66,10 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
     }
 
     if(socketString!=NULL)
+    {
         delete socketString;
+        socketString=NULL;
+    }
     if(linkToGameServer!=NULL)
     {
         linkToGameServer->closeSocket();

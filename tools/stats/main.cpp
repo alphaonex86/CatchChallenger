@@ -142,10 +142,28 @@ int main(int argc, char *argv[])
     epoll_event events[MAXEVENTS];
 
     /* The event loop */
+    std::vector<std::pair<void *,BaseClassSwitch::EpollObjectType> > elementsToDelete;
     int number_of_events, i;
     while(1)
     {
         number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
+        if(!elementsToDelete.empty())
+        {
+            unsigned int index=0;
+            while(index<elementsToDelete.size())
+            {
+                switch(elementsToDelete.at(index).second)
+                {
+                    case BaseClassSwitch::EpollObjectType::MasterLink:
+                        delete static_cast<LinkToLogin *>(elementsToDelete.at(index).first);
+                    break;
+                    default:
+                    break;
+                }
+                index++;
+            }
+            elementsToDelete.clear();
+        }
         for(i = 0; i < number_of_events; i++)
         {
             switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
@@ -181,8 +199,7 @@ int main(int argc, char *argv[])
                         continue;
                     }
                     //ready to read
-                    if(events[i].events & EPOLLIN || events[i].events & EPOLLRDHUP)
-                        client->parseIncommingData();
+                    client->parseIncommingData();
                     if(events[i].events & EPOLLHUP || events[i].events & EPOLLRDHUP)
                         client->tryReconnect();
                 }
