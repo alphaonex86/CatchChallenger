@@ -872,10 +872,36 @@ int main(int argc, char *argv[])
     #endif
     int numberOfConnectedClient=0,numberOfConnectedUnixClient=0;
     /* The event loop */
+    std::vector<std::pair<void *,BaseClassSwitch::EpollObjectType> > elementsToDelete;
     int number_of_events, i;
     while(1)
     {
         number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
+        if(!elementsToDelete.empty())
+        {
+            unsigned int index=0;
+            while(index<elementsToDelete.size())
+            {
+                switch(elementsToDelete.at(index).second)
+                {
+                    case BaseClassSwitch::EpollObjectType::Client:
+                        delete static_cast<Client *>(elementsToDelete.at(index).first);
+                    break;
+                    case BaseClassSwitch::EpollObjectType::UnixClient:
+                        delete static_cast<EpollUnixSocketClientFinal *>(elementsToDelete.at(index).first);
+                    break;
+                    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+                    case BaseClassSwitch::EpollObjectType::MasterLink:
+                        delete static_cast<LinkToMaster *>(elementsToDelete.at(index).first);
+                    break;
+                    #endif
+                    default:
+                    break;
+                }
+                index++;
+            }
+            elementsToDelete.clear();
+        }
         #ifdef SERVERBENCHMARK
         EpollUnixSocketClientFinal::start = std::chrono::high_resolution_clock::now();
         #endif
@@ -1114,13 +1140,17 @@ int main(int argc, char *argv[])
                         if(!(events[i].events & EPOLLHUP))
                             std::cerr << "client epoll error: " << events[i].events << std::endl;
                         numberOfConnectedClient--;
+
                         client->disconnectClient();
-                        delete client;
+                        std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
+                        tempElementsToDelete.first=events[i].data.ptr;
+                        tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
+                        elementsToDelete.push_back(tempElementsToDelete);
+
                         continue;
                     }
                     //ready to read
-                    if(events[i].events & EPOLLIN || events[i].events & EPOLLRDHUP)
-                        client->parseIncommingData();
+                    client->parseIncommingData();
                     #ifndef SERVERNOBUFFER
                     //ready to write
                     if(events[i].events & EPOLLOUT)
@@ -1131,7 +1161,13 @@ int main(int argc, char *argv[])
                     {
                         numberOfConnectedClient--;
                         client->disconnectClient();
-                        delete client;//disconnected, remove the object
+                        //disconnected, remove the object
+
+                        client->disconnectClient();
+                        std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
+                        tempElementsToDelete.first=events[i].data.ptr;
+                        tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
+                        elementsToDelete.push_back(tempElementsToDelete);
                     }
                     #ifdef SERVERBENCHMARKFULL
                     std::chrono::duration<unsigned long long int,std::nano> elapsed_seconds = std::chrono::high_resolution_clock::now()-start_inter;
@@ -1153,18 +1189,27 @@ int main(int argc, char *argv[])
                         ready for reading (why were we notified then?) */
                         std::cerr << "client epoll error: " << events[i].events << std::endl;
                         numberOfConnectedUnixClient--;
+
                         client->close();
-                        delete client;
+                        std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
+                        tempElementsToDelete.first=events[i].data.ptr;
+                        tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
+                        elementsToDelete.push_back(tempElementsToDelete);
+
                         continue;
                     }
                     //ready to read
-                    if(events[i].events & EPOLLIN || events[i].events & EPOLLRDHUP)
-                        client->parseIncommingData();
+                    client->parseIncommingData();
                     if(events[i].events & EPOLLRDHUP)
                     {
                         numberOfConnectedUnixClient--;
+                        //disconnected, remove the object
+
                         client->close();
-                        delete client;//disconnected, remove the object
+                        std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
+                        tempElementsToDelete.first=events[i].data.ptr;
+                        tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
+                        elementsToDelete.push_back(tempElementsToDelete);
                     }
                 }
                 break;
@@ -1272,8 +1317,7 @@ int main(int argc, char *argv[])
                         continue;
                     }
                     //ready to read
-                    if(events[i].events & EPOLLIN)
-                        client->parseIncommingData();
+                    client->parseIncommingData();
                     #ifndef SERVERNOBUFFER
                     //ready to write
                     if(events[i].events & EPOLLOUT)

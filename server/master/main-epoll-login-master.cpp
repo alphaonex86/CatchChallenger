@@ -88,10 +88,28 @@ int main(int argc, char *argv[])
 
     int numberOfConnectedClient=0;
     /* The event loop */
+    std::vector<std::pair<void *,BaseClassSwitch::EpollObjectType> > elementsToDelete;
     int number_of_events, i;
     while(1)
     {
         number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
+        if(!elementsToDelete.empty())
+        {
+            unsigned int index=0;
+            while(index<elementsToDelete.size())
+            {
+                switch(elementsToDelete.at(index).second)
+                {
+                    case BaseClassSwitch::EpollObjectType::Client:
+                        delete static_cast<EpollClientLoginMaster *>(elementsToDelete.at(index).first);
+                    break;
+                    default:
+                    break;
+                }
+                index++;
+            }
+            elementsToDelete.clear();
+        }
         for(i = 0; i < number_of_events; i++)
         {
             switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
@@ -216,12 +234,17 @@ int main(int argc, char *argv[])
                         if(!(events[i].events & EPOLLHUP))
                             std::cerr << "client epoll error: " << events[i].events << std::endl;
                         numberOfConnectedClient--;
-                        delete client;
+
+                        client->disconnectClient();
+                        std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
+                        tempElementsToDelete.first=events[i].data.ptr;
+                        tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
+                        elementsToDelete.push_back(tempElementsToDelete);
+
                         continue;
                     }
                     //ready to read
-                    if(events[i].events & EPOLLIN || events[i].events & EPOLLRDHUP)
-                        client->parseIncommingData();
+                    client->parseIncommingData();
                     #ifndef SERVERNOBUFFER
                     //ready to write
                     if(events[i].events & EPOLLOUT)
@@ -231,7 +254,13 @@ int main(int argc, char *argv[])
                     if(events[i].events & EPOLLRDHUP)
                     {
                         numberOfConnectedClient--;
-                        delete client;//disconnected, remove the object
+                        //disconnected, remove the object
+
+                        client->disconnectClient();
+                        std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
+                        tempElementsToDelete.first=events[i].data.ptr;
+                        tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
+                        elementsToDelete.push_back(tempElementsToDelete);
                     }
                 }
                 break;

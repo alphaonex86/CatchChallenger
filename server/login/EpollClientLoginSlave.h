@@ -52,6 +52,7 @@ public:
         #endif
         );
     ~EpollClientLoginSlave();
+    void disconnectClient();
     struct AddCharacterParam
     {
         uint8_t query_id;
@@ -186,7 +187,6 @@ private:
     bool parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
 
     bool parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size);
-    void disconnectClient();
 public:
     void askLogin_cancel();
     void askLogin(const uint8_t &query_id,const char *rawdata);
