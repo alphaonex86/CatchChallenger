@@ -18,15 +18,15 @@ TinyXMLSettings::TinyXMLSettings(const std::string &file)
     this->file=file;
     if(!document.LoadFile(file))
     {
-        if(document.ErrorId()!=12 && errno!=2)
-        {
-            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << document.ErrorRow() << ", column " << document.ErrorCol() << ": " << document.ErrorDesc() << ", error id: " << document.ErrorId() << std::endl;
-            abort();
-        }
-        else
+        if(document.ErrorId()==2 /*NOT 12! Error document empty. but can be just corrupted!*/ && errno==2)
         {
             TiXmlElement * root = new TiXmlElement( "configuration" );
             document.LinkEndChild(root);
+        }
+        else
+        {
+            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << document.ErrorRow() << ", column " << document.ErrorCol() << ": " << document.ErrorDesc() << ", error id: " << document.ErrorId() << ", errno: " << errno << std::endl;
+            abort();
         }
     }
     whereIs=document.RootElement();
