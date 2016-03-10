@@ -872,36 +872,39 @@ bool EpollClientLoginMaster::parseReplyData(const uint8_t &mainCodeType,const ui
                     charactersGroupForGameServerInformation->lastPingStarted=msFrom1970();/// \note Can be dropped to performance improvement
                 }
 
-                unsigned int index=0;
-                while(index<secondServerInConflict.size())
+                if(!secondServerInConflict.empty())
                 {
-                    EpollClientLoginMaster * const gameServer=secondServerInConflict.at(index);
-
-                    gameServer->sendGameServerRegistrationReply(gameServer->queryNumberInConflicWithTheMainServer,true);
-
-                    CharactersGroup::InternalGameServer tempData;
-                    if(gameServer->charactersGroupForGameServerInformation!=NULL)
+                    unsigned int index=0;
+                    while(index<secondServerInConflict.size())
                     {
-                        tempData=*gameServer->charactersGroupForGameServerInformation;
-                        delete gameServer->charactersGroupForGameServerInformation;
-                        gameServer->charactersGroupForGameServerInformation=NULL;
-                    }
-                    else
-                    {
-                        std::cerr << "charactersGroupForGameServerInformation==NULL at " << __FILE__ << ":" << __LINE__ << std::endl;
-                        abort();
-                    }
-                    gameServer->charactersGroupForGameServerInformation=charactersGroupForGameServer->addGameServerUniqueKey(
-                                this,tempData.uniqueKey,tempData.host,tempData.port,tempData.metaData,tempData.logicalGroupIndex,tempData.currentPlayer,tempData.maxPlayer,tempData.lockedAccountByGameserver);
+                        EpollClientLoginMaster * const gameServer=secondServerInConflict.at(index);
 
-                    index++;
+                        gameServer->sendGameServerRegistrationReply(gameServer->queryNumberInConflicWithTheMainServer,true);
+
+                        CharactersGroup::InternalGameServer tempData;
+                        if(gameServer->charactersGroupForGameServerInformation!=NULL)
+                        {
+                            tempData=*gameServer->charactersGroupForGameServerInformation;
+                            delete gameServer->charactersGroupForGameServerInformation;
+                            gameServer->charactersGroupForGameServerInformation=NULL;
+                        }
+                        else
+                        {
+                            std::cerr << "charactersGroupForGameServerInformation==NULL at " << __FILE__ << ":" << __LINE__ << std::endl;
+                            abort();
+                        }
+                        gameServer->charactersGroupForGameServerInformation=charactersGroupForGameServer->addGameServerUniqueKey(
+                                    this,tempData.uniqueKey,tempData.host,tempData.port,tempData.metaData,tempData.logicalGroupIndex,tempData.currentPlayer,tempData.maxPlayer,tempData.lockedAccountByGameserver);
+
+                        index++;
+                    }
+                    secondServerInConflict.clear();
+
+                    EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
+                    EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();
+                    EpollClientLoginMaster::broadcastGameServerChange();
+                    updateConsoleCountServer();
                 }
-                secondServerInConflict.clear();
-
-                EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
-                EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();
-                EpollClientLoginMaster::broadcastGameServerChange();
-                updateConsoleCountServer();
             }
             /*orderned mode else
                 std::cerr << "parseFullReplyData() !loginServerReturnForCharaterSelect.contains(queryNumber): mainCodeType: " << mainCodeType << ", subCodeType: " << subCodeType << ", queryNumber: " << queryNumber << std::endl;*/
