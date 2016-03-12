@@ -4,11 +4,11 @@ include(catchchallenger-server.pri)
 QT       -= gui widgets network sql
 #QT       -= core xml
 
-#QMAKE_CFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations"
-#QMAKE_CXXFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations"
+#QMAKE_CFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations -std=c++0x"
+#QMAKE_CXXFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations -std=c++0x"
 
-QMAKE_CFLAGS="-fstack-protector-all"
-QMAKE_CXXFLAGS="-fstack-protector-all"
+QMAKE_CFLAGS="-fstack-protector-all -std=c++0x"
+QMAKE_CXXFLAGS="-fstack-protector-all -std=c++0x"
 
 DEFINES += SERVERNOBUFFER
 #DEFINES += SERVERSSL
