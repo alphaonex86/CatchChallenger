@@ -814,6 +814,11 @@ void BaseServer::preload_profile()
         index++;
     }
 
+    if(GlobalServerData::serverPrivateVariables.serverProfileInternalList.empty())
+    {
+        std::cerr << "No profile loaded, seam unable to work without it" << std::endl;
+        abort();
+    }
     std::cout << GlobalServerData::serverPrivateVariables.serverProfileInternalList.size() << " profile loaded" << std::endl;
 }
 
