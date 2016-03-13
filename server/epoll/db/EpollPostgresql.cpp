@@ -332,38 +332,44 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
             tuleIndex=-1;
             ntuples=0;
             result=PQgetResult(conn);
-            if(result!=NULL)
+            if(result==NULL)
+                std::cerr << "query async send failed: " << errorMessage() << ", PQgetResult(conn) have returned NULL" << std::endl;
+            else
             {
-                const ExecStatusType &execStatusType=PQresultStatus(result);
-                if(execStatusType!=PGRES_TUPLES_OK && execStatusType!=PGRES_COMMAND_OK)
+                while(result!=NULL)
                 {
-                    if(queriesList.empty())
-                        std::cerr << "Query to database failed: " << errorMessage() << std::endl;
-                    else
-                        std::cerr << "Query to database failed: " << errorMessage() << queriesList.front() << std::endl;
-                    tuleIndex=0;
-                }
-                else
-                    ntuples=PQntuples(result);
-                if(!queue.empty())
-                {
-                    CallBack callback=queue.front();
-                    if(callback.method!=NULL)
-                        callback.method(callback.object);
-                    queue.erase(queue.cbegin());
-                }
-                if(result!=NULL)
-                    clear();
-                if(!queriesList.empty())
-                    queriesList.erase(queriesList.cbegin());
-                if(!queriesList.empty())
-                {
-                    const int &query_id=PQsendQuery(conn,queriesList.front().c_str());
-                    if(query_id==0)
+                    const ExecStatusType &execStatusType=PQresultStatus(result);
+                    if(execStatusType!=PGRES_TUPLES_OK && execStatusType!=PGRES_COMMAND_OK)
                     {
-                        std::cerr << "query async send failed: " << errorMessage() << ", where query list is not empty: " << stringimplode(queriesList,';') << std::endl;
-                        return false;
+                        if(queriesList.empty())
+                            std::cerr << "Query to database failed: " << errorMessage() << std::endl;
+                        else
+                            std::cerr << "Query to database failed: " << errorMessage() << queriesList.front() << std::endl;
+                        tuleIndex=0;
                     }
+                    else
+                        ntuples=PQntuples(result);
+                    if(!queue.empty())
+                    {
+                        CallBack callback=queue.front();
+                        if(callback.method!=NULL)
+                            callback.method(callback.object);
+                        queue.erase(queue.cbegin());
+                    }
+                    if(result!=NULL)
+                        clear();
+                    if(!queriesList.empty())
+                        queriesList.erase(queriesList.cbegin());
+                    if(!queriesList.empty())
+                    {
+                        const int &query_id=PQsendQuery(conn,queriesList.front().c_str());
+                        if(query_id==0)
+                        {
+                            std::cerr << "query async send failed: " << errorMessage() << ", where query list is not empty: " << stringimplode(queriesList,';') << std::endl;
+                            return false;
+                        }
+                    }
+                    result=PQgetResult(conn);
                 }
             }
         }
