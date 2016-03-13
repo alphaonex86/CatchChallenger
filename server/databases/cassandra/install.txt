@@ -1,0 +1,5 @@
+= Simplified part =
+CREATE KEYSPACE catchchallenger_login WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+CREATE KEYSPACE catchchallenger_base WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+CREATE KEYSPACE catchchallenger_common WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+CREATE KEYSPACE catchchallenger_server WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
