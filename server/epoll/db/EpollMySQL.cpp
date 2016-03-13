@@ -262,30 +262,35 @@ bool EpollMySQL::epollEvent(const uint32_t &events)
             ntuples=0;
             nfields=0;
             result=mysql_store_result(conn);
-            if(result!=NULL)
+            if(result!=NULL)//SELECT
             {
                 ntuples=mysql_num_rows(result);
                 nfields=mysql_num_fields(result);
-                if(!queue.empty())
+            }
+            else//INSERT, UPDATE, DELETE
+            {
+                ntuples=0;
+                nfields=0;
+            }
+            if(!queue.empty())
+            {
+                CallBack callback=queue.front();
+                if(callback.method!=NULL)
+                    callback.method(callback.object);
+                queue.erase(queue.cbegin());
+            }
+            if(result!=NULL)
+                clear();
+            if(!queriesList.empty())
+                queriesList.erase(queriesList.cbegin());
+            if(!queriesList.empty())
+            {
+                const std::string &query=queriesList.front();
+                const int &query_id=mysql_send_query(conn,query.c_str(),query.size());
+                if(query_id!=0)
                 {
-                    CallBack callback=queue.front();
-                    if(callback.method!=NULL)
-                        callback.method(callback.object);
-                    queue.erase(queue.cbegin());
-                }
-                if(result!=NULL)
-                    clear();
-                if(!queriesList.empty())
-                    queriesList.erase(queriesList.cbegin());
-                if(!queriesList.empty())
-                {
-                    const std::string &query=queriesList.front();
-                    const int &query_id=mysql_send_query(conn,query.c_str(),query.size());
-                    if(query_id==0)
-                    {
-                        std::cerr << "query async send failed: " << errorMessage() << ", where query list is not empty: " << stringimplode(queriesList,';') << std::endl;
-                        return false;
-                    }
+                    std::cerr << "query async send failed: " << errorMessage() << ", where query list is not empty: " << stringimplode(queriesList,';') << std::endl;
+                    return false;
                 }
             }
         }
