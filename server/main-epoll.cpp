@@ -21,6 +21,12 @@
 #include "epoll/timer/TimerDisplayEventBySeconds.h"
 #include "epoll/timer/TimerPositionSync.h"
 #include "epoll/timer/TimerSendInsertMoveRemove.h"
+#ifdef CATCHCHALLENGER_DB_POSTGRESQL
+#include "epoll/db/EpollPostgresql.h"
+#endif
+#ifdef CATCHCHALLENGER_DB_MYSQL
+#include "epoll/db/EpollMySQL.h"
+#endif
 #include "base/ServerStructures.h"
 #include "NormalServerGlobal.h"
 #include "base/GlobalServerData.h"
@@ -1270,7 +1276,7 @@ int main(int argc, char *argv[])
                         #ifdef CATCHCHALLENGER_DB_MYSQL
                         case DatabaseBase::DatabaseType::Mysql:
                         {
-                            EpollMysql * const db=static_cast<EpollMysql *>(events[i].data.ptr);
+                            EpollMySQL * const db=static_cast<EpollMySQL *>(events[i].data.ptr);
                             db->epollEvent(events[i].events);
                             if(!datapack_loaded)
                             {
