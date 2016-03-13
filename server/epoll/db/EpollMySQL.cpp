@@ -9,6 +9,8 @@
 #include "../Epoll.h"
 #include "../EpollSocket.h"
 #include "../../../general/base/GeneralVariable.h"
+#include "../../../general/base/cpp11addition.h"
+#include "../../VariableServer.h"
 #include <chrono>
 #include <ctime>
 #include <thread>
@@ -28,7 +30,7 @@ EpollMySQL::EpollMySQL() :
 {
     emptyCallback.object=NULL;
     emptyCallback.method=NULL;
-    databaseTypeVar=DatabaseBase::Type::Mysql;
+    databaseTypeVar=DatabaseBase::DatabaseType::Mysql;
 
     queue.reserve(CATCHCHALLENGER_MAXBDQUERIES);
     queriesList.reserve(CATCHCHALLENGER_MAXBDQUERIES);
@@ -54,7 +56,7 @@ bool EpollMySQL::isConnected() const
     return conn!=NULL && started;
 }
 
-bool EpollMySQL::syncConnect(const char * const host, const char * const dbname, const char * const user, const char * const password)
+bool EpollMySQL::syncConnect(const std::string &host, const std::string &dbname, const std::string &user, const std::string &password)
 {
     if(conn!=NULL)
     {
@@ -62,10 +64,10 @@ bool EpollMySQL::syncConnect(const char * const host, const char * const dbname,
         return false;
     }
 
-    strcpy(strCohost,host);
-    strcpy(strCouser,user);
-    strcpy(strCodatabase,dbname);
-    strcpy(strCopass,password);
+    strcpy(strCohost,host.c_str());
+    strcpy(strCouser,user.c_str());
+    strcpy(strCodatabase,dbname.c_str());
+    strcpy(strCopass,password.c_str());
     std::cout << "Connecting to mysql: " << host << "..." << std::endl;
     return syncConnectInternal();
 }
@@ -155,7 +157,7 @@ void EpollMySQL::syncDisconnect()
     conn=NULL;
 }
 
-CatchChallenger::DatabaseBase::CallBack * EpollMySQL::asyncRead(const char * const query,void * returnObject, CallBackDatabase method)
+CatchChallenger::DatabaseBase::CallBack * EpollMySQL::asyncRead(const std::string &query,void * returnObject, CallBackDatabase method)
 {
     if(conn==NULL)
     {
@@ -171,12 +173,12 @@ CatchChallenger::DatabaseBase::CallBack * EpollMySQL::asyncRead(const char * con
             std::cerr << "mysql queue full" << std::endl;
             return NULL;
         }
-        queue << tempCallback;
-        queriesList << std::string::fromUtf8(query);
-        return &queue.last();
+        queue.push_back(tempCallback);
+        queriesList.push_back(query);
+        return &queue.back();
     }
-    queriesList << std::string::fromUtf8(query);
-    const int &stringlen=strlen(query);
+    queriesList.push_back(query);
+    const int &stringlen=query.size();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(stringlen==0)
     {
@@ -184,17 +186,17 @@ CatchChallenger::DatabaseBase::CallBack * EpollMySQL::asyncRead(const char * con
         abort();
     }
     #endif
-    const int &query_id=mysql_send_query(conn,query,stringlen);
+    const int &query_id=mysql_send_query(conn,query.c_str(),stringlen);
     if(query_id<0)
     {
         std::cerr << "query " << query << "send failed: " << errorMessage() << std::endl;
         return NULL;
     }
-    queue << tempCallback;
-    return &queue.last();
+    queue.push_back(tempCallback);
+    return &queue.back();
 }
 
-bool EpollMySQL::asyncWrite(const char * const query)
+bool EpollMySQL::asyncWrite(const std::string &query)
 {
     if(conn==NULL)
     {
@@ -203,27 +205,38 @@ bool EpollMySQL::asyncWrite(const char * const query)
     }
     if(queue.size()>0 || result!=NULL)
     {
-        queue << emptyCallback;
-        queriesList << std::string::fromUtf8(query);
+        queue.push_back(emptyCallback);
+        queriesList.push_back(query);
         return true;
     }
-    queriesList << std::string::fromUtf8(query);
-    const int &query_id=mysql_send_query(conn,query,strlen(query));
+    queriesList.push_back(query);
+    const int &stringlen=query.size();
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(stringlen==0)
+    {
+        std::cerr << "query " << query << ", stringlen==0" << std::endl;
+        abort();
+    }
+    #endif
+    const int &query_id=mysql_send_query(conn,query.c_str(),stringlen);
     if(query_id==0)
     {
         std::cerr << "query send failed" << std::endl;
         return false;
     }
-    queue << emptyCallback;
+    queue.push_back(emptyCallback);
     return true;
 }
 
 void EpollMySQL::clear()
 {
-    if(result!=NULL)
+    while(result!=NULL)
     {
         mysql_free_result(result);
-        result=NULL;
+        if(conn!=NULL)
+            result=mysql_store_result(conn);
+        else
+            result=NULL;
     }
     row=NULL;
     ntuples=0;
@@ -253,24 +266,24 @@ bool EpollMySQL::epollEvent(const uint32_t &events)
             {
                 ntuples=mysql_num_rows(result);
                 nfields=mysql_num_fields(result);
-                if(!queue.isEmpty())
+                if(!queue.empty())
                 {
-                    CallBack callback=queue.first();
+                    CallBack callback=queue.front();
                     if(callback.method!=NULL)
                         callback.method(callback.object);
-                    queue.removeFirst();
+                    queue.erase(queue.cbegin());
                 }
                 if(result!=NULL)
                     clear();
-                if(!queriesList.isEmpty())
-                    queriesList.removeFirst();
-                if(!queriesList.isEmpty())
+                if(!queriesList.empty())
+                    queriesList.erase(queriesList.cbegin());
+                if(!queriesList.empty())
                 {
-                    const std::vector<char> &query=queriesList.first().toUtf8();
-                    const int &query_id=mysql_send_query(conn,query.constData(),query.size());
+                    const std::string &query=queriesList.front();
+                    const int &query_id=mysql_send_query(conn,query.c_str(),query.size());
                     if(query_id==0)
                     {
-                        std::cerr << "query async send failed: " << errorMessage() << ", where query list is not empty: " << queriesList.join(";").toStdString() << std::endl;
+                        std::cerr << "query async send failed: " << errorMessage() << ", where query list is not empty: " << stringimplode(queriesList,';') << std::endl;
                         return false;
                     }
                 }
@@ -291,9 +304,9 @@ bool EpollMySQL::epollEvent(const uint32_t &events)
     return true;
 }
 
-const char * EpollMySQL::errorMessage() const
+const std::string EpollMySQL::errorMessage() const
 {
-    return std::string("%1, errno: %2").arg(mysql_error(conn)).arg(mysql_errno(conn)).toUtf8();
+    return mysql_error(conn)+std::string(", errno: ")+std::to_string(mysql_errno(conn));
 }
 
 bool EpollMySQL::next()
@@ -321,7 +334,7 @@ bool EpollMySQL::next()
     }
 }
 
-const char * EpollMySQL::value(const int &value) const
+const std::string EpollMySQL::value(const int &value) const
 {
     if(result==NULL || tuleIndex<0 || value>=nfields)
         return emptyString;
