@@ -202,6 +202,14 @@ CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncRead(const std::
         return &queue.back();
     }
     queriesList.push_back(query);
+    const int &stringlen=query.size();
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(stringlen==0)
+    {
+        std::cerr << "query " << query << ", stringlen==0" << std::endl;
+        abort();
+    }
+    #endif
     const int &query_id=PQsendQuery(conn,query.c_str());
     if(query_id==0)
     {
@@ -226,6 +234,14 @@ bool EpollPostgresql::asyncWrite(const std::string &query)
         return true;
     }
     queriesList.push_back(query);
+        const int &stringlen=query.size();
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(stringlen==0)
+    {
+        std::cerr << "query " << query << ", stringlen==0" << std::endl;
+        abort();
+    }
+    #endif
     const int &query_id=PQsendQuery(conn,query.c_str());
     if(query_id==0)
     {
@@ -334,12 +350,12 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                     CallBack callback=queue.front();
                     if(callback.method!=NULL)
                         callback.method(callback.object);
-                    queue.erase(queue.begin());
+                    queue.erase(queue.cbegin());
                 }
                 if(result!=NULL)
                     clear();
                 if(!queriesList.empty())
-                    queriesList.erase(queriesList.begin());
+                    queriesList.erase(queriesList.cbegin());
                 if(!queriesList.empty())
                 {
                     const int &query_id=PQsendQuery(conn,queriesList.front().c_str());

@@ -4,11 +4,11 @@ include(catchchallenger-server.pri)
 QT       -= gui widgets network sql
 #QT       -= core xml
 
-#QMAKE_CFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations -std=c++0x"
-#QMAKE_CXXFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations -std=c++0x"
+#QMAKE_CFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations -std=c++0x"
+#QMAKE_CXXFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations -std=c++0x"
 
-QMAKE_CFLAGS="-fstack-protector-all -std=c++0x"
-QMAKE_CXXFLAGS="-fstack-protector-all -std=c++0x"
+QMAKE_CFLAGS+="-fstack-protector-all -std=c++0x"
+QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x"
 
 DEFINES += SERVERNOBUFFER
 #DEFINES += SERVERSSL
@@ -21,11 +21,11 @@ DEFINES += CATCHCHALLENGER_CLASS_ALLINONESERVER
 LIBS += -lssl -lcrypto
 
 # postgresql 9+
-DEFINES += CATCHCHALLENGER_DB_POSTGRESQL
-LIBS    += -lpq
+#DEFINES += CATCHCHALLENGER_DB_POSTGRESQL
+#LIBS    += -lpq
 # mysql 5.5+
-#LIBS    += -lmysqlclient
-#DEFINES += CATCHCHALLENGER_DB_MYSQL
+LIBS    += -lmysqlclient
+DEFINES += CATCHCHALLENGER_DB_MYSQL
 
 CONFIG += c++11
 

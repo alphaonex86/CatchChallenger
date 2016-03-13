@@ -12,22 +12,22 @@
 
 #define CATCHCHALLENGER_MAXBDQUERIES 1024
 
-class EpollMySQL : public BaseClassSwitch, public CatchChallenger::DatabaseBase
+class EpollMySQL : public CatchChallenger::DatabaseBase
 {
 public:
     EpollMySQL();
     ~EpollMySQL();
-    bool syncConnect(const char * const host, const char * const dbname, const char * const user, const char * const password);
+    bool syncConnect(const std::string &host, const std::string &dbname, const std::string &user, const std::string &password);
     bool syncConnectInternal();
     void syncDisconnect();
     void syncReconnect();
-    CallBack * asyncRead(const char * const query,void * returnObject,CallBackDatabase method);
-    bool asyncWrite(const char * const query);
+    CallBack * asyncRead(const std::string &query,void * returnObject,CallBackDatabase method);
+    bool asyncWrite(const std::string &query);
     bool epollEvent(const uint32_t &events);
     void clear();
-    const char * errorMessage() const;
+    const std::string errorMessage() const;
     bool next();
-    const char * value(const int &value) const;
+    const std::string value(const int &value) const;
     bool isConnected() const;
 private:
     MYSQL *conn;
@@ -36,7 +36,8 @@ private:
     int ntuples;
     int nfields;
     MYSQL_RES *result;
-    std::vector<QueryInPogress> queue;
+    std::vector<CallBack> queue;
+    std::vector<std::string> queriesList;
     bool started;
     static char emptyString[1];
     static CallBack emptyCallback;
