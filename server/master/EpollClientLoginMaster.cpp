@@ -144,7 +144,7 @@ void EpollClientLoginMaster::disconnectClient()
     resetToDisconnect();
     updateConsoleCountServer();
     epollSocket.close();
-    messageParsingLayer("Disconnected client");
+    //messageParsingLayer("Disconnected client");
 }
 
 void EpollClientLoginMaster::updateConsoleCountServer()
