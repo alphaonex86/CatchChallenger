@@ -209,9 +209,6 @@ int main(int argc, char *argv[])
                         ready for reading (why were we notified then?) */
                         if(!(events[i].events & EPOLLHUP))
                             std::cerr << "client epoll error: " << events[i].events << std::endl;
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                        std::cerr << "client epoll bye: " << events[i].events << std::endl;
-                        #endif
                         numberOfConnectedClient--;
 
                         client->disconnectClient();
@@ -240,9 +237,6 @@ int main(int argc, char *argv[])
                     }*/
                     if(events[i].events & EPOLLRDHUP)
                     {
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                        std::cerr << "client disconnect, EPOLLRDHUP" << std::endl;
-                        #endif
                         numberOfConnectedClient--;
                         //disconnected, remove the object
 

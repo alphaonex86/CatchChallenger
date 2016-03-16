@@ -511,6 +511,9 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
 
 void LinkToMaster::characterDisconnected(const uint32_t &characterId)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cerr << "unlock the char " << std::to_string(characterId) << std::endl;
+    #endif
     *reinterpret_cast<uint32_t *>(LinkToMaster::sendDisconnectedPlayer+0x01)=htole32(characterId);
     internalSendRawSmallPacket(LinkToMaster::sendDisconnectedPlayer,sizeof(LinkToMaster::sendDisconnectedPlayer));
 }
