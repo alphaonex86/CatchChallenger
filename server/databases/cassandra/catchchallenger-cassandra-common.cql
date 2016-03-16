@@ -15,9 +15,9 @@ CREATE TABLE "character" (
     starter int
 );
 CREATE TABLE character_allow (
+    id int PRIMARY KEY,
     "character" int,
-    "allow" int,
-    PRIMARY KEY ("character", "allow")
+    "allow" int
 );
 CREATE TABLE clan (
     id int PRIMARY KEY,
@@ -26,16 +26,16 @@ CREATE TABLE clan (
     date bigint
 );
 CREATE TABLE item (
+    id int PRIMARY KEY,
     item int,
     "character" int,
-    quantity int,
-    PRIMARY KEY ("character", "item")
+    quantity int
 );
 CREATE TABLE item_warehouse (
+    id int PRIMARY KEY,
     item int,
     "character" int,
-    quantity int,
-    PRIMARY KEY ("character", "item")
+    quantity int
 );
 CREATE TABLE monster (
     id int PRIMARY KEY,
@@ -53,36 +53,36 @@ CREATE TABLE monster (
     place int
 );
 CREATE TABLE monster_buff (
+    id int PRIMARY KEY,
     monster int,
     buff int,
-    level int,
-    PRIMARY KEY ("monster", "buff")
+    level int
 );
 CREATE TABLE monster_skill (
+    id int PRIMARY KEY,
     monster int,
     skill int,
     level int,
-    endurance int,
-    PRIMARY KEY ("monster", "skill")
+    endurance int
 );
 CREATE TABLE recipe (
+    id int PRIMARY KEY,
     "character" int,
-    recipe int,
-    PRIMARY KEY ("character", "recipe")
+    recipe int
 );
 CREATE TABLE reputation (
+    id int PRIMARY KEY,
     "character" int,
     type int,
     point bigint,
-    level int,
-    PRIMARY KEY ("character", type)
+    level int
 );
 CREATE TABLE server_time (
+    id int PRIMARY KEY,
     server int,
     account int,
     played_time int,
-    last_connect int,
-    PRIMARY KEY (server, account)
+    last_connect int
 );
 
 CREATE INDEX ON server_time (account);
@@ -97,5 +97,15 @@ CREATE INDEX ON monster_buff ("monster");
 CREATE INDEX ON monster_skill ("monster");
 CREATE INDEX ON recipe ("character");
 CREATE INDEX ON reputation ("character");
+
 CREATE CUSTOM INDEX ON "character" (pseudo,clan);
 CREATE CUSTOM INDEX ON monster ("character", place);
+
+CREATE CUSTOM INDEX ON "character_allow" ("character", "allow");
+CREATE CUSTOM INDEX ON item ("character", "item");
+CREATE CUSTOM INDEX ON item_warehouse ("character", "item");
+CREATE CUSTOM INDEX ON monster_buff ("monster", "buff");
+CREATE CUSTOM INDEX ON monster_skill ("monster", "skill");
+CREATE CUSTOM INDEX ON recipe ("character", "recipe");
+CREATE CUSTOM INDEX ON reputation ("character", type);
+CREATE CUSTOM INDEX ON server_time (server, account);
