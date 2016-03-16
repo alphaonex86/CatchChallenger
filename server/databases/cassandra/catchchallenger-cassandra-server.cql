@@ -1,7 +1,7 @@
 CREATE TABLE bot_already_beaten (
+    id int PRIMARY KEY,
     "character" int,
-    botfight_id int,
-    PRIMARY KEY ("character", botfight_id)
+    botfight_id int
 );
 CREATE TABLE character_forserver (
     "character" int PRIMARY KEY,
@@ -21,9 +21,9 @@ CREATE TABLE character_forserver (
     market_cash bigint
 );
 CREATE TABLE character_itemonmap (
+    id int PRIMARY KEY,
     "character" int,
-    "pointOnMap" int,
-    PRIMARY KEY ("character", "pointOnMap")
+    "pointOnMap" int
 );
 CREATE TABLE city (
     city text PRIMARY KEY,
@@ -46,33 +46,38 @@ CREATE TABLE factory (
     last_update bigint
 );
 CREATE TABLE item_market (
+    id int PRIMARY KEY,
     item int,
     "character" int,
     quantity int,
-    market_price bigint,
-    PRIMARY KEY ("character", item)
+    market_price bigint
 );
 CREATE TABLE monster_market_price (
     id int PRIMARY KEY,
     market_price int
 );
 CREATE TABLE plant (
+    id int PRIMARY KEY,
     "character" int,
     "pointOnMap" int,
     plant int,
-    plant_timestamps int,
-    PRIMARY KEY ("character", "pointOnMap")
+    plant_timestamps int
 );
 CREATE TABLE quest (
+    id int PRIMARY KEY,
     "character" int,
     quest int,
     finish_one_time boolean,
-    step int,
-    PRIMARY KEY ("character", quest)
+    step int
 );
 
 CREATE INDEX ON plant ("character");
 CREATE INDEX ON bot_already_beaten ("character");
-CREATE INDEX ON character_forserver ("character");
 CREATE INDEX ON character_itemonmap ("character");
 CREATE INDEX ON quest ("character");
+
+CREATE CUSTOM INDEX ON "bot_already_beaten" ("character", botfight_id);
+CREATE CUSTOM INDEX ON character_itemonmap ("character", "pointOnMap");
+CREATE CUSTOM INDEX ON item_market ("character", item);
+CREATE CUSTOM INDEX ON plant ("character", "pointOnMap");
+CREATE CUSTOM INDEX ON quest ("character", quest);
