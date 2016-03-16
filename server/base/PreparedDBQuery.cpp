@@ -1,4 +1,5 @@
 #include "PreparedDBQuery.h"
+#include <iostream>
 
 using namespace CatchChallenger;
 
@@ -128,8 +129,14 @@ void PreparedDBQueryLogin::initDatabaseQueryLogin(const DatabaseBase::DatabaseTy
     switch(type)
     {
         default:
-        return;
         #ifndef EPOLLCATCHCHALLENGERSERVER
+        std::cerr << "PreparedDBQuery: Unknown database type" << std::endl;
+        #else
+        std::cerr << "PreparedDBQuery: Unknown database type in epoll mode" << std::endl;
+        #endif
+        abort();
+        return;
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_MYSQL)
         case DatabaseBase::DatabaseType::Mysql:
         PreparedDBQueryLogin::db_query_login="SELECT `id`,LOWER(HEX(`password`)) FROM `account` WHERE `login`=UNHEX('%1')";
         PreparedDBQueryLogin::db_query_insert_login="INSERT INTO account(id,login,password,date) VALUES(%1,UNHEX('%2'),UNHEX('%3'),%4)";
@@ -143,10 +150,12 @@ void PreparedDBQueryLogin::initDatabaseQueryLogin(const DatabaseBase::DatabaseTy
         break;
         #endif
 
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
         PreparedDBQueryLogin::db_query_login="SELECT id,encode(password,'hex') FROM account WHERE login='\\x%1'";
         PreparedDBQueryLogin::db_query_insert_login="INSERT INTO account(id,login,password,date) VALUES(%1,'\\x%2','\\x%3',%4)";
         break;
+        #endif
     }
 }
 
@@ -155,8 +164,14 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
     switch(type)
     {
         default:
-        return;
         #ifndef EPOLLCATCHCHALLENGERSERVER
+        std::cerr << "PreparedDBQuery: Unknown database type" << std::endl;
+        #else
+        std::cerr << "PreparedDBQuery: Unknown database type in epoll mode" << std::endl;
+        #endif
+        abort();
+        return;
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_MYSQL)
         case DatabaseBase::DatabaseType::Mysql:
         PreparedDBQueryCommon::db_query_select_allow="SELECT `allow` FROM `character_allow` WHERE `character`=%1";
         PreparedDBQueryCommon::db_query_characters="SELECT `id`,`pseudo`,`skin`,`time_to_delete`,`played_time`,`last_connect` FROM `character` WHERE `account`=%1 ORDER BY `played_time` LIMIT 0,%2";
@@ -322,6 +337,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         break;
         #endif
 
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
         PreparedDBQueryCommon::db_query_select_allow="SELECT allow FROM character_allow WHERE character=%1";
         PreparedDBQueryCommon::db_query_characters="SELECT id,pseudo,skin,time_to_delete,played_time,last_connect FROM character WHERE account=%1 ORDER BY played_time LIMIT %2";
@@ -402,6 +418,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_server_time_played_time="UPDATE server_time SET played_time=played_time+%1 WHERE server=%2 AND account=%3;";
         PreparedDBQueryCommon::db_query_update_server_time_last_connect="UPDATE server_time SET last_connect=%1 WHERE server=%2 AND account=%3;";
         break;
+        #endif
     }
 }
 
@@ -410,8 +427,14 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::Da
     switch(type)
     {
         default:
-        return;
         #ifndef EPOLLCATCHCHALLENGERSERVER
+        std::cerr << "PreparedDBQuery: Unknown database type" << std::endl;
+        #else
+        std::cerr << "PreparedDBQuery: Unknown database type in epoll mode" << std::endl;
+        #endif
+        abort();
+        return;
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_MYSQL)
         case DatabaseBase::DatabaseType::Mysql:
         if(useSP)
         {
@@ -453,6 +476,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::Da
         break;
         #endif
 
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
         if(useSP)
         {
@@ -471,6 +495,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::Da
             PreparedDBQueryCommon::db_query_update_monster_xp="UPDATE monster SET xp=%2 WHERE id=%1";
         }
         break;
+        #endif
     }
 }
 
@@ -479,8 +504,14 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
     switch(type)
     {
         default:
-        return;
         #ifndef EPOLLCATCHCHALLENGERSERVER
+        std::cerr << "PreparedDBQuery: Unknown database type" << std::endl;
+        #else
+        std::cerr << "PreparedDBQuery: Unknown database type in epoll mode" << std::endl;
+        #endif
+        abort();
+        return;
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_MYSQL)
         case DatabaseBase::DatabaseType::Mysql:
         PreparedDBQueryServer::db_query_character_server_by_id="SELECT `map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash` FROM `character_forserver` WHERE `character`=%1";
         PreparedDBQueryServer::db_query_delete_all_item_market="DELETE FROM `item_market` WHERE `character`=%1";
@@ -554,6 +585,7 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         break;
         #endif
 
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
         PreparedDBQueryServer::db_query_character_server_by_id="SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash FROM character_forserver WHERE character=%1";
         PreparedDBQueryServer::db_query_delete_all_item_market="DELETE FROM item_market WHERE character=%1";
@@ -588,6 +620,7 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_update_character_forserver_map_part1="UPDATE character_forserver SET map=%1,x=%2,y=%3,orientation=%4,%5 WHERE character=%6";
         PreparedDBQueryServer::db_query_update_character_forserver_map_part2="rescue_map=%1,rescue_x=%2,rescue_y=%3,rescue_orientation=%4,unvalidated_rescue_map=%5,unvalidated_rescue_x=%6,unvalidated_rescue_y=%7,unvalidated_rescue_orientation=%8";
         break;
+        #endif
     }
 }
 
