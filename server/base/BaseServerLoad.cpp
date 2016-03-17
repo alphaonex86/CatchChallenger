@@ -1064,26 +1064,10 @@ bool BaseServer::preload_the_map()
                     while(index_search<map_semi.map->teleporter_list_size)
                     {
                         if(map_semi.map->teleporter[index_search].source_x==teleport.source_x && map_semi.map->teleporter[index_search].source_y==teleport.source_y)
-                        {
-                            std::cerr << "already found teleporter on the map: "
-                                 << map_semi.map->map_file
-                                 << "("
-                                 << std::to_string(teleport.source_x)
-                                 << ","
-                                 << std::to_string(teleport.source_y)
-                                 << "), to "
-                                 << teleportString
-                                 << "("
-                                 << std::to_string(teleport.destination_x)
-                                 << ","
-                                 << std::to_string(teleport.destination_y)
-                                 << ")"
-                                 << std::endl;
                             break;
-                        }
                         index_search++;
                     }
-                    if(index==map_semi.old_map.teleport.size())
+                    if(index_search==map_semi.map->teleporter_list_size)
                     {
                         #ifdef DEBUG_MESSAGE_MAP_LOAD
                         std::cout << "teleporter on the map: "
@@ -1111,6 +1095,21 @@ bool BaseServer::preload_the_map()
                         semi_loaded_map[index].map->teleporter[map_semi.map->teleporter_list_size]=teleporter;
                         map_semi.map->teleporter_list_size++;
                     }
+                    else
+                        std::cerr << "already found teleporter on the map: "
+                             << map_semi.map->map_file
+                             << "("
+                             << std::to_string(teleport.source_x)
+                             << ","
+                             << std::to_string(teleport.source_y)
+                             << "), to "
+                             << teleportString
+                             << "("
+                             << std::to_string(teleport.destination_x)
+                             << ","
+                             << std::to_string(teleport.destination_y)
+                             << ")"
+                             << std::endl;
                 }
                 else
                     std::cerr << "wrong teleporter on the map: "
