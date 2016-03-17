@@ -62,7 +62,9 @@ void EpollClientLoginMaster::resetToDisconnect()
     if(stat==EpollClientLoginMasterStat::GameServer)
     {
         vectorremoveOne(EpollClientLoginMaster::gameServers,this);
-        charactersGroupForGameServer->removeGameServerUniqueKey(this);
+        passUniqueKeyToNextGameServer();
+
+        //select in progress: abort
         unsigned int index=0;
         while(index<loginServerReturnForCharaterSelect.size())
         {
@@ -86,7 +88,6 @@ void EpollClientLoginMaster::resetToDisconnect()
         vectorremoveOne(inConflicWithTheMainServer->secondServerInConflict,this);
         inConflicWithTheMainServer=NULL;
     }
-    passUniqueKeyToNextGameServer();
 
     stat=EpollClientLoginMasterStat::None;
 
@@ -95,6 +96,17 @@ void EpollClientLoginMaster::resetToDisconnect()
 
 void EpollClientLoginMaster::passUniqueKeyToNextGameServer()
 {
+    if(stat!=EpollClientLoginMasterStat::GameServer)
+    {
+        std::cerr << "Client is not a game server into passUniqueKeyToNextGameServer()" << std::endl;
+        return;
+    }
+    if(charactersGroupForGameServer==NULL)
+    {
+        std::cerr << "This game server don't have charactersGroupForGameServer==NULL into passUniqueKeyToNextGameServer()" << std::endl;
+        return;
+    }
+    charactersGroupForGameServer->removeGameServerUniqueKey(this);
     if(!secondServerInConflict.empty())
     {
         std::cout << "Server with same unique key in waiting..." << std::endl;

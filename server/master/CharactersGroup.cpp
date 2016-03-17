@@ -192,6 +192,9 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(Ep
     //old locked account
     if(lockedAccountByDisconnectedServer.find(uniqueKey)!=lockedAccountByDisconnectedServer.cend())
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        std::cerr << "lockedAccountByDisconnectedServer for this server have account locked: " << lockedAccountByDisconnectedServer.at(uniqueKey).size() << std::endl;
+        #endif
         //new key found on master server
         auto i = lockedAccountByDisconnectedServer.at(uniqueKey).begin();
         while (i != lockedAccountByDisconnectedServer.at(uniqueKey).cend())
@@ -200,6 +203,9 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(Ep
             {
                 //was disconnected from the last game server disconnection
                 this->lockedAccount[*i]=now+5;//wait 5s before reconnect
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                std::cerr << "not more locked on gameserver, database id: " << *i << std::endl;
+                #endif
             }
             ++i;
         }
@@ -282,7 +288,17 @@ void CharactersGroup::removeGameServerUniqueKey(void * const client)
 {
     EpollClientLoginMaster * const clientCast=static_cast<EpollClientLoginMaster * const>(client);
     const uint32_t &uniqueKey=clientCast->uniqueKey;
+
+    if(gameServers.find(uniqueKey)==gameServers.cend())
+    {
+        std::cerr << "gameServers not found with unique key: " << uniqueKey << std::endl;
+        return;
+    }
+
     const InternalGameServer &internalGameServer=gameServers.at(uniqueKey);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cerr << "removeGameServerUniqueKey with account locked: " << internalGameServer.lockedAccountByGameserver.size() << std::endl;
+    #endif
     lockedAccountByDisconnectedServer[uniqueKey].insert(internalGameServer.lockedAccountByGameserver.cbegin(),internalGameServer.lockedAccountByGameserver.cend());
     gameServers.erase(uniqueKey);
 }
