@@ -45,19 +45,19 @@ std::string Client::directionToStringToSave(const Direction &direction)
     {
         case Direction_look_at_top:
         case Direction_move_at_top:
-            return Client::text_top;
+            return "1";
         break;
         case Direction_look_at_right:
         case Direction_move_at_right:
-            return Client::text_right;
+            return "2";
         break;
         case Direction_look_at_bottom:
         case Direction_move_at_bottom:
-            return Client::text_bottom;
+            return "3";
         break;
         case Direction_look_at_left:
         case Direction_move_at_left:
-            return Client::text_left;
+            return "4";
         break;
         default:
         break;
@@ -110,7 +110,10 @@ void Client::savePosition()
     stringreplaceOne(updateMapPositionQuery,"%1",std::to_string(map_file_database_id));
     stringreplaceOne(updateMapPositionQuery,"%2",std::to_string(x));
     stringreplaceOne(updateMapPositionQuery,"%3",std::to_string(y));
-    stringreplaceOne(updateMapPositionQuery,"%4",std::to_string((uint8_t)getLastDirection()));
+
+    //force into orientation because it can be kicked while move in progress:
+    stringreplaceOne(updateMapPositionQuery,"%4",directionToStringToSave(getLastDirection()));
+
     updateMapPositionQuerySub=PreparedDBQueryServer::db_query_update_character_forserver_map_part2;
     stringreplaceOne(updateMapPositionQuerySub,"%1",std::to_string(rescue_map_file_database_id));
     stringreplaceOne(updateMapPositionQuerySub,"%2",std::to_string(rescue.x));
