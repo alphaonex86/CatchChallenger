@@ -232,8 +232,6 @@ int main(int argc, char *argv[])
                         tempElementsToDelete.first=events[i].data.ptr;
                         tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
                         elementsToDelete.push_back(tempElementsToDelete);
-
-                        delete client;//disconnected, remove the object
                     }
                 }
                 break;
