@@ -92,7 +92,7 @@ void EpollClientLoginSlave::disconnectClient()
         linkToGameServer=NULL;
     }
     epollSocket.close();
-    messageParsingLayer("Disconnected client");
+    //messageParsingLayer("Disconnected client");
 }
 
 //input/ouput layer
