@@ -470,7 +470,10 @@ void LinkToLogin::removeJsonFile()
 {
     if(remove(pFilePath.c_str())!=0)
     {
-        std::cerr << "Error deleting file: " << pFilePath << ", errno: " << errno << std::endl;
-        abort();
+        if(errno!=2)
+        {
+            std::cerr << "Error deleting file: " << pFilePath << ", errno: " << errno << std::endl;
+            abort();
+        }
     }
 }
