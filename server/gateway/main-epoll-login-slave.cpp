@@ -71,28 +71,36 @@ int main(int argc, char *argv[])
 
     int numberOfConnectedClient=0;
     /* The event loop */
-    std::vector<std::pair<void *,BaseClassSwitch::EpollObjectType> > elementsToDelete;
+    std::vector<std::vector<std::pair<void *,BaseClassSwitch::EpollObjectType> > > elementsToDelete;
+    elementsToDelete.resize(16);
     int number_of_events, i;
     while(1)
     {
         number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
-        if(!elementsToDelete.empty())
+        if(number_of_events<MAXEVENTS)
         {
-            unsigned int index=0;
-            while(index<elementsToDelete.size())
+            const std::vector<std::pair<void *,BaseClassSwitch::EpollObjectType> > &elementsToDeleteSub=elementsToDelete.front();
+            if(!elementsToDeleteSub.empty())
             {
-                switch(elementsToDelete.at(index).second)
+                unsigned int index=0;
+                while(index<elementsToDeleteSub.size())
                 {
-                    case BaseClassSwitch::EpollObjectType::Client:
-                        delete static_cast<EpollClientLoginSlave *>(elementsToDelete.at(index).first);
-                    break;
-                    default:
-                    break;
+                    const std::pair<void *,BaseClassSwitch::EpollObjectType> &item=elementsToDeleteSub.at(index);
+                    switch(item.second)
+                    {
+                        case BaseClassSwitch::EpollObjectType::Client:
+                            delete static_cast<EpollClientLoginSlave *>(item.first);
+                        break;
+                        default:
+                        break;
+                    }
+                    index++;
                 }
-                index++;
             }
-            elementsToDelete.clear();
+            elementsToDelete.erase(elementsToDelete.cbegin());
         }
+        if(elementsToDelete.size()<16)
+            elementsToDelete.resize(16);
         for(i = 0; i < number_of_events; i++)
         {
             switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
@@ -186,7 +194,7 @@ int main(int argc, char *argv[])
                             }
                             epoll_event event;
                             event.data.ptr = client;
-                            event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP;//EPOLLET | EPOLLOUT | EPOLLHUP
+                            event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLHUP;//EPOLLET | EPOLLOUT | EPOLLHUP
                             s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
                             if(s == -1)
                             {
@@ -217,13 +225,13 @@ int main(int argc, char *argv[])
                         std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
                         tempElementsToDelete.first=events[i].data.ptr;
                         tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
-                        elementsToDelete.push_back(tempElementsToDelete);
+                        elementsToDelete.back().push_back(tempElementsToDelete);
 
                         continue;
                     }
                     //ready to read
                     client->parseIncommingData();
-                    if(events[i].events & EPOLLRDHUP)
+                    if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP)
                     {
                         numberOfConnectedClient--;
 
@@ -231,7 +239,7 @@ int main(int argc, char *argv[])
                         std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
                         tempElementsToDelete.first=events[i].data.ptr;
                         tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
-                        elementsToDelete.push_back(tempElementsToDelete);
+                        elementsToDelete.back().push_back(tempElementsToDelete);
                     }
                 }
                 break;
