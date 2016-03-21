@@ -893,6 +893,7 @@ int main(int argc, char *argv[])
                 while(index<elementsToDeleteSub.size())
                 {
                     const std::pair<void *,BaseClassSwitch::EpollObjectType> &item=elementsToDeleteSub.at(index);
+                    std::cerr << "client epoll delete: " << item.first << std::endl;
                     switch(item.second)
                     {
                         case BaseClassSwitch::EpollObjectType::Client:
@@ -1043,7 +1044,7 @@ int main(int argc, char *argv[])
                             }
                             epoll_event event;
                             event.data.ptr = client;
-                            event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLHUP;//EPOLLET | EPOLLOUT | EPOLLHUP
+                            event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLHUP | EPOLLET;//EPOLLET | EPOLLOUT | EPOLLHUP
                             s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
                             if(s == -1)
                             {
@@ -1138,6 +1139,12 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::EpollObjectType::Client:
                 {
+                    if(events[i].events==EPOLLIN)
+                        std::cerr << "client epoll events: EPOLLIN on " << events[i].data.ptr << std::endl;
+                    else if(events[i].events==(EPOLLIN | EPOLLRDHUP))
+                        std::cerr << "client epoll events: EPOLLIN | EPOLLRDHUP on " << events[i].data.ptr << std::endl;
+                    else
+                        std::cerr << "client epoll events: " << events[i].events << " on " << events[i].data.ptr << std::endl;
                     #ifdef SERVERBENCHMARKFULL
                     start_inter = std::chrono::high_resolution_clock::now();
                     #endif
@@ -1164,20 +1171,20 @@ int main(int argc, char *argv[])
                         continue;
                     }
                     //ready to read
-                    client->parseIncommingData();
+                    if(events[i].events & EPOLLIN)
+                        client->parseIncommingData();
                     #ifndef SERVERNOBUFFER
                     //ready to write
                     if(events[i].events & EPOLLOUT)
                         if(!closed)
                             client->flush();
                     #endif
-                    if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP)
+                    if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP || client->socketIsClosed())
                     {
                         numberOfConnectedClient--;
                         client->disconnectClient();
                         //disconnected, remove the object
 
-                        client->disconnectClient();
                         std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
                         tempElementsToDelete.first=events[i].data.ptr;
                         tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
