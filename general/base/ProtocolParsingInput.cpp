@@ -145,6 +145,18 @@ void ProtocolParsingInputOutput::closeSocket()
     #endif
 }
 
+#if defined(EPOLLCATCHCHALLENGERSERVER)
+bool ProtocolParsingInputOutput::socketIsOpen()//for epoll delete
+{
+    return epollSocket.isValid();
+}
+
+bool ProtocolParsingInputOutput::socketIsClosed()//for epoll delete
+{
+    return !epollSocket.isValid();
+}
+#endif
+
 void ProtocolParsingInputOutput::parseIncommingData()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -263,6 +275,12 @@ std::string(" parseIncommingData(): size returned is 0!"));*/
     #endif
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     parseIncommingDataCount--;
+    if(epollSocket.bytesAvailable()>0)
+        messageParsingLayer(
+                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                    std::to_string(flags & 0x10)+
+                    #endif
+        std::string(" parseIncommingData(): remain byte to purge!"));
     #endif
 }
 
