@@ -47,6 +47,10 @@ void EpollClient::close()
     #endif
     if(infd!=-1)
     {
+        char tempBuffer[4096];
+        //purge the buffer to prevent multiple EPOLLIN due to level trigger (vs edge trigger)
+        while(read(tempBuffer,sizeof(tempBuffer))>0)
+        {}
         /* Closing the descriptor will make epoll remove it
         from the set of descriptors which are monitored. */
         Epoll::epoll.ctl(EPOLL_CTL_DEL, infd, NULL);
