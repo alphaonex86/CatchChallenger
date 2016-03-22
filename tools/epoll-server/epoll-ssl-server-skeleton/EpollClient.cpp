@@ -7,6 +7,8 @@
 #include <netinet/tcp.h>
 #include <netdb.h>
 #include <cstring>
+#include <sys/epoll.h>
+#include "Epoll.h"
 
 EpollClient::EpollClient(const int &infd) :
     #ifndef SERVERNOBUFFER
@@ -38,7 +40,7 @@ void EpollClient::close()
     {
         /* Closing the descriptor will make epoll remove it
         from the set of descriptors which are monitored. */
-        epoll_ctl(epfd, EPOLL_CTL_DEL, infd, NULL);
+        Epoll::epoll.ctl(EPOLL_CTL_DEL, infd, NULL);
         ::close(infd);
         std::cout << "Closed connection on descriptor " << infd << std::endl;
         infd=-1;

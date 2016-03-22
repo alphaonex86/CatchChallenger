@@ -107,8 +107,6 @@ bool ProtocolParsingBase::internalSendRawSmallPacket(const char * const data,con
     }
     #endif
 
-    if(data[0]==0x45)
-        std::cout << "45: " << size << ": " << binarytoHexa(data,size) << std::endl;
     const int &byteWriten = write(data,size);
     if(Q_UNLIKELY(size!=byteWriten))
     {

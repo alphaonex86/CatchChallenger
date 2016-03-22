@@ -8,6 +8,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <openssl/err.h>
+#include <sys/epoll.h>
 
 EpollSslServer::EpollSslServer()
 {

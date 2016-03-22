@@ -6,6 +6,7 @@
 #include <iostream>
 #include <netinet/tcp.h>
 #include <netdb.h>
+#include <sys/epoll.h>
 
 char EpollSslClient::rawbuf[4096];
 
