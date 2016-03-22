@@ -248,7 +248,6 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                     //remove the first
                     Client *client=static_cast<Client *>(BaseServerLogin::tokenForAuth[0].client);
                     client->disconnectClient();
-                    delete client;
                     BaseServerLogin::tokenForAuthSize--;
                     //move the last
                     if(BaseServerLogin::tokenForAuthSize>0)
