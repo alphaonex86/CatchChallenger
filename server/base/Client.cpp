@@ -349,6 +349,7 @@ void Client::disconnectClient()
     if(character_id!=0)
         normalOutput("Disconnected client done");
     #endif
+    recordDisconnectByServer(this);
 }
 
 //input/ouput layer
