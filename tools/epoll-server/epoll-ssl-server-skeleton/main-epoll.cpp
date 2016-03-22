@@ -46,7 +46,6 @@ int main(int argc, char *argv[])
     /* Buffer where events are returned */
     epoll_event events[MAXEVENTS];
 
-    bool closed;
     int numberOfConnectedClient=0;
     /* The event loop */
     int number_of_events, i;
@@ -115,6 +114,7 @@ int main(int argc, char *argv[])
                         #else
                         EpollClient *client=new EpollClient(infd);
                         #endif
+                        std::cout << "new pointer " << client << std::endl;
                         numberOfConnectedClient++;
                         int s = EpollSocket::make_non_blocking(infd);
                         if(s == -1)
@@ -122,9 +122,9 @@ int main(int argc, char *argv[])
                         epoll_event event;
                         event.data.ptr = client;
                         #ifndef SERVERNOBUFFER
-                        event.events = EPOLLIN | EPOLLET | EPOLLOUT;
+                        event.events = EPOLLIN | EPOLLET | EPOLLOUT | EPOLLHUP | EPOLLET | EPOLLRDHUP;
                         #else
-                        event.events = EPOLLIN | EPOLLET;
+                        event.events = EPOLLIN | EPOLLET | EPOLLHUP | EPOLLET | EPOLLRDHUP;
                         #endif
                         s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
                         if(s == -1)
@@ -138,7 +138,6 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::Type::Client:
                 {
-                    closed=true;
                     //timerDisplayEventBySeconds.addCount();
                     #ifndef SERVERNOSSL
                     EpollSslClient *client=static_cast<EpollSslClient *>(events[i].data.ptr);
@@ -152,12 +151,14 @@ int main(int argc, char *argv[])
                         /* An error has occured on this fd, or the socket is not
                         ready for reading (why were we notified then?) */
                         std::cerr << "client epoll error: " << events[i].events << std::endl;
+                        std::cout << "delete pointer " << client << std::endl;
                         delete client;
                         continue;
                     }
                     //ready to read
                     if(events[i].events & EPOLLIN)
                     {
+                        std::cout << "use pointer " << client << std::endl;
                         /* We have data on the fd waiting to be read. Read and
                         display it. We must read whatever data is available
                         completely, as we are running in edge-triggered mode
@@ -167,6 +168,7 @@ int main(int argc, char *argv[])
                         //bug or close, or buffer full
                         if(count<0)
                         {
+                            std::cout << "delete pointer " << client << std::endl;
                             delete client;
                             numberOfConnectedClient--;
                         }
@@ -175,11 +177,10 @@ int main(int argc, char *argv[])
                             if(client->write(buf,count)!=count)
                             {
                                 //buffer full, we disconnect this client
+                                std::cout << "delete pointer " << client << std::endl;
                                 delete client;
                                 numberOfConnectedClient--;
                             }
-                            else
-                                closed=false;
                         }
                     }
                     #ifndef SERVERNOBUFFER
@@ -188,6 +189,20 @@ int main(int argc, char *argv[])
                         if(!closed)
                             client->flush();
                     #endif
+                    if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP)
+                    {
+                        // Crash at 51th: /usr/bin/php -f loginserver-json-generator.php 127.0.0.1 39034
+                        numberOfConnectedClient--;
+                        std::cout << "delete pointer " << client << std::endl;
+                        delete client;
+                        //disconnected, remove the object
+/*
+                        std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
+                        tempElementsToDelete.first=events[i].data.ptr;
+                        tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
+                        elementsToDelete.back().push_back(tempElementsToDelete);
+                        std::cerr << "elementsToDelete.back().push_back(: " << tempElementsToDelete.first << ") pointer: " << events[i].data.ptr << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;*/
+                    }
                 }
                 break;
                 case BaseClassSwitch::Type::Timer:

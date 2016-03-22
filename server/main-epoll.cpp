@@ -82,6 +82,32 @@ void generateTokenStatClient(TinyXMLSettings &settings,char * const data)
 }
 #endif
 
+std::vector<std::vector<std::pair<void *,BaseClassSwitch::EpollObjectType> > > elementsToDelete;
+
+void CatchChallenger::recordDisconnectByServer(void * client)
+{
+    unsigned int mainIndex=0;
+    while(mainIndex<elementsToDelete.size())
+    {
+        std::vector<std::pair<void *,BaseClassSwitch::EpollObjectType> > &elementsToDeleteSub=elementsToDelete.at(mainIndex);
+        if(!elementsToDeleteSub.empty())
+        {
+            unsigned int index=0;
+            while(index<elementsToDeleteSub.size())
+            {
+                const std::pair<void *,BaseClassSwitch::EpollObjectType> &item=elementsToDeleteSub.at(index);
+                if(item.first==client)
+                    return;
+                index++;
+            }
+        }
+    }
+    std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
+    tempElementsToDelete.first=client;
+    tempElementsToDelete.second=BaseClassSwitch::EpollObjectType::Client;
+    elementsToDelete.back().push_back(tempElementsToDelete);
+}
+
 void send_settings()
 {
     GameServerSettings formatedServerSettings=server->getSettings();
@@ -881,11 +907,36 @@ int main(int argc, char *argv[])
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     unsigned int clientnumberToDebug=0;
     #endif
+    elementsToDelete.resize(16);
     int number_of_events, i;
     while(1)
     {
 
         number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
+        if(number_of_events<MAXEVENTS)
+        {
+            const std::vector<std::pair<void *,BaseClassSwitch::EpollObjectType> > &elementsToDeleteSub=elementsToDelete.front();
+            if(!elementsToDeleteSub.empty())
+            {
+                unsigned int index=0;
+                while(index<elementsToDeleteSub.size())
+                {
+                    const std::pair<void *,BaseClassSwitch::EpollObjectType> &item=elementsToDeleteSub.at(index);
+                    switch(item.second)
+                    {
+                        case BaseClassSwitch::EpollObjectType::Client:
+                        delete static_cast<Client *>(item.first);
+                        break;
+                        default:
+                        break;
+                    }
+                    index++;
+                }
+            }
+            elementsToDelete.erase(elementsToDelete.cbegin());
+        }
+        if(elementsToDelete.size()<16)
+            elementsToDelete.resize(16);
         #ifdef SERVERBENCHMARK
         EpollUnixSocketClientFinal::start = std::chrono::high_resolution_clock::now();
         #endif
@@ -895,12 +946,6 @@ int main(int argc, char *argv[])
             {
                 case BaseClassSwitch::EpollObjectType::Server:
                 {
-                    if(events[i].events==EPOLLIN)
-                        std::cerr << "client Server epoll events: EPOLLIN on " << events[i].data.ptr << std::endl;
-                    else if(events[i].events==(EPOLLIN | EPOLLRDHUP))
-                        std::cerr << "client Server epoll events: EPOLLIN | EPOLLRDHUP on " << events[i].data.ptr << std::endl;
-                    else
-                        std::cerr << "client Server epoll events: " << events[i].events << " on " << events[i].data.ptr << std::endl;
                     #ifdef SERVERBENCHMARKFULL
                     timerDisplayEventBySeconds.addServerCount();
                     #endif
@@ -1012,9 +1057,9 @@ int main(int argc, char *argv[])
                                 if(s == 0)
                                 {
                                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                                    std::cout << "Accepted connection on descriptor " << infd << "(host=" << hbuf << ", port=" << sbuf << "), client: " << client << ", clientnumberToDebug: " << clientnumberToDebug << std::endl;
+                                    //std::cout << "Accepted connection on descriptor " << infd << "(host=" << hbuf << ", port=" << sbuf << "), client: " << client << ", clientnumberToDebug: " << clientnumberToDebug << std::endl;
                                     #else
-                                    std::cout << "Accepted connection on descriptor " << infd << "(host=" << hbuf << ", port=" << sbuf << "), client: " << client << std::endl;
+                                    //std::cout << "Accepted connection on descriptor " << infd << "(host=" << hbuf << ", port=" << sbuf << "), client: " << client << std::endl;
                                     #endif
                                     client->socketStringSize=strlen(hbuf)+strlen(sbuf)+1+1;
                                     client->socketString=new char[client->socketStringSize];
@@ -1023,8 +1068,8 @@ int main(int argc, char *argv[])
                                     strcat(client->socketString,sbuf);
                                     client->socketString[client->socketStringSize-1]='\0';
                                 }
-                                else
-                                    std::cout << "Accepted connection on descriptor " << infd << ", client: " << client << std::endl;
+                                /*else
+                                    std::cout << "Accepted connection on descriptor " << infd << ", client: " << client << std::endl;*/
                             }
                             epoll_event event;
                             event.data.ptr = client;
@@ -1051,12 +1096,6 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::EpollObjectType::UnixServer:
                 {
-                    if(events[i].events==EPOLLIN)
-                        std::cerr << "client UnixServer epoll events: EPOLLIN on " << events[i].data.ptr << std::endl;
-                    else if(events[i].events==(EPOLLIN | EPOLLRDHUP))
-                        std::cerr << "client UnixServer epoll events: EPOLLIN | EPOLLRDHUP on " << events[i].data.ptr << std::endl;
-                    else
-                        std::cerr << "client UnixServer epoll events: " << events[i].events << " on " << events[i].data.ptr << std::endl;
                     #ifdef SERVERBENCHMARKFULL
                     timerDisplayEventBySeconds.addServerCount();
                     #endif
@@ -1142,12 +1181,6 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::EpollObjectType::Client:
                 {
-                    if(events[i].events==EPOLLIN)
-                        std::cerr << "client epoll events: EPOLLIN on " << events[i].data.ptr << std::endl;
-                    else if(events[i].events==(EPOLLIN | EPOLLRDHUP))
-                        std::cerr << "client epoll events: EPOLLIN | EPOLLRDHUP on " << events[i].data.ptr << std::endl;
-                    else
-                        std::cerr << "client epoll events: " << events[i].events << " on " << events[i].data.ptr << std::endl;
                     #ifdef SERVERBENCHMARKFULL
                     start_inter = std::chrono::high_resolution_clock::now();
                     #endif
@@ -1167,15 +1200,7 @@ int main(int argc, char *argv[])
                         numberOfConnectedClient--;
 
                         client->disconnectClient();
-                        delete client;
-                        /*
-                        std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
-                        tempElementsToDelete.first=events[i].data.ptr;
-                        tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
-                        elementsToDelete.back().push_back(tempElementsToDelete);
-                        std::cerr << "elementsToDelete.back().push_back(: " << tempElementsToDelete.first << ") pointer: " << events[i].data.ptr << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;*/
 
-                        abort();
                         continue;
                     }
                     //ready to read
@@ -1192,14 +1217,6 @@ int main(int argc, char *argv[])
                         // Crash at 51th: /usr/bin/php -f loginserver-json-generator.php 127.0.0.1 39034
                         numberOfConnectedClient--;
                         client->disconnectClient();
-                        delete client;
-                        //disconnected, remove the object
-/*
-                        std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
-                        tempElementsToDelete.first=events[i].data.ptr;
-                        tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
-                        elementsToDelete.back().push_back(tempElementsToDelete);
-                        std::cerr << "elementsToDelete.back().push_back(: " << tempElementsToDelete.first << ") pointer: " << events[i].data.ptr << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;*/
                     }
                     #ifdef SERVERBENCHMARKFULL
                     std::chrono::duration<unsigned long long int,std::nano> elapsed_seconds = std::chrono::high_resolution_clock::now()-start_inter;
@@ -1209,12 +1226,6 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::EpollObjectType::UnixClient:
                 {
-                    if(events[i].events==EPOLLIN)
-                        std::cerr << "client UnixClient epoll events: EPOLLIN on " << events[i].data.ptr << std::endl;
-                    else if(events[i].events==(EPOLLIN | EPOLLRDHUP))
-                        std::cerr << "client UnixClient epoll events: EPOLLIN | EPOLLRDHUP on " << events[i].data.ptr << std::endl;
-                    else
-                        std::cerr << "client UnixClient epoll events: " << events[i].events << " on " << events[i].data.ptr << std::endl;
                     #ifdef SERVERBENCHMARKFULL
                     timerDisplayEventBySeconds.addClientCount();
                     #endif
@@ -1229,12 +1240,10 @@ int main(int argc, char *argv[])
                         numberOfConnectedUnixClient--;
 
                         client->close();
-                        delete client;
-                        /*std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
+                        std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
                         tempElementsToDelete.first=events[i].data.ptr;
                         tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
                         elementsToDelete.back().push_back(tempElementsToDelete);
-                        std::cerr << "elementsToDelete.back().push_back(: " << tempElementsToDelete.first << ") pointer: " << events[i].data.ptr << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;*/
 
                         continue;
                     }
@@ -1246,12 +1255,10 @@ int main(int argc, char *argv[])
                         //disconnected, remove the object
 
                         client->close();
-                        delete client;
-                        /*std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
+                        std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
                         tempElementsToDelete.first=events[i].data.ptr;
                         tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
                         elementsToDelete.back().push_back(tempElementsToDelete);
-                        std::cerr << "elementsToDelete.back().push_back(: " << tempElementsToDelete.first << ") pointer: " << events[i].data.ptr << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;*/
                     }
                 }
                 break;
@@ -1273,12 +1280,6 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::EpollObjectType::Database:
                 {
-                    if(events[i].events==EPOLLIN)
-                        std::cerr << "client Database epoll events: EPOLLIN on " << events[i].data.ptr << std::endl;
-                    else if(events[i].events==(EPOLLIN | EPOLLRDHUP))
-                        std::cerr << "client Database epoll events: EPOLLIN | EPOLLRDHUP on " << events[i].data.ptr << std::endl;
-                    else
-                        std::cerr << "client Database epoll events: " << events[i].events << " on " << events[i].data.ptr << std::endl;
                     #ifdef SERVERBENCHMARKFULL
                     start_inter = std::chrono::high_resolution_clock::now();
                     #endif
@@ -1352,12 +1353,6 @@ int main(int argc, char *argv[])
                 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
                 case BaseClassSwitch::EpollObjectType::MasterLink:
                 {
-                    if(events[i].events==EPOLLIN)
-                        std::cerr << "client MasterLink epoll events: EPOLLIN on " << events[i].data.ptr << std::endl;
-                    else if(events[i].events==(EPOLLIN | EPOLLRDHUP))
-                        std::cerr << "client MasterLink epoll events: EPOLLIN | EPOLLRDHUP on " << events[i].data.ptr << std::endl;
-                    else
-                        std::cerr << "client MasterLink epoll events: " << events[i].events << " on " << events[i].data.ptr << std::endl;
                     LinkToMaster * const client=static_cast<LinkToMaster *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||

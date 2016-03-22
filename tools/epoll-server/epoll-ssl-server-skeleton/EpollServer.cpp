@@ -8,6 +8,7 @@
 #include <netdb.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/epoll.h>
 
 EpollServer::EpollServer()
 {
@@ -69,12 +70,12 @@ bool EpollServer::tryListen(char *port)
         std::cerr << "Can't put in non blocking" << std::endl;
         return false;
     }
-    if(setsockopt(sfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)))
+    /*if(setsockopt(sfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)))
     {
         sfd=-1;
         std::cerr << "Can't put in reuse" << std::endl;
         return false;
-    }
+    }*/
 
     s = listen(sfd, SOMAXCONN);
     if(s == -1)

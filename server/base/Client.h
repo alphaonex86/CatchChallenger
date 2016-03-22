@@ -27,6 +27,9 @@
 #include <iostream>
 
 namespace CatchChallenger {
+
+void recordDisconnectByServer(void * client);
+
 class Client :
         #ifdef EPOLLCATCHCHALLENGERSERVER
         public BaseClassSwitch,
