@@ -275,12 +275,14 @@ std::string(" parseIncommingData(): size returned is 0!"));*/
     #endif
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     parseIncommingDataCount--;
+    #if defined(EPOLLCATCHCHALLENGERSERVER)
     if(epollSocket.bytesAvailable()>0)
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                     std::to_string(flags & 0x10)+
                     #endif
         std::string(" parseIncommingData(): remain byte to purge!"));
+    #endif
     #endif
 }
 
