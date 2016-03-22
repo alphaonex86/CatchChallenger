@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
                             }
                             epoll_event event;
                             event.data.ptr = client;
-                            event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLHUP;//EPOLLET | EPOLLOUT | EPOLLHUP
+                            event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLHUP | EPOLLET;//EPOLLET | EPOLLOUT | EPOLLHUP
                             s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
                             if(s == -1)
                             {
@@ -230,8 +230,9 @@ int main(int argc, char *argv[])
                         continue;
                     }
                     //ready to read
-                    client->parseIncommingData();
-                    if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP)
+                    if(events[i].events & EPOLLIN)
+                        client->parseIncommingData();
+                    if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP || client->socketIsClosed())
                     {
                         numberOfConnectedClient--;
 
