@@ -81,6 +81,7 @@ int main(int argc, char *argv[])
                 while(index<elementsToDeleteSub.size())
                 {
                     const std::pair<void *,BaseClassSwitch::EpollObjectType> &item=elementsToDeleteSub.at(index);
+                    std::cerr << "client epoll delete: " << item.first << std::endl;
                     switch(item.second)
                     {
                         case BaseClassSwitch::EpollObjectType::Client:
@@ -105,6 +106,12 @@ int main(int argc, char *argv[])
             {
                 case BaseClassSwitch::EpollObjectType::Server:
                 {
+                    if(events[i].events==EPOLLIN)
+                        std::cerr << "client Server epoll events: EPOLLIN on " << events[i].data.ptr << std::endl;
+                    else if(events[i].events==(EPOLLIN | EPOLLRDHUP))
+                        std::cerr << "client Server epoll events: EPOLLIN | EPOLLRDHUP on " << events[i].data.ptr << std::endl;
+                    else
+                        std::cerr << "client Server epoll events: " << events[i].events << " on " << events[i].data.ptr << std::endl;
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
@@ -192,7 +199,7 @@ int main(int argc, char *argv[])
                             }
                             epoll_event event;
                             event.data.ptr = client;
-                            event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLHUP;//EPOLLET | EPOLLOUT | EPOLLHUP
+                            event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLHUP | EPOLLET;//EPOLLET | EPOLLOUT | EPOLLHUP
                             s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
                             if(s == -1)
                             {
@@ -208,6 +215,12 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::EpollObjectType::Client:
                 {
+                    if(events[i].events==EPOLLIN)
+                        std::cerr << "client epoll events: EPOLLIN on " << events[i].data.ptr << std::endl;
+                    else if(events[i].events==(EPOLLIN | EPOLLRDHUP))
+                        std::cerr << "client epoll events: EPOLLIN | EPOLLRDHUP on " << events[i].data.ptr << std::endl;
+                    else
+                        std::cerr << "client epoll events: " << events[i].events << " on " << events[i].data.ptr << std::endl;
                     EpollClientLoginSlave * const client=static_cast<EpollClientLoginSlave *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
@@ -224,12 +237,14 @@ int main(int argc, char *argv[])
                         tempElementsToDelete.first=events[i].data.ptr;
                         tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
                         elementsToDelete.back().push_back(tempElementsToDelete);
+                        std::cerr << "elementsToDelete.back().push_back(: " << tempElementsToDelete.first << ") pointer: " << events[i].data.ptr << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;
 
                         continue;
                     }
                     //ready to read
-                    client->parseIncommingData();
-                    if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP)
+                    if(events[i].events & EPOLLIN)
+                        client->parseIncommingData();
+                    if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP || client->socketIsClosed())
                     {
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
                         if(events[i].events & EPOLLRDHUP)
@@ -246,6 +261,7 @@ int main(int argc, char *argv[])
                         tempElementsToDelete.first=events[i].data.ptr;
                         tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
                         elementsToDelete.back().push_back(tempElementsToDelete);
+                        std::cerr << "elementsToDelete.back().push_back(: " << tempElementsToDelete.first << ") pointer: " << events[i].data.ptr << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;
                     }
                 }
                 break;
@@ -257,6 +273,12 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::EpollObjectType::Database:
                 {
+                    if(events[i].events==EPOLLIN)
+                        std::cerr << "client Database epoll events: EPOLLIN on " << events[i].data.ptr << std::endl;
+                    else if(events[i].events==(EPOLLIN | EPOLLRDHUP))
+                        std::cerr << "client Database epoll events: EPOLLIN | EPOLLRDHUP on " << events[i].data.ptr << std::endl;
+                    else
+                        std::cerr << "client Database epoll events: " << events[i].events << " on " << events[i].data.ptr << std::endl;
                     EpollPostgresql * const db=static_cast<EpollPostgresql *>(events[i].data.ptr);
                     db->epollEvent(events[i].events);
                     if(!db->isConnected())
@@ -268,6 +290,12 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::EpollObjectType::MasterLink:
                 {
+                    if(events[i].events==EPOLLIN)
+                        std::cerr << "client MasterLink epoll events: EPOLLIN on " << events[i].data.ptr << std::endl;
+                    else if(events[i].events==(EPOLLIN | EPOLLRDHUP))
+                        std::cerr << "client MasterLink epoll events: EPOLLIN | EPOLLRDHUP on " << events[i].data.ptr << std::endl;
+                    else
+                        std::cerr << "client MasterLink epoll events: " << events[i].events << " on " << events[i].data.ptr << std::endl;
                     LinkToMaster * const client=static_cast<LinkToMaster *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
