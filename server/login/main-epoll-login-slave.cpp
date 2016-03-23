@@ -184,12 +184,12 @@ int main(int argc, char *argv[])
                                 NI_NUMERICHOST | NI_NUMERICSERV);
                                 if(s == 0)
                                 {
-                                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                                    /*#ifdef CATCHCHALLENGER_EXTRA_CHECK
                                     std::cout << "Accepted connection on descriptor " << infd << "(host=" << hbuf << ", port=" << sbuf << "), client: " << client << ", clientnumberToDebug: " << clientnumberToDebug << std::endl;
                                     clientnumberToDebug++;
                                     #else
                                     std::cout << "Accepted connection on descriptor " << infd << "(host=" << hbuf << ", port=" << sbuf << "), client: " << client << std::endl;
-                                    #endif
+                                    #endif*/
                                     client->socketStringSize=strlen(hbuf)+strlen(sbuf)+1+1;
                                     client->socketString=new char[client->socketStringSize];
                                     strcpy(client->socketString,hbuf);
