@@ -220,12 +220,12 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
 
     public_and_private_informations.public_informations.pseudo=std::string(GlobalServerData::serverPrivateVariables.db_common->value(1));
 
-    #ifndef SERVERBENCHMARK
+    /*#ifndef SERVERBENCHMARK
     if(GlobalServerData::serverSettings.anonymous)
         normalOutput("Charater id is logged: "+std::to_string(characterId));
     else
         normalOutput("Charater is logged: "+GlobalServerData::serverPrivateVariables.db_common->value(1));
-    #endif
+    #endif*/
     const uint32_t &time_to_delete=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(8),&ok);
     if(!ok || time_to_delete>0)
     {
