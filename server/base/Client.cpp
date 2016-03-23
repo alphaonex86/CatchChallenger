@@ -349,7 +349,9 @@ void Client::disconnectClient()
     if(character_id!=0)
         normalOutput("Disconnected client done");
     #endif
+    #ifdef EPOLLCATCHCHALLENGERSERVER
     recordDisconnectByServer(this);
+    #endif
 }
 
 //input/ouput layer
