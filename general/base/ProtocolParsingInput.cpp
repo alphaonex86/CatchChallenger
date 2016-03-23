@@ -123,14 +123,14 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
     #ifndef EPOLLCATCHCHALLENGERSERVER
     TXSize+=byteWriten;
     #endif
-    if(Q_UNLIKELY((ssize_t)size!=byteWriten))
+    /*if(Q_UNLIKELY((ssize_t)size!=byteWriten))
     {
         #ifdef EPOLLCATCHCHALLENGERSERVER
         messageParsingLayer("All the bytes have not be written byteWriten: "+std::to_string(byteWriten)+", size: "+std::to_string(size));
         #else
         messageParsingLayer("All the bytes have not be written: "+socket->errorString().toStdString()+", byteWriten: "+std::to_string(byteWriten));
         #endif
-    }
+    }*/
 
     return byteWriten;
 }

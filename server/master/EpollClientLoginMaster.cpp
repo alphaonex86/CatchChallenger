@@ -161,12 +161,13 @@ void EpollClientLoginMaster::disconnectClient()
 
 void EpollClientLoginMaster::updateConsoleCountServer()
 {
+    /** \warning done by the stats client, better way to do (no logs flood, instant, no text to parse)
     if(EpollClientLoginMaster::lastSizeDisplayGameServers!=gameServers.size() || EpollClientLoginMaster::lastSizeDisplayLoginServers!=loginServers.size())
     {
         EpollClientLoginMaster::lastSizeDisplayGameServers=gameServers.size();
         EpollClientLoginMaster::lastSizeDisplayLoginServers=loginServers.size();
         std::cout << "Online: " << EpollClientLoginMaster::lastSizeDisplayLoginServers << " login server and " << EpollClientLoginMaster::lastSizeDisplayGameServers << " game server" << std::endl;
-    }
+    }*/
 }
 
 //input/ouput layer
