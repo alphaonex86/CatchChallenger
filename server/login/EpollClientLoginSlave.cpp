@@ -1,5 +1,6 @@
 #include "EpollClientLoginSlave.h"
 #include "CharactersGroupForLogin.h"
+#include "../base/BaseServerLogin.h"
 
 #include <iostream>
 #include <string>
@@ -144,13 +145,7 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
             }
         }
     }
-    if(linkToGameServer!=NULL)
-    {
-        linkToGameServer->closeSocket();
-        //break the link
-        linkToGameServer->client=NULL;
-        linkToGameServer=NULL;
-    }
+    disconnectClient();
 }
 
 void EpollClientLoginSlave::disconnectClient()
@@ -163,7 +158,33 @@ void EpollClientLoginSlave::disconnectClient()
         linkToGameServer=NULL;
     }
     epollSocket.close();
-    messageParsingLayer("Disconnected client");
+
+    {
+        uint32_t index=0;
+        while(index<BaseServerLogin::tokenForAuthSize)
+        {
+            const BaseServerLogin::TokenLink &tokenLink=BaseServerLogin::tokenForAuth[index];
+            if(tokenLink.client==this)
+            {
+                BaseServerLogin::tokenForAuthSize--;
+                if(BaseServerLogin::tokenForAuthSize>0)
+                {
+                    while(index<BaseServerLogin::tokenForAuthSize)
+                    {
+                        BaseServerLogin::tokenForAuth[index]=BaseServerLogin::tokenForAuth[index+1];
+                        index++;
+                    }
+                    //don't work:memmove(BaseServerLogin::tokenForAuth+index*sizeof(TokenLink),BaseServerLogin::tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*(BaseServerLogin::tokenForAuthSize-index));
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    if(BaseServerLogin::tokenForAuth[0].client==NULL)
+                        abort();
+                    #endif
+                }
+                break;
+            }
+            index++;
+        }
+    }
 }
 
 //input/ouput layer
