@@ -101,6 +101,7 @@ void CatchChallenger::recordDisconnectByServer(void * client)
                 index++;
             }
         }
+        mainIndex++;
     }
     std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
     tempElementsToDelete.first=client;
