@@ -1197,7 +1197,6 @@ int main(int argc, char *argv[])
                         ready for reading (why were we notified then?) */
                         if(!(events[i].events & EPOLLHUP))
                             std::cerr << "client epoll error: " << events[i].events << std::endl;
-                        std::cerr << "client epoll error: " << events[i].events << std::endl;
                         numberOfConnectedClient--;
 
                         client->disconnectClient();
