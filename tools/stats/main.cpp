@@ -123,15 +123,15 @@ int main(int argc, char *argv[])
     }
 
     {
-        if(outputFile.empty())
+        if(LinkToLogin::linkToLogin->pFilePath.empty())
         {
             std::cerr << "The output file can't be emtpy" << std::endl;
             abort();
         }
-        LinkToLogin::linkToLogin->pFile = fopen(outputFile.c_str(),"wb");
+        LinkToLogin::linkToLogin->pFile = fopen(LinkToLogin::linkToLogin->pFilePath.c_str(),"wb");
         if(LinkToLogin::linkToLogin->pFile==NULL)
         {
-            std::cerr << "Unable to open the output file: " << outputFile << std::endl;
+            std::cerr << "Unable to open the output file: " << LinkToLogin::linkToLogin->pFilePath << std::endl;
             abort();
         }
     }

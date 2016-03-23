@@ -407,6 +407,15 @@ void LinkToLogin::updateJsonFile()
 {
     //std::cout << "Update the json file..." << std::endl;
 
+    if(pFile==NULL)
+    {
+        LinkToLogin::linkToLogin->pFile = fopen(LinkToLogin::linkToLogin->pFilePath.c_str(),"wb");
+        if(LinkToLogin::linkToLogin->pFile==NULL)
+        {
+            std::cerr << "Unable to open the output file: " << LinkToLogin::linkToLogin->pFilePath << std::endl;
+            abort();
+        }
+    }
     if(pFile!=NULL)
     {
         std::string content;
@@ -468,6 +477,11 @@ void LinkToLogin::updateJsonFile()
 
 void LinkToLogin::removeJsonFile()
 {
+    if(pFile!=NULL)
+    {
+        fclose(pFile);
+        pFile=NULL;
+    }
     if(remove(pFilePath.c_str())!=0)
     {
         if(errno!=2)
