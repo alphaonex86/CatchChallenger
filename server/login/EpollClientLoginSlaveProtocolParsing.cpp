@@ -137,8 +137,8 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                 if(BaseServerLogin::tokenForAuthSize>=CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION)
                 {
                     EpollClientLoginSlave *client=static_cast<EpollClientLoginSlave *>(BaseServerLogin::tokenForAuth[0].client);
+                    std::cerr << "BaseServerLogin::tokenForAuthSize>=CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION: " << client << std::endl;
                     client->disconnectClient();
-                    delete client;
                     BaseServerLogin::tokenForAuthSize--;
                     if(BaseServerLogin::tokenForAuthSize>0)
                     {

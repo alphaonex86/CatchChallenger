@@ -64,6 +64,9 @@ int main(int argc, char *argv[])
         }
     }
 
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    unsigned int clientnumberToDebug=0;
+    #endif
     int numberOfConnectedClient=0;
     /* The event loop */
     std::vector<std::vector<std::pair<void *,BaseClassSwitch::EpollObjectType> > > elementsToDelete;
@@ -188,7 +191,12 @@ int main(int argc, char *argv[])
                                 NI_NUMERICHOST | NI_NUMERICSERV);
                                 if(s == 0)
                                 {
-                                    //std::cout << "Accepted connection on descriptor " << infd << "(host=" << hbuf << ", port=" << sbuf << ")" << std::endl;
+                                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                                    std::cout << "Accepted connection on descriptor " << infd << "(host=" << hbuf << ", port=" << sbuf << "), client: " << client << ", clientnumberToDebug: " << clientnumberToDebug << std::endl;
+                                    clientnumberToDebug++;
+                                    #else
+                                    std::cout << "Accepted connection on descriptor " << infd << "(host=" << hbuf << ", port=" << sbuf << "), client: " << client << std::endl;
+                                    #endif
                                     client->socketStringSize=strlen(hbuf)+strlen(sbuf)+1+1;
                                     client->socketString=new char[client->socketStringSize];
                                     strcpy(client->socketString,hbuf);

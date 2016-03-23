@@ -28,7 +28,9 @@
 
 namespace CatchChallenger {
 
+#ifdef EPOLLCATCHCHALLENGERSERVER
 void recordDisconnectByServer(void * client);
+#endif
 
 class Client :
         #ifdef EPOLLCATCHCHALLENGERSERVER
