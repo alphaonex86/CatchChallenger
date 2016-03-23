@@ -24,7 +24,10 @@ while(1)
                     if(!isset($contents[0x06]))
                         die('wrong read size'."\n");
                     else
+                    {
                         echo 'All is ok'."\n";
+                        usleep(10*1000);
+                    }
                 }
             }
         }
