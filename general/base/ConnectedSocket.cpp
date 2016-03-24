@@ -95,10 +95,15 @@ void ConnectedSocket::destroyedSocket()
     sslSocket=NULL;
     tcpSocket=NULL;
     fakeSocket=NULL;
+    hostName.clear();
+    port=0;
 }
 
 void ConnectedSocket::abort()
 {
+    hostName.clear();
+    port=0;
+
     if(fakeSocket!=NULL)
         fakeSocket->abort();
     if(sslSocket!=NULL)
@@ -113,10 +118,17 @@ void ConnectedSocket::connectToHost(const QString & hostName, quint16 port)
         return;
     if(fakeSocket!=NULL)
         fakeSocket->connectToHost();
-    else if(sslSocket!=NULL)
-        sslSocket->connectToHost(hostName,port);
-    else if(tcpSocket!=NULL)
-        tcpSocket->connectToHost(hostName,port);
+    else
+    {
+        //workaround because QSslSocket don't return correct value for i2p via proxy
+        this->hostName=hostName;
+        this->port=port;
+
+        if(sslSocket!=NULL)
+            sslSocket->connectToHost(hostName,port);
+        else if(tcpSocket!=NULL)
+            tcpSocket->connectToHost(hostName,port);
+    }
 }
 
 void ConnectedSocket::connectToHost(const QHostAddress & address, quint16 port)
@@ -135,6 +147,8 @@ void ConnectedSocket::disconnectFromHost()
 {
     if(state()!=QAbstractSocket::ConnectedState)
         return;
+    hostName.clear();
+    port=0;
     if(fakeSocket!=NULL)
         fakeSocket->disconnectFromHost();
     if(sslSocket!=NULL)
@@ -204,6 +218,9 @@ void ConnectedSocket::setTcpCork(const bool &cork)
 
 QHostAddress ConnectedSocket::localAddress() const
 {
+    //deprecated form incorrect value for i2p
+    std::cerr << "ConnectedSocket::localAddress(): deprecated form incorrect value for i2p" << std::endl;
+
     if(fakeSocket!=NULL)
         return QHostAddress::LocalHost;
     if(sslSocket!=NULL)
@@ -226,6 +243,9 @@ quint16	ConnectedSocket::localPort() const
 
 QHostAddress	ConnectedSocket::peerAddress() const
 {
+    //deprecated form incorrect value for i2p
+    std::cerr << "ConnectedSocket::peerAddress(): deprecated form incorrect value for i2p" << std::endl;
+
     if(fakeSocket!=NULL)
         return QHostAddress::LocalHost;
     if(sslSocket!=NULL)
@@ -237,7 +257,18 @@ QHostAddress	ConnectedSocket::peerAddress() const
 
 QString ConnectedSocket::peerName() const
 {
-    return peerAddress().toString();
+    /// \warning via direct value for i2p. Never pass by peerAddress()
+    QString pearName;
+    if(fakeSocket!=NULL)
+        return QString();
+    if(sslSocket!=NULL)
+        pearName=sslSocket->peerName();
+    if(tcpSocket!=NULL)
+        pearName=tcpSocket->peerName();
+    if(!pearName.isEmpty())
+        return pearName;
+    else
+        return hostName;
 }
 
 quint16	ConnectedSocket::peerPort() const
