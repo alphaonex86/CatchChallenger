@@ -245,7 +245,7 @@ void EpollServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
         abort();
     }
     if(purgeLockPeriod>maxLockAge)
-        std::cerr << "purgeLockPeriod<1 || purgeLockPeriod>3600 || purgeLockPeriod>maxLockAge || not number (abort)" << std::endl;
+        std::cerr << "Warning: purgeLockPeriod>maxLockAge" << std::endl;
     if(purgeTheLockedAccount!=NULL)
         delete purgeTheLockedAccount;
     purgeTheLockedAccount=new PurgeTheLockedAccount(purgeLockPeriod);
