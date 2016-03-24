@@ -51,6 +51,9 @@ protected:
     bool	isSequential() const;
     bool canReadLine() const;
     QList<QSslError> sslErrors() const;
+    //workaround because QSslSocket don't return correct value for i2p via proxy
+    QString hostName;
+    uint16_t port;
 signals:
     void	connected();
     void	disconnected();

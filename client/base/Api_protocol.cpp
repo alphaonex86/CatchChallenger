@@ -2053,7 +2053,7 @@ void Api_protocol::connectTheExternalSocketInternal()
         newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::connectTheExternalSocket() socket->sslSocket==NULL"));
         return;
     }
-    if(socket->sslSocket->peerAddress()==QHostAddress::Null)
+    if(socket->peerName().isEmpty() || socket->sslSocket->state()!=QSslSocket::SocketState::ConnectedState)
     {
         newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::connectTheExternalSocket() socket->sslSocket->peerAddress()==QHostAddress::Null: ")+socket->peerName()+"-"+QString::number(socket->peerPort())+
                  QString(", state: %1").arg(socket->sslSocket->state())
