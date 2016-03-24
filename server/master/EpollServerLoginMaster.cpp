@@ -239,11 +239,13 @@ void EpollServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
         abort();
     }
     purgeLockPeriod=stringtouint16(settings.value("purgeLockPeriod"),&ok);
-    if(purgeLockPeriod<1 || purgeLockPeriod>3600 || purgeLockPeriod>maxLockAge || !ok)
+    if(purgeLockPeriod<1 || purgeLockPeriod>3600 || !ok)
     {
-        std::cerr << "purgeLockPeriod<1 || purgeLockPeriod>3600 || purgeLockPeriod>maxLockAge || not number (abort)" << std::endl;
+        std::cerr << "purgeLockPeriod<1 || purgeLockPeriod>3600 || not number (abort)" << std::endl;
         abort();
     }
+    if(purgeLockPeriod>maxLockAge)
+        std::cerr << "purgeLockPeriod<1 || purgeLockPeriod>3600 || purgeLockPeriod>maxLockAge || not number (abort)" << std::endl;
     if(purgeTheLockedAccount!=NULL)
         delete purgeTheLockedAccount;
     purgeTheLockedAccount=new PurgeTheLockedAccount(purgeLockPeriod);
