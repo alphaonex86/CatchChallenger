@@ -104,8 +104,8 @@ int LinkToGameServer::tryConnect(const char * const host, const uint16_t &port,c
         }
         if(connStatusType<0)
         {
-            std::cerr << "ERROR connecting to game server server (abort)" << std::endl;
-            abort();
+            std::cerr << "ERROR connecting to game server server (abort) on: " << host << ":" << port << std::endl;
+            return -1;
         }
     }
     std::cout << "Connected to game server" << std::endl;

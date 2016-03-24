@@ -117,7 +117,7 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
         if(connStatusType<0)
         {
             memset(LinkToMaster::private_token_master,0x00,sizeof(LinkToMaster::private_token_master));
-            std::cerr << "ERROR connecting to master server (abort)" << std::endl;
+            std::cerr << "ERROR connecting to master server (abort): " << host << ":" << port << " ..." << std::endl;
             abort();
         }
     }
