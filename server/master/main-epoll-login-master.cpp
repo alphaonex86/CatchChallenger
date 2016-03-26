@@ -88,36 +88,33 @@ int main(int argc, char *argv[])
 
     int numberOfConnectedClient=0;
     /* The event loop */
-    std::vector<std::vector<std::pair<void *,BaseClassSwitch::EpollObjectType> > > elementsToDelete;
+    std::vector<std::vector<void *> > elementsToDelete;
     elementsToDelete.resize(16);
+    size_t elementsToDeleteSize=0;
     int number_of_events, i;
     while(1)
     {
         number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
-        if(number_of_events<MAXEVENTS)
+        if(elementsToDeleteSize>0)
         {
-            const std::vector<std::pair<void *,BaseClassSwitch::EpollObjectType> > &elementsToDeleteSub=elementsToDelete.front();
-            if(!elementsToDeleteSub.empty())
+            if(number_of_events<MAXEVENTS)
             {
-                unsigned int index=0;
-                while(index<elementsToDeleteSub.size())
+                const std::vector<void *> &elementsToDeleteSub=elementsToDelete.front();
+                if(!elementsToDeleteSub.empty())
                 {
-                    const std::pair<void *,BaseClassSwitch::EpollObjectType> &item=elementsToDeleteSub.at(index);
-                    switch(item.second)
+                    unsigned int index=0;
+                    while(index<elementsToDeleteSub.size())
                     {
-                        case BaseClassSwitch::EpollObjectType::Client:
-                            delete static_cast<EpollClientLoginMaster *>(item.first);
-                        break;
-                        default:
-                        break;
+                        delete static_cast<EpollClientLoginMaster *>(elementsToDeleteSub.at(index));
+                        index++;
                     }
-                    index++;
                 }
+                elementsToDeleteSize-=elementsToDeleteSub.size();
+                elementsToDelete.erase(elementsToDelete.cbegin());
             }
-            elementsToDelete.erase(elementsToDelete.cbegin());
+            if(elementsToDelete.size()<16)
+                elementsToDelete.resize(16);
         }
-        if(elementsToDelete.size()<16)
-            elementsToDelete.resize(16);
         for(i = 0; i < number_of_events; i++)
         {
             switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
@@ -140,6 +137,13 @@ int main(int argc, char *argv[])
                         sockaddr in_addr;
                         socklen_t in_len = sizeof(in_addr);
                         const int &infd = EpollServerLoginMaster::epollServerLoginMaster->accept(&in_addr, &in_len);
+                        if(elementsToDeleteSize>64)
+                        {
+                            /// \todo dont clean error on client into this case
+                            std::cerr << "server overload" << std::endl;
+                            ::close(infd);
+                            break;
+                        }
                         if(infd == -1)
                         {
                             if((errno == EAGAIN) ||
@@ -244,10 +248,8 @@ int main(int argc, char *argv[])
                         numberOfConnectedClient--;
 
                         client->disconnectClient();
-                        std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
-                        tempElementsToDelete.first=events[i].data.ptr;
-                        tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
-                        elementsToDelete.back().push_back(tempElementsToDelete);
+                        elementsToDelete.back().push_back(events[i].data.ptr);
+                        elementsToDeleteSize++;
 
                         continue;
                     }
@@ -266,10 +268,8 @@ int main(int argc, char *argv[])
                         //disconnected, remove the object
 
                         client->disconnectClient();
-                        std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
-                        tempElementsToDelete.first=events[i].data.ptr;
-                        tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
-                        elementsToDelete.back() .push_back(tempElementsToDelete);
+                        elementsToDelete.back().push_back(events[i].data.ptr);
+                        elementsToDeleteSize++;
                     }
                 }
                 break;

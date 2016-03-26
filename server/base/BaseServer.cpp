@@ -323,15 +323,10 @@ void BaseServer::preload_finish()
     std::cout << "Loaded the server SQL datapack into " << (now-timeDatapack) << "ms" << std::endl;
     preload_other();
     #if defined(EPOLLCATCHCHALLENGERSERVER) && ! defined(CATCHCHALLENGER_CLIENT)
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    auto i=xmlLoadedFile.begin();
-    while(i!=xmlLoadedFile.cend())
-    {
-        delete xmlLoadedFile;
-        ++i;
-    }
+
+    //delete content of Map_loader::getXmlCondition()
     CommonDatapack::commonDatapack.xmlLoadedFile.clear();
-    #endif
+
     Map_loader::teleportConditionsUnparsed.clear();
     #endif
     entryListZone.clear();

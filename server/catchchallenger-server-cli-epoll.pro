@@ -38,16 +38,12 @@ SOURCES += main-epoll.cpp \
     epoll/EpollSocket.cpp \
     epoll/EpollClient.cpp \
     epoll/EpollServer.cpp \
-    epoll/EpollUnixSocketServer.cpp \
     epoll/EpollSslClient.cpp \
     epoll/EpollSslServer.cpp \
-    epoll/EpollUnixSocketClient.cpp \
-    epoll/EpollUnixSocketClientFinal.cpp \
     epoll/Epoll.cpp \
     epoll/EpollTimer.cpp \
     epoll/db/EpollPostgresql.cpp \
     epoll/db/EpollMySQL.cpp \
-    epoll/timer/TimerDisplayEventBySeconds.cpp \
     epoll/timer/TimerCityCapture.cpp \
     epoll/timer/TimerSendInsertMoveRemove.cpp \
     epoll/timer/TimerPositionSync.cpp \
@@ -55,22 +51,19 @@ SOURCES += main-epoll.cpp \
     epoll/timer/TimerEvents.cpp \
     NormalServerGlobal.cpp \
     epoll/EpollGenericServer.cpp \
-    epoll/EpollGenericSslServer.cpp
+    epoll/EpollGenericSslServer.cpp \
+    base/FixedDelimitedBufferRingOnStack64x16.cpp
 
 HEADERS += epoll/EpollSocket.h \
     epoll/EpollClient.h \
     epoll/EpollServer.h \
-    epoll/EpollUnixSocketServer.h \
     epoll/EpollSslClient.h \
     epoll/EpollSslServer.h \
-    epoll/EpollUnixSocketClient.h \
-    epoll/EpollUnixSocketClientFinal.h \
     epoll/Epoll.h \
     epoll/BaseClassSwitch.h \
     epoll/EpollTimer.h \
     epoll/db/EpollPostgresql.h \
     epoll/db/EpollMySQL.h \
-    epoll/timer/TimerDisplayEventBySeconds.h \
     epoll/timer/TimerCityCapture.h \
     epoll/timer/TimerPositionSync.h \
     epoll/timer/TimerSendInsertMoveRemove.h \
@@ -78,5 +71,6 @@ HEADERS += epoll/EpollSocket.h \
     epoll/timer/TimerEvents.h \
     NormalServerGlobal.h \
     epoll/EpollGenericServer.h \
-    epoll/EpollGenericSslServer.h
+    epoll/EpollGenericSslServer.h \
+    base/FixedDelimitedBufferRingOnStack64x16.h
 

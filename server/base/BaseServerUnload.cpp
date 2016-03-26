@@ -209,14 +209,6 @@ void BaseServer::unload_other()
         Client::characterIsRightFinalStepHeader=NULL;
     }
 
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    auto i=xmlLoadedFile.begin();
-    while(i!=xmlLoadedFile.cend())
-    {
-        delete xmlLoadedFile;
-        ++i;
-    }
     CommonDatapack::commonDatapack.xmlLoadedFile.clear();
-    #endif
     Map_loader::teleportConditionsUnparsed.clear();
 }
