@@ -48,8 +48,8 @@ public:
     std::vector<Type> types;
     #endif
 
+    std::unordered_map<std::string/*file*/, TiXmlDocument> xmlLoadedFile;//keep for Map_loader::getXmlCondition(), need to be deleted later
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    std::unordered_map<std::string/*file*/, TiXmlDocument> xmlLoadedFile;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     std::unordered_map<std::string/*file*/, QDomDocument> xmlLoadedFileQt;
     #endif
