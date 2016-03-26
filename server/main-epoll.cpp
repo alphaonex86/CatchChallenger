@@ -882,6 +882,7 @@ int main(int argc, char *argv[])
         }
     }
     #endif
+    delete settings;
 
     #ifndef SERVERNOBUFFER
     #ifdef SERVERSSL
