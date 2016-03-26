@@ -82,31 +82,29 @@ void generateTokenStatClient(TinyXMLSettings &settings,char * const data)
 }
 #endif
 
-std::vector<std::vector<std::pair<void *,BaseClassSwitch::EpollObjectType> > > elementsToDelete;
+std::vector<std::vector<void *> > elementsToDelete;
+size_t elementsToDeleteSize=0;
 
 void CatchChallenger::recordDisconnectByServer(void * client)
 {
     unsigned int mainIndex=0;
     while(mainIndex<elementsToDelete.size())
     {
-        std::vector<std::pair<void *,BaseClassSwitch::EpollObjectType> > &elementsToDeleteSub=elementsToDelete.at(mainIndex);
+        std::vector<void *> &elementsToDeleteSub=elementsToDelete.at(mainIndex);
         if(!elementsToDeleteSub.empty())
         {
             unsigned int index=0;
             while(index<elementsToDeleteSub.size())
             {
-                const std::pair<void *,BaseClassSwitch::EpollObjectType> &item=elementsToDeleteSub.at(index);
-                if(item.first==client)
+                if(elementsToDeleteSub.at(index)==client)
                     return;
                 index++;
             }
         }
         mainIndex++;
     }
-    std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
-    tempElementsToDelete.first=client;
-    tempElementsToDelete.second=BaseClassSwitch::EpollObjectType::Client;
-    elementsToDelete.back().push_back(tempElementsToDelete);
+    elementsToDelete.back().push_back(client);
+    elementsToDeleteSize++;
 }
 
 void send_settings()
@@ -798,18 +796,8 @@ int main(int argc, char *argv[])
     }
     server->initialize_the_database_prepared_query();
 
-    EpollUnixSocketServer unixServer;
-    if(!unixServer.tryListen())
-    {
-        server->close();
-        return EPOLLERR;
-    }
-
     TimerCityCapture timerCityCapture;
     TimerDdos timerDdos;
-    #ifdef SERVERBENCHMARKFULL
-    TimerDisplayEventBySeconds timerDisplayEventBySeconds;
-    #endif
     TimerPositionSync timerPositionSync;
     TimerSendInsertMoveRemove timerSendInsertMoveRemove;
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
@@ -832,15 +820,6 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
     }
-    #ifdef SERVERBENCHMARKFULL
-    {
-        if(!timerDisplayEventBySeconds.start(60*1000))
-        {
-            std::cerr << "timerDisplayEventBySeconds fail to set" << std::endl;
-            return EXIT_FAILURE;
-        }
-    }
-    #endif
     {
         if(GlobalServerData::serverSettings.secondToPositionSync>0)
             if(!timerPositionSync.start(GlobalServerData::serverSettings.secondToPositionSync*1000))
@@ -901,10 +880,7 @@ int main(int argc, char *argv[])
     encodingBuff[0]=0x00;
     #endif
 
-    #ifdef SERVERBENCHMARKFULL
-    std::chrono::time_point<std::chrono::high_resolution_clock> start_inter;
-    #endif
-    int numberOfConnectedClient=0,numberOfConnectedUnixClient=0;
+    int numberOfConnectedClient=0;
     /* The event loop */
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     unsigned int clientnumberToDebug=0;
@@ -915,30 +891,26 @@ int main(int argc, char *argv[])
     {
 
         number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
-        if(number_of_events<MAXEVENTS)
+        if(elementsToDeleteSize>0)
         {
-            const std::vector<std::pair<void *,BaseClassSwitch::EpollObjectType> > &elementsToDeleteSub=elementsToDelete.front();
-            if(!elementsToDeleteSub.empty())
+            if(number_of_events<MAXEVENTS)
             {
-                unsigned int index=0;
-                while(index<elementsToDeleteSub.size())
+                const std::vector<void *> &elementsToDeleteSub=elementsToDelete.front();
+                if(!elementsToDeleteSub.empty())
                 {
-                    const std::pair<void *,BaseClassSwitch::EpollObjectType> &item=elementsToDeleteSub.at(index);
-                    switch(item.second)
+                    unsigned int index=0;
+                    while(index<elementsToDeleteSub.size())
                     {
-                        case BaseClassSwitch::EpollObjectType::Client:
-                        delete static_cast<Client *>(item.first);
-                        break;
-                        default:
-                        break;
+                        delete static_cast<Client *>(elementsToDeleteSub.at(index));
+                        index++;
                     }
-                    index++;
                 }
+                elementsToDeleteSize-=elementsToDeleteSub.size();
+                elementsToDelete.erase(elementsToDelete.cbegin());
             }
-            elementsToDelete.erase(elementsToDelete.cbegin());
+            if(elementsToDelete.size()<16)
+                elementsToDelete.resize(16);
         }
-        if(elementsToDelete.size()<16)
-            elementsToDelete.resize(16);
         #ifdef SERVERBENCHMARK
         EpollUnixSocketClientFinal::start = std::chrono::high_resolution_clock::now();
         #endif
@@ -948,9 +920,6 @@ int main(int argc, char *argv[])
             {
                 case BaseClassSwitch::EpollObjectType::Server:
                 {
-                    #ifdef SERVERBENCHMARKFULL
-                    timerDisplayEventBySeconds.addServerCount();
-                    #endif
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
@@ -971,6 +940,19 @@ int main(int argc, char *argv[])
                         {
                             /// \todo dont clean error on client into this case
                             std::cerr << "client connect when the server is not ready" << std::endl;
+                            ::close(infd);
+                            break;
+                        }
+                        if(elementsToDeleteSize>64
+                                #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+                                || BaseServerLogin::tokenForAuthSize>=CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION
+                                #else
+                                || Client::tokenAuthList.size()>=CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION
+                                #endif
+                                )
+                        {
+                            /// \todo dont clean error on client into this case
+                            std::cerr << "server overload" << std::endl;
                             ::close(infd);
                             break;
                         }
@@ -1093,102 +1075,10 @@ int main(int argc, char *argv[])
 
                         }
                     }
-                    continue;
-                }
-                break;
-                case BaseClassSwitch::EpollObjectType::UnixServer:
-                {
-                    #ifdef SERVERBENCHMARKFULL
-                    timerDisplayEventBySeconds.addServerCount();
-                    #endif
-                    if((events[i].events & EPOLLERR) ||
-                    (events[i].events & EPOLLHUP) ||
-                    (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
-                    {
-                        /* An error has occured on this fd, or the socket is not
-                        ready for reading (why were we notified then?) */
-                        std::cerr << "unix server epoll error" << std::endl;
-                        continue;
-                    }
-                    /* We have a notification on the listening socket, which
-                    means one or more incoming connections. */
-                    while(1)
-                    {
-                        sockaddr in_addr;
-                        socklen_t in_len = sizeof(in_addr);
-                        const int &infd = unixServer.accept(&in_addr, &in_len);
-                        if(infd == -1)
-                        {
-                            if((errno == EAGAIN) ||
-                            (errno == EWOULDBLOCK))
-                            {
-                                /* We have processed all incoming
-                                connections. */
-                                break;
-                            }
-                            else
-                            {
-                                std::cout << "connexion accepted" << std::endl;
-                                break;
-                            }
-                        }
-
-                        int s = EpollSocket::make_non_blocking(infd);
-                        if(s == -1)
-                            std::cerr << "unable to make to socket non blocking" << std::endl;
-                        else
-                        {
-                            EpollUnixSocketClientFinal *client=new EpollUnixSocketClientFinal(infd);
-
-                            //just for informations
-                            {
-                                char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
-                                const int &s = getnameinfo(&in_addr, in_len,
-                                hbuf, sizeof hbuf,
-                                sbuf, sizeof sbuf,
-                                NI_NUMERICHOST | NI_NUMERICSERV);
-                                if(s == 0)
-                                    std::cout << "Accepted connection on descriptor " << infd << "(host=" << hbuf << ", port=" << sbuf << "), client: " << client << std::endl;
-                                else
-                                    std::cout << "Accepted connection on descriptor " << infd << ", client: " << client << std::endl;
-                            }
-
-                            epoll_event event;
-                            event.data.ptr = client;
-                            event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLHUP;//EPOLLET | EPOLLOUT | EPOLLHUP
-                            s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
-                            if(s == -1)
-                            {
-                                std::cerr << "epoll_ctl on socket error" << std::endl;
-                                delete client;
-                            }
-                            if(numberOfConnectedUnixClient==0)
-                            {
-                                #ifdef SERVERBENCHMARK
-                                EpollUnixSocketClientFinal::start = std::chrono::high_resolution_clock::now();
-                                EpollUnixSocketClientFinal::timeUsed=0;
-                                #ifdef SERVERBENCHMARKFULL
-                                EpollUnixSocketClientFinal::timeUsedForTimer=0;
-                                EpollUnixSocketClientFinal::timeUsedForUser=0;
-                                EpollUnixSocketClientFinal::timeUsedForDatabase=0;
-                                #endif
-                                #endif
-                            }
-                            numberOfConnectedUnixClient++;
-                            client->parseIncommingData();
-                        }
-                    }
-                    continue;
                 }
                 break;
                 case BaseClassSwitch::EpollObjectType::Client:
                 {
-                    #ifdef SERVERBENCHMARKFULL
-                    start_inter = std::chrono::high_resolution_clock::now();
-                    #endif
-                    #ifdef SERVERBENCHMARKFULL
-                    timerDisplayEventBySeconds.addClientCount();
-                    #endif
                     Client * const client=static_cast<Client *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
@@ -1219,74 +1109,16 @@ int main(int argc, char *argv[])
                         numberOfConnectedClient--;
                         client->disconnectClient();
                     }
-                    #ifdef SERVERBENCHMARKFULL
-                    std::chrono::duration<unsigned long long int,std::nano> elapsed_seconds = std::chrono::high_resolution_clock::now()-start_inter;
-                    EpollUnixSocketClientFinal::timeUsedForUser+=elapsed_seconds.count();
-                    #endif
-                }
-                break;
-                case BaseClassSwitch::EpollObjectType::UnixClient:
-                {
-                    #ifdef SERVERBENCHMARKFULL
-                    timerDisplayEventBySeconds.addClientCount();
-                    #endif
-                    EpollUnixSocketClientFinal * const client=static_cast<EpollUnixSocketClientFinal *>(events[i].data.ptr);
-                    if((events[i].events & EPOLLERR) ||
-                    (events[i].events & EPOLLHUP) ||
-                    (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
-                    {
-                        /* An error has occured on this fd, or the socket is not
-                        ready for reading (why were we notified then?) */
-                        std::cerr << "client epoll error: " << events[i].events << std::endl;
-                        numberOfConnectedUnixClient--;
-
-                        client->close();
-                        std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
-                        tempElementsToDelete.first=events[i].data.ptr;
-                        tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
-                        elementsToDelete.back().push_back(tempElementsToDelete);
-
-                        continue;
-                    }
-                    //ready to read
-                    client->parseIncommingData();
-                    if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP)
-                    {
-                        numberOfConnectedUnixClient--;
-                        //disconnected, remove the object
-
-                        client->close();
-                        std::pair<void *,BaseClassSwitch::EpollObjectType> tempElementsToDelete;
-                        tempElementsToDelete.first=events[i].data.ptr;
-                        tempElementsToDelete.second=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
-                        elementsToDelete.back().push_back(tempElementsToDelete);
-                    }
                 }
                 break;
                 case BaseClassSwitch::EpollObjectType::Timer:
                 {
-                    #ifdef SERVERBENCHMARKFULL
-                    start_inter = std::chrono::high_resolution_clock::now();
-                    #endif
-                    #ifdef SERVERBENCHMARKFULL
-                    timerDisplayEventBySeconds.addTimerCount();
-                    #endif
                     static_cast<EpollTimer *>(events[i].data.ptr)->exec();
                     static_cast<EpollTimer *>(events[i].data.ptr)->validateTheTimer();
-                    #ifdef SERVERBENCHMARKFULL
-                    std::chrono::duration<unsigned long long int,std::nano> elapsed_seconds = std::chrono::high_resolution_clock::now()-start_inter;
-                    EpollUnixSocketClientFinal::timeUsedForTimer+=elapsed_seconds.count();
-                    #endif
                 }
                 break;
                 case BaseClassSwitch::EpollObjectType::Database:
                 {
-                    #ifdef SERVERBENCHMARKFULL
-                    start_inter = std::chrono::high_resolution_clock::now();
-                    #endif
-                    #ifdef SERVERBENCHMARKFULL
-                    timerDisplayEventBySeconds.addDbCount();
-                    #endif
                     switch(static_cast<CatchChallenger::DatabaseBase *>(events[i].data.ptr)->databaseType())
                     {
                         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
@@ -1305,10 +1137,6 @@ int main(int argc, char *argv[])
                                 else
                                     std::cerr << "datapack_loaded not loaded: but database seam don't be connected" << std::endl;
                             }
-                            #ifdef SERVERBENCHMARKFULL
-                            std::chrono::duration<unsigned long long int,std::nano> elapsed_seconds = std::chrono::high_resolution_clock::now()-start_inter;
-                            EpollUnixSocketClientFinal::timeUsedForDatabase+=elapsed_seconds.count();
-                            #endif
                             if(!db->isConnected())
                             {
                                 std::cerr << "database disconnect, quit now" << std::endl;
@@ -1333,10 +1161,6 @@ int main(int argc, char *argv[])
                                 else
                                     std::cerr << "datapack_loaded not loaded: but database seam don't be connected" << std::endl;
                             }
-                            #ifdef SERVERBENCHMARKFULL
-                            std::chrono::duration<unsigned long long int,std::nano> elapsed_seconds = std::chrono::high_resolution_clock::now()-start_inter;
-                            EpollUnixSocketClientFinal::timeUsedForDatabase+=elapsed_seconds.count();
-                            #endif
                             if(!db->isConnected())
                             {
                                 std::cerr << "database disconnect, quit now" << std::endl;
@@ -1381,9 +1205,6 @@ int main(int argc, char *argv[])
                 break;
                 #endif
                 default:
-                    #ifdef SERVERBENCHMARKFULL
-                    timerDisplayEventBySeconds.addOtherCount();
-                    #endif
                     std::cerr << "unknown event" << std::endl;
                 break;
             }

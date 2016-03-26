@@ -133,6 +133,17 @@ public:
     #endif
 
     static const unsigned char protocolHeaderToMatch[5];
+
+    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    struct TokenAuth
+    {
+        char *token;
+        uint32_t characterId;
+        uint32_t accountIdRequester;
+        uint64_t createTime;
+    };
+    static std::vector<TokenAuth> tokenAuthList;
+    #endif
 protected:
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     bool stat_client;
@@ -265,16 +276,6 @@ private:
     bool isInCityCapture;
     std::vector<Skill::AttackReturn> attackReturn;
     std::unordered_map<uint32_t, std::unordered_map<uint32_t,uint32_t> > deferedEndurance;
-    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    struct TokenAuth
-    {
-        char *token;
-        uint32_t characterId;
-        uint32_t accountIdRequester;
-        uint64_t createTime;
-    };
-    static std::vector<TokenAuth> tokenAuthList;
-    #endif
 
     //player indexed list
     static const std::string text_chat;
