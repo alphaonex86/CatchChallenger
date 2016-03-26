@@ -288,15 +288,13 @@ void LinkToMaster::parseIncommingData()
 
 bool LinkToMaster::setSettings(TinyXMLSettings * const settings)
 {
-    this->settings=settings;
-
     //token
     settings->beginGroup("master");
     if(!settings->contains("token"))
-        generateToken();
+        generateToken(settings);
     std::string token=settings->value("token");
     if(token.size()!=TOKEN_SIZE_FOR_MASTERAUTH*2/*String Hexa, not binary*/)
-        generateToken();
+        generateToken(settings);
     token=settings->value("token");
     std::vector<char> binarytoken=hexatoBinary(token);
     if(binarytoken.empty())
@@ -307,10 +305,61 @@ bool LinkToMaster::setSettings(TinyXMLSettings * const settings)
     memcpy(LinkToMaster::private_token,binarytoken.data(),binarytoken.size());
     settings->endGroup();
 
+    {
+        if(!settings->contains("external-server-ip"))
+            settings->setValue("external-server-ip",server_ip);
+        externalServerIp=settings->value("external-server-ip");
+        if(externalServerIp.empty())
+        {
+            externalServerIp="localhost";
+            settings->setValue("external-server-ip",externalServerIp);
+        }
+    }
+    {
+        if(!settings->contains("external-server-port"))
+            settings->setValue("external-server-port",server_port);
+        bool ok;
+        externalServerPort=stringtouint16(settings->value("external-server-port"),&ok);
+        if(!ok)
+            settings->setValue("external-server-port",server_port);
+        externalServerPort=stringtouint16(settings->value("external-server-port"),&ok);
+        if(!ok)
+        {
+            externalServerPort = rng()%(65535-8192)+8192;
+            settings->setValue("external-server-port",externalServerPort);
+        }
+    }
+
+    server_ip=settings->value("server-ip");
+    server_port=settings->value("server-port");
+
+    settings->beginGroup("master");
+    charactersGroup=settings->value("charactersGroup");
+
+    if(!settings->contains("uniqueKey"))
+    {
+        uniqueKey = rng();
+        settings->setValue("uniqueKey",std::to_string(uniqueKey));
+    }
+    else
+    {
+        bool ok;
+        uniqueKey=stringtouint32(settings->value("uniqueKey"),&ok);
+        if(!ok)
+        {
+            uniqueKey = rng();
+            settings->setValue("uniqueKey",std::to_string(uniqueKey));
+        }
+    }
+    logicalGroup=settings->value("logicalGroup");
+    settings->endGroup();
+
+    settings->sync();
+
     return true;
 }
 
-void LinkToMaster::generateToken()
+void LinkToMaster::generateToken(TinyXMLSettings * const settings)
 {
     FILE *fpRandomFile = fopen(RANDOMFILEDEVICE,"rb");
     if(fpRandomFile==NULL)
@@ -359,14 +408,10 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
         //memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));->to reconnect after be disconnected
     }
 
-    std::string server_ip=settings->value("server-ip");
-    std::string server_port=settings->value("server-port");
-
-    settings->beginGroup("master");
     //group to find the catchchallenger_common database
     {
-        if(!settings->value("charactersGroup").empty())
-            newSizeCharactersGroup=FacilityLibGeneral::toUTF8WithHeader(settings->value("charactersGroup"),ProtocolParsingBase::tempBigBufferForOutput+posOutput);
+        if(!charactersGroup.empty())
+            newSizeCharactersGroup=FacilityLibGeneral::toUTF8WithHeader(charactersGroup,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
         else
         {
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
@@ -377,58 +422,19 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
 
     //the unique key to save the info by server
     {
-        unsigned int uniqueKey;
-        if(!settings->contains("uniqueKey"))
-        {
-            uniqueKey = rng();
-            settings->setValue("uniqueKey",std::to_string(uniqueKey));
-        }
-        else
-        {
-            bool ok;
-            uniqueKey=stringtouint32(settings->value("uniqueKey"),&ok);
-            if(!ok)
-            {
-                uniqueKey = rng();
-                settings->setValue("uniqueKey",std::to_string(uniqueKey));
-            }
-        }
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(uniqueKey);
         posOutput+=4;
     }
 
     //the external information to connect the client or the login server as proxy
     {
-        if(!settings->contains("external-server-ip"))
-            settings->setValue("external-server-ip",server_ip);
-        std::string externalServerIp=settings->value("external-server-ip");
-        if(externalServerIp.empty())
-        {
-            externalServerIp="localhost";
-            settings->setValue("external-server-ip",externalServerIp);
-        }
-
         unsigned int newSizeText=FacilityLibGeneral::toUTF8WithHeader(externalServerIp,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
         posOutput+=newSizeText;
     }
     {
-        unsigned short int externalServerPort;
-        if(!settings->contains("external-server-port"))
-            settings->setValue("external-server-port",server_port);
-        bool ok;
-        externalServerPort=stringtouint16(settings->value("external-server-port"),&ok);
-        if(!ok)
-            settings->setValue("external-server-port",server_port);
-        externalServerPort=stringtouint16(settings->value("external-server-port"),&ok);
-        if(!ok)
-        {
-            externalServerPort = rng()%(65535-8192)+8192;
-            settings->setValue("external-server-port",externalServerPort);
-        }
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(externalServerPort);
         posOutput+=2;
     }
-    settings->endGroup();
 
     //the xml with name and description
     {
@@ -443,11 +449,10 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
         posOutput+=newSizeCharactersGroup;
     }
 
-    settings->beginGroup("master");
     //logical group
     {
-        if(!settings->value("logicalGroup").empty())
-            newSizeCharactersGroup=FacilityLibGeneral::toUTF8WithHeader(settings->value("logicalGroup"),ProtocolParsingBase::tempBigBufferForOutput+posOutput);
+        if(!logicalGroup.empty())
+            newSizeCharactersGroup=FacilityLibGeneral::toUTF8WithHeader(logicalGroup,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
         else
         {
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
@@ -455,9 +460,6 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
         }
         posOutput+=newSizeCharactersGroup;
     }
-    settings->endGroup();
-
-    settings->sync();
 
     //current player number and max player
     if(GlobalServerData::serverSettings.sendPlayerNumber)

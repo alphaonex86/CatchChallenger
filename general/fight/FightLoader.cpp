@@ -95,18 +95,24 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
     std::vector<Type> types;
     TiXmlDocument *domDocument;
     //open and quick check the file
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        #else
+        domDocument=new TiXmlDocument();
+        #endif
         const bool loadOkay=domDocument->LoadFile(file);
         if(!loadOkay)
         {
             std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
             return types;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
     }
+    #endif
     const TiXmlElement * root = domDocument->RootElement();
     if(root->ValueStr()!="types")
     {
@@ -209,6 +215,9 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
             typeItem = typeItem->NextSiblingElement(FightLoader::text_type);
         }
     }
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    delete domDocument;
+    #endif
     return types;
 }
 #endif
@@ -242,12 +251,16 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
         }
         #endif
         TiXmlDocument *domDocument;
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         //open and quick check the file
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         else
         {
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            #else
+            domDocument=new TiXmlDocument();
+            #endif
             const bool loadOkay=domDocument->LoadFile(file);
             if(!loadOkay)
             {
@@ -255,7 +268,9 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                 file_index++;
                 continue;
             }
+            #ifndef EPOLLCATCHCHALLENGERSERVER
         }
+        #endif
         const TiXmlElement * root = domDocument->RootElement();
         if(root->ValueStr()!=FightLoader::text_monsters)
         {
@@ -858,6 +873,9 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
             ++i;
         }
         #endif
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+        delete domDocument;
+        #endif
         file_index++;
     }
     return monsters;
@@ -940,12 +958,16 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
     {
         const std::string &file=fileList.at(index_file).absoluteFilePath;
         TiXmlDocument *domDocument;
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         //open and quick check the file
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         else
         {
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            #else
+            domDocument=new TiXmlDocument();
+            #endif
             const bool loadOkay=domDocument->LoadFile(file);
             if(!loadOkay)
             {
@@ -953,7 +975,9 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                 index_file++;
                 continue;
             }
+            #ifndef EPOLLCATCHCHALLENGERSERVER
         }
+        #endif
         const TiXmlElement * root = domDocument->RootElement();
         if(root->ValueStr()!="fights")
         {
@@ -1144,6 +1168,9 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                 std::cerr << "Unable to open the xml file: " << file << ", is not an element: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
             item = item->NextSiblingElement("fight");
         }
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+        delete domDocument;
+        #endif
         index_file++;
     }
     return botFightList;
@@ -1180,12 +1207,16 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
         }
         #endif // CATCHCHALLENGER_CLASS_MASTER
         TiXmlDocument *domDocument;
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         //open and quick check the file
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         else
         {
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            #else
+            domDocument=new TiXmlDocument();
+            #endif
             const bool loadOkay=domDocument->LoadFile(file);
             if(!loadOkay)
             {
@@ -1193,7 +1224,9 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                 file_index++;
                 continue;
             }
+            #ifndef EPOLLCATCHCHALLENGERSERVER
         }
+        #endif
         const TiXmlElement * root = domDocument->RootElement();
         if(root->ValueStr()!="skills")
         {
@@ -1507,6 +1540,9 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
             }
             #endif
         }
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+        delete domDocument;
+        #endif
         file_index++;
     }
     return monsterSkills;
@@ -1527,12 +1563,16 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
             continue;
         }
         TiXmlDocument *domDocument;
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         //open and quick check the file
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         else
         {
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            #else
+            domDocument=new TiXmlDocument();
+            #endif
             const bool loadOkay=domDocument->LoadFile(file);
             if(!loadOkay)
             {
@@ -1540,7 +1580,9 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                 file_index++;
                 continue;
             }
+            #ifndef EPOLLCATCHCHALLENGERSERVER
         }
+        #endif
         const TiXmlElement * root = domDocument->RootElement();
         if(root->ValueStr()!="buffs")
         {
@@ -1800,6 +1842,9 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                 std::cerr << "Unable to open the xml file: " << file << ", is not an element: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
             item = item->NextSiblingElement(FightLoader::text_buff);
         }
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+        delete domDocument;
+        #endif
         file_index++;
     }
     return monsterBuffs;

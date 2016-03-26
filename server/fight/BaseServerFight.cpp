@@ -78,19 +78,25 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
 {
     TiXmlDocument *domDocument;
     std::unordered_map<uint16_t,std::vector<MonsterDrops> > monsterDrops;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     //open and quick check the file
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        #else
+        domDocument=new TiXmlDocument();
+        #endif
         const bool loadOkay=domDocument->LoadFile(file);
         if(!loadOkay)
         {
             std::cerr << "Unable to open the file: " << file.c_str() << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
             return monsterDrops;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
     }
+    #endif
     const TiXmlElement * root = domDocument->RootElement();;
     if(root->ValueStr()!=BaseServer::text_monsters)
     {
@@ -254,6 +260,9 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
             std::cerr << "Unable to open the xml file: " << file << ", is not an element: child.tagName(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
         item = item->NextSiblingElement(BaseServer::text_monster);
     }
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    delete domDocument;
+    #endif
     return monsterDrops;
 }
 
