@@ -14,20 +14,26 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
 {
     std::regex excludeFilterRegex("[\"']");
     std::regex typeRegex("^[a-z]{1,32}$");
-    TiXmlDocument *domDocument;
     std::vector<Reputation> reputation;
+    TiXmlDocument *domDocument;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        #else
+        domDocument=new TiXmlDocument();
+        #endif
         const bool loadOkay=domDocument->LoadFile(file);
         if(!loadOkay)
         {
             std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
             return reputation;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
     }
+    #endif
     const TiXmlElement * root = domDocument->RootElement();
     if(root->ValueStr()!="reputations")
     {
@@ -179,6 +185,9 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
         item = item->NextSiblingElement("reputation");
     }
 
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    delete domDocument;
+    #endif
     return reputation;
 }
 
@@ -232,18 +241,24 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     CatchChallenger::Quest quest;
     quest.id=0;
     TiXmlDocument *domDocument;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        #else
+        domDocument=new TiXmlDocument();
+        #endif
         const bool loadOkay=domDocument->LoadFile(file);
         if(!loadOkay)
         {
             std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
             return std::pair<bool,Quest>(false,quest);
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
     }
+    #endif
     const TiXmlElement * root = domDocument->RootElement();
     if(root->ValueStr()!="quest")
     {
@@ -580,6 +595,10 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
         step = step->NextSiblingElement("step");
     }
 
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    delete domDocument;
+    #endif
+
     //sort the step
     unsigned int indexLoop=1;
     while(indexLoop<(steps.size()+1))
@@ -608,18 +627,24 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
     std::unordered_map<uint8_t, Plant> plants;
     TiXmlDocument *domDocument;
     //open and quick check the file
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        #else
+        domDocument=new TiXmlDocument();
+        #endif
         const bool loadOkay=domDocument->LoadFile(file);
         if(!loadOkay)
         {
             std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
             return plants;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
     }
+    #endif
     const TiXmlElement * root = domDocument->RootElement();
     if(root->ValueStr()!="plants")
     {
@@ -869,6 +894,9 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
             std::cerr << "Unable to open the plants file: " << file << ", is not an element: child->ValueStr(): " << plantItem->ValueStr() << " (at line: " << plantItem->Row() << ")" << std::endl;
         plantItem = plantItem->NextSiblingElement("plant");
     }
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    delete domDocument;
+    #endif
     return plants;
 }
 
@@ -886,19 +914,25 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
     std::unordered_map<uint16_t,CrafingRecipe> crafingRecipes;
     std::unordered_map<uint16_t,uint16_t> itemToCrafingRecipes;
     TiXmlDocument *domDocument;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     //open and quick check the file
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        #else
+        domDocument=new TiXmlDocument();
+        #endif
         const bool loadOkay=domDocument->LoadFile(file);
         if(!loadOkay)
         {
             std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
             return std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
     }
+    #endif
     const TiXmlElement * root = domDocument->RootElement();
     if(root->ValueStr()!="recipes")
     {
@@ -1159,6 +1193,9 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
             std::cerr << "Unable to open the crafting recipe file: " << file << ", is not an element: child->ValueStr(): " << recipeItem->ValueStr() << " (at line: " << recipeItem->Row() << ")" << std::endl;
         recipeItem = recipeItem->NextSiblingElement("recipe");
     }
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    delete domDocument;
+    #endif
     return std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
 }
 
@@ -1172,11 +1209,15 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
         const std::string &file=fileList.at(file_index).absoluteFilePath;
         TiXmlDocument *domDocument;
         //open and quick check the file
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         else
         {
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            #else
+            domDocument=new TiXmlDocument();
+            #endif
             const bool loadOkay=domDocument->LoadFile(file);
             if(!loadOkay)
             {
@@ -1184,7 +1225,9 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                 file_index++;
                 continue;
             }
+            #ifndef EPOLLCATCHCHALLENGERSERVER
         }
+        #endif
         const TiXmlElement * root = domDocument->RootElement();
         if(root->ValueStr()!="industries")
         {
@@ -1402,6 +1445,9 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                 std::cerr << "Unable to open the industries is not an element: file: " << file << ", child->ValueStr(): " << industryItem->ValueStr() << " (at line: " << industryItem->Row() << ")" << std::endl;
             industryItem = industryItem->NextSiblingElement("industrialrecipe");
         }
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+        delete domDocument;
+        #endif
         file_index++;
     }
     return industries;
@@ -1420,19 +1466,25 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
     }
     std::unordered_map<uint16_t,IndustryLink> industriesLink;
     TiXmlDocument *domDocument;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     //open and quick check the file
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        #else
+        domDocument=new TiXmlDocument();
+        #endif
         const bool loadOkay=domDocument->LoadFile(file);
         if(!loadOkay)
         {
             std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
             return industriesLink;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
     }
+    #endif
     const TiXmlElement * root = domDocument->RootElement();
     if(root->ValueStr()!="industries")
     {
@@ -1546,6 +1598,9 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
             std::cerr << "Unable to open the industries link is not a element, file: " << file << ", child->ValueStr(): " << linkItem->ValueStr() << " (at line: " << linkItem->Row() << ")" << std::endl;
         linkItem = linkItem->NextSiblingElement("link");
     }
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    delete domDocument;
+    #endif
     return industriesLink;
 }
 
@@ -1572,11 +1627,15 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
             file_index++;
             continue;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         else
         {
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            #else
+            domDocument=new TiXmlDocument();
+            #endif
             const bool loadOkay=domDocument->LoadFile(file);
             if(!loadOkay)
             {
@@ -1584,7 +1643,9 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                 file_index++;
                 continue;
             }
+            #ifndef EPOLLCATCHCHALLENGERSERVER
         }
+        #endif
         const TiXmlElement * root = domDocument->RootElement();
         if(root->ValueStr()!="items")
         {
@@ -1832,6 +1893,9 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                 std::cerr << "Unable to open the file, is not an element, file: " << file << ", child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
             item = item->NextSiblingElement("item");
         }
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+        delete domDocument;
+        #endif
         file_index++;
     }
     return items;
@@ -1872,19 +1936,25 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
     }
     std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > returnVar;
     TiXmlDocument *domDocument;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     //open and quick check the file
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        #else
+        domDocument=new TiXmlDocument();
+        #endif
         const bool loadOkay=domDocument->LoadFile(file);
         if(!loadOkay)
         {
             std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
             return returnVar;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
     }
+    #endif
     const TiXmlElement * root = domDocument->RootElement();
     if(root->ValueStr()!="profile")
     {
@@ -2133,6 +2203,9 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
             std::cerr << "Unable to open the xml file: " << file << ", is not an element: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
         startItem = startItem->NextSiblingElement("start");
     }
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    delete domDocument;
+    #endif
     return returnVar;
 }
 
@@ -2159,19 +2232,25 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
     }
     std::vector<MonstersCollision> returnVar;
     TiXmlDocument *domDocument;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     //open and quick check the file
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        #else
+        domDocument=new TiXmlDocument();
+        #endif
         const bool loadOkay=domDocument->LoadFile(file);
         if(!loadOkay)
         {
             std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
             return returnVar;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
     }
+    #endif
     const TiXmlElement * root = domDocument->RootElement();
     if(root->ValueStr()!="layers")
     {
@@ -2331,6 +2410,9 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
         }
         monstersCollisionItem = monstersCollisionItem->NextSiblingElement("monstersCollision");
     }
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    delete domDocument;
+    #endif
     return returnVar;
 }
 
@@ -2339,19 +2421,25 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const std::string &file)
     LayersOptions returnVar;
     returnVar.zoom=2;
     TiXmlDocument *domDocument;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     //open and quick check the file
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        #else
+        domDocument=new TiXmlDocument();
+        #endif
         const bool loadOkay=domDocument->LoadFile(file);
         if(!loadOkay)
         {
             std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
             return returnVar;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
     }
+    #endif
     const TiXmlElement * root = domDocument->RootElement();
     if(root->ValueStr()!="layers")
     {
@@ -2377,7 +2465,9 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const std::string &file)
             }
         }
     }
-
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    delete domDocument;
+    #endif
     return returnVar;
 }
 
@@ -2386,19 +2476,25 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
     std::vector<Event> returnVar;
 
     TiXmlDocument *domDocument;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     //open and quick check the file
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        #else
+        domDocument=new TiXmlDocument();
+        #endif
         const bool loadOkay=domDocument->LoadFile(file);
         if(!loadOkay)
         {
             std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
             return returnVar;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
     }
+    #endif
     const TiXmlElement * root = domDocument->RootElement();
     if(root->ValueStr()!="events")
     {
@@ -2433,6 +2529,9 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
         }
         eventItem = eventItem->NextSiblingElement("event");
     }
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    delete domDocument;
+    #endif
     return returnVar;
 }
 
@@ -2441,19 +2540,25 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
     std::unordered_map<uint32_t,Shop> shops;
 
     TiXmlDocument *domDocument;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     //open and quick check the file
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        #else
+        domDocument=new TiXmlDocument();
+        #endif
         const bool loadOkay=domDocument->LoadFile(file);
         if(!loadOkay)
         {
             std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
             return shops;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
     }
+    #endif
     const TiXmlElement * root = domDocument->RootElement();
     if(root->ValueStr()!="shops")
     {
@@ -2531,6 +2636,9 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
             std::cerr << "Unable to open the shops file: " << file << ", is not an element: child->ValueStr(): " << shopItem->ValueStr() << " (at line: " << shopItem->Row() << ")" << std::endl;
         shopItem = shopItem->NextSiblingElement("shop");
     }
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    delete domDocument;
+    #endif
     return shops;
 }
 #endif
@@ -2594,19 +2702,25 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(
     std::vector<ServerProfile> serverProfileList;
 
     TiXmlDocument *domDocument;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     //open and quick check the file
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        #else
+        domDocument=new TiXmlDocument();
+        #endif
         const bool loadOkay=domDocument->LoadFile(file);
         if(!loadOkay)
         {
             std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
             return serverProfileList;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
     }
+    #endif
     const TiXmlElement * root = domDocument->RootElement();
     if(root->ValueStr()!="profile")
     {
@@ -2678,6 +2792,8 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(
             std::cerr << "Unable to open the xml file: " << file << ", is not an element: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
         startItem = startItem->NextSiblingElement("start");
     }
-
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    delete domDocument;
+    #endif
     return serverProfileList;
 }

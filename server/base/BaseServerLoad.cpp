@@ -401,11 +401,15 @@ bool BaseServer::preload_zone_init()
         stringreplaceOne(zoneCodeName,BaseServer::text_dotxml,"");
         const std::string &file=entryListZone.at(index).absoluteFilePath;
         TiXmlDocument *domDocument;
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         else
         {
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            #else
+            domDocument=new TiXmlDocument();
+            #endif
             const bool loadOkay=domDocument->LoadFile(file);
             if(!loadOkay)
             {
@@ -413,7 +417,9 @@ bool BaseServer::preload_zone_init()
                 index++;
                 continue;
             }
+            #ifndef EPOLLCATCHCHALLENGERSERVER
         }
+        #endif
         auto search = GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.find(zoneCodeName);
         if(search != GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.end())
         {
@@ -459,6 +465,9 @@ bool BaseServer::preload_zone_init()
             else
                 std::cerr << "Unable to open the file: " << file << ", is not an element: (at line: " << capture->Row() << ")" << std::endl;
         }
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+        delete domDocument;
+        #endif
         index++;
     }
 
@@ -2331,18 +2340,24 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
         return;
     botFiles[file];//create the entry
     TiXmlDocument *domDocument;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        #else
+        domDocument=new TiXmlDocument();
+        #endif
         const bool loadOkay=domDocument->LoadFile(file);
         if(!loadOkay)
         {
             std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
             return;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
     }
+    #endif
     bool ok;
     const TiXmlElement * root = domDocument->RootElement();
     if(root->ValueStr()!="bots")
@@ -2392,4 +2407,7 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
         }
         child = child->NextSiblingElement("bot");
     }
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    delete domDocument;
+    #endif
 }

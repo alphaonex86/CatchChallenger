@@ -125,18 +125,24 @@ bool Map_loader::tryLoadMap(const std::string &file)
     TiXmlDocument *domDocument;
 
     //open and quick check the file
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        #else
+        domDocument=new TiXmlDocument();
+        #endif
         bool loadOkay = domDocument->LoadFile(file);
         if (!loadOkay)
         {
             error=file+", Parse error at line "+std::to_string(domDocument->ErrorRow())+" column "+std::to_string(domDocument->ErrorCol())+": "+domDocument->ErrorDesc();
             return false;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
     }
+    #endif
     const TiXmlElement * root = domDocument->RootElement();
     if(root->ValueStr()!=Map_loader::text_map)
     {
@@ -1148,6 +1154,9 @@ bool Map_loader::tryLoadMap(const std::string &file)
         DebugClass::debugConsole("No layer found!");
 #endif
 
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    delete domDocument;
+    #endif
     return true;
 }
 
@@ -1156,18 +1165,24 @@ bool Map_loader::loadMonsterMap(const std::string &file, std::vector<std::string
     TiXmlDocument *domDocument;
 
     //open and quick check the file
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        #else
+        domDocument=new TiXmlDocument();
+        #endif
         const bool loadOkay=domDocument->LoadFile(file);
         if(!loadOkay)
         {
             std::cerr << file << ", Parse error at line " << std::to_string(domDocument->ErrorRow()) << ", column " << std::to_string(domDocument->ErrorCol()) << ": " << domDocument->ErrorDesc() << std::endl;
             return false;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
     }
+    #endif
     this->map_to_send.xmlRoot = domDocument->RootElement();
     if(this->map_to_send.xmlRoot->ValueStr()!=Map_loader::text_map)
     {
@@ -1283,7 +1298,9 @@ bool Map_loader::loadMonsterMap(const std::string &file, std::vector<std::string
             index++;
         }
     }
-
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    delete domDocument;
+    #endif
     return true;
 }
 
@@ -1463,18 +1480,24 @@ TiXmlElement *Map_loader::getXmlCondition(const std::string &fileName,const std:
     TiXmlDocument *domDocument;
 
     //open and quick check the file
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        #else
+        domDocument=new TiXmlDocument();
+        #endif
         const bool loadOkay=domDocument->LoadFile(file);
         if(!loadOkay)
         {
             std::cerr << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
             return NULL;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
     }
+    #endif
     const TiXmlElement * root = domDocument->RootElement();
     if(root->ValueStr()!="conditions")
     {
@@ -1502,6 +1525,9 @@ TiXmlElement *Map_loader::getXmlCondition(const std::string &fileName,const std:
         }
         item = item->NextSiblingElement(Map_loader::text_condition);
     }
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    delete domDocument;
+    #endif
     if(teleportConditionsUnparsed.find(file)!=teleportConditionsUnparsed.cend())
         if(teleportConditionsUnparsed.at(file).find(conditionId)!=teleportConditionsUnparsed.at(file).cend())
             return teleportConditionsUnparsed.at(file).at(conditionId);
