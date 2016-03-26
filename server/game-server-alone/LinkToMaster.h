@@ -64,7 +64,7 @@ public:
     void connectInternal();
     void setConnexionSettings(const uint8_t &tryInterval, const uint8_t &considerDownAfterNumberOfTry);
     bool registerGameServer(const std::string &exportedXml,const char * const dynamicToken);
-    void generateToken();
+    void generateToken(TinyXMLSettings * const settings);
     void sendProtocolHeader();
     bool setSettings(TinyXMLSettings * const settings);
     void characterDisconnected(const uint32_t &characterId);
@@ -91,11 +91,17 @@ protected:
 
     bool parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size);
 private:
-    TinyXMLSettings * settings;
     std::mt19937 rng;
     static sockaddr_in serv_addr;
     uint8_t tryInterval;
     uint8_t considerDownAfterNumberOfTry;
+    std::string server_ip;
+    std::string server_port;
+    std::string externalServerIp;
+    uint16_t externalServerPort;
+    std::string charactersGroup;
+    uint32_t uniqueKey;
+    std::string logicalGroup;
 };
 }
 

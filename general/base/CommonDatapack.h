@@ -47,10 +47,14 @@ public:
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     std::vector<Type> types;
     #endif
+
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     std::unordered_map<std::string/*file*/, TiXmlDocument> xmlLoadedFile;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     std::unordered_map<std::string/*file*/, QDomDocument> xmlLoadedFileQt;
     #endif
+    #endif
+
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     LayersOptions layersOptions;
     std::vector<Event> events;
