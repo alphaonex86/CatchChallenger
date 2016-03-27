@@ -305,14 +305,25 @@ bool LinkToMaster::setSettings(TinyXMLSettings * const settings)
     memcpy(LinkToMaster::private_token,binarytoken.data(),binarytoken.size());
     settings->endGroup();
 
+    server_ip=settings->value("server-ip");
+    server_port=settings->value("server-port");
+
+    settings->beginGroup("master");
+    charactersGroup=settings->value("charactersGroup");
+
     {
         if(!settings->contains("external-server-ip"))
             settings->setValue("external-server-ip",server_ip);
         externalServerIp=settings->value("external-server-ip");
         if(externalServerIp.empty())
         {
-            externalServerIp="localhost";
-            settings->setValue("external-server-ip",externalServerIp);
+            settings->setValue("external-server-ip",server_ip);
+            externalServerIp=settings->value("external-server-ip");
+            if(externalServerIp.empty())
+            {
+                externalServerIp="localhost";
+                settings->setValue("external-server-ip",externalServerIp);
+            }
         }
     }
     {
@@ -329,12 +340,6 @@ bool LinkToMaster::setSettings(TinyXMLSettings * const settings)
             settings->setValue("external-server-port",externalServerPort);
         }
     }
-
-    server_ip=settings->value("server-ip");
-    server_port=settings->value("server-port");
-
-    settings->beginGroup("master");
-    charactersGroup=settings->value("charactersGroup");
 
     if(!settings->contains("uniqueKey"))
     {
@@ -557,6 +562,8 @@ void LinkToMaster::askMoreMaxClanId()
 void LinkToMaster::tryReconnect()
 {
     stat=Stat::Unconnected;
+    GlobalServerData::serverPrivateVariables.maxMonsterId.clear();
+    GlobalServerData::serverPrivateVariables.maxClanId.clear();
     if(stat!=Stat::Unconnected)
         return;
     else
