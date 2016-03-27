@@ -82,15 +82,16 @@ void generateTokenStatClient(TinyXMLSettings &settings,char * const data)
 }
 #endif
 
-std::vector<std::vector<void *> > elementsToDelete;
+std::vector<void *> elementsToDelete[16];
 size_t elementsToDeleteSize=0;
+uint8_t elementsToDeleteIndex=0;
 
 void CatchChallenger::recordDisconnectByServer(void * client)
 {
     unsigned int mainIndex=0;
-    while(mainIndex<elementsToDelete.size())
+    while(mainIndex<16)
     {
-        std::vector<void *> &elementsToDeleteSub=elementsToDelete.at(mainIndex);
+        const std::vector<void *> &elementsToDeleteSub=elementsToDelete[mainIndex];
         if(!elementsToDeleteSub.empty())
         {
             unsigned int index=0;
@@ -103,7 +104,7 @@ void CatchChallenger::recordDisconnectByServer(void * client)
         }
         mainIndex++;
     }
-    elementsToDelete.back().push_back(client);
+    elementsToDelete[elementsToDeleteIndex].push_back(client);
     elementsToDeleteSize++;
 }
 
@@ -885,31 +886,29 @@ int main(int argc, char *argv[])
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     unsigned int clientnumberToDebug=0;
     #endif
-    elementsToDelete.resize(16);
     int number_of_events, i;
     while(1)
     {
 
         number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
-        if(elementsToDeleteSize>0)
+        if(elementsToDeleteSize>0 && number_of_events<MAXEVENTS)
         {
-            if(number_of_events<MAXEVENTS)
+            if(elementsToDeleteIndex>=15)
+                elementsToDeleteIndex=0;
+            else
+                ++elementsToDeleteIndex;
+            const std::vector<void *> &elementsToDeleteSub=elementsToDelete[elementsToDeleteIndex];
+            if(!elementsToDeleteSub.empty())
             {
-                const std::vector<void *> &elementsToDeleteSub=elementsToDelete.front();
-                if(!elementsToDeleteSub.empty())
+                unsigned int index=0;
+                while(index<elementsToDeleteSub.size())
                 {
-                    unsigned int index=0;
-                    while(index<elementsToDeleteSub.size())
-                    {
-                        delete static_cast<Client *>(elementsToDeleteSub.at(index));
-                        index++;
-                    }
+                    delete static_cast<Client *>(elementsToDeleteSub.at(index));
+                    index++;
                 }
-                elementsToDeleteSize-=elementsToDeleteSub.size();
-                elementsToDelete.erase(elementsToDelete.cbegin());
             }
-            if(elementsToDelete.size()<16)
-                elementsToDelete.resize(16);
+            elementsToDeleteSize-=elementsToDeleteSub.size();
+            elementsToDelete[elementsToDeleteIndex].clear();
         }
         #ifdef SERVERBENCHMARK
         EpollUnixSocketClientFinal::start = std::chrono::high_resolution_clock::now();

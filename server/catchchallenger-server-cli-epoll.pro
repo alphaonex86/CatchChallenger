@@ -51,8 +51,7 @@ SOURCES += main-epoll.cpp \
     epoll/timer/TimerEvents.cpp \
     NormalServerGlobal.cpp \
     epoll/EpollGenericServer.cpp \
-    epoll/EpollGenericSslServer.cpp \
-    base/FixedDelimitedBufferRingOnStack64x16.cpp
+    epoll/EpollGenericSslServer.cpp
 
 HEADERS += epoll/EpollSocket.h \
     epoll/EpollClient.h \
@@ -71,6 +70,5 @@ HEADERS += epoll/EpollSocket.h \
     epoll/timer/TimerEvents.h \
     NormalServerGlobal.h \
     epoll/EpollGenericServer.h \
-    epoll/EpollGenericSslServer.h \
-    base/FixedDelimitedBufferRingOnStack64x16.h
+    epoll/EpollGenericSslServer.h
 
