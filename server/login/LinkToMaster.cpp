@@ -296,6 +296,9 @@ void LinkToMaster::parseIncommingData()
 void LinkToMaster::tryReconnect()
 {
     stat=Stat::Unconnected;
+    EpollClientLoginSlave::maxAccountIdList.clear();
+    EpollClientLoginSlave::maxCharacterIdList.clear();
+    EpollClientLoginSlave::maxClanIdList.clear();
     if(stat!=Stat::Unconnected)
         return;
     else

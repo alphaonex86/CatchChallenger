@@ -309,13 +309,8 @@ struct ServerPrivateVariables
 
     //fight
     std::unordered_map<uint16_t,std::vector<MonsterDrops> > monsterDrops;
-    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     std::vector<uint32_t> maxMonsterId;
     std::vector<uint32_t> maxClanId;
-    #else
-    std::atomic<unsigned int> maxClanId;
-    std::atomic<unsigned int> maxMonsterId;
-    #endif
     std::unordered_map<std::string,std::vector<uint16_t> > captureFightIdListByZoneToCaptureCity;
     std::unordered_map<std::string,CityStatus> cityStatusList;
     std::unordered_map<uint32_t,std::string > cityStatusListReverse;

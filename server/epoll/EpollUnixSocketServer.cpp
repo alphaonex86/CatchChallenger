@@ -27,6 +27,7 @@ EpollUnixSocketServer::~EpollUnixSocketServer()
 
 bool EpollUnixSocketServer::tryListen()
 {
+    abort();
     if(sfd != -1)
         return false;
 

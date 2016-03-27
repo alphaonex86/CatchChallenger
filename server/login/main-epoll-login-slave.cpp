@@ -66,32 +66,32 @@ int main(int argc, char *argv[])
 
     int numberOfConnectedClient=0;
     /* The event loop */
-    std::vector<std::vector<void *> > elementsToDelete;
-    elementsToDelete.resize(16);
+    std::vector<void *> elementsToDelete[16];
     size_t elementsToDeleteSize=0;
+    uint8_t elementsToDeleteIndex=0;
+
     int number_of_events, i;
     while(1)
     {
         number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
-        if(elementsToDeleteSize>0)
+        if(elementsToDeleteSize>0 && number_of_events<MAXEVENTS)
         {
-            if(number_of_events<MAXEVENTS)
+            if(elementsToDeleteIndex>=15)
+                elementsToDeleteIndex=0;
+            else
+                ++elementsToDeleteIndex;
+            const std::vector<void *> &elementsToDeleteSub=elementsToDelete[elementsToDeleteIndex];
+            if(!elementsToDeleteSub.empty())
             {
-                const std::vector<void *> &elementsToDeleteSub=elementsToDelete.front();
-                if(!elementsToDeleteSub.empty())
+                unsigned int index=0;
+                while(index<elementsToDeleteSub.size())
                 {
-                    unsigned int index=0;
-                    while(index<elementsToDeleteSub.size())
-                    {
-                        delete static_cast<EpollClientLoginSlave *>(elementsToDeleteSub.at(index));
-                        index++;
-                    }
+                    delete static_cast<EpollClientLoginSlave *>(elementsToDeleteSub.at(index));
+                    index++;
                 }
-                elementsToDeleteSize-=elementsToDeleteSub.size();
-                elementsToDelete.erase(elementsToDelete.cbegin());
             }
-            if(elementsToDelete.size()<16)
-                elementsToDelete.resize(16);
+            elementsToDeleteSize-=elementsToDeleteSub.size();
+            elementsToDelete[elementsToDeleteIndex].clear();
         }
         for(i = 0; i < number_of_events; i++)
         {
@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
                         numberOfConnectedClient--;
 
                         client->disconnectClient();
-                        elementsToDelete.back().push_back(events[i].data.ptr);
+                        elementsToDelete[elementsToDeleteIndex].push_back(events[i].data.ptr);
                         elementsToDeleteSize++;
 
                         continue;
@@ -236,7 +236,7 @@ int main(int argc, char *argv[])
 
                         client->disconnectClient();
 
-                        elementsToDelete.back().push_back(events[i].data.ptr);
+                        elementsToDelete[elementsToDeleteIndex].push_back(events[i].data.ptr);
                         elementsToDeleteSize++;
                     }
                 }
