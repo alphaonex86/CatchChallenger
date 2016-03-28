@@ -5,6 +5,7 @@
 #include "../../../general/base/FacilityLibGeneral.h"
 #include "../../../general/base/GeneralStructures.h"
 #include "../../../general/base/CommonDatapack.h"
+#include "../../../general/base/CommonSettingsServer.h"
 #include "ui_BaseWindow.h"
 #include "../../base/FacilityLibClient.h"
 
@@ -129,7 +130,8 @@ void BaseWindow::plant_collected(const CatchChallenger::Plant_collect &stat)
             qDebug() << "BaseWindow::plant_collected(): unknown return";
         break;
     }
-    plant_collect_in_waiting.removeFirst();
+    if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
+        plant_collect_in_waiting.removeFirst();
 }
 
 void BaseWindow::load_plant_inventory()

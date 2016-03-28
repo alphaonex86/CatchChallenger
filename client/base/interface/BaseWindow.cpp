@@ -1569,6 +1569,7 @@ void BaseWindow::actionOn(Map_client *map, uint8_t x, uint8_t y)
         return;
     else if(CatchChallenger::MoveOnTheMap::isDirt(*map,x,y))
     {
+        /* -1 == not found */
         int index=havePlant(map,x,y);
         if(index>=0)
         {
