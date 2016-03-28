@@ -617,7 +617,7 @@ void BaseWindow::updateConnectingStatus()
                         emit message("Can't create character but the list is empty");
                 }
                 updateCharacterList();
-                if((characterListForSelection.isEmpty() || characterListForSelection.first().isEmpty()) && CommonSettingsCommon::commonSettingsCommon.max_character>0)
+                if((characterListForSelection.isEmpty() || characterListForSelection.at(charactersGroupIndex).isEmpty()) && CommonSettingsCommon::commonSettingsCommon.max_character>0)
                 {
                     if(CommonSettingsCommon::commonSettingsCommon.min_character>0)
                     {
@@ -629,7 +629,7 @@ void BaseWindow::updateConnectingStatus()
                 }
                 if(characterListForSelection.size()==1 && CommonSettingsCommon::commonSettingsCommon.min_character>=characterListForSelection.size() && CommonSettingsCommon::commonSettingsCommon.max_character<=characterListForSelection.size())
                 {
-                    if(characterListForSelection.first().size()==1)
+                    if(characterListForSelection.at(charactersGroupIndex).size()==1)
                     {
                         characterSelected=true;
                         ui->characterEntryList->item(ui->characterEntryList->count()-1)->setSelected(true);
@@ -637,7 +637,7 @@ void BaseWindow::updateConnectingStatus()
                         return;
                     }
                     else
-                        emit message("BaseWindow::updateConnectingStatus(): characterListForSelection.first().size()!=1, bug");
+                        emit message("BaseWindow::updateConnectingStatus(): characterListForSelection.at(charactersGroupIndex).size()!=1, bug");
                 }
                 return;
             }
