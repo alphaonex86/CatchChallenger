@@ -222,11 +222,15 @@ BaseServer::~BaseServer()
 
 void BaseServer::closeDB()
 {
-    GlobalServerData::serverPrivateVariables.db_server->syncDisconnect();
-    GlobalServerData::serverPrivateVariables.db_common->syncDisconnect();
-    GlobalServerData::serverPrivateVariables.db_base->syncDisconnect();
+    if(GlobalServerData::serverPrivateVariables.db_server!=NULL)
+        GlobalServerData::serverPrivateVariables.db_server->syncDisconnect();
+    if(GlobalServerData::serverPrivateVariables.db_common!=NULL)
+        GlobalServerData::serverPrivateVariables.db_common->syncDisconnect();
+    if(GlobalServerData::serverPrivateVariables.db_base!=NULL)
+        GlobalServerData::serverPrivateVariables.db_base->syncDisconnect();
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    GlobalServerData::serverPrivateVariables.db_login->syncDisconnect();
+    if(GlobalServerData::serverPrivateVariables.db_login!=NULL)
+        GlobalServerData::serverPrivateVariables.db_login->syncDisconnect();
     #endif
 }
 
@@ -348,6 +352,34 @@ void BaseServer::parseJustLoadedMap(const Map_to_send &,const std::string &)
 
 bool BaseServer::initialize_the_database()
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_SOLO
+    if(GlobalServerData::serverPrivateVariables.db_server!=NULL && GlobalServerData::serverPrivateVariables.db_server->isConnected())
+        if(GlobalServerData::serverPrivateVariables.db_server->databaseType()!=DatabaseBase::DatabaseType::SQLite)
+        {
+            std::cerr << "Disconnected to incorrect database type for solo: " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_server->databaseType()) << std::endl;
+            abort();
+        }
+    if(GlobalServerData::serverPrivateVariables.db_common!=NULL && GlobalServerData::serverPrivateVariables.db_common->isConnected())
+        if(GlobalServerData::serverPrivateVariables.db_common->databaseType()!=DatabaseBase::DatabaseType::SQLite)
+        {
+            std::cerr << "Disconnected to incorrect database type for solo: " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_common->databaseType()) << std::endl;
+            abort();
+        }
+    if(GlobalServerData::serverPrivateVariables.db_login!=NULL && GlobalServerData::serverPrivateVariables.db_login->isConnected())
+        if(GlobalServerData::serverPrivateVariables.db_login->databaseType()!=DatabaseBase::DatabaseType::SQLite)
+        {
+            std::cerr << "Disconnected to incorrect database type for solo: " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_login->databaseType()) << std::endl;
+            abort();
+        }
+    if(GlobalServerData::serverPrivateVariables.db_base!=NULL && GlobalServerData::serverPrivateVariables.db_base->isConnected())
+        if(GlobalServerData::serverPrivateVariables.db_base->databaseType()!=DatabaseBase::DatabaseType::SQLite)
+        {
+            std::cerr << "Disconnected to incorrect database type for solo: " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_base->databaseType()) << std::endl;
+            abort();
+        }
+    #endif
+    #endif
     if(GlobalServerData::serverPrivateVariables.db_server->isConnected())
     {
         std::cout << "Disconnected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_server->databaseType())
