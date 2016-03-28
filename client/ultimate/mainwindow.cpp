@@ -1718,6 +1718,19 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
         settings.setValue("mainDatapackCode",list.at(0).fileName());
         CommonSettingsServer::commonSettingsServer.mainDatapackCode=list.at(0).fileName().toStdString();
     }
+    QDir mainDir(CatchChallenger::Api_client_real::client->datapackPathBase()+"map/main/"+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/");
+    if(!mainDir.exists())
+    {
+        const QFileInfoList &list=QDir(CatchChallenger::Api_client_real::client->datapackPathBase()+"/map/main/").entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+        if(list.isEmpty())
+        {
+            QMessageBox::critical(this,tr("Error"),tr("No main code detected into the current datapack"));
+            return false;
+        }
+        settings.setValue("mainDatapackCode",list.at(0).fileName());
+        CommonSettingsServer::commonSettingsServer.mainDatapackCode=list.at(0).fileName().toStdString();
+    }
+
     if(settings.contains("subDatapackCode"))
         CommonSettingsServer::commonSettingsServer.subDatapackCode=settings.value("subDatapackCode","").toString().toStdString();
     else
@@ -1730,6 +1743,21 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
         }
         else
             CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
+    }
+    if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
+    {
+        QDir subDir(CatchChallenger::Api_client_real::client->datapackPathBase()+"/map/main/"+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/sub/"+QString::fromStdString(CommonSettingsServer::commonSettingsServer.subDatapackCode)+"/");
+        if(!subDir.exists())
+        {
+            const QFileInfoList &list=QDir(CatchChallenger::Api_client_real::client->datapackPathBase()+"/map/main/"+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/sub/").entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+            if(!list.isEmpty())
+            {
+                settings.setValue("subDatapackCode",list.at(0).fileName());
+                CommonSettingsServer::commonSettingsServer.subDatapackCode=list.at(0).fileName().toStdString();
+            }
+            else
+                CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
+        }
     }
 
     internalServer->setSettings(formatedServerSettings);

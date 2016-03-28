@@ -3640,7 +3640,7 @@ void BaseWindow::updateTheTurtle()
         //qDebug() << "The last query was slow:" << lastReplyTimeValue << ">" << TIMEINMSTOBESLOW << " && " << lastReplyTimeSince.elapsed() << "<" << TIMETOSHOWTHETURTLE;
         if(ui->labelSlow->isVisible())
             return;
-        ui->labelSlow->setToolTip(tr("The last query was slow"));
+        ui->labelSlow->setToolTip(tr("The last query was slow (%1ms)").arg(lastReplyTimeValue));
         ui->labelSlow->show();
         return;
     }
@@ -3648,7 +3648,7 @@ void BaseWindow::updateTheTurtle()
     {
         if(ui->labelSlow->isVisible())
             return;
-        ui->labelSlow->setToolTip(tr("Remain query in suspend"));
+        ui->labelSlow->setToolTip(tr("Remain query in suspend (%1ms ago)").arg(worseQueryTime));
         ui->labelSlow->show();
         return;
     }
