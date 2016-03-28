@@ -577,10 +577,27 @@ void BaseWindow::updateConnectingStatus()
         {
             if(ui->stackedWidget->currentWidget()!=ui->page_serverList)
             {
-                ui->stackedWidget->setCurrentWidget(ui->page_serverList);
-                ui->serverList->header()->setSectionResizeMode(QHeaderView::Fixed);
-                ui->serverList->header()->resizeSection(0,680);
-                updateServerList();
+                if(multiplayer)
+                {
+                    ui->stackedWidget->setCurrentWidget(ui->page_serverList);
+                    ui->serverList->header()->setSectionResizeMode(QHeaderView::Fixed);
+                    ui->serverList->header()->resizeSection(0,680);
+                    updateServerList();
+                }
+                else
+                {
+                    updateServerList();
+
+                    const QTreeWidgetItem * const selectedItem=ui->serverList->itemAt(0,0);
+                    if(selectedItem==NULL)
+                    {
+                        error(tr("Internal Error: No internal server detected"));
+                        return;
+                    }
+
+                    serverSelected=selectedItem->data(99,99).toUInt();
+                    updateConnectingStatus();
+                }
                 return;
             }
         }
@@ -588,7 +605,8 @@ void BaseWindow::updateConnectingStatus()
         {
             if(ui->stackedWidget->currentWidget()!=ui->page_character)
             {
-                ui->stackedWidget->setCurrentWidget(ui->page_character);
+                if(multiplayer)
+                    ui->stackedWidget->setCurrentWidget(ui->page_character);
                 const uint8_t &charactersGroupIndex=serverOrdenedList.at(serverSelected)->charactersGroupIndex;
                 const QList<CharacterEntry> &characterEntryList=characterListForSelection.at(charactersGroupIndex);
                 ui->character_add->setEnabled(characterEntryList.size()<CommonSettingsCommon::commonSettingsCommon.max_character);
@@ -599,7 +617,7 @@ void BaseWindow::updateConnectingStatus()
                         emit message("Can't create character but the list is empty");
                 }
                 updateCharacterList();
-                if(characterListForSelection.isEmpty() && CommonSettingsCommon::commonSettingsCommon.max_character>0)
+                if((characterListForSelection.isEmpty() || characterListForSelection.first().isEmpty()) && CommonSettingsCommon::commonSettingsCommon.max_character>0)
                 {
                     if(CommonSettingsCommon::commonSettingsCommon.min_character>0)
                     {
@@ -607,16 +625,19 @@ void BaseWindow::updateConnectingStatus()
                         ui->label_connecting_status->setText(QString());
                     }
                     on_character_add_clicked();
+                    return;
                 }
                 if(characterListForSelection.size()==1 && CommonSettingsCommon::commonSettingsCommon.min_character>=characterListForSelection.size() && CommonSettingsCommon::commonSettingsCommon.max_character<=characterListForSelection.size())
                 {
-                    /*if(!characterSelected && characterListForSelection.first().mapId!=-1)
+                    if(characterListForSelection.first().size()==1)
                     {
-                        qDebug() << characterListForSelection.first().mapId;
                         characterSelected=true;
                         ui->characterEntryList->item(ui->characterEntryList->count()-1)->setSelected(true);
                         on_character_select_clicked();
-                    }*/
+                        return;
+                    }
+                    else
+                        emit message("BaseWindow::updateConnectingStatus(): characterListForSelection.first().size()!=1, bug");
                 }
                 return;
             }

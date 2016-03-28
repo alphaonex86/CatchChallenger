@@ -128,7 +128,10 @@ void BaseWindow::updateCharacterList()
 
 void BaseWindow::on_character_back_clicked()
 {
-    ui->stackedWidget->setCurrentWidget(ui->page_serverList);
+    if(multiplayer)
+        ui->stackedWidget->setCurrentWidget(ui->page_serverList);
+    else
+        Api_client_real::client->tryDisconnect();
 }
 
 void BaseWindow::on_character_select_clicked()

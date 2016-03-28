@@ -80,6 +80,12 @@ bool QtDatabase::isConnected() const
 
 bool QtDatabase::syncConnect(const std::string &host, const std::string &dbname, const std::string &user, const std::string &password)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_SOLO
+    std::cerr << "Disconnected to incorrect database type for solo into QtDatabase class" << std::endl;
+    abort();
+    #endif
+    #endif
     if(conn!=NULL)
         syncDisconnect();
     conn=findConnexionToOpen(host,dbname);
@@ -113,6 +119,12 @@ bool QtDatabase::syncConnect(const std::string &host, const std::string &dbname,
 
 bool QtDatabase::syncConnectMysql(const std::string &host, const std::string &dbname, const std::string &user,const std::string &password)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_SOLO
+    std::cerr << "Disconnected to incorrect database type for solo into QtDatabase class" << std::endl;
+    abort();
+    #endif
+    #endif
     return syncConnect(host,dbname,user,password);
 }
 
@@ -147,6 +159,12 @@ bool QtDatabase::syncConnectSqlite(const std::string &file)
 
 bool QtDatabase::syncConnectPostgresql(const std::string &host,const std::string &dbname,const std::string &user,const std::string &password)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_SOLO
+    std::cerr << "Disconnected to incorrect database type for solo into QtDatabase class" << std::endl;
+    abort();
+    #endif
+    #endif
     if(conn!=NULL)
         syncDisconnect();
     conn=findConnexionToOpen(host,dbname);
