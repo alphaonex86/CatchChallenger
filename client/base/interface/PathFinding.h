@@ -13,7 +13,7 @@ public:
     explicit PathFinding();
     virtual ~PathFinding();
 signals:
-    void result(QList<QPair<CatchChallenger::Orientation,uint8_t> > path);
+    void result(const QString &current_map,const uint8_t &x,const uint8_t &y,QList<QPair<CatchChallenger::Orientation,uint8_t> > path);
     void internalCancel();
     void emitSearchPath(const QString &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const QString &current_map,const uint8_t &x,const uint8_t &y,const QHash<uint16_t,uint32_t> &items);
 public slots:

@@ -33,17 +33,18 @@ CREATE TABLE "character" (
     time_to_delete integer,
     played_time integer,
     last_connect integer,
-    starter smallint
-);
-
-
---
--- Name: character_allow; Type: TABLE; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE TABLE character_allow (
-    "character" integer,
-    allow smallint
+    starter smallint,
+    allow bytea,
+    item bytea,
+    item_warehouse bytea,
+    recipes bytea,
+    reputations bytea,
+    encyclopedia_monster bytea,
+    encyclopedia_item bytea,
+    achievements bytea,
+    monster bytea,
+    monster_warehouse bytea,
+    monster_market bytea
 );
 
 
@@ -59,32 +60,6 @@ CREATE TABLE clan (
 );
 
 
---
--- Name: item; Type: TABLE; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE TABLE item (
-    item smallint,
-    "character" integer,
-    quantity integer
-);
-
-
---
--- Name: item_warehouse; Type: TABLE; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE TABLE item_warehouse (
-    item smallint,
-    "character" integer,
-    quantity integer
-);
-
-
---
--- Name: monster; Type: TABLE; Schema: public; Owner: root; Tablespace: 
---
-
 CREATE TABLE monster (
     id integer,
     hp smallint,
@@ -98,54 +73,11 @@ CREATE TABLE monster (
     egg_step integer,
     character_origin integer,
     "position" smallint,
-    place smallint
+    place smallint,
+    buffs bytea,
+    skills bytea,
+    skills_endurance bytea
 );
-
-
---
--- Name: monster_buff; Type: TABLE; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE TABLE monster_buff (
-    monster integer,
-    buff smallint,
-    level smallint
-);
-
-
---
--- Name: monster_skill; Type: TABLE; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE TABLE monster_skill (
-    monster integer,
-    skill smallint,
-    level smallint,
-    endurance smallint
-);
-
-
---
--- Name: recipe; Type: TABLE; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE TABLE recipe (
-    "character" integer,
-    recipe smallint
-);
-
-
---
--- Name: reputation; Type: TABLE; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE TABLE reputation (
-    "character" integer,
-    type smallint,
-    point bigint,
-    level smallint
-);
-
 
 --
 -- Name: server_time; Type: TABLE; Schema: public; Owner: root; Tablespace: 
@@ -197,25 +129,10 @@ CREATE INDEX server_time_by_account ON server_time USING btree (account);
 CREATE INDEX character_account ON "character" USING btree (account);
 
 
---
--- Name: character_allow_by_character; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE INDEX character_allow_by_character ON character_allow USING btree ("character");
-
-
---
 -- Name: character_bypseudo; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE UNIQUE INDEX character_bypseudo ON "character" USING btree (pseudo);
-
-
---
--- Name: character_bypseudoandclan; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE UNIQUE INDEX character_bypseudoandclan ON "character" USING btree (pseudo, clan);
 
 
 --
@@ -224,104 +141,11 @@ CREATE UNIQUE INDEX character_bypseudoandclan ON "character" USING btree (pseudo
 
 CREATE INDEX character_clan ON "character" USING btree (clan);
 
-
---
--- Name: item_by_char; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE INDEX item_by_char ON item USING btree ("character");
-
-
---
--- Name: item_uniqueindex; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE UNIQUE INDEX item_uniqueindex ON item USING btree (item, "character");
-
-
---
--- Name: item_warehouse_by_char; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE INDEX item_warehouse_by_char ON item_warehouse USING btree ("character");
-
-
---
--- Name: item_warehouse_uniqueindex; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE UNIQUE INDEX item_warehouse_uniqueindex ON item_warehouse USING btree (item, "character");
-
-
---
--- Name: monster_bychar; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE INDEX monster_bychar ON monster USING btree ("character", place);
-
-
 --
 -- Name: monster_unique; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE UNIQUE INDEX monster_unique ON monster USING btree (id);
-
-
---
--- Name: monsterbuff_bymonster; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE INDEX monsterbuff_bymonster ON monster_buff USING btree (monster);
-
-
---
--- Name: monsterbuff_bymonsterandbuff; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE UNIQUE INDEX monsterbuff_bymonsterandbuff ON monster_buff USING btree (monster, buff);
-
-
---
--- Name: monsterskill_bymonster; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE INDEX monsterskill_bymonster ON monster_skill USING btree (monster);
-
-
---
--- Name: monsterskill_unique; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE UNIQUE INDEX monsterskill_unique ON monster_skill USING btree (monster, skill);
-
-
---
--- Name: recipe_bychar; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE INDEX recipe_bychar ON recipe USING btree ("character");
-
-
---
--- Name: recipe_unique; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE UNIQUE INDEX recipe_unique ON recipe USING btree ("character", recipe);
-
-
---
--- Name: reputation_bychar; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE INDEX reputation_bychar ON reputation USING btree ("character");
-
-
---
--- Name: reputation_unique; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE UNIQUE INDEX reputation_unique ON reputation USING btree ("character", type);
-
 
 --
 -- Name: public; Type: ACL; Schema: -; Owner: postgres

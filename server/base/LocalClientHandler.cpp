@@ -2933,9 +2933,8 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
 
             if(!isFound)
             {
-                std::string queryText=PreparedDBQueryCommon::db_query_update_character_clan_by_pseudo;
-                stringreplaceOne(queryText,"%1",SqlFunction::quoteSqlVariable(text));
-                stringreplaceOne(queryText,"%2",std::to_string(public_and_private_informations.clan));
+                std::string queryText=PreparedDBQueryCommon::db_query_update_character_clan;
+                stringreplaceOne(queryText,"%1",std::to_string(character_id));
                 dbQueryWriteCommon(queryText);
                 return;
             }
