@@ -6,6 +6,7 @@
 
 namespace CatchChallenger {
 
+#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
 class PreparedDBQueryLogin
 {
 public:
@@ -15,16 +16,30 @@ public:
     static std::string db_query_login;
     static std::string db_query_insert_login;
 };
+#endif
 
+#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+class PreparedDBQueryCommonForLogin
+{
+public:
+    static void initDatabaseQueryCommonForLogin(const DatabaseBase::DatabaseType &type);
+public:
+    static std::string db_query_characters;
+    static std::string db_query_characters_with_monsters;
+    static std::string db_query_select_server_time;
+};
+#endif
+
+#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
 class PreparedDBQueryCommon
 {
 public:
     static void initDatabaseQueryCommonWithoutSP(const DatabaseBase::DatabaseType &type);
     static void initDatabaseQueryCommonWithSP(const DatabaseBase::DatabaseType &type,const bool &useSP);
 public:
+    #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
     //query
     static std::string db_query_select_allow;
-    static std::string db_query_characters;
     static std::string db_query_played_time;
     static std::string db_query_monster_skill;
     static std::string db_query_monster;
@@ -32,7 +47,6 @@ public:
     static std::string db_query_update_character_time_to_delete;
     static std::string db_query_update_character_last_connect;
     static std::string db_query_clan;
-    static std::string db_query_select_server_time;
     static std::string db_query_insert_server_time;
     static std::string db_query_update_server_time_played_time;
     static std::string db_query_update_server_time_last_connect;
@@ -104,8 +118,11 @@ public:
     static std::string db_query_delete_monster_specific_skill;
     static std::string db_query_insert_clan;
     static std::string db_query_update_monster_owner;
+    #endif
 };
+#endif
 
+#if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
 class PreparedDBQueryServer
 {
 public:
@@ -146,6 +163,7 @@ public:
     static std::string db_query_update_character_forserver_map_part1;
     static std::string db_query_update_character_forserver_map_part2;
 };
+#endif
 
 }
 

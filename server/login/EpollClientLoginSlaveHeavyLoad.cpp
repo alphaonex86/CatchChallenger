@@ -2,6 +2,7 @@
 #include "EpollServerLoginSlave.h"
 #include "CharactersGroupForLogin.h"
 #include "../base/PreparedDBQuery.h"
+#include "../base/GlobalServerData.h"
 #include <iostream>
 #include <chrono>
 #include <openssl/sha.h>
@@ -240,6 +241,13 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
         }
         else
         {
+            const uint8_t &blob_version=databaseBaseLogin.stringtouint8(databaseBaseLogin.value(2),&ok);
+            if(blob_version!=CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION)
+            {
+                loginIsWrong(askLoginParam->query_id,0x04,"Blob version incorrect");
+                delete askLoginParam;
+                return;
+            }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             std::vector<char> tempAddedToken;
             std::vector<char> secretTokenBinary;
@@ -511,11 +519,6 @@ void EpollClientLoginSlave::createAccount(const uint8_t &query_id, const char *r
         errorParsingLayer("createAccount() Query inset login is empty, bug");
         return;
     }
-    if(PreparedDBQueryCommon::db_query_characters.empty())
-    {
-        errorParsingLayer("createAccount() Query characters is empty, bug");
-        return;
-    }
     if(!CommonSettingsCommon::commonSettingsCommon.automatic_account_creation)
     {
         errorParsingLayer("createAccount() Creation account not premited");
@@ -639,6 +642,7 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
             stringreplaceOne(queryText,"%2",binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE));
             stringreplaceOne(queryText,"%3",binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE));
             stringreplaceOne(queryText,"%4",std::to_string(sFrom1970()));
+            stringreplaceOne(queryText,"%5",std::to_string(CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION));
             dbQueryWriteLogin(queryText);
         }
         //send the network reply

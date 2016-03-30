@@ -12,7 +12,7 @@ using namespace CatchChallenger;
 
 void CharactersGroupForLogin::character_list(EpollClientLoginSlave * const client,const uint32_t &account_id)
 {
-    std::string queryText=PreparedDBQueryCommon::db_query_characters;
+    std::string queryText=PreparedDBQueryCommonForLogin::db_query_characters;
     stringreplaceOne(queryText,"%1",std::to_string(account_id));
     stringreplaceOne(queryText,"%2",std::to_string(CommonSettingsCommon::commonSettingsCommon.max_character*2));
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText,this,&CharactersGroupForLogin::character_list_static);
@@ -158,7 +158,7 @@ void CharactersGroupForLogin::character_list_object()
 
 void CharactersGroupForLogin::server_list(EpollClientLoginSlave * const client,const uint32_t &account_id)
 {
-    std::string queryText=PreparedDBQueryCommon::db_query_select_server_time;
+    std::string queryText=PreparedDBQueryCommonForLogin::db_query_select_server_time;
     stringreplaceOne(queryText,"%1",std::to_string(account_id));
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText,this,&CharactersGroupForLogin::server_list_static);
     if(callback==NULL)
@@ -235,29 +235,9 @@ void CharactersGroupForLogin::server_list_object()
 void CharactersGroupForLogin::deleteCharacterNow(const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryCommon::db_query_monster_by_character_id.empty())
-    {
-        std::cerr << "deleteCharacterNow() Query is empty, bug" << std::endl;
-        return;
-    }
-    if(PreparedDBQueryCommon::db_query_delete_monster_buff.empty())
-    {
-        std::cerr << "deleteCharacterNow() Query db_query_delete_monster_buff is empty, bug" << std::endl;
-        return;
-    }
-    if(PreparedDBQueryCommon::db_query_delete_monster_skill.empty())
-    {
-        std::cerr << "deleteCharacterNow() Query db_query_delete_monster_skill is empty, bug" << std::endl;
-        return;
-    }
     if(PreparedDBQueryCommon::db_query_delete_character.empty())
     {
         std::cerr << "deleteCharacterNow() Query db_query_delete_character is empty, bug" << std::endl;
-        return;
-    }
-    if(PreparedDBQueryCommon::db_query_delete_all_item.empty())
-    {
-        std::cerr << "deleteCharacterNow() Query db_query_delete_item is empty, bug" << std::endl;
         return;
     }
     if(PreparedDBQueryCommon::db_query_delete_monster_by_character.empty())
@@ -265,19 +245,9 @@ void CharactersGroupForLogin::deleteCharacterNow(const uint32_t &characterId)
         std::cerr << "deleteCharacterNow() Query db_query_delete_monster is empty, bug" << std::endl;
         return;
     }
-    if(PreparedDBQueryCommon::db_query_delete_recipes.empty())
-    {
-        std::cerr << "deleteCharacterNow() Query db_query_delete_recipes is empty, bug" << std::endl;
-        return;
-    }
-    if(PreparedDBQueryCommon::db_query_delete_reputation.empty())
-    {
-        std::cerr << "deleteCharacterNow() Query db_query_delete_reputation is empty, bug" << std::endl;
-        return;
-    }
     #endif
 
-    std::string queryText=PreparedDBQueryCommon::db_query_monster_by_character_id;
+    std::string queryText=PreparedDBQueryCommon::db_query_characters_with_monsters;
     stringreplaceOne(queryText,"%1",std::to_string(characterId));
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText,this,&CharactersGroupForLogin::deleteCharacterNow_static);
     if(callback==NULL)
@@ -304,42 +274,72 @@ void CharactersGroupForLogin::deleteCharacterNow_object()
 
 void CharactersGroupForLogin::deleteCharacterNow_return(const uint32_t &characterId)
 {
-    bool ok;
     std::string queryText;
-    while(databaseBaseCommon->next())
+    if(databaseBaseCommon->next())
     {
-        const uint32_t &monsterId=databaseBaseCommon->stringtouint32(databaseBaseCommon->value(0),&ok);
-        if(ok)
         {
-            queryText=PreparedDBQueryCommon::db_query_delete_monster_buff;
-            stringreplaceOne(queryText,"%1",std::to_string(monsterId));
-            dbQueryWriteCommon(queryText);
-            queryText=PreparedDBQueryCommon::db_query_delete_monster_skill;
-            stringreplaceOne(queryText,"%1",std::to_string(monsterId));
-            dbQueryWriteCommon(queryText);
+            std::string monster;
+            monster=databaseBaseCommon->value(0);
+            if(monster.size()%(sizeof(uint32_t)*2)==0)
+            {
+                const auto &data=hexatoBinary(monster);
+                const uint16_t &size=data.size()/(sizeof(uint32_t));
+                uint16_t index=0;
+                while(index<size)
+                {
+                    const uint32_t &monsterId=*reinterpret_cast<uint32_t *>(data.data()+index*sizeof(uint32_t));
+                    queryText=PreparedDBQueryCommon::db_query_delete_monster_by_id;
+                    stringreplaceOne(queryText,"%1",std::to_string(monsterId));
+                    dbQueryWriteCommon(queryText);
+                    index++;
+                }
+            }
+            else
+                std::cerr << "haractersGroupForLogin::deleteCharacterNow_return() have incorrect monster blob lenght: " << monster.size() << ", characterId: " << characterId << std::endl;
         }
+        {
+            std::string monster_warehouse=databaseBaseCommon->value(1);
+            if(monster_warehouse.size()%(sizeof(uint32_t)*2)==0)
+            {
+                const auto &data=hexatoBinary(monster_warehouse);
+                const uint16_t &size=data.size()/(sizeof(uint32_t));
+                uint16_t index=0;
+                while(index<size)
+                {
+                    const uint32_t &monsterId=*reinterpret_cast<uint32_t *>(data.data()+index*sizeof(uint32_t));
+                    queryText=PreparedDBQueryCommon::db_query_delete_monster_by_id;
+                    stringreplaceOne(queryText,"%1",std::to_string(monsterId));
+                    dbQueryWriteCommon(queryText);
+                    index++;
+                }
+            }
+            else
+                std::cerr << "haractersGroupForLogin::deleteCharacterNow_return() have incorrect monster_warehouse blob lenght: " << monster_warehouse.size() << ", characterId: " << characterId << std::endl;
+        }
+        {
+            std::string monster_market=databaseBaseCommon->value(2);
+            if(monster_market.size()%(sizeof(uint32_t)*2)==0)
+            {
+                const auto &data=hexatoBinary(monster_market);
+                const uint16_t &size=data.size()/(sizeof(uint32_t));
+                uint16_t index=0;
+                while(index<size)
+                {
+                    const uint32_t &monsterId=*reinterpret_cast<uint32_t *>(data.data()+index*sizeof(uint32_t));
+                    queryText=PreparedDBQueryCommon::db_query_delete_monster_by_id;
+                    stringreplaceOne(queryText,"%1",std::to_string(monsterId));
+                    dbQueryWriteCommon(queryText);
+                    index++;
+                }
+            }
+            else
+                std::cerr << "haractersGroupForLogin::deleteCharacterNow_return() have incorrect monster_market blob lenght: " << monster_market.size() << ", characterId: " << characterId << std::endl;
+        }
+
+        queryText=PreparedDBQueryCommon::db_query_delete_character;
+        stringreplaceOne(queryText,"%1",std::to_string(characterId));
+        dbQueryWriteCommon(queryText);
     }
-    queryText=PreparedDBQueryCommon::db_query_delete_character;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
-    dbQueryWriteCommon(queryText);
-    queryText=PreparedDBQueryCommon::db_query_delete_all_item;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
-    dbQueryWriteCommon(queryText);
-    queryText=PreparedDBQueryCommon::db_query_delete_all_item_warehouse;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
-    dbQueryWriteCommon(queryText);
-    queryText=PreparedDBQueryCommon::db_query_delete_monster_by_character;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
-    dbQueryWriteCommon(queryText);
-    queryText=PreparedDBQueryCommon::db_query_delete_recipes;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
-    dbQueryWriteCommon(queryText);
-    queryText=PreparedDBQueryCommon::db_query_delete_reputation;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
-    dbQueryWriteCommon(queryText);
-    queryText=PreparedDBQueryCommon::db_query_delete_allow;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
-    dbQueryWriteCommon(queryText);
 }
 
 int8_t CharactersGroupForLogin::addCharacter(void * const client,const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId)
