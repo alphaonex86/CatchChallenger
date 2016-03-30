@@ -65,7 +65,7 @@ void MapControllerMP::resetAll()
 
     unloadPlayerFromCurrentMap();
     current_map.clear();
-    path.clear();
+    pathList.clear();
     delayedActions.clear();
     skinFolderList.clear();
 
@@ -1617,10 +1617,59 @@ void MapControllerMP::destroyMap(MapVisualiserThread::Map_full *map)
 
 CatchChallenger::Direction MapControllerMP::moveFromPath()
 {
-    const CatchChallenger::Orientation orientation=path.first().first;
-    path.first().second--;
-    if(path.first().second==0)
-        path.removeFirst();
+    CatchChallenger::Orientation orientation;
+    if(pathList.size()>1)
+    {
+        PathResolved::StartPoint startPoint=pathList.last().startPoint;
+        if(startPoint.map==currentMap() && startPoint.x==x && startPoint.y==y)
+        {
+            while(pathList.size()>1)
+                pathList.removeFirst();
+        }
+
+        orientation=pathList.first().path.first().first;
+        pathList.first().path.first().second--;
+        if(pathList.first().path.first().second==0)
+        {
+            pathList.first().path.removeFirst();
+            if(pathList.first().path.isEmpty())
+            {
+                pathList.removeFirst();
+                if(!pathList.isEmpty())
+                {
+                    PathResolved::StartPoint startPoint=pathList.last().startPoint;
+                    if(startPoint.map==currentMap() && startPoint.x==x && startPoint.y==y)
+                    {
+                    }
+                    else
+                        pathList.clear();
+                }
+            }
+        }
+    }
+    else
+    {
+        orientation=pathList.first().path.first().first;
+        pathList.first().path.first().second--;
+        if(pathList.first().path.first().second==0)
+        {
+            pathList.first().path.removeFirst();
+            if(pathList.first().path.isEmpty())
+            {
+                pathList.removeFirst();
+                if(!pathList.isEmpty())
+                {
+                    PathResolved::StartPoint startPoint=pathList.last().startPoint;
+                    if(startPoint.map==currentMap() && startPoint.x==x && startPoint.y==y)
+                    {
+                    }
+                    else
+                        pathList.clear();
+                }
+            }
+        }
+    }
+
     if(orientation==CatchChallenger::Orientation_bottom)
         return CatchChallenger::Direction_move_at_bottom;
     if(orientation==CatchChallenger::Orientation_top)
@@ -1640,14 +1689,19 @@ void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserTh
         {
             MapVisualiser::eventOnMap(event,tempMapObject,x,y);
             pathFinding.searchPath(all_map,QString::fromStdString(tempMapObject->logicalMap.map_file),x,y,current_map,this->x,this->y,CatchChallenger::stdmapToQHash(*items));
-            path.clear();
+            if(pathList.isEmpty())
+            {
+                while(pathList.size()>1)
+                    pathList.removeLast();
+                //pathList.clear();
+            }
         }
     }
 }
 
 bool MapControllerMP::nextPathStep()//true if have step
 {
-    if(!path.isEmpty())
+    if(!pathList.isEmpty())
     {
         const CatchChallenger::Direction &direction=MapControllerMP::moveFromPath();
         if(canGoTo(direction,all_map.value(current_map)->logicalMap,x,y,true))
@@ -1683,21 +1737,36 @@ bool MapControllerMP::nextPathStep()//true if have step
             return true;
         }
         else
-            path.clear();
+            pathList.clear();
     }
     return false;
 }
 
-void MapControllerMP::pathFindingResult(const QList<QPair<CatchChallenger::Orientation,uint8_t> > &path)
+void MapControllerMP::pathFindingResult(const QString &current_map,const uint8_t &x,const uint8_t &y,const QList<QPair<CatchChallenger::Orientation,uint8_t> > &path)
 {
     if(!path.isEmpty())
     {
         if(keyAccepted.isEmpty() || (keyAccepted.contains(Qt::Key_Return) && keyAccepted.size()))
         {
             //take care of the returned data
-            this->path=path;
+            PathResolved pathResolved;
+            pathResolved.startPoint.map=current_map;
+            pathResolved.startPoint.x=x;
+            pathResolved.startPoint.y=y;
+            pathResolved.path=path;
+
             if(!inMove)
-                nextPathStep();
+            {
+                if(this->current_map==current_map && this->x==x && this->y==y)
+                {
+                    if(pathList.size()>1)
+                        pathList.removeLast();
+                    pathList.append(pathResolved);
+                    nextPathStep();
+                }
+                else
+                    std::cerr << "Wrong start point to start the path finding" << std::endl;
+            }
             return;
         }
     }
@@ -1708,6 +1777,6 @@ void MapControllerMP::pathFindingResult(const QList<QPair<CatchChallenger::Orien
 void MapControllerMP::keyPressParse()
 {
     pathFinding.cancel();
-    path.clear();
+    pathList.clear();
     MapVisualiserPlayerWithFight::keyPressParse();
 }

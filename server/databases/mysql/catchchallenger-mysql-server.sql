@@ -8,19 +8,6 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Table structure for table `bot_already_beaten`
---
-
-CREATE TABLE IF NOT EXISTS `bot_already_beaten` (
-  `character` int(11) NOT NULL,
-  `botfight_id` int(11) NOT NULL,
-  PRIMARY KEY (`character`,`botfight_id`),
-  KEY `player_id` (`character`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `character_forserver`
 --
 
@@ -38,22 +25,13 @@ CREATE TABLE IF NOT EXISTS `character_forserver` (
   `unvalidated_rescue_x` tinyint(3) unsigned NOT NULL,
   `unvalidated_rescue_y` tinyint(3) unsigned NOT NULL,
   `unvalidated_rescue_orientation` smallint(6) NOT NULL,
-  `date` bigint(20) unsigned NOT NULL,
+  `date` int(11) unsigned NOT NULL,
   `market_cash` bigint(20) unsigned NOT NULL,
+  `botfight_id` mediumblob NOT NULL,
+  `itemonmap` tinyblob NOT NULL,
+  `plants` blob NOT NULL,
+  `blob_version` tinyint(4) NOT NULL,
   PRIMARY KEY (`character`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `character_itemonmap`
---
-
-CREATE TABLE IF NOT EXISTS `character_itemonmap` (
-  `character` int(11) NOT NULL,
-  `pointOnMap` smallint(6) NOT NULL,
-  UNIQUE KEY `character_2` (`character`,`pointOnMap`),
-  KEY `character` (`character`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -78,7 +56,7 @@ CREATE TABLE IF NOT EXISTS `dictionary_map` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `map` text NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -92,7 +70,7 @@ CREATE TABLE IF NOT EXISTS `dictionary_pointonmap` (
   `x` smallint(6) NOT NULL,
   `y` smallint(6) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -104,7 +82,7 @@ CREATE TABLE IF NOT EXISTS `factory` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `resources` text NOT NULL,
   `products` text NOT NULL,
-  `last_update` bigint(20) unsigned NOT NULL,
+  `last_update` int(11) unsigned NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
@@ -147,19 +125,4 @@ CREATE TABLE IF NOT EXISTS `plant` (
   `plant_timestamps` int(11) unsigned NOT NULL,
   PRIMARY KEY (`character`,`pointOnMap`),
   KEY `character` (`character`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `quest`
---
-
-CREATE TABLE IF NOT EXISTS `quest` (
-  `character` int(11) NOT NULL,
-  `quest` smallint(5) unsigned NOT NULL,
-  `finish_one_time` tinyint(1) NOT NULL,
-  `step` tinyint(3) unsigned NOT NULL,
-  PRIMARY KEY (`character`,`quest`),
-  KEY `player` (`character`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

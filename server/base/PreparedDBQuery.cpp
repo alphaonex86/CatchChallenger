@@ -103,7 +103,6 @@ std::string PreparedDBQueryCommon::db_query_update_reputation;
 std::string PreparedDBQueryCommon::db_query_update_character_clan;
 std::string PreparedDBQueryCommon::db_query_update_character_clan_and_leader;
 std::string PreparedDBQueryCommon::db_query_delete_clan;
-std::string PreparedDBQueryCommon::db_query_update_character_clan_by_pseudo;
 std::string PreparedDBQueryCommon::db_query_update_monster_xp_hp_level;
 std::string PreparedDBQueryCommon::db_query_update_monster_hp_only;
 std::string PreparedDBQueryCommon::db_query_update_monster_sp_only;
@@ -234,7 +233,6 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_character_clan="UPDATE `character` SET `clan`=0 WHERE `id`=%1";
         PreparedDBQueryCommon::db_query_update_character_clan_and_leader="UPDATE `character` SET `clan`=%1,`clan_leader`=%2 WHERE `id`=%3;";
         PreparedDBQueryCommon::db_query_delete_clan="DELETE FROM `clan` WHERE `id`=%1";
-        PreparedDBQueryCommon::db_query_update_character_clan_by_pseudo="UPDATE `character` SET `clan`=0 WHERE `pseudo`=%1 AND `clan`=%2";
         PreparedDBQueryCommon::db_query_update_monster_hp_only="UPDATE `monster` SET `hp`=%1 WHERE `id`=%2";
         PreparedDBQueryCommon::db_query_update_monster_sp_only="UPDATE `monster` SET `sp`=%1 WHERE `id`=%2";
         PreparedDBQueryCommon::db_query_update_monster_skill_level="UPDATE `monster_skill` SET `level`=%1 WHERE `monster`=%2 AND `skill`=%3";
@@ -317,7 +315,6 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_character_clan="UPDATE character SET clan=0 WHERE id=%1";
         PreparedDBQueryCommon::db_query_update_character_clan_and_leader="UPDATE character SET clan=%1,clan_leader=%2 WHERE id=%3;";
         PreparedDBQueryCommon::db_query_delete_clan="DELETE FROM clan WHERE id=%1";
-        PreparedDBQueryCommon::db_query_update_character_clan_by_pseudo="UPDATE character SET clan=0 WHERE pseudo=%1 AND clan=%2";
         PreparedDBQueryCommon::db_query_update_monster_hp_only="UPDATE monster SET hp=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_monster_sp_only="UPDATE monster SET sp=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_monster_skill_level="UPDATE monster_skill SET level=%1 WHERE monster=%2 AND skill=%3";
@@ -400,7 +397,6 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_character_clan="UPDATE character SET clan=0 WHERE id=%1";
         PreparedDBQueryCommon::db_query_update_character_clan_and_leader="UPDATE character SET clan=%1,clan_leader=%2 WHERE id=%3;";
         PreparedDBQueryCommon::db_query_delete_clan="DELETE FROM clan WHERE id=%1";
-        PreparedDBQueryCommon::db_query_update_character_clan_by_pseudo="UPDATE character SET clan=0 WHERE pseudo=%1 AND clan=%2";
         PreparedDBQueryCommon::db_query_update_monster_hp_only="UPDATE monster SET hp=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_monster_sp_only="UPDATE monster SET sp=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_monster_skill_level="UPDATE monster_skill SET level=%1 WHERE monster=%2 AND skill=%3";
