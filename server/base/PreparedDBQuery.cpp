@@ -4,48 +4,24 @@
 using namespace CatchChallenger;
 
 //query
+#if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
 std::string PreparedDBQueryLogin::db_query_login;
 std::string PreparedDBQueryLogin::db_query_insert_login;
+#endif
 
-std::string PreparedDBQueryServer::db_query_character_server_by_id;
-std::string PreparedDBQueryServer::db_query_delete_all_item_market;
-std::string PreparedDBQueryServer::db_query_insert_item_market;
-std::string PreparedDBQueryServer::db_query_delete_item_market;
-std::string PreparedDBQueryServer::db_query_update_item_market;
-std::string PreparedDBQueryServer::db_query_update_item_market_and_price;
-std::string PreparedDBQueryServer::db_query_update_charaters_market_cash;
-std::string PreparedDBQueryServer::db_query_get_market_cash;
-std::string PreparedDBQueryServer::db_query_insert_monster_market_price;
-std::string PreparedDBQueryServer::db_query_delete_monster_market_price;
+#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+std::string PreparedDBQueryCommonForLogin::db_query_characters;
+std::string PreparedDBQueryCommonForLogin::db_query_characters_with_monsters;
+std::string PreparedDBQueryCommonForLogin::db_query_select_server_time;
+#endif
 
-std::string PreparedDBQueryServer::db_query_insert_plant;
-std::string PreparedDBQueryServer::db_query_update_quest_finish;
-std::string PreparedDBQueryServer::db_query_update_quest_step;
-std::string PreparedDBQueryServer::db_query_update_quest_restart;
-std::string PreparedDBQueryServer::db_query_insert_quest;
-std::string PreparedDBQueryServer::db_query_update_city_clan;
-std::string PreparedDBQueryServer::db_query_insert_city;
-std::string PreparedDBQueryServer::db_query_select_plant;
-std::string PreparedDBQueryServer::db_query_delete_plant;
-std::string PreparedDBQueryServer::db_query_delete_plant_by_index;
-std::string PreparedDBQueryServer::db_query_delete_quest;
-std::string PreparedDBQueryServer::db_query_select_quest_by_id;
-std::string PreparedDBQueryServer::db_query_select_bot_beaten;
-std::string PreparedDBQueryServer::db_query_select_itemOnMap;
-std::string PreparedDBQueryServer::db_query_insert_itemonmap;
-std::string PreparedDBQueryServer::db_query_insert_factory;
-std::string PreparedDBQueryServer::db_query_update_factory;
-std::string PreparedDBQueryServer::db_query_delete_city;
-std::string PreparedDBQueryServer::db_query_insert_bot_already_beaten;
-std::string PreparedDBQueryServer::db_query_delete_bot_already_beaten;
-
+#if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
 std::string PreparedDBQueryCommon::db_query_select_monstersBuff_by_id;
 std::string PreparedDBQueryCommon::db_query_update_monster_move_to_player;
 std::string PreparedDBQueryCommon::db_query_update_monster_move_to_new_player;
 std::string PreparedDBQueryCommon::db_query_update_monster_move_to_warehouse;
 std::string PreparedDBQueryCommon::db_query_update_monster_move_to_market;
 std::string PreparedDBQueryCommon::db_query_select_allow;
-std::string PreparedDBQueryCommon::db_query_characters;
 std::string PreparedDBQueryCommon::db_query_played_time;
 std::string PreparedDBQueryCommon::db_query_monster_skill;
 std::string PreparedDBQueryCommon::db_query_monster;
@@ -116,13 +92,48 @@ std::string PreparedDBQueryCommon::db_query_update_monster_level_only;
 std::string PreparedDBQueryCommon::db_query_delete_monster_specific_skill;
 std::string PreparedDBQueryCommon::db_query_insert_clan;
 std::string PreparedDBQueryCommon::db_query_update_monster_owner;
-std::string PreparedDBQueryCommon::db_query_select_server_time;
 std::string PreparedDBQueryCommon::db_query_insert_server_time;
 std::string PreparedDBQueryCommon::db_query_update_server_time_played_time;
 std::string PreparedDBQueryCommon::db_query_update_server_time_last_connect;
+#endif
+
+#if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+std::string PreparedDBQueryServer::db_query_character_server_by_id;
+std::string PreparedDBQueryServer::db_query_delete_all_item_market;
+std::string PreparedDBQueryServer::db_query_insert_item_market;
+std::string PreparedDBQueryServer::db_query_delete_item_market;
+std::string PreparedDBQueryServer::db_query_update_item_market;
+std::string PreparedDBQueryServer::db_query_update_item_market_and_price;
+std::string PreparedDBQueryServer::db_query_update_charaters_market_cash;
+std::string PreparedDBQueryServer::db_query_get_market_cash;
+std::string PreparedDBQueryServer::db_query_insert_monster_market_price;
+std::string PreparedDBQueryServer::db_query_delete_monster_market_price;
+
+std::string PreparedDBQueryServer::db_query_insert_plant;
+std::string PreparedDBQueryServer::db_query_update_quest_finish;
+std::string PreparedDBQueryServer::db_query_update_quest_step;
+std::string PreparedDBQueryServer::db_query_update_quest_restart;
+std::string PreparedDBQueryServer::db_query_insert_quest;
+std::string PreparedDBQueryServer::db_query_update_city_clan;
+std::string PreparedDBQueryServer::db_query_insert_city;
+std::string PreparedDBQueryServer::db_query_select_plant;
+std::string PreparedDBQueryServer::db_query_delete_plant;
+std::string PreparedDBQueryServer::db_query_delete_plant_by_index;
+std::string PreparedDBQueryServer::db_query_delete_quest;
+std::string PreparedDBQueryServer::db_query_select_quest_by_id;
+std::string PreparedDBQueryServer::db_query_select_bot_beaten;
+std::string PreparedDBQueryServer::db_query_select_itemOnMap;
+std::string PreparedDBQueryServer::db_query_insert_itemonmap;
+std::string PreparedDBQueryServer::db_query_insert_factory;
+std::string PreparedDBQueryServer::db_query_update_factory;
+std::string PreparedDBQueryServer::db_query_delete_city;
+std::string PreparedDBQueryServer::db_query_insert_bot_already_beaten;
+std::string PreparedDBQueryServer::db_query_delete_bot_already_beaten;
 std::string PreparedDBQueryServer::db_query_update_character_forserver_map_part1;
 std::string PreparedDBQueryServer::db_query_update_character_forserver_map_part2;
+#endif
 
+#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
 void PreparedDBQueryLogin::initDatabaseQueryLogin(const DatabaseBase::DatabaseType &type)
 {
     switch(type)
@@ -137,27 +148,69 @@ void PreparedDBQueryLogin::initDatabaseQueryLogin(const DatabaseBase::DatabaseTy
         return;
         #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_MYSQL)
         case DatabaseBase::DatabaseType::Mysql:
-        PreparedDBQueryLogin::db_query_login="SELECT `id`,LOWER(HEX(`password`)) FROM `account` WHERE `login`=UNHEX('%1')";
-        PreparedDBQueryLogin::db_query_insert_login="INSERT INTO account(id,login,password,date) VALUES(%1,UNHEX('%2'),UNHEX('%3'),%4)";
+        PreparedDBQueryLogin::db_query_login="SELECT `id`,LOWER(HEX(`password`)),blob_version FROM `account` WHERE `login`=UNHEX('%1')";
+        PreparedDBQueryLogin::db_query_insert_login="INSERT INTO account(id,login,password,date,blob_version) VALUES(%1,UNHEX('%2'),UNHEX('%3'),%4,%5)";
         break;
         #endif
 
         #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::SQLite:
-        PreparedDBQueryLogin::db_query_login="SELECT id,password FROM account WHERE login='%1'";
-        PreparedDBQueryLogin::db_query_insert_login="INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4)";
+        PreparedDBQueryLogin::db_query_login="SELECT id,password,blob_version FROM account WHERE login='%1'";
+        PreparedDBQueryLogin::db_query_insert_login="INSERT INTO account(id,login,password,date,blob_version) VALUES(%1,'%2','%3',%4,%5)";
         break;
         #endif
 
         #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
-        PreparedDBQueryLogin::db_query_login="SELECT id,encode(password,'hex') FROM account WHERE login='\\x%1'";
-        PreparedDBQueryLogin::db_query_insert_login="INSERT INTO account(id,login,password,date) VALUES(%1,'\\x%2','\\x%3',%4)";
+        PreparedDBQueryLogin::db_query_login="SELECT id,encode(password,'hex'),blob_version FROM account WHERE login='\\x%1'";
+        PreparedDBQueryLogin::db_query_insert_login="INSERT INTO account(id,login,password,date,blob_version) VALUES(%1,'\\x%2','\\x%3',%4,%5)";
         break;
         #endif
     }
 }
+#endif
 
+#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const DatabaseBase::DatabaseType &type)
+{
+    switch(type)
+    {
+        default:
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        std::cerr << "PreparedDBQuery: Unknown database type" << std::endl;
+        #else
+        std::cerr << "PreparedDBQuery: Unknown database type in epoll mode" << std::endl;
+        #endif
+        abort();
+        return;
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_MYSQL)
+        case DatabaseBase::DatabaseType::Mysql:
+        PreparedDBQueryCommonForLogin::db_query_characters="SELECT `id`,`pseudo`,`skin`,`time_to_delete`,`played_time`,`last_connect` FROM `character` WHERE `account`=%1 LIMIT 0,%2";
+        PreparedDBQueryCommonForLogin::db_query_characters_with_monsters="SELECT LOWER(HEX(`monster`)),LOWER(HEX(`monster_warehouse`)),LOWER(HEX(`monster_market`)) FROM `character` WHERE `id`=%1";
+        PreparedDBQueryCommonForLogin::db_query_select_server_time="SELECT `server`,`played_time`,`last_connect` FROM `server_time` WHERE `account`=%1";//not by characters to prevent too hurge datas to store
+        break;
+        #endif
+
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        case DatabaseBase::DatabaseType::SQLite:
+        PreparedDBQueryCommonForLogin::db_query_characters="SELECT id,pseudo,skin,time_to_delete,played_time,last_connect FROM character WHERE account=%1 LIMIT 0,%2";
+        PreparedDBQueryCommonForLogin::db_query_characters_with_monsters="SELECT monster,monster_warehouse,monster_market FROM character WHERE id=%1";
+        PreparedDBQueryCommonForLogin::db_query_select_server_time="SELECT server,played_time,last_connect FROM server_time WHERE account=%1";//not by characters to prevent too hurge datas to store
+        break;
+        #endif
+
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
+        case DatabaseBase::DatabaseType::PostgreSQL:
+        PreparedDBQueryCommonForLogin::db_query_characters="SELECT id,pseudo,skin,time_to_delete,played_time,last_connect FROM character WHERE account=%1 LIMIT %2";
+        PreparedDBQueryCommonForLogin::db_query_characters_with_monsters="SELECT encode(monster,'hex'),encode(monster_warehouse,'hex'),encode(monster_market,'hex') FROM character WHERE id=%1";
+        PreparedDBQueryCommonForLogin::db_query_select_server_time="SELECT server,played_time,last_connect FROM server_time WHERE account=%1";//not by characters to prevent too hurge datas to store
+        break;
+        #endif
+    }
+}
+#endif
+
+#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
 void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase::DatabaseType &type)
 {
     switch(type)
@@ -172,8 +225,8 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         return;
         #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_MYSQL)
         case DatabaseBase::DatabaseType::Mysql:
+        #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
         PreparedDBQueryCommon::db_query_select_allow="SELECT `allow` FROM `character_allow` WHERE `character`=%1";
-        PreparedDBQueryCommon::db_query_characters="SELECT `id`,`pseudo`,`skin`,`time_to_delete`,`played_time`,`last_connect` FROM `character` WHERE `account`=%1 ORDER BY `played_time` LIMIT 0,%2";
         PreparedDBQueryCommon::db_query_played_time="UPDATE `character` SET `played_time`=`played_time`+%2 WHERE `id`=%1";
         PreparedDBQueryCommon::db_query_monster_skill="UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3";
         PreparedDBQueryCommon::db_query_character_by_id="SELECT `account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`starter` FROM `character` WHERE `id`=%1";
@@ -245,17 +298,17 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_delete_monster_specific_skill="DELETE FROM `monster_skill` WHERE `monster`=%1 AND `skill`=%2";
         PreparedDBQueryCommon::db_query_insert_clan="INSERT INTO `clan`(`id`,`name`,`date`) VALUES(%1,'%2',%3);";
         PreparedDBQueryCommon::db_query_update_monster_owner="UPDATE `monster` SET `character`=%2 WHERE `id`=%1;";
-        PreparedDBQueryCommon::db_query_select_server_time="SELECT `server`,`played_time`,`last_connect` FROM `server_time` WHERE `account`=%1";//not by characters to prevent too hurge datas to store
         PreparedDBQueryCommon::db_query_insert_server_time="INSERT INTO `server_time`(`server`,`account`,`played_time`,`last_connect`) VALUES(%1,%2,0,%3);";
         PreparedDBQueryCommon::db_query_update_server_time_played_time="UPDATE `server_time` SET `played_time`=`played_time`+%1 WHERE `server`=%2 AND `account`=%3;";
         PreparedDBQueryCommon::db_query_update_server_time_last_connect="UPDATE `server_time` SET `last_connect`=%1 WHERE `server`=%2 AND `account`=%3;";
+        #endif
         break;
         #endif
 
         #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::SQLite:
+        #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
         PreparedDBQueryCommon::db_query_select_allow="SELECT allow FROM character_allow WHERE character=%1";
-        PreparedDBQueryCommon::db_query_characters="SELECT id,pseudo,skin,time_to_delete,played_time,last_connect FROM character WHERE account=%1 ORDER BY played_time LIMIT 0,%2";
         PreparedDBQueryCommon::db_query_played_time="UPDATE character SET played_time=played_time+%2 WHERE id=%1";
         PreparedDBQueryCommon::db_query_monster_skill="UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3";
         PreparedDBQueryCommon::db_query_character_by_id="SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter FROM character WHERE id=%1";
@@ -327,17 +380,17 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_delete_monster_specific_skill="DELETE FROM monster_skill WHERE monster=%1 AND skill=%2";
         PreparedDBQueryCommon::db_query_insert_clan="INSERT INTO clan(id,name,date) VALUES(%1,'%2',%3);";
         PreparedDBQueryCommon::db_query_update_monster_owner="UPDATE monster SET character=%2 WHERE id=%1;";
-        PreparedDBQueryCommon::db_query_select_server_time="SELECT server,played_time,last_connect FROM server_time WHERE account=%1";//not by characters to prevent too hurge datas to store
         PreparedDBQueryCommon::db_query_insert_server_time="INSERT INTO server_time(server,account,played_time,last_connect) VALUES(%1,%2,0,%3);";
         PreparedDBQueryCommon::db_query_update_server_time_played_time="UPDATE server_time SET played_time=played_time+%1 WHERE server=%2 AND account=%3;";
         PreparedDBQueryCommon::db_query_update_server_time_last_connect="UPDATE server_time SET last_connect=%1 WHERE server=%2 AND account=%3;";
+        #endif
         break;
         #endif
 
         #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
+        #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
         PreparedDBQueryCommon::db_query_select_allow="SELECT allow FROM character_allow WHERE character=%1";
-        PreparedDBQueryCommon::db_query_characters="SELECT id,pseudo,skin,time_to_delete,played_time,last_connect FROM character WHERE account=%1 ORDER BY played_time LIMIT %2";
         PreparedDBQueryCommon::db_query_played_time="UPDATE character SET played_time=played_time+%2 WHERE id=%1";
         PreparedDBQueryCommon::db_query_monster_skill="UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3";
         PreparedDBQueryCommon::db_query_character_by_id="SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter FROM character WHERE id=%1";
@@ -409,10 +462,10 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_delete_monster_specific_skill="DELETE FROM monster_skill WHERE monster=%1 AND skill=%2";
         PreparedDBQueryCommon::db_query_insert_clan="INSERT INTO clan(id,name,date) VALUES(%1,'%2',%3);";
         PreparedDBQueryCommon::db_query_update_monster_owner="UPDATE monster SET character=%2 WHERE id=%1;";
-        PreparedDBQueryCommon::db_query_select_server_time="SELECT server,played_time,last_connect FROM server_time WHERE account=%1";//not by characters to prevent too hurge datas to store
         PreparedDBQueryCommon::db_query_insert_server_time="INSERT INTO server_time(server,account,played_time,last_connect) VALUES(%1,%2,0,%3);";
         PreparedDBQueryCommon::db_query_update_server_time_played_time="UPDATE server_time SET played_time=played_time+%1 WHERE server=%2 AND account=%3;";
         PreparedDBQueryCommon::db_query_update_server_time_last_connect="UPDATE server_time SET last_connect=%1 WHERE server=%2 AND account=%3;";
+        #endif
         break;
         #endif
     }
@@ -420,6 +473,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
 
 void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::DatabaseType &type,const bool &useSP)
 {
+    (void)useSP;
     switch(type)
     {
         default:
@@ -432,6 +486,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::Da
         return;
         #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_MYSQL)
         case DatabaseBase::DatabaseType::Mysql:
+        #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
         if(useSP)
         {
             PreparedDBQueryCommon::db_query_monster="UPDATE `monster` SET `hp`=%3,`xp`=%4,`level`=%5,`sp`=%6,`position`=%7 WHERE `id`=%1";
@@ -448,11 +503,13 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::Da
             PreparedDBQueryCommon::db_query_update_monster_xp_hp_level="UPDATE `monster` SET `hp`=%2,`xp`=%3,`level`=%4 WHERE `id`=%1";
             PreparedDBQueryCommon::db_query_update_monster_xp="UPDATE `monster` SET `xp`=%2 WHERE `id`=%1";
         }
+        #endif
         break;
         #endif
 
         #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::SQLite:
+        #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
         if(useSP)
         {
             PreparedDBQueryCommon::db_query_monster="UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6,position=%7 WHERE id=%1";
@@ -469,11 +526,13 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::Da
             PreparedDBQueryCommon::db_query_select_monsters_warehouse_by_player_id="SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=1 ORDER BY position ASC";
             PreparedDBQueryCommon::db_query_update_monster_xp="UPDATE monster SET xp=%2 WHERE id=%1";
         }
+        #endif
         break;
         #endif
 
         #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
+        #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
         if(useSP)
         {
             PreparedDBQueryCommon::db_query_monster="UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6,position=%7 WHERE id=%1";
@@ -490,11 +549,14 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::Da
             PreparedDBQueryCommon::db_query_select_monsters_warehouse_by_player_id="SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=1 ORDER BY position ASC";
             PreparedDBQueryCommon::db_query_update_monster_xp="UPDATE monster SET xp=%2 WHERE id=%1";
         }
+        #endif
         break;
         #endif
     }
 }
+#endif
 
+#if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
 void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::DatabaseType &type)
 {
     switch(type)
@@ -619,4 +681,4 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         #endif
     }
 }
-
+#endif

@@ -170,6 +170,13 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         }
         else
         {
+            const uint8_t &blob_version=GlobalServerData::serverPrivateVariables.db_login->stringtouint8(GlobalServerData::serverPrivateVariables.db_login->value(2),&ok);
+            if(blob_version!=CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION)
+            {
+                loginIsWrong(askLoginParam->query_id,0x04,"Blob version incorrect");
+                delete askLoginParam;
+                return;
+            }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             std::vector<char> tempAddedToken;
             std::vector<char> secretTokenBinary;
@@ -403,6 +410,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         stringreplaceOne(queryText,"%2",binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE));
         stringreplaceOne(queryText,"%3",binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE));
         stringreplaceOne(queryText,"%4",std::to_string(sFrom1970()));
+        stringreplaceOne(queryText,"%5",std::to_string(CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION));
         dbQueryWriteLogin(queryText);
 
         //send the network reply
