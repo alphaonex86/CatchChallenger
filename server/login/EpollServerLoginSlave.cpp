@@ -318,6 +318,8 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         std::sort(charactersGroupForLoginList.begin(),charactersGroupForLoginList.end());
         EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup[EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize]=(unsigned char)charactersGroupForLoginList.size();
         EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize+=sizeof(unsigned char);
+        if(!charactersGroupForLoginList.empty())
+            PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(CharactersGroupForLogin::list.back()->databaseType());
         unsigned int index=0;
         while(index<charactersGroupForLoginList.size())
         {
@@ -334,9 +336,6 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
             CharactersGroupForLogin::hash[CharactersGroupForLoginName]->index=index;
             CharactersGroupForLogin::list.push_back(CharactersGroupForLogin::hash.at(CharactersGroupForLoginName));
-
-            if(index==0)
-                PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(CharactersGroupForLogin::list.back()->databaseType());
 
             index++;
         }

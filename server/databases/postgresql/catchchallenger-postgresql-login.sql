@@ -42,15 +42,7 @@ CREATE TABLE account_register (
 --
 
 ALTER TABLE ONLY account
-    ADD CONSTRAINT account_login_key UNIQUE (login);
-
-
---
--- Name: account_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
---
-
-ALTER TABLE ONLY account
-    ADD CONSTRAINT account_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT account_login_key PRIMARY KEY (login);
 
 --
 -- Name: account_register_login_key; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
