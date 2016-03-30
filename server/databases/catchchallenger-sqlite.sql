@@ -95,7 +95,7 @@ CREATE TABLE character_forserver (
     "unvalidated_rescue_orientation" INTEGER,
     "date" INTEGER,
     "market_cash" INTEGER
-, "botfight_id" BLOB, "itemonmap" BLOB, "plants" BLOB, "blob_version" INTEGER);
+, "botfight_id" TEXT, "itemonmap" TEXT, "plants" TEXT, "blob_version" INTEGER);
 CREATE UNIQUE INDEX "idcharacter_forserver" on "character_forserver" (character ASC);
 CREATE TABLE character (
     "id" INTEGER,
@@ -112,7 +112,7 @@ CREATE TABLE character (
     "played_time" INTEGER,
     "last_connect" INTEGER,
     "starter" INTEGER
-, "allow" BLOB, "item" BLOB, "item_warehouse" BLOB, "recipes" BLOB, "reputations" BLOB, "encyclopedia_monster" BLOB, "encyclopedia_item" BLOB, "achievements" BLOB, "monster" BLOB, "monster_warehouse" BLOB, "monster_market" BLOB);
+, "allow" TEXT, "item" TEXT, "item_warehouse" TEXT, "recipes" TEXT, "reputations" TEXT, "encyclopedia_monster" TEXT, "encyclopedia_item" TEXT, "achievements" TEXT, "monster" TEXT, "monster_warehouse" TEXT, "monster_market" TEXT);
 CREATE UNIQUE INDEX "id" on "character" (id ASC);
 CREATE UNIQUE INDEX "bypseudoandclan" on "character" (pseudo ASC, clan ASC);
 CREATE INDEX "byclan" on "character" (clan ASC);
@@ -132,5 +132,5 @@ CREATE TABLE monster (
     "character_origin" INTEGER,
     "position" INTEGER,
     "place" INTEGER
-, "buffs" BLOB, "skills" BLOB, "skills_endurance" BLOB);
+, "buffs" TEXT, "skills" TEXT, "skills_endurance" TEXT);
 CREATE UNIQUE INDEX "monster_index_key" on monster (id ASC);

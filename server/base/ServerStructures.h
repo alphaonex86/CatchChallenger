@@ -21,17 +21,17 @@
 #include "../../general/base/GeneralVariable.h"
 #include "../VariableServer.h"
 #ifdef EPOLLCATCHCHALLENGERSERVER
-#include "epoll/timer/TimerCityCapture.h"
-#include "epoll/timer/TimerDdos.h"
-#include "epoll/timer/TimerPositionSync.h"
-#include "epoll/timer/TimerSendInsertMoveRemove.h"
-#include "epoll/timer/TimerEvents.h"
+#include "../epoll/timer/TimerCityCapture.h"
+#include "../epoll/timer/TimerDdos.h"
+#include "../epoll/timer/TimerPositionSync.h"
+#include "../epoll/timer/TimerSendInsertMoveRemove.h"
+#include "../epoll/timer/TimerEvents.h"
 #include "../base/DatabaseBase.h"
     #if defined(CATCHCHALLENGER_DB_POSTGRESQL)
-    #include "epoll/db/EpollPostgresql.h"
+    #include "../epoll/db/EpollPostgresql.h"
     #define EpollDatabaseAsync EpollPostgresql
     #elif defined(CATCHCHALLENGER_DB_MYSQL)
-    #include "epoll/db/EpollMySQL.h"
+    #include "../epoll/db/EpollMySQL.h"
     #else
     #error Unknow database type
     #endif

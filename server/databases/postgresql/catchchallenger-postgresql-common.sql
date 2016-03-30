@@ -63,7 +63,6 @@ CREATE TABLE clan (
 CREATE TABLE monster (
     id integer,
     hp smallint,
-    "character" integer,
     monster smallint,
     level smallint,
     xp integer,
