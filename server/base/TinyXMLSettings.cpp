@@ -1,7 +1,8 @@
 #include "TinyXMLSettings.h"
 #include <iostream>
 
-TinyXMLSettings::TinyXMLSettings()
+TinyXMLSettings::TinyXMLSettings() :
+    modified(false)
 {
     abort();//todo to home folder
     document.LoadFile("");
@@ -13,14 +14,16 @@ TinyXMLSettings::TinyXMLSettings()
     }
 }
 
-TinyXMLSettings::TinyXMLSettings(const std::string &file)
+TinyXMLSettings::TinyXMLSettings(const std::string &file) :
+    modified(false)
 {
     this->file=file;
     if(!document.LoadFile(file))
     {
+        modified=true;
         if(document.ErrorId()==2 /*NOT 12! Error document empty. but can be just corrupted!*/ && errno==2)
         {
-            TiXmlElement * root = new TiXmlElement( "configuration" );
+            TiXmlElement * root = new TiXmlElement("configuration");
             document.LinkEndChild(root);
         }
         else
@@ -86,12 +89,18 @@ void TinyXMLSettings::setValue(const std::string &var,const std::string &value)
     TiXmlElement * item = whereIs->FirstChildElement(var);
     if(item==NULL)
     {
+        modified=true;
         TiXmlElement item(var);
         item.SetAttribute("value",value);
         whereIs->InsertEndChild(item);
     }
     else
+    {
+        if(item->Attribute("value")==value)
+            return;
+        modified=true;
         item->SetAttribute("value",value);
+    }
 }
 
 void TinyXMLSettings::setValue(const std::string &var,const int &value)
@@ -119,9 +128,12 @@ void TinyXMLSettings::setValue(const std::string &var,const char * const value)
 
 void TinyXMLSettings::sync()
 {
+    if(!modified)
+        return;
     if(!document.SaveFile(file))
     {
         std::cerr << "Unable to save the file: " << file << ", Parse error at line " << document.ErrorRow() << ", column " << document.ErrorCol() << ": " << document.ErrorDesc() << std::endl;
         abort();
     }
+    modified=false;
 }

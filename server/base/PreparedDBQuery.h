@@ -91,7 +91,6 @@ public:
     static std::string db_query_update_character_clan;
     static std::string db_query_update_character_clan_and_leader;
     static std::string db_query_delete_clan;
-    static std::string db_query_update_character_clan_by_pseudo;
     static std::string db_query_update_monster_xp_hp_level;
     static std::string db_query_update_monster_hp_only;
     static std::string db_query_update_monster_sp_only;
