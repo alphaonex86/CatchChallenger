@@ -16,17 +16,6 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- Name: bot_already_beaten; Type: TABLE; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE TABLE bot_already_beaten (
-    "character" integer,
-    botfight_id smallint
-);
-
-
-
---
 -- Name: character_forserver; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
@@ -45,20 +34,12 @@ CREATE TABLE character_forserver (
     unvalidated_rescue_y smallint,
     unvalidated_rescue_orientation smallint,
     date bigint,
-    market_cash bigint
+    market_cash bigint,
+    botfight_id bytea,
+    itemonmap bytea,
+    plants bytea,
+    blob_version smallint
 );
-
-
-
---
--- Name: character_itemonmap; Type: TABLE; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE TABLE character_itemonmap (
-    "character" integer,
-    "pointOnMap" smallint
-);
-
 
 
 --
@@ -212,39 +193,11 @@ CREATE INDEX plant_by_char ON plant USING btree ("character");
 
 CREATE UNIQUE INDEX plant_unique ON plant USING btree ("character", "pointOnMap");
 
-
---
--- Name: bot_already_beaten_by_character; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE INDEX bot_already_beaten_by_character ON bot_already_beaten USING btree ("character");
-
-
---
--- Name: bot_already_beaten_unique; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE UNIQUE INDEX bot_already_beaten_unique ON bot_already_beaten USING btree ("character", botfight_id);
-
-
 --
 -- Name: character_character_forserver_index; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE INDEX character_character_forserver_index ON character_forserver USING btree ("character");
-
-
---
--- Name: character_itemOnMap_index; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE INDEX "character_itemOnMap_index" ON character_itemonmap USING btree ("character");
-
---
--- Name: character_itemOnMap_unique; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE UNIQUE INDEX "character_itemOnMap_unique" ON character_itemonmap USING btree ("character", "pointOnMap");
 
 --
 -- Name: item_market_uniqueindex; Type: INDEX; Schema: public; Owner: root; Tablespace: 

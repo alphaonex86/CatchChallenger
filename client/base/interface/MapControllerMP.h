@@ -146,7 +146,17 @@ private:
     static QPixmap *imgForPseudoAdmin;
     static QPixmap *imgForPseudoDev;
     static QPixmap *imgForPseudoPremium;
-    QList<QPair<CatchChallenger::Orientation,uint8_t> > path;
+    struct PathResolved
+    {
+        struct StartPoint
+        {
+            QString map;
+            uint8_t x,y;
+        };
+        StartPoint startPoint;
+        QList<QPair<CatchChallenger::Orientation,uint8_t> > path;
+    };
+    QList<PathResolved> pathList;
 protected:
     //current player
     CatchChallenger::Player_private_and_public_informations player_informations;
@@ -167,7 +177,7 @@ protected slots:
     virtual void loadOtherPlayerFromMap(OtherPlayer otherPlayer, const bool &display=true);
     //call before leave the old map (and before loadPlayerFromCurrentMap())
     virtual void unloadOtherPlayerFromMap(OtherPlayer otherPlayer);
-    void pathFindingResult(const QList<QPair<CatchChallenger::Orientation, uint8_t> > &path);
+    void pathFindingResult(const QString &current_map, const uint8_t &x, const uint8_t &y, const QList<QPair<CatchChallenger::Orientation, uint8_t> > &path);
     bool nextPathStep();//true if have step
     virtual void keyPressParse();
 signals:

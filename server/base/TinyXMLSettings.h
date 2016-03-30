@@ -25,6 +25,7 @@ private:
     TiXmlDocument document;
     TiXmlElement * whereIs;
     std::string file;
+    bool modified;
 };
 
 #endif // TINYXMLSETTINGS_H

@@ -1733,8 +1733,8 @@ void BaseWindow::blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar)
 
 void BaseWindow::pathFindingNotFound()
 {
-    //showTip(tr("No path to go here"));
-    showTip(tr("Path finding disabled"));
+    showTip(tr("No path to go here"));
+    //showTip(tr("Path finding disabled"));
 }
 
 void BaseWindow::currentMapLoaded()

@@ -20,15 +20,15 @@ PathFinding::~PathFinding()
 void PathFinding::searchPath(const QHash<QString, MapVisualiserThread::Map_full *> &all_map,const QString &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const QString &current_map,const uint8_t &x,const uint8_t &y,const QHash<uint16_t,uint32_t> &items)
 {
     //path finding buggy
-    {
+    /*{
         QList<QPair<CatchChallenger::Orientation,uint8_t> > path;
         emit result(path);
         return;
-    }
+    }*/
     if(!all_map.contains(current_map))
     {
         QList<QPair<CatchChallenger::Orientation,uint8_t> > path;
-        emit result(path);
+        emit result(QString(),0,0,path);
         return;
     }
     tryCancel=false;
@@ -389,7 +389,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
                     {
                         qDebug() << "Path result into" << time.elapsed() << "ms";
                         returnedVar.last().second--;
-                        emit result(returnedVar);
+                        emit result(current_map,x,y,returnedVar);
                         return;
                     }
                 }
@@ -493,7 +493,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
         }
     }
     tryCancel=false;
-    emit result(QList<QPair<CatchChallenger::Orientation,uint8_t> >());
+    emit result(QString(),0,0,QList<QPair<CatchChallenger::Orientation,uint8_t> >());
     qDebug() << "Path not found into" << time.elapsed() << "ms";
 }
 
