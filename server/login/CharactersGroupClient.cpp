@@ -10,11 +10,16 @@
 
 using namespace CatchChallenger;
 
+std::string CharactersGroupForLogin::gender_unknown("3");
+std::string CharactersGroupForLogin::gender_male("1");
+std::string CharactersGroupForLogin::gender_female("2");
+
 void CharactersGroupForLogin::character_list(EpollClientLoginSlave * const client,const uint32_t &account_id)
 {
-    std::string queryText=PreparedDBQueryCommonForLogin::db_query_characters;
-    stringreplaceOne(queryText,"%1",std::to_string(account_id));
-    stringreplaceOne(queryText,"%2",std::to_string(CommonSettingsCommon::commonSettingsCommon.max_character*2));
+    const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_characters.compose(
+                std::to_string(account_id),
+                std::to_string(CommonSettingsCommon::commonSettingsCommon.max_character*2)
+                );
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText,this,&CharactersGroupForLogin::character_list_static);
     if(callback==NULL)
     {
@@ -158,8 +163,9 @@ void CharactersGroupForLogin::character_list_object()
 
 void CharactersGroupForLogin::server_list(EpollClientLoginSlave * const client,const uint32_t &account_id)
 {
-    std::string queryText=PreparedDBQueryCommonForLogin::db_query_select_server_time;
-    stringreplaceOne(queryText,"%1",std::to_string(account_id));
+    const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_select_server_time.compose(
+                std::to_string(account_id)
+                );
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText,this,&CharactersGroupForLogin::server_list_static);
     if(callback==NULL)
     {
@@ -235,20 +241,21 @@ void CharactersGroupForLogin::server_list_object()
 void CharactersGroupForLogin::deleteCharacterNow(const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryCommon::db_query_delete_character.empty())
+    if(PreparedDBQueryCommonForLogin::db_query_delete_character.empty())
     {
         std::cerr << "deleteCharacterNow() Query db_query_delete_character is empty, bug" << std::endl;
         return;
     }
-    if(PreparedDBQueryCommon::db_query_delete_monster_by_character.empty())
+    if(PreparedDBQueryCommon::db_query_delete_monster_by_id.empty())
     {
-        std::cerr << "deleteCharacterNow() Query db_query_delete_monster is empty, bug" << std::endl;
+        std::cerr << "deleteCharacterNow() Query db_query_delete_monster_by_id is empty, bug" << std::endl;
         return;
     }
     #endif
 
-    std::string queryText=PreparedDBQueryCommon::db_query_characters_with_monsters;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
+    const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_characters_with_monsters.compose(
+                std::to_string(characterId)
+                );
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText,this,&CharactersGroupForLogin::deleteCharacterNow_static);
     if(callback==NULL)
     {
@@ -274,22 +281,21 @@ void CharactersGroupForLogin::deleteCharacterNow_object()
 
 void CharactersGroupForLogin::deleteCharacterNow_return(const uint32_t &characterId)
 {
-    std::string queryText;
     if(databaseBaseCommon->next())
     {
         {
-            std::string monster;
-            monster=databaseBaseCommon->value(0);
+            const std::string &monster=databaseBaseCommon->value(0);
             if(monster.size()%(sizeof(uint32_t)*2)==0)
             {
-                const auto &data=hexatoBinary(monster);
+                const std::vector<char> &data=hexatoBinary(monster);
                 const uint16_t &size=data.size()/(sizeof(uint32_t));
                 uint16_t index=0;
                 while(index<size)
                 {
-                    const uint32_t &monsterId=*reinterpret_cast<uint32_t *>(data.data()+index*sizeof(uint32_t));
-                    queryText=PreparedDBQueryCommon::db_query_delete_monster_by_id;
-                    stringreplaceOne(queryText,"%1",std::to_string(monsterId));
+                    const uint32_t &monsterId=*reinterpret_cast<const uint32_t *>(data.data()+index*sizeof(uint32_t));
+                    const std::string &queryText=PreparedDBQueryCommon::db_query_delete_monster_by_id.compose(
+                                std::to_string(monsterId)
+                                );
                     dbQueryWriteCommon(queryText);
                     index++;
                 }
@@ -298,17 +304,18 @@ void CharactersGroupForLogin::deleteCharacterNow_return(const uint32_t &characte
                 std::cerr << "haractersGroupForLogin::deleteCharacterNow_return() have incorrect monster blob lenght: " << monster.size() << ", characterId: " << characterId << std::endl;
         }
         {
-            std::string monster_warehouse=databaseBaseCommon->value(1);
+            const std::string &monster_warehouse=databaseBaseCommon->value(1);
             if(monster_warehouse.size()%(sizeof(uint32_t)*2)==0)
             {
-                const auto &data=hexatoBinary(monster_warehouse);
+                const std::vector<char> &data=hexatoBinary(monster_warehouse);
                 const uint16_t &size=data.size()/(sizeof(uint32_t));
                 uint16_t index=0;
                 while(index<size)
                 {
-                    const uint32_t &monsterId=*reinterpret_cast<uint32_t *>(data.data()+index*sizeof(uint32_t));
-                    queryText=PreparedDBQueryCommon::db_query_delete_monster_by_id;
-                    stringreplaceOne(queryText,"%1",std::to_string(monsterId));
+                    const uint32_t &monsterId=*reinterpret_cast<const uint32_t *>(data.data()+index*sizeof(uint32_t));
+                    const std::string &queryText=PreparedDBQueryCommon::db_query_delete_monster_by_id.compose(
+                                std::to_string(monsterId)
+                                );
                     dbQueryWriteCommon(queryText);
                     index++;
                 }
@@ -317,17 +324,18 @@ void CharactersGroupForLogin::deleteCharacterNow_return(const uint32_t &characte
                 std::cerr << "haractersGroupForLogin::deleteCharacterNow_return() have incorrect monster_warehouse blob lenght: " << monster_warehouse.size() << ", characterId: " << characterId << std::endl;
         }
         {
-            std::string monster_market=databaseBaseCommon->value(2);
+            const std::string &monster_market=databaseBaseCommon->value(2);
             if(monster_market.size()%(sizeof(uint32_t)*2)==0)
             {
-                const auto &data=hexatoBinary(monster_market);
+                const std::vector<char> &data=hexatoBinary(monster_market);
                 const uint16_t &size=data.size()/(sizeof(uint32_t));
                 uint16_t index=0;
                 while(index<size)
                 {
-                    const uint32_t &monsterId=*reinterpret_cast<uint32_t *>(data.data()+index*sizeof(uint32_t));
-                    queryText=PreparedDBQueryCommon::db_query_delete_monster_by_id;
-                    stringreplaceOne(queryText,"%1",std::to_string(monsterId));
+                    const uint32_t &monsterId=*reinterpret_cast<const uint32_t *>(data.data()+index*sizeof(uint32_t));
+                    const std::string &queryText=PreparedDBQueryCommon::db_query_delete_monster_by_id.compose(
+                                std::to_string(monsterId)
+                                );
                     dbQueryWriteCommon(queryText);
                     index++;
                 }
@@ -336,8 +344,9 @@ void CharactersGroupForLogin::deleteCharacterNow_return(const uint32_t &characte
                 std::cerr << "haractersGroupForLogin::deleteCharacterNow_return() have incorrect monster_market blob lenght: " << monster_market.size() << ", characterId: " << characterId << std::endl;
         }
 
-        queryText=PreparedDBQueryCommon::db_query_delete_character;
-        stringreplaceOne(queryText,"%1",std::to_string(characterId));
+        const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_delete_character.compose(
+                    std::to_string(characterId)
+                    );
         dbQueryWriteCommon(queryText);
     }
 }
@@ -345,7 +354,7 @@ void CharactersGroupForLogin::deleteCharacterNow_return(const uint32_t &characte
 int8_t CharactersGroupForLogin::addCharacter(void * const client,const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryCommon::db_query_select_character_by_pseudo.empty())
+    if(PreparedDBQueryCommonForLogin::db_query_select_character_by_pseudo.empty())
     {
         std::cerr << "addCharacter() Query is empty, bug" << std::endl;
         return 0x03;
@@ -398,8 +407,9 @@ int8_t CharactersGroupForLogin::addCharacter(void * const client,const uint8_t &
     addCharacterParam.skinId=skinId;
     addCharacterParam.client=client;
 
-    std::string queryText=PreparedDBQueryCommon::db_query_get_character_count_by_account;
-    stringreplaceOne(queryText,"%1",std::to_string(static_cast<EpollClientLoginSlave *>(client)->account_id));
+    std::string queryText=PreparedDBQueryCommonForLogin::db_query_get_character_count_by_account.compose(
+                std::to_string(static_cast<EpollClientLoginSlave *>(client)->account_id)
+                );
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText,this,&CharactersGroupForLogin::addCharacterStep1_static);
     if(callback==NULL)
     {
@@ -450,8 +460,9 @@ void CharactersGroupForLogin::addCharacterStep1_return(EpollClientLoginSlave * c
         return;
     }
 
-    std::string queryText=PreparedDBQueryCommon::db_query_select_character_by_pseudo;
-    stringreplaceOne(queryText,"%1",SqlFunction::quoteSqlVariable(pseudo));
+    const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_select_character_by_pseudo.compose(
+                SqlFunction::quoteSqlVariable(pseudo)
+                );
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText,this,&CharactersGroupForLogin::addCharacterStep2_static);
     if(callback==NULL)
     {
@@ -497,124 +508,53 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
 
     const uint32_t &characterId=maxCharacterId.back();
     maxCharacterId.pop_back();
-    unsigned int index=0;
     int monster_position=1;
-    int tempBufferSize=0;
-    std::string numberBuffer;
 
-    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[0],profile.preparedQuerySize[0]);
-    tempBufferSize+=profile.preparedQuerySize[0];
-
-    numberBuffer=std::to_string(characterId);
-    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.data(),numberBuffer.size());
-    tempBufferSize+=numberBuffer.size();
-
-    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[1],profile.preparedQuerySize[1]);
-    tempBufferSize+=profile.preparedQuerySize[1];
-
-    numberBuffer=std::to_string(client->account_id);
-    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.data(),numberBuffer.size());
-    tempBufferSize+=numberBuffer.size();
-
-    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[2],profile.preparedQuerySize[2]);
-    tempBufferSize+=profile.preparedQuerySize[2];
-
-    numberBuffer=SqlFunction::quoteSqlVariable(pseudo);
-    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.data(),numberBuffer.size());
-    tempBufferSize+=numberBuffer.size();
-
-    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[3],profile.preparedQuerySize[3]);
-    tempBufferSize+=profile.preparedQuerySize[3];
-
-    numberBuffer=std::to_string(DictionaryLogin::dictionary_skin_internal_to_database.at(skinId));
-    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.data(),numberBuffer.size());
-    tempBufferSize+=numberBuffer.size();
-
-    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[4],profile.preparedQuerySize[4]);
-    tempBufferSize+=profile.preparedQuerySize[4];
-
-    numberBuffer=std::to_string(sFrom1970());
-    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.data(),numberBuffer.size());
-    tempBufferSize+=numberBuffer.size();
-
-    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[5],profile.preparedQuerySize[5]);
-    tempBufferSize+=profile.preparedQuerySize[5];
-
-    CharactersGroupForLogin::tempBuffer[tempBufferSize]='\0';
-
-    dbQueryWriteCommon(CharactersGroupForLogin::tempBuffer);
-
+    std::string monsterIdList;
+    const std::vector<StringWithReplacement> &monsters=profile.monster_insert.at(monsterGroupId);
+    std::string monster_encyclopedia_insert=profile.monster_encyclopedia_insert.at(monsterGroupId);
+    if(!monsters.empty())
     {
+        char monsterIdList[4*monsters.size()];
         unsigned int index=0;
-        const std::vector<EpollServerLoginSlave::LoginProfile::Monster> &monsters=profile.monstergroup.at(monsterGroupId);
         while(index<monsters.size())
         {
-            const EpollServerLoginSlave::LoginProfile::Monster &monster=monsters.at(index);
-            uint32_t gender=Gender_Unknown;
-            if(monster.ratio_gender!=-1)
-            {
-                if(rand()%101<monster.ratio_gender)
-                    gender=Gender_Female;
-                else
-                    gender=Gender_Male;
-            }
+            const StringWithReplacement &monster=monsters.at(index);
 
-            uint32_t monster_id=maxMonsterId.back();
+            const uint32_t monster_id=maxMonsterId.back();
             maxMonsterId.pop_back();
+            *reinterpret_cast<uint32_t *>(monsterIdList+index*4)=htole32(monster_id);
 
             //insert the monster is db
             {
-                std::string queryText=PreparedDBQueryCommon::db_query_insert_monster;
-                stringreplaceOne(queryText,"%1",std::to_string(monster_id));
-                stringreplaceOne(queryText,"%2",std::to_string(monster.hp));
-                stringreplaceAll(queryText,"%3",std::to_string(characterId));
-                stringreplaceOne(queryText,"%4",std::to_string(monster.id));
-                stringreplaceOne(queryText,"%5",std::to_string(monster.level));
-                stringreplaceOne(queryText,"%6",std::to_string(monster.captured_with));
-                stringreplaceOne(queryText,"%7",std::to_string(gender));
-                stringreplaceOne(queryText,"%8",std::to_string(monster_position));
-                dbQueryWriteCommon(queryText);
-                monster_position++;
-            }
+                const std::string &monster_id_string=std::to_string(monster_id);
+                //id,gender,id
+                if(monster.ratio_gender!=-1)
+                {
+                    if(rand()%101<monster.ratio_gender)
+                        dbQueryWriteCommon(monster.compose(monster_id_string,CharactersGroupForLogin::gender_female,monster_id_string));
+                    else
+                        dbQueryWriteCommon(monster.compose(monster_id_string,CharactersGroupForLogin::gender_male,monster_id_string));
+                }
+                else
+                    dbQueryWriteCommon(monster.compose(monster_id_string,CharactersGroupForLogin::gender_unknown,monster_id_string));
 
-            //insert the skill
-            unsigned int sub_index=0;
-            while(sub_index<monster.skills.size())
-            {
-                const EpollServerLoginSlave::LoginProfile::Monster::Skill &skill=monster.skills.at(sub_index);
-                std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_skill;
-                stringreplaceOne(queryText,"%1",std::to_string(monster_id));
-                stringreplaceOne(queryText,"%2",std::to_string(skill.id));
-                stringreplaceOne(queryText,"%3",std::to_string(skill.level));
-                stringreplaceOne(queryText,"%4",std::to_string(skill.endurance));
-                dbQueryWriteCommon(queryText);
-                sub_index++;
+                monster_position++;
             }
             index++;
         }
     }
-    index=0;
-    while(index<profile.reputation.size())
-    {
-        const EpollServerLoginSlave::LoginProfile::Reputation &reputation=profile.reputation.at(index);
-        std::string queryText=PreparedDBQueryCommon::db_query_insert_reputation;
-        stringreplaceOne(queryText,"%1",std::to_string(characterId));
-        stringreplaceOne(queryText,"%2",std::to_string(reputation.reputationDatabaseId));
-        stringreplaceOne(queryText,"%3",std::to_string(reputation.point));
-        stringreplaceOne(queryText,"%4",std::to_string(reputation.level));
-        dbQueryWriteCommon(queryText);
-        index++;
-    }
-    index=0;
-    while(index<profile.items.size())
-    {
-        std::string queryText=PreparedDBQueryCommon::db_query_insert_item;
-        stringreplaceOne(queryText,"%1",std::to_string(profile.items.at(index).id));
-        stringreplaceOne(queryText,"%2",std::to_string(characterId));
-        stringreplaceOne(queryText,"%3",std::to_string(profile.items.at(index).quantity));
-        dbQueryWriteCommon(queryText);
-        index++;
-    }
+
+    const std::string &local_character_insert=profile.character_insert.compose(
+                std::to_string(characterId),
+                std::to_string(client->account_id),
+                SqlFunction::quoteSqlVariable(pseudo),
+                std::to_string(DictionaryLogin::dictionary_skin_internal_to_database.at(skinId)),
+                std::to_string(sFrom1970()),
+                monsterIdList
+                monster_encyclopedia_insert
+                );
+    dbQueryWriteCommon(local_character_insert);
 
     //send the network reply
     client->removeFromQueryReceived(query_id);

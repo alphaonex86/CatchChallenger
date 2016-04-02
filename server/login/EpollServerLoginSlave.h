@@ -6,6 +6,7 @@
 #include "../epoll/EpollGenericServer.h"
 #include "../base/BaseServerLogin.h"
 #include "../base/TinyXMLSettings.h"
+#include "../base/StringWithReplacement.h"
 #include "EpollClientLoginSlave.h"
 
 #include <string>
@@ -51,15 +52,17 @@ public:
             CATCHCHALLENGER_TYPE_ITEM id;
             uint32_t quantity;
         };
+        std::vector<Item> items;
         uint16_t databaseId;
         std::vector<uint8_t> forcedskin;
         uint64_t cash;
+        std::vector<Reputation> reputations;
+
         std::vector<std::vector<Monster> > monstergroup;
-        std::vector<Reputation> reputation;
-        std::vector<Item> items;
-        char * preparedQueryChar;
-        uint8_t preparedQueryPos[6];
-        uint8_t preparedQuerySize[6];
+        std::vector<std::string> monster_encyclopedia_insert;
+        std::vector<std::vector<StringWithReplacement> > monster_insert;
+
+        StringWithReplacement character_insert;
     };
     std::vector<LoginProfile> loginProfileList;
 
