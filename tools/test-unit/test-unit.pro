@@ -19,9 +19,13 @@ SOURCES += main.cpp \
     reputation/level-down.cpp \
     reputation/level-up.cpp \
     TestUnitCpp.cpp \
-    TestUnitMessageParsing.cpp
+    TestString.cpp \
+    TestUnitMessageParsing.cpp \
+    ../../server/base/StringWithReplacement.cpp
 
 HEADERS += \
     reputation/TestUnitReputation.h \
     TestUnitCpp.h \
-    TestUnitMessageParsing.h
+    TestString.h \
+    TestUnitMessageParsing.h \
+    ../../server/base/StringWithReplacement.h

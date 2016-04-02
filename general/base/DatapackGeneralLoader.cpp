@@ -4,6 +4,7 @@
 #include "FacilityLib.h"
 #include "FacilityLibGeneral.h"
 #include "tinyXML/tinyxml.h"
+#include "cpp11addition.h"
 
 #include <vector>
 #include <iostream>
@@ -2326,7 +2327,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
                     {
                         monstersCollision.defautMonsterTypeList=stringsplit(monstersCollisionItem->Attribute("monsterType"),';');
                         vectorRemoveEmpty(monstersCollision.defautMonsterTypeList);
-                        vectorDuplicatesForSmallList(monstersCollision.defautMonsterTypeList);
+                        vectorRemoveDuplicatesForSmallList(monstersCollision.defautMonsterTypeList);
                         monstersCollision.monsterTypeList=monstersCollision.defautMonsterTypeList;
                         //load the condition
                         const TiXmlElement * eventItem = monstersCollisionItem->FirstChildElement("event");
