@@ -419,13 +419,6 @@ EpollServerLoginSlave::~EpollServerLoginSlave()
         delete LinkToMaster::linkToMaster;
         LinkToMaster::linkToMaster=NULL;
     }
-    unsigned int index=0;
-    while(index<EpollServerLoginSlave::loginProfileList.size())
-    {
-        EpollServerLoginSlave::LoginProfile &profile=EpollServerLoginSlave::loginProfileList[index];
-        delete profile.preparedQueryChar;
-        index++;
-    }
 }
 
 void EpollServerLoginSlave::close()
@@ -577,71 +570,143 @@ void EpollServerLoginSlave::preload_profile()
         abort();
     }
     const DatabaseBase::DatabaseType &type=CharactersGroupForLogin::list.at(0)->databaseType();
-    std::vector<std::string> tempStringList;
 
     unsigned int index=0;
     while(index<EpollServerLoginSlave::loginProfileList.size())
     {
         EpollServerLoginSlave::LoginProfile &profile=EpollServerLoginSlave::loginProfileList[index];
+
+        std::string encyclopedia_item,item;
+        if(profile.items.empty())
+        {
+            auto max=profile.items.at(0).id;
+            uint32_t pos=0;
+            char item_raw[(2+4)*profile.items.size()];
+            unsigned int index=0;
+            while(index<profile.items.size())
+            {
+                const LoginProfile::Item &item=profile.items.at(index);
+                if(max<item.id)
+                    max=item.id;
+                *reinterpret_cast<uint16_t *>(item_raw+pos)=htole16(item.id);
+                pos+=2;
+                *reinterpret_cast<uint32_t *>(item_raw+pos)=htole32(item.quantity);
+                pos+=4;
+                index++;
+            }
+            item=binarytoHexa(item_raw,sizeof(item_raw));
+
+            const size_t size=max/8+1;
+            char bitlist[size];
+            memset(bitlist,0,size);
+            index=0;
+            while(index<profile.items.size())
+            {
+                const LoginProfile::Item &item=profile.items.at(index);
+                uint16_t bittoUp=item.id;
+                bitlist[bittoUp/8]|=(1<<(7-bittoUp%8));
+                index++;
+            }
+            encyclopedia_item=binarytoHexa(bitlist,sizeof(bitlist));
+        }
+        std::string reputations;
+        if(profile.reputations.empty())
+        {
+            uint32_t pos=0;
+            char reputation_raw[(1+4+1)*profile.reputations.size()];
+            unsigned int index=0;
+            while(index<profile.reputations.size())
+            {
+                const LoginProfile::Reputation &reputation=profile.reputations.at(index);
+                *reinterpret_cast<uint32_t *>(reputation_raw+pos)=htole32(reputation.point);
+                pos+=4;
+                reputation_raw[pos]=reputation.reputationDatabaseId;
+                pos+=1;
+                reputation_raw[pos]=reputation.level;
+                pos+=1;
+                index++;
+            }
+            reputations=binarytoHexa(reputation_raw,sizeof(reputation_raw));
+        }
+
         //assume here all is the same type
+        {
+            unsigned int monsterGroupIndex=0;
+            const std::vector<EpollServerLoginSlave::LoginProfile::Monster> &monsters=profile.monstergroup.at(monsterGroupIndex);
+            while(monsterGroupIndex<monsters.size())
+            {
+                std::vector<uint16_t> monsterForEncyclopedia;
+                unsigned int monsterIndex=0;
+                const EpollServerLoginSlave::LoginProfile::Monster &monster=monsters.at(monsterIndex);
+                std::vector<StringWithReplacement> &monsterGroupQuery=profile.monster_insert[monsterGroupIndex];
+                while(monsterIndex<monsters.size())
+                {
+                    //dynamic part
+                    {
+                        //id,hp,monster,level,captured_with,gender,character_origin
+                        const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster.compose(
+                                    "%1",
+                                    std::to_string(monster.hp),
+                                    std::to_string(monster.id),
+                                    std::to_string(monster.level),
+                                    std::to_string(monster.captured_with),
+                                    "%2",
+                                    "%3"
+                                    );
+
+                        monsterGroupQuery.push_back(queryText);
+                    }
+                    monsterForEncyclopedia.push_back(monster.id);
+                    monsterIndex++;
+                }
+                //do the encyclopedia monster
+                const auto &result=std::max_element(monsterForEncyclopedia.begin(),monsterForEncyclopedia.end());
+                const size_t size=*result/8+1;
+                char bitlist[size];
+                memset(bitlist,0,size);
+                monsterIndex=0;
+                while(monsterIndex<monsterForEncyclopedia.size())
+                {
+                    uint16_t bittoUp=monsterForEncyclopedia.at(monsterIndex);
+                    bitlist[bittoUp/8]|=(1<<(7-bittoUp%8));
+                    monsterIndex++;
+                }
+                profile.monster_encyclopedia_insert.push_back(binarytoHexa(bitlist,sizeof(bitlist)));
+
+                monsterGroupIndex++;
+            }
+        }
         switch(type)
         {
             default:
             case DatabaseBase::DatabaseType::Mysql:
-                tempStringList.push_back("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(");
-                tempStringList.push_back(",");
-                tempStringList.push_back(",'");
-                tempStringList.push_back("',");
-                tempStringList.push_back(",0,0,"+
-                        std::to_string(profile.cash)+",");
-                tempStringList.push_back(",0,0,0,0,0,"+
-                        std::to_string(profile.databaseId)+");");
+                EpollServerLoginSlave::loginProfileList[index].character_insert=std::string("INSERT INTO `character`("
+                        "`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,"
+                        "`time_to_delete`,`played_time`,`last_connect`,`starter`,`item`,`reputations`,`monster`,`encyclopedia_monster`,`encyclopedia_item`"
+                        ") VALUES(%1,%2,'%3',%4,0,0,"+
+                        std::to_string(profile.cash)+",%5,0,0,"
+                        "0,0,0,"+
+                        std::to_string(profile.databaseId/*starter*/)+",UNHEX('"+item+"'),UNHEX('"+reputations+"'),%6,%7,UNHEX('"+encyclopedia_item+"'));");
             break;
             case DatabaseBase::DatabaseType::SQLite:
-                tempStringList.push_back("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
-                tempStringList.push_back(",");
-                tempStringList.push_back(",'");
-                tempStringList.push_back("',");
-                tempStringList.push_back(",0,0,"+
-                        std::to_string(profile.cash)+",");
-                tempStringList.push_back(",0,0,0,0,0,"+
-                        std::to_string(index)+");");
+                EpollServerLoginSlave::loginProfileList[index].character_insert=std::string("INSERT INTO character("
+                        "id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,"
+                        "time_to_delete,played_time,last_connect,starter,item,reputations,monster,encyclopedia_monster,encyclopedia_item"
+                        ") VALUES(%1,%2,'%3',%4,0,0,"+
+                        std::to_string(profile.cash)+",%5,0,0,"
+                        "0,0,0,"+
+                        std::to_string(profile.databaseId/*starter*/)+",'"+item+"','"+reputations+"',%6,%7,'"+encyclopedia_item+"');");
             break;
             case DatabaseBase::DatabaseType::PostgreSQL:
-                tempStringList.push_back("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
-                tempStringList.push_back(",");
-                tempStringList.push_back(",'");
-                tempStringList.push_back("',");
-                tempStringList.push_back(",0,0,"+
-                        std::to_string(profile.cash)+",");
-                tempStringList.push_back(",0,FALSE,0,0,0,"+
-                        std::to_string(index)+");");
+                EpollServerLoginSlave::loginProfileList[index].character_insert=std::string("INSERT INTO character("
+                        "id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,"
+                        "time_to_delete,played_time,last_connect,starter,item,reputations,monster,encyclopedia_monster,encyclopedia_item"
+                        ") VALUES(%1,%2,'%3',%4,0,0,"+
+                        std::to_string(profile.cash)+",%5,0,0,"
+                        "0,0,0,"+
+                        std::to_string(profile.databaseId/*starter*/)+",'\\x"+item+"','\\x"+reputations+"',%6,%7,'\\x"+encyclopedia_item+"');");
             break;
         }
-        unsigned int preparedQueryCharTempSize=0;
-        //reservate the memory space
-        {
-            unsigned int sub_index=0;
-            while(sub_index<tempStringList.size())
-            {
-                preparedQueryCharTempSize+=tempStringList.at(sub_index).size();
-                sub_index++;
-            }
-            profile.preparedQueryChar=(char *)malloc(preparedQueryCharTempSize);
-        }
-        //set the new memory space
-        {
-            unsigned int sub_index=0;
-            while(sub_index<tempStringList.size())
-            {
-                profile.preparedQuerySize[sub_index]=tempStringList.at(sub_index).size();
-                if(sub_index>0)
-                    profile.preparedQueryPos[sub_index]=profile.preparedQueryPos[sub_index-1]+profile.preparedQuerySize[sub_index-1];
-                memcpy(profile.preparedQueryChar+profile.preparedQueryPos[sub_index],tempStringList.at(sub_index).data(),tempStringList.at(sub_index).size());
-                sub_index++;
-            }
-        }
-        tempStringList.clear();
 
         index++;
     }

@@ -74,7 +74,8 @@ SOURCES += \
     ../../general/base/tinyXML/tinyxml.cpp \
     ../../general/base/tinyXML/tinyxmlerror.cpp \
     ../../general/base/tinyXML/tinyxmlparser.cpp \
-    ../base/DatabaseFunction.cpp
+    ../base/DatabaseFunction.cpp \
+    ../base/StringWithReplacement.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \
@@ -110,4 +111,5 @@ HEADERS += \
     ../base/TinyXMLSettings.h \
     ../../general/base/tinyXML/tinystr.h \
     ../../general/base/tinyXML/tinyxml.h \
-    ../base/DatabaseFunction.h
+    ../base/DatabaseFunction.h \
+    ../base/StringWithReplacement.h
