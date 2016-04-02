@@ -96,6 +96,7 @@ private:
     std::vector<uint32_t> deleteCharacterNowCharacterIdList;
     std::unordered_map<uint32_t,uint8_t> uniqueKeyToIndex;
 
+    static const std::string gender_unknown,gender_male,gender_female;
     static char tempBuffer[4096];
 };
 }

@@ -24,8 +24,9 @@ void EpollClientLoginSlave::askLogin(const uint8_t &query_id,const char *rawdata
     askLoginParam->query_id=query_id;
     memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
 
-    std::string queryText=PreparedDBQueryLogin::db_query_login;
-    stringreplaceOne(queryText,"%1",binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE));
+    const std::string &queryText=PreparedDBQueryLogin::db_query_login.compose(
+                binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)
+                );
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseLogin.asyncRead(queryText,this,&EpollClientLoginSlave::askLogin_static);
     if(callback==NULL)
     {
@@ -536,8 +537,9 @@ void EpollClientLoginSlave::createAccount(const uint8_t &query_id, const char *r
     memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
     askLoginParam->query_id=query_id;
 
-    std::string queryText=PreparedDBQueryLogin::db_query_login;
-    stringreplaceOne(queryText,"%1",binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE));
+    const std::string &queryText=PreparedDBQueryLogin::db_query_login.compose(
+                binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)
+                );
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseLogin.asyncRead(queryText,this,&EpollClientLoginSlave::createAccount_static);
     if(callback==NULL)
     {
@@ -637,12 +639,13 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
         account_id=maxAccountIdList.front();
         maxAccountIdList.erase(maxAccountIdList.begin());
         {
-            std::string queryText=PreparedDBQueryLogin::db_query_insert_login;
-            stringreplaceOne(queryText,"%1",std::to_string(account_id));
-            stringreplaceOne(queryText,"%2",binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE));
-            stringreplaceOne(queryText,"%3",binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE));
-            stringreplaceOne(queryText,"%4",std::to_string(sFrom1970()));
-            stringreplaceOne(queryText,"%5",std::to_string(CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION));
+            const std::string &queryText=PreparedDBQueryLogin::db_query_insert_login.compose(
+                        std::to_string(account_id),
+                        binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE),
+                        binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE),
+                        std::to_string(sFrom1970()),
+                        std::to_string(CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION)
+                        );
             dbQueryWriteLogin(queryText);
         }
         //send the network reply

@@ -2,6 +2,7 @@
 #include <QDebug>
 #include "reputation/TestUnitReputation.h"
 #include "TestUnitCpp.h"
+#include "TestString.h"
 #include "TestUnitMessageParsing.h"
 
 int main(int argc, char *argv[])
@@ -41,6 +42,19 @@ int main(int argc, char *argv[])
             testUnitCpp.testFSabsoluteFilePath();
 
         if(!testUnitCpp.finalResult)
+        {
+            qDebug() << "Final result: Failed: " << __FILE__ << ":" <<  __LINE__;
+            return EXIT_FAILURE;
+        }
+    }
+
+    {
+        TestString testString;
+
+        testString.finalResult=true;
+        testString.testReplace1();
+
+        if(!testString.finalResult)
         {
             qDebug() << "Final result: Failed: " << __FILE__ << ":" <<  __LINE__;
             return EXIT_FAILURE;

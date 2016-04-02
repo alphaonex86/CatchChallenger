@@ -530,18 +530,6 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 {
                     EpollServerLoginSlave::LoginProfile profile;
 
-                    //cache query to compose
-                    profile.preparedQueryChar=NULL;
-                    {
-                        unsigned int index=0;
-                        while(index<sizeof(profile.preparedQueryPos))
-                        {
-                            profile.preparedQueryPos[index]=0;
-                            profile.preparedQuerySize[index]=0;
-                            index++;
-                        }
-                    }
-
                     //database id
                     if((size-cursor)<(int)sizeof(uint16_t))
                     {
@@ -732,7 +720,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         reputation.point=le32toh(*reinterpret_cast<int32_t *>(const_cast<char *>(rawData+cursor)));
                         cursor+=sizeof(int32_t);
 
-                        profile.reputation.push_back(reputation);
+                        profile.reputations.push_back(reputation);
                         reputationListIndex++;
                     }
 

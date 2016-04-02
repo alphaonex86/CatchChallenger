@@ -124,7 +124,7 @@ unsigned int vectorRemoveEmpty(std::vector<T> &list)
 }
 
 template <class T>
-unsigned int vectorDuplicatesForSmallList(std::vector<T> &list)
+unsigned int vectorRemoveDuplicatesForSmallList(std::vector<T> &list)
 {
     /*unsigned int removedEntryNumber=0;
     for(auto it = list.begin();it < list.cend()-1;)
@@ -147,7 +147,7 @@ unsigned int vectorDuplicatesForSmallList(std::vector<T> &list)
 }
 
 template <class T>
-unsigned int vectorDuplicatesForBigList(std::vector<T> &list)
+unsigned int vectorRemoveDuplicatesForBigList(std::vector<T> &list)
 {
     std::unordered_set<T> s(list.begin(),list.end());
     const unsigned int removedEntryNumber=list.size()-s.size();
