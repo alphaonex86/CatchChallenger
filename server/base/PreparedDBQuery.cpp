@@ -25,6 +25,8 @@ StringWithReplacement PreparedDBQueryCommon::db_query_delete_monster_by_id;
 StringWithReplacement PreparedDBQueryCommon::db_query_insert_monster;
 
 #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+StringWithReplacement PreparedDBQueryServer::db_query_update_character_forserver_map;
+/*
 StringWithReplacement PreparedDBQueryCommon::db_query_select_monstersBuff_by_id;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_move_to_player;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_move_to_new_player;
@@ -129,8 +131,7 @@ StringWithReplacement PreparedDBQueryServer::db_query_update_factory;
 StringWithReplacement PreparedDBQueryServer::db_query_delete_city;
 StringWithReplacement PreparedDBQueryServer::db_query_insert_bot_already_beaten;
 StringWithReplacement PreparedDBQueryServer::db_query_delete_bot_already_beaten;
-StringWithReplacement PreparedDBQueryServer::db_query_update_character_forserver_map_part1;
-StringWithReplacement PreparedDBQueryServer::db_query_update_character_forserver_map_part2;
+*/
 #endif
 
 #if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
@@ -574,6 +575,8 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         return;
         #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_MYSQL)
         case DatabaseBase::DatabaseType::Mysql:
+        PreparedDBQueryServer::db_query_update_character_forserver_map="UPDATE `character_forserver` SET `map`=%1,`x`=%2,`y`=%3,`orientation`=%4,`rescue_map`=%5,`rescue_x`=%6,`rescue_y`=%7,`rescue_orientation`=%8,`unvalidated_rescue_map`=%9,`unvalidated_rescue_x`=%10,`unvalidated_rescue_y`=%11,`unvalidated_rescue_orientation`=%12 WHERE `character`=%13";
+
         PreparedDBQueryServer::db_query_character_server_by_id="SELECT `map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash` FROM `character_forserver` WHERE `character`=%1";
         PreparedDBQueryServer::db_query_delete_all_item_market="DELETE FROM `item_market` WHERE `character`=%1";
         PreparedDBQueryServer::db_query_insert_item_market="INSERT INTO `item_market`(`item`,`character`,`quantity`,`market_price`) VALUES(%1,%2,%3,%4)";
@@ -604,13 +607,13 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_insert_quest="INSERT INTO `quest`(`character`,`quest`,`finish_one_time`,`step`) VALUES(%1,%2,0,%3);";
         PreparedDBQueryServer::db_query_update_city_clan="UPDATE `city` SET `clan`=%1 WHERE `city`='%2';";
         PreparedDBQueryServer::db_query_insert_city="INSERT INTO `city`(`clan`,`city`) VALUES(%1,'%2');";
-        PreparedDBQueryServer::db_query_update_character_forserver_map_part1="UPDATE `character_forserver` SET `map`=%1,`x`=%2,`y`=%3,`orientation`=%4,%5 WHERE `character`=%6";
-        PreparedDBQueryServer::db_query_update_character_forserver_map_part2="`rescue_map`=%1,`rescue_x`=%2,`rescue_y`=%3,`rescue_orientation`=%4,`unvalidated_rescue_map`=%5,`unvalidated_rescue_x`=%6,`unvalidated_rescue_y`=%7,`unvalidated_rescue_orientation`=%8";
         break;
         #endif
 
         #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::SQLite:
+        PreparedDBQueryServer::db_query_update_character_forserver_map="UPDATE character_forserver SET map=%1,x=%2,y=%3,orientation=%4,rescue_map=%5,rescue_x=%6,rescue_y=%7,rescue_orientation=%8,unvalidated_rescue_map=%9,unvalidated_rescue_x=%10,unvalidated_rescue_y=%11,unvalidated_rescue_orientation=%12 WHERE character=%13";
+
         PreparedDBQueryServer::db_query_character_server_by_id="SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash FROM character_forserver WHERE character=%1";
         PreparedDBQueryServer::db_query_delete_all_item_market="DELETE FROM item_market WHERE character=%1";
         PreparedDBQueryServer::db_query_insert_item_market="INSERT INTO item_market(item,character,quantity,market_price) VALUES(%1,%2,%3,%4)";
@@ -641,14 +644,14 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_insert_quest="INSERT INTO quest(character,quest,finish_one_time,step) VALUES(%1,%2,0,%3);";
         PreparedDBQueryServer::db_query_update_city_clan="UPDATE city SET clan=%1 WHERE city='%2';";
         PreparedDBQueryServer::db_query_insert_city="INSERT INTO city(clan,city) VALUES(%1,'%2');";
-        PreparedDBQueryServer::db_query_update_character_forserver_map_part1="UPDATE character_forserver SET map=%1,x=%2,y=%3,orientation=%4,%5 WHERE character=%6";
-        PreparedDBQueryServer::db_query_update_character_forserver_map_part2="rescue_map=%1,rescue_x=%2,rescue_y=%3,rescue_orientation=%4,unvalidated_rescue_map=%5,unvalidated_rescue_x=%6,unvalidated_rescue_y=%7,unvalidated_rescue_orientation=%8";
         break;
         #endif
 
         #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
-        PreparedDBQueryServer::db_query_character_server_by_id="SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash FROM character_forserver WHERE character=%1";
+        PreparedDBQueryServer::db_query_update_character_forserver_map="UPDATE character_forserver SET map=%1,x=%2,y=%3,orientation=%4,rescue_map=%5,rescue_x=%6,rescue_y=%7,rescue_orientation=%8,unvalidated_rescue_map=%9,unvalidated_rescue_x=%10,unvalidated_rescue_y=%11,unvalidated_rescue_orientation=%12 WHERE character=%13";
+
+        /*PreparedDBQueryServer::db_query_character_server_by_id="SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash FROM character_forserver WHERE character=%1";
         PreparedDBQueryServer::db_query_delete_all_item_market="DELETE FROM item_market WHERE character=%1";
         PreparedDBQueryServer::db_query_insert_item_market="INSERT INTO item_market(item,character,quantity,market_price) VALUES(%1,%2,%3,%4)";
         PreparedDBQueryServer::db_query_delete_item_market="DELETE FROM item_market WHERE item=%1 AND character=%2";
@@ -677,9 +680,7 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_update_quest_restart="UPDATE quest SET step=1 WHERE character=%1 AND quest=%2;";
         PreparedDBQueryServer::db_query_insert_quest="INSERT INTO quest(character,quest,finish_one_time,step) VALUES(%1,%2,0,%3);";
         PreparedDBQueryServer::db_query_update_city_clan="UPDATE city SET clan=%1 WHERE city='%2';";
-        PreparedDBQueryServer::db_query_insert_city="INSERT INTO city(clan,city) VALUES(%1,'%2');";
-        PreparedDBQueryServer::db_query_update_character_forserver_map_part1="UPDATE character_forserver SET map=%1,x=%2,y=%3,orientation=%4,%5 WHERE character=%6";
-        PreparedDBQueryServer::db_query_update_character_forserver_map_part2="rescue_map=%1,rescue_x=%2,rescue_y=%3,rescue_orientation=%4,unvalidated_rescue_map=%5,unvalidated_rescue_x=%6,unvalidated_rescue_y=%7,unvalidated_rescue_orientation=%8";
+        PreparedDBQueryServer::db_query_insert_city="INSERT INTO city(clan,city) VALUES(%1,'%2');";*/
         break;
         #endif
     }
