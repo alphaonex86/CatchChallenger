@@ -129,6 +129,7 @@ class PreparedDBQueryServer
 public:
     static void initDatabaseQueryServer(const DatabaseBase::DatabaseType &type);
 public:
+    static StringWithReplacement db_query_update_character_forserver_map;
     /*static StringWithReplacement db_query_insert_bot_already_beaten;
     static StringWithReplacement db_query_character_server_by_id;
     static StringWithReplacement db_query_select_bot_beaten;
@@ -161,8 +162,7 @@ public:
     static StringWithReplacement db_query_update_item_market_and_price;
     static StringWithReplacement db_query_update_charaters_market_cash;
     static StringWithReplacement db_query_get_market_cash;
-    static StringWithReplacement db_query_update_character_forserver_map_part1;
-    static StringWithReplacement db_query_update_character_forserver_map_part2;*/
+*/
 };
 #endif
 
