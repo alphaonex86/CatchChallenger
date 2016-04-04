@@ -31,6 +31,8 @@ public:
     static StringWithReplacement db_query_delete_character;
     static StringWithReplacement db_query_select_character_by_pseudo;
     static StringWithReplacement db_query_get_character_count_by_account;
+    static StringWithReplacement db_query_account_time_to_delete_character_by_id;
+    static StringWithReplacement db_query_update_character_time_to_delete_by_id;
 };
 #endif
 
@@ -83,8 +85,6 @@ public:
     static StringWithReplacement db_query_insert_reputation;
     static StringWithReplacement db_query_insert_item;
     static StringWithReplacement db_query_insert_item_warehouse;
-    static StringWithReplacement db_query_account_time_to_delete_character_by_id;
-    static StringWithReplacement db_query_update_character_time_to_delete_by_id;
     static StringWithReplacement db_query_select_reputation_by_id;
     static StringWithReplacement db_query_select_recipes_by_player_id;
     static StringWithReplacement db_query_select_items_by_player_id;
