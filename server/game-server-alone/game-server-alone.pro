@@ -1,4 +1,4 @@
-include(catchchallenger-server-cli-epoll.pro)
+include(../catchchallenger-server-cli-epoll.pro)
 
 TARGET = catchchallenger-game-server-alone
 
