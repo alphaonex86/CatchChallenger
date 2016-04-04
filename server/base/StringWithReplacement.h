@@ -147,7 +147,10 @@ public:
                         const std::string &arg15
                         ) const;
 private:
-    char * preparedQuery;
+    /* [0]: occurence to replace
+     * [1,2]: total size of the String
+     * List of: 16Bit header + string content */
+    unsigned char * preparedQuery;
     static char composeBuffer[4096];
 };
 
