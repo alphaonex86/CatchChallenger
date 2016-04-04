@@ -102,29 +102,25 @@ void Client::savePosition()
     #endif
     /* disable because use memory, but useful only into less than < 0.1% of case
      * if(map!=at_start_map_name || x!=at_start_x || y!=at_start_y || orientation!=at_start_orientation) */
-    std::string updateMapPositionQuery,updateMapPositionQuerySub;
     const uint32_t &map_file_database_id=static_cast<MapServer *>(map)->reverse_db_id;
     const uint32_t &rescue_map_file_database_id=static_cast<MapServer *>(rescue.map)->reverse_db_id;
     const uint32_t &unvalidated_rescue_map_file_database_id=static_cast<MapServer *>(unvalidated_rescue.map)->reverse_db_id;
-    updateMapPositionQuery=PreparedDBQueryServer::db_query_update_character_forserver_map_part1;
-    stringreplaceOne(updateMapPositionQuery,"%1",std::to_string(map_file_database_id));
-    stringreplaceOne(updateMapPositionQuery,"%2",std::to_string(x));
-    stringreplaceOne(updateMapPositionQuery,"%3",std::to_string(y));
-
-    //force into orientation because it can be kicked while move in progress:
-    stringreplaceOne(updateMapPositionQuery,"%4",directionToStringToSave(getLastDirection()));
-
-    updateMapPositionQuerySub=PreparedDBQueryServer::db_query_update_character_forserver_map_part2;
-    stringreplaceOne(updateMapPositionQuerySub,"%1",std::to_string(rescue_map_file_database_id));
-    stringreplaceOne(updateMapPositionQuerySub,"%2",std::to_string(rescue.x));
-    stringreplaceOne(updateMapPositionQuerySub,"%3",std::to_string(rescue.y));
-    stringreplaceOne(updateMapPositionQuerySub,"%4",std::to_string((uint8_t)rescue.orientation));
-    stringreplaceOne(updateMapPositionQuerySub,"%5",std::to_string(unvalidated_rescue_map_file_database_id));
-    stringreplaceOne(updateMapPositionQuerySub,"%6",std::to_string(unvalidated_rescue.x));
-    stringreplaceOne(updateMapPositionQuerySub,"%7",std::to_string(unvalidated_rescue.y));
-    stringreplaceOne(updateMapPositionQuerySub,"%8",std::to_string((uint8_t)unvalidated_rescue.orientation));
-    stringreplaceOne(updateMapPositionQuery,"%5",updateMapPositionQuerySub);
-    stringreplaceOne(updateMapPositionQuery,"%6",std::to_string(character_id));
+    const std::string &updateMapPositionQuery=PreparedDBQueryServer::db_query_update_character_forserver_map.compose(
+                std::to_string(map_file_database_id),
+                std::to_string(x),
+                std::to_string(y),
+                //force into orientation because it can be kicked while move in progress
+                directionToStringToSave(getLastDirection()),
+                std::to_string(rescue_map_file_database_id),
+                std::to_string(rescue.x),
+                std::to_string(rescue.y),
+                std::to_string((uint8_t)rescue.orientation),
+                std::to_string(unvalidated_rescue_map_file_database_id),
+                std::to_string(unvalidated_rescue.x),
+                std::to_string(unvalidated_rescue.y),
+                std::to_string((uint8_t)unvalidated_rescue.orientation),
+                std::to_string(character_id)
+                );
     dbQueryWriteServer(updateMapPositionQuery);
 /* do at moveDownMonster and moveUpMonster
  *     const std::vector<PlayerMonster> &playerMonsterList=getPlayerMonster();
