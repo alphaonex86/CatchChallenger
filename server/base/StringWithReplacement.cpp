@@ -1,5 +1,6 @@
 #include "StringWithReplacement.h"
 #include "../../general/base/cpp11addition.h"
+#include "../../general/base/GeneralVariable.h"
 #include <iostream>
 #include <string.h>//memcpy
 
@@ -32,9 +33,12 @@ void StringWithReplacement::set(const std::string &query)
         delete preparedQuery;
         preparedQuery=NULL;
     }
-    if((query.size()+16+2)>255)
+    if((query.size()+16+2)>=65535 || (query.size()+16+2)>=sizeof(composeBuffer))
     {
-        std::cerr << "StringWithReplacement::operator=(): query to bug to de stored" << std::endl;
+        std::cerr << "StringWithReplacement::operator=(): query to big to de stored: (query.size(): " << query.size() << "+16+2)>255" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return;
     }
     uint8_t numberOfReplace=15;
@@ -43,12 +47,13 @@ void StringWithReplacement::set(const std::string &query)
         const std::size_t &found = query.find("%"+std::to_string(numberOfReplace));
         if(found!=std::string::npos)
         {
-            const uint8_t &arraysize=1+numberOfReplace+query.size()+2;
+            const uint16_t &arraysize=1+numberOfReplace+query.size()+2;
             char preparedQueryTemp[arraysize];
             preparedQueryTemp[0]=numberOfReplace;
             preparedQueryTemp[1]=0;
-            uint8_t pos=2;
-            uint8_t previousStringPos=0;
+            preparedQueryTemp[2]=0;
+            uint16_t pos=3;
+            uint16_t previousStringPos=0;
             uint8_t index=1;
             do
             {
@@ -61,9 +66,9 @@ void StringWithReplacement::set(const std::string &query)
                         std::cerr << "StringWithReplacement::operator=(): id to replace need be ordened" << std::endl;
                         return;
                     }
-                    const uint8_t &size=foundinternal-previousStringPos;
-                    preparedQueryTemp[pos]=size;
-                    ++pos;
+                    const uint16_t &size=foundinternal-previousStringPos;
+                    *reinterpret_cast<uint16_t *>(preparedQueryTemp+pos)=size;
+                    pos+=2;
                     if(size>0)
                     {
                         const std::string extractedPart(query.substr(previousStringPos,size));
@@ -80,9 +85,9 @@ void StringWithReplacement::set(const std::string &query)
                 index++;
             } while(index<=numberOfReplace);
             //the last part:
-            const uint8_t &size=query.size()-previousStringPos;
-            preparedQueryTemp[pos]=size;
-            ++pos;
+            const uint16_t &size=query.size()-previousStringPos;
+            *reinterpret_cast<uint16_t *>(preparedQueryTemp+pos)=size;
+            pos+=2;
             if(size>0)
             {
                 const std::string extractedPart(query.substr(previousStringPos,size));
@@ -90,9 +95,9 @@ void StringWithReplacement::set(const std::string &query)
                 pos+=size;
             }
             previousStringPos=size;
-            preparedQueryTemp[1]=pos-2-(numberOfReplace+1);
+            *reinterpret_cast<uint16_t *>(preparedQueryTemp+1)=pos-3-(numberOfReplace*2+1);
             //copy
-            preparedQuery=new char[pos];
+            preparedQuery=new unsigned char[pos];
             memcpy(preparedQuery,preparedQueryTemp,pos);
             //dump:
             return;
@@ -125,15 +130,19 @@ std::string StringWithReplacement::compose(const std::string &arg1) const
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
         return std::string();
     }
-    if((preparedQuery[1]+arg1.size()+1)>=sizeof(composeBuffer))
+    if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+arg1.size()+1)>=sizeof(composeBuffer))
     {
         std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     //copy the first segments
-    memcpy(composeBuffer,preparedQuery+3,preparedQuery[2]);
-    uint16_t posComposeBuffer=preparedQuery[2];
-    uint8_t pos=2+1+preparedQuery[2];
+    const uint16_t &firstChunkSize=*reinterpret_cast<uint16_t *>(preparedQuery+1+2);
+    memcpy(composeBuffer,preparedQuery+1+2+2,firstChunkSize);
+    uint16_t posComposeBuffer=firstChunkSize;
+    uint16_t pos=1+2+2+firstChunkSize;
     uint8_t index=0;
     while(index<preparedQuery[0])
     {
@@ -146,9 +155,9 @@ std::string StringWithReplacement::compose(const std::string &arg1) const
             default:
             break;
         }
-        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+1,preparedQuery[pos]);
+        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+2,*reinterpret_cast<uint16_t *>(preparedQuery+pos));
         posComposeBuffer+=preparedQuery[pos];
-        pos+=1+preparedQuery[pos];
+        pos+=2+preparedQuery[pos];
         ++index;
     }
     return std::string(composeBuffer,posComposeBuffer);
@@ -168,15 +177,19 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
         return std::string();
     }
-    if((preparedQuery[1]+arg1.size()+arg2.size()+1)>=sizeof(composeBuffer))
+    if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+arg1.size()+arg2.size()+1)>=sizeof(composeBuffer))
     {
         std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     //copy the first segments
-    memcpy(composeBuffer,preparedQuery+3,preparedQuery[2]);
-    uint16_t posComposeBuffer=preparedQuery[2];
-    uint8_t pos=2+1+preparedQuery[2];
+    const uint16_t &firstChunkSize=*reinterpret_cast<uint16_t *>(preparedQuery+1+2);
+    memcpy(composeBuffer,preparedQuery+1+2+2,firstChunkSize);
+    uint16_t posComposeBuffer=firstChunkSize;
+    uint16_t pos=1+2+2+firstChunkSize;
     uint8_t index=0;
     while(index<preparedQuery[0])
     {
@@ -193,9 +206,9 @@ std::string StringWithReplacement::compose(const std::string &arg1,
             default:
             break;
         }
-        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+1,preparedQuery[pos]);
+        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+2,*reinterpret_cast<uint16_t *>(preparedQuery+pos));
         posComposeBuffer+=preparedQuery[pos];
-        pos+=1+preparedQuery[pos];
+        pos+=2+preparedQuery[pos];
         ++index;
     }
     return std::string(composeBuffer,posComposeBuffer);
@@ -216,17 +229,21 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
         return std::string();
     }
-    if((preparedQuery[1]+
+    if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
         arg1.size()+arg2.size()+arg3.size()+
         1)>=sizeof(composeBuffer))
     {
         std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     //copy the first segments
-    memcpy(composeBuffer,preparedQuery+3,preparedQuery[2]);
-    uint16_t posComposeBuffer=preparedQuery[2];
-    uint8_t pos=2+1+preparedQuery[2];
+    const uint16_t &firstChunkSize=*reinterpret_cast<uint16_t *>(preparedQuery+1+2);
+    memcpy(composeBuffer,preparedQuery+1+2+2,firstChunkSize);
+    uint16_t posComposeBuffer=firstChunkSize;
+    uint16_t pos=1+2+2+firstChunkSize;
     uint8_t index=0;
     while(index<preparedQuery[0])
     {
@@ -247,9 +264,9 @@ std::string StringWithReplacement::compose(const std::string &arg1,
             default:
             break;
         }
-        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+1,preparedQuery[pos]);
+        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+2,*reinterpret_cast<uint16_t *>(preparedQuery+pos));
         posComposeBuffer+=preparedQuery[pos];
-        pos+=1+preparedQuery[pos];
+        pos+=2+preparedQuery[pos];
         ++index;
     }
     return std::string(composeBuffer,posComposeBuffer);
@@ -271,17 +288,21 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
         return std::string();
     }
-    if((preparedQuery[1]+
+    if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
         arg1.size()+arg2.size()+arg3.size()+arg4.size()+
         1)>=sizeof(composeBuffer))
     {
         std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     //copy the first segments
-    memcpy(composeBuffer,preparedQuery+3,preparedQuery[2]);
-    uint16_t posComposeBuffer=preparedQuery[2];
-    uint8_t pos=2+1+preparedQuery[2];
+    const uint16_t &firstChunkSize=*reinterpret_cast<uint16_t *>(preparedQuery+1+2);
+    memcpy(composeBuffer,preparedQuery+1+2+2,firstChunkSize);
+    uint16_t posComposeBuffer=firstChunkSize;
+    uint16_t pos=1+2+2+firstChunkSize;
     uint8_t index=0;
     while(index<preparedQuery[0])
     {
@@ -306,9 +327,9 @@ std::string StringWithReplacement::compose(const std::string &arg1,
             default:
             break;
         }
-        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+1,preparedQuery[pos]);
+        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+2,*reinterpret_cast<uint16_t *>(preparedQuery+pos));
         posComposeBuffer+=preparedQuery[pos];
-        pos+=1+preparedQuery[pos];
+        pos+=2+preparedQuery[pos];
         ++index;
     }
     return std::string(composeBuffer,posComposeBuffer);
@@ -331,18 +352,22 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
         return std::string();
     }
-    if((preparedQuery[1]+
+    if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
         arg1.size()+arg2.size()+arg3.size()+arg4.size()+
         arg5.size()+
         1)>=sizeof(composeBuffer))
     {
         std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     //copy the first segments
-    memcpy(composeBuffer,preparedQuery+3,preparedQuery[2]);
-    uint16_t posComposeBuffer=preparedQuery[2];
-    uint8_t pos=2+1+preparedQuery[2];
+    const uint16_t &firstChunkSize=*reinterpret_cast<uint16_t *>(preparedQuery+1+2);
+    memcpy(composeBuffer,preparedQuery+1+2+2,firstChunkSize);
+    uint16_t posComposeBuffer=firstChunkSize;
+    uint16_t pos=1+2+2+firstChunkSize;
     uint8_t index=0;
     while(index<preparedQuery[0])
     {
@@ -371,9 +396,9 @@ std::string StringWithReplacement::compose(const std::string &arg1,
             default:
             break;
         }
-        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+1,preparedQuery[pos]);
+        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+2,*reinterpret_cast<uint16_t *>(preparedQuery+pos));
         posComposeBuffer+=preparedQuery[pos];
-        pos+=1+preparedQuery[pos];
+        pos+=2+preparedQuery[pos];
         ++index;
     }
     return std::string(composeBuffer,posComposeBuffer);
@@ -397,18 +422,22 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
         return std::string();
     }
-    if((preparedQuery[1]+
+    if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
         arg1.size()+arg2.size()+arg3.size()+arg4.size()+
         arg5.size()+arg6.size()+
         1)>=sizeof(composeBuffer))
     {
         std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     //copy the first segments
-    memcpy(composeBuffer,preparedQuery+3,preparedQuery[2]);
-    uint16_t posComposeBuffer=preparedQuery[2];
-    uint8_t pos=2+1+preparedQuery[2];
+    const uint16_t &firstChunkSize=*reinterpret_cast<uint16_t *>(preparedQuery+1+2);
+    memcpy(composeBuffer,preparedQuery+1+2+2,firstChunkSize);
+    uint16_t posComposeBuffer=firstChunkSize;
+    uint16_t pos=1+2+2+firstChunkSize;
     uint8_t index=0;
     while(index<preparedQuery[0])
     {
@@ -441,9 +470,9 @@ std::string StringWithReplacement::compose(const std::string &arg1,
             default:
             break;
         }
-        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+1,preparedQuery[pos]);
+        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+2,*reinterpret_cast<uint16_t *>(preparedQuery+pos));
         posComposeBuffer+=preparedQuery[pos];
-        pos+=1+preparedQuery[pos];
+        pos+=2+preparedQuery[pos];
         ++index;
     }
     return std::string(composeBuffer,posComposeBuffer);
@@ -468,18 +497,22 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
         return std::string();
     }
-    if((preparedQuery[1]+
+    if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
         arg1.size()+arg2.size()+arg3.size()+arg4.size()+
         arg5.size()+arg6.size()+arg7.size()+
         1)>=sizeof(composeBuffer))
     {
         std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     //copy the first segments
-    memcpy(composeBuffer,preparedQuery+3,preparedQuery[2]);
-    uint16_t posComposeBuffer=preparedQuery[2];
-    uint8_t pos=2+1+preparedQuery[2];
+    const uint16_t &firstChunkSize=*reinterpret_cast<uint16_t *>(preparedQuery+1+2);
+    memcpy(composeBuffer,preparedQuery+1+2+2,firstChunkSize);
+    uint16_t posComposeBuffer=firstChunkSize;
+    uint16_t pos=1+2+2+firstChunkSize;
     uint8_t index=0;
     while(index<preparedQuery[0])
     {
@@ -516,9 +549,9 @@ std::string StringWithReplacement::compose(const std::string &arg1,
             default:
             break;
         }
-        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+1,preparedQuery[pos]);
+        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+2,*reinterpret_cast<uint16_t *>(preparedQuery+pos));
         posComposeBuffer+=preparedQuery[pos];
-        pos+=1+preparedQuery[pos];
+        pos+=2+preparedQuery[pos];
         ++index;
     }
     return std::string(composeBuffer,posComposeBuffer);
@@ -544,18 +577,22 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
         return std::string();
     }
-    if((preparedQuery[1]+
+    if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
         arg1.size()+arg2.size()+arg3.size()+arg4.size()+
         arg5.size()+arg6.size()+arg7.size()+arg8.size()+
         1)>=sizeof(composeBuffer))
     {
         std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     //copy the first segments
-    memcpy(composeBuffer,preparedQuery+3,preparedQuery[2]);
-    uint16_t posComposeBuffer=preparedQuery[2];
-    uint8_t pos=2+1+preparedQuery[2];
+    const uint16_t &firstChunkSize=*reinterpret_cast<uint16_t *>(preparedQuery+1+2);
+    memcpy(composeBuffer,preparedQuery+1+2+2,firstChunkSize);
+    uint16_t posComposeBuffer=firstChunkSize;
+    uint16_t pos=1+2+2+firstChunkSize;
     uint8_t index=0;
     while(index<preparedQuery[0])
     {
@@ -596,9 +633,9 @@ std::string StringWithReplacement::compose(const std::string &arg1,
             default:
             break;
         }
-        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+1,preparedQuery[pos]);
+        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+2,*reinterpret_cast<uint16_t *>(preparedQuery+pos));
         posComposeBuffer+=preparedQuery[pos];
-        pos+=1+preparedQuery[pos];
+        pos+=2+preparedQuery[pos];
         ++index;
     }
     return std::string(composeBuffer,posComposeBuffer);
@@ -625,19 +662,31 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
         return std::string();
     }
-    if((preparedQuery[1]+
+    if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
         arg1.size()+arg2.size()+arg3.size()+arg4.size()+
         arg5.size()+arg6.size()+arg7.size()+arg8.size()+
         arg9.size()+
         1)>=sizeof(composeBuffer))
     {
-        std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): argument too big, preparedQuery[1]: "
+                  << std::to_string(preparedQuery[1])
+                  << ", sizeof(composeBuffer): "
+                  << sizeof(composeBuffer)
+                  << ", arg size: "
+                  << arg1.size()+arg2.size()+arg3.size()+arg4.size()+
+                     arg5.size()+arg6.size()+arg7.size()+arg8.size()+
+                     arg9.size()
+                  << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     //copy the first segments
-    memcpy(composeBuffer,preparedQuery+3,preparedQuery[2]);
-    uint16_t posComposeBuffer=preparedQuery[2];
-    uint8_t pos=2+1+preparedQuery[2];
+    const uint16_t &firstChunkSize=*reinterpret_cast<uint16_t *>(preparedQuery+1+2);
+    memcpy(composeBuffer,preparedQuery+1+2+2,firstChunkSize);
+    uint16_t posComposeBuffer=firstChunkSize;
+    uint16_t pos=1+2+2+firstChunkSize;
     uint8_t index=0;
     while(index<preparedQuery[0])
     {
@@ -682,9 +731,9 @@ std::string StringWithReplacement::compose(const std::string &arg1,
             default:
             break;
         }
-        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+1,preparedQuery[pos]);
+        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+2,*reinterpret_cast<uint16_t *>(preparedQuery+pos));
         posComposeBuffer+=preparedQuery[pos];
-        pos+=1+preparedQuery[pos];
+        pos+=2+preparedQuery[pos];
         ++index;
     }
     return std::string(composeBuffer,posComposeBuffer);
@@ -712,19 +761,23 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
         return std::string();
     }
-    if((preparedQuery[1]+
+    if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
         arg1.size()+arg2.size()+arg3.size()+arg4.size()+
         arg5.size()+arg6.size()+arg7.size()+arg8.size()+
         arg9.size()+arg10.size()+
         1)>=sizeof(composeBuffer))
     {
         std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     //copy the first segments
-    memcpy(composeBuffer,preparedQuery+3,preparedQuery[2]);
-    uint16_t posComposeBuffer=preparedQuery[2];
-    uint8_t pos=2+1+preparedQuery[2];
+    const uint16_t &firstChunkSize=*reinterpret_cast<uint16_t *>(preparedQuery+1+2);
+    memcpy(composeBuffer,preparedQuery+1+2+2,firstChunkSize);
+    uint16_t posComposeBuffer=firstChunkSize;
+    uint16_t pos=1+2+2+firstChunkSize;
     uint8_t index=0;
     while(index<preparedQuery[0])
     {
@@ -773,9 +826,9 @@ std::string StringWithReplacement::compose(const std::string &arg1,
             default:
             break;
         }
-        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+1,preparedQuery[pos]);
+        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+2,*reinterpret_cast<uint16_t *>(preparedQuery+pos));
         posComposeBuffer+=preparedQuery[pos];
-        pos+=1+preparedQuery[pos];
+        pos+=2+preparedQuery[pos];
         ++index;
     }
     return std::string(composeBuffer,posComposeBuffer);
@@ -804,19 +857,23 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
         return std::string();
     }
-    if((preparedQuery[1]+
+    if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
         arg1.size()+arg2.size()+arg3.size()+arg4.size()+
         arg5.size()+arg6.size()+arg7.size()+arg8.size()+
         arg9.size()+arg10.size()+arg11.size()+
         1)>=sizeof(composeBuffer))
     {
         std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     //copy the first segments
-    memcpy(composeBuffer,preparedQuery+3,preparedQuery[2]);
-    uint16_t posComposeBuffer=preparedQuery[2];
-    uint8_t pos=2+1+preparedQuery[2];
+    const uint16_t &firstChunkSize=*reinterpret_cast<uint16_t *>(preparedQuery+1+2);
+    memcpy(composeBuffer,preparedQuery+1+2+2,firstChunkSize);
+    uint16_t posComposeBuffer=firstChunkSize;
+    uint16_t pos=1+2+2+firstChunkSize;
     uint8_t index=0;
     while(index<preparedQuery[0])
     {
@@ -869,9 +926,9 @@ std::string StringWithReplacement::compose(const std::string &arg1,
             default:
             break;
         }
-        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+1,preparedQuery[pos]);
+        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+2,*reinterpret_cast<uint16_t *>(preparedQuery+pos));
         posComposeBuffer+=preparedQuery[pos];
-        pos+=1+preparedQuery[pos];
+        pos+=2+preparedQuery[pos];
         ++index;
     }
     return std::string(composeBuffer,posComposeBuffer);
@@ -901,19 +958,23 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
         return std::string();
     }
-    if((preparedQuery[1]+
+    if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
         arg1.size()+arg2.size()+arg3.size()+arg4.size()+
         arg5.size()+arg6.size()+arg7.size()+arg8.size()+
         arg9.size()+arg10.size()+arg11.size()+arg12.size()+
         1)>=sizeof(composeBuffer))
     {
         std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     //copy the first segments
-    memcpy(composeBuffer,preparedQuery+3,preparedQuery[2]);
-    uint16_t posComposeBuffer=preparedQuery[2];
-    uint8_t pos=2+1+preparedQuery[2];
+    const uint16_t &firstChunkSize=*reinterpret_cast<uint16_t *>(preparedQuery+1+2);
+    memcpy(composeBuffer,preparedQuery+1+2+2,firstChunkSize);
+    uint16_t posComposeBuffer=firstChunkSize;
+    uint16_t pos=1+2+2+firstChunkSize;
     uint8_t index=0;
     while(index<preparedQuery[0])
     {
@@ -970,9 +1031,9 @@ std::string StringWithReplacement::compose(const std::string &arg1,
             default:
             break;
         }
-        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+1,preparedQuery[pos]);
+        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+2,*reinterpret_cast<uint16_t *>(preparedQuery+pos));
         posComposeBuffer+=preparedQuery[pos];
-        pos+=1+preparedQuery[pos];
+        pos+=2+preparedQuery[pos];
         ++index;
     }
     return std::string(composeBuffer,posComposeBuffer);
@@ -1003,7 +1064,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
         return std::string();
     }
-    if((preparedQuery[1]+
+    if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
         arg1.size()+arg2.size()+arg3.size()+arg4.size()+
         arg5.size()+arg6.size()+arg7.size()+arg8.size()+
         arg9.size()+arg10.size()+arg11.size()+arg12.size()+
@@ -1011,12 +1072,16 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         1)>=sizeof(composeBuffer))
     {
         std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     //copy the first segments
-    memcpy(composeBuffer,preparedQuery+3,preparedQuery[2]);
-    uint16_t posComposeBuffer=preparedQuery[2];
-    uint8_t pos=2+1+preparedQuery[2];
+    const uint16_t &firstChunkSize=*reinterpret_cast<uint16_t *>(preparedQuery+1+2);
+    memcpy(composeBuffer,preparedQuery+1+2+2,firstChunkSize);
+    uint16_t posComposeBuffer=firstChunkSize;
+    uint16_t pos=1+2+2+firstChunkSize;
     uint8_t index=0;
     while(index<preparedQuery[0])
     {
@@ -1077,9 +1142,9 @@ std::string StringWithReplacement::compose(const std::string &arg1,
             default:
             break;
         }
-        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+1,preparedQuery[pos]);
+        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+2,*reinterpret_cast<uint16_t *>(preparedQuery+pos));
         posComposeBuffer+=preparedQuery[pos];
-        pos+=1+preparedQuery[pos];
+        pos+=2+preparedQuery[pos];
         ++index;
     }
     return std::string(composeBuffer,posComposeBuffer);
@@ -1111,7 +1176,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
         return std::string();
     }
-    if((preparedQuery[1]+
+    if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
         arg1.size()+arg2.size()+arg3.size()+arg4.size()+
         arg5.size()+arg6.size()+arg7.size()+arg8.size()+
         arg9.size()+arg10.size()+arg11.size()+arg12.size()+
@@ -1119,12 +1184,16 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         1)>=sizeof(composeBuffer))
     {
         std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     //copy the first segments
-    memcpy(composeBuffer,preparedQuery+3,preparedQuery[2]);
-    uint16_t posComposeBuffer=preparedQuery[2];
-    uint8_t pos=2+1+preparedQuery[2];
+    const uint16_t &firstChunkSize=*reinterpret_cast<uint16_t *>(preparedQuery+1+2);
+    memcpy(composeBuffer,preparedQuery+1+2+2,firstChunkSize);
+    uint16_t posComposeBuffer=firstChunkSize;
+    uint16_t pos=1+2+2+firstChunkSize;
     uint8_t index=0;
     while(index<preparedQuery[0])
     {
@@ -1189,9 +1258,9 @@ std::string StringWithReplacement::compose(const std::string &arg1,
             default:
             break;
         }
-        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+1,preparedQuery[pos]);
+        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+2,*reinterpret_cast<uint16_t *>(preparedQuery+pos));
         posComposeBuffer+=preparedQuery[pos];
-        pos+=1+preparedQuery[pos];
+        pos+=2+preparedQuery[pos];
         ++index;
     }
     return std::string(composeBuffer,posComposeBuffer);
@@ -1224,7 +1293,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
         return std::string();
     }
-    if((preparedQuery[1]+
+    if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
         arg1.size()+arg2.size()+arg3.size()+arg4.size()+
         arg5.size()+arg6.size()+arg7.size()+arg8.size()+
         arg9.size()+arg10.size()+arg11.size()+arg12.size()+
@@ -1232,12 +1301,16 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         1)>=sizeof(composeBuffer))
     {
         std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     //copy the first segments
-    memcpy(composeBuffer,preparedQuery+3,preparedQuery[2]);
-    uint16_t posComposeBuffer=preparedQuery[2];
-    uint8_t pos=2+1+preparedQuery[2];
+    const uint16_t &firstChunkSize=*reinterpret_cast<uint16_t *>(preparedQuery+1+2);
+    memcpy(composeBuffer,preparedQuery+1+2+2,firstChunkSize);
+    uint16_t posComposeBuffer=firstChunkSize;
+    uint16_t pos=1+2+2+firstChunkSize;
     uint8_t index=0;
     while(index<preparedQuery[0])
     {
@@ -1306,9 +1379,9 @@ std::string StringWithReplacement::compose(const std::string &arg1,
             default:
             break;
         }
-        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+1,preparedQuery[pos]);
+        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+2,*reinterpret_cast<uint16_t *>(preparedQuery+pos));
         posComposeBuffer+=preparedQuery[pos];
-        pos+=1+preparedQuery[pos];
+        pos+=2+preparedQuery[pos];
         ++index;
     }
     return std::string(composeBuffer,posComposeBuffer);

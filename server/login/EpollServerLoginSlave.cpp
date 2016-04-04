@@ -318,8 +318,6 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         std::sort(charactersGroupForLoginList.begin(),charactersGroupForLoginList.end());
         EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup[EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize]=(unsigned char)charactersGroupForLoginList.size();
         EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize+=sizeof(unsigned char);
-        if(!charactersGroupForLoginList.empty())
-            PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(CharactersGroupForLogin::list.back()->databaseType());
         unsigned int index=0;
         while(index<charactersGroupForLoginList.size())
         {
@@ -339,6 +337,8 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
             index++;
         }
+        if(!CharactersGroupForLogin::list.empty())
+            PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(CharactersGroupForLogin::list.back()->databaseType());
     }
 
     {
@@ -633,6 +633,7 @@ void EpollServerLoginSlave::preload_profile()
         {
             unsigned int monsterGroupIndex=0;
             const std::vector<EpollServerLoginSlave::LoginProfile::Monster> &monsters=profile.monstergroup.at(monsterGroupIndex);
+            profile.monster_insert.resize(monsters.size());
             while(monsterGroupIndex<monsters.size())
             {
                 std::vector<uint16_t> monsterForEncyclopedia;
@@ -641,9 +642,25 @@ void EpollServerLoginSlave::preload_profile()
                 std::vector<StringWithReplacement> &monsterGroupQuery=profile.monster_insert[monsterGroupIndex];
                 while(monsterIndex<monsters.size())
                 {
+                    if(monster.skills.empty())
+                    {
+                        std::cerr << "monster.skills.empty() for some profile" << std::endl;
+                        abort();
+                    }
+                    char raw_skill[(2+1)*monster.skills.size()],raw_skill_endurance[1*monster.skills.size()];
+                    //the skills
+                    unsigned int sub_index=0;
+                    while(sub_index<monster.skills.size())
+                    {
+                        const EpollServerLoginSlave::LoginProfile::Monster::Skill &skill=monster.skills.at(sub_index);
+                        *reinterpret_cast<uint16_t *>(raw_skill+sub_index*(2+1))=htole16(skill.id);
+                        raw_skill[sub_index*(2+1)+2]=skill.level;
+                        raw_skill_endurance[sub_index]=skill.endurance;
+                        sub_index++;
+                    }
                     //dynamic part
                     {
-                        //id,hp,monster,level,captured_with,gender,character_origin
+                        //id,hp,monster,level,captured_with,gender,character_origin,skills,skills_endurance
                         const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster.compose(
                                     "%1",
                                     std::to_string(monster.hp),
@@ -651,7 +668,9 @@ void EpollServerLoginSlave::preload_profile()
                                     std::to_string(monster.level),
                                     std::to_string(monster.captured_with),
                                     "%2",
-                                    "%3"
+                                    "%3",
+                                    binarytoHexa(raw_skill,sizeof(raw_skill)),
+                                    binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
                                     );
 
                         monsterGroupQuery.push_back(queryText);

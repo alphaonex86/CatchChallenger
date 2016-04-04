@@ -10,9 +10,9 @@
 
 using namespace CatchChallenger;
 
-std::string CharactersGroupForLogin::gender_unknown("3");
-std::string CharactersGroupForLogin::gender_male("1");
-std::string CharactersGroupForLogin::gender_female("2");
+const std::string CharactersGroupForLogin::gender_unknown("3");
+const std::string CharactersGroupForLogin::gender_male("1");
+const std::string CharactersGroupForLogin::gender_female("2");
 
 void CharactersGroupForLogin::character_list(EpollClientLoginSlave * const client,const uint32_t &account_id)
 {
@@ -511,6 +511,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     int monster_position=1;
 
     std::string monsterIdList;
+    const std::vector<EpollServerLoginSlave::LoginProfile::Monster> &monsterGroup=profile.monstergroup.at(monsterGroupId);
     const std::vector<StringWithReplacement> &monsters=profile.monster_insert.at(monsterGroupId);
     std::string monster_encyclopedia_insert=profile.monster_encyclopedia_insert.at(monsterGroupId);
     if(!monsters.empty())
@@ -519,7 +520,8 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
         unsigned int index=0;
         while(index<monsters.size())
         {
-            const StringWithReplacement &monster=monsters.at(index);
+            const EpollServerLoginSlave::LoginProfile::Monster &monster=monsterGroup.at(index);
+            const StringWithReplacement &monsterQuery=monsters.at(index);
 
             const uint32_t monster_id=maxMonsterId.back();
             maxMonsterId.pop_back();
@@ -532,12 +534,12 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
                 if(monster.ratio_gender!=-1)
                 {
                     if(rand()%101<monster.ratio_gender)
-                        dbQueryWriteCommon(monster.compose(monster_id_string,CharactersGroupForLogin::gender_female,monster_id_string));
+                        dbQueryWriteCommon(monsterQuery.compose(monster_id_string,CharactersGroupForLogin::gender_female,monster_id_string));
                     else
-                        dbQueryWriteCommon(monster.compose(monster_id_string,CharactersGroupForLogin::gender_male,monster_id_string));
+                        dbQueryWriteCommon(monsterQuery.compose(monster_id_string,CharactersGroupForLogin::gender_male,monster_id_string));
                 }
                 else
-                    dbQueryWriteCommon(monster.compose(monster_id_string,CharactersGroupForLogin::gender_unknown,monster_id_string));
+                    dbQueryWriteCommon(monsterQuery.compose(monster_id_string,CharactersGroupForLogin::gender_unknown,monster_id_string));
 
                 monster_position++;
             }
@@ -551,7 +553,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
                 SqlFunction::quoteSqlVariable(pseudo),
                 std::to_string(DictionaryLogin::dictionary_skin_internal_to_database.at(skinId)),
                 std::to_string(sFrom1970()),
-                monsterIdList
+                monsterIdList,
                 monster_encyclopedia_insert
                 );
     dbQueryWriteCommon(local_character_insert);
@@ -576,7 +578,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
 bool CharactersGroupForLogin::removeCharacter(void * const client,const uint8_t &query_id, const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryCommon::db_query_account_time_to_delete_character_by_id.empty())
+    if(PreparedDBQueryCommonForLogin::db_query_account_time_to_delete_character_by_id.empty())
     {
         std::cerr << "removeCharacter() Query is empty, bug" << std::endl;
         return false;
@@ -587,8 +589,9 @@ bool CharactersGroupForLogin::removeCharacter(void * const client,const uint8_t 
     removeCharacterParam.characterId=characterId;
     removeCharacterParam.client=client;
 
-    std::string queryText=PreparedDBQueryCommon::db_query_account_time_to_delete_character_by_id;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
+    const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_account_time_to_delete_character_by_id.compose(
+                std::to_string(characterId)
+                );
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText,this,&CharactersGroupForLogin::removeCharacter_static);
     if(callback==NULL)
     {
@@ -642,15 +645,13 @@ void CharactersGroupForLogin::removeCharacter_return(EpollClientLoginSlave * con
         return;
     }
     /// \todo don't and failed if timedrift
-    std::string queryText=PreparedDBQueryCommon::db_query_update_character_time_to_delete_by_id;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
-    stringreplaceOne(queryText,"%2",
-                  //date to delete, not time (no sens on database, delete the date of removing
-                  std::to_string(
-                        sFrom1970()+
-                        CommonSettingsCommon::commonSettingsCommon.character_delete_time
-                    )
-                  );
+    const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_update_character_time_to_delete_by_id.compose(
+                std::to_string(characterId),
+                std::to_string(
+                      sFrom1970()+
+                      CommonSettingsCommon::commonSettingsCommon.character_delete_time
+                  )
+                );
     dbQueryWriteCommon(queryText);
 
     //send the network reply

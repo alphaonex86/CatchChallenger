@@ -631,9 +631,6 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 posOutput+=4;
                 index++;
             }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            std::cerr << "maxAccountId is now: " << maxAccountId << ", " << __FILE__ << ":" << __LINE__ << std::endl;
-            #endif
             {
                 if((posOutput+2*4*CATCHCHALLENGER_SERVER_MAXIDBLOCK*CharactersGroup::list.size())>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
                 {
@@ -714,9 +711,6 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 posOutput+=4;
                 index++;
             }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            std::cerr << "maxAccountId is now: " << maxAccountId << ", " << __FILE__ << ":" << __LINE__ << std::endl;
-            #endif
 
             internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         }

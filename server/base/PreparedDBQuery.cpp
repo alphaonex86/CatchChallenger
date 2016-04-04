@@ -16,6 +16,8 @@ StringWithReplacement PreparedDBQueryCommonForLogin::db_query_select_server_time
 StringWithReplacement PreparedDBQueryCommonForLogin::db_query_delete_character;
 StringWithReplacement PreparedDBQueryCommonForLogin::db_query_select_character_by_pseudo;
 StringWithReplacement PreparedDBQueryCommonForLogin::db_query_get_character_count_by_account;
+StringWithReplacement PreparedDBQueryCommonForLogin::db_query_account_time_to_delete_character_by_id;
+StringWithReplacement PreparedDBQueryCommonForLogin::db_query_update_character_time_to_delete_by_id;
 #endif
 
 //login and gameserver alone
@@ -56,8 +58,6 @@ StringWithReplacement PreparedDBQueryCommon::db_query_insert_monster_skill;
 StringWithReplacement PreparedDBQueryCommon::db_query_insert_reputation;
 StringWithReplacement PreparedDBQueryCommon::db_query_insert_item;
 StringWithReplacement PreparedDBQueryCommon::db_query_insert_item_warehouse;
-StringWithReplacement PreparedDBQueryCommon::db_query_account_time_to_delete_character_by_id;
-StringWithReplacement PreparedDBQueryCommon::db_query_update_character_time_to_delete_by_id;
 StringWithReplacement PreparedDBQueryCommon::db_query_select_reputation_by_id;
 StringWithReplacement PreparedDBQueryCommon::db_query_select_recipes_by_player_id;
 StringWithReplacement PreparedDBQueryCommon::db_query_select_items_by_player_id;
@@ -191,6 +191,8 @@ void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const Databa
         PreparedDBQueryCommonForLogin::db_query_delete_character="DELETE FROM `character` WHERE `id`=%1";
         PreparedDBQueryCommonForLogin::db_query_select_character_by_pseudo="SELECT `id` FROM `character` WHERE `pseudo`='%1'";
         PreparedDBQueryCommonForLogin::db_query_get_character_count_by_account="SELECT COUNT(*) FROM `character` WHERE `account`=%1";
+        PreparedDBQueryCommonForLogin::db_query_account_time_to_delete_character_by_id="SELECT `account`,`time_to_delete` FROM `character` WHERE `id`=%1";
+        PreparedDBQueryCommonForLogin::db_query_update_character_time_to_delete_by_id="UPDATE `character` SET `time_to_delete`=%2 WHERE `id`=%1";
         break;
         #endif
 
@@ -202,6 +204,8 @@ void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const Databa
         PreparedDBQueryCommonForLogin::db_query_delete_character="DELETE FROM character WHERE id=%1";
         PreparedDBQueryCommonForLogin::db_query_select_character_by_pseudo="SELECT id FROM character WHERE pseudo='%1'";
         PreparedDBQueryCommonForLogin::db_query_get_character_count_by_account="SELECT COUNT(*) FROM character WHERE account=%1";
+        PreparedDBQueryCommonForLogin::db_query_account_time_to_delete_character_by_id="SELECT account,time_to_delete FROM character WHERE id=%1";
+        PreparedDBQueryCommonForLogin::db_query_update_character_time_to_delete_by_id="UPDATE character SET time_to_delete=%2 WHERE id=%1";
         break;
         #endif
 
@@ -213,6 +217,8 @@ void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const Databa
         PreparedDBQueryCommonForLogin::db_query_delete_character="DELETE FROM character WHERE id=%1";
         PreparedDBQueryCommonForLogin::db_query_select_character_by_pseudo="SELECT id FROM character WHERE pseudo='%1'";
         PreparedDBQueryCommonForLogin::db_query_get_character_count_by_account="SELECT COUNT(*) FROM character WHERE account=%1";
+        PreparedDBQueryCommonForLogin::db_query_account_time_to_delete_character_by_id="SELECT account,time_to_delete FROM character WHERE id=%1";
+        PreparedDBQueryCommonForLogin::db_query_update_character_time_to_delete_by_id="UPDATE character SET time_to_delete=%2 WHERE id=%1";
         break;
         #endif
     }
@@ -236,8 +242,8 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         case DatabaseBase::DatabaseType::Mysql:
         //login and gameserver alone
         PreparedDBQueryCommon::db_query_delete_monster_by_id="DELETE FROM `monster` WHERE `id`=%1";
-        PreparedDBQueryCommon::db_query_insert_monster="INSERT INTO `monster`(`id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`) "
-                                                       "VALUES(%1,%2,%3,%4,0,0,%5,%6,0,%7)";
+        PreparedDBQueryCommon::db_query_insert_monster="INSERT INTO `monster`(`id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`skills`,`skills_endurance`) "
+                                                       "VALUES(%1,%2,%3,%4,0,0,%5,%6,0,%7,UNHEX('%8'),UNHEX('%9'))";
 
         #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
         PreparedDBQueryCommon::db_query_select_allow="SELECT `allow` FROM `character_allow` WHERE `character`=%1";
@@ -270,8 +276,6 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_insert_monster_skill="INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4)";
         PreparedDBQueryCommon::db_query_insert_item="INSERT INTO `item`(`item`,`character`,`quantity`) VALUES(%1,%2,%3)";
         PreparedDBQueryCommon::db_query_insert_item_warehouse="INSERT INTO `item_warehouse`(`item`,`character`,`quantity`) VALUES(%1,%2,%3)";
-        PreparedDBQueryCommon::db_query_account_time_to_delete_character_by_id="SELECT `account`,`time_to_delete` FROM `character` WHERE `id`=%1";
-        PreparedDBQueryCommon::db_query_update_character_time_to_delete_by_id="UPDATE `character` SET `time_to_delete`=%2 WHERE `id`=%1";
         PreparedDBQueryCommon::db_query_select_reputation_by_id="SELECT `type`,`point`,`level` FROM `reputation` WHERE `character`=%1 ORDER BY `type`";
         PreparedDBQueryCommon::db_query_select_recipes_by_player_id="SELECT `recipe` FROM `recipe` WHERE `character`=%1 ORDER BY `recipe`";
         PreparedDBQueryCommon::db_query_select_items_by_player_id="SELECT `item`,`quantity` FROM `item` WHERE `character`=%1 ORDER BY `item`";
@@ -316,8 +320,8 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         case DatabaseBase::DatabaseType::SQLite:
         //login and gameserver alone
         PreparedDBQueryCommon::db_query_delete_monster_by_id="DELETE FROM monster WHERE id=%1";
-        PreparedDBQueryCommon::db_query_insert_monster="INSERT INTO monster(id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin) "
-                                                       "VALUES(%1,%2,%3,%4,0,0,%5,%6,0,%7)";
+        PreparedDBQueryCommon::db_query_insert_monster="INSERT INTO monster(id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,skills,skills_endurance) "
+                                                       "VALUES(%1,%2,%3,%4,0,0,%5,%6,0,%7,%8,%9)";
 
         #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
         PreparedDBQueryCommon::db_query_select_allow="SELECT allow FROM character_allow WHERE character=%1";
@@ -350,8 +354,6 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_insert_monster_skill="INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,%3,%4)";
         PreparedDBQueryCommon::db_query_insert_item="INSERT INTO item(item,character,quantity) VALUES(%1,%2,%3)";
         PreparedDBQueryCommon::db_query_insert_item_warehouse="INSERT INTO item_warehouse(item,character,quantity) VALUES(%1,%2,%3)";
-        PreparedDBQueryCommon::db_query_account_time_to_delete_character_by_id="SELECT account,time_to_delete FROM character WHERE id=%1";
-        PreparedDBQueryCommon::db_query_update_character_time_to_delete_by_id="UPDATE character SET time_to_delete=%2 WHERE id=%1";
         PreparedDBQueryCommon::db_query_select_reputation_by_id="SELECT type,point,level FROM reputation WHERE character=%1 ORDER BY type";
         PreparedDBQueryCommon::db_query_select_recipes_by_player_id="SELECT recipe FROM recipe WHERE character=%1 ORDER BY recipe";
         PreparedDBQueryCommon::db_query_select_items_by_player_id="SELECT item,quantity FROM item WHERE character=%1 ORDER BY item";
@@ -396,9 +398,8 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         case DatabaseBase::DatabaseType::PostgreSQL:
         //login and gameserver alone
         PreparedDBQueryCommon::db_query_delete_monster_by_id="DELETE FROM monster WHERE id=%1";
-        do the skills, skills_endurance
-        PreparedDBQueryCommon::db_query_insert_monster="INSERT INTO monster(id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin) "
-                                                       "VALUES(%1,%2,%3,%4,0,0,%5,%6,0,%7)";
+        PreparedDBQueryCommon::db_query_insert_monster="INSERT INTO monster(id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,skills,skills_endurance) "
+                                                       "VALUES(%1,%2,%3,%4,0,0,%5,%6,0,%7,'\\x%8','\\x%9')";
 
         #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
         PreparedDBQueryCommon::db_query_select_allow="SELECT allow FROM character_allow WHERE character=%1";
@@ -431,8 +432,6 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_insert_monster_skill="INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,%3,%4)";
         PreparedDBQueryCommon::db_query_insert_item="INSERT INTO item(item,character,quantity) VALUES(%1,%2,%3)";
         PreparedDBQueryCommon::db_query_insert_item_warehouse="INSERT INTO item_warehouse(item,character,quantity) VALUES(%1,%2,%3)";
-        PreparedDBQueryCommon::db_query_account_time_to_delete_character_by_id="SELECT account,time_to_delete FROM character WHERE id=%1";
-        PreparedDBQueryCommon::db_query_update_character_time_to_delete_by_id="UPDATE character SET time_to_delete=%2 WHERE id=%1";
         PreparedDBQueryCommon::db_query_select_reputation_by_id="SELECT type,point,level FROM reputation WHERE character=%1 ORDER BY type";
         PreparedDBQueryCommon::db_query_select_recipes_by_player_id="SELECT recipe FROM recipe WHERE character=%1 ORDER BY recipe";
         PreparedDBQueryCommon::db_query_select_items_by_player_id="SELECT item,quantity FROM item WHERE character=%1 ORDER BY item";
