@@ -525,21 +525,63 @@ void Client::addObject(const uint16_t &item,const uint32_t &quantity)
     if(public_and_private_informations.items.find(item)!=public_and_private_informations.items.cend())
     {
         public_and_private_informations.items[item]+=quantity;
-        std::string queryText=PreparedDBQueryCommon::db_query_update_item;
+        /*std::string queryText=PreparedDBQueryCommon::db_query_update_item;
         stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
         stringreplaceOne(queryText,"%2",std::to_string(item));
         stringreplaceOne(queryText,"%3",std::to_string(character_id));
-        dbQueryWriteCommon(queryText);
+        dbQueryWriteCommon(queryText);*/
     }
     else
     {
-        std::string queryText=PreparedDBQueryCommon::db_query_insert_item;
+        /*std::string queryText=PreparedDBQueryCommon::db_query_insert_item;
         stringreplaceOne(queryText,"%1",std::to_string(item));
         stringreplaceOne(queryText,"%2",std::to_string(character_id));
         stringreplaceOne(queryText,"%3",std::to_string(quantity));
-        dbQueryWriteCommon(queryText);
+        dbQueryWriteCommon(queryText);*/
         public_and_private_informations.items[item]=quantity;
     }
+}
+
+void Client::updateObjectInDatabase()
+{
+    if(public_and_private_informations.items.empty())
+    {
+    }
+    else
+    {
+        auto max=profile.items.at(0).id;
+        uint32_t pos=0;
+        char item_raw[(2+4)*profile.items.size()];
+        unsigned int index=0;
+        while(index<profile.items.size())
+        {
+            const LoginProfile::Item &item=profile.items.at(index);
+            if(max<item.id)
+                max=item.id;
+            *reinterpret_cast<uint16_t *>(item_raw+pos)=htole16(item.id);
+            pos+=2;
+            *reinterpret_cast<uint32_t *>(item_raw+pos)=htole32(item.quantity);
+            pos+=4;
+            index++;
+        }
+        item=binarytoHexa(item_raw,sizeof(item_raw));
+    }
+}
+
+void Client::updateObjectInEncyclopedia()
+{
+    const size_t size=max/8+1;
+    char bitlist[size];
+    memset(bitlist,0,size);
+    index=0;
+    while(index<profile.items.size())
+    {
+        const LoginProfile::Item &item=profile.items.at(index);
+        uint16_t bittoUp=item.id;
+        bitlist[bittoUp/8]|=(1<<(7-bittoUp%8));
+        index++;
+    }
+    encyclopedia_item=binarytoHexa(bitlist,sizeof(bitlist));
 }
 
 void Client::addWarehouseObject(const uint16_t &item,const uint32_t &quantity)
