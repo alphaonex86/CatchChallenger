@@ -355,9 +355,7 @@ struct Player_private_and_public_informations
     std::vector<PlayerMonster> playerMonster,warehouse_playerMonster;
     std::unordered_map<uint16_t, PlayerQuest> quests;
     CLAN_ID_TYPE clan;
-    bool clan_leader;
     std::unordered_set<ActionAllow,std::hash<uint8_t> > allow;
-    uint32_t repel_step;
     //here to send at character login
     std::unordered_set<uint8_t> itemOnMap;
     #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
@@ -367,6 +365,10 @@ struct Player_private_and_public_informations
     #else
         std::unordered_map<uint8_t/*dirtOnMap*/,PlayerPlant> plantOnMap;
     #endif
+    char * encyclopedia_monster;
+    char * encyclopedia_item;
+    uint32_t repel_step;
+    bool clan_leader;
 };
 
 struct CharacterEntry

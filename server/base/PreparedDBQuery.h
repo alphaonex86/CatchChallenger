@@ -83,8 +83,6 @@ public:
     static StringWithReplacement db_query_insert_warehouse_monster_full;
     static StringWithReplacement db_query_insert_monster_skill;
     static StringWithReplacement db_query_insert_reputation;
-    static StringWithReplacement db_query_insert_item;
-    static StringWithReplacement db_query_insert_item_warehouse;
     static StringWithReplacement db_query_select_reputation_by_id;
     static StringWithReplacement db_query_select_recipes_by_player_id;
     static StringWithReplacement db_query_select_items_by_player_id;
@@ -93,6 +91,8 @@ public:
     static StringWithReplacement db_query_select_monsters_warehouse_by_player_id;
     static StringWithReplacement db_query_select_monstersSkill_by_id;
     static StringWithReplacement db_query_change_right;
+    static StringWithReplacement db_query_insert_item;
+    static StringWithReplacement db_query_insert_item_warehouse;
     static StringWithReplacement db_query_update_item;
     static StringWithReplacement db_query_update_item_warehouse;
     static StringWithReplacement db_query_delete_item;
