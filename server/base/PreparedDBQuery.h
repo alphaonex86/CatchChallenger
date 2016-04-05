@@ -48,6 +48,12 @@ public:
     static StringWithReplacement db_query_insert_monster;
 
     #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+    static StringWithReplacement db_query_update_character_item;
+    static StringWithReplacement db_query_update_character_item_and_encyclopedia;
+    static StringWithReplacement db_query_update_character_item_warehouse;
+    static StringWithReplacement db_query_update_cash;
+    static StringWithReplacement db_query_update_warehouse_cash;
+
     //query
     /*static StringWithReplacement db_query_select_allow;
     static StringWithReplacement db_query_played_time;
@@ -97,8 +103,6 @@ public:
     static StringWithReplacement db_query_update_item_warehouse;
     static StringWithReplacement db_query_delete_item;
     static StringWithReplacement db_query_delete_item_warehouse;
-    static StringWithReplacement db_query_update_cash;
-    static StringWithReplacement db_query_update_warehouse_cash;
     static StringWithReplacement db_query_insert_recipe;
     static StringWithReplacement db_query_insert_character_allow;
     static StringWithReplacement db_query_delete_character_allow;

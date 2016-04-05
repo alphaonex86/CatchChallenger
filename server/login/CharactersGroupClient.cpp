@@ -646,11 +646,11 @@ void CharactersGroupForLogin::removeCharacter_return(EpollClientLoginSlave * con
     }
     /// \todo don't and failed if timedrift
     const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_update_character_time_to_delete_by_id.compose(
-                std::to_string(characterId),
                 std::to_string(
                       sFrom1970()+
                       CommonSettingsCommon::commonSettingsCommon.character_delete_time
-                  )
+                  ),
+                std::to_string(characterId)
                 );
     dbQueryWriteCommon(queryText);
 

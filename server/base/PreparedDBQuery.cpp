@@ -25,6 +25,12 @@ StringWithReplacement PreparedDBQueryCommon::db_query_delete_monster_by_id;
 StringWithReplacement PreparedDBQueryCommon::db_query_insert_monster;
 
 #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+StringWithReplacement PreparedDBQueryCommon::db_query_update_character_item;
+StringWithReplacement PreparedDBQueryCommon::db_query_update_character_item_and_encyclopedia;
+StringWithReplacement PreparedDBQueryCommon::db_query_update_character_item_warehouse;
+StringWithReplacement PreparedDBQueryCommon::db_query_update_cash;
+StringWithReplacement PreparedDBQueryCommon::db_query_update_warehouse_cash;
+
 StringWithReplacement PreparedDBQueryServer::db_query_update_character_forserver_map;
 
 /*
@@ -34,8 +40,6 @@ StringWithReplacement PreparedDBQueryCommon::db_query_update_item;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_item_warehouse;
 StringWithReplacement PreparedDBQueryCommon::db_query_delete_item;
 StringWithReplacement PreparedDBQueryCommon::db_query_delete_item_warehouse;
-StringWithReplacement PreparedDBQueryCommon::db_query_update_cash;
-StringWithReplacement PreparedDBQueryCommon::db_query_update_warehouse_cash;
 StringWithReplacement PreparedDBQueryCommon::db_query_select_monstersBuff_by_id;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_move_to_player;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_move_to_new_player;
@@ -194,7 +198,7 @@ void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const Databa
         PreparedDBQueryCommonForLogin::db_query_select_character_by_pseudo="SELECT `id` FROM `character` WHERE `pseudo`='%1'";
         PreparedDBQueryCommonForLogin::db_query_get_character_count_by_account="SELECT COUNT(*) FROM `character` WHERE `account`=%1";
         PreparedDBQueryCommonForLogin::db_query_account_time_to_delete_character_by_id="SELECT `account`,`time_to_delete` FROM `character` WHERE `id`=%1";
-        PreparedDBQueryCommonForLogin::db_query_update_character_time_to_delete_by_id="UPDATE `character` SET `time_to_delete`=%2 WHERE `id`=%1";
+        PreparedDBQueryCommonForLogin::db_query_update_character_time_to_delete_by_id="UPDATE `character` SET `time_to_delete`=%1 WHERE `id`=%2";
         break;
         #endif
 
@@ -207,7 +211,7 @@ void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const Databa
         PreparedDBQueryCommonForLogin::db_query_select_character_by_pseudo="SELECT id FROM character WHERE pseudo='%1'";
         PreparedDBQueryCommonForLogin::db_query_get_character_count_by_account="SELECT COUNT(*) FROM character WHERE account=%1";
         PreparedDBQueryCommonForLogin::db_query_account_time_to_delete_character_by_id="SELECT account,time_to_delete FROM character WHERE id=%1";
-        PreparedDBQueryCommonForLogin::db_query_update_character_time_to_delete_by_id="UPDATE character SET time_to_delete=%2 WHERE id=%1";
+        PreparedDBQueryCommonForLogin::db_query_update_character_time_to_delete_by_id="UPDATE character SET time_to_delete=%1 WHERE id=%2";
         break;
         #endif
 
@@ -220,7 +224,7 @@ void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const Databa
         PreparedDBQueryCommonForLogin::db_query_select_character_by_pseudo="SELECT id FROM character WHERE pseudo='%1'";
         PreparedDBQueryCommonForLogin::db_query_get_character_count_by_account="SELECT COUNT(*) FROM character WHERE account=%1";
         PreparedDBQueryCommonForLogin::db_query_account_time_to_delete_character_by_id="SELECT account,time_to_delete FROM character WHERE id=%1";
-        PreparedDBQueryCommonForLogin::db_query_update_character_time_to_delete_by_id="UPDATE character SET time_to_delete=%2 WHERE id=%1";
+        PreparedDBQueryCommonForLogin::db_query_update_character_time_to_delete_by_id="UPDATE character SET time_to_delete=%1 WHERE id=%2";
         break;
         #endif
     }
@@ -248,6 +252,21 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
                                                        "VALUES(%1,%2,%3,%4,0,0,%5,%6,0,%7,UNHEX('%8'),UNHEX('%9'))";
 
         #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+        PreparedDBQueryCommon::db_query_update_character_item="UPDATE `character` SET `item`=UNHEX('%1') WHERE `id`=%2";
+        PreparedDBQueryCommon::db_query_update_character_item_and_encyclopedia="UPDATE `character` SET `item`=UNHEX('%1'),`encyclopedia_item`=UNHEX('%2') WHERE `id`=%3";
+        PreparedDBQueryCommon::db_query_update_character_item_warehouse="UPDATE `character_warehouse` SET `item`=UNHEX('%1') WHERE `id`=%2";
+        PreparedDBQueryCommon::db_query_update_cash="UPDATE `character` SET `cash`=%1 WHERE `id`=%2";
+        PreparedDBQueryCommon::db_query_update_warehouse_cash="UPDATE `character` SET `warehouse_cash`=%1 WHERE `id`=%2";
+
+
+
+
+
+
+
+
+
+
         PreparedDBQueryCommon::db_query_select_allow="SELECT `allow` FROM `character_allow` WHERE `character`=%1";
         PreparedDBQueryCommon::db_query_played_time="UPDATE `character` SET `played_time`=`played_time`+%2 WHERE `id`=%1";
         PreparedDBQueryCommon::db_query_monster_skill="UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3";
@@ -289,8 +308,6 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_item_warehouse="UPDATE `item_warehouse` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3";
         PreparedDBQueryCommon::db_query_delete_item="DELETE FROM `item` WHERE `item`=%1 AND `character`=%2";
         PreparedDBQueryCommon::db_query_delete_item_warehouse="DELETE FROM `item_warehouse` WHERE `item`=%1 AND `character`=%2";
-        PreparedDBQueryCommon::db_query_update_cash="UPDATE `character` SET `cash`=%1 WHERE `id`=%2";
-        PreparedDBQueryCommon::db_query_update_warehouse_cash="UPDATE `character` SET `warehouse_cash`=%1 WHERE `id`=%2";
         PreparedDBQueryCommon::db_query_insert_recipe="INSERT INTO `recipe`(`character`,`recipe`) VALUES(%1,%2)";
         PreparedDBQueryCommon::db_query_insert_character_allow="INSERT INTO `character_allow`(`character`,`allow`) VALUES(%1,%2)";
         PreparedDBQueryCommon::db_query_delete_character_allow="DELETE FROM `character_allow` WHERE `character`=%1 AND `allow`=%2";
@@ -326,6 +343,28 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
                                                        "VALUES(%1,%2,%3,%4,0,0,%5,%6,0,%7,%8,%9)";
 
         #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+        PreparedDBQueryCommon::db_query_update_character_item="UPDATE character SET item='%1' WHERE id=%2";
+        PreparedDBQueryCommon::db_query_update_character_item_and_encyclopedia="UPDATE character SET item='%1',encyclopedia_item='%2' WHERE id=%3";
+        PreparedDBQueryCommon::db_query_update_character_item_warehouse="UPDATE character SET item_warehouse='%1' WHERE id=%2";
+        PreparedDBQueryCommon::db_query_update_cash="UPDATE character SET cash=%1 WHERE id=%2";
+        PreparedDBQueryCommon::db_query_update_warehouse_cash="UPDATE character SET warehouse_cash=%1 WHERE id=%2";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         PreparedDBQueryCommon::db_query_select_allow="SELECT allow FROM character_allow WHERE character=%1";
         PreparedDBQueryCommon::db_query_played_time="UPDATE character SET played_time=played_time+%2 WHERE id=%1";
         PreparedDBQueryCommon::db_query_monster_skill="UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3";
@@ -367,8 +406,6 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_item_warehouse="UPDATE item_warehouse SET quantity=%1 WHERE item=%2 AND character=%3";
         PreparedDBQueryCommon::db_query_delete_item="DELETE FROM item WHERE item=%1 AND character=%2";
         PreparedDBQueryCommon::db_query_delete_item_warehouse="DELETE FROM item_warehouse WHERE item=%1 AND character=%2";
-        PreparedDBQueryCommon::db_query_update_cash="UPDATE character SET cash=%1 WHERE id=%2";
-        PreparedDBQueryCommon::db_query_update_warehouse_cash="UPDATE character SET warehouse_cash=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_insert_recipe="INSERT INTO recipe(character,recipe) VALUES(%1,%2)";
         PreparedDBQueryCommon::db_query_insert_character_allow="INSERT INTO character_allow(character,allow) VALUES(%1,%2)";
         PreparedDBQueryCommon::db_query_delete_character_allow="DELETE FROM character_allow WHERE character=%1 AND allow=%2";
@@ -404,6 +441,28 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
                                                        "VALUES(%1,%2,%3,%4,0,0,%5,%6,0,%7,'\\x%8','\\x%9')";
 
         #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+        PreparedDBQueryCommon::db_query_update_character_item="UPDATE character SET item='\\x%1' WHERE id=%2";
+        PreparedDBQueryCommon::db_query_update_character_item_and_encyclopedia="UPDATE character SET item='\\x%1',encyclopedia_item='\\x%2' WHERE id=%3";
+        PreparedDBQueryCommon::db_query_update_character_item_warehouse="UPDATE character SET item_warehouse='\\x%1' WHERE id=%2";
+        PreparedDBQueryCommon::db_query_update_cash="UPDATE character SET cash=%1 WHERE id=%2";
+        PreparedDBQueryCommon::db_query_update_warehouse_cash="UPDATE character SET warehouse_cash=%1 WHERE id=%2";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         PreparedDBQueryCommon::db_query_select_allow="SELECT allow FROM character_allow WHERE character=%1";
         PreparedDBQueryCommon::db_query_played_time="UPDATE character SET played_time=played_time+%2 WHERE id=%1";
         PreparedDBQueryCommon::db_query_monster_skill="UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3";
@@ -445,8 +504,6 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_item_warehouse="UPDATE item_warehouse SET quantity=%1 WHERE item=%2 AND character=%3";
         PreparedDBQueryCommon::db_query_delete_item="DELETE FROM item WHERE item=%1 AND character=%2";
         PreparedDBQueryCommon::db_query_delete_item_warehouse="DELETE FROM item_warehouse WHERE item=%1 AND character=%2";
-        PreparedDBQueryCommon::db_query_update_cash="UPDATE character SET cash=%1 WHERE id=%2";
-        PreparedDBQueryCommon::db_query_update_warehouse_cash="UPDATE character SET warehouse_cash=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_insert_recipe="INSERT INTO recipe(character,recipe) VALUES(%1,%2)";
         PreparedDBQueryCommon::db_query_insert_character_allow="INSERT INTO character_allow(character,allow) VALUES(%1,%2)";
         PreparedDBQueryCommon::db_query_delete_character_allow="DELETE FROM character_allow WHERE character=%1 AND allow=%2";
