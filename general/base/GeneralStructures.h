@@ -366,7 +366,7 @@ struct Player_private_and_public_informations
         std::unordered_map<uint8_t/*dirtOnMap*/,PlayerPlant> plantOnMap;
     #endif
     char * encyclopedia_monster;
-    char * encyclopedia_item;
+    char * encyclopedia_item;//should be: CommonDatapack::commonDatapack.items.item.size()/8+1
     uint32_t repel_step;
     bool clan_leader;
 };
