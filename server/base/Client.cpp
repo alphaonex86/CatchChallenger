@@ -94,6 +94,8 @@ Client::Client(
     ClientBase::public_and_private_informations_solo=&public_and_private_informations;
     #endif
     public_and_private_informations.repel_step=0;
+    public_and_private_informations.encyclopedia_monster=NULL;
+    public_and_private_informations.encyclopedia_item=NULL;
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     {
         memset(movePacketKick+(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue),
@@ -124,6 +126,16 @@ Client::~Client()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     ClientBase::public_and_private_informations_solo=NULL;
     #endif
+    if(public_and_private_informations.encyclopedia_monster!=NULL)
+    {
+        delete public_and_private_informations.encyclopedia_monster;
+        public_and_private_informations.encyclopedia_monster=NULL;
+    }
+    if(public_and_private_informations.encyclopedia_item!=NULL)
+    {
+        delete public_and_private_informations.encyclopedia_item;
+        public_and_private_informations.encyclopedia_item=NULL;
+    }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     //normalOutput("Destroyed client");
     #endif
