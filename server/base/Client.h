@@ -486,6 +486,8 @@ private:
     void saveObjectRetention(const uint16_t &item);
     uint32_t removeObject(const uint16_t &item,const uint32_t &quantity=1);
     void sendRemoveObject(const uint16_t &item,const uint32_t &quantity=1);
+    void updateObjectInDatabase();
+    void updateObjectInEncyclopedia();
     uint32_t objectQuantity(const uint16_t &item) const;
     bool addMarketCashWithoutSave(const uint64_t &cash);
     void addCash(const uint64_t &cash,const bool &forceSave=false);
