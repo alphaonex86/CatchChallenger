@@ -530,6 +530,7 @@ void Client::addObject(const uint16_t &item,const uint32_t &quantity)
         stringreplaceOne(queryText,"%2",std::to_string(item));
         stringreplaceOne(queryText,"%3",std::to_string(character_id));
         dbQueryWriteCommon(queryText);*/
+        updateObjectInDatabase();
     }
     else
     {
@@ -539,6 +540,15 @@ void Client::addObject(const uint16_t &item,const uint32_t &quantity)
         stringreplaceOne(queryText,"%3",std::to_string(quantity));
         dbQueryWriteCommon(queryText);*/
         public_and_private_informations.items[item]=quantity;
+        if(public_and_private_informations.encyclopedia_item==NULL)
+            updateObjectInDatabase();
+        else if(public_and_private_informations.encyclopedia_item[item/8] & (1<<(7-item%8)))
+        {
+            public_and_private_informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
+            updateObjectInDatabaseAndEncyclopedia();
+        }
+        else
+            updateObjectInDatabase();
     }
 }
 
@@ -546,42 +556,103 @@ void Client::updateObjectInDatabase()
 {
     if(public_and_private_informations.items.empty())
     {
+        dbQueryWriteCommon(
+                    PreparedDBQueryCommon::db_query_update_character_item.compose(
+                        std::string()
+                        )
+                    );
     }
     else
     {
-        auto max=profile.items.at(0).id;
+        uint16_t max=0;
         uint32_t pos=0;
-        char item_raw[(2+4)*profile.items.size()];
-        unsigned int index=0;
-        while(index<profile.items.size())
+        char item_raw[(2+4)*public_and_private_informations.items.size()];
+        auto i=public_and_private_informations.items.begin();
+        while(i!=public_and_private_informations.items.cend())
         {
-            const LoginProfile::Item &item=profile.items.at(index);
-            if(max<item.id)
-                max=item.id;
-            *reinterpret_cast<uint16_t *>(item_raw+pos)=htole16(item.id);
+            const uint16_t &item=i->first;
+            const uint32_t &quantity=i->second;
+            if(max<item)
+                max=item;
+            *reinterpret_cast<uint16_t *>(item_raw+pos)=htole16(item);
             pos+=2;
-            *reinterpret_cast<uint32_t *>(item_raw+pos)=htole32(item.quantity);
+            *reinterpret_cast<uint32_t *>(item_raw+pos)=htole32(quantity);
             pos+=4;
-            index++;
+            ++i;
         }
-        item=binarytoHexa(item_raw,sizeof(item_raw));
+        dbQueryWriteCommon(
+                    PreparedDBQueryCommon::db_query_update_character_item.compose(
+                        binarytoHexa(item_raw,sizeof(item_raw))
+                        )
+                    );
     }
 }
 
-void Client::updateObjectInEncyclopedia()
+void Client::updateObjectInWarehouseDatabase()
 {
-    const size_t size=max/8+1;
-    char bitlist[size];
-    memset(bitlist,0,size);
-    index=0;
-    while(index<profile.items.size())
+    if(public_and_private_informations.items.empty())
     {
-        const LoginProfile::Item &item=profile.items.at(index);
-        uint16_t bittoUp=item.id;
-        bitlist[bittoUp/8]|=(1<<(7-bittoUp%8));
-        index++;
+        dbQueryWriteCommon(
+                    PreparedDBQueryCommon::db_query_update_character_item_warehouse.compose(
+                        std::string()
+                        )
+                    );
     }
-    encyclopedia_item=binarytoHexa(bitlist,sizeof(bitlist));
+    else
+    {
+        uint16_t max=0;
+        uint32_t pos=0;
+        char item_raw[(2+4)*public_and_private_informations.warehouse_items.size()];
+        auto i=public_and_private_informations.warehouse_items.begin();
+        while(i!=public_and_private_informations.warehouse_items.cend())
+        {
+            const uint16_t &item=i->first;
+            const uint32_t &quantity=i->second;
+            if(max<item)
+                max=item;
+            *reinterpret_cast<uint16_t *>(item_raw+pos)=htole16(item);
+            pos+=2;
+            *reinterpret_cast<uint32_t *>(item_raw+pos)=htole32(quantity);
+            pos+=4;
+            ++i;
+        }
+        dbQueryWriteCommon(
+                    PreparedDBQueryCommon::db_query_update_character_item_warehouse.compose(
+                        binarytoHexa(item_raw,sizeof(item_raw))
+                        )
+                    );
+    }
+}
+
+void Client::updateObjectInDatabaseAndEncyclopedia()
+{
+    std::string item;
+    if(!public_and_private_informations.items.empty())
+    {
+        uint16_t max=0;
+        uint32_t pos=0;
+        char item_raw[(2+4)*public_and_private_informations.items.size()];
+        auto i=public_and_private_informations.items.begin();
+        while(i!=public_and_private_informations.items.cend())
+        {
+            const uint16_t &item=i->first;
+            const uint32_t &quantity=i->second;
+            if(max<item)
+                max=item;
+            *reinterpret_cast<uint16_t *>(item_raw+pos)=htole16(item);
+            pos+=2;
+            *reinterpret_cast<uint32_t *>(item_raw+pos)=htole32(quantity);
+            pos+=4;
+            ++i;
+        }
+        item=binarytoHexa(item_raw,sizeof(item_raw));
+    }
+    dbQueryWriteCommon(
+                PreparedDBQueryCommon::db_query_update_character_item_and_encyclopedia.compose(
+                    item,
+                    binarytoHexa(public_and_private_informations.encyclopedia_item,CommonDatapack::commonDatapack.items.item.size()/8+1)
+                    )
+                );
 }
 
 void Client::addWarehouseObject(const uint16_t &item,const uint32_t &quantity)
@@ -589,19 +660,11 @@ void Client::addWarehouseObject(const uint16_t &item,const uint32_t &quantity)
     if(public_and_private_informations.warehouse_items.find(item)!=public_and_private_informations.warehouse_items.cend())
     {
         public_and_private_informations.warehouse_items[item]+=quantity;
-        std::string queryText=PreparedDBQueryCommon::db_query_update_item_warehouse;
-        stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
-        stringreplaceOne(queryText,"%2",std::to_string(item));
-        stringreplaceOne(queryText,"%3",std::to_string(character_id));
-        dbQueryWriteCommon(queryText);
+        updateObjectInWarehouseDatabase();
     }
     else
     {
-        std::string queryText=PreparedDBQueryCommon::db_query_insert_item_warehouse;
-        stringreplaceOne(queryText,"%1",std::to_string(item));
-        stringreplaceOne(queryText,"%2",std::to_string(character_id));
-        stringreplaceOne(queryText,"%3",std::to_string(quantity));
-        dbQueryWriteCommon(queryText);
+        updateObjectInWarehouseDatabase();
         public_and_private_informations.warehouse_items[item]=quantity;
     }
 }
@@ -613,21 +676,14 @@ uint32_t Client::removeWarehouseObject(const uint16_t &item,const uint32_t &quan
         if(public_and_private_informations.warehouse_items.at(item)>quantity)
         {
             public_and_private_informations.warehouse_items[item]-=quantity;
-            std::string queryText=PreparedDBQueryCommon::db_query_update_item_warehouse;
-            stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
-            stringreplaceOne(queryText,"%2",std::to_string(item));
-            stringreplaceOne(queryText,"%3",std::to_string(character_id));
-            dbQueryWriteCommon(queryText);
+            updateObjectInWarehouseDatabase();
             return quantity;
         }
         else
         {
             const uint32_t removed_quantity=public_and_private_informations.warehouse_items.at(item);
             public_and_private_informations.warehouse_items.erase(item);
-            std::string queryText=PreparedDBQueryCommon::db_query_delete_item_warehouse;
-            stringreplaceOne(queryText,"%1",std::to_string(item));
-            stringreplaceOne(queryText,"%2",std::to_string(character_id));
-            dbQueryWriteCommon(queryText);
+            updateObjectInWarehouseDatabase();
             return removed_quantity;
         }
     }
@@ -637,7 +693,8 @@ uint32_t Client::removeWarehouseObject(const uint16_t &item,const uint32_t &quan
 
 void Client::saveObjectRetention(const uint16_t &item)
 {
-    if(public_and_private_informations.items.find(item)!=public_and_private_informations.items.cend())
+    (void)item;
+    /*if(public_and_private_informations.items.find(item)!=public_and_private_informations.items.cend())
     {
         std::string queryText=PreparedDBQueryCommon::db_query_update_item;
         stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
@@ -651,7 +708,8 @@ void Client::saveObjectRetention(const uint16_t &item)
         stringreplaceOne(queryText,"%1",std::to_string(item));
         stringreplaceOne(queryText,"%2",std::to_string(character_id));
         dbQueryWriteCommon(queryText);
-    }
+    }*/
+    updateObjectInDatabase();
 }
 
 uint32_t Client::removeObject(const uint16_t &item, const uint32_t &quantity)
@@ -661,21 +719,23 @@ uint32_t Client::removeObject(const uint16_t &item, const uint32_t &quantity)
         if(public_and_private_informations.items.at(item)>quantity)
         {
             public_and_private_informations.items[item]-=quantity;
-            std::string queryText=PreparedDBQueryCommon::db_query_update_item;
+            /*std::string queryText=PreparedDBQueryCommon::db_query_update_item;
             stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
             stringreplaceOne(queryText,"%2",std::to_string(item));
             stringreplaceOne(queryText,"%3",std::to_string(character_id));
-            dbQueryWriteCommon(queryText);
+            dbQueryWriteCommon(queryText);*/
+            updateObjectInDatabase();
             return quantity;
         }
         else
         {
             const uint32_t removed_quantity=public_and_private_informations.items.at(item);
-            public_and_private_informations.items.erase(item);
+            /*public_and_private_informations.items.erase(item);
             std::string queryText=PreparedDBQueryCommon::db_query_delete_item;
             stringreplaceOne(queryText,"%1",std::to_string(item));
             stringreplaceOne(queryText,"%2",std::to_string(character_id));
-            dbQueryWriteCommon(queryText);
+            dbQueryWriteCommon(queryText);*/
+            updateObjectInDatabase();
             return removed_quantity;
         }
     }
@@ -724,9 +784,10 @@ void Client::addCash(const uint64_t &cash, const bool &forceSave)
     if(cash==0 && !forceSave)
         return;
     public_and_private_informations.cash+=cash;
-    std::string queryText=PreparedDBQueryCommon::db_query_update_cash;
-    stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.cash));
-    stringreplaceOne(queryText,"%2",std::to_string(character_id));
+    const std::string &queryText=PreparedDBQueryCommon::db_query_update_cash.compose(
+                std::to_string(public_and_private_informations.cash),
+                std::to_string(character_id)
+                );
     dbQueryWriteCommon(queryText);
 }
 
@@ -735,9 +796,10 @@ void Client::removeCash(const uint64_t &cash)
     if(cash==0)
         return;
     public_and_private_informations.cash-=cash;
-    std::string queryText=PreparedDBQueryCommon::db_query_update_cash;
-    stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.cash));
-    stringreplaceOne(queryText,"%2",std::to_string(character_id));
+    const std::string &queryText=PreparedDBQueryCommon::db_query_update_cash.compose(
+                std::to_string(public_and_private_informations.cash),
+                std::to_string(character_id)
+                );
     dbQueryWriteCommon(queryText);
 }
 
@@ -746,9 +808,10 @@ void Client::addWarehouseCash(const uint64_t &cash, const bool &forceSave)
     if(cash==0 && !forceSave)
         return;
     public_and_private_informations.warehouse_cash+=cash;
-    std::string queryText=PreparedDBQueryCommon::db_query_update_warehouse_cash;
-    stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.warehouse_cash));
-    stringreplaceOne(queryText,"%2",std::to_string(character_id));
+    const std::string &queryText=PreparedDBQueryCommon::db_query_update_warehouse_cash.compose(
+                std::to_string(public_and_private_informations.warehouse_cash),
+                std::to_string(character_id)
+                );
     dbQueryWriteCommon(queryText);
 }
 
@@ -757,9 +820,11 @@ void Client::removeWarehouseCash(const uint64_t &cash)
     if(cash==0)
         return;
     public_and_private_informations.warehouse_cash-=cash;
-    std::string queryText=PreparedDBQueryCommon::db_query_update_warehouse_cash;
-    stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.warehouse_cash));
-    stringreplaceOne(queryText,"%2",std::to_string(character_id));
+    public_and_private_informations.warehouse_cash+=cash;
+    const std::string &queryText=PreparedDBQueryCommon::db_query_update_warehouse_cash.compose(
+                std::to_string(public_and_private_informations.warehouse_cash),
+                std::to_string(character_id)
+                );
     dbQueryWriteCommon(queryText);
 }
 
