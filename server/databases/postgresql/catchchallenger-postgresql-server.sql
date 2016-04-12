@@ -38,6 +38,7 @@ CREATE TABLE character_forserver (
     botfight_id bytea,
     itemonmap bytea,
     plants bytea,
+    quest bytea,
     blob_version smallint
 );
 
@@ -109,7 +110,8 @@ CREATE TABLE item_market (
 
 CREATE TABLE monster_market_price (
     id integer NOT NULL,
-    market_price integer
+    market_price integer,
+    "character" integer
 );
 
 
@@ -124,21 +126,6 @@ CREATE TABLE plant (
     plant smallint,
     plant_timestamps integer
 );
-
-
-
---
--- Name: quest; Type: TABLE; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE TABLE quest (
-    "character" integer,
-    quest smallint,
-    finish_one_time boolean,
-    step smallint
-);
-
-
 
 --
 -- Name: character_forserver_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
@@ -204,20 +191,6 @@ CREATE INDEX character_character_forserver_index ON character_forserver USING bt
 --
 
 CREATE UNIQUE INDEX item_market_uniqueindex ON item_market USING btree ("character", item);
-
-
---
--- Name: quest_bychar; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE INDEX quest_bychar ON quest USING btree ("character");
-
-
---
--- Name: quest_unique; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE UNIQUE INDEX quest_unique ON quest USING btree ("character", quest);
 
 
 --
