@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS `character_forserver` (
   `botfight_id` mediumblob NOT NULL,
   `itemonmap` tinyblob NOT NULL,
   `plants` blob NOT NULL,
+  `quest` blob NOT NULL,
   `blob_version` tinyint(4) NOT NULL,
   PRIMARY KEY (`character`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -98,7 +99,7 @@ CREATE TABLE IF NOT EXISTS `item_market` (
   `quantity` int(11) NOT NULL,
   `market_price` bigint(20) NOT NULL,
   UNIQUE KEY `item` (`item`,`character`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -109,8 +110,9 @@ CREATE TABLE IF NOT EXISTS `item_market` (
 CREATE TABLE IF NOT EXISTS `monster_market_price` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `market_price` int(11) NOT NULL,
+  `character` int(11) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 

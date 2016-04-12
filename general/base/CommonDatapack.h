@@ -32,6 +32,7 @@ public:
     std::unordered_map<uint8_t,Plant> plants;
     std::unordered_map<uint16_t,CrafingRecipe> crafingRecipes;
     std::unordered_map<uint16_t,uint16_t> itemToCrafingRecipes;
+    uint16_t crafingRecipesMaxId;
     #endif
     std::vector<Reputation> reputation;
     std::unordered_map<uint16_t,Monster> monsters;

@@ -1323,6 +1323,45 @@ uint8_t Client::decreaseSkillEndurance(const uint32_t &skill)
     return newEndurance;
 }
 
+void Client::addPlayerMonster(const std::vector<PlayerMonster> &playerMonster)
+{
+    CommonFightEngine::addPlayerMonster(playerMonster);
+    bool haveChange=false;
+    uint32_t index=0;
+    while(index<playerMonster.size())
+    {
+        if(addPlayerMonsterWithChange(playerMonster.at(index)))
+            haveChange=true;
+        index++;
+    }
+    if(haveChange)
+        updateMonsterInDatabase();
+    else
+        updateMonsterInDatabaseAndEncyclopedia();
+}
+
+void Client::addPlayerMonster(const PlayerMonster &playerMonster)
+{
+    CommonFightEngine::addPlayerMonster(playerMonster);
+    if(addPlayerMonsterWithChange(playerMonster))
+        updateMonsterInDatabase();
+    else
+        updateMonsterInDatabaseAndEncyclopedia();
+}
+
+bool Client::addPlayerMonsterWithChange(const PlayerMonster &playerMonster)
+{
+    const uint16_t bittoUp=playerMonster.monster;
+    bitlist[bittoUp/8]|=(1<<(7-bittoUp%8));
+    if(bitlist[bittoUp/8] & (1<<(7-bittoUp%8)))
+        return false;
+    else
+    {
+        bitlist[bittoUp/8]|=(1<<(7-bittoUp%8));
+        return true;
+    }
+}
+
 void Client::confirmEvolutionTo(PlayerMonster * playerMonster,const uint32_t &monster)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
