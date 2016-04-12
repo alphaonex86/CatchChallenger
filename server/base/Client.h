@@ -487,8 +487,11 @@ private:
     uint32_t removeObject(const uint16_t &item,const uint32_t &quantity=1);
     void sendRemoveObject(const uint16_t &item,const uint32_t &quantity=1);
     void updateObjectInDatabase();
+    void updateMonsterInDatabase();
     void updateObjectInWarehouseDatabase();
+    void updateMonsterInWarehouseDatabase();
     void updateObjectInDatabaseAndEncyclopedia();
+    void updateMonsterInDatabaseAndEncyclopedia();
     uint32_t objectQuantity(const uint16_t &item) const;
     bool addMarketCashWithoutSave(const uint64_t &cash);
     void addCash(const uint64_t &cash,const bool &forceSave=false);
@@ -531,9 +534,11 @@ private:
     void newQuestAction(const QuestAction &action,const uint32_t &questId);
     void appendAllow(const ActionAllow &allow);
     void removeAllow(const ActionAllow &allow);
+    void syncDatabaseAllow();
     //reputation
     void appendReputationPoint(const uint8_t &reputationId, const int32_t &point);
     void appendReputationRewards(const std::vector<ReputationRewards> &reputationList);
+    void syncDatabaseReputation();
     //battle
     void battleCanceled();
     void battleAccepted();
@@ -809,6 +814,9 @@ private:
     uint32_t tryCapture(const uint16_t &item);
     bool changeOfMonsterInFight(const uint32_t &monsterId);
     void confirmEvolutionTo(PlayerMonster * playerMonster,const uint32_t &monster);
+    void addPlayerMonster(const std::vector<PlayerMonster> &playerMonster);
+    void addPlayerMonster(const PlayerMonster &playerMonster);
+    bool addPlayerMonsterWithChange(const PlayerMonster &playerMonster);
 
     bool sendInventory();
 

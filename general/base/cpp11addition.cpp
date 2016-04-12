@@ -427,6 +427,11 @@ std::string binarytoHexa(const std::vector<char> &data)
     return output;
 }
 
+std::string binarytoHexa(const unsigned char * const data,const uint32_t &size)
+{
+    return binarytoHexa(reinterpret_cast<const char * const>(data),size);
+}
+
 std::string binarytoHexa(const char * const data,const uint32_t &size)
 {
     std::string output;

@@ -901,7 +901,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
     return plants;
 }
 
-std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> > DatapackGeneralLoader::loadCraftingRecipes(const std::string &file,const std::unordered_map<uint16_t, Item> &items)
+std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> > DatapackGeneralLoader::loadCraftingRecipes(const std::string &file,const std::unordered_map<uint16_t, Item> &items,uint16_t &crafingRecipesMaxId)
 {
     std::unordered_map<std::string,int> reputationNameToId;
     {
@@ -1177,6 +1177,8 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                         }
                         if(ok)
                         {
+                            if(crafingRecipesMaxId<id)
+                                crafingRecipesMaxId=id;
                             crafingRecipes[id]=recipe;
                             itemToCrafingRecipes[recipe.itemToLearn]=id;
                         }
