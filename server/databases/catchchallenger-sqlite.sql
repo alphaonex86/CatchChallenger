@@ -35,10 +35,6 @@ CREATE TABLE "dictionary_starter" (
     "id" INTEGER PRIMARY KEY NOT NULL,
     "starter" TEXT
 );
-CREATE TABLE "monster_market_price" (
-    "id" INTEGER PRIMARY KEY,
-    "market_price" INTEGER
-);
 CREATE TABLE "dictionary_server" (
     "id" INTEGER PRIMARY KEY,
     "key" TEXT
@@ -79,6 +75,59 @@ CREATE TABLE account (
 , "blob_version" INTEGER);
 CREATE UNIQUE INDEX "index_account" on account (id ASC);
 CREATE UNIQUE INDEX "login_account" on account (login ASC);
+CREATE TABLE character (
+    "id" INTEGER,
+    "pseudo" TEXT NOT NULL,
+    "skin" INTEGER,
+    "type" INTEGER,
+    "clan" INTEGER,
+    "clan_leader" INTEGER,
+    "date" INTEGER,
+    "account" INTEGER,
+    "cash" INTEGER,
+    "warehouse_cash" INTEGER,
+    "time_to_delete" INTEGER,
+    "played_time" INTEGER,
+    "last_connect" INTEGER,
+    "starter" INTEGER,
+    "allow" BLOB,
+    "item" BLOB,
+    "item_warehouse" BLOB,
+    "recipes" BLOB,
+    "reputations" BLOB,
+    "encyclopedia_monster" BLOB,
+    "encyclopedia_item" BLOB,
+    "achievements" BLOB,
+    "monster" BLOB,
+    "monster_warehouse" BLOB
+);
+CREATE UNIQUE INDEX "id" on "character" (id ASC);
+CREATE UNIQUE INDEX "bypseudoandclan" on "character" (pseudo ASC, clan ASC);
+CREATE INDEX "byclan" on "character" (clan ASC);
+CREATE UNIQUE INDEX "player_unique_pseudo" on "character" (pseudo ASC);
+CREATE INDEX "player_link_account" on "character" (account ASC);
+CREATE TABLE monster_market_price (
+    "id" INTEGER,
+    "market_price" INTEGER
+, "character" INTEGER);
+CREATE TABLE monster (
+    "id" INTEGER,
+    "hp" INTEGER,
+    "monster" INTEGER,
+    "level" INTEGER,
+    "xp" INTEGER,
+    "sp" INTEGER,
+    "captured_with" INTEGER,
+    "gender" INTEGER,
+    "egg_step" INTEGER,
+    "character_origin" INTEGER,
+    "position" INTEGER,
+    "place" INTEGER,
+    "buffs" BLOB,
+    "skills" BLOB,
+    "skills_endurance" BLOB
+);
+CREATE UNIQUE INDEX "monster_index_key" on monster (id ASC);
 CREATE TABLE character_forserver (
     "character" INTEGER,
     "x" INTEGER,
@@ -94,43 +143,10 @@ CREATE TABLE character_forserver (
     "unvalidated_rescue_y" INTEGER,
     "unvalidated_rescue_orientation" INTEGER,
     "date" INTEGER,
-    "market_cash" INTEGER
-, "botfight_id" TEXT, "itemonmap" TEXT, "plants" TEXT, "blob_version" INTEGER);
+    "market_cash" INTEGER,
+    "botfight_id" BLOB,
+    "itemonmap" BLOB,
+    "plants" BLOB,
+    "blob_version" INTEGER
+, "quest" BLOB);
 CREATE UNIQUE INDEX "idcharacter_forserver" on "character_forserver" (character ASC);
-CREATE TABLE character (
-    "id" INTEGER,
-    "pseudo" TEXT NOT NULL,
-    "skin" INTEGER,
-    "type" INTEGER,
-    "clan" INTEGER,
-    "clan_leader" INTEGER,
-    "date" INTEGER,
-    "account" INTEGER,
-    "cash" INTEGER,
-    "warehouse_cash" INTEGER,
-    "time_to_delete" INTEGER,
-    "played_time" INTEGER,
-    "last_connect" INTEGER,
-    "starter" INTEGER
-, "allow" TEXT, "item" TEXT, "item_warehouse" TEXT, "recipes" TEXT, "reputations" TEXT, "encyclopedia_monster" TEXT, "encyclopedia_item" TEXT, "achievements" TEXT, "monster" TEXT, "monster_warehouse" TEXT, "monster_market" TEXT);
-CREATE UNIQUE INDEX "id" on "character" (id ASC);
-CREATE UNIQUE INDEX "bypseudoandclan" on "character" (pseudo ASC, clan ASC);
-CREATE INDEX "byclan" on "character" (clan ASC);
-CREATE UNIQUE INDEX "player_unique_pseudo" on "character" (pseudo ASC);
-CREATE INDEX "player_link_account" on "character" (account ASC);
-CREATE TABLE monster (
-    "id" INTEGER,
-    "hp" INTEGER,
-    "character" INTEGER,
-    "monster" INTEGER,
-    "level" INTEGER,
-    "xp" INTEGER,
-    "sp" INTEGER,
-    "captured_with" INTEGER,
-    "gender" INTEGER,
-    "egg_step" INTEGER,
-    "character_origin" INTEGER,
-    "position" INTEGER,
-    "place" INTEGER
-, "buffs" TEXT, "skills" TEXT, "skills_endurance" TEXT);
-CREATE UNIQUE INDEX "monster_index_key" on monster (id ASC);

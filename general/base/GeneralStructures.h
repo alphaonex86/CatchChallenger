@@ -355,7 +355,7 @@ struct Player_private_and_public_informations
     std::vector<PlayerMonster> playerMonster,warehouse_playerMonster;
     std::unordered_map<uint16_t, PlayerQuest> quests;
     CLAN_ID_TYPE clan;
-    std::unordered_set<ActionAllow,std::hash<uint8_t> > allow;
+    std::unordered_set<ActionAllow,std::hash<uint8_t>/*what hash use*/ > allow;
     //here to send at character login
     std::unordered_set<uint8_t> itemOnMap;
     #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)

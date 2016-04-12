@@ -51,8 +51,23 @@ public:
     static StringWithReplacement db_query_update_character_item;
     static StringWithReplacement db_query_update_character_item_and_encyclopedia;
     static StringWithReplacement db_query_update_character_item_warehouse;
+    static StringWithReplacement db_query_update_character_monster;
+    static StringWithReplacement db_query_update_character_monster_and_encyclopedia;
+    static StringWithReplacement db_query_update_character_monster_warehouse;
     static StringWithReplacement db_query_update_cash;
     static StringWithReplacement db_query_update_warehouse_cash;
+    static StringWithReplacement db_query_update_character_recipe;
+    static StringWithReplacement db_query_update_character_allow;
+    static StringWithReplacement db_query_update_character_reputations;
+    static StringWithReplacement db_query_select_clan_by_name;
+    static StringWithReplacement db_query_update_character_clan_to_reset;
+    static StringWithReplacement db_query_update_character_clan_and_leader;
+    static StringWithReplacement db_query_delete_clan;
+    static StringWithReplacement db_query_update_monster_xp_hp_level;
+    static StringWithReplacement db_query_update_monster_hp_only;
+    static StringWithReplacement db_query_update_monster_sp_only;
+    static StringWithReplacement db_query_update_monster_xp;
+    static StringWithReplacement db_query_insert_clan;
 
     //query
     /*static StringWithReplacement db_query_select_allow;
@@ -79,12 +94,12 @@ public:
     static StringWithReplacement db_query_delete_recipes;
     static StringWithReplacement db_query_delete_reputation;
     static StringWithReplacement db_query_delete_allow;
+    static StringWithReplacement db_query_update_monster_buff_level;
 
     static StringWithReplacement db_query_update_monster_move_to_player;
     static StringWithReplacement db_query_update_monster_move_to_new_player;
     static StringWithReplacement db_query_update_monster_move_to_warehouse;
     static StringWithReplacement db_query_update_monster_move_to_market;
-    static StringWithReplacement db_query_select_clan_by_name;
     static StringWithReplacement db_query_insert_monster_full;
     static StringWithReplacement db_query_insert_warehouse_monster_full;
     static StringWithReplacement db_query_insert_monster_skill;
@@ -104,24 +119,15 @@ public:
     static StringWithReplacement db_query_delete_item;
     static StringWithReplacement db_query_delete_item_warehouse;
     static StringWithReplacement db_query_insert_recipe;
-    static StringWithReplacement db_query_insert_character_allow;
+
     static StringWithReplacement db_query_delete_character_allow;
     static StringWithReplacement db_query_update_reputation;
-    static StringWithReplacement db_query_update_character_clan;
-    static StringWithReplacement db_query_update_character_clan_and_leader;
-    static StringWithReplacement db_query_delete_clan;
-    static StringWithReplacement db_query_update_monster_xp_hp_level;
-    static StringWithReplacement db_query_update_monster_hp_only;
-    static StringWithReplacement db_query_update_monster_sp_only;
+
     static StringWithReplacement db_query_update_monster_skill_level;
-    static StringWithReplacement db_query_update_monster_xp;
     static StringWithReplacement db_query_insert_monster_buff;
-    static StringWithReplacement db_query_update_monster_level;
     static StringWithReplacement db_query_update_monster_position;
     static StringWithReplacement db_query_update_monster_and_hp;
-    static StringWithReplacement db_query_update_monster_level_only;
     static StringWithReplacement db_query_delete_monster_specific_skill;
-    static StringWithReplacement db_query_insert_clan;
     static StringWithReplacement db_query_update_monster_owner;*/
     #endif
 };
@@ -134,31 +140,13 @@ public:
     static void initDatabaseQueryServer(const DatabaseBase::DatabaseType &type);
 public:
     static StringWithReplacement db_query_update_character_forserver_map;
-    /*static StringWithReplacement db_query_insert_bot_already_beaten;
-    static StringWithReplacement db_query_character_server_by_id;
-    static StringWithReplacement db_query_select_bot_beaten;
-    static StringWithReplacement db_query_select_itemOnMap;
-    static StringWithReplacement db_query_insert_itemonmap;
-    static StringWithReplacement db_query_insert_recipe;
     static StringWithReplacement db_query_insert_factory;
     static StringWithReplacement db_query_update_factory;
-    static StringWithReplacement db_query_delete_quest;
-    static StringWithReplacement db_query_select_quest_by_id;
-    static StringWithReplacement db_query_update_quest_finish;
-    static StringWithReplacement db_query_update_quest_step;
-    static StringWithReplacement db_query_update_quest_restart;
-    static StringWithReplacement db_query_insert_quest;
     static StringWithReplacement db_query_delete_city;
     static StringWithReplacement db_query_update_city_clan;
     static StringWithReplacement db_query_insert_city;
-    static StringWithReplacement db_query_select_plant;
-    static StringWithReplacement db_query_delete_plant;
-    static StringWithReplacement db_query_delete_plant_by_index;
-    static StringWithReplacement db_query_insert_plant;
-    static StringWithReplacement db_query_delete_bot_already_beaten;
     static StringWithReplacement db_query_insert_monster_market_price;
     static StringWithReplacement db_query_delete_monster_market_price;
-
     static StringWithReplacement db_query_delete_all_item_market;
     static StringWithReplacement db_query_insert_item_market;
     static StringWithReplacement db_query_delete_item_market;
@@ -166,6 +154,25 @@ public:
     static StringWithReplacement db_query_update_item_market_and_price;
     static StringWithReplacement db_query_update_charaters_market_cash;
     static StringWithReplacement db_query_get_market_cash;
+
+    /*
+    static StringWithReplacement db_query_insert_bot_already_beaten;
+    static StringWithReplacement db_query_character_server_by_id;
+    static StringWithReplacement db_query_select_bot_beaten;
+    static StringWithReplacement db_query_select_itemOnMap;
+    static StringWithReplacement db_query_insert_itemonmap;
+    static StringWithReplacement db_query_insert_recipe;
+    static StringWithReplacement db_query_delete_quest;
+    static StringWithReplacement db_query_select_quest_by_id;
+    static StringWithReplacement db_query_update_quest_finish;
+    static StringWithReplacement db_query_update_quest_step;
+    static StringWithReplacement db_query_update_quest_restart;
+    static StringWithReplacement db_query_insert_quest;
+    static StringWithReplacement db_query_select_plant;
+    static StringWithReplacement db_query_delete_plant;
+    static StringWithReplacement db_query_delete_plant_by_index;
+    static StringWithReplacement db_query_insert_plant;
+    static StringWithReplacement db_query_delete_bot_already_beaten;
 */
 };
 #endif
