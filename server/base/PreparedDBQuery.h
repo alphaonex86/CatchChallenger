@@ -154,6 +154,7 @@ public:
     static StringWithReplacement db_query_update_item_market_and_price;
     static StringWithReplacement db_query_update_charaters_market_cash;
     static StringWithReplacement db_query_get_market_cash;
+    static StringWithReplacement db_query_insert_monster_market;
 
     /*
     static StringWithReplacement db_query_insert_bot_already_beaten;
