@@ -588,6 +588,7 @@ private:
     bool startQuest(const Quest &quest);
     void addQuestStepDrop(const uint32_t &questId,const uint8_t &questStep);
     void removeQuestStepDrop(const uint32_t &questId,const uint8_t &questStep);
+    void syncDatabaseQuest();
 
     bool checkCollision();
 
@@ -697,7 +698,7 @@ private:
     std::unordered_map<uint32_t,uint32_t> getTradeObjects() const;
     std::vector<PlayerMonster> getTradeMonster() const;
     void resetTheTrade();
-    void addExistingMonster(std::vector<PlayerMonster> tradeMonster);
+    void transferExistingMonster(std::vector<PlayerMonster> tradeMonster);
     PlayerMonster &getSelectedMonster();
     uint8_t getSelectedMonsterNumber();
     PlayerMonster& getEnemyMonster();

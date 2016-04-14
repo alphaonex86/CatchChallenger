@@ -68,10 +68,10 @@ public:
     static StringWithReplacement db_query_update_monster_sp_only;
     static StringWithReplacement db_query_update_monster_xp;
     static StringWithReplacement db_query_insert_clan;
+    static StringWithReplacement db_query_played_time;
 
     //query
     /*static StringWithReplacement db_query_select_allow;
-    static StringWithReplacement db_query_played_time;
     static StringWithReplacement db_query_monster_skill;
     static StringWithReplacement db_query_monster;
     static StringWithReplacement db_query_character_by_id;
@@ -155,6 +155,7 @@ public:
     static StringWithReplacement db_query_update_charaters_market_cash;
     static StringWithReplacement db_query_get_market_cash;
     static StringWithReplacement db_query_insert_monster_market;
+    static StringWithReplacement db_query_update_character_quests;
 
     /*
     static StringWithReplacement db_query_insert_bot_already_beaten;

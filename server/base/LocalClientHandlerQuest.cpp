@@ -202,6 +202,61 @@ bool Client::haveStartQuestRequirement(const CatchChallenger::Quest &quest)
     return haveReputationRequirements(quest.requirements.reputation);
 }
 
+void Client::syncDatabaseQuest()
+{
+    if(public_and_private_informations.quests.size()*(1+1+1)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+    {
+        uint32_t posOutput=0;
+        char tempBigBufferForOutput[public_and_private_informations.quests.size()*(1+1+1)];
+        auto i=public_and_private_informations.quests.begin();
+        while(i!=public_and_private_informations.quests.cend())
+        {
+            const uint8_t &type=i->first;
+            const PlayerQuest &quest=i->second;
+            tempBigBufferForOutput[posOutput]=type;
+            posOutput+=1;
+            if(quest.finish_one_time)
+                tempBigBufferForOutput[posOutput]=0x01;
+            else
+                tempBigBufferForOutput[posOutput]=0x00;
+            posOutput+=1;
+            tempBigBufferForOutput[posOutput]=quest.step;
+            posOutput+=1;
+            ++i;
+        }
+        const std::string &queryText=PreparedDBQueryServer::db_query_update_character_quests.compose(
+                    binarytoHexa(tempBigBufferForOutput,posOutput),
+                    std::to_string(character_id)
+                    );
+        dbQueryWriteServer(queryText);
+    }
+    else
+    {
+        uint32_t posOutput=0;
+        auto i=public_and_private_informations.quests.begin();
+        while(i!=public_and_private_informations.quests.cend())
+        {
+            const uint8_t &type=i->first;
+            const PlayerQuest &quest=i->second;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=type;
+            posOutput+=1;
+            if(quest.finish_one_time)
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+            else
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=quest.step;
+            posOutput+=1;
+            ++i;
+        }
+        const std::string &queryText=PreparedDBQueryServer::db_query_update_character_quests.compose(
+                    binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput),
+                    std::to_string(character_id)
+                    );
+        dbQueryWriteServer(queryText);
+    }
+}
+
 bool Client::nextStepQuest(const Quest &quest)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
@@ -233,10 +288,7 @@ bool Client::nextStepQuest(const Quest &quest)
         #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
         normalOutput("finish the quest: "+std::to_string(quest.id));
         #endif
-        std::string queryText=PreparedDBQueryServer::db_query_update_quest_finish;
-        stringreplaceOne(queryText,"%1",std::to_string(character_id));
-        stringreplaceOne(queryText,"%2",std::to_string(quest.id));
-        dbQueryWriteServer(queryText);
+        syncDatabaseQuest();
         public_and_private_informations.quests[quest.id].step=0;
         public_and_private_informations.quests[quest.id].finish_one_time=true;
         index=0;
@@ -263,11 +315,7 @@ bool Client::nextStepQuest(const Quest &quest)
         #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
         normalOutput("next step in the quest: "+std::to_string(quest.id));
         #endif
-        std::string queryText=PreparedDBQueryServer::db_query_update_quest_step;
-        stringreplaceOne(queryText,"%1",std::to_string(character_id));
-        stringreplaceOne(queryText,"%2",std::to_string(quest.id));
-        stringreplaceOne(queryText,"%3",std::to_string(public_and_private_informations.quests.at(quest.id).step));
-        dbQueryWriteServer(queryText);
+        syncDatabaseQuest();
         addQuestStepDrop(quest.id,public_and_private_informations.quests.at(quest.id).step);
     }
     return true;
@@ -277,22 +325,12 @@ bool Client::startQuest(const Quest &quest)
 {
     if(public_and_private_informations.quests.find(quest.id)==public_and_private_informations.quests.cend())
     {
-        std::string queryText=PreparedDBQueryServer::db_query_insert_quest;
-        stringreplaceOne(queryText,"%1",std::to_string(character_id));
-        stringreplaceOne(queryText,"%2",std::to_string(quest.id));
-        stringreplaceOne(queryText,"%3",std::to_string(1));
-        dbQueryWriteServer(queryText);
         public_and_private_informations.quests[quest.id].step=1;
         public_and_private_informations.quests[quest.id].finish_one_time=false;
     }
     else
-    {
-        std::string queryText=PreparedDBQueryServer::db_query_update_quest_restart;
-        stringreplaceOne(queryText,"%1",std::to_string(character_id));
-        stringreplaceOne(queryText,"%2",std::to_string(quest.id));
-        dbQueryWriteServer(queryText);
         public_and_private_informations.quests[quest.id].step=1;
-    }
+    syncDatabaseQuest();
     addQuestStepDrop(quest.id,1);
     return true;
 }
