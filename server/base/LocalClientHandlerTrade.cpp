@@ -132,8 +132,9 @@ void Client::tradeFinished()
             }
         }
         //monster
-        otherPlayerTrade->addExistingMonster(tradeMonster);
-        addExistingMonster(otherPlayerTrade->tradeMonster);
+        otherPlayerTrade->transferExistingMonster(tradeMonster);
+        transferExistingMonster(otherPlayerTrade->tradeMonster);
+
 
         //send the network message
         ProtocolParsingBase::tempBigBufferForOutput[0x01]=0x5B;
@@ -168,9 +169,9 @@ void Client::resetTheTrade()
     updateCanDoFight();
 }
 
-void Client::addExistingMonster(std::vector<PlayerMonster> tradeMonster)
+void Client::transferExistingMonster(std::vector<PlayerMonster> tradeMonster)
 {
-    unsigned int index=0;
+    /*unsigned int index=0;
     while(index<tradeMonster.size())
     {
         std::string queryText=PreparedDBQueryCommon::db_query_update_monster_owner;
@@ -178,8 +179,10 @@ void Client::addExistingMonster(std::vector<PlayerMonster> tradeMonster)
         stringreplaceOne(queryText,"%2",std::to_string(character_id));
         dbQueryWriteCommon(queryText);
         index++;
-    }
-    public_and_private_informations.playerMonster.insert(public_and_private_informations.playerMonster.cend(),tradeMonster.cbegin(),tradeMonster.cend());
+    }*/
+    /*updateMonsterInDatabase();
+    public_and_private_informations.playerMonster.insert(public_and_private_informations.playerMonster.cend(),tradeMonster.cbegin(),tradeMonster.cend());*/
+    addPlayerMonster(tradeMonster);
 }
 
 void Client::tradeAddTradeCash(const uint64_t &cash)
@@ -374,7 +377,7 @@ void Client::tradeAddTradeMonster(const uint32_t &monsterId)
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
             otherPlayerTrade->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
-            while(index<public_and_private_informations.playerMonster.size())
+            /*while(index<public_and_private_informations.playerMonster.size())
             {
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
                 std::string queryText=PreparedDBQueryCommon::db_query_update_monster_position;
@@ -382,7 +385,7 @@ void Client::tradeAddTradeMonster(const uint32_t &monsterId)
                 stringreplaceOne(queryText,"%2",std::to_string(playerMonster.id));
                 dbQueryWriteCommon(queryText);
                 index++;
-            }
+            }*/
             return;
         }
         index++;
