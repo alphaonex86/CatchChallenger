@@ -382,8 +382,10 @@ void Client::setRights(const Player_type& type)
 {
     public_and_private_informations.public_informations.type=type;
     const int &newType=type/0x10-1;
-    std::string queryText=PreparedDBQueryCommon::db_query_change_right;
-    stringreplaceOne(queryText,"%1",std::to_string(account_id));
-    stringreplaceOne(queryText,"%2",std::to_string(newType));
+
+    const std::string &queryText=PreparedDBQueryCommon::db_query_change_right.compose(
+                std::to_string(newType),
+                std::to_string(account_id)
+                );
     dbQueryWriteCommon(queryText);
 }

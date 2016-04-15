@@ -110,8 +110,7 @@ CREATE TABLE item_market (
 
 CREATE TABLE monster_market_price (
     id integer NOT NULL,
-    market_price integer,
-    "character" integer
+    market_price integer
 );
 
 
