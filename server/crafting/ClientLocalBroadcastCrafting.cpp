@@ -137,6 +137,44 @@ void Client::plantSeed(
     useSeed(plant_id);
 }
 
+#ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+//plant
+bool Client::syncDatabasePlant()
+{
+    if(public_and_private_informations.plantOnMap.size()*(1+1+8)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+    {
+        errorOutput("Too many plant");
+        return false;
+    }
+    else
+    {
+        uint32_t posOutput=0;
+        auto i=public_and_private_informations.plantOnMap.begin();
+        while(i!=public_and_private_informations.plantOnMap.cend())
+        {
+            const uint8_t &dirtOnMap=i->first;
+            const PlayerPlant &plant=i->second;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=dirtOnMap;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=plant.plant;
+            posOutput+=1;
+            const uint64_t mature_at=htole64(plant.mature_at);
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&mature_at,sizeof(mature_at));
+            // *reinterpret_cast<uint64_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole64(plant.mature_at);
+            posOutput+=4;
+
+            ++i;
+        }
+        const std::string &queryText=PreparedDBQueryServer::db_query_update_plant.compose(
+                    binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput),
+                    std::to_string(character_id)
+                    );
+        dbQueryWriteServer(queryText);
+        return true;
+    }
+}
+#endif
+
 void Client::seedValidated()
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
@@ -186,6 +224,9 @@ void Client::seedValidated()
         plantOnMapPlayer.mature_at=current_time+CommonDatapack::commonDatapack.plants.at(plantOnMapPlayer.plant).fruits_seconds;
         public_and_private_informations.plantOnMap[plantOnMap.indexOfOnMap]=plantOnMapPlayer;
     }
+    {
+        syncDatabasePlant();
+    }
     #else
     MapServer::PlantOnMap &plantOnMap=static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants[pos];
     {
@@ -195,15 +236,15 @@ void Client::seedValidated()
         plantOnMap.player_owned_expire_at=current_time+CommonDatapack::commonDatapack.plants.at(plantOnMap.plant).fruits_seconds+CATCHCHALLENGER_SERVER_OWNER_TIMEOUT;
         static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants[pos]=plantOnMap;
     }
-    #endif
     {
-        std::string queryText=PreparedDBQueryServer::db_query_insert_plant;
+        const std::string &queryText=PreparedDBQueryServer::db_query_insert_plant;
         stringreplaceOne(queryText,"%1",std::to_string(character_id));
         stringreplaceOne(queryText,"%2",std::to_string(plantOnMap.pointOnMapDbCode));
         stringreplaceOne(queryText,"%3",std::to_string(plant_list_in_waiting.front().plant_id));
         stringreplaceOne(queryText,"%4",std::to_string(current_time));
         dbQueryWriteServer(queryText);
     }
+    #endif
 
     //send to all player
     #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
@@ -428,10 +469,11 @@ void Client::collectPlant(
             return;
         }
         //remove from db
-        std::string queryText=PreparedDBQueryServer::db_query_delete_plant_by_index;
+        /*std::string queryText=PreparedDBQueryServer::db_query_delete_plant_by_index;
         stringreplaceOne(queryText,"%1",std::to_string(character_id));
         stringreplaceOne(queryText,"%2",std::to_string(plant.pointOnMapDbCode));
-        dbQueryWriteServer(queryText);
+        dbQueryWriteServer(queryText);*/
+        syncDatabasePlant();
 
         //add into the inventory
         float quantity=CommonDatapack::commonDatapack.plants.at(playerPlant.plant).fix_quantity;

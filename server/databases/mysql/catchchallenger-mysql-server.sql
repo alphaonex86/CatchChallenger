@@ -110,7 +110,6 @@ CREATE TABLE IF NOT EXISTS `item_market` (
 CREATE TABLE IF NOT EXISTS `monster_market_price` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `market_price` int(11) NOT NULL,
-  `character` int(11) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 

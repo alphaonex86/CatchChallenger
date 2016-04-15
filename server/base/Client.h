@@ -553,6 +553,12 @@ private:
     void appendAllow(const ActionAllow &allow);
     void removeAllow(const ActionAllow &allow);
     void syncDatabaseAllow();
+    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+    //plant
+    bool syncDatabasePlant();
+    #endif
+    //item on map
+    bool syncDatabaseItemOnMap();
     //reputation
     void appendReputationPoint(const uint8_t &reputationId, const int32_t &point);
     void appendReputationRewards(const std::vector<ReputationRewards> &reputationList);
