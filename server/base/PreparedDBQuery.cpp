@@ -50,6 +50,8 @@ StringWithReplacement PreparedDBQueryCommon::db_query_monster_skill_and_enduranc
 StringWithReplacement PreparedDBQueryCommon::db_query_character_by_id;
 StringWithReplacement PreparedDBQueryCommon::db_query_set_character_time_to_delete_to_zero;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_character_last_connect;
+StringWithReplacement PreparedDBQueryCommon::db_query_clan;
+StringWithReplacement PreparedDBQueryCommon::db_query_change_right;
 
 
 StringWithReplacement PreparedDBQueryServer::db_query_delete_city;
@@ -70,6 +72,8 @@ StringWithReplacement PreparedDBQueryServer::db_query_insert_monster_market_pric
 StringWithReplacement PreparedDBQueryServer::db_query_delete_monster_market_price;
 StringWithReplacement PreparedDBQueryServer::db_query_update_character_quests;
 StringWithReplacement PreparedDBQueryServer::db_query_character_server_by_id;
+StringWithReplacement PreparedDBQueryServer::db_query_update_plant;
+StringWithReplacement PreparedDBQueryServer::db_query_update_itemonmap;
 
 /*
 StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_buff_level;
@@ -86,7 +90,6 @@ StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_move_to_war
 StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_move_to_market;
 StringWithReplacement PreparedDBQueryCommon::db_query_select_allow;
 StringWithReplacement PreparedDBQueryCommon::db_query_monster_skill;
-StringWithReplacement PreparedDBQueryCommon::db_query_clan;
 
 StringWithReplacement PreparedDBQueryCommon::db_query_monster_by_character_id;
 StringWithReplacement PreparedDBQueryCommon::db_query_delete_monster_buff;
@@ -111,7 +114,6 @@ StringWithReplacement PreparedDBQueryCommon::db_query_select_items_warehouse_by_
 StringWithReplacement PreparedDBQueryCommon::db_query_select_monsters_by_player_id;
 StringWithReplacement PreparedDBQueryCommon::db_query_select_monsters_warehouse_by_player_id;
 StringWithReplacement PreparedDBQueryCommon::db_query_select_monstersSkill_by_id;
-StringWithReplacement PreparedDBQueryCommon::db_query_change_right;
 StringWithReplacement PreparedDBQueryCommon::db_query_insert_recipe;
 StringWithReplacement PreparedDBQueryCommon::db_query_insert_character_allow;
 StringWithReplacement PreparedDBQueryCommon::db_query_delete_character_allow;
@@ -287,6 +289,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_monster_skill_and_endurance="UPDATE `monster` SET `skill`=UNHEX('%1'),`skills_endurance`=UNHEX('%2') WHERE `id`=%3";
         PreparedDBQueryCommon::db_query_set_character_time_to_delete_to_zero="UPDATE `character` SET `time_to_delete`=0 WHERE `id`=%1";
         PreparedDBQueryCommon::db_query_update_character_last_connect="UPDATE `character` SET `last_connect`=%1 WHERE `id`=%2";
+        PreparedDBQueryCommon::db_query_clan="SELECT `name`,`cash` FROM `clan` WHERE `id`=%1";
 
 
 
@@ -300,7 +303,6 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_monster_skill="UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3";
         PreparedDBQueryCommon::db_query_character_by_id="SELECT `account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`starter`,`allow`,`item`,`item_warehouse`,`recipes`,`reputations`,`encyclopedia_monster`,`encyclopedia_item`,`achievements`,`monster`,`monster_warehouse` FROM `character` WHERE `id`=%1";
 
-        PreparedDBQueryCommon::db_query_clan="SELECT `name`,`cash` FROM `clan` WHERE `id`=%1";
 
         PreparedDBQueryCommon::db_query_monster_by_character_id="SELECT `id` FROM `monster` WHERE `character`=%1";
         PreparedDBQueryCommon::db_query_delete_monster_buff="DELETE FROM `monster_buff` WHERE monster=%1";
@@ -328,7 +330,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_select_items_warehouse_by_player_id="SELECT `item`,`quantity` FROM `item_warehouse` WHERE `character`=%1 ORDER BY `item`";
         PreparedDBQueryCommon::db_query_select_monstersSkill_by_id="SELECT `skill`,`level`,`endurance` FROM `monster_skill` WHERE `monster`=%1 ORDER BY `skill`";
         PreparedDBQueryCommon::db_query_select_monstersBuff_by_id="SELECT `buff`,`level` FROM `monster_buff` WHERE `monster`=%1 ORDER BY `buff`";
-        PreparedDBQueryCommon::db_query_change_right="UPDATE `character` SET `type`=%2 WHERE `id`=%1";
+        PreparedDBQueryCommon::db_query_change_right="UPDATE `character` SET `type`=%1 WHERE `id`=%2";
         PreparedDBQueryCommon::db_query_update_item="UPDATE `item` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3";
         PreparedDBQueryCommon::db_query_update_item_warehouse="UPDATE `item_warehouse` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3";
         PreparedDBQueryCommon::db_query_delete_item="DELETE FROM `item` WHERE `item`=%1 AND `character`=%2";
@@ -387,6 +389,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_monster_skill_and_endurance="UPDATE monster SET skill='%1',skills_endurance='%2' WHERE id=%3";
         PreparedDBQueryCommon::db_query_set_character_time_to_delete_to_zero="UPDATE character SET time_to_delete=0 WHERE id=%1";
         PreparedDBQueryCommon::db_query_update_character_last_connect="UPDATE character SET last_connect=%1 WHERE id=%2";
+        PreparedDBQueryCommon::db_query_clan="SELECT name,cash FROM clan WHERE id=%1";
 
 
 
@@ -407,8 +410,6 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_select_allow="SELECT allow FROM character_allow WHERE character=%1";
         PreparedDBQueryCommon::db_query_monster_skill="UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3";
         PreparedDBQueryCommon::db_query_character_by_id="SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,allow,item,item_warehouse,recipes,reputations,encyclopedia_monster,encyclopedia_item,achievements,monster,monster_warehouse FROM character WHERE id=%1";
-
-        PreparedDBQueryCommon::db_query_clan="SELECT name,cash FROM clan WHERE id=%1";
 
         PreparedDBQueryCommon::db_query_monster_by_character_id="SELECT id FROM monster WHERE character=%1";
         PreparedDBQueryCommon::db_query_delete_monster_buff="DELETE FROM monster_buff WHERE monster=%1";
@@ -436,7 +437,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_select_items_warehouse_by_player_id="SELECT item,quantity FROM item_warehouse WHERE character=%1 ORDER BY item";
         PreparedDBQueryCommon::db_query_select_monstersSkill_by_id="SELECT skill,level,endurance FROM monster_skill WHERE monster=%1 ORDER BY skill";
         PreparedDBQueryCommon::db_query_select_monstersBuff_by_id="SELECT buff,level FROM monster_buff WHERE monster=%1 ORDER BY buff";
-        PreparedDBQueryCommon::db_query_change_right="UPDATE \"character\" SET \"type\"=%2 WHERE \"id\"=%1";
+        PreparedDBQueryCommon::db_query_change_right="UPDATE \"character\" SET \"type\"=%1 WHERE \"id\"=%2";
         PreparedDBQueryCommon::db_query_update_item="UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3";
         PreparedDBQueryCommon::db_query_update_item_warehouse="UPDATE item_warehouse SET quantity=%1 WHERE item=%2 AND character=%3";
         PreparedDBQueryCommon::db_query_delete_item="DELETE FROM item WHERE item=%1 AND character=%2";
@@ -495,6 +496,8 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_character_by_id="SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,allow,item,item_warehouse,recipes,reputations,encyclopedia_monster,encyclopedia_item,achievements,monster,monster_warehouse FROM character WHERE id=%1";
         PreparedDBQueryCommon::db_query_set_character_time_to_delete_to_zero="UPDATE character SET time_to_delete=0 WHERE id=%1";
         PreparedDBQueryCommon::db_query_update_character_last_connect="UPDATE character SET last_connect=%1 WHERE id=%2";
+        PreparedDBQueryCommon::db_query_clan="SELECT name,cash FROM clan WHERE id=%1";
+        PreparedDBQueryCommon::db_query_change_right="UPDATE \"character\" SET \"type\"=%1 WHERE \"id\"=%2";
 
 
 
@@ -509,8 +512,6 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
 
         /*PreparedDBQueryCommon::db_query_select_allow="SELECT allow FROM character_allow WHERE character=%1";
         PreparedDBQueryCommon::db_query_monster_skill="UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3";
-
-        PreparedDBQueryCommon::db_query_clan="SELECT name,cash FROM clan WHERE id=%1";
 
         PreparedDBQueryCommon::db_query_monster_by_character_id="SELECT id FROM monster WHERE character=%1";
         PreparedDBQueryCommon::db_query_delete_monster_buff="DELETE FROM monster_buff WHERE monster=%1";
@@ -538,7 +539,6 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_select_items_warehouse_by_player_id="SELECT item,quantity FROM item_warehouse WHERE character=%1 ORDER BY item";
         PreparedDBQueryCommon::db_query_select_monstersSkill_by_id="SELECT skill,level,endurance FROM monster_skill WHERE monster=%1 ORDER BY skill";
         PreparedDBQueryCommon::db_query_select_monstersBuff_by_id="SELECT buff,level FROM monster_buff WHERE monster=%1 ORDER BY buff";
-        PreparedDBQueryCommon::db_query_change_right="UPDATE \"character\" SET \"type\"=%2 WHERE \"id\"=%1";
         PreparedDBQueryCommon::db_query_update_item="UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3";
         PreparedDBQueryCommon::db_query_update_item_warehouse="UPDATE item_warehouse SET quantity=%1 WHERE item=%2 AND character=%3";
         PreparedDBQueryCommon::db_query_delete_item="DELETE FROM item WHERE item=%1 AND character=%2";
@@ -699,6 +699,8 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_update_city_clan="UPDATE `city` SET `clan`=%1 WHERE `city`='%2';";
         PreparedDBQueryServer::db_query_insert_city="INSERT INTO `city`(`clan`,`city`) VALUES(%1,'%2');";
         PreparedDBQueryServer::db_query_update_character_quests="UPDATE character_forserver SET quest=UNHEX('%1') WHERE id=%2";
+        PreparedDBQueryServer::db_query_update_plant="UPDATE character_forserver SET plants=UNHEX('%1') WHERE id=%2";
+        PreparedDBQueryServer::db_query_update_itemonmap="UPDATE character_forserver SET itemonmap=UNHEX('%1') WHERE id=%2";
         break;
         #endif
 
@@ -737,6 +739,8 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_update_city_clan="UPDATE city SET clan=%1 WHERE city='%2';";
         PreparedDBQueryServer::db_query_insert_city="INSERT INTO city(clan,city) VALUES(%1,'%2');"
         PreparedDBQueryServer::db_query_update_character_quests="UPDATE character_forserver SET quest='%1' WHERE id=%2";
+        PreparedDBQueryServer::db_query_update_plant="UPDATE character_forserver SET plants='%1' WHERE id=%2";
+        PreparedDBQueryServer::db_query_update_itemonmap="UPDATE character_forserver SET itemonmap='%1' WHERE id=%2";
         break;
         #endif
 
@@ -761,6 +765,8 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_delete_monster_market_price="DELETE FROM monster_market_price WHERE id=%1";
         PreparedDBQueryServer::db_query_update_character_quests="UPDATE character_forserver SET quest='\\x%1' WHERE id=%2";
         PreparedDBQueryServer::db_query_character_server_by_id="SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,plants,quest,blob_version FROM character_forserver WHERE character=%1";
+        PreparedDBQueryServer::db_query_update_plant="UPDATE character_forserver SET plants='\\x%1' WHERE id=%2";
+        PreparedDBQueryServer::db_query_update_itemonmap="UPDATE character_forserver SET itemonmap='\\x%1' WHERE id=%2";
 
         /*
         PreparedDBQueryServer::db_query_delete_bot_already_beaten="DELETE FROM bot_already_beaten WHERE character=%1";
