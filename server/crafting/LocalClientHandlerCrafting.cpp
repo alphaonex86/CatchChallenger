@@ -160,13 +160,14 @@ void Client::takeAnObjectOnMap()
         errorOutput("Wrong direction to plant a seed");
         return;
     }
+    std::pair<uint8_t,uint8_t> pos(x,y);
     //check if is dirt
-    if(static_cast<MapServer *>(map)->itemsOnMap.find(std::pair<uint8_t,uint8_t>(x,y))==static_cast<MapServer *>(map)->itemsOnMap.cend())
+    if(static_cast<MapServer *>(map)->itemsOnMap.find(pos)==static_cast<MapServer *>(map)->itemsOnMap.cend())
     {
         errorOutput("Not on map item on this place");
         return;
     }
-    const MapServer::ItemOnMap &item=static_cast<MapServer *>(map)->itemsOnMap.at(std::pair<uint8_t,uint8_t>(x,y));
+    const MapServer::ItemOnMap &item=static_cast<MapServer *>(map)->itemsOnMap.at(pos);
     //add get item from db
     if(!item.infinite)
     {
@@ -177,10 +178,40 @@ void Client::takeAnObjectOnMap()
         }
         public_and_private_informations.itemOnMap.insert(item.pointOnMapDbCode);
 
-        std::string queryText=PreparedDBQueryServer::db_query_insert_itemonmap;
+        /*const std::string &queryText=PreparedDBQueryServer::db_query_update_itemonmap.co;
         stringreplaceOne(queryText,"%1",std::to_string(character_id));
         stringreplaceOne(queryText,"%2",std::to_string(item.pointOnMapDbCode));
-        dbQueryWriteServer(queryText);
+        dbQueryWriteServer(queryText);*/
+        syncDatabaseItemOnMap();
     }
     addObject(item.item);
+}
+
+//item on map
+bool Client::syncDatabaseItemOnMap()
+{
+    if(public_and_private_informations.plantOnMap.size()*(1)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+    {
+        errorOutput("Too many item on map");
+        return false;
+    }
+    else
+    {
+        uint32_t posOutput=0;
+        auto i=public_and_private_informations.itemOnMap.begin();
+        while(i!=public_and_private_informations.itemOnMap.cend())
+        {
+            const uint8_t &itemOnMap=*i;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=itemOnMap;
+            posOutput+=1;
+
+            ++i;
+        }
+        const std::string &queryText=PreparedDBQueryServer::db_query_update_itemonmap.compose(
+                    binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput),
+                    std::to_string(character_id)
+                    );
+        dbQueryWriteServer(queryText);
+        return true;
+    }
 }

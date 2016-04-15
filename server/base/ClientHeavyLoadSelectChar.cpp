@@ -444,9 +444,10 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                      std::to_string(sFrom1970())+
                      serverProfileInternal.preparedQueryAddCharacterForServer.at(2)
                      );
-        std::string queryText=PreparedDBQueryCommon::db_query_update_character_last_connect;
-        stringreplaceOne(queryText,"%1",std::to_string(characterId));
-        stringreplaceOne(queryText,"%2",std::to_string(sFrom1970()));
+        const std::string &queryText=PreparedDBQueryCommon::db_query_update_character_last_connect.compose(
+                    std::to_string(sFrom1970()),
+                    std::to_string(characterId)
+                    );
         dbQueryWriteCommon(queryText);
 
         characterIsRightWithParsedRescue(query_id,
@@ -488,14 +489,12 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     const uint8_t &blob_version=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(GlobalServerData::serverPrivateVariables.db_server->value(17),&ok);
     if(!ok)
     {
-        loginIsWrong(askLoginParam->query_id,0x04,"Blob version not a number");
-        delete askLoginParam;
+        characterSelectionIsWrong(query_id,0x04,"Blob version not a number");
         return;
     }
-    if(blob_version!=CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION)
+    if(blob_version!=CATCHCHALLENGER_SERVER_DATABASE_SERVER_BLOBVERSION)
     {
-        loginIsWrong(askLoginParam->query_id,0x04,"Blob version incorrect");
-        delete askLoginParam;
+        characterSelectionIsWrong(query_id,0x04,"Blob version incorrect");
         return;
     }
 
@@ -853,8 +852,9 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
         {
             normalOutput("First client of the clan: "+std::to_string(public_and_private_informations.clan)+", get the info");
             //do the query
-            std::string queryText=PreparedDBQueryCommon::db_query_clan;
-            stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.clan));
+            const std::string &queryText=PreparedDBQueryCommon::db_query_clan.compose(
+                        std::to_string(public_and_private_informations.clan)
+                        );
             CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::selectClan_static);
             if(callback==NULL)
             {
@@ -879,7 +879,7 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
     }
 }
 
-void Client::loadItemOnMap()
+/*void Client::loadItemOnMap()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryServer::db_query_select_itemOnMap.empty())
@@ -952,10 +952,10 @@ void Client::loadItemOnMap_return()
     #else
     characterIsRightFinalStep();
     #endif
-}
+}*/
 
 
-#ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+/*#ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
 void Client::loadPlantOnMap()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -1045,7 +1045,7 @@ void Client::loadPlantOnMap_return()
     }
     characterIsRightFinalStep();
 }
-#endif
+#endif*/
 
 
 
@@ -1396,7 +1396,7 @@ void Client::loginIsWrong(const uint8_t &query_id, const uint8_t &returnCode, co
 }
 #endif
 
-void Client::loadPlayerAllow()
+/*void Client::loadPlayerAllow()
 {
     if(!PreparedDBQueryCommon::db_query_select_allow.empty())
     {
@@ -1450,4 +1450,4 @@ void Client::loadPlayerAllow_return()
             normalOutput("allow id: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" is not a number");
     }
     loadItems();
-}
+}*/

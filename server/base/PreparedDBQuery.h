@@ -74,10 +74,11 @@ public:
     static StringWithReplacement db_query_character_by_id;
     static StringWithReplacement db_query_set_character_time_to_delete_to_zero;
     static StringWithReplacement db_query_update_character_last_connect;
+    static StringWithReplacement db_query_clan;
+    static StringWithReplacement db_query_change_right;
 
     //query
     /*static StringWithReplacement db_query_select_allow;
-    static StringWithReplacement db_query_clan;
     static StringWithReplacement db_query_insert_server_time;
     static StringWithReplacement db_query_update_server_time_played_time;
     static StringWithReplacement db_query_update_server_time_last_connect;
@@ -111,7 +112,6 @@ public:
     static StringWithReplacement db_query_select_monsters_by_player_id;
     static StringWithReplacement db_query_select_monsters_warehouse_by_player_id;
     static StringWithReplacement db_query_select_monstersSkill_by_id;
-    static StringWithReplacement db_query_change_right;
     static StringWithReplacement db_query_insert_item;
     static StringWithReplacement db_query_insert_item_warehouse;
     static StringWithReplacement db_query_update_item;
@@ -157,6 +157,8 @@ public:
     static StringWithReplacement db_query_insert_monster_market;
     static StringWithReplacement db_query_update_character_quests;
     static StringWithReplacement db_query_character_server_by_id;
+    static StringWithReplacement db_query_update_plant;
+    static StringWithReplacement db_query_update_itemonmap;
 
     /*
     static StringWithReplacement db_query_insert_bot_already_beaten;
