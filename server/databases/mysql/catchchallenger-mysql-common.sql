@@ -34,9 +34,6 @@ CREATE TABLE IF NOT EXISTS `character` (
   `encyclopedia_monster` mediumblob NOT NULL,
   `encyclopedia_item` mediumblob NOT NULL,
   `achievements` tinyblob NOT NULL,
-  `monster` tinyblob NOT NULL,
-  `monster_warehouse` blob NOT NULL,
-  `monster_market` tinyblob NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `pseudo` (`pseudo`,`clan`),
   UNIQUE KEY `pseudo_2` (`pseudo`),
@@ -66,6 +63,8 @@ CREATE TABLE IF NOT EXISTS `clan` (
 
 CREATE TABLE IF NOT EXISTS `monster` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
+  `character` int(11) unsigned NOT NULL,
+  `place` smallint(5) unsigned NOT NULL,
   `hp` smallint(5) unsigned NOT NULL,
   `monster` smallint(5) unsigned NOT NULL,
   `level` tinyint(3) unsigned NOT NULL,
@@ -79,7 +78,8 @@ CREATE TABLE IF NOT EXISTS `monster` (
   `buffs` blob NOT NULL,
   `skills` tinyblob NOT NULL,
   `skills_endurance` tinyblob NOT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `character` (`character`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------

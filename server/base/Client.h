@@ -26,6 +26,24 @@
 #include <queue>
 #include <iostream>
 
+#ifdef EPOLLCATCHCHALLENGERSERVER
+    #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB*1024
+    #error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB
+    #endif
+    #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_SERVER_DATAPACK_MAX_FILEPURGE_KB*1024
+    #error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_SERVER_DATAPACK_MAX_FILEPURGE_KB
+    #endif
+    #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_SERVER_DATAPACK_ZLIB_COMPRESSEDFILEPURGE_KB*1024
+    #error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_SERVER_DATAPACK_ZLIB_COMPRESSEDFILEPURGE_KB
+    #endif
+    #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_SERVER_DATAPACK_XZ_COMPRESSEDFILEPURGE_KB*1024
+    #error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_SERVER_DATAPACK_XZ_COMPRESSEDFILEPURGE_KB
+    #endif
+    #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB*1024
+    #error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB
+    #endif
+#endif
+
 namespace CatchChallenger {
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
@@ -766,11 +784,14 @@ private:
     void characterSelectionIsWrong(const uint8_t &query_id,const uint8_t &returnCode,const std::string &debugMessage);
     //load linked data (like item, quests, ...)
     void loadLinkedData();
-    void loadItems();
-    void loadItemsWarehouse();
-    void loadRecipes();
+
     void loadMonsters();
     void loadMonstersWarehouse();
+    void loadCharacterForServer();
+
+    /*void loadItems();
+    void loadItemsWarehouse();
+    void loadRecipes();
     void loadReputation();
     void loadQuests();
     void loadBotAlreadyBeaten();
@@ -811,6 +832,7 @@ private:
     static void loadPlayerMonsterSkills_static(void *object);
     void loadPlayerMonsterSkills_object();
     void loadPlayerMonsterSkills_return(const uint32_t &index);
+*/
 
     uint32_t tryCapture(const uint16_t &item);
     bool changeOfMonsterInFight(const uint32_t &monsterId);

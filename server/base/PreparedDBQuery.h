@@ -71,12 +71,12 @@ public:
     static StringWithReplacement db_query_played_time;
     static StringWithReplacement db_query_monster;
     static StringWithReplacement db_query_monster_skill_and_endurance;
+    static StringWithReplacement db_query_character_by_id;
+    static StringWithReplacement db_query_set_character_time_to_delete_to_zero;
+    static StringWithReplacement db_query_update_character_last_connect;
 
     //query
     /*static StringWithReplacement db_query_select_allow;
-    static StringWithReplacement db_query_character_by_id;
-    static StringWithReplacement db_query_update_character_time_to_delete;
-    static StringWithReplacement db_query_update_character_last_connect;
     static StringWithReplacement db_query_clan;
     static StringWithReplacement db_query_insert_server_time;
     static StringWithReplacement db_query_update_server_time_played_time;
@@ -156,10 +156,10 @@ public:
     static StringWithReplacement db_query_get_market_cash;
     static StringWithReplacement db_query_insert_monster_market;
     static StringWithReplacement db_query_update_character_quests;
+    static StringWithReplacement db_query_character_server_by_id;
 
     /*
     static StringWithReplacement db_query_insert_bot_already_beaten;
-    static StringWithReplacement db_query_character_server_by_id;
     static StringWithReplacement db_query_select_bot_beaten;
     static StringWithReplacement db_query_select_itemOnMap;
     static StringWithReplacement db_query_insert_itemonmap;
