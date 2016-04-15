@@ -18,6 +18,8 @@ SOURCES += \
     $$PWD/base/Client.cpp \
     $$PWD/base/ClientStaticVar.cpp \
     $$PWD/base/ClientHeavyLoad.cpp \
+    $$PWD/base/ClientHeavyLoadLogin.cpp \
+    $$PWD/base/ClientHeavyLoadMirror.cpp \
     $$PWD/base/ClientHeavyLoadSelectChar.cpp \
     $$PWD/base/ClientNetworkWrite.cpp \
     $$PWD/base/ClientNetworkRead.cpp \
