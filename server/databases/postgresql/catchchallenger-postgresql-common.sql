@@ -41,10 +41,7 @@ CREATE TABLE "character" (
     reputations bytea,
     encyclopedia_monster bytea,
     encyclopedia_item bytea,
-    achievements bytea,
-    monster bytea,
-    monster_warehouse bytea,
-    monster_market bytea
+    achievements bytea
 );
 
 
@@ -62,6 +59,8 @@ CREATE TABLE clan (
 
 CREATE TABLE monster (
     id integer,
+    "character" integer,
+    place smallint,
     hp smallint,
     monster smallint,
     level smallint,
@@ -72,7 +71,6 @@ CREATE TABLE monster (
     egg_step integer,
     character_origin integer,
     "position" smallint,
-    place smallint,
     buffs bytea,
     skills bytea,
     skills_endurance bytea
@@ -145,6 +143,12 @@ CREATE INDEX character_clan ON "character" USING btree (clan);
 --
 
 CREATE UNIQUE INDEX monster_unique ON monster USING btree (id);
+
+--
+-- Name: monster_unique; Type: INDEX; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE INDEX monster_by_character ON monster USING btree ("character");
 
 --
 -- Name: public; Type: ACL; Schema: -; Owner: postgres

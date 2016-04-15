@@ -100,7 +100,7 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
         errorOutput("selectCharacter() Query is empty, bug");
         return;
     }
-    if(PreparedDBQueryCommon::db_query_update_character_last_connect.empty())
+    /*if(PreparedDBQueryCommon::db_query_update_character_last_connect.empty())
     {
         errorOutput("selectCharacter() Query db_query_update_character_last_connect is empty, bug");
         return;
@@ -109,15 +109,16 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
     {
         errorOutput("selectCharacter() Query db_query_update_character_time_to_delete is empty, bug");
         return;
-    }
+    }*/
     #endif
     SelectCharacterParam *selectCharacterParam=new SelectCharacterParam;
     selectCharacterParam->query_id=query_id;
     selectCharacterParam->characterId=characterId;
     stat=ClientStat::CharacterSelecting;
 
-    std::string queryText=PreparedDBQueryCommon::db_query_character_by_id;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
+    std::string queryText=PreparedDBQueryCommon::db_query_character_by_id.compose(
+                std::to_string(characterId)
+                );
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::selectCharacter_static);
     if(callback==NULL)
     {
@@ -229,14 +230,20 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     const uint32_t &time_to_delete=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(8),&ok);
     if(!ok || time_to_delete>0)
     {
-        std::string queryText=PreparedDBQueryCommon::db_query_update_character_time_to_delete;
-        stringreplaceOne(queryText,"%1",std::to_string(characterId));
+        const std::string &queryText=PreparedDBQueryCommon::db_query_set_character_time_to_delete_to_zero.compose(
+                    std::to_string(characterId)
+                    );
         dbQueryWriteCommon(queryText);
     }
-    std::string queryText=PreparedDBQueryCommon::db_query_update_character_last_connect;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
-    stringreplaceOne(queryText,"%2",std::to_string(sFrom1970()));
-    dbQueryWriteCommon(queryText);
+
+
+    {
+        const std::string &queryText=PreparedDBQueryCommon::db_query_update_character_last_connect.compose(
+                    std::to_string(sFrom1970()),
+                    std::to_string(characterId)
+                    );
+        dbQueryWriteCommon(queryText);
+    }
 
     const uint32_t &skin_database_id=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
     if(!ok)
@@ -364,8 +371,9 @@ void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &char
     selectCharacterParam->query_id=query_id;
     selectCharacterParam->characterId=characterId;
 
-    std::string queryText=PreparedDBQueryServer::db_query_character_server_by_id;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
+    const std::string &queryText=PreparedDBQueryServer::db_query_character_server_by_id.compose(
+                std::to_string(characterId)
+                );
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&Client::selectCharacterServer_static);
     if(callback==NULL)
     {
@@ -424,7 +432,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     /*map(0),x(1),y(2),orientation(3),
     rescue_map(4),rescue_x(5),rescue_y(6),rescue_orientation(7),
     unvalidated_rescue_map(8),unvalidated_rescue_x(9),unvalidated_rescue_y(10),unvalidated_rescue_orientation(11),
-    market_cash(12)*/
+    market_cash(12),botfight_id(13),itemonmap(14),plants(15),quest(16),blob_version(17)*/
     callbackRegistred.pop();
     if(!GlobalServerData::serverPrivateVariables.db_server->next())
     {
@@ -475,6 +483,20 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         break;
         case MapVisibilityAlgorithmSelection_None:
         break;
+    }
+
+    const uint8_t &blob_version=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(GlobalServerData::serverPrivateVariables.db_server->value(17),&ok);
+    if(!ok)
+    {
+        loginIsWrong(askLoginParam->query_id,0x04,"Blob version not a number");
+        delete askLoginParam;
+        return;
+    }
+    if(blob_version!=CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION)
+    {
+        loginIsWrong(askLoginParam->query_id,0x04,"Blob version incorrect");
+        delete askLoginParam;
+        return;
     }
 
     market_cash=GlobalServerData::serverPrivateVariables.db_server->stringtouint64(GlobalServerData::serverPrivateVariables.db_server->value(12),&ok);

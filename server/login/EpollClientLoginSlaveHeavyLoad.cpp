@@ -243,6 +243,12 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
         else
         {
             const uint8_t &blob_version=databaseBaseLogin.stringtouint8(databaseBaseLogin.value(2),&ok);
+            if(!ok)
+            {
+                loginIsWrong(askLoginParam->query_id,0x04,"Blob version not a number");
+                delete askLoginParam;
+                return;
+            }
             if(blob_version!=CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION)
             {
                 loginIsWrong(askLoginParam->query_id,0x04,"Blob version incorrect");
