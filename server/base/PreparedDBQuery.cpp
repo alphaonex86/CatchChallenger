@@ -45,6 +45,8 @@ StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_hp_only;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_sp_only;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_xp;
 StringWithReplacement PreparedDBQueryCommon::db_query_played_time;
+StringWithReplacement PreparedDBQueryCommon::db_query_monster;
+StringWithReplacement PreparedDBQueryCommon::db_query_monster_skill_and_endurance;
 
 
 StringWithReplacement PreparedDBQueryServer::db_query_delete_city;
@@ -80,7 +82,6 @@ StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_move_to_war
 StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_move_to_market;
 StringWithReplacement PreparedDBQueryCommon::db_query_select_allow;
 StringWithReplacement PreparedDBQueryCommon::db_query_monster_skill;
-StringWithReplacement PreparedDBQueryCommon::db_query_monster;
 StringWithReplacement PreparedDBQueryCommon::db_query_character_by_id;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_character_time_to_delete;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_character_last_connect;
@@ -284,6 +285,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_monster_sp_only="UPDATE `monster` SET `sp`=%1 WHERE `id`=%2";
         PreparedDBQueryCommon::db_query_update_monster_and_hp="UPDATE `monster` SET `hp`=%1,`monster`=%2 WHERE `id`=%3";
         PreparedDBQueryCommon::db_query_played_time="UPDATE `character` SET `played_time`=`played_time`+%2 WHERE `id`=%1";
+        PreparedDBQueryCommon::db_query_monster_skill_and_endurance="UPDATE `monster` SET `skill`=UNHEX('%1'),`skills_endurance`=UNHEX('%2') WHERE `id`=%3";
 
 
 
@@ -383,6 +385,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_monster_sp_only="UPDATE monster SET sp=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_monster_and_hp="UPDATE monster SET hp=%1,monster=%2 WHERE id=%3";
         PreparedDBQueryCommon::db_query_played_time="UPDATE character SET played_time=played_time+%2 WHERE id=%1";
+        PreparedDBQueryCommon::db_query_monster_skill_and_endurance="UPDATE monster SET skill='%1',skills_endurance='%2' WHERE id=%3";
 
 
 
@@ -488,6 +491,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_monster_hp_only="UPDATE monster SET hp=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_monster_sp_only="UPDATE monster SET sp=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_played_time="UPDATE character SET played_time=played_time+%2 WHERE id=%1";
+        PreparedDBQueryCommon::db_query_monster_skill_and_endurance="UPDATE monster SET skill='\\x%1',skills_endurance='\\x%2' WHERE id=%3";
 
 
 
@@ -628,7 +632,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::Da
         #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
         if(useSP)
         {
-            PreparedDBQueryCommon::db_query_monster="UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6,position=%7 WHERE id=%1";
+            PreparedDBQueryCommon::db_query_monster="UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6 WHERE id=%1";
             PreparedDBQueryCommon::db_query_update_monster_xp_hp_level="UPDATE monster SET hp=%2,xp=%3,level=%4,sp=%5 WHERE id=%1";
             PreparedDBQueryCommon::db_query_select_monsters_by_player_id="SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=0 ORDER BY position ASC";
             PreparedDBQueryCommon::db_query_select_monsters_warehouse_by_player_id="SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=1 ORDER BY position ASC";
@@ -636,7 +640,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::Da
         }
         else
         {
-            PreparedDBQueryCommon::db_query_monster="UPDATE monster SET hp=%3,xp=%4,level=%5,position=%6 WHERE id=%1";
+            PreparedDBQueryCommon::db_query_monster="UPDATE monster SET hp=%3,xp=%4,level=%5 WHERE id=%1";
             PreparedDBQueryCommon::db_query_update_monster_xp_hp_level="UPDATE monster SET hp=%2,xp=%3,level=%4 WHERE id=%1";
             PreparedDBQueryCommon::db_query_select_monsters_by_player_id="SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=0 ORDER BY position ASC";
             PreparedDBQueryCommon::db_query_select_monsters_warehouse_by_player_id="SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=1 ORDER BY position ASC";
