@@ -136,7 +136,7 @@ CREATE UNIQUE INDEX character_bypseudo ON "character" USING btree (pseudo);
 -- Name: character_clan; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
-CREATE INDEX character_clan ON "character" USING btree (clan);
+CREATE INDEX character_clan ON "character" USING btree ("clan") WHERE clan>0;
 
 --
 -- Name: monster_unique; Type: INDEX; Schema: public; Owner: root; Tablespace: 
