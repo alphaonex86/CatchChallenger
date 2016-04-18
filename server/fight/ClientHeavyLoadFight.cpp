@@ -20,13 +20,14 @@ void Client::loadMonsters()
         return;
     }
     #endif
-    std::string queryText=PreparedDBQueryCommon::db_query_select_monsters_by_player_id;
-    stringreplaceOne(queryText,"%1",std::to_string(character_id));
+    const std::string &queryText=PreparedDBQueryCommon::db_query_select_monsters_by_player_id.compose(
+                std::to_string(character_id)
+                );
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::loadMonsters_static);
     if(callback==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
-        loadReputation();
+        characterIsRightFinalStep();
         return;
     }
     else
@@ -184,10 +185,10 @@ void Client::loadMonsters_return()
         if(ok)
             public_and_private_informations.playerMonster.push_back(playerMonster);
     }
-    loadMonstersWarehouse();
+    characterIsRightFinalStep();
 }
 
-void Client::loadMonstersWarehouse()
+/*void Client::loadMonstersWarehouse()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryCommon::db_query_select_monsters_warehouse_by_player_id.empty())
@@ -372,9 +373,9 @@ void Client::loadMonstersWarehouse_return()
         loadPlayerMonsterBuffs(0);
     else
         loadReputation();
-}
+}*/
 
-void Client::loadPlayerMonsterBuffs(const uint32_t &index)
+/*void Client::loadPlayerMonsterBuffs(const uint32_t &index)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryCommon::db_query_select_monstersBuff_by_id.empty())
@@ -645,7 +646,7 @@ void Client::loadPlayerMonsterSkills_return(const uint32_t &index)
             playerMonster->skills.push_back(skill);
     }
     loadPlayerMonsterSkills(index+1);
-}
+}*/
 
 void Client::generateRandomNumber()
 {
@@ -689,7 +690,7 @@ uint8_t Client::getOneSeed(const uint8_t &max)
     return number%(max+1);
 }
 
-void Client::loadBotAlreadyBeaten()
+/*void Client::loadBotAlreadyBeaten()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryServer::db_query_select_bot_beaten.empty())
@@ -738,4 +739,4 @@ void Client::loadBotAlreadyBeaten_return()
         public_and_private_informations.bot_already_beaten.insert(id);
     }
     loadItemOnMap();
-}
+}*/

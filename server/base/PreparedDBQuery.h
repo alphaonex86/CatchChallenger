@@ -69,13 +69,21 @@ public:
     static StringWithReplacement db_query_update_monster_xp;
     static StringWithReplacement db_query_insert_clan;
     static StringWithReplacement db_query_played_time;
-    static StringWithReplacement db_query_monster;
-    static StringWithReplacement db_query_monster_skill_and_endurance;
+    static StringWithReplacement db_query_monster_update_mix;
+    static StringWithReplacement db_query_monster_update_skill_and_endurance;
+    static StringWithReplacement db_query_monster_update_endurance;
+    static StringWithReplacement db_query_update_monster_buff;
     static StringWithReplacement db_query_character_by_id;
     static StringWithReplacement db_query_set_character_time_to_delete_to_zero;
     static StringWithReplacement db_query_update_character_last_connect;
     static StringWithReplacement db_query_clan;
     static StringWithReplacement db_query_change_right;
+    static StringWithReplacement db_query_delete_monster_buff;
+    static StringWithReplacement db_query_insert_warehouse_monster;
+    static StringWithReplacement db_query_update_monster_position;
+    static StringWithReplacement db_query_update_monster_and_hp;
+    static StringWithReplacement db_query_update_monster_hp_and_level;
+    static StringWithReplacement db_query_select_monsters_by_player_id;
 
     //query
     /*static StringWithReplacement db_query_select_allow;
@@ -85,7 +93,6 @@ public:
 
     static StringWithReplacement db_query_select_monstersBuff_by_id;
     static StringWithReplacement db_query_monster_by_character_id;
-    static StringWithReplacement db_query_delete_monster_buff;
     static StringWithReplacement db_query_delete_monster_specific_buff;
     static StringWithReplacement db_query_delete_monster_skill;
     static StringWithReplacement db_query_delete_all_item;
@@ -109,7 +116,6 @@ public:
     static StringWithReplacement db_query_select_recipes_by_player_id;
     static StringWithReplacement db_query_select_items_by_player_id;
     static StringWithReplacement db_query_select_items_warehouse_by_player_id;
-    static StringWithReplacement db_query_select_monsters_by_player_id;
     static StringWithReplacement db_query_select_monsters_warehouse_by_player_id;
     static StringWithReplacement db_query_select_monstersSkill_by_id;
     static StringWithReplacement db_query_insert_item;
@@ -125,8 +131,6 @@ public:
 
     static StringWithReplacement db_query_update_monster_skill_level;
     static StringWithReplacement db_query_insert_monster_buff;
-    static StringWithReplacement db_query_update_monster_position;
-    static StringWithReplacement db_query_update_monster_and_hp;
     static StringWithReplacement db_query_delete_monster_specific_skill;
     static StringWithReplacement db_query_update_monster_owner;*/
     #endif
@@ -159,6 +163,7 @@ public:
     static StringWithReplacement db_query_character_server_by_id;
     static StringWithReplacement db_query_update_plant;
     static StringWithReplacement db_query_update_itemonmap;
+    static StringWithReplacement db_query_update_character_bot_already_beaten;
 
     /*
     static StringWithReplacement db_query_insert_bot_already_beaten;
