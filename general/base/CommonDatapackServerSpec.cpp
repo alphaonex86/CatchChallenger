@@ -60,7 +60,8 @@ void CommonDatapackServerSpec::parseShop()
 
 void CommonDatapackServerSpec::parseBotFights()
 {
-    botFights=FightLoader::loadFight(datapackPath+DATAPACK_BASE_PATH_FIGHT1+mainDatapackCode+DATAPACK_BASE_PATH_FIGHT2,CommonDatapack::commonDatapack.monsters,CommonDatapack::commonDatapack.monsterSkills,CommonDatapack::commonDatapack.items.item);
+    botFightsMaxId=0;
+    botFights=FightLoader::loadFight(datapackPath+DATAPACK_BASE_PATH_FIGHT1+mainDatapackCode+DATAPACK_BASE_PATH_FIGHT2,CommonDatapack::commonDatapack.monsters,CommonDatapack::commonDatapack.monsterSkills,CommonDatapack::commonDatapack.items.item,botFightsMaxId);
     std::cout << botFights.size() << " bot fight(s) loaded" << std::endl;
 }
 

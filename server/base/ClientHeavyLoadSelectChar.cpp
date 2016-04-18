@@ -845,7 +845,7 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
         if(GlobalServerData::serverPrivateVariables.clanList.find(public_and_private_informations.clan)!=GlobalServerData::serverPrivateVariables.clanList.cend())
         {
             GlobalServerData::serverPrivateVariables.clanList[public_and_private_informations.clan]->players.push_back(this);
-            loadLinkedData();
+            loadMonsters();
             return;
         }
         else
@@ -859,7 +859,7 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
             if(callback==NULL)
             {
                 std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
-                loadLinkedData();
+                loadMonsters();
                 return;
             }
             else
@@ -874,7 +874,7 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
             mapToDebug+=this->map->map_file;
         }
         #endif
-        loadLinkedData();
+        loadMonsters();
         return;
     }
 }
@@ -1376,7 +1376,7 @@ void Client::selectClan_return()
         public_and_private_informations.clan=0;
         normalOutput("Warning: clan linked: %1 is not found into db");
     }
-    loadLinkedData();
+    loadMonsters();
 }
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

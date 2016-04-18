@@ -34,41 +34,41 @@ CONFIG   += console
 
 TEMPLATE = app
 
-SOURCES += main-epoll.cpp \
-    epoll/EpollSocket.cpp \
-    epoll/EpollClient.cpp \
-    epoll/EpollServer.cpp \
-    epoll/EpollSslClient.cpp \
-    epoll/EpollSslServer.cpp \
-    epoll/Epoll.cpp \
-    epoll/EpollTimer.cpp \
-    epoll/db/EpollPostgresql.cpp \
-    epoll/db/EpollMySQL.cpp \
-    epoll/timer/TimerCityCapture.cpp \
-    epoll/timer/TimerSendInsertMoveRemove.cpp \
-    epoll/timer/TimerPositionSync.cpp \
-    epoll/timer/TimerDdos.cpp \
-    epoll/timer/TimerEvents.cpp \
-    NormalServerGlobal.cpp \
-    epoll/EpollGenericServer.cpp \
-    epoll/EpollGenericSslServer.cpp
+SOURCES += $$PWD/main-epoll.cpp \
+    $$PWD/epoll/EpollSocket.cpp \
+    $$PWD/epoll/EpollClient.cpp \
+    $$PWD/epoll/EpollServer.cpp \
+    $$PWD/epoll/EpollSslClient.cpp \
+    $$PWD/epoll/EpollSslServer.cpp \
+    $$PWD/epoll/Epoll.cpp \
+    $$PWD/epoll/EpollTimer.cpp \
+    $$PWD/epoll/db/EpollPostgresql.cpp \
+    $$PWD/epoll/db/EpollMySQL.cpp \
+    $$PWD/epoll/timer/TimerCityCapture.cpp \
+    $$PWD/epoll/timer/TimerSendInsertMoveRemove.cpp \
+    $$PWD/epoll/timer/TimerPositionSync.cpp \
+    $$PWD/epoll/timer/TimerDdos.cpp \
+    $$PWD/epoll/timer/TimerEvents.cpp \
+    $$PWD/NormalServerGlobal.cpp \
+    $$PWD/epoll/EpollGenericServer.cpp \
+    $$PWD/epoll/EpollGenericSslServer.cpp
 
-HEADERS += epoll/EpollSocket.h \
-    epoll/EpollClient.h \
-    epoll/EpollServer.h \
-    epoll/EpollSslClient.h \
-    epoll/EpollSslServer.h \
-    epoll/Epoll.h \
-    epoll/BaseClassSwitch.h \
-    epoll/EpollTimer.h \
-    epoll/db/EpollPostgresql.h \
-    epoll/db/EpollMySQL.h \
-    epoll/timer/TimerCityCapture.h \
-    epoll/timer/TimerPositionSync.h \
-    epoll/timer/TimerSendInsertMoveRemove.h \
-    epoll/timer/TimerDdos.h \
-    epoll/timer/TimerEvents.h \
-    NormalServerGlobal.h \
-    epoll/EpollGenericServer.h \
-    epoll/EpollGenericSslServer.h
+HEADERS += $$PWD/epoll/EpollSocket.h \
+    $$PWD/epoll/EpollClient.h \
+    $$PWD/epoll/EpollServer.h \
+    $$PWD/epoll/EpollSslClient.h \
+    $$PWD/epoll/EpollSslServer.h \
+    $$PWD/epoll/Epoll.h \
+    $$PWD/epoll/BaseClassSwitch.h \
+    $$PWD/epoll/EpollTimer.h \
+    $$PWD/epoll/db/EpollPostgresql.h \
+    $$PWD/epoll/db/EpollMySQL.h \
+    $$PWD/epoll/timer/TimerCityCapture.h \
+    $$PWD/epoll/timer/TimerPositionSync.h \
+    $$PWD/epoll/timer/TimerSendInsertMoveRemove.h \
+    $$PWD/epoll/timer/TimerDdos.h \
+    $$PWD/epoll/timer/TimerEvents.h \
+    $$PWD/NormalServerGlobal.h \
+    $$PWD/epoll/EpollGenericServer.h \
+    $$PWD/epoll/EpollGenericSslServer.h
 
