@@ -949,7 +949,7 @@ std::vector<PlayerMonster::PlayerSkill> FightLoader::loadDefaultAttack(const uin
 }
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
-std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &folder, const std::unordered_map<uint16_t,Monster> &monsters, const std::unordered_map<uint16_t, Skill> &monsterSkills, const std::unordered_map<uint16_t, Item> &items)
+std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &folder, const std::unordered_map<uint16_t,Monster> &monsters, const std::unordered_map<uint16_t, Skill> &monsterSkills, const std::unordered_map<uint16_t, Item> &items,uint16_t &botFightsMaxId)
 {
     std::unordered_map<uint16_t,BotFight> botFightList;
     const std::vector<FacilityLibGeneral::InodeDescriptor> &fileList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder,CatchChallenger::FacilityLibGeneral::ListFolder::Files);
@@ -1152,7 +1152,11 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                             if(botFightList.find(id)==botFightList.cend())
                             {
                                 if(!botFight.monsters.empty())
+                                {
+                                    if(botFightsMaxId<id)
+                                        botFightsMaxId=id;
                                     botFightList[id]=botFight;
+                                }
                                 else
                                     std::cerr << "Monster list is empty to open the xml file: " << file << ", id already found: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
                             }

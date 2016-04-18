@@ -78,24 +78,26 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
     {
         if(CommonSettingsServer::commonSettingsServer.useSP)
         {
-            std::string queryText=PreparedDBQueryCommon::db_query_update_monster_xp_hp_level;
-            stringreplaceOne(queryText,"%1",std::to_string(monster.id));
-            stringreplaceOne(queryText,"%2",std::to_string(monster.hp));
-            stringreplaceOne(queryText,"%3",std::to_string(monster.remaining_xp));
-            stringreplaceOne(queryText,"%4",std::to_string(monster.level));
-            stringreplaceOne(queryText,"%5",std::to_string(monster.sp));
+            const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_xp_hp_level.compose(
+                        std::to_string(monster.id),
+                        std::to_string(monster.hp),
+                        std::to_string(monster.remaining_xp),
+                        std::to_string(monster.level),
+                        std::to_string(monster.sp)
+                        );
             dbQueryWriteCommon(queryText);
         }
         else
         {
-            std::string queryText=PreparedDBQueryCommon::db_query_update_monster_xp_hp_level;
-            stringreplaceOne(queryText,"%1",std::to_string(monster.id));
-            stringreplaceOne(queryText,"%2",std::to_string(monster.hp));
-            stringreplaceOne(queryText,"%3",std::to_string(monster.remaining_xp));
-            stringreplaceOne(queryText,"%4",std::to_string(monster.level));
+            const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_xp_hp_level.compose(
+                        std::to_string(monster.id),
+                        std::to_string(monster.hp),
+                        std::to_string(monster.remaining_xp),
+                        std::to_string(monster.level)
+                        );
             dbQueryWriteCommon(queryText);
         }
-        auto i = deferedEndurance.begin();
+        /*auto i = deferedEndurance.begin();
         while (i != deferedEndurance.cend())
         {
             auto j = i->second.begin();
@@ -110,8 +112,72 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
             }
             ++i;
         }
-        deferedEndurance.clear();
+        deferedEndurance.clear();*/
+
+        syncMonsterSkillAndEndurance(monster);
     }
+}
+
+void Client::syncMonsterBuff(const PlayerMonster &monster)
+{
+    char raw_buff[(1+1+1)*monster.buffs.size()];
+    uint32_t sub_index=0;
+    while(sub_index<monster.buffs.size())
+    {
+        const PlayerBuff &buff=monster.buffs.at(sub_index);
+        raw_buff[sub_index*3+0]=buff.buff;
+        raw_buff[sub_index*3+1]=buff.level;
+        raw_buff[sub_index*3+2]=buff.remainingNumberOfTurn;
+        sub_index++;
+    }
+    const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_buff.compose(
+                binarytoHexa(raw_buff,sizeof(raw_buff)),
+                std::to_string(monster.id)
+                );
+    dbQueryWriteCommon(queryText);
+}
+
+void Client::syncMonsterSkillAndEndurance(const PlayerMonster &monster)
+{
+    char skills_endurance[monster.skills.size()*(1)];
+    char skills[monster.skills.size()*(2+1)];
+    unsigned int sub_index=0;
+    const unsigned int &sub_size=monster.skills.size();
+    while(sub_index<sub_size)
+    {
+        const PlayerMonster::PlayerSkill &playerSkill=monster.skills.at(sub_index);
+        skills_endurance[sub_index]=playerSkill.endurance;
+
+        *reinterpret_cast<uint16_t *>(skills+sub_index*(2+1))=htole16(playerSkill.skill);
+        skills[2+sub_index*(2+1)]=playerSkill.level;
+
+        sub_index++;
+    }
+    const std::string &queryText=PreparedDBQueryCommon::db_query_monster_update_skill_and_endurance.compose(
+                binarytoHexa(skills,sizeof(skills)),
+                binarytoHexa(skills_endurance,sizeof(skills_endurance)),
+                std::to_string(monster.id)
+                );
+    dbQueryWriteCommon(queryText);
+}
+
+void Client::syncMonsterEndurance(const PlayerMonster &monster)
+{
+    char skills_endurance[monster.skills.size()*(1)];
+    unsigned int sub_index=0;
+    const unsigned int &sub_size=monster.skills.size();
+    while(sub_index<sub_size)
+    {
+        const PlayerMonster::PlayerSkill &playerSkill=monster.skills.at(sub_index);
+        skills_endurance[sub_index]=playerSkill.endurance;
+
+        sub_index++;
+    }
+    const std::string &queryText=PreparedDBQueryCommon::db_query_monster_update_endurance.compose(
+                binarytoHexa(skills_endurance,sizeof(skills_endurance)),
+                std::to_string(monster.id)
+                );
+    dbQueryWriteCommon(queryText);
 }
 
 void Client::saveAllMonsterPosition()
@@ -185,18 +251,21 @@ void Client::healAllMonsters()
             if(public_and_private_informations.playerMonster.at(index).hp!=stat.hp)
             {
                 public_and_private_informations.playerMonster[index].hp=stat.hp;
-                std::string queryText=PreparedDBQueryCommon::db_query_update_monster_hp_only;
-                stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.playerMonster.at(index).hp));
-                stringreplaceOne(queryText,"%2",std::to_string(public_and_private_informations.playerMonster.at(index).id));
+                const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_hp_only.compose(
+                            std::to_string(public_and_private_informations.playerMonster.at(index).hp),
+                            std::to_string(public_and_private_informations.playerMonster.at(index).id)
+                            );
                 dbQueryWriteCommon(queryText);
             }
             if(!public_and_private_informations.playerMonster.at(index).buffs.empty())
             {
-                std::string queryText=PreparedDBQueryCommon::db_query_delete_monster_buff;
-                stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.playerMonster.at(index).id));
+                const std::string &queryText=PreparedDBQueryCommon::db_query_delete_monster_buff.compose(
+                                std::to_string(public_and_private_informations.playerMonster.at(index).id)
+                            );
                 dbQueryWriteCommon(queryText);
                 public_and_private_informations.playerMonster[index].buffs.clear();
             }
+            bool endurance_have_change=false;
             sub_index=0;
             const unsigned int &list_size=public_and_private_informations.playerMonster.at(index).skills.size();
             while(sub_index<list_size)
@@ -207,15 +276,20 @@ void Client::healAllMonsters()
                         .level.at(public_and_private_informations.playerMonster.at(index).skills.at(sub_index).level-1).endurance;
                 if(public_and_private_informations.playerMonster.at(index).skills.at(sub_index).endurance!=endurance)
                 {
-                    std::string queryText=PreparedDBQueryCommon::db_query_monster_skill;
+                    /*const std::string &queryText=PreparedDBQueryCommon::db_query_monster_skill.compose(
+
+                                );
                     stringreplaceOne(queryText,"%1",std::to_string(endurance));
                     stringreplaceOne(queryText,"%2",std::to_string(public_and_private_informations.playerMonster.at(index).id));
                     stringreplaceOne(queryText,"%3",std::to_string(public_and_private_informations.playerMonster.at(index).skills.at(sub_index).skill));
-                    dbQueryWriteCommon(queryText);
+                    dbQueryWriteCommon(queryText);*/
                     public_and_private_informations.playerMonster[index].skills[sub_index].endurance=endurance;
+                    endurance_have_change=true;
                 }
                 sub_index++;
             }
+            if(endurance_have_change)
+                syncMonsterEndurance(public_and_private_informations.playerMonster[index]);
         }
         index++;
     }
@@ -263,9 +337,11 @@ void Client::saveStat()
             }
     }
     #endif
-    std::string queryText=PreparedDBQueryCommon::db_query_update_monster_hp_only;
-    stringreplaceOne(queryText,"%1",std::to_string(getCurrentMonster()->hp));
-    stringreplaceOne(queryText,"%2",std::to_string(getCurrentMonster()->id));
+    const PlayerMonster * const monster=getCurrentMonster();
+    const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_hp_only.compose(
+                std::to_string(monster->hp),
+                std::to_string(monster->id)
+                );
     dbQueryWriteCommon(queryText);
 }
 
@@ -440,19 +516,21 @@ bool Client::learnSkillInternal(const uint32_t &monsterId,const uint32_t &skill)
                                 return false;
                             }
                             public_and_private_informations.playerMonster[index].sp-=sp;
-                            std::string queryText=PreparedDBQueryCommon::db_query_update_monster_sp_only;
-                            stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.playerMonster.at(index).sp));
-                            stringreplaceOne(queryText,"%2",std::to_string(monsterId));
+                            const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_sp_only.compose(
+                                        std::to_string(public_and_private_informations.playerMonster.at(index).sp),
+                                        std::to_string(monsterId)
+                                        );
                             dbQueryWriteCommon(queryText);
                         }
-                        if(learn.learnSkillLevel==1)
+                        syncMonsterSkillAndEndurance(public_and_private_informations.playerMonster[index]);
+/*                        if(learn.learnSkillLevel==1)
                         {
                             PlayerMonster::PlayerSkill temp;
                             temp.skill=skill;
                             temp.level=1;
                             temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(temp.skill).level.front().endurance;
                             public_and_private_informations.playerMonster[index].skills.push_back(temp);
-                            std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_skill;
+                            const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster_skill;
                             stringreplaceOne(queryText,"%1",std::to_string(monsterId));
                             stringreplaceOne(queryText,"%2",std::to_string(temp.skill));
                             stringreplaceOne(queryText,"%3","1");
@@ -462,12 +540,12 @@ bool Client::learnSkillInternal(const uint32_t &monsterId,const uint32_t &skill)
                         else
                         {
                             public_and_private_informations.playerMonster[index].skills[sub_index2].level++;
-                            std::string queryText=PreparedDBQueryCommon::db_query_update_monster_skill_level;
+                            const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_skill_level;
                             stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.playerMonster.at(index).skills.at(sub_index2).level));
                             stringreplaceOne(queryText,"%2",std::to_string(monsterId));
                             stringreplaceOne(queryText,"%3",std::to_string(skill));
                             dbQueryWriteCommon(queryText);
-                        }
+                        }*/
                         return true;
                     }
                 }
@@ -842,20 +920,22 @@ bool Client::giveXPSP(int xp,int sp)
         {
             if(haveChangeOfLevel)
             {
-                std::string queryText=PreparedDBQueryCommon::db_query_update_monster_xp_hp_level;
-                stringreplaceOne(queryText,"%1",std::to_string(currentMonster->id));
-                stringreplaceOne(queryText,"%2",std::to_string(currentMonster->hp));
-                stringreplaceOne(queryText,"%3",std::to_string(currentMonster->remaining_xp));
-                stringreplaceOne(queryText,"%4",std::to_string(currentMonster->level));
-                stringreplaceOne(queryText,"%5",std::to_string(currentMonster->sp));
+                const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_xp_hp_level.compose(
+                            std::to_string(currentMonster->id),
+                            std::to_string(currentMonster->hp),
+                            std::to_string(currentMonster->remaining_xp),
+                            std::to_string(currentMonster->level),
+                            std::to_string(currentMonster->sp)
+                            );
                 dbQueryWriteCommon(queryText);
             }
             else
             {
-                std::string queryText=PreparedDBQueryCommon::db_query_update_monster_xp;
-                stringreplaceOne(queryText,"%1",std::to_string(currentMonster->id));
-                stringreplaceOne(queryText,"%2",std::to_string(currentMonster->remaining_xp));
-                stringreplaceOne(queryText,"%3",std::to_string(currentMonster->sp));
+                const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_xp.compose(
+                            std::to_string(currentMonster->id),
+                            std::to_string(currentMonster->remaining_xp),
+                            std::to_string(currentMonster->sp)
+                            );
                 dbQueryWriteCommon(queryText);
             }
         }
@@ -863,18 +943,20 @@ bool Client::giveXPSP(int xp,int sp)
         {
             if(haveChangeOfLevel)
             {
-                std::string queryText=PreparedDBQueryCommon::db_query_update_monster_xp_hp_level;
-                stringreplaceOne(queryText,"%1",std::to_string(currentMonster->id));
-                stringreplaceOne(queryText,"%2",std::to_string(currentMonster->hp));
-                stringreplaceOne(queryText,"%3",std::to_string(currentMonster->remaining_xp));
-                stringreplaceOne(queryText,"%4",std::to_string(currentMonster->level));
+                const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_xp_hp_level.compose(
+                            std::to_string(currentMonster->id),
+                            std::to_string(currentMonster->hp),
+                            std::to_string(currentMonster->remaining_xp),
+                            std::to_string(currentMonster->level)
+                            );
                 dbQueryWriteCommon(queryText);
             }
             else
             {
-                std::string queryText=PreparedDBQueryCommon::db_query_update_monster_xp;
-                stringreplaceOne(queryText,"%1",std::to_string(currentMonster->id));
-                stringreplaceOne(queryText,"%2",std::to_string(currentMonster->remaining_xp));
+                const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_xp.compose(
+                            std::to_string(currentMonster->id),
+                            std::to_string(currentMonster->remaining_xp)
+                            );
                 dbQueryWriteCommon(queryText);
             }
         }
@@ -902,10 +984,11 @@ bool Client::finishTheTurn(const bool &isBot)
                 {
                     addCash(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.at(botFightId).cash);
                     public_and_private_informations.bot_already_beaten.insert(botFightId);
-                    std::string queryText=PreparedDBQueryServer::db_query_insert_bot_already_beaten;
+                    /*const std::string &queryText=PreparedDBQueryServer::db_query_insert_bot_already_beaten;
                     stringreplaceOne(queryText,"%1",std::to_string(character_id));
                     stringreplaceOne(queryText,"%2",std::to_string(botFightId));
-                    dbQueryWriteServer(queryText);
+                    dbQueryWriteServer(queryText);*/
+                    syncBotAlreadyBeaten();
                 }
                 fightOrBattleFinish(win,botFightId);
                 normalOutput("Register the win against the bot fight: "+std::to_string(botFightId));
@@ -1023,54 +1106,79 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
         errorFightEngine("No more monster id: getMonsterId(&ok) failed");
         return 0;
     }
+
+    char raw_skill[(2+1)*newMonster.skills.size()],raw_skill_endurance[1*newMonster.skills.size()];
+    //the skills
+    unsigned int sub_index=0;
+    while(sub_index<newMonster.skills.size())
+    {
+        const PlayerMonster::PlayerSkill &skill=newMonster.skills.at(sub_index);
+        *reinterpret_cast<uint16_t *>(raw_skill+sub_index*(2+1))=htole16(skill.skill);
+        raw_skill[sub_index*(2+1)+2]=skill.level;
+        raw_skill_endurance[sub_index]=skill.endurance;
+        sub_index++;
+    }
+
+    char raw_buff[(1+1+1)*newMonster.buffs.size()];
+    //the skills
+    sub_index=0;
+    while(sub_index<newMonster.buffs.size())
+    {
+        const PlayerBuff &buff=newMonster.buffs.at(sub_index);
+        raw_buff[sub_index*3+0]=buff.buff;
+        raw_buff[sub_index*3+1]=buff.level;
+        raw_buff[sub_index*3+2]=buff.remainingNumberOfTurn;
+        sub_index++;
+    }
+
     if(toStorage)
     {
         public_and_private_informations.warehouse_playerMonster.push_back(newMonster);
         public_and_private_informations.warehouse_playerMonster.back().id=monster_id;
         position=public_and_private_informations.warehouse_playerMonster.size();
+        const std::string &queryText=PreparedDBQueryCommon::db_query_insert_warehouse_monster.compose(
+                    std::to_string(monster_id),
+                    std::to_string(newMonster.hp),
+                    std::to_string(newMonster.monster),
+                    std::to_string(newMonster.level),
+                    std::to_string(newMonster.remaining_xp),
+                    std::to_string(newMonster.sp),
+                    std::to_string(newMonster.catched_with),
+                    std::to_string((uint8_t)newMonster.gender),
+                    std::to_string(newMonster.egg_step),
+                    std::to_string(character_id),
+                    std::to_string(position),
+                    binarytoHexa(raw_skill,sizeof(raw_skill)),
+                    binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance)),
+                    binarytoHexa(raw_buff,sizeof(raw_buff))
+                    );
+        dbQueryWriteCommon(queryText);
     }
     else
     {
         public_and_private_informations.playerMonster.push_back(newMonster);
         public_and_private_informations.playerMonster.back().id=monster_id;
         position=public_and_private_informations.playerMonster.size();
-    }
-    if(toStorage)
-    {
-        std::string queryText=PreparedDBQueryCommon::db_query_insert_warehouse_monster_full;
-        stringreplaceOne(queryText,"%1",std::to_string(monster_id));
-        stringreplaceOne(queryText,"%2",std::to_string(newMonster.hp));
-        stringreplaceOne(queryText,"%3",std::to_string(newMonster.monster));
-        stringreplaceOne(queryText,"%4",std::to_string(newMonster.level));
-        stringreplaceOne(queryText,"%5",std::to_string(newMonster.remaining_xp));
-        stringreplaceOne(queryText,"%6",std::to_string(newMonster.sp));
-        stringreplaceOne(queryText,"%7",std::to_string(newMonster.catched_with));
-        stringreplaceOne(queryText,"%8",std::to_string((uint8_t)newMonster.gender));
-        stringreplaceOne(queryText,"%9","%1,%2,%3");
-        stringreplaceOne(queryText,"%1",std::to_string(newMonster.egg_step));
-        stringreplaceOne(queryText,"%2",std::to_string(character_id));
-        stringreplaceOne(queryText,"%3",std::to_string(position));
-        dbQueryWriteCommon(queryText);
-    }
-    else
-    {
-        std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_full;
-        stringreplaceOne(queryText,"%1",std::to_string(monster_id));
-        stringreplaceOne(queryText,"%2",std::to_string(newMonster.hp));
-        stringreplaceOne(queryText,"%3",std::to_string(newMonster.monster));
-        stringreplaceOne(queryText,"%4",std::to_string(newMonster.level));
-        stringreplaceOne(queryText,"%5",std::to_string(newMonster.remaining_xp));
-        stringreplaceOne(queryText,"%6",std::to_string(newMonster.sp));
-        stringreplaceOne(queryText,"%7",std::to_string(newMonster.catched_with));
-        stringreplaceOne(queryText,"%8",std::to_string((uint8_t)newMonster.gender));
-        stringreplaceOne(queryText,"%9","%1,%2,%3");
-        stringreplaceOne(queryText,"%1",std::to_string(newMonster.egg_step));
-        stringreplaceOne(queryText,"%2",std::to_string(character_id));
-        stringreplaceOne(queryText,"%3",std::to_string(position));
+        const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster.compose(
+                    std::to_string(monster_id),
+                    std::to_string(newMonster.hp),
+                    std::to_string(newMonster.monster),
+                    std::to_string(newMonster.level),
+                    std::to_string(newMonster.remaining_xp),
+                    std::to_string(newMonster.sp),
+                    std::to_string(newMonster.catched_with),
+                    std::to_string((uint8_t)newMonster.gender),
+                    std::to_string(newMonster.egg_step),
+                    std::to_string(character_id),
+                    std::to_string(position),
+                    binarytoHexa(raw_skill,sizeof(raw_skill)),
+                    binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance)),
+                    binarytoHexa(raw_buff,sizeof(raw_buff))
+                    );
         dbQueryWriteCommon(queryText);
     }
 
-    unsigned int index=0;
+    /*unsigned int index=0;
     while(index<newMonster.skills.size())
     {
         std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_skill;
@@ -1093,7 +1201,7 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
             dbQueryWriteCommon(queryText);
         }
         index++;
-    }
+    }*/
     wildMonsters.erase(wildMonsters.begin());
     return monster_id;
 }
@@ -1120,35 +1228,37 @@ int Client::addCurrentBuffEffect(const Skill::BuffEffect &effect)
         return returnCode;
     if(CommonDatapack::commonDatapack.monsterBuffs.at(effect.buff).level.at(effect.level-1).duration==Buff::Duration_Always)
     {
-        if(returnCode==-1)
+        //if(returnCode==-1)
             switch(effect.on)
             {
                 case ApplyOn_AloneEnemy:
                 case ApplyOn_AllEnemy:
                 if(isInBattle())
                 {
-                    std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_buff;
-                    stringreplaceOne(queryText,"%1",std::to_string(otherPlayerBattle->getCurrentMonster()->id));
+                    syncMonsterBuff(*otherPlayerBattle->getCurrentMonster());
+                    /*std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_buff;
+                    stringreplaceOne(queryText,"%1",std::to_string(->id));
                     stringreplaceOne(queryText,"%2",std::to_string(effect.buff));
                     stringreplaceOne(queryText,"%3",std::to_string(effect.level));
-                    dbQueryWriteCommon(queryText);
+                    dbQueryWriteCommon(queryText);*/
                 }
                 break;
                 case ApplyOn_Themself:
                 case ApplyOn_AllAlly:
                 {
-                    std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_buff;
+                    syncMonsterBuff(*getCurrentMonster());
+                    /*std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_buff;
                     stringreplaceOne(queryText,"%1",std::to_string(getCurrentMonster()->id));
                     stringreplaceOne(queryText,"%2",std::to_string(effect.buff));
                     stringreplaceOne(queryText,"%3",std::to_string(effect.level));
-                    dbQueryWriteCommon(queryText);
+                    dbQueryWriteCommon(queryText);*/
                 }
                 break;
                 default:
                     errorOutput("Not apply match, can't apply the buff");
                 break;
             }
-        else
+        /*else
             switch(effect.on)
             {
                 case ApplyOn_AloneEnemy:
@@ -1175,7 +1285,7 @@ int Client::addCurrentBuffEffect(const Skill::BuffEffect &effect)
                 default:
                     errorOutput("Not apply match, can't apply the buff");
                 break;
-            }
+            }*/
     }
     return returnCode;
 }
@@ -1210,9 +1320,10 @@ bool Client::moveDownMonster(const uint8_t &number)
 
 void Client::saveMonsterPosition(const uint32_t &monsterId,const uint8_t &monsterPosition)
 {
-    std::string queryText=PreparedDBQueryCommon::db_query_update_monster_position;
-    stringreplaceOne(queryText,"%1",std::to_string(monsterPosition));
-    stringreplaceOne(queryText,"%2",std::to_string(monsterId));
+    const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_position.compose(
+                std::to_string(monsterPosition),
+                std::to_string(monsterId)
+                );
     dbQueryWriteCommon(queryText);
 }
 
@@ -1309,16 +1420,20 @@ uint8_t Client::decreaseSkillEndurance(const uint32_t &skill)
     const uint8_t &newEndurance=CommonFightEngine::decreaseSkillEndurance(skill);
     if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtEachTurn)
     {
-        std::string queryText=PreparedDBQueryCommon::db_query_monster_skill;
+        /*std::string queryText=PreparedDBQueryCommon::db_query_monster_skill;
         stringreplaceOne(queryText,"%1",std::to_string(newEndurance));
         stringreplaceOne(queryText,"%2",std::to_string(currentMonster->id));
         stringreplaceOne(queryText,"%3",std::to_string(skill));
-        dbQueryWriteCommon(queryText);
+        dbQueryWriteCommon(queryText);*/
+        syncMonsterEndurance(*currentMonster);
     }
     else
     {
         if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheEndOfBattle)
-            deferedEndurance[currentMonster->id][skill]=newEndurance;
+        {
+            //deferedEnduranceSync[currentMonster][skill]=newEndurance;
+            deferedEnduranceSync.insert(currentMonster);
+        }
     }
     return newEndurance;
 }
@@ -1351,13 +1466,18 @@ void Client::addPlayerMonster(const PlayerMonster &playerMonster)
 
 bool Client::addPlayerMonsterWithChange(const PlayerMonster &playerMonster)
 {
+    if(public_and_private_informations.encyclopedia_monster==NULL)
+    {
+        errorOutput("public_and_private_informations.encyclopedia_monster==NULL");
+        return false;
+    }
     const uint16_t bittoUp=playerMonster.monster;
-    bitlist[bittoUp/8]|=(1<<(7-bittoUp%8));
-    if(bitlist[bittoUp/8] & (1<<(7-bittoUp%8)))
+    public_and_private_informations.encyclopedia_monster[bittoUp/8]|=(1<<(7-bittoUp%8));
+    if(public_and_private_informations.encyclopedia_monster[bittoUp/8] & (1<<(7-bittoUp%8)))
         return false;
     else
     {
-        bitlist[bittoUp/8]|=(1<<(7-bittoUp%8));
+        public_and_private_informations.encyclopedia_monster[bittoUp/8]|=(1<<(7-bittoUp%8));
         return true;
     }
 }
@@ -1379,10 +1499,11 @@ void Client::confirmEvolutionTo(PlayerMonster * playerMonster,const uint32_t &mo
         }
     #endif
     CommonFightEngine::confirmEvolutionTo(playerMonster,monster);
-    std::string queryText=PreparedDBQueryCommon::db_query_update_monster_and_hp;
-    stringreplaceOne(queryText,"%1",std::to_string(playerMonster->hp));
-    stringreplaceOne(queryText,"%2",std::to_string(playerMonster->monster));
-    stringreplaceOne(queryText,"%3",std::to_string(playerMonster->id));
+    const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_and_hp.compose(
+                std::to_string(playerMonster->hp),
+                std::to_string(playerMonster->monster),
+                std::to_string(playerMonster->id)
+                );
     dbQueryWriteCommon(queryText);
 }
 
@@ -1479,21 +1600,28 @@ void Client::hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue
         }
     }
     #endif
-    std::string queryText=PreparedDBQueryCommon::db_query_update_monster_hp_only;
-    stringreplaceOne(queryText,"%1",std::to_string(newHpValue));
-    stringreplaceOne(queryText,"%2",std::to_string(currentMonster->id));
+    const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_hp_only.compose(
+                std::to_string(newHpValue),
+                std::to_string(currentMonster->id)
+                );
     dbQueryWriteCommon(queryText);
 }
 
 bool Client::removeBuffOnMonster(PlayerMonster * currentMonster, const uint32_t &buffId)
 {
+    if(currentMonster==NULL)
+    {
+        errorOutput("removeBuffOnMonster(): PlayerMonster * currentMonster==NULL");
+        return false;
+    }
     const bool returnVal=CommonFightEngine::removeBuffOnMonster(currentMonster,buffId);
     if(returnVal)
     {
-        std::string queryText=PreparedDBQueryCommon::db_query_delete_monster_specific_buff;
+        /*cosnt std::string &queryText=PreparedDBQueryCommon::db_query_delete_monster_specific_buff;
         stringreplaceOne(queryText,"%1",std::to_string(currentMonster->id));
         stringreplaceOne(queryText,"%2",std::to_string(buffId));
-        dbQueryWriteCommon(queryText);
+        dbQueryWriteCommon(queryText);*/
+        syncMonsterBuff(*currentMonster);
     }
     return returnVal;
 }
@@ -1503,9 +1631,10 @@ bool Client::removeAllBuffOnMonster(PlayerMonster * currentMonster)
     const bool &returnVal=CommonFightEngine::removeAllBuffOnMonster(currentMonster);
     if(returnVal)
     {
-        std::string queryText=PreparedDBQueryCommon::db_query_delete_monster_buff;
+        /*std::string queryText=PreparedDBQueryCommon::db_query_delete_monster_buff;
         stringreplaceOne(queryText,"%1",std::to_string(currentMonster->id));
-        dbQueryWriteCommon(queryText);
+        dbQueryWriteCommon(queryText);*/
+        syncMonsterBuff(*currentMonster);
     }
     return returnVal;
 }
@@ -1514,10 +1643,14 @@ bool Client::addLevel(PlayerMonster * monster, const uint8_t &numberOfLevel)
 {
     if(!CommonFightEngine::addLevel(monster,numberOfLevel))
         return false;
-    std::string queryText=PreparedDBQueryCommon::db_query_update_monster_level_only;
-    stringreplaceOne(queryText,"%1",std::to_string(monster->hp));
+    const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_hp_and_level.compose(
+                std::to_string(monster->hp),
+                std::to_string(monster->level),
+                std::to_string(monster->id)
+                );
+/*    stringreplaceOne(queryText,"%1",std::to_string(monster->hp));
     stringreplaceOne(queryText,"%2",std::to_string(monster->level));
-    stringreplaceOne(queryText,"%3",std::to_string(monster->id));
+    stringreplaceOne(queryText,"%3",std::to_string(monster->id));*/
     dbQueryWriteCommon(queryText);
     return true;
 }
@@ -1526,12 +1659,13 @@ bool Client::addSkill(PlayerMonster * currentMonster,const PlayerMonster::Player
 {
     if(!CommonFightEngine::addSkill(currentMonster,skill))
         return false;
-    std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_skill;
+    /*std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_skill;
     stringreplaceOne(queryText,"%1",std::to_string(currentMonster->id));
     stringreplaceOne(queryText,"%2",std::to_string(skill.skill));
     stringreplaceOne(queryText,"%3",std::to_string(skill.level));
     stringreplaceOne(queryText,"%4",std::to_string(skill.endurance));
-    dbQueryWriteCommon(queryText);
+    dbQueryWriteCommon(queryText);*/
+    syncMonsterSkillAndEndurance(*currentMonster);
     return true;
 }
 
@@ -1539,11 +1673,12 @@ bool Client::setSkillLevel(PlayerMonster * currentMonster,const unsigned int &in
 {
     if(!CommonFightEngine::setSkillLevel(currentMonster,index,level))
         return false;
-    std::string queryText=PreparedDBQueryCommon::db_query_update_monster_skill_level;
+    /*std::string queryText=PreparedDBQueryCommon::db_query_update_monster_skill_level;
     stringreplaceOne(queryText,"%1",std::to_string(level));
     stringreplaceOne(queryText,"%2",std::to_string(currentMonster->id));
     stringreplaceOne(queryText,"%3",std::to_string(currentMonster->skills.at(index).skill));
-    dbQueryWriteCommon(queryText);
+    dbQueryWriteCommon(queryText);*/
+    syncMonsterSkillAndEndurance(*currentMonster);
     return true;
 }
 
@@ -1551,9 +1686,10 @@ bool Client::removeSkill(PlayerMonster * currentMonster,const unsigned int &inde
 {
     if(!CommonFightEngine::removeSkill(currentMonster,index))
         return false;
-    std::string queryText=PreparedDBQueryCommon::db_query_delete_monster_specific_skill;
+    /*const std::string &queryText=PreparedDBQueryCommon::db_query_delete_monster_specific_skill;
     stringreplaceOne(queryText,"%1",std::to_string(currentMonster->id));
     stringreplaceOne(queryText,"%2",std::to_string(currentMonster->skills.at(index).skill));
-    dbQueryWriteCommon(queryText);
+    dbQueryWriteCommon(queryText);*/
+    syncMonsterSkillAndEndurance(*currentMonster);
     return true;
 }

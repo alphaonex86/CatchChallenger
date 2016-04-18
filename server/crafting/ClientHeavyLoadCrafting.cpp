@@ -9,7 +9,7 @@
 
 using namespace CatchChallenger;
 
-void Client::loadRecipes()
+/*void Client::loadRecipes()
 {
     //recipes
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -57,9 +57,9 @@ void Client::loadRecipes_return()
             normalOutput("recipeId: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" is not a number");
     }
     loadMonsters();
-}
+}*/
 
-void Client::loadItems()
+/*void Client::loadItems()
 {
     //do the query
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -183,7 +183,7 @@ void Client::loadItemsWarehouse_return()
         public_and_private_informations.warehouse_items[id]=quantity;
     }
     loadRecipes();
-}
+}*/
 
 bool Client::sendInventory()
 {
