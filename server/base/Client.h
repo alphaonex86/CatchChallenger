@@ -293,7 +293,8 @@ private:
     uint32_t botFightId;
     bool isInCityCapture;
     std::vector<Skill::AttackReturn> attackReturn;
-    std::unordered_map<uint32_t, std::unordered_map<uint32_t,uint32_t> > deferedEndurance;
+    //std::unordered_map<uint32_t/*currentMonster->id*/, std::unordered_map<uint32_t/*skill*/,uint32_t> > deferedEnduranceSync;
+    std::unordered_set<PlayerMonster *> deferedEnduranceSync;
 
     //player indexed list
     static const std::string text_chat;
@@ -563,6 +564,8 @@ private:
     void appendReputationPoint(const uint8_t &reputationId, const int32_t &point);
     void appendReputationRewards(const std::vector<ReputationRewards> &reputationList);
     void syncDatabaseReputation();
+    //bot
+    void syncBotAlreadyBeaten();
     //battle
     void battleCanceled();
     void battleAccepted();
@@ -620,6 +623,9 @@ private:
     bool isInFight() const;
     void saveCurrentMonsterStat();
     void saveMonsterStat(const PlayerMonster &monster);
+    void syncMonsterSkillAndEndurance(const PlayerMonster &monster);
+    void syncMonsterEndurance(const PlayerMonster &monster);
+    void syncMonsterBuff(const PlayerMonster &monster);
     bool checkLoose();
     bool isInBattle() const;
     bool learnSkillInternal(const uint32_t &monsterId,const uint32_t &skill);
@@ -789,11 +795,11 @@ private:
     #endif
     void characterSelectionIsWrong(const uint8_t &query_id,const uint8_t &returnCode,const std::string &debugMessage);
     //load linked data (like item, quests, ...)
-    void loadLinkedData();
+    //void loadLinkedData();
 
     void loadMonsters();
-    void loadMonstersWarehouse();
-    void loadCharacterForServer();
+    static void loadMonsters_static(void *object);
+    void loadMonsters_return();
 
     /*void loadItems();
     void loadItemsWarehouse();
@@ -811,8 +817,6 @@ private:
     void loadItemsWarehouse_return();
     static void loadRecipes_static(void *object);
     void loadRecipes_return();
-    static void loadMonsters_static(void *object);
-    void loadMonsters_return();
     static void loadMonstersWarehouse_static(void *object);
     void loadMonstersWarehouse_return();
     static void loadReputation_static(void *object);

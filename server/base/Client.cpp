@@ -313,7 +313,7 @@ void Client::disconnectClient()
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
                 if(CommonSettingsServer::commonSettingsServer.useSP)
                 {
-                    const std::string &queryText=PreparedDBQueryCommon::db_query_monster.compose(
+                    const std::string &queryText=PreparedDBQueryCommon::db_query_monster_update_mix.compose(
                                 std::to_string(playerMonster.id),
                                 std::to_string(character_id),
                                 std::to_string(playerMonster.hp),
@@ -325,7 +325,7 @@ void Client::disconnectClient()
                 }
                 else
                 {
-                    const std::string &queryText=PreparedDBQueryCommon::db_query_monster.compose(
+                    const std::string &queryText=PreparedDBQueryCommon::db_query_monster_update_mix.compose(
                                 std::to_string(playerMonster.id),
                                 std::to_string(character_id),
                                 std::to_string(playerMonster.hp),
@@ -334,28 +334,7 @@ void Client::disconnectClient()
                                 );
                     dbQueryWriteCommon(queryText);
                 }
-                {
-                    char skills_endurance[playerMonster.skills.size()*(1)];
-                    char skills[playerMonster.skills.size()*(2+1)];
-                    unsigned int sub_index=0;
-                    const unsigned int &sub_size=playerMonster.skills.size();
-                    while(sub_index<sub_size)
-                    {
-                        const PlayerMonster::PlayerSkill &playerSkill=playerMonster.skills.at(sub_index);
-                        skills_endurance[sub_index]=playerSkill.endurance;
-
-                        *reinterpret_cast<uint16_t *>(skills+sub_index*(2+1))=htole16(playerSkill.skill);
-                        skills[2+sub_index*(2+1)]=playerSkill.level;
-
-                        sub_index++;
-                    }
-                    const std::string &queryText=PreparedDBQueryCommon::db_query_monster_skill_and_endurance.compose(
-                                binarytoHexa(skills,sizeof(skills)),
-                                binarytoHexa(skills_endurance,sizeof(skills_endurance)),
-                                std::to_string(playerMonster.id)
-                                );
-                    dbQueryWriteCommon(queryText);
-                }
+                    syncMonsterSkillAndEndurance(playerMonster);
                 index++;
             }
         }

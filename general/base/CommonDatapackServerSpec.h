@@ -17,6 +17,7 @@ public:
     void parseDatapack(const std::string &datapackPath, const std::string &mainDatapackCode);
 public:
     std::unordered_map<uint16_t,BotFight> botFights;
+    uint16_t botFightsMaxId;
     std::unordered_map<uint16_t,Quest> quests;
     std::unordered_map<uint32_t,Shop> shops;
     std::vector<ServerProfile> serverProfileList;
