@@ -433,6 +433,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     rescue_map(4),rescue_x(5),rescue_y(6),rescue_orientation(7),
     unvalidated_rescue_map(8),unvalidated_rescue_x(9),unvalidated_rescue_y(10),unvalidated_rescue_orientation(11),
     market_cash(12),botfight_id(13),itemonmap(14),plants(15),quest(16),blob_version(17)*/
+    do the blob data loading
     callbackRegistred.pop();
     if(!GlobalServerData::serverPrivateVariables.db_server->next())
     {

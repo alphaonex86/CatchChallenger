@@ -34,10 +34,10 @@
 using namespace CatchChallenger;
 
 //load linked data (like item, quests, ...)
-void Client::loadLinkedData()
+/*void Client::loadLinkedData()
 {
     //loadPlayerAllow();
-}
+}*/
 
 std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_list(const std::string &path, const std::string &exclude, const bool withHash)
 {
