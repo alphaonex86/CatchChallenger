@@ -414,8 +414,16 @@ double stringtodouble(const std::string &string,bool *ok)
     }
 }
 
-std::string binarytoHexa(const std::vector<char> &data)
+std::string binarytoHexa(const std::vector<char> &data, bool *ok)
 {
+    if(data.size()%2!=0)
+    {
+        if(ok!=NULL)
+           *ok=false;
+        return std::string();
+    }
+    if(ok!=NULL)
+       *ok=true;
     std::string output;
     output.reserve(2*data.size());
     for(size_t i=0;i<data.size();++i)
@@ -427,13 +435,21 @@ std::string binarytoHexa(const std::vector<char> &data)
     return output;
 }
 
-std::string binarytoHexa(const unsigned char * const data,const uint32_t &size)
+std::string binarytoHexa(const unsigned char * const data, const uint32_t &size, bool *ok)
 {
-    return binarytoHexa(reinterpret_cast<const char * const>(data),size);
+    return binarytoHexa(reinterpret_cast<const char * const>(data),size,ok);
 }
 
-std::string binarytoHexa(const char * const data,const uint32_t &size)
+std::string binarytoHexa(const char * const data, const uint32_t &size, bool *ok)
 {
+    if(size%2!=0)
+    {
+        if(ok!=NULL)
+           *ok=false;
+        return std::string();
+    }
+    if(ok!=NULL)
+       *ok=true;
     std::string output;
     output.reserve(2*size);
     for(size_t i=0;i<size;++i)
