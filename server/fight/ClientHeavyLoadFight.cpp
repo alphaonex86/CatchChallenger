@@ -170,8 +170,10 @@ void Client::loadMonsters_return()
         //buffs
         if(ok)
         {
-            const std::vector<char> &buffs=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(10+sp_offset),&ok).data();
+            const std::vector<char> &buffs=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(10+sp_offset),&ok);
+            #ifndef CATCHCHALLENGER_EXTRA_CHECK
             const char * const raw_buffs=buffs.data();
+            #endif
             if(!ok)
                 normalOutput("monster buffs: "+GlobalServerData::serverPrivateVariables.db_common->value(10+sp_offset)+" is not a hexa");
             else
@@ -185,21 +187,73 @@ void Client::loadMonsters_return()
                     uint32_t pos=0;
                     while(pos<buffs.size())
                     {
-                        buff.buff=raw_buffs[pos];
+                        buff.buff=
+                                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                                buffs
+                                #else
+                                raw_buffs
+                                #endif
+                                [pos];
                         ++pos;
-                        buff.level=raw_buffs[pos];
+                        buff.level=
+                                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                                buffs
+                                #else
+                                raw_buffs
+                                #endif
+                                [pos];
                         ++pos;
-                        buff.remainingNumberOfTurn=raw_buffs[pos];
+                        buff.remainingNumberOfTurn=
+                                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                                buffs
+                                #else
+                                raw_buffs
+                                #endif
+                                [pos];
                         ++pos;
+
+                        if(ok)
+                        {
+                            if(CommonDatapack::commonDatapack.monsterBuffs.find(buff.buff)==CommonDatapack::commonDatapack.monsterBuffs.cend())
+                            {
+                                ok=false;
+                                normalOutput("buff "+std::to_string(buff.buff)+" for monsterId: "+std::to_string(monsterId)+" is not found into buff list");
+                            }
+                        }
+                        else
+                            normalOutput("buff id: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" is not a number");
+                        if(ok)
+                        {
+                            buff.level=GlobalServerData::serverPrivateVariables.db_common->stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
+                            if(ok)
+                            {
+                                if(buff.level>CommonDatapack::commonDatapack.monsterBuffs.at(buff.buff).level.size())
+                                {
+                                    ok=false;
+                                    normalOutput("buff "+std::to_string(buff.buff)+" for monsterId: "+std::to_string(monsterId)+" have not the level: "+std::to_string(buff.level));
+                                }
+                            }
+                            else
+                                normalOutput("buff level: "+GlobalServerData::serverPrivateVariables.db_common->value(2)+" is not a number");
+                        }
+                        if(ok)
+                        {
+                            if(CommonDatapack::commonDatapack.monsterBuffs.at(buff.buff).level.at(buff.level-1).duration!=Buff::Duration_Always)
+                            {
+                                ok=false;
+                                normalOutput("buff "+std::to_string(buff.buff)+" for monsterId: "+std::to_string(monsterId)+" can't be loaded from the db if is not permanent");
+                            }
+                        }
+                        if(ok)
+                            playerMonster.buffs.push_back(playerMonster);
                     }
-                    playerMonster.buffs.push_back(playerMonster);
                 }
             }
         }
         //skills
         if(ok)
         {
-            const char * const skills=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(11+sp_offset),&ok).data();
+            const std::vector<char> &skills=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(11+sp_offset),&ok);
             const char * const raw_skills=skills.data();
             if(!ok)
                 normalOutput("monster skills: "+GlobalServerData::serverPrivateVariables.db_common->value(11+sp_offset)+" is not a hexa");
@@ -216,11 +270,17 @@ void Client::loadMonsters_return()
                     {
                         skill.skill=le16toh(*reinterpret_cast<uint16_t *>(raw_skills+pos));
                         pos+=2;
-                        skill.level=raw_skills[pos];
+                        skill.level=
+                                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                                skills
+                                #else
+                                raw_skills
+                                #endif
+                                [pos];
                         ++pos;
                        skill.endurance=0;
+                       playerMonster.skills.push_back(playerMonster);
                     }
-                    playerMonster.skills.push_back(playerMonster);
                 }
             }
 
@@ -229,8 +289,10 @@ void Client::loadMonsters_return()
         //skills_endurance
         if(ok)
         {
-            const char * const skills_endurance=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(12+sp_offset),&ok).data();
+            const std::vector<char> &skills_endurance=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(12+sp_offset),&ok);
+            #ifndef CATCHCHALLENGER_EXTRA_CHECK
             const char * const raw_skills_endurance=skills_endurance.data();
+            #endif
             if(!ok)
                 normalOutput("monster skills_endurance: "+GlobalServerData::serverPrivateVariables.db_common->value(12+sp_offset)+" is not a hexa");
             else
@@ -242,7 +304,13 @@ void Client::loadMonsters_return()
                     uint32_t pos=0;
                     while(pos<skills_endurance.size())
                     {
-                        playerMonster.skills[pos].endurance=raw_skills_endurance[pos];
+                        playerMonster.skills[pos].endurance=
+                                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                                skills_endurance
+                                #else
+                                raw_skills_endurance
+                                #endif
+                                [pos];
                         ++pos;
                     }
                 }

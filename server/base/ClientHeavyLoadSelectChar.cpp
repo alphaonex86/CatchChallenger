@@ -433,7 +433,6 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     rescue_map(4),rescue_x(5),rescue_y(6),rescue_orientation(7),
     unvalidated_rescue_map(8),unvalidated_rescue_x(9),unvalidated_rescue_y(10),unvalidated_rescue_orientation(11),
     market_cash(12),botfight_id(13),itemonmap(14),plants(15),quest(16),blob_version(17)*/
-    do the blob data loading
     callbackRegistred.pop();
     if(!GlobalServerData::serverPrivateVariables.db_server->next())
     {
@@ -502,8 +501,250 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     market_cash=GlobalServerData::serverPrivateVariables.db_server->stringtouint64(GlobalServerData::serverPrivateVariables.db_server->value(12),&ok);
     if(!ok)
     {
-        characterSelectionIsWrong(query_id,0x04,"Market cash wrong: "+GlobalServerData::serverPrivateVariables.db_server->value(22));
+        characterSelectionIsWrong(query_id,0x04,"Market cash wrong: "+GlobalServerData::serverPrivateVariables.db_server->value(12));
         return;
+    }
+
+    //botfight_id
+    {
+        const std::vector<char> &botfight_id=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(13),&ok);
+        #ifndef CATCHCHALLENGER_EXTRA_CHECK
+        const char * const raw_botfight_id=botfight_id.data();
+        #endif
+        if(!ok)
+        {
+            characterSelectionIsWrong(query_id,0x04,"botfight_id: "+GlobalServerData::serverPrivateVariables.db_server->value(13)+" is not a hexa");
+            return;
+        }
+        else
+        {
+            uint16_t index=0;
+            while(index<=CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId && (index/8)<botfight_id.size())
+            {
+                const uint16_t &bitgetUp=index;
+                if(
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        botfight_id
+                        #else
+                        raw_botfight_id
+                        #endif
+                        [bitgetUp/8] & (1<<(7-bitgetUp%8)))
+                    public_and_private_informations.bot_already_beaten.insert(bitgetUp);
+                index++;
+            }
+        }
+    }
+    //itemonmap
+    {
+        const std::vector<char> &itemonmap=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(14),&ok);
+        #ifndef CATCHCHALLENGER_EXTRA_CHECK
+        const char * const raw_itemonmap=itemonmap.data();
+        #endif
+        if(!ok)
+        {
+            characterSelectionIsWrong(query_id,0x04,"itemonmap: "+GlobalServerData::serverPrivateVariables.db_server->value(14)+" is not a hexa");
+            return;
+        }
+        else
+        {
+            public_and_private_informations.itemOnMap.reserve(itemonmap.size());
+            uint32_t pos=0;
+            while(pos<itemonmap.size())
+            {
+                const uint32_t &pointOnMapDatabaseId=
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                itemonmap
+                #else
+                raw_itemonmap
+                #endif
+                [pos];
+                if(!ok)
+                {
+                    normalOutput("wrong value type for item on map, skip: "+std::to_string(pointOnMapDatabaseId));
+                    continue;
+                }
+                if(pointOnMapDatabaseId>=DictionaryServer::dictionary_pointOnMap_database_to_internal.size())
+                {
+                    normalOutput("item on map is not into the map list (1), skip: "+std::to_string(pointOnMapDatabaseId));
+                    continue;
+                }
+                if(DictionaryServer::dictionary_pointOnMap_database_to_internal.at(pointOnMapDatabaseId).map==NULL)
+                {
+                    normalOutput("item on map is not into the map list (2), skip: "+std::to_string(pointOnMapDatabaseId));
+                    continue;
+                }
+                const uint8_t &indexOfItemOnMap=DictionaryServer::dictionary_pointOnMap_database_to_internal.at(pointOnMapDatabaseId).indexOfItemOnMap;
+                if(indexOfItemOnMap==255)
+                {
+                    normalOutput("item on map is not into the map list (3), skip: "+std::to_string(pointOnMapDatabaseId));
+                    continue;
+                }
+                if(indexOfItemOnMap>=Client::indexOfItemOnMap)
+                {
+                    normalOutput("item on map is not into the map list (4), skip: "+std::to_string(indexOfItemOnMap)+" on "+std::to_string(Client::indexOfItemOnMap));
+                    continue;
+                }
+                public_and_private_informations.itemOnMap.insert(indexOfItemOnMap);
+                ++pos;
+            }
+        }
+    }
+    //plants
+    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+    {
+        const std::vector<char> &plants=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(15),&ok);
+        const char * const raw_plants=plants.data();
+        if(!ok)
+        {
+            characterSelectionIsWrong(query_id,0x04,"plants: "+GlobalServerData::serverPrivateVariables.db_server->value(15)+" is not a hexa");
+            return;
+        }
+        else
+        {
+            if(plants.size()%(1+1+8)!=0)
+            {
+                characterSelectionIsWrong(query_id,0x04,"plants missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(15));
+                return;
+            }
+            else
+            {
+                public_and_private_informations.plantOnMap.reserve(plants.size()/(1+1+8));
+                PlayerPlant plant;
+                uint32_t pos=0;
+                while(pos<plants.size())
+                {
+                    const uint8_t &pointOnMap=
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            plants
+                            #else
+                            raw_plants
+                            #endif
+                            [pos];
+                    ++pos;
+
+                    if(pointOnMap>=DictionaryServer::dictionary_pointOnMap_database_to_internal.size())
+                    {
+                        normalOutput("dirt on map is not into the map list (1), skip: "+std::to_string(pointOnMap));
+                        pos+=1+8;
+                        continue;
+                    }
+                    if(DictionaryServer::dictionary_pointOnMap_database_to_internal.at(pointOnMap).map==NULL)
+                    {
+                        normalOutput("dirt on map is not into the map list (2), skip: "+std::to_string(pointOnMap));
+                        pos+=1+8;
+                        continue;
+                    }
+                    const uint8_t &indexOfDirtOnMap=DictionaryServer::dictionary_pointOnMap_database_to_internal.at(pointOnMap).indexOfDirtOnMap;
+                    if(indexOfDirtOnMap==255)
+                    {
+                        normalOutput("dirt on map is not into the map list (3), skip: "+std::to_string(pointOnMap));
+                        pos+=1+8;
+                        continue;
+                    }
+
+                    plant.plant=
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            plants
+                            #else
+                            raw_plants
+                            #endif
+                            [pos];
+                    ++pos;
+
+                    if(CommonDatapack::commonDatapack.plants.find(plant.plant)==CommonDatapack::commonDatapack.plants.cend())
+                    {
+                        normalOutput("wrong value type for plant dirt on map, skip: "+std::to_string(plant.plant));
+                        pos+=8;
+                        continue;
+                    }
+
+                    uint64_t mature_at;
+                    memcpy(&mature_at,
+                            raw_plants
+                            +pos,sizeof(uint64_t));
+                    plant.mature_at=le64toh(mature_at)+CommonDatapack::commonDatapack.plants.at(plant.plant).fruits_seconds;
+                    pos+=8;
+
+                    public_and_private_informations.plantOnMap[pointOnMap]=plant;
+                }
+            }
+        }
+    }
+    #endif
+    //quest
+    {
+        const std::vector<char> &quests=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(16),&ok);
+        #ifndef CATCHCHALLENGER_EXTRA_CHECK
+        const char * const raw_quests=quests.data();
+        #endif
+        if(!ok)
+        {
+            characterSelectionIsWrong(query_id,0x04,"plants: "+GlobalServerData::serverPrivateVariables.db_server->value(16)+" is not a hexa");
+            return;
+        }
+        else
+        {
+            if(quests.size()%(1+1+1)!=0)
+            {
+                characterSelectionIsWrong(query_id,0x04,"plants missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(16));
+                return;
+            }
+            else
+            {
+                public_and_private_informations.quests.reserve(quests.size()/(1+1+1));
+                PlayerQuest playerQuest;
+                uint32_t pos=0;
+                while(pos<quests.size())
+                {
+                    uint8_t questId=
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            quests
+                            #else
+                            raw_quests
+                            #endif
+                            [pos];
+                    ++pos;
+                    playerQuest.finish_one_time=
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            quests
+                            #else
+                            raw_quests
+                            #endif
+                            [pos];
+                    ++pos;
+                    playerQuest.step=
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            quests
+                            #else
+                            raw_quests
+                            #endif
+                            [pos];
+                    ++pos;
+
+                    if(CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(questId)==CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
+                    {
+                        normalOutput("wrong value type for quest on map, skip: "+std::to_string(questId));
+                        pos+=2;
+                        continue;
+                    }
+
+                    const Quest &datapackQuest=CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId);
+                    if((playerQuest.step<=0 && !playerQuest.finish_one_time) || playerQuest.step>datapackQuest.steps.size())
+                    {
+                        normalOutput("step out of quest range, skip: "+std::to_string(questId));
+                        continue;
+                    }
+                    if(playerQuest.step<=0 && !playerQuest.finish_one_time)
+                    {
+                        normalOutput("can't be to step 0 if have never finish the quest, skip: "+std::to_string(questId));
+                        continue;
+                    }
+                    public_and_private_informations.quests[questId]=playerQuest;
+                    if(playerQuest.step>0)
+                        addQuestStepDrop(questId,playerQuest.step);
+                }
+            }
+        }
     }
 
     public_and_private_informations.public_informations.speed=CATCHCHALLENGER_SERVER_NORMAL_SPEED;
