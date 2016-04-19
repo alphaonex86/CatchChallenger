@@ -87,6 +87,14 @@ double DatabaseFunction::stringtodouble(const std::string &string,bool *ok)
 
 std::vector<char> DatabaseFunction::hexatoBinary(const std::string &data,bool *ok)
 {
+    if(data.size()%2!=0)
+    {
+        if(ok!=NULL)
+            *ok=false;
+        return std::vector<char>();
+    }
+    if(ok!=NULL)
+        *ok=true;
     std::vector<char> out;
     out.reserve(data.length()/2);
     for(size_t i=0;i<data.length();i+=2)
