@@ -42,6 +42,12 @@ void Client::loadMonsters_static(void *object)
 
 void Client::loadMonsters_return()
 {
+    /* No SP:
+     * id(0),character(1),place(2),hp(3),monster(4),level(5),xp(6),captured_with(7),gender(8),egg_step(9),character_origin(10),buffs(11),skills(12),skills_endurance(13)
+     * SP:
+     * id(0),character(1),place(2),hp(3),monster(4),level(5),xp(6),sp(7),captured_with(8),gender(9),egg_step(10),character_origin(11),buffs(12),skills(13),skills_endurance(14)
+     */
+    do the blog content and comment the call order
     callbackRegistred.pop();
     bool ok;
     Monster monster;
@@ -160,6 +166,87 @@ void Client::loadMonsters_return()
             playerMonster.character_origin=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(9+sp_offset),&ok);
             if(!ok)
                 normalOutput("monster character_origin: "+GlobalServerData::serverPrivateVariables.db_common->value(9+sp_offset)+" is not a number");
+        }
+        //buffs
+        if(ok)
+        {
+            const std::vector<char> &buffs=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(10+sp_offset),&ok).data();
+            const char * const raw_buffs=buffs.data();
+            if(!ok)
+                normalOutput("monster buffs: "+GlobalServerData::serverPrivateVariables.db_common->value(10+sp_offset)+" is not a hexa");
+            else
+            {
+                if(buffs.size()%(1+1+1)!=0)
+                    normalOutput("monster buffs missing data: "+GlobalServerData::serverPrivateVariables.db_common->value(10+sp_offset));
+                else
+                {
+                    playerMonster.buffs.reserve(buffs.size()/(1+1+1));
+                    PlayerBuff buff;
+                    uint32_t pos=0;
+                    while(pos<buffs.size())
+                    {
+                        buff.buff=raw_buffs[pos];
+                        ++pos;
+                        buff.level=raw_buffs[pos];
+                        ++pos;
+                        buff.remainingNumberOfTurn=raw_buffs[pos];
+                        ++pos;
+                    }
+                    playerMonster.buffs.push_back(playerMonster);
+                }
+            }
+        }
+        //skills
+        if(ok)
+        {
+            const char * const skills=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(11+sp_offset),&ok).data();
+            const char * const raw_skills=skills.data();
+            if(!ok)
+                normalOutput("monster skills: "+GlobalServerData::serverPrivateVariables.db_common->value(11+sp_offset)+" is not a hexa");
+            else
+            {
+                if(skills.size()%(1+2)!=0)
+                    normalOutput("monster skills missing data: "+GlobalServerData::serverPrivateVariables.db_common->value(10+sp_offset));
+                else
+                {
+                    playerMonster.skills.reserve(skills.size()/(1+2));
+                    PlayerMonster::PlayerSkill skill;
+                    uint32_t pos=0;
+                    while(pos<skills.size())
+                    {
+                        skill.skill=le16toh(*reinterpret_cast<uint16_t *>(raw_skills+pos));
+                        pos+=2;
+                        skill.level=raw_skills[pos];
+                        ++pos;
+                       skill.endurance=0;
+                    }
+                    playerMonster.skills.push_back(playerMonster);
+                }
+            }
+
+
+        }
+        //skills_endurance
+        if(ok)
+        {
+            const char * const skills_endurance=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(12+sp_offset),&ok).data();
+            const char * const raw_skills_endurance=skills_endurance.data();
+            if(!ok)
+                normalOutput("monster skills_endurance: "+GlobalServerData::serverPrivateVariables.db_common->value(12+sp_offset)+" is not a hexa");
+            else
+            {
+                if(skills_endurance.size()!=playerMonster.skills.size())
+                    normalOutput("monster skills_endurance missing data: "+GlobalServerData::serverPrivateVariables.db_common->value(10+sp_offset));
+                else
+                {
+                    uint32_t pos=0;
+                    while(pos<skills_endurance.size())
+                    {
+                        playerMonster.skills[pos].endurance=raw_skills_endurance[pos];
+                        ++pos;
+                    }
+                }
+            }
         }
         //stats
         if(ok)

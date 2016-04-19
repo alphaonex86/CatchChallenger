@@ -19,7 +19,7 @@ public:
     virtual int64_t stringtoint64(const std::string &string,bool *ok=NULL);
     virtual float stringtofloat(const std::string &string,bool *ok=NULL);
     virtual double stringtodouble(const std::string &string,bool *ok=NULL);
-    virtual std::vector<char> hexatoBinary(const std::string &data);
+    virtual std::vector<char> hexatoBinary(const std::string &data,bool *ok=NULL);
 };
 }
 
