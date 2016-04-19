@@ -47,7 +47,6 @@ void Client::loadMonsters_return()
      * SP:
      * id(0),character(1),place(2),hp(3),monster(4),level(5),xp(6),sp(7),captured_with(8),gender(9),egg_step(10),character_origin(11),buffs(12),skills(13),skills_endurance(14)
      */
-    do the blog content and comment the call order
     callbackRegistred.pop();
     bool ok;
     Monster monster;
@@ -217,7 +216,7 @@ void Client::loadMonsters_return()
                             if(CommonDatapack::commonDatapack.monsterBuffs.find(buff.buff)==CommonDatapack::commonDatapack.monsterBuffs.cend())
                             {
                                 ok=false;
-                                normalOutput("buff "+std::to_string(buff.buff)+" for monsterId: "+std::to_string(monsterId)+" is not found into buff list");
+                                normalOutput("buff "+std::to_string(buff.buff)+" for monsterId: "+std::to_string(playerMonster.id)+" is not found into buff list");
                             }
                         }
                         else
@@ -230,7 +229,7 @@ void Client::loadMonsters_return()
                                 if(buff.level>CommonDatapack::commonDatapack.monsterBuffs.at(buff.buff).level.size())
                                 {
                                     ok=false;
-                                    normalOutput("buff "+std::to_string(buff.buff)+" for monsterId: "+std::to_string(monsterId)+" have not the level: "+std::to_string(buff.level));
+                                    normalOutput("buff "+std::to_string(buff.buff)+" for monsterId: "+std::to_string(playerMonster.id)+" have not the level: "+std::to_string(buff.level));
                                 }
                             }
                             else
@@ -241,11 +240,11 @@ void Client::loadMonsters_return()
                             if(CommonDatapack::commonDatapack.monsterBuffs.at(buff.buff).level.at(buff.level-1).duration!=Buff::Duration_Always)
                             {
                                 ok=false;
-                                normalOutput("buff "+std::to_string(buff.buff)+" for monsterId: "+std::to_string(monsterId)+" can't be loaded from the db if is not permanent");
+                                normalOutput("buff "+std::to_string(buff.buff)+" for monsterId: "+std::to_string(playerMonster.id)+" can't be loaded from the db if is not permanent");
                             }
                         }
                         if(ok)
-                            playerMonster.buffs.push_back(playerMonster);
+                            playerMonster.buffs.push_back(buff);
                     }
                 }
             }
@@ -268,7 +267,7 @@ void Client::loadMonsters_return()
                     uint32_t pos=0;
                     while(pos<skills.size())
                     {
-                        skill.skill=le16toh(*reinterpret_cast<uint16_t *>(raw_skills+pos));
+                        skill.skill=le16toh(*reinterpret_cast<const uint16_t *>(raw_skills+pos));
                         pos+=2;
                         skill.level=
                                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -279,7 +278,7 @@ void Client::loadMonsters_return()
                                 [pos];
                         ++pos;
                        skill.endurance=0;
-                       playerMonster.skills.push_back(playerMonster);
+                       playerMonster.skills.push_back(skill);
                     }
                 }
             }
