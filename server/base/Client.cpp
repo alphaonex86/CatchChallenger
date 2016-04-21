@@ -288,17 +288,22 @@ void Client::disconnectClient()
         const uint64_t &addTime=sFrom1970()-connectedSince;
         if(addTime>5)
         {
-            const std::string &queryText=PreparedDBQueryCommon::db_query_played_time.compose(
-                        std::to_string(character_id),
-                        std::to_string(addTime)
-                        );
-            dbQueryWriteCommon(queryText);
+            {
+                const std::string &queryText=PreparedDBQueryCommon::db_query_played_time.compose(
+                            std::to_string(character_id),
+                            std::to_string(addTime)
+                            );
+                dbQueryWriteCommon(queryText);
+            }
             #ifdef CATCHCHALLENGER_CLASS_ALLINONESERVER
-            const std::string &queryText=PreparedDBQueryCommon::db_query_update_server_time_played_time;
-            stringreplaceOne(queryText,"%1",std::to_string(addTime));
-            stringreplaceOne(queryText,"%2",std::to_string(0));
-            stringreplaceOne(queryText,"%3",std::to_string(character_id));
-            dbQueryWriteCommon(queryText);
+            {
+                const std::string &queryText=PreparedDBQueryCommon::db_query_update_server_time_played_time.compose(
+                            std::to_string(addTime),
+                            std::to_string(0),
+                            std::to_string(character_id)
+                            );
+                dbQueryWriteCommon(queryText);
+            }
             #endif
         }
         //save the monster

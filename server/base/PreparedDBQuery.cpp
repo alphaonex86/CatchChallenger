@@ -4,16 +4,17 @@
 using namespace CatchChallenger;
 
 //query
-#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
 StringWithReplacement PreparedDBQueryLogin::db_query_login;
 StringWithReplacement PreparedDBQueryLogin::db_query_insert_login;
 #endif
 
-#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
 StringWithReplacement PreparedDBQueryCommonForLogin::db_query_characters;
 StringWithReplacement PreparedDBQueryCommonForLogin::db_query_characters_with_monsters;
 StringWithReplacement PreparedDBQueryCommonForLogin::db_query_select_server_time;
 StringWithReplacement PreparedDBQueryCommonForLogin::db_query_delete_character;
+StringWithReplacement PreparedDBQueryCommonForLogin::db_query_delete_monster_by_character;
 StringWithReplacement PreparedDBQueryCommonForLogin::db_query_select_character_by_pseudo;
 StringWithReplacement PreparedDBQueryCommonForLogin::db_query_get_character_count_by_account;
 StringWithReplacement PreparedDBQueryCommonForLogin::db_query_account_time_to_delete_character_by_id;
@@ -24,7 +25,7 @@ StringWithReplacement PreparedDBQueryCommonForLogin::db_query_update_character_t
 StringWithReplacement PreparedDBQueryCommon::db_query_delete_monster_by_id;
 StringWithReplacement PreparedDBQueryCommon::db_query_insert_monster;
 
-#if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+#if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
 StringWithReplacement PreparedDBQueryCommon::db_query_update_character_item;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_character_item_and_encyclopedia;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_character_item_warehouse;
@@ -159,7 +160,7 @@ StringWithReplacement PreparedDBQueryServer::db_query_delete_bot_already_beaten;
 */
 #endif
 
-#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
 void PreparedDBQueryLogin::initDatabaseQueryLogin(const DatabaseBase::DatabaseType &type)
 {
     switch(type)
@@ -196,7 +197,7 @@ void PreparedDBQueryLogin::initDatabaseQueryLogin(const DatabaseBase::DatabaseTy
 }
 #endif
 
-#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
 void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const DatabaseBase::DatabaseType &type)
 {
     switch(type)
@@ -211,10 +212,11 @@ void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const Databa
         return;
         #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_MYSQL)
         case DatabaseBase::DatabaseType::Mysql:
-        PreparedDBQueryCommonForLogin::db_query_characters="SELECT `id`,`pseudo`,`skin`,`time_to_delete`,`played_time`,`last_connect` FROM `character` WHERE `account`=%1 LIMIT 0,%2";
+        PreparedDBQueryCommonForLogin::db_query_characters="SELECT `id`,`pseudo`,`skin`,`time_to_delete`,`played_time`,`last_connect` FROM `character` WHERE `account`=%1";
         PreparedDBQueryCommonForLogin::db_query_characters_with_monsters="SELECT LOWER(HEX(`monster`)),LOWER(HEX(`monster_warehouse`)),LOWER(HEX(`monster_market`)) FROM `character` WHERE `id`=%1";
         PreparedDBQueryCommonForLogin::db_query_select_server_time="SELECT `server`,`played_time`,`last_connect` FROM `server_time` WHERE `account`=%1";//not by characters to prevent too hurge datas to store
         PreparedDBQueryCommonForLogin::db_query_delete_character="DELETE FROM `character` WHERE `id`=%1";
+        PreparedDBQueryCommonForLogin::db_query_delete_monster_by_character="DELETE FROM `monster` WHERE `character`=%1";
         PreparedDBQueryCommonForLogin::db_query_select_character_by_pseudo="SELECT `id` FROM `character` WHERE `pseudo`='%1'";
         PreparedDBQueryCommonForLogin::db_query_get_character_count_by_account="SELECT COUNT(*) FROM `character` WHERE `account`=%1";
         PreparedDBQueryCommonForLogin::db_query_account_time_to_delete_character_by_id="SELECT `account`,`time_to_delete` FROM `character` WHERE `id`=%1";
@@ -224,10 +226,11 @@ void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const Databa
 
         #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::SQLite:
-        PreparedDBQueryCommonForLogin::db_query_characters="SELECT id,pseudo,skin,time_to_delete,played_time,last_connect FROM character WHERE account=%1 LIMIT 0,%2";
+        PreparedDBQueryCommonForLogin::db_query_characters="SELECT id,pseudo,skin,time_to_delete,played_time,last_connect FROM character WHERE account=%1";
         PreparedDBQueryCommonForLogin::db_query_characters_with_monsters="SELECT monster,monster_warehouse,monster_market FROM character WHERE id=%1";
         PreparedDBQueryCommonForLogin::db_query_select_server_time="SELECT server,played_time,last_connect FROM server_time WHERE account=%1";//not by characters to prevent too hurge datas to store
         PreparedDBQueryCommonForLogin::db_query_delete_character="DELETE FROM character WHERE id=%1";
+        PreparedDBQueryCommonForLogin::db_query_delete_monster_by_character="DELETE FROM monster WHERE character=%1";
         PreparedDBQueryCommonForLogin::db_query_select_character_by_pseudo="SELECT id FROM character WHERE pseudo='%1'";
         PreparedDBQueryCommonForLogin::db_query_get_character_count_by_account="SELECT COUNT(*) FROM character WHERE account=%1";
         PreparedDBQueryCommonForLogin::db_query_account_time_to_delete_character_by_id="SELECT account,time_to_delete FROM character WHERE id=%1";
@@ -237,10 +240,11 @@ void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const Databa
 
         #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
-        PreparedDBQueryCommonForLogin::db_query_characters="SELECT id,pseudo,skin,time_to_delete,played_time,last_connect FROM character WHERE account=%1 LIMIT %2";
+        PreparedDBQueryCommonForLogin::db_query_characters="SELECT id,pseudo,skin,time_to_delete,played_time,last_connect FROM character WHERE account=%1";
         PreparedDBQueryCommonForLogin::db_query_characters_with_monsters="SELECT encode(monster,'hex'),encode(monster_warehouse,'hex'),encode(monster_market,'hex') FROM character WHERE id=%1";
         PreparedDBQueryCommonForLogin::db_query_select_server_time="SELECT server,played_time,last_connect FROM server_time WHERE account=%1";//not by characters to prevent too hurge datas to store
         PreparedDBQueryCommonForLogin::db_query_delete_character="DELETE FROM character WHERE id=%1";
+        PreparedDBQueryCommonForLogin::db_query_delete_monster_by_character="DELETE FROM monster WHERE character=%1";
         PreparedDBQueryCommonForLogin::db_query_select_character_by_pseudo="SELECT id FROM character WHERE pseudo='%1'";
         PreparedDBQueryCommonForLogin::db_query_get_character_count_by_account="SELECT COUNT(*) FROM character WHERE account=%1";
         PreparedDBQueryCommonForLogin::db_query_account_time_to_delete_character_by_id="SELECT account,time_to_delete FROM character WHERE id=%1";
@@ -251,7 +255,7 @@ void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const Databa
 }
 #endif
 
-#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
 void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase::DatabaseType &type)
 {
     switch(type)
@@ -574,10 +578,12 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_monster_buff_level="UPDATE monster SET level=%3 WHERE monster=%1 AND buff=%2";
         PreparedDBQueryCommon::db_query_delete_monster_specific_buff="DELETE FROM monster_buff WHERE monster=%1 AND buff=%2";
         PreparedDBQueryCommon::db_query_delete_monster_specific_skill="DELETE FROM monster_skill WHERE monster=%1 AND skill=%2";
-        PreparedDBQueryCommon::db_query_update_monster_owner="UPDATE monster SET character=%2 WHERE id=%1;";
+        PreparedDBQueryCommon::db_query_update_monster_owner="UPDATE monster SET character=%2 WHERE id=%1;";*/
+        #endif
+        #if defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
         PreparedDBQueryCommon::db_query_insert_server_time="INSERT INTO server_time(server,account,played_time,last_connect) VALUES(%1,%2,0,%3);";
         PreparedDBQueryCommon::db_query_update_server_time_played_time="UPDATE server_time SET played_time=played_time+%1 WHERE server=%2 AND account=%3;";
-        PreparedDBQueryCommon::db_query_update_server_time_last_connect="UPDATE server_time SET last_connect=%1 WHERE server=%2 AND account=%3;";*/
+        PreparedDBQueryCommon::db_query_update_server_time_last_connect="UPDATE server_time SET last_connect=%1 WHERE server=%2 AND account=%3;";
         #endif
         break;
         #endif
@@ -671,7 +677,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::Da
 }
 #endif
 
-#if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+#if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
 void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::DatabaseType &type)
 {
     switch(type)
