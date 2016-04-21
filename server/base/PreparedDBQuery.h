@@ -7,7 +7,7 @@
 
 namespace CatchChallenger {
 
-#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
 class PreparedDBQueryLogin
 {
 public:
@@ -19,16 +19,17 @@ public:
 };
 #endif
 
-#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
 class PreparedDBQueryCommonForLogin
 {
 public:
     static void initDatabaseQueryCommonForLogin(const DatabaseBase::DatabaseType &type);
 public:
-    static StringWithReplacement db_query_characters;
+    static StringWithReplacement db_query_characters;//should be already limited at creation (write access), not need limit on read
     static StringWithReplacement db_query_characters_with_monsters;
     static StringWithReplacement db_query_select_server_time;
     static StringWithReplacement db_query_delete_character;
+    static StringWithReplacement db_query_delete_monster_by_character;
     static StringWithReplacement db_query_select_character_by_pseudo;
     static StringWithReplacement db_query_get_character_count_by_account;
     static StringWithReplacement db_query_account_time_to_delete_character_by_id;
@@ -36,7 +37,7 @@ public:
 };
 #endif
 
-#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
 class PreparedDBQueryCommon
 {
 public:
@@ -47,7 +48,7 @@ public:
     static StringWithReplacement db_query_delete_monster_by_id;
     static StringWithReplacement db_query_insert_monster;
 
-    #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+    #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
     static StringWithReplacement db_query_update_character_item;
     static StringWithReplacement db_query_update_character_item_and_encyclopedia;
     static StringWithReplacement db_query_update_character_item_warehouse;
@@ -85,11 +86,13 @@ public:
     static StringWithReplacement db_query_update_monster_hp_and_level;
     static StringWithReplacement db_query_select_monsters_by_player_id;
 
-    //query
-    /*static StringWithReplacement db_query_select_allow;
+    #if defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
     static StringWithReplacement db_query_insert_server_time;
     static StringWithReplacement db_query_update_server_time_played_time;
     static StringWithReplacement db_query_update_server_time_last_connect;
+    #endif
+    //query
+    /*static StringWithReplacement db_query_select_allow;
 
     static StringWithReplacement db_query_select_monstersBuff_by_id;
     static StringWithReplacement db_query_monster_by_character_id;
@@ -137,7 +140,7 @@ public:
 };
 #endif
 
-#if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+#if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
 class PreparedDBQueryServer
 {
 public:

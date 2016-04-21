@@ -18,6 +18,11 @@ void EpollClientLoginSlave::askLogin(const uint8_t &query_id,const char *rawdata
         errorParsingLayer("askLogin() Query login is empty, bug");
         return;
     }
+    if(PreparedDBQueryLogin::db_query_insert_login.empty())
+    {
+        errorOutput("askLogin() Query inset login is empty, bug");
+        return false;
+    }
     #endif
     AskLoginParam *askLoginParam=new AskLoginParam;
     SHA224(reinterpret_cast<const unsigned char *>(rawdata),CATCHCHALLENGER_SHA224HASH_SIZE,reinterpret_cast<unsigned char *>(askLoginParam->login));
