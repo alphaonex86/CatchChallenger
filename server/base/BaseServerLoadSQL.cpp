@@ -1032,7 +1032,7 @@ void BaseServer::loadMonsterSkills_return()
                 {
                     skill.endurance=CommonDatapack::commonDatapack.monsterSkills.at(skill.skill).level.at(skill.level-1).endurance;
                     ok=false;
-                    std::cerr << "endurance of skill " << skill.skill << " for monsterId: " <<  monsterId<< " have been fixed by lower at " << skill.endurance << std::endl;
+                    std::cerr << "endurance of skill " << skill.skill << " for monsterId: " <<  monsterId<< " have been fixed by lower at " << skill.endurance << ": truncated" << std::endl;
                 }
             }
             else

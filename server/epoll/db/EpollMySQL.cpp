@@ -6,6 +6,9 @@
 #include <string.h>
 #include <sys/epoll.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 #include "../Epoll.h"
 #include "../EpollSocket.h"
 #include "../../../general/base/GeneralVariable.h"
@@ -114,6 +117,13 @@ bool EpollMySQL::syncConnectInternal()
        std::cerr << "mysql no blocking error" << std::endl;
        return false;
     }*/
+    /* Use no delay, will not be able to group tcp message because is ordened into a queue
+     * Then the execution is on by one, and the RTT will slow down this */
+    {
+        int state = 1;
+        if(setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &state, sizeof(state))!=0)
+            std::cerr << "Unable to apply tcp no delay" << std::endl;
+    }
     epoll_event event;
     event.events = EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLET;
     event.data.ptr = this;
