@@ -660,20 +660,43 @@ void EpollServerLoginSlave::preload_profile()
                     }
                     //dynamic part
                     {
-                        //id,hp,monster,level,captured_with,gender,character_origin,skills,skills_endurance
-                        const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster.compose(
+                        //id,character,place,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position,skills,skills_endurance
+                        if(monster.ratio_gender!=-1)
+                        {
+                            const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster.compose(
                                     "%1",
+                                    "%2",
+                                    "1",
                                     std::to_string(monster.hp),
                                     std::to_string(monster.id),
                                     std::to_string(monster.level),
                                     std::to_string(monster.captured_with),
-                                    "%2",
                                     "%3",
+                                    "%4",
+                                    std::to_string(monsterIndex+1),
                                     binarytoHexa(raw_skill,sizeof(raw_skill)),
                                     binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
                                     );
-
-                        monsterGroupQuery.push_back(queryText);
+                            monsterGroupQuery.push_back(queryText);
+                        }
+                        else
+                        {
+                            const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster.compose(
+                                    "%1",
+                                    "%2",
+                                    "1",
+                                    std::to_string(monster.hp),
+                                    std::to_string(monster.id),
+                                    std::to_string(monster.level),
+                                    std::to_string(monster.captured_with),
+                                    "3",
+                                    "%3",
+                                    std::to_string(monsterIndex+1),
+                                    binarytoHexa(raw_skill,sizeof(raw_skill)),
+                                    binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
+                                    );
+                            monsterGroupQuery.push_back(queryText);
+                        }
                     }
                     monsterForEncyclopedia.push_back(monster.id);
                     monsterIndex++;

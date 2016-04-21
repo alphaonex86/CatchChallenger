@@ -10,7 +10,6 @@
 
 using namespace CatchChallenger;
 
-const std::string CharactersGroupForLogin::gender_unknown("3");
 const std::string CharactersGroupForLogin::gender_male("1");
 const std::string CharactersGroupForLogin::gender_female("2");
 
@@ -507,13 +506,14 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     const EpollServerLoginSlave::LoginProfile &profile=EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.at(profileIndex);
 
     const uint32_t &characterId=maxCharacterId.back();
+    const std::string &characterIdString=std::to_string(characterId);
     maxCharacterId.pop_back();
     int monster_position=1;
 
     std::string monsterIdList;
     const std::vector<EpollServerLoginSlave::LoginProfile::Monster> &monsterGroup=profile.monstergroup.at(monsterGroupId);
     const std::vector<StringWithReplacement> &monsters=profile.monster_insert.at(monsterGroupId);
-    std::string monster_encyclopedia_insert=profile.monster_encyclopedia_insert.at(monsterGroupId);
+    const std::string &monster_encyclopedia_insert=profile.monster_encyclopedia_insert.at(monsterGroupId);
     if(!monsters.empty())
     {
         char monsterIdList[4*monsters.size()];
@@ -534,12 +534,12 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
                 if(monster.ratio_gender!=-1)
                 {
                     if(rand()%101<monster.ratio_gender)
-                        dbQueryWriteCommon(monsterQuery.compose(monster_id_string,CharactersGroupForLogin::gender_female,monster_id_string));
+                        dbQueryWriteCommon(monsterQuery.compose(monster_id_string,characterIdString,CharactersGroupForLogin::gender_female,characterIdString));
                     else
-                        dbQueryWriteCommon(monsterQuery.compose(monster_id_string,CharactersGroupForLogin::gender_male,monster_id_string));
+                        dbQueryWriteCommon(monsterQuery.compose(monster_id_string,characterIdString,CharactersGroupForLogin::gender_male,characterIdString));
                 }
                 else
-                    dbQueryWriteCommon(monsterQuery.compose(monster_id_string,CharactersGroupForLogin::gender_unknown,monster_id_string));
+                    dbQueryWriteCommon(monsterQuery.compose(monster_id_string,characterIdString,characterIdString));
 
                 monster_position++;
             }
@@ -548,7 +548,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     }
 
     const std::string &local_character_insert=profile.character_insert.compose(
-                std::to_string(characterId),
+                characterIdString,
                 std::to_string(client->account_id),
                 SqlFunction::quoteSqlVariable(pseudo),
                 std::to_string(DictionaryLogin::dictionary_skin_internal_to_database.at(skinId)),
