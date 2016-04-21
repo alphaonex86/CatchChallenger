@@ -432,7 +432,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     /*map(0),x(1),y(2),orientation(3),
     rescue_map(4),rescue_x(5),rescue_y(6),rescue_orientation(7),
     unvalidated_rescue_map(8),unvalidated_rescue_x(9),unvalidated_rescue_y(10),unvalidated_rescue_orientation(11),
-    market_cash(12),botfight_id(13),itemonmap(14),plants(15),quest(16),blob_version(17)*/
+    market_cash(12),botfight_id(13),itemonmap(14),quest(15),blob_version(16),plants(17)*/
     callbackRegistred.pop();
     if(!GlobalServerData::serverPrivateVariables.db_server->next())
     {
@@ -486,7 +486,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         break;
     }
 
-    const uint8_t &blob_version=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(GlobalServerData::serverPrivateVariables.db_server->value(17),&ok);
+    const uint8_t &blob_version=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(GlobalServerData::serverPrivateVariables.db_server->value(16),&ok);
     if(!ok)
     {
         characterSelectionIsWrong(query_id,0x04,"Blob version not a number");
@@ -592,18 +592,18 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     //plants
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     {
-        const std::vector<char> &plants=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(15),&ok);
+        const std::vector<char> &plants=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(17),&ok);
         const char * const raw_plants=plants.data();
         if(!ok)
         {
-            characterSelectionIsWrong(query_id,0x04,"plants: "+GlobalServerData::serverPrivateVariables.db_server->value(15)+" is not a hexa");
+            characterSelectionIsWrong(query_id,0x04,"plants: "+GlobalServerData::serverPrivateVariables.db_server->value(17)+" is not a hexa");
             return;
         }
         else
         {
             if(plants.size()%(1+1+8)!=0)
             {
-                characterSelectionIsWrong(query_id,0x04,"plants missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(15));
+                characterSelectionIsWrong(query_id,0x04,"plants missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(17));
                 return;
             }
             else
@@ -673,20 +673,20 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     #endif
     //quest
     {
-        const std::vector<char> &quests=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(16),&ok);
+        const std::vector<char> &quests=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(15),&ok);
         #ifndef CATCHCHALLENGER_EXTRA_CHECK
         const char * const raw_quests=quests.data();
         #endif
         if(!ok)
         {
-            characterSelectionIsWrong(query_id,0x04,"plants: "+GlobalServerData::serverPrivateVariables.db_server->value(16)+" is not a hexa");
+            characterSelectionIsWrong(query_id,0x04,"plants: "+GlobalServerData::serverPrivateVariables.db_server->value(15)+" is not a hexa");
             return;
         }
         else
         {
             if(quests.size()%(1+1+1)!=0)
             {
-                characterSelectionIsWrong(query_id,0x04,"plants missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(16));
+                characterSelectionIsWrong(query_id,0x04,"plants missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(15));
                 return;
             }
             else
@@ -763,7 +763,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     else
     {
         orientation=Orientation_bottom;
-        normalOutput("Wrong orientation (not number) corrected with bottom: "+GlobalServerData::serverPrivateVariables.db_server->value(5));
+        normalOutput("Wrong orientation (not number) corrected with bottom: "+GlobalServerData::serverPrivateVariables.db_server->value(3));
     }
     //all is rights
     const uint32_t &map_database_id=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
