@@ -687,7 +687,11 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_MYSQL)
         case DatabaseBase::DatabaseType::Mysql:
         PreparedDBQueryServer::db_query_update_character_forserver_map="UPDATE `character_forserver` SET `map`=%1,`x`=%2,`y`=%3,`orientation`=%4,`rescue_map`=%5,`rescue_x`=%6,`rescue_y`=%7,`rescue_orientation`=%8,`unvalidated_rescue_map`=%9,`unvalidated_rescue_x`=%10,`unvalidated_rescue_y`=%11,`unvalidated_rescue_orientation`=%12 WHERE `character`=%13";
-        PreparedDBQueryServer::db_query_character_server_by_id="SELECT `map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`botfight_id`,`itemonmap`,`plants`,`quest`,`blob_version` FROM `character_forserver` WHERE `character`=%1";
+        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+        PreparedDBQueryServer::db_query_character_server_by_id="SELECT `map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`botfight_id`,`itemonmap`,`quest`,`blob_version`,`plants` FROM `character_forserver` WHERE `character`=%1";
+        #else
+        PreparedDBQueryServer::db_query_character_server_by_id="SELECT `map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`botfight_id`,`itemonmap`,`quest`,`blob_version` FROM `character_forserver` WHERE `character`=%1";
+        #endif
         PreparedDBQueryServer::db_query_delete_all_item_market="DELETE FROM `item_market` WHERE `character`=%1";
         PreparedDBQueryServer::db_query_insert_item_market="INSERT INTO `item_market`(`item`,`character`,`quantity`,`market_price`) VALUES(%1,%2,%3,%4)";
         PreparedDBQueryServer::db_query_delete_item_market="DELETE FROM `item_market` WHERE `item`=%1 AND `character`=%2";
@@ -728,7 +732,11 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         case DatabaseBase::DatabaseType::SQLite:
         PreparedDBQueryServer::db_query_update_character_forserver_map="UPDATE character_forserver SET map=%1,x=%2,y=%3,orientation=%4,rescue_map=%5,rescue_x=%6,rescue_y=%7,rescue_orientation=%8,unvalidated_rescue_map=%9,unvalidated_rescue_x=%10,unvalidated_rescue_y=%11,unvalidated_rescue_orientation=%12 WHERE character=%13";
 
-        PreparedDBQueryServer::db_query_character_server_by_id="SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,plants,quest,blob_version FROM character_forserver WHERE character=%1";
+        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+        PreparedDBQueryServer::db_query_character_server_by_id="SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,botfight_id,itemonmap,quest,blob_version,plants FROM character_forserver WHERE character=%1";
+        #else
+        PreparedDBQueryServer::db_query_character_server_by_id="SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,botfight_id,itemonmap,quest,blob_version FROM character_forserver WHERE character=%1";
+        #endif
         PreparedDBQueryServer::db_query_delete_all_item_market="DELETE FROM item_market WHERE character=%1";
         PreparedDBQueryServer::db_query_insert_item_market="INSERT INTO item_market(item,character,quantity,market_price) VALUES(%1,%2,%3,%4)";
         PreparedDBQueryServer::db_query_delete_item_market="DELETE FROM item_market WHERE item=%1 AND character=%2";
@@ -785,7 +793,11 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_insert_monster_market_price="INSERT INTO monster_market_price(id,market_price,character) VALUES(%1,%2,%3)";
         PreparedDBQueryServer::db_query_delete_monster_market_price="DELETE FROM monster_market_price WHERE id=%1";
         PreparedDBQueryServer::db_query_update_character_quests="UPDATE character_forserver SET quest='\\x%1' WHERE id=%2";
-        PreparedDBQueryServer::db_query_character_server_by_id="SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,plants,quest,blob_version FROM character_forserver WHERE character=%1";
+        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+        PreparedDBQueryServer::db_query_character_server_by_id="SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,botfight_id,itemonmap,quest,blob_version,plants FROM character_forserver WHERE character=%1";
+        #else
+        PreparedDBQueryServer::db_query_character_server_by_id="SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,botfight_id,itemonmap,quest,blob_version FROM character_forserver WHERE character=%1";
+        #endif
         PreparedDBQueryServer::db_query_update_plant="UPDATE character_forserver SET plants='\\x%1' WHERE id=%2";
         PreparedDBQueryServer::db_query_update_itemonmap="UPDATE character_forserver SET itemonmap='\\x%1' WHERE id=%2";
         PreparedDBQueryServer::db_query_update_character_bot_already_beaten="UPDATE character_forserver SET bot_already_beaten='\\x%1' WHERE id=%2";
