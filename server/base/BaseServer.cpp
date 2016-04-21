@@ -671,10 +671,9 @@ bool BaseServer::initialize_the_database()
 
 void BaseServer::initialize_the_database_prepared_query()
 {
-    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    #if ! defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLIENT)
     PreparedDBQueryLogin::initDatabaseQueryLogin(GlobalServerData::serverPrivateVariables.db_login->databaseType());
-    PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLoginWithoutSP(GlobalServerData::serverPrivateVariables.db_common->databaseType());
-    PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLoginWithSP(GlobalServerData::serverPrivateVariables.db_common->databaseType(),CommonSettingsServer::commonSettingsServer.useSP);
+    PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(GlobalServerData::serverPrivateVariables.db_common->databaseType());
     #endif
     //PreparedDBQueryBase::initDatabaseQueryBase(GlobalServerData::serverPrivateVariables.db_base->databaseType());//don't exist, allow dictionary and loaded without cache
     PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(GlobalServerData::serverPrivateVariables.db_common->databaseType());

@@ -245,6 +245,37 @@ void CharactersGroupForLogin::deleteCharacterNow(const uint32_t &characterId)
         std::cerr << "deleteCharacterNow() Query db_query_delete_character is empty, bug" << std::endl;
         return;
     }
+    if(PreparedDBQueryCommonForLogin::db_query_delete_monster_by_character.empty())
+    {
+        std::cerr << "deleteCharacterNow() Query db_query_delete_monster_by_id is empty, bug" << std::endl;
+        return;
+    }
+    #endif
+
+    const std::string &characterIdString=std::to_string(characterId);
+    {
+        const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_delete_character.compose(
+                    characterIdString
+                    );
+        dbQueryWriteCommon(queryText);
+    }
+    {
+        const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_delete_monster_by_character.compose(
+                    characterIdString
+                    );
+        dbQueryWriteCommon(queryText);
+    }
+}
+
+/*
+void CharactersGroupForLogin::deleteCharacterNow(const uint32_t &characterId)
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(PreparedDBQueryCommonForLogin::db_query_delete_character.empty())
+    {
+        std::cerr << "deleteCharacterNow() Query db_query_delete_character is empty, bug" << std::endl;
+        return;
+    }
     if(PreparedDBQueryCommon::db_query_delete_monster_by_id.empty())
     {
         std::cerr << "deleteCharacterNow() Query db_query_delete_monster_by_id is empty, bug" << std::endl;
@@ -282,73 +313,71 @@ void CharactersGroupForLogin::deleteCharacterNow_return(const uint32_t &characte
 {
     if(databaseBaseCommon->next())
     {
+        const std::string &monster=databaseBaseCommon->value(0);
+        if(monster.size()%(sizeof(uint32_t)*2)==0)
         {
-            const std::string &monster=databaseBaseCommon->value(0);
-            if(monster.size()%(sizeof(uint32_t)*2)==0)
+            const std::vector<char> &data=hexatoBinary(monster);
+            const uint16_t &size=data.size()/(sizeof(uint32_t));
+            uint16_t index=0;
+            while(index<size)
             {
-                const std::vector<char> &data=hexatoBinary(monster);
-                const uint16_t &size=data.size()/(sizeof(uint32_t));
-                uint16_t index=0;
-                while(index<size)
-                {
-                    const uint32_t &monsterId=*reinterpret_cast<const uint32_t *>(data.data()+index*sizeof(uint32_t));
-                    const std::string &queryText=PreparedDBQueryCommon::db_query_delete_monster_by_id.compose(
-                                std::to_string(monsterId)
-                                );
-                    dbQueryWriteCommon(queryText);
-                    index++;
-                }
+                const uint32_t &monsterId=*reinterpret_cast<const uint32_t *>(data.data()+index*sizeof(uint32_t));
+                const std::string &queryText=PreparedDBQueryCommon::db_query_delete_monster_by_id.compose(
+                            std::to_string(monsterId)
+                            );
+                dbQueryWriteCommon(queryText);
+                index++;
             }
-            else
-                std::cerr << "haractersGroupForLogin::deleteCharacterNow_return() have incorrect monster blob lenght: " << monster.size() << ", characterId: " << characterId << std::endl;
         }
-        {
-            const std::string &monster_warehouse=databaseBaseCommon->value(1);
-            if(monster_warehouse.size()%(sizeof(uint32_t)*2)==0)
-            {
-                const std::vector<char> &data=hexatoBinary(monster_warehouse);
-                const uint16_t &size=data.size()/(sizeof(uint32_t));
-                uint16_t index=0;
-                while(index<size)
-                {
-                    const uint32_t &monsterId=*reinterpret_cast<const uint32_t *>(data.data()+index*sizeof(uint32_t));
-                    const std::string &queryText=PreparedDBQueryCommon::db_query_delete_monster_by_id.compose(
-                                std::to_string(monsterId)
-                                );
-                    dbQueryWriteCommon(queryText);
-                    index++;
-                }
-            }
-            else
-                std::cerr << "haractersGroupForLogin::deleteCharacterNow_return() have incorrect monster_warehouse blob lenght: " << monster_warehouse.size() << ", characterId: " << characterId << std::endl;
-        }
-        {
-            const std::string &monster_market=databaseBaseCommon->value(2);
-            if(monster_market.size()%(sizeof(uint32_t)*2)==0)
-            {
-                const std::vector<char> &data=hexatoBinary(monster_market);
-                const uint16_t &size=data.size()/(sizeof(uint32_t));
-                uint16_t index=0;
-                while(index<size)
-                {
-                    const uint32_t &monsterId=*reinterpret_cast<const uint32_t *>(data.data()+index*sizeof(uint32_t));
-                    const std::string &queryText=PreparedDBQueryCommon::db_query_delete_monster_by_id.compose(
-                                std::to_string(monsterId)
-                                );
-                    dbQueryWriteCommon(queryText);
-                    index++;
-                }
-            }
-            else
-                std::cerr << "haractersGroupForLogin::deleteCharacterNow_return() have incorrect monster_market blob lenght: " << monster_market.size() << ", characterId: " << characterId << std::endl;
-        }
-
-        const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_delete_character.compose(
-                    std::to_string(characterId)
-                    );
-        dbQueryWriteCommon(queryText);
+        else
+            std::cerr << "haractersGroupForLogin::deleteCharacterNow_return() have incorrect monster blob lenght: " << monster.size() << ", characterId: " << characterId << std::endl;
     }
-}
+    {
+        const std::string &monster_warehouse=databaseBaseCommon->value(1);
+        if(monster_warehouse.size()%(sizeof(uint32_t)*2)==0)
+        {
+            const std::vector<char> &data=hexatoBinary(monster_warehouse);
+            const uint16_t &size=data.size()/(sizeof(uint32_t));
+            uint16_t index=0;
+            while(index<size)
+            {
+                const uint32_t &monsterId=*reinterpret_cast<const uint32_t *>(data.data()+index*sizeof(uint32_t));
+                const std::string &queryText=PreparedDBQueryCommon::db_query_delete_monster_by_id.compose(
+                            std::to_string(monsterId)
+                            );
+                dbQueryWriteCommon(queryText);
+                index++;
+            }
+        }
+        else
+            std::cerr << "haractersGroupForLogin::deleteCharacterNow_return() have incorrect monster_warehouse blob lenght: " << monster_warehouse.size() << ", characterId: " << characterId << std::endl;
+    }
+    {
+        const std::string &monster_market=databaseBaseCommon->value(2);
+        if(monster_market.size()%(sizeof(uint32_t)*2)==0)
+        {
+            const std::vector<char> &data=hexatoBinary(monster_market);
+            const uint16_t &size=data.size()/(sizeof(uint32_t));
+            uint16_t index=0;
+            while(index<size)
+            {
+                const uint32_t &monsterId=*reinterpret_cast<const uint32_t *>(data.data()+index*sizeof(uint32_t));
+                const std::string &queryText=PreparedDBQueryCommon::db_query_delete_monster_by_id.compose(
+                            std::to_string(monsterId)
+                            );
+                dbQueryWriteCommon(queryText);
+                index++;
+            }
+        }
+        else
+            std::cerr << "haractersGroupForLogin::deleteCharacterNow_return() have incorrect monster_market blob lenght: " << monster_market.size() << ", characterId: " << characterId << std::endl;
+    }
+
+    const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_delete_character.compose(
+                std::to_string(characterId)
+                );
+    dbQueryWriteCommon(queryText);
+}*/
 
 int8_t CharactersGroupForLogin::addCharacter(void * const client,const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId)
 {
