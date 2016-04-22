@@ -2112,7 +2112,7 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
                             }
                             if(ok)
                             {
-                                reputationTemp.reputationId=reputationNameToId.at(reputationElement->Attribute("type"));
+                                reputationTemp.reputationDatabaseId=reputationNameToId.at(reputationElement->Attribute("type"));
                                 if(reputationTemp.level==0)
                                 {
                                     std::cerr << "Unable to open the xml file: " << file << ", reputation level is useless if level 0: child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
@@ -2120,7 +2120,7 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
                                 }
                                 else if(reputationTemp.level<0)
                                 {
-                                    if((-reputationTemp.level)>(int32_t)reputations.at(reputationTemp.reputationId).reputation_negative.size())
+                                    if((-reputationTemp.level)>(int32_t)reputations.at(reputationTemp.reputationDatabaseId).reputation_negative.size())
                                     {
                                         std::cerr << "Unable to open the xml file: " << file << ", reputation level is lower than minimal level for " << reputationElement->Attribute("type") << ": child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
                                         ok=false;
@@ -2128,7 +2128,7 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
                                 }
                                 else// if(reputationTemp.level>0)
                                 {
-                                    if((reputationTemp.level)>=(int32_t)reputations.at(reputationTemp.reputationId).reputation_positive.size())
+                                    if((reputationTemp.level)>=(int32_t)reputations.at(reputationTemp.reputationDatabaseId).reputation_positive.size())
                                     {
                                         std::cerr << "Unable to open the xml file: " << file << ", reputation level is higther than maximal level for " << reputationElement->Attribute("type") << ": child->ValueStr(): " << startItem->ValueStr() << " (at line: " << startItem->Row() << ")" << std::endl;
                                         ok=false;
@@ -2151,7 +2151,7 @@ std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGene
                             }
                         }
                         if(ok)
-                            profile.reputation.push_back(reputationTemp);
+                            profile.reputations.push_back(reputationTemp);
                     }
                     reputationElement = reputationElement->NextSiblingElement("reputation");
                 }
@@ -2646,9 +2646,9 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
 }
 #endif
 
-std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileList(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &file,const std::vector<Profile> &profileCommon)
+std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileList(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &file,const std::vector<Profile> &profileCommon)
 {
-    std::vector<ServerProfile> serverProfile=loadServerProfileListInternal(datapackPath,mainDatapackCode,file);
+    std::vector<ServerSpecProfile> serverProfile=loadServerProfileListInternal(datapackPath,mainDatapackCode,file);
     //index of base profile
     std::unordered_set<std::string> profileId,serverProfileId;
     {
@@ -2685,7 +2685,7 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileList(const st
             if(serverProfileId.find(profileCommon.at(index).id)==serverProfileId.cend())
             {
                 std::cerr << "Profile xml file: " << file << ", found common id \"" << profileCommon.at(index).id << "\" but not found in server, add it" << std::endl;
-                ServerProfile serverProfileTemp;
+                ServerSpecProfile serverProfileTemp;
                 serverProfileTemp.id=profileCommon.at(index).id;
                 serverProfileTemp.orientation=Orientation_bottom;
                 serverProfileTemp.x=0;
@@ -2699,10 +2699,10 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileList(const st
     return serverProfile;
 }
 
-std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &file)
+std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInternal(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &file)
 {
     std::unordered_set<std::string> idDuplicate;
-    std::vector<ServerProfile> serverProfileList;
+    std::vector<ServerSpecProfile> serverProfileList;
 
     TiXmlDocument *domDocument;
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -2738,7 +2738,7 @@ std::vector<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(
     {
         if(startItem->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
         {
-            ServerProfile serverProfile;
+            ServerSpecProfile serverProfile;
             serverProfile.orientation=Orientation_bottom;
 
             const TiXmlElement * map = startItem->FirstChildElement("map");

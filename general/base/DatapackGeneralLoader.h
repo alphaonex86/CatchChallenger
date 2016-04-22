@@ -29,8 +29,8 @@ public:
                                                                       const std::unordered_map<uint16_t, Item> &items,
                                                                       #endif // CATCHCHALLENGER_CLASS_MASTER
                                                                       const std::unordered_map<uint16_t,Monster> &monsters,const std::vector<Reputation> &reputations);
-    static std::vector<ServerProfile> loadServerProfileList(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &file, const std::vector<Profile> &profileCommon);
-    static std::vector<ServerProfile> loadServerProfileListInternal(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &file);
+    static std::vector<ServerSpecProfile> loadServerProfileList(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &file, const std::vector<Profile> &profileCommon);
+    static std::vector<ServerSpecProfile> loadServerProfileListInternal(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &file);
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     static std::vector<MonstersCollision> loadMonstersCollision(const std::string &file, const std::unordered_map<uint16_t, Item> &items, const std::vector<Event> &events);
     static LayersOptions loadLayersOptions(const std::string &file);

@@ -20,8 +20,8 @@ void EpollClientLoginSlave::askLogin(const uint8_t &query_id,const char *rawdata
     }
     if(PreparedDBQueryLogin::db_query_insert_login.empty())
     {
-        errorOutput("askLogin() Query inset login is empty, bug");
-        return false;
+        errorParsingLayer("askLogin() Query inset login is empty, bug");
+        return;
     }
     #endif
     AskLoginParam *askLoginParam=new AskLoginParam;
