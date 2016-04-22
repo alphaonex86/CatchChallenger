@@ -20,7 +20,7 @@ public:
     uint16_t botFightsMaxId;
     std::unordered_map<uint16_t,Quest> quests;
     std::unordered_map<uint32_t,Shop> shops;
-    std::vector<ServerProfile> serverProfileList;
+    std::vector<ServerSpecProfile> serverProfileList;
     static CommonDatapackServerSpec commonDatapackServerSpec;
 private:
     bool isParsedSpec;

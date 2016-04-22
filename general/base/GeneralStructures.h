@@ -793,11 +793,12 @@ struct IndustryStatus
     std::unordered_map<uint32_t,uint32_t> products;
 };
 
-struct Profile
+class Profile
 {
+public:
     struct Reputation
     {
-        uint8_t reputationId;//datapack order, can can need the dicionary to db resolv
+        uint8_t reputationDatabaseId;//datapack order, can can need the dicionary to db resolv
         int8_t level;
         int32_t point;
     };
@@ -815,12 +816,12 @@ struct Profile
     std::vector<uint8_t> forcedskin;
     uint64_t cash;
     std::vector<std::vector<Profile::Monster> > monstergroup;
-    std::vector<Reputation> reputation;
+    std::vector<Reputation> reputations;
     std::vector<Item> items;
     std::string id;
 };
 
-struct ServerProfile
+struct ServerSpecProfile
 {
     std::string mapString;
     /*COORD_TYPE*/ uint8_t x;
