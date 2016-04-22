@@ -874,29 +874,14 @@ void Client::deleteCharacterNow_return(const uint32_t &characterId)
 void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryCommon::db_query_select_character_by_pseudo.empty())
+    if(PreparedDBQueryCommonForLogin::db_query_select_character_by_pseudo.empty())
     {
-        errorOutput("addCharacter() Query is empty, bug");
+        std::cerr << "addCharacter() Query is empty, bug" << std::endl;
         return;
     }
     if(PreparedDBQueryCommon::db_query_insert_monster.empty())
     {
         errorOutput("addCharacter() Query db_query_insert_monster is empty, bug");
-        return;
-    }
-    if(PreparedDBQueryCommon::db_query_insert_monster_skill.empty())
-    {
-        errorOutput("addCharacter() Query db_query_insert_monster_skill is empty, bug");
-        return;
-    }
-    if(PreparedDBQueryCommon::db_query_insert_reputation.empty())
-    {
-        errorOutput("addCharacter() Query db_query_insert_reputation is empty, bug");
-        return;
-    }
-    if(PreparedDBQueryCommon::db_query_insert_item.empty())
-    {
-        errorOutput("addCharacter() Query db_query_insert_item is empty, bug");
         return;
     }
     #endif
@@ -981,8 +966,9 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
     addCharacterParam->monsterGroupId=monsterGroupId;
     addCharacterParam->skinId=skinId;
 
-    std::string queryText=PreparedDBQueryCommon::db_query_select_character_by_pseudo;
-    stringreplaceOne(queryText,"%1",SqlFunction::quoteSqlVariable(pseudo));
+    const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_select_character_by_pseudo.compose(
+                SqlFunction::quoteSqlVariable(pseudo)
+                );
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::addCharacter_static);
     if(callback==NULL)
     {
@@ -1075,13 +1061,75 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
 
         return;
     }
+
+    number_of_character++;
+    GlobalServerData::serverPrivateVariables.maxCharacterId++;
+
+    const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
+
+    const uint32_t &characterId=GlobalServerData::serverPrivateVariables.maxCharacterId;
+    const std::string &characterIdString=std::to_string(characterId);
+    maxCharacterId.pop_back();
+    int monster_position=1;
+
+    const std::vector<EpollServerLoginSlave::LoginProfile::Monster> &monsterGroup=profile.monstergroup.at(monsterGroupId);
+    const std::vector<StringWithReplacement> &monsters=profile.monster_insert.at(monsterGroupId);
+    const std::string &monster_encyclopedia_insert=profile.monster_encyclopedia_insert.at(monsterGroupId);
+    if(!monsters.empty())
+    {
+        unsigned int index=0;
+        while(index<monsters.size())
+        {
+            const EpollServerLoginSlave::LoginProfile::Monster &monster=monsterGroup.at(index);
+            const StringWithReplacement &monsterQuery=monsters.at(index);
+
+            const uint32_t monster_id=maxMonsterId.back();
+            maxMonsterId.pop_back();
+
+            //insert the monster is db
+            {
+                const std::string &monster_id_string=std::to_string(monster_id);
+                //id,gender,id
+                if(monster.ratio_gender!=-1)
+                {
+                    if(rand()%101<monster.ratio_gender)
+                        dbQueryWriteCommon(monsterQuery.compose(monster_id_string,characterIdString,CharactersGroupForLogin::gender_female,characterIdString));
+                    else
+                        dbQueryWriteCommon(monsterQuery.compose(monster_id_string,characterIdString,CharactersGroupForLogin::gender_male,characterIdString));
+                }
+                else
+                    dbQueryWriteCommon(monsterQuery.compose(monster_id_string,characterIdString,characterIdString));
+
+                monster_position++;
+            }
+            index++;
+        }
+    }
+
+    const std::string &local_character_insert=profile.character_insert.compose(
+                characterIdString,
+                std::to_string(client->account_id),
+                SqlFunction::quoteSqlVariable(pseudo),
+                std::to_string(DictionaryLogin::dictionary_skin_internal_to_database.at(skinId)),
+                std::to_string(sFrom1970()),
+                monsterIdList,
+                monster_encyclopedia_insert
+                );
+    dbQueryWriteCommon(local_character_insert);
+
+
+
+
+
+
+    --------------------
+
     const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
     const std::vector<Profile::Monster> &monsters=profile.monstergroup.at(monsterGroupId);
     //const ServerProfile &serverProfile=CommonDatapack::commonDatapack.serverProfileList.at(profileIndex);
     const ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex);
 
-    number_of_character++;
-    GlobalServerData::serverPrivateVariables.maxCharacterId++;
+
 
     std::vector<unsigned int> monsterIdList;
     {

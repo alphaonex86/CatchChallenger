@@ -14,6 +14,7 @@
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/ConnectedSocket.h"
 #include "PlayerUpdater.h"
+#include "StringWithReplacement.h"
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "PlayerUpdaterToMaster.h"
 #endif
@@ -265,17 +266,10 @@ struct ServerProfileInternal
     /*COORD_TYPE*/ uint8_t y;
     Orientation orientation;
 
-    /*struct MonsterProfile
-    {
-        std::vector<std::string > monster;
-        std::vector<std::vector<std::string > > preparedQueryAddMonsterSkill;
-    };*/
-    //only to add
-    std::vector<std::string > preparedQueryAddCharacter;
-    std::vector<std::string > preparedQueryAddCharacterForServer;
-    /*std::vector<MonsterProfile> preparedQueryAddMonster;
-    std::vector<std::vector<std::string > > preparedQueryAddItem;
-    std::vector<std::vector<std::string > > preparedQueryAddReputation;*/
+    std::vector<std::string> monster_encyclopedia_insert;
+    std::vector<std::vector<StringWithReplacement> > monster_insert;
+
+    StringWithReplacement character_insert;
     bool valid;
 };
 

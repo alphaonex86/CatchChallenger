@@ -387,6 +387,11 @@ int8_t CharactersGroupForLogin::addCharacter(void * const client,const uint8_t &
         std::cerr << "addCharacter() Query is empty, bug" << std::endl;
         return 0x03;
     }
+    if(PreparedDBQueryCommon::db_query_insert_monster.empty())
+    {
+        std::cerr << "addCharacter() Query db_query_insert_monster is empty, bug" << std::endl;
+        return 0x03;
+    }
     #endif
     if(DictionaryLogin::dictionary_skin_internal_to_database.empty())
     {
@@ -539,13 +544,11 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     maxCharacterId.pop_back();
     int monster_position=1;
 
-    std::string monsterIdList;
     const std::vector<EpollServerLoginSlave::LoginProfile::Monster> &monsterGroup=profile.monstergroup.at(monsterGroupId);
     const std::vector<StringWithReplacement> &monsters=profile.monster_insert.at(monsterGroupId);
     const std::string &monster_encyclopedia_insert=profile.monster_encyclopedia_insert.at(monsterGroupId);
     if(!monsters.empty())
     {
-        char monsterIdList[4*monsters.size()];
         unsigned int index=0;
         while(index<monsters.size())
         {
@@ -554,7 +557,6 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
 
             const uint32_t monster_id=maxMonsterId.back();
             maxMonsterId.pop_back();
-            *reinterpret_cast<uint32_t *>(monsterIdList+index*4)=htole32(monster_id);
 
             //insert the monster is db
             {
@@ -582,7 +584,6 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
                 SqlFunction::quoteSqlVariable(pseudo),
                 std::to_string(DictionaryLogin::dictionary_skin_internal_to_database.at(skinId)),
                 std::to_string(sFrom1970()),
-                monsterIdList,
                 monster_encyclopedia_insert
                 );
     dbQueryWriteCommon(local_character_insert);
