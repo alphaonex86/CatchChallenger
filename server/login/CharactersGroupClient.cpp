@@ -605,7 +605,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
-bool CharactersGroupForLogin::removeCharacter(void * const client,const uint8_t &query_id, const uint32_t &characterId)
+bool CharactersGroupForLogin::removeCharacterLater(void * const client,const uint8_t &query_id, const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryCommonForLogin::db_query_account_time_to_delete_character_by_id.empty())
@@ -622,7 +622,7 @@ bool CharactersGroupForLogin::removeCharacter(void * const client,const uint8_t 
     const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_account_time_to_delete_character_by_id.compose(
                 std::to_string(characterId)
                 );
-    CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText,this,&CharactersGroupForLogin::removeCharacter_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText,this,&CharactersGroupForLogin::removeCharacterLater_static);
     if(callback==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseCommon->errorMessage() << std::endl;
@@ -635,21 +635,21 @@ bool CharactersGroupForLogin::removeCharacter(void * const client,const uint8_t 
     }
 }
 
-void CharactersGroupForLogin::removeCharacter_static(void *object)
+void CharactersGroupForLogin::removeCharacterLater_static(void *object)
 {
     if(object!=NULL)
-        static_cast<CharactersGroupForLogin *>(object)->removeCharacter_object();
+        static_cast<CharactersGroupForLogin *>(object)->removeCharacterLater_object();
 }
 
-void CharactersGroupForLogin::removeCharacter_object()
+void CharactersGroupForLogin::removeCharacterLater_object()
 {
     RemoveCharacterParam removeCharacterParam=removeCharacterParamList.front();
     removeCharacterParamList.erase(removeCharacterParamList.begin());
-    removeCharacter_return(static_cast<EpollClientLoginSlave *>(removeCharacterParam.client),removeCharacterParam.query_id,removeCharacterParam.characterId);
+    removeCharacterLater_return(static_cast<EpollClientLoginSlave *>(removeCharacterParam.client),removeCharacterParam.query_id,removeCharacterParam.characterId);
     databaseBaseCommon->clear();
 }
 
-void CharactersGroupForLogin::removeCharacter_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint32_t &characterId)
+void CharactersGroupForLogin::removeCharacterLater_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint32_t &characterId)
 {
     if(!databaseBaseCommon->next())
     {

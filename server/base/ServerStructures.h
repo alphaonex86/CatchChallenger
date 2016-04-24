@@ -270,6 +270,8 @@ struct ServerProfileInternal
     std::vector<std::vector<StringWithReplacement> > monster_insert;
 
     StringWithReplacement character_insert;
+
+    StringWithReplacement preparedQueryAddCharacterForServer;
     bool valid;
 };
 
