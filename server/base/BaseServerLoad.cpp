@@ -843,6 +843,7 @@ void BaseServer::preload_profile()
     while(index<CommonDatapack::commonDatapack.profileList.size())
     {
         const Profile &profile=CommonDatapack::commonDatapack.profileList.at(index);
+        ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(index);
 
         std::string encyclopedia_item,item;
         if(profile.items.empty())
@@ -901,27 +902,30 @@ void BaseServer::preload_profile()
         {
             unsigned int monsterGroupIndex=0;
             const auto &monsters=profile.monstergroup.at(monsterGroupIndex);
-            profile.monster_insert.resize(monsters.size());
+            serverProfileInternal.monster_insert.resize(monsters.size());
             while(monsterGroupIndex<monsters.size())
             {
                 std::vector<uint16_t> monsterForEncyclopedia;
                 unsigned int monsterIndex=0;
                 const auto &monster=monsters.at(monsterIndex);
-                std::vector<StringWithReplacement> &monsterGroupQuery=profile.monster_insert[monsterGroupIndex];
+                const auto &monsterDatapack=CommonDatapack::commonDatapack.monsters.at(monster.id);
+                const Monster::Stat &monsterStat=CommonFightEngineBase::getStat(monsterDatapack,monster.level);
+                const std::vector<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngineBase::generateWildSkill(monsterDatapack,monster.level);
+                std::vector<StringWithReplacement> &monsterGroupQuery=serverProfileInternal.monster_insert[monsterGroupIndex];
                 while(monsterIndex<monsters.size())
                 {
-                    if(monster.skills.empty())
+                    if(skills.empty())
                     {
-                        std::cerr << "monster.skills.empty() for some profile" << std::endl;
+                        std::cerr << "skills.empty() for some profile" << std::endl;
                         abort();
                     }
-                    char raw_skill[(2+1)*monster.skills.size()],raw_skill_endurance[1*monster.skills.size()];
+                    char raw_skill[(2+1)*skills.size()],raw_skill_endurance[1*skills.size()];
                     //the skills
                     unsigned int sub_index=0;
-                    while(sub_index<monster.skills.size())
+                    while(sub_index<skills.size())
                     {
-                        const EpollServerLoginSlave::LoginProfile::Monster::Skill &skill=monster.skills.at(sub_index);
-                        *reinterpret_cast<uint16_t *>(raw_skill+sub_index*(2+1))=htole16(skill.id);
+                        const auto &skill=skills.at(sub_index);
+                        *reinterpret_cast<uint16_t *>(raw_skill+sub_index*(2+1))=htole16(skill.skill);
                         raw_skill[sub_index*(2+1)+2]=skill.level;
                         raw_skill_endurance[sub_index]=skill.endurance;
                         sub_index++;
@@ -929,13 +933,13 @@ void BaseServer::preload_profile()
                     //dynamic part
                     {
                         //id,character,place,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position,skills,skills_endurance
-                        if(monster.ratio_gender!=-1)
+                        if(monsterDatapack.ratio_gender!=-1)
                         {
                             const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster.compose(
                                     "%1",
                                     "%2",
                                     "1",
-                                    std::to_string(monster.hp),
+                                    std::to_string(monsterStat.hp),
                                     std::to_string(monster.id),
                                     std::to_string(monster.level),
                                     std::to_string(monster.captured_with),
@@ -953,7 +957,7 @@ void BaseServer::preload_profile()
                                     "%1",
                                     "%2",
                                     "1",
-                                    std::to_string(monster.hp),
+                                    std::to_string(monsterStat.hp),
                                     std::to_string(monster.id),
                                     std::to_string(monster.level),
                                     std::to_string(monster.captured_with),
@@ -981,7 +985,7 @@ void BaseServer::preload_profile()
                     bitlist[bittoUp/8]|=(1<<(7-bittoUp%8));
                     monsterIndex++;
                 }
-                profile.monster_encyclopedia_insert.push_back(binarytoHexa(bitlist,sizeof(bitlist)));
+                serverProfileInternal.monster_encyclopedia_insert.push_back(binarytoHexa(bitlist,sizeof(bitlist)));
 
                 monsterGroupIndex++;
             }
@@ -990,31 +994,54 @@ void BaseServer::preload_profile()
         {
             default:
             case DatabaseBase::DatabaseType::Mysql:
-                EpollServerLoginSlave::loginProfileList[index].character_insert=std::string("INSERT INTO `character`("
+                serverProfileInternal.character_insert=std::string("INSERT INTO `character`("
                         "`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,"
                         "`time_to_delete`,`played_time`,`last_connect`,`starter`,`item`,`reputations`,`encyclopedia_monster`,`encyclopedia_item`"
                         ") VALUES(%1,%2,'%3',%4,0,0,"+
                         std::to_string(profile.cash)+",%5,0,0,"
                         "0,0,0,"+
-                        std::to_string(profile.databaseId/*starter*/)+",UNHEX('"+item+"'),UNHEX('"+reputations+"'),%6,UNHEX('"+encyclopedia_item+"'));");
+                        std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",UNHEX('"+item+"'),UNHEX('"+reputations+"'),%6,UNHEX('"+encyclopedia_item+"'));");
             break;
             case DatabaseBase::DatabaseType::SQLite:
-                EpollServerLoginSlave::loginProfileList[index].character_insert=std::string("INSERT INTO character("
+                serverProfileInternal.character_insert=std::string("INSERT INTO character("
                         "id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,"
                         "time_to_delete,played_time,last_connect,starter,item,reputations,encyclopedia_monster,encyclopedia_item"
                         ") VALUES(%1,%2,'%3',%4,0,0,"+
                         std::to_string(profile.cash)+",%5,0,0,"
                         "0,0,0,"+
-                        std::to_string(profile.databaseId/*starter*/)+",'"+item+"','"+reputations+"',%6,'"+encyclopedia_item+"');");
+                        std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",'"+item+"','"+reputations+"',%6,'"+encyclopedia_item+"');");
             break;
             case DatabaseBase::DatabaseType::PostgreSQL:
-                EpollServerLoginSlave::loginProfileList[index].character_insert=std::string("INSERT INTO character("
+                serverProfileInternal.character_insert=std::string("INSERT INTO character("
                         "id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,"
                         "time_to_delete,played_time,last_connect,starter,item,reputations,encyclopedia_monster,encyclopedia_item"
                         ") VALUES(%1,%2,'%3',%4,0,0,"+
                         std::to_string(profile.cash)+",%5,0,0,"
                         "0,0,0,"+
-                        std::to_string(profile.databaseId/*starter*/)+",'\\x"+item+"','\\x"+reputations+"',%6,'\\x"+encyclopedia_item+"');");
+                        std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",'\\x"+item+"','\\x"+reputations+"',%6,'\\x"+encyclopedia_item+"');");
+            break;
+        }
+        const std::string &mapQuery=std::to_string(serverProfileInternal.map->reverse_db_id)+
+                ","+
+                std::to_string(serverProfileInternal.x)+
+                ","+
+                std::to_string(serverProfileInternal.y)+
+                ","+
+                std::to_string(Orientation_bottom);
+        switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
+        {
+            default:
+            case DatabaseBase::DatabaseType::Mysql:
+                serverProfileInternal.preparedQueryAddCharacterForServer=std::string("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`) VALUES("
+                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0);");
+            break;
+            case DatabaseBase::DatabaseType::SQLite:
+                serverProfileInternal.preparedQueryAddCharacterForServer=std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES("
+                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0);");
+            break;
+            case DatabaseBase::DatabaseType::PostgreSQL:
+                serverProfileInternal.preparedQueryAddCharacterForServer=std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES("
+                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0);");
             break;
         }
 

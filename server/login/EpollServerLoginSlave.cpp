@@ -652,7 +652,7 @@ void EpollServerLoginSlave::preload_profile()
                     unsigned int sub_index=0;
                     while(sub_index<monster.skills.size())
                     {
-                        const EpollServerLoginSlave::LoginProfile::Monster::Skill &skill=monster.skills.at(sub_index);
+                        const auto &skill=monster.skills.at(sub_index);
                         *reinterpret_cast<uint16_t *>(raw_skill+sub_index*(2+1))=htole16(skill.id);
                         raw_skill[sub_index*(2+1)+2]=skill.level;
                         raw_skill_endurance[sub_index]=skill.endurance;
@@ -722,7 +722,7 @@ void EpollServerLoginSlave::preload_profile()
         {
             default:
             case DatabaseBase::DatabaseType::Mysql:
-                EpollServerLoginSlave::loginProfileList[index].character_insert=std::string("INSERT INTO `character`("
+                profile.character_insert=std::string("INSERT INTO `character`("
                         "`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,"
                         "`time_to_delete`,`played_time`,`last_connect`,`starter`,`item`,`reputations`,`encyclopedia_monster`,`encyclopedia_item`"
                         ") VALUES(%1,%2,'%3',%4,0,0,"+
@@ -731,7 +731,7 @@ void EpollServerLoginSlave::preload_profile()
                         std::to_string(profile.databaseId/*starter*/)+",UNHEX('"+item+"'),UNHEX('"+reputations+"'),%6,UNHEX('"+encyclopedia_item+"'));");
             break;
             case DatabaseBase::DatabaseType::SQLite:
-                EpollServerLoginSlave::loginProfileList[index].character_insert=std::string("INSERT INTO character("
+                profile.character_insert=std::string("INSERT INTO character("
                         "id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,"
                         "time_to_delete,played_time,last_connect,starter,item,reputations,encyclopedia_monster,encyclopedia_item"
                         ") VALUES(%1,%2,'%3',%4,0,0,"+
@@ -740,7 +740,7 @@ void EpollServerLoginSlave::preload_profile()
                         std::to_string(profile.databaseId/*starter*/)+",'"+item+"','"+reputations+"',%6,'"+encyclopedia_item+"');");
             break;
             case DatabaseBase::DatabaseType::PostgreSQL:
-                EpollServerLoginSlave::loginProfileList[index].character_insert=std::string("INSERT INTO character("
+                profile.character_insert=std::string("INSERT INTO character("
                         "id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,"
                         "time_to_delete,played_time,last_connect,starter,item,reputations,encyclopedia_monster,encyclopedia_item"
                         ") VALUES(%1,%2,'%3',%4,0,0,"+

@@ -62,7 +62,11 @@ StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_and_hp;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_hp_and_level;
 StringWithReplacement PreparedDBQueryCommon::db_query_select_monsters_by_player_id;
 StringWithReplacement PreparedDBQueryCommon::db_query_insert_clan;
-
+#if defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+StringWithReplacement PreparedDBQueryCommon::db_query_insert_server_time;
+StringWithReplacement PreparedDBQueryCommon::db_query_update_server_time_played_time;
+StringWithReplacement PreparedDBQueryCommon::db_query_update_server_time_last_connect;
+#endif
 
 
 
@@ -136,9 +140,6 @@ StringWithReplacement PreparedDBQueryCommon::db_query_insert_monster_buff;
 
 StringWithReplacement PreparedDBQueryCommon::db_query_delete_monster_specific_skill;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_owner;
-StringWithReplacement PreparedDBQueryCommon::db_query_insert_server_time;
-StringWithReplacement PreparedDBQueryCommon::db_query_update_server_time_played_time;
-StringWithReplacement PreparedDBQueryCommon::db_query_update_server_time_last_connect;
 #endif
 
 #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)

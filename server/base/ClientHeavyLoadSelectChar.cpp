@@ -434,19 +434,20 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     unvalidated_rescue_map(8),unvalidated_rescue_x(9),unvalidated_rescue_y(10),unvalidated_rescue_orientation(11),
     market_cash(12),botfight_id(13),itemonmap(14),quest(15),blob_version(16),plants(17)*/
     callbackRegistred.pop();
+    const auto &characterIdString=std::to_string(characterId);
+    const auto &sFrom1970String=std::to_string(sFrom1970());
     if(!GlobalServerData::serverPrivateVariables.db_server->next())
     {
         const ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex);
 
-        dbQueryWriteServer(serverProfileInternal.preparedQueryAddCharacterForServer.at(0)+
-                     std::to_string(characterId)+
-                     serverProfileInternal.preparedQueryAddCharacterForServer.at(1)+
-                     std::to_string(sFrom1970())+
-                     serverProfileInternal.preparedQueryAddCharacterForServer.at(2)
-                     );
+        dbQueryWriteServer(serverProfileInternal.preparedQueryAddCharacterForServer.compose(
+                               characterIdString,
+                               sFrom1970String
+                               )
+                           );
         const std::string &queryText=PreparedDBQueryCommon::db_query_update_character_last_connect.compose(
-                    std::to_string(sFrom1970()),
-                    std::to_string(characterId)
+                    sFrom1970String,
+                    characterIdString
                     );
         dbQueryWriteCommon(queryText);
 

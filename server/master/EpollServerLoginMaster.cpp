@@ -1047,19 +1047,19 @@ void EpollServerLoginMaster::loadTheProfile()
 
             {
                 //reputation
-                rawServerListForC211[rawServerListForC211Size]=profile.reputation.size();
+                rawServerListForC211[rawServerListForC211Size]=profile.reputations.size();
                 rawServerListForC211Size+=sizeof(uint8_t);
                 unsigned int reputationIndex=0;
-                while(reputationIndex<profile.reputation.size())
+                while(reputationIndex<profile.reputations.size())
                 {
-                    const Profile::Reputation &reputation=profile.reputation.at(reputationIndex);
-                    if(reputation.reputationId>=CommonDatapack::commonDatapack.reputation.size())
+                    const Profile::Reputation &reputation=profile.reputations.at(reputationIndex);
+                    if(reputation.reputationDatabaseId>=CommonDatapack::commonDatapack.reputation.size())
                     {
-                        std::cerr << "For profile the reputation " << reputation.reputationId << " is not found (abort)" << std::endl;
+                        std::cerr << "For profile the reputation " << reputation.reputationDatabaseId << " is not found (abort)" << std::endl;
                         abort();
                     }
                     //type
-                    *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(CommonDatapack::commonDatapack.reputation.at(reputation.reputationId).reverse_database_id);
+                    *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(CommonDatapack::commonDatapack.reputation.at(reputation.reputationDatabaseId).reverse_database_id);
                     rawServerListForC211Size+=sizeof(uint16_t);
                     //level
                     rawServerListForC211[rawServerListForC211Size]=reputation.level;
