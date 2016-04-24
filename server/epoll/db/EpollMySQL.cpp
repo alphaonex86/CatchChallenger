@@ -121,7 +121,7 @@ bool EpollMySQL::syncConnectInternal()
      * Then the execution is on by one, and the RTT will slow down this */
     {
         int state = 1;
-        if(setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &state, sizeof(state))!=0)
+        if(setsockopt(conn->net.fd, IPPROTO_TCP, TCP_NODELAY, &state, sizeof(state))!=0)
             std::cerr << "Unable to apply tcp no delay" << std::endl;
     }
     epoll_event event;
