@@ -1,6 +1,6 @@
 CONFIG += c++11
-QMAKE_CFLAGS="-std=c++0x"
-QMAKE_CXXFLAGS="-std=c++0x"
+QMAKE_CFLAGS+="-std=c++0x -Wall -Wextra"
+QMAKE_CXXFLAGS+="-std=c++0x -Wall -Wextra"
 
 QT       -= core
 DEFINES += TIXML_USE_STL

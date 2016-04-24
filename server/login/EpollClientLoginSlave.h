@@ -206,7 +206,7 @@ public:
 private:
     void deleteCharacterNow(const uint32_t &characterId);
     void addCharacter(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId);
-    void removeCharacter(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint32_t &characterId);
+    void removeCharacterLater(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint32_t &characterId);
     void dbQueryWriteLogin(const std::string &queryText);
 
     void loginIsWrong(const uint8_t &query_id,const uint8_t &returnCode,const std::string &debugMessage);

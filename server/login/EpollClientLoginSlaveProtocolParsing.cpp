@@ -539,7 +539,7 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
             #endif
             const uint8_t &charactersGroupIndex=data[0];
             const uint32_t &characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+1)));
-            removeCharacter(queryNumber,charactersGroupIndex,characterId);
+            removeCharacterLater(queryNumber,charactersGroupIndex,characterId);
             return true;
         }
         break;

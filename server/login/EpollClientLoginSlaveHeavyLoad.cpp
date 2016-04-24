@@ -841,14 +841,14 @@ void EpollClientLoginSlave::addCharacter(const uint8_t &query_id, const uint8_t 
     }
 }
 
-void EpollClientLoginSlave::removeCharacter(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint32_t &characterId)
+void EpollClientLoginSlave::removeCharacterLater(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint32_t &characterId)
 {
     if(characterGroupIndex>=CharactersGroupForLogin::list.size())
     {
         errorParsingLayer("EpollClientLoginSlave::selectCharacter() charactersGroupIndex is out of range");
         return;
     }
-    if(!CharactersGroupForLogin::list.at(characterGroupIndex)->removeCharacter(this,query_id,characterId))
+    if(!CharactersGroupForLogin::list.at(characterGroupIndex)->removeCharacterLater(this,query_id,characterId))
     {
         EpollClientLoginSlave::loginIsWrongBufferReply[1]=query_id;
         EpollClientLoginSlave::loginIsWrongBufferReply[1+1+4]=0x02;

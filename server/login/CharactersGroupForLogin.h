@@ -64,10 +64,10 @@ public:
     static void addCharacterStep2_static(void *object);
     void addCharacterStep2_object();
     void addCharacterStep2_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo, const uint8_t &monsterGroupId,const uint8_t &skinId);
-    bool removeCharacter(void * const client,const uint8_t &query_id, const uint32_t &characterId);
-    static void removeCharacter_static(void *object);
-    void removeCharacter_object();
-    void removeCharacter_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint32_t &characterId);
+    bool removeCharacterLater(void * const client,const uint8_t &query_id, const uint32_t &characterId);
+    static void removeCharacterLater_static(void *object);
+    void removeCharacterLater_object();
+    void removeCharacterLater_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint32_t &characterId);
 
     void character_list(EpollClientLoginSlave * const client,const uint32_t &account_id);
     static void character_list_static(void *object);
