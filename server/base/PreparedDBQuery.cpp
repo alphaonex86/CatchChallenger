@@ -174,7 +174,7 @@ void PreparedDBQueryLogin::initDatabaseQueryLogin(const DatabaseBase::DatabaseTy
         #endif
         abort();
         return;
-        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_MYSQL)
+        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
         PreparedDBQueryLogin::db_query_login="SELECT `id`,LOWER(HEX(`password`)),blob_version FROM `account` WHERE `login`=UNHEX('%1')";
         PreparedDBQueryLogin::db_query_insert_login="INSERT INTO account(id,login,password,date,blob_version) VALUES(%1,UNHEX('%2'),UNHEX('%3'),%4,%5)";
@@ -211,7 +211,7 @@ void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const Databa
         #endif
         abort();
         return;
-        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_MYSQL)
+        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
         PreparedDBQueryCommonForLogin::db_query_characters="SELECT `id`,`pseudo`,`skin`,`time_to_delete`,`played_time`,`last_connect` FROM `character` WHERE `account`=%1";
         PreparedDBQueryCommonForLogin::db_query_characters_with_monsters="SELECT LOWER(HEX(`monster`)),LOWER(HEX(`monster_warehouse`)),LOWER(HEX(`monster_market`)) FROM `character` WHERE `id`=%1";
@@ -269,7 +269,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         #endif
         abort();
         return;
-        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_MYSQL)
+        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
         //login and gameserver alone
         PreparedDBQueryCommon::db_query_delete_monster_by_id="DELETE FROM `monster` WHERE `id`=%1";
@@ -604,7 +604,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::Da
         #endif
         abort();
         return;
-        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_MYSQL)
+        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
         #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
         if(useSP)
@@ -691,7 +691,7 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         #endif
         abort();
         return;
-        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_MYSQL)
+        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
         PreparedDBQueryServer::db_query_update_character_forserver_map="UPDATE `character_forserver` SET `map`=%1,`x`=%2,`y`=%3,`orientation`=%4,`rescue_map`=%5,`rescue_x`=%6,`rescue_y`=%7,`rescue_orientation`=%8,`unvalidated_rescue_map`=%9,`unvalidated_rescue_x`=%10,`unvalidated_rescue_y`=%11,`unvalidated_rescue_orientation`=%12 WHERE `character`=%13";
         #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
@@ -753,7 +753,17 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_get_market_cash="UPDATE character SET cash=%1,market_cash=0 WHERE id=%2;";
         PreparedDBQueryServer::db_query_insert_monster_market_price="INSERT INTO monster_market_price(id,market_price,character) VALUES(%1,%2,%3)";
         PreparedDBQueryServer::db_query_delete_monster_market_price="DELETE FROM monster_market_price WHERE id=%1";
-        PreparedDBQueryServer::db_query_delete_bot_already_beaten="DELETE FROM bot_already_beaten WHERE character=%1";
+        PreparedDBQueryServer::db_query_insert_factory="INSERT INTO factory(id,resources,products,last_update) VALUES(%1,'%2','%3',%4)";
+        PreparedDBQueryServer::db_query_update_factory="UPDATE factory SET resources='%1',products='%2',last_update=%3 WHERE id=%4";
+        PreparedDBQueryServer::db_query_delete_city="DELETE FROM city WHERE city='%1'";
+        PreparedDBQueryServer::db_query_update_city_clan="UPDATE city SET clan=%1 WHERE city='%2';";
+        PreparedDBQueryServer::db_query_insert_city="INSERT INTO city(clan,city) VALUES(%1,'%2');";
+        PreparedDBQueryServer::db_query_update_character_quests="UPDATE character_forserver SET quest='%1' WHERE id=%2";
+        PreparedDBQueryServer::db_query_update_plant="UPDATE character_forserver SET plants='%1' WHERE id=%2";
+        PreparedDBQueryServer::db_query_update_itemonmap="UPDATE character_forserver SET itemonmap='%1' WHERE id=%2";
+        PreparedDBQueryServer::db_query_update_character_bot_already_beaten="UPDATE character_forserver SET bot_already_beaten='%1' WHERE id=%2";
+
+        /*        PreparedDBQueryServer::db_query_delete_bot_already_beaten="DELETE FROM bot_already_beaten WHERE character=%1";
         PreparedDBQueryServer::db_query_select_plant="SELECT \"pointOnMap\",plant,plant_timestamps FROM plant WHERE character=%1";
         PreparedDBQueryServer::db_query_delete_plant="DELETE FROM plant WHERE character=%1";
         PreparedDBQueryServer::db_query_delete_plant_by_index="DELETE FROM plant WHERE character=%1 AND \"pointOnMap\"=%2";
@@ -762,21 +772,13 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_select_bot_beaten="SELECT botfight_id FROM bot_already_beaten WHERE character=%1 ORDER BY bot_already_beaten";
         PreparedDBQueryServer::db_query_select_itemOnMap="SELECT \"pointOnMap\" FROM \"character_itemonmap\" WHERE character=%1 ORDER BY \"pointOnMap\"";
         PreparedDBQueryServer::db_query_insert_itemonmap="INSERT INTO \"character_itemonmap\"(character,\"pointOnMap\") VALUES(%1,%2)";
-        PreparedDBQueryServer::db_query_insert_factory="INSERT INTO factory(id,resources,products,last_update) VALUES(%1,'%2','%3',%4)";
-        PreparedDBQueryServer::db_query_update_factory="UPDATE factory SET resources='%1',products='%2',last_update=%3 WHERE id=%4";
-        PreparedDBQueryServer::db_query_delete_city="DELETE FROM city WHERE city='%1'";
         PreparedDBQueryServer::db_query_insert_bot_already_beaten="INSERT INTO bot_already_beaten(character,botfight_id) VALUES(%1,%2)";
         PreparedDBQueryServer::db_query_insert_plant="INSERT INTO plant(character,\"pointOnMap\",plant,plant_timestamps) VALUES(%1,%2,%3,%4);";
         PreparedDBQueryServer::db_query_update_quest_finish="UPDATE quest SET step=0,finish_one_time=1 WHERE character=%1 AND quest=%2;";
         PreparedDBQueryServer::db_query_update_quest_step="UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;";
         PreparedDBQueryServer::db_query_update_quest_restart="UPDATE quest SET step=1 WHERE character=%1 AND quest=%2;";
         PreparedDBQueryServer::db_query_insert_quest="INSERT INTO quest(character,quest,finish_one_time,step) VALUES(%1,%2,0,%3);";
-        PreparedDBQueryServer::db_query_update_city_clan="UPDATE city SET clan=%1 WHERE city='%2';";
-        PreparedDBQueryServer::db_query_insert_city="INSERT INTO city(clan,city) VALUES(%1,'%2');"
-        PreparedDBQueryServer::db_query_update_character_quests="UPDATE character_forserver SET quest='%1' WHERE id=%2";
-        PreparedDBQueryServer::db_query_update_plant="UPDATE character_forserver SET plants='%1' WHERE id=%2";
-        PreparedDBQueryServer::db_query_update_itemonmap="UPDATE character_forserver SET itemonmap='%1' WHERE id=%2";
-        PreparedDBQueryServer::db_query_update_character_bot_already_beaten="UPDATE character_forserver SET bot_already_beaten='%1' WHERE id=%2";
+        */
         break;
         #endif
 
