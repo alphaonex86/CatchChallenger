@@ -77,6 +77,7 @@ public:
     static const unsigned char protocolHeaderToMatch[BASE_PROTOCOL_MAGIC_SIZE];
     static unsigned char protocolReplyProtocolNotSupported[7];
     static unsigned char protocolReplyWrongAuth[7];
+    /// \todo group all reply in one
     static unsigned char protocolReplyCompressionNone[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     static unsigned char protocolReplyCompresssionZlib[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];

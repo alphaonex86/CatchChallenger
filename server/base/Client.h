@@ -127,10 +127,13 @@ public:
     static unsigned char *characterIsRightFinalStepHeader;
     static uint32_t characterIsRightFinalStepHeaderSize;
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    /// \todo group all reply in one
     static unsigned char protocolReplyCompressionNone[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     static unsigned char protocolReplyCompresssionZlib[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     static unsigned char protocolReplyCompressionXz[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     static unsigned char protocolReplyCompressionLz4[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    #endif
     static std::vector<Client *> stat_client_list;
     static unsigned char private_token_statclient[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
 
@@ -435,7 +438,9 @@ private:
     void addDatapackListReply(const bool &fileRemove);
     void purgeDatapackListReply(const uint8_t &query_id);
     void sendFileContent();
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     void sendCompressedFileContent();
+    #endif
     #endif
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     void dbQueryWriteLogin(const std::string &queryText);

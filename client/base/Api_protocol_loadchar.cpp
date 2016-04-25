@@ -440,28 +440,6 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
     in >> cash;
     player_informations.warehouse_cash=cash;
 
-    //recipes
-    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
-    {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the recipe list size, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-        return false;
-    }
-    uint16_t recipe_list_size;
-    in >> recipe_list_size;
-    uint16_t recipeId;
-    uint32_t index=0;
-    while(index<recipe_list_size)
-    {
-        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
-        {
-            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player local recipe, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-            return false;
-        }
-        in >> recipeId;
-        player_informations.recipes.insert(recipeId);
-        index++;
-    }
-
     //monsters
     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
     {
@@ -471,7 +449,7 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
     uint8_t gender;
     uint8_t monster_list_size;
     in >> monster_list_size;
-    index=0;
+    uint32_t index=0;
     uint32_t sub_index;
     while(index<monster_list_size)
     {
@@ -791,6 +769,147 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
         player_informations.reputation[type]=playerReputation;
         index++;
     }
+    //compressed block
+    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
+    {
+        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the reputation list size, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        return false;
+    }
+    uint32_t sub_size32;
+    in >> sub_size32;
+    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<sub_size32)
+    {
+        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the reputation list size, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        return false;
+    }
+    const uint32_t &decompressedSize=computeDecompression(data.data()+in.device()->pos(),ProtocolParsingBase::tempBigBufferForUncompressedInput,sub_size32,sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput),ProtocolParsingBase::compressionTypeClient);
+    {
+        const QByteArray data2(ProtocolParsingBase::tempBigBufferForUncompressedInput,decompressedSize);
+        QDataStream in2(data2);
+        in2.setVersion(QDataStream::Qt_4_4);in2.setByteOrder(QDataStream::LittleEndian);
+        if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)sizeof(uint16_t))
+        {
+            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max player, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            return false;
+        }
+        if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)sizeof(uint8_t))
+        {
+            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the reputation list size, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            return false;
+        }
+
+        //alloc
+        if(player_informations.recipes!=NULL)
+        {
+            delete player_informations.recipes;
+            player_informations.recipes=NULL;
+        }
+        if(player_informations.encyclopedia_monster!=NULL)
+        {
+            delete player_informations.encyclopedia_monster;
+            player_informations.encyclopedia_monster=NULL;
+        }
+        if(player_informations.encyclopedia_item!=NULL)
+        {
+            delete player_informations.encyclopedia_item;
+            player_informations.encyclopedia_item=NULL;
+        }
+        player_informations.recipes=(char *)malloc(CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
+        player_informations.encyclopedia_monster=(char *)malloc(CommonDatapack::commonDatapack.monstersMaxId/8+1);
+        player_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+        memset(player_informations.recipes,0x00,CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
+        memset(player_informations.encyclopedia_monster,0x00,CommonDatapack::commonDatapack.monstersMaxId/8+1);
+        memset(player_informations.encyclopedia_item,0x00,CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+
+        //recipes
+        {
+            if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)sizeof(uint16_t))
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max player, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                return false;
+            }
+            uint16_t sub_size16;
+            in2 >> sub_size16;
+            if(sub_size16>0)
+            {
+                if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<sub_size16)
+                {
+                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the reputation list size, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                    return false;
+                }
+                if(sub_size16>CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1)
+                    memcpy(player_informations.recipes,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
+                else
+                    memcpy(player_informations.recipes,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),sub_size16);
+                in2.device()->seek(in2.device()->pos()+sub_size16);
+            }
+        }
+
+        //encyclopedia_monster
+        {
+            if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)sizeof(uint16_t))
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max player, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                return false;
+            }
+            uint16_t sub_size16;
+            in2 >> sub_size16;
+            if(sub_size16>0)
+            {
+                if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<sub_size16)
+                {
+                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the reputation list size, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                    return false;
+                }
+                if(sub_size16>CommonDatapack::commonDatapack.monstersMaxId/8+1)
+                    memcpy(player_informations.encyclopedia_monster,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),CommonDatapack::commonDatapack.monstersMaxId/8+1);
+                else
+                    memcpy(player_informations.encyclopedia_monster,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),sub_size16);
+                in2.device()->seek(in2.device()->pos()+sub_size16);
+            }
+        }
+
+        //encyclopedia_item
+        {
+            if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)sizeof(uint16_t))
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max player, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                return false;
+            }
+            uint16_t sub_size16;
+            in2 >> sub_size16;
+            if(sub_size16>0)
+            {
+                if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<sub_size16)
+                {
+                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the reputation list size, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                    return false;
+                }
+                if(sub_size16>CommonDatapack::commonDatapack.items.itemMaxId/8+1)
+                    memcpy(player_informations.encyclopedia_item,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+                else
+                    memcpy(player_informations.encyclopedia_item,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),sub_size16);
+                in2.device()->seek(in2.device()->pos()+sub_size16);
+            }
+        }
+
+        if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)sizeof(uint8_t))
+        {
+            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max player, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            return false;
+        }
+        in2.device()->seek(in2.device()->pos()+sizeof(uint8_t));
+
+        if(in2.device()->size()!=in2.device()->pos())
+        {
+            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max player, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            return false;
+        }
+    }
+    in.device()->seek(in.device()->pos()+sub_size32);
+
+    //------------------------------------------- End of common part, start of server specific part ----------------------------------
+
     //quest
     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
     {

@@ -303,8 +303,8 @@ void BaseServer::SQL_common_load_finish()
 {
     std::cout << dictionary_reputation_database_to_internal.size() << " SQL reputation dictionary" << std::endl;
 
-    DictionaryLogin::dictionary_allow_database_to_internal=this->dictionary_allow_database_to_internal;
-    DictionaryLogin::dictionary_allow_internal_to_database=this->dictionary_allow_internal_to_database;
+    /*DictionaryLogin::dictionary_allow_database_to_internal=this->dictionary_allow_database_to_internal;
+    DictionaryLogin::dictionary_allow_internal_to_database=this->dictionary_allow_internal_to_database;*/
     DictionaryLogin::dictionary_reputation_database_to_internal=this->dictionary_reputation_database_to_internal;//negative == not found
     DictionaryLogin::dictionary_skin_database_to_internal=this->dictionary_skin_database_to_internal;
     DictionaryLogin::dictionary_skin_internal_to_database=this->dictionary_skin_internal_to_database;
