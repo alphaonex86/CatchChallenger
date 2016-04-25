@@ -159,6 +159,7 @@ private:
 
     static unsigned char protocolReplyProtocolNotSupported[7];
     static unsigned char protocolReplyServerFull[7];
+    /// \todo group all reply in one
     static unsigned char protocolReplyCompressionNone[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     static unsigned char protocolReplyCompresssionZlib[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];

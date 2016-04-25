@@ -180,6 +180,7 @@ struct ItemFull
     std::unordered_map<CATCHCHALLENGER_TYPE_ITEM/*item*/, std::unordered_set<uint16_t/*monster*/> > itemToLearn;
     std::unordered_map<uint16_t, uint32_t> repel;
     std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, Item> item;
+    CATCHCHALLENGER_TYPE_ITEM itemMaxId;
     std::unordered_map<uint16_t, Trap> trap;
 };
 
@@ -347,7 +348,7 @@ struct Player_private_and_public_informations
     uint64_t cash,warehouse_cash;
     std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t/*quantity*/> items,warehouse_items;
     //crafting
-    std::unordered_set<uint16_t> recipes;
+    char * recipes;
     std::unordered_map<uint8_t,PlayerReputation> reputation;
     //fight
     std::unordered_set<uint16_t> bot_already_beaten;

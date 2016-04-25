@@ -1136,11 +1136,13 @@ void BaseWindow::add_to_inventory(const QHash<uint16_t,uint32_t> &items,const bo
         while (i.hasNext()) {
             i.next();
 
+            const uint16_t &item=i.key();
+            ClientFightEngine::fightEngine.public_and_private_informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
             //add really to the list
-            if(this->items.find(i.key())!=this->items.cend())
-                this->items[i.key()]+=i.value();
+            if(this->items.find(item)!=this->items.cend())
+                this->items[item]+=i.value();
             else
-                this->items[i.key()]=i.value();
+                this->items[item]=i.value();
 
             QPixmap image;
             QString name;
@@ -1179,11 +1181,14 @@ void BaseWindow::add_to_inventory(const QHash<uint16_t,uint32_t> &items,const bo
         QHashIterator<uint16_t,uint32_t> i(items);
         while (i.hasNext()) {
             i.next();
+
+            const uint16_t &item=i.key();
+            ClientFightEngine::fightEngine.public_and_private_informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
             //add really to the list
-            if(this->items.find(i.key())!=this->items.cend())
-                this->items[i.key()]+=i.value();
+            if(this->items.find(item)!=this->items.cend())
+                this->items[item]+=i.value();
             else
-                this->items[i.key()]=i.value();
+                this->items[item]=i.value();
         }
     }
 
@@ -2892,7 +2897,8 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
     if(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.find(itemId)!=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.cend())
     {
         Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
-        if(informations.recipes.find(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.at(itemId))!=informations.recipes.cend())
+        const uint8_t &recipe=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.at(itemId);
+        if(informations.recipes[recipe/8] & (1<<(7-recipe%8)))
         {
             QMessageBox::information(this,tr("Information"),tr("You already know this recipe"));
             return;
