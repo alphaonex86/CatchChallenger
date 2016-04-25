@@ -860,7 +860,7 @@ void BaseServer::preload_market_items_return()
             std::cerr << "not more marketObjectId into the list, skip" << std::endl;
             return;
         }
-        marketItem.marketObjectId=Client::marketObjectIdList.at(0);
+        marketItem.marketObjectUniqueId=Client::marketObjectIdList.at(0);
         Client::marketObjectIdList.erase(Client::marketObjectIdList.begin());
         GlobalServerData::serverPrivateVariables.marketItemList.push_back(marketItem);
     }

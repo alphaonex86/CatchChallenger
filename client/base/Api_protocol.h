@@ -245,7 +245,7 @@ signals:
     void recipeUsed(const RecipeUsage &recipeUsage) const;
     //inventory
     void objectUsed(const ObjectUsage &objectUsage) const;
-    void monsterCatch(const uint32_t &newMonsterId) const;
+    void monsterCatch(const bool &success) const;
 
     //chat
     void new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type) const;
@@ -356,7 +356,7 @@ public:
     void tradeFinish();
     void addTradeCash(const quint64 &cash);
     void addObject(const uint16_t &item,const uint32_t &quantity);
-    void addMonster(const uint32_t &monsterId);
+    void addMonsterByPosition(const uint8_t &monsterPosition);
 
     //battle
     void battleRefused();
@@ -384,10 +384,10 @@ public:
     void useSkill(const uint16_t &skill);
     void heal();
     void requestFight(const uint32_t &fightId);
-    void changeOfMonsterInFight(const uint32_t &monsterId);
+    void changeOfMonsterInFightByPosition(const uint8_t &monsterPosition);
 
     //monster
-    void learnSkill(const uint32_t &monsterId, const uint16_t &skill);
+    void learnSkillByPosition(const uint8_t &monsterPosition, const uint16_t &skill);
     void monsterMoveDown(const uint8_t &number);
     void monsterMoveUp(const uint8_t &number);
     void confirmEvolution(const uint32_t &monterId);
@@ -410,12 +410,12 @@ public:
     //market
     void getMarketList();
     void buyMarketObject(const uint32_t &marketObjectId,const uint32_t &quantity=1);
-    void buyMarketMonster(const uint32_t &monsterId);
-    void putMarketObject(const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price);
-    void putMarketMonster(const uint32_t &monsterId,const uint32_t &price);
+    void buyMarketMonsterByPosition(const uint16_t &monsterPosition);
+    void putMarketObject(const uint32_t &objectId,const uint32_t &quantity,const uint64_t &price);
+    void putMarketMonsterByPosition(const uint8_t &monsterPosition,const uint64_t &price);
     void recoverMarketCash();
-    void withdrawMarketObject(const uint32_t &objectId,const uint32_t &quantity=1);
-    void withdrawMarketMonster(const uint32_t &monsterId);
+    void withdrawMarketObject(const uint16_t &objectPosition, const uint32_t &quantity=1);
+    void withdrawMarketMonsterByPosition(const uint16_t &monsterPosition);
 };
 }
 

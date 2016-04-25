@@ -26,7 +26,7 @@ public:
     virtual Skill::AttackReturn generateOtherAttack();
     uint8_t getCurrentSelectedMonsterNumber() const;
     uint8_t getOtherSelectedMonsterNumber() const;
-    virtual bool remainMonstersToFight(const uint32_t &monsterId) const;
+    virtual bool remainMonstersToFightWithoutThisMonster(const uint8_t &monsterPosition) const;
     virtual bool canDoRandomFight(const CommonMap &map,const uint8_t &x,const uint8_t &y) const;
     void updateCanDoFight();
     virtual bool haveAnotherMonsterOnThePlayerToFight() const;
@@ -39,7 +39,7 @@ public:
     bool dropKOCurrentMonster();
     virtual bool dropKOOtherMonster();
     virtual void healAllMonsters();
-    virtual bool learnSkill(const uint32_t &monsterId,const uint16_t &skill);
+    virtual bool learnSkill(PlayerMonster *monsterPlayer, const uint16_t &skill);
     virtual bool learnSkillByItem(PlayerMonster *playerMonster, const uint32_t &itemId);
     virtual void addPlayerMonster(const std::vector<PlayerMonster> &playerMonster);
     virtual void addPlayerMonster(const PlayerMonster &playerMonster);
@@ -50,6 +50,7 @@ public:
     virtual bool removeMonster(const uint32_t &monsterId);
     bool haveThisMonster(const uint32_t &monsterId) const;
     PlayerMonster * monsterById(const uint32_t &monsterId);
+    PlayerMonster * monsterByPosition(const uint8_t &monsterPosition);
     virtual bool canEscape();
     virtual bool tryEscape();
     bool canDoFightAction();
@@ -66,7 +67,7 @@ public:
     virtual void doTheTurn(const uint32_t &skill,const uint8_t &skillLevel,const bool currentMonsterStatIsFirstToAttack);
     virtual bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const;
     virtual uint32_t tryCapture(const uint16_t &item);
-    virtual bool changeOfMonsterInFight(const uint32_t &monsterId);
+    virtual bool changeOfMonsterInFight(const uint8_t &monsterPosition);
     virtual int addBuffEffectFull(const Skill::BuffEffect &effect,PublicPlayerMonster * currentMonster,PublicPlayerMonster * otherMonster);
     virtual void removeBuffEffectFull(const Skill::BuffEffect &effect);
     virtual bool useObjectOnMonster(const uint16_t &object, const uint32_t &monster);

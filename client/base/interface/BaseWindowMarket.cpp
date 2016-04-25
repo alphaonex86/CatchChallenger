@@ -31,8 +31,8 @@ void BaseWindow::marketList(const uint64_t &price,const QList<MarketObject> &mar
     {
         const MarketMonster &marketMonster=marketMonsterList.at(index);
         QListWidgetItem *item=new QListWidgetItem();
-        item->setData(99,marketMonster.monsterId);
-        item->setData(98,marketMonster.price);
+        item->setData(99,marketMonster.index);
+        item->setData(98,(quint64)marketMonster.price);
         item->setData(96,marketMonster.level);
         QString price;
         if(marketMonster.price>0)
@@ -76,8 +76,8 @@ void BaseWindow::marketList(const uint64_t &price,const QList<MarketObject> &mar
 void BaseWindow::addOwnMonster(const MarketMonster &marketMonster)
 {
     QListWidgetItem *item=new QListWidgetItem();
-    item->setData(99,marketMonster.monsterId);
-    item->setData(98,marketMonster.price);
+    item->setData(99,marketMonster.index);
+    item->setData(98,(quint64)marketMonster.price);
     QString price;
     if(marketMonster.price>0)
         price=tr("Price: %1$").arg(marketMonster.price);
@@ -146,14 +146,14 @@ void BaseWindow::marketPut(const bool &success)
             marketMonster.price=marketPutCashInSuspend;
             marketMonster.level=marketPutMonsterList.first().level;
             marketMonster.monster=marketPutMonsterList.first().monster;
-            marketMonster.monsterId=marketPutMonsterList.first().id;
+            //marketMonster.monsterId=marketPutMonsterList.first().id;
             addOwnMonster(marketMonster);
         }
         if(!marketPutObjectInSuspendList.isEmpty())
         {
             MarketObject marketObject;
             marketObject.price=marketPutCashInSuspend;
-            marketObject.marketObjectId=0;
+            //marketObject.marketObjectId=0;
             marketObject.objectId=marketPutObjectInSuspendList.first().first;
             marketObject.quantity=marketPutObjectInSuspendList.first().second;
             QListWidgetItem *item=new QListWidgetItem();
@@ -227,9 +227,9 @@ void BaseWindow::on_marketWithdraw_clicked()
 
 void BaseWindow::updateMarketObject(QListWidgetItem *item,const MarketObject &marketObject)
 {
-    item->setData(99,marketObject.marketObjectId);
+    item->setData(99,marketObject.index);
     item->setData(98,marketObject.quantity);
-    item->setData(97,marketObject.price);
+    item->setData(97,(quint64)marketObject.price);
     item->setData(95,marketObject.objectId);
     QString price;
     if(marketObject.price>0)
@@ -293,7 +293,7 @@ void BaseWindow::on_marketObject_itemActivated(QListWidgetItem *item)
     else
     {
         MarketObject marketObject;
-        marketObject.marketObjectId=item->data(99).toUInt();
+        marketObject.index=item->data(99).toUInt();
         marketObject.quantity=item->data(98).toUInt();
         marketObject.price=item->data(97).toUInt();
         marketObject.objectId=item->data(95).toUInt();
@@ -319,7 +319,7 @@ void BaseWindow::on_marketOwnObject_itemActivated(QListWidgetItem *item)
     CatchChallenger::Api_client_real::client->withdrawMarketObject(item->data(95).toUInt(),item->data(98).toUInt());
     marketWithdrawInSuspend=true;
     MarketObject marketObject;
-    marketObject.marketObjectId=item->data(99).toUInt();
+    marketObject.index=item->data(99).toUInt();
     marketObject.quantity=item->data(98).toUInt();
     marketObject.price=item->data(97).toUInt();
     marketObject.objectId=item->data(95).toUInt();
@@ -353,7 +353,7 @@ void BaseWindow::on_marketMonster_itemActivated(QListWidgetItem *item)
         QMessageBox::warning(this,tr("Error"),tr("Have not cash to buy it"));
         return;
     }
-    CatchChallenger::Api_client_real::client->buyMarketMonster(item->data(99).toUInt());
+    CatchChallenger::Api_client_real::client->buyMarketMonsterByPosition(item->data(99).toUInt());
     delete item;
 }
 
@@ -374,7 +374,7 @@ void BaseWindow::on_marketOwnMonster_itemActivated(QListWidgetItem *item)
     playerMonster.price=item->data(98).toUInt();
     playerMonster.level=item->data(96).toUInt();
     marketWithdrawMonsterList << playerMonster;
-    CatchChallenger::Api_client_real::client->withdrawMarketMonster(item->data(99).toUInt());
+    CatchChallenger::Api_client_real::client->withdrawMarketMonsterByPosition(item->data(99).toUInt());
     marketWithdrawInSuspend=true;
     delete item;
 }

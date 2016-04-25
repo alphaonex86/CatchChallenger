@@ -194,7 +194,7 @@ private slots:
     QString getFrontSkinPath(const uint32_t &skinId) const;
     QString getFrontSkinPath(const QString &skin) const;
     QString getBackSkinPath(const uint32_t &skinId) const;
-    void monsterCatch(const uint32_t &newMonsterId);
+    void monsterCatch(const bool &success);
     //render
     void stopped_in_front_of(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
     bool stopped_in_front_of_check_bot(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
@@ -314,8 +314,8 @@ private slots:
     void updatePageZoneCatch();
 
     //learn
-    bool showLearnSkill(const uint32_t &monsterId);
-    bool learnSkill(const uint32_t &monsterId,const uint32_t &skill);
+    bool showLearnSkillByPosition(const uint8_t &monsterPosition);
+    bool learnSkillByPosition(const uint8_t &monsterPosition,const uint32_t &skill);
 
     //quest
     bool haveReputationRequirements(const QList<ReputationRequirements> &reputationList) const;
@@ -593,7 +593,7 @@ private:
     QHash<QListWidgetItem *,uint32_t> crafting_recipes_items_graphical;
     QHash<uint32_t,QListWidgetItem *> crafting_recipes_items_to_graphical;
     QHash<QListWidgetItem *,uint32_t> fight_attacks_graphical;
-    QHash<QListWidgetItem *,uint32_t> monsters_items_graphical;
+    QHash<QListWidgetItem *,uint8_t> monsters_items_graphical;
     QHash<QListWidgetItem *,uint32_t> attack_to_learn_graphical;
     QHash<QListWidgetItem *,uint32_t> quests_to_id_graphical;
     bool inSelection;
@@ -660,7 +660,7 @@ private:
     QList<uint8_t> tradeCurrentMonstersPosition;
 
     //learn
-    uint32_t monsterToLearn;
+    uint8_t monsterPositionToLearn;
 
     //quest
     bool isInQuest;
