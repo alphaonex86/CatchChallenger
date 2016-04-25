@@ -278,7 +278,7 @@ void Client::tradeAddTradeObject(const uint16_t &item,const uint32_t &quantity)
     otherPlayerTrade->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
-void Client::tradeAddTradeMonster(const uint32_t &monsterId)
+void Client::tradeAddTradeMonster(const uint8_t &monsterPosition)
 {
     if(!tradeIsValidated)
     {
@@ -300,97 +300,94 @@ void Client::tradeAddTradeMonster(const uint32_t &monsterId)
         errorOutput("You can't trade monster because you are in fight");
         return;
     }
+    if(monsterPosition>=public_and_private_informations.playerMonster.size())
+    {
+        errorOutput("Trade monster not found");
+        return;
+    }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("Add monster to trade: "+std::to_string(monsterId));
     #endif
-    unsigned int index=0;
-    while(index<public_and_private_informations.playerMonster.size())
+    unsigned int index=monsterPosition;
+    if(!remainMonstersToFightWithoutThisMonster(monsterPosition))
     {
-        if(public_and_private_informations.playerMonster.at(index).id==monsterId)
-        {
-            if(!remainMonstersToFight(monsterId))
-            {
-                errorOutput("You can't trade this msonter because you will be without monster to fight");
-                return;
-            }
-            tradeMonster.push_back(public_and_private_informations.playerMonster.at(index));
-            public_and_private_informations.playerMonster.erase(public_and_private_informations.playerMonster.begin()+index);
-            updateCanDoFight();
-
-            //send the network message
-            uint32_t posOutput=0;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x57;
-            posOutput+=1+4;
-
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
-            posOutput+=1;
-            const PlayerMonster &monster=tradeMonster.back();
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.id);
-            posOutput+=4;
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(monster.monster);
-            posOutput+=2;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=monster.level;
-            posOutput+=1;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.remaining_xp);
-            posOutput+=4;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.hp);
-            posOutput+=4;
-            if(CommonSettingsServer::commonSettingsServer.useSP)
-            {
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.sp);
-                posOutput+=4;
-            }
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(monster.catched_with);
-            posOutput+=2;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)monster.gender;
-            posOutput+=1;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.egg_step);
-            posOutput+=4;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.character_origin);
-            posOutput+=4;
-
-            int sub_index=0;
-            int sub_size=monster.buffs.size();
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=sub_size;
-            posOutput+=1;
-            while(sub_index<sub_size)
-            {
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=monster.buffs.at(sub_index).buff;
-                posOutput+=1;
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=monster.buffs.at(sub_index).level;
-                posOutput+=1;
-                sub_index++;
-            }
-            sub_index=0;
-            sub_size=monster.skills.size();
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(sub_size);
-            posOutput+=2;
-            while(sub_index<sub_size)
-            {
-                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(monster.skills.at(sub_index).skill);
-                posOutput+=2;
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=monster.skills.at(sub_index).level;
-                posOutput+=1;
-                sub_index++;
-            }
-
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
-            otherPlayerTrade->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-
-            /*while(index<public_and_private_informations.playerMonster.size())
-            {
-                const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
-                std::string queryText=PreparedDBQueryCommon::db_query_update_monster_position;
-                stringreplaceOne(queryText,"%1",std::to_string(index+1));
-                stringreplaceOne(queryText,"%2",std::to_string(playerMonster.id));
-                dbQueryWriteCommon(queryText);
-                index++;
-            }*/
-            return;
-        }
-        index++;
+        errorOutput("You can't trade this msonter because you will be without monster to fight");
+        return;
     }
-    errorOutput("Trade monster not found");
+    tradeMonster.push_back(public_and_private_informations.playerMonster.at(index));
+    public_and_private_informations.playerMonster.erase(public_and_private_informations.playerMonster.begin()+index);
+    updateCanDoFight();
+
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x57;
+    posOutput+=1+4;
+
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
+    posOutput+=1;
+    const PlayerMonster &monster=tradeMonster.back();
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.id);
+    posOutput+=4;
+    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(monster.monster);
+    posOutput+=2;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=monster.level;
+    posOutput+=1;
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.remaining_xp);
+    posOutput+=4;
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.hp);
+    posOutput+=4;
+    if(CommonSettingsServer::commonSettingsServer.useSP)
+    {
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.sp);
+        posOutput+=4;
+    }
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(monster.catched_with);
+    posOutput+=2;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)monster.gender;
+    posOutput+=1;
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.egg_step);
+    posOutput+=4;
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(monster.character_origin);
+    posOutput+=4;
+
+    int sub_index=0;
+    int sub_size=monster.buffs.size();
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=sub_size;
+    posOutput+=1;
+    while(sub_index<sub_size)
+    {
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=monster.buffs.at(sub_index).buff;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=monster.buffs.at(sub_index).level;
+        posOutput+=1;
+        sub_index++;
+    }
+    sub_index=0;
+    sub_size=monster.skills.size();
+    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(sub_size);
+    posOutput+=2;
+    while(sub_index<sub_size)
+    {
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(monster.skills.at(sub_index).skill);
+        posOutput+=2;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=monster.skills.at(sub_index).level;
+        posOutput+=1;
+        sub_index++;
+    }
+
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    otherPlayerTrade->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
+    /*while(index<public_and_private_informations.playerMonster.size())
+    {
+        const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
+        std::string queryText=PreparedDBQueryCommon::db_query_update_monster_position;
+        stringreplaceOne(queryText,"%1",std::to_string(index+1));
+        stringreplaceOne(queryText,"%2",std::to_string(playerMonster.id));
+        dbQueryWriteCommon(queryText);
+        index++;
+    }*/
+    return;
 }
 
 void Client::internalTradeCanceled(const bool &send)

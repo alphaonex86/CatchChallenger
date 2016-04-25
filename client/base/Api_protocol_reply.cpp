@@ -671,7 +671,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
         //Use object
         case 0x86:
         {
-            uint16_t item=lastObjectUsed.first();
+            const uint16_t item=lastObjectUsed.first();
             lastObjectUsed.removeFirst();
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
             {
@@ -681,16 +681,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             uint8_t returnCode;
             in >> returnCode;
             if(CommonDatapack::commonDatapack.items.trap.find(item)!=CommonDatapack::commonDatapack.items.trap.cend())
-            {
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
-                {
-                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(packetCode).arg('X').arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-                    return false;
-                }
-                uint32_t newMonsterId;
-                in >> newMonsterId;
-                monsterCatch(newMonsterId);
-            }
+                monsterCatch(returnCode==0x01);
             else
             {
                 switch(returnCode)
@@ -961,7 +952,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(packetCode).arg('X').arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                     return false;
                 }
-                in >> marketObject.marketObjectId;
+                in >> marketObject.index;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(packetCode).arg('X').arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
@@ -979,7 +970,9 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(packetCode).arg('X').arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                     return false;
                 }
-                in >> marketObject.price;
+                quint64 price;
+                in >> price;
+                marketObject.price=price;
                 marketObjectList << marketObject;
                 index++;
             }
@@ -993,7 +986,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(packetCode).arg('X').arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                     return false;
                 }
-                in >> marketMonster.monsterId;
+                in >> marketMonster.index;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(packetCode).arg('X').arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
@@ -1011,7 +1004,9 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(packetCode).arg('X').arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                     return false;
                 }
-                in >> marketMonster.price;
+                quint64 price;
+                in >> price;
+                marketMonster.price=price;
                 marketMonsterList << marketMonster;
                 index++;
             }
@@ -1025,7 +1020,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(packetCode).arg('X').arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                     return false;
                 }
-                in >> marketObject.marketObjectId;
+                in >> marketObject.index;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(packetCode).arg('X').arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
@@ -1043,7 +1038,9 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(packetCode).arg('X').arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                     return false;
                 }
-                in >> marketObject.price;
+                quint64 price;
+                in >> price;
+                marketObject.price=price;
                 marketOwnObjectList << marketObject;
                 index++;
             }
@@ -1057,7 +1054,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(packetCode).arg('X').arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                     return false;
                 }
-                in >> marketMonster.monsterId;
+                in >> marketMonster.index;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(packetCode).arg('X').arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
@@ -1075,7 +1072,9 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(packetCode).arg('X').arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                     return false;
                 }
-                in >> marketMonster.price;
+                quint64 price;
+                in >> price;
+                marketMonster.price=price;
                 marketOwnMonsterList << marketMonster;
                 index++;
             }
