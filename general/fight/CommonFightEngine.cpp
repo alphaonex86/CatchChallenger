@@ -144,73 +144,61 @@ void CommonFightEngine::healAllMonsters()
         updateCanDoFight();
 }
 
-bool CommonFightEngine::learnSkill(const uint32_t &monsterId,const uint16_t &skill)
+bool CommonFightEngine::learnSkill(PlayerMonster *monsterPlayer, const uint16_t &skill)
 {
-    unsigned int index=0;
-    unsigned int sub_index2,sub_index;
-    while(index<public_and_private_informations.playerMonster.size())
+    //search if have already the previous skill
+    uint16_t sub_index2=0;
+    while(sub_index2<monsterPlayer->skills.size())
     {
-        const PlayerMonster &monster=public_and_private_informations.playerMonster.at(index);
-        //have located the monster
-        if(monster.id==monsterId)
+        if(monsterPlayer->skills.at(sub_index2).skill==skill)
+            break;
+        sub_index2++;
+    }
+    uint16_t sub_index=0;
+    while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monsterPlayer->monster).learn.size())
+    {
+        const Monster::AttackToLearn &learn=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monsterPlayer->monster).learn.at(sub_index);
+        if(learn.learnAtLevel<=monsterPlayer->level && learn.learnSkill==skill)
         {
-            //search if have already the previous skill
-            sub_index2=0;
-            while(sub_index2<monster.skills.size())
+            if(
+                    //if skill not found
+                    (sub_index2==monsterPlayer->skills.size() && learn.learnSkillLevel==1)
+                    ||
+                    //if skill already found and need level up
+                    (sub_index2<monsterPlayer->skills.size() && (monsterPlayer->skills.at(sub_index2).level+1)==learn.learnSkillLevel)
+                    )
             {
-                if(monster.skills.at(sub_index2).skill==skill)
-                    break;
-                sub_index2++;
-            }
-            sub_index=0;
-            while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster.monster).learn.size())
-            {
-                const Monster::AttackToLearn &learn=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster.monster).learn.at(sub_index);
-                if(learn.learnAtLevel<=monster.level && learn.learnSkill==skill)
+                if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.find(learn.learnSkill)==CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
                 {
-                    if(
-                            //if skill not found
-                            (sub_index2==monster.skills.size() && learn.learnSkillLevel==1)
-                            ||
-                            //if skill already found and need level up
-                            (sub_index2<monster.skills.size() && (monster.skills.at(sub_index2).level+1)==learn.learnSkillLevel)
-                            )
-                    {
-                        if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.find(learn.learnSkill)==CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
-                        {
-                            errorFightEngine("Skill to learn not found into learnSkill()");
-                            return false;
-                        }
-                        if(learn.learnSkillLevel>CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(learn.learnSkill).level.size())
-                        {
-                            errorFightEngine("Skill level to learn not found learnSkill() "+std::to_string(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(learn.learnSkill).level.size())+">"+std::to_string(learn.learnSkillLevel));
-                            return false;
-                        }
-                        if(CommonSettingsServer::commonSettingsServer.useSP)
-                        {
-                            const uint32_t &sp=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(learn.learnSkill).level.at(learn.learnSkillLevel-1).sp_to_learn;
-                            if(sp>monster.sp)
-                                return false;
-                            public_and_private_informations.playerMonster[index].sp-=sp;
-                        }
-                        if(learn.learnSkillLevel==1)
-                        {
-                            PlayerMonster::PlayerSkill temp;
-                            temp.skill=skill;
-                            temp.level=1;
-                            temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(learn.learnSkill).level.at(learn.learnSkillLevel-1).endurance;
-                            addSkill(&public_and_private_informations.playerMonster[index],temp);
-                        }
-                        else
-                            setSkillLevel(&public_and_private_informations.playerMonster[index],sub_index2,public_and_private_informations.playerMonster.at(index).skills.at(sub_index2).level+1);
-                        return true;
-                    }
+                    errorFightEngine("Skill to learn not found into learnSkill()");
+                    return false;
                 }
-                sub_index++;
+                if(learn.learnSkillLevel>CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(learn.learnSkill).level.size())
+                {
+                    errorFightEngine("Skill level to learn not found learnSkill() "+std::to_string(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(learn.learnSkill).level.size())+">"+std::to_string(learn.learnSkillLevel));
+                    return false;
+                }
+                if(CommonSettingsServer::commonSettingsServer.useSP)
+                {
+                    const uint32_t &sp=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(learn.learnSkill).level.at(learn.learnSkillLevel-1).sp_to_learn;
+                    if(sp>monsterPlayer->sp)
+                        return false;
+                    monsterPlayer->sp-=sp;
+                }
+                if(learn.learnSkillLevel==1)
+                {
+                    PlayerMonster::PlayerSkill temp;
+                    temp.skill=skill;
+                    temp.level=1;
+                    temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(learn.learnSkill).level.at(learn.learnSkillLevel-1).endurance;
+                    addSkill(monsterPlayer,temp);
+                }
+                else
+                    setSkillLevel(monsterPlayer,sub_index2,monsterPlayer->skills.at(sub_index2).level+1);
+                return true;
             }
-            return false;
         }
-        index++;
+        sub_index++;
     }
     return false;
 }
@@ -553,13 +541,13 @@ PublicPlayerMonster *CommonFightEngine::getOtherMonster()
         return NULL;
 }
 
-bool CommonFightEngine::remainMonstersToFight(const uint32_t &monsterId) const
+bool CommonFightEngine::remainMonstersToFightWithoutThisMonster(const uint8_t &monsterPosition) const
 {
     unsigned int index=0;
     while(index<public_and_private_informations.playerMonster.size())
     {
         const PlayerMonster &playerMonsterEntry=public_and_private_informations.playerMonster.at(index);
-        if(playerMonsterEntry.id==monsterId)
+        if(index==monsterPosition)
         {
             //the current monster can't fight, echange it will do nothing
             if(monsterIsKO(playerMonsterEntry))
@@ -1062,36 +1050,33 @@ bool CommonFightEngine::removeAllBuffOnMonster(PlayerMonster * currentMonster)
     return false;
 }
 
-bool CommonFightEngine::changeOfMonsterInFight(const uint32_t &monsterId)
+bool CommonFightEngine::changeOfMonsterInFight(const uint8_t &monsterPosition)
 {
+    if(monsterPosition>=public_and_private_informations.playerMonster.size())
+    {
+        errorFightEngine("The monster is not found: "+std::to_string(monsterPosition));
+        return false;
+    }
     if(!isInFight())
         return false;
-    if(getCurrentMonster()->id==monsterId)
+    if((uint8_t)selectedMonster==monsterPosition)
     {
         errorFightEngine("try change monster but is already on the current monster");
         return false;
     }
-    unsigned int index=0;
-    while(index<public_and_private_informations.playerMonster.size())
+    const PlayerMonster &playerMonsterEntry=public_and_private_informations.playerMonster.at(monsterPosition);
+    if(!monsterIsKO(playerMonsterEntry))
     {
-        const PlayerMonster &playerMonsterEntry=public_and_private_informations.playerMonster.at(index);
-        if(playerMonsterEntry.id==monsterId)
-        {
-            if(!monsterIsKO(playerMonsterEntry))
-            {
-                selectedMonster=index;
-                ableToFight=true;
-                if(doTurnIfChangeOfMonster)
-                    doTheOtherMonsterTurn();
-                else
-                    doTurnIfChangeOfMonster=true;
-                return true;
-            }
-            else
-                return false;
-        }
-        index++;
+        selectedMonster=monsterPosition;
+        ableToFight=true;
+        if(doTurnIfChangeOfMonster)
+            doTheOtherMonsterTurn();
+        else
+            doTurnIfChangeOfMonster=true;
+        return true;
     }
+    else
+        return false;
     errorFightEngine("unable to locate the new monster to change");
     return false;
 }
@@ -1218,7 +1203,6 @@ uint32_t CommonFightEngine::tryCapture(const uint16_t &item)
         newMonster.egg_step=0;
         newMonster.gender=wildMonsters.front().gender;
         newMonster.hp=wildMonsters.front().hp;
-        newMonster.id=0;//unknown at this time
         newMonster.level=wildMonsters.front().level;
         newMonster.monster=wildMonsters.front().monster;
         newMonster.remaining_xp=0;
@@ -1348,6 +1332,14 @@ PlayerMonster * CommonFightEngine::monsterById(const uint32_t &monsterId)
         index++;
     }
     return NULL;
+}
+
+PlayerMonster * CommonFightEngine::monsterByPosition(const uint8_t &monsterPosition)
+{
+    if(monsterPosition>=public_and_private_informations.playerMonster.size())
+        return NULL;
+    else
+        return &public_and_private_informations.playerMonster[monsterPosition];
 }
 
 void CommonFightEngine::wildDrop(const uint32_t &)

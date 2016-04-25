@@ -816,14 +816,14 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         //Learn skill
         case 0x09:
         {
-            if(size!=((int)sizeof(uint32_t)+sizeof(uint16_t)))
+            if(size!=((int)sizeof(uint8_t)+sizeof(uint16_t)))
             {
                 errorOutput("wrong remaining size for learn skill");
                 return false;
             }
-            const uint32_t &monsterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data)));
+            const uint8_t &monsterPosition=data[0x00];
             const uint16_t &skill=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+sizeof(uint32_t))));
-            return learnSkill(monsterId,skill);
+            return learnSkill(monsterPosition,skill);
         }
         break;
         case 0x0A:
@@ -890,13 +890,13 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         //Monster evolution validated
         case 0x0F:
         {
-            if(size!=((int)sizeof(uint32_t)))
+            if(size!=((int)sizeof(uint8_t)))
             {
                 errorOutput("wrong remaining size for monster evolution validated");
                 return false;
             }
-            const uint32_t &monsterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data)));
-            confirmEvolution(monsterId);
+            const uint8_t &monsterPosition=data[0x00];
+            confirmEvolution(monsterPosition);
             return true;
         }
         break;

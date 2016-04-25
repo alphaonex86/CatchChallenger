@@ -1316,6 +1316,32 @@ void Client::characterIsRightFinalStep()
     ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
     posOutput+=Client::characterIsRightFinalStepHeaderSize;
 
+    /// \todo optimise and cache this block
+    //send the event
+    {
+        std::vector<std::pair<uint8_t,uint8_t> > events;
+        unsigned int index=0;
+        while(index<GlobalServerData::serverPrivateVariables.events.size())
+        {
+            const uint8_t &value=GlobalServerData::serverPrivateVariables.events.at(index);
+            if(value!=0)
+                events.push_back(std::pair<uint8_t,uint8_t>(index,value));
+            index++;
+        }
+        index=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=events.size();
+        posOutput+=1;
+        while(index<events.size())
+        {
+            const std::pair<uint8_t,uint8_t> &event=events.at(index);
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=event.first;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=event.second;
+            posOutput+=1;
+            index++;
+        }
+    }
+
     //temporary character id
     if(GlobalServerData::serverSettings.max_players<=255)
     {
@@ -1327,6 +1353,7 @@ void Client::characterIsRightFinalStep()
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.public_informations.simplifiedId);
         posOutput+=2;
     }
+
     //pseudo
     {
         const std::string &text=public_and_private_informations.public_informations.pseudo;
@@ -1356,32 +1383,6 @@ void Client::characterIsRightFinalStep()
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
     posOutput+=1;
 
-    /// \todo optimise and cache this block
-    //send the event
-    {
-        std::vector<std::pair<uint8_t,uint8_t> > events;
-        unsigned int index=0;
-        while(index<GlobalServerData::serverPrivateVariables.events.size())
-        {
-            const uint8_t &value=GlobalServerData::serverPrivateVariables.events.at(index);
-            if(value!=0)
-                events.push_back(std::pair<uint8_t,uint8_t>(index,value));
-            index++;
-        }
-        index=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=events.size();
-        posOutput+=1;
-        while(index<events.size())
-        {
-            const std::pair<uint8_t,uint8_t> &event=events.at(index);
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=event.first;
-            posOutput+=1;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=event.second;
-            posOutput+=1;
-            index++;
-        }
-    }
-
     {
         const uint64_t cash=htole64(public_and_private_informations.cash);
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&cash,8);
@@ -1393,39 +1394,6 @@ void Client::characterIsRightFinalStep()
         posOutput+=8;
     }
 
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.itemOnMap.size();
-    posOutput+=1;
-    {
-        auto i=public_and_private_informations.itemOnMap.begin();
-        while (i!=public_and_private_informations.itemOnMap.cend())
-        {
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=*i;
-            posOutput+=1;
-            ++i;
-        }
-    }
-
-    //send plant on map
-    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-    const auto &time=sFrom1970();
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.plantOnMap.size();
-    posOutput+=1;
-    auto i=public_and_private_informations.plantOnMap.begin();
-    while(i!=public_and_private_informations.plantOnMap.cend())
-    {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i->first;
-        posOutput+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i->second.plant;
-        posOutput+=1;
-        /// \todo Can essaylly int 16 ovbertflow
-        if(time<i->second.mature_at)
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(i->second.mature_at-time);
-        else
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
-        posOutput+=2;
-        ++i;
-    }
-    #endif
 
     //temporary variable
     uint32_t index;
@@ -1513,6 +1481,40 @@ void Client::characterIsRightFinalStep()
             ++k;
         }
     }
+
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.itemOnMap.size();
+    posOutput+=1;
+    {
+        auto i=public_and_private_informations.itemOnMap.begin();
+        while (i!=public_and_private_informations.itemOnMap.cend())
+        {
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=*i;
+            posOutput+=1;
+            ++i;
+        }
+    }
+
+    //send plant on map
+    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+    const auto &time=sFrom1970();
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.plantOnMap.size();
+    posOutput+=1;
+    auto i=public_and_private_informations.plantOnMap.begin();
+    while(i!=public_and_private_informations.plantOnMap.cend())
+    {
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i->first;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i->second.plant;
+        posOutput+=1;
+        /// \todo Can essaylly int 16 ovbertflow
+        if(time<i->second.mature_at)
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(i->second.mature_at-time);
+        else
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+        posOutput+=2;
+        ++i;
+    }
+    #endif
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(this->map==NULL)

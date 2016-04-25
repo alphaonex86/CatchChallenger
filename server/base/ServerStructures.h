@@ -231,7 +231,7 @@ struct MarketPlayerMonster
 
 struct MarketItem
 {
-    uint32_t marketObjectId;
+    uint32_t marketObjectUniqueId;
     uint32_t item;
     uint32_t quantity;
     uint32_t player;

@@ -849,8 +849,8 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             if(!ok)
                 return;
             ui->stackedWidget->setCurrentWidget(ui->page_learn);
-            monsterToLearn=itemId;
-            if(!showLearnSkill(monsterToLearn))
+            monsterPositionToLearn=itemId;
+            if(!showLearnSkillByPosition(monsterPositionToLearn))
             {
                 newError(tr("Internal error"),"Unable to load the right monster");
                 return;
@@ -867,7 +867,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 return;
             resetPosition(true,false,true);
             //do copie here because the call of changeOfMonsterInFight apply the skill/buff effect
-            const PlayerMonster *tempMonster=ClientFightEngine::fightEngine.monsterById(itemId);
+            const PlayerMonster *tempMonster=ClientFightEngine::fightEngine.monsterByPosition(itemId);
             if(tempMonster==NULL)
             {
                 qDebug() << "Monster not found";
@@ -876,7 +876,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             PlayerMonster copiedMonster=*tempMonster;
             if(!ClientFightEngine::fightEngine.changeOfMonsterInFight(itemId))
                 return;
-            CatchChallenger::Api_client_real::client->changeOfMonsterInFight(itemId);
+            CatchChallenger::Api_client_real::client->changeOfMonsterInFightByPosition(itemId);
             PlayerMonster * playerMonster=ClientFightEngine::fightEngine.getCurrentMonster();
             init_current_monster_display(&copiedMonster);
             ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
@@ -910,7 +910,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 QMessageBox::warning(this,tr("Warning"),tr("You can't trade your last monster"));
                 break;
             }
-            if(!ClientFightEngine::fightEngine.remainMonstersToFight(itemId))
+            if(!ClientFightEngine::fightEngine.remainMonstersToFightWithoutThisMonster(itemId))
             {
                 QMessageBox::warning(this,tr("Warning"),tr("You don't have more monster valid"));
                 break;
@@ -928,7 +928,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                     marketPutMonsterList << playerMonster.at(index);
                     marketPutMonsterPlaceList << index;
                     ClientFightEngine::fightEngine.removeMonster(itemId);
-                    CatchChallenger::Api_client_real::client->putMarketMonster(itemId,getPrice.price());
+                    CatchChallenger::Api_client_real::client->putMarketMonsterByPosition(itemId,getPrice.price());
                     marketPutCashInSuspend=getPrice.price();
                     break;
                 }
@@ -943,7 +943,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             if(waitedObjectType==ObjectType_MonsterToLearn)
             {
                 ui->stackedWidget->setCurrentWidget(ui->page_learn);
-                monsterToLearn=itemId;
+                monsterPositionToLearn=itemId;
                 return;
             }
             ui->stackedWidget->setCurrentWidget(ui->page_trade);
@@ -955,7 +955,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 QMessageBox::warning(this,tr("Warning"),tr("You can't trade your last monster"));
                 break;
             }
-            if(!ClientFightEngine::fightEngine.remainMonstersToFight(itemId))
+            if(!ClientFightEngine::fightEngine.remainMonstersToFightWithoutThisMonster(itemId))
             {
                 QMessageBox::warning(this,tr("Warning"),tr("You don't have more monster valid"));
                 break;
@@ -969,7 +969,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                     tradeCurrentMonstersPosition << index;
                     tradeCurrentMonsters << playerMonster.at(index);
                     ClientFightEngine::fightEngine.removeMonster(itemId);
-                    CatchChallenger::Api_client_real::client->addMonster(itemId);
+                    CatchChallenger::Api_client_real::client->addMonsterByPosition(itemId);
                     QListWidgetItem *item=new QListWidgetItem();
                     item->setText(DatapackClientLoader::datapackLoader.monsterExtra.value(tradeCurrentMonsters.last().monster).name);
                     item->setToolTip(tr("Level: %1").arg(tradeCurrentMonsters.last().level));
@@ -2971,9 +2971,9 @@ void BaseWindow::objectUsed(const ObjectUsage &objectUsage)
             qDebug() << "BaseWindow::objectUsed(): unknow object type";
 
         break;
-        case ObjectUsage_failed:
+        case ObjectUsage_failedWithConsumption:
         break;
-        case ObjectUsage_impossible:
+        case ObjectUsage_failedWithoutConsumption:
             add_to_inventory(objectInUsing.first());
         break;
         default:

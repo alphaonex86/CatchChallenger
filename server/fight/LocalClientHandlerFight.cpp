@@ -482,81 +482,77 @@ bool Client::isInFight() const
     return otherPlayerBattle!=NULL || battleIsValidated;
 }
 
-bool Client::learnSkillInternal(const uint32_t &monsterId,const uint32_t &skill)
+bool Client::learnSkillInternal(const uint8_t &monsterPosition,const uint32_t &skill)
 {
-    unsigned int index=0;
-    while(index<public_and_private_informations.playerMonster.size())
+    if(monsterPosition>=public_and_private_informations.playerMonster.size())
     {
-        const PlayerMonster &monster=public_and_private_informations.playerMonster.at(index);
-        if(monster.id==monsterId)
-        {
-            unsigned int sub_index2=0;
-            while(sub_index2<monster.skills.size())
-            {
-                if(monster.skills.at(sub_index2).skill==skill)
-                    break;
-                sub_index2++;
-            }
-            int sub_index=0;
-            const int &list_size=CommonDatapack::commonDatapack.monsters.at(monster.monster).learn.size();
-            while(sub_index<list_size)
-            {
-                const Monster::AttackToLearn &learn=CommonDatapack::commonDatapack.monsters.at(monster.monster).learn.at(sub_index);
-                if(learn.learnAtLevel<=monster.level && learn.learnSkill==skill)
-                {
-                    if((sub_index2==monster.skills.size() && learn.learnSkillLevel==1) || (monster.skills.at(sub_index2).level+1)==learn.learnSkillLevel)
-                    {
-                        if(CommonSettingsServer::commonSettingsServer.useSP)
-                        {
-                            const Skill &skillStructure=CommonDatapack::commonDatapack.monsterSkills.at(learn.learnSkill);
-                            const uint32_t &sp=skillStructure.level.at(learn.learnSkillLevel-1).sp_to_learn;
-                            if(sp>monster.sp)
-                            {
-                                errorOutput("The attack require "+std::to_string(sp)+" sp to be learned, you have only "+std::to_string(monster.sp));
-                                return false;
-                            }
-                            public_and_private_informations.playerMonster[index].sp-=sp;
-                            const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_sp_only.compose(
-                                        std::to_string(public_and_private_informations.playerMonster.at(index).sp),
-                                        std::to_string(monsterId)
-                                        );
-                            dbQueryWriteCommon(queryText);
-                        }
-                        syncMonsterSkillAndEndurance(public_and_private_informations.playerMonster[index]);
-/*                        if(learn.learnSkillLevel==1)
-                        {
-                            PlayerMonster::PlayerSkill temp;
-                            temp.skill=skill;
-                            temp.level=1;
-                            temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(temp.skill).level.front().endurance;
-                            public_and_private_informations.playerMonster[index].skills.push_back(temp);
-                            const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster_skill;
-                            stringreplaceOne(queryText,"%1",std::to_string(monsterId));
-                            stringreplaceOne(queryText,"%2",std::to_string(temp.skill));
-                            stringreplaceOne(queryText,"%3","1");
-                            stringreplaceOne(queryText,"%4",std::to_string(temp.endurance));
-                            dbQueryWriteCommon(queryText);
-                        }
-                        else
-                        {
-                            public_and_private_informations.playerMonster[index].skills[sub_index2].level++;
-                            const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_skill_level;
-                            stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.playerMonster.at(index).skills.at(sub_index2).level));
-                            stringreplaceOne(queryText,"%2",std::to_string(monsterId));
-                            stringreplaceOne(queryText,"%3",std::to_string(skill));
-                            dbQueryWriteCommon(queryText);
-                        }*/
-                        return true;
-                    }
-                }
-                sub_index++;
-            }
-            errorOutput("The skill "+std::to_string(skill)+" is not into learn skill list for the monster");
-            return false;
-        }
-        index++;
+        errorOutput("The monster is not found: "+std::to_string(monsterPosition));
+        return false;
     }
-    errorOutput("The monster is not found: "+std::to_string(monsterId));
+    unsigned int index=monsterPosition;
+    const PlayerMonster &monster=public_and_private_informations.playerMonster.at(index);
+    unsigned int sub_index2=0;
+    while(sub_index2<monster.skills.size())
+    {
+        if(monster.skills.at(sub_index2).skill==skill)
+            break;
+        sub_index2++;
+    }
+    int sub_index=0;
+    const int &list_size=CommonDatapack::commonDatapack.monsters.at(monster.monster).learn.size();
+    while(sub_index<list_size)
+    {
+        const Monster::AttackToLearn &learn=CommonDatapack::commonDatapack.monsters.at(monster.monster).learn.at(sub_index);
+        if(learn.learnAtLevel<=monster.level && learn.learnSkill==skill)
+        {
+            if((sub_index2==monster.skills.size() && learn.learnSkillLevel==1) || (monster.skills.at(sub_index2).level+1)==learn.learnSkillLevel)
+            {
+                if(CommonSettingsServer::commonSettingsServer.useSP)
+                {
+                    const Skill &skillStructure=CommonDatapack::commonDatapack.monsterSkills.at(learn.learnSkill);
+                    const uint32_t &sp=skillStructure.level.at(learn.learnSkillLevel-1).sp_to_learn;
+                    if(sp>monster.sp)
+                    {
+                        errorOutput("The attack require "+std::to_string(sp)+" sp to be learned, you have only "+std::to_string(monster.sp));
+                        return false;
+                    }
+                    public_and_private_informations.playerMonster[index].sp-=sp;
+                    const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_sp_only.compose(
+                                std::to_string(public_and_private_informations.playerMonster.at(index).sp),
+                                std::to_string(public_and_private_informations.playerMonster.at(index).id)
+                                );
+                    dbQueryWriteCommon(queryText);
+                }
+                syncMonsterSkillAndEndurance(public_and_private_informations.playerMonster[index]);
+/*                        if(learn.learnSkillLevel==1)
+                {
+                    PlayerMonster::PlayerSkill temp;
+                    temp.skill=skill;
+                    temp.level=1;
+                    temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(temp.skill).level.front().endurance;
+                    public_and_private_informations.playerMonster[index].skills.push_back(temp);
+                    const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster_skill;
+                    stringreplaceOne(queryText,"%1",std::to_string(monsterId));
+                    stringreplaceOne(queryText,"%2",std::to_string(temp.skill));
+                    stringreplaceOne(queryText,"%3","1");
+                    stringreplaceOne(queryText,"%4",std::to_string(temp.endurance));
+                    dbQueryWriteCommon(queryText);
+                }
+                else
+                {
+                    public_and_private_informations.playerMonster[index].skills[sub_index2].level++;
+                    const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_skill_level;
+                    stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.playerMonster.at(index).skills.at(sub_index2).level));
+                    stringreplaceOne(queryText,"%2",std::to_string(monsterId));
+                    stringreplaceOne(queryText,"%3",std::to_string(skill));
+                    dbQueryWriteCommon(queryText);
+                }*/
+                return true;
+            }
+        }
+        sub_index++;
+    }
+    errorOutput("The skill "+std::to_string(skill)+" is not into learn skill list for the monster");
     return false;
 }
 
@@ -1327,7 +1323,7 @@ void Client::saveMonsterPosition(const uint32_t &monsterId,const uint8_t &monste
     dbQueryWriteCommon(queryText);
 }
 
-bool Client::changeOfMonsterInFight(const uint32_t &monsterId)
+bool Client::changeOfMonsterInFight(const uint8_t &monsterPosition)
 {
     const bool &doTurnIfChangeOfMonster=this->doTurnIfChangeOfMonster;
 
@@ -1336,7 +1332,7 @@ bool Client::changeOfMonsterInFight(const uint32_t &monsterId)
     if(monster!=NULL)
         saveMonsterStat(*monster);
 
-    if(!CommonFightEngine::changeOfMonsterInFight(monsterId))
+    if(!CommonFightEngine::changeOfMonsterInFight(monsterPosition))
         return false;
     if(isInBattle())
     {
@@ -1507,34 +1503,30 @@ void Client::confirmEvolutionTo(PlayerMonster * playerMonster,const uint32_t &mo
     dbQueryWriteCommon(queryText);
 }
 
-void Client::confirmEvolution(const uint32_t &monsterId)
+void Client::confirmEvolution(const uint8_t &monsterPosition)
 {
-    unsigned int index=0;
-    while(index<public_and_private_informations.playerMonster.size())
+    if(monsterPosition>=public_and_private_informations.playerMonster.size())
     {
-        if(public_and_private_informations.playerMonster.at(index).id==monsterId)
+        errorOutput("Monster for evolution not found");
+        return;
+    }
+    unsigned int index=monsterPosition;
+    const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.at(public_and_private_informations.playerMonster.at(index).monster);
+    unsigned int sub_index=0;
+    while(sub_index<monsterInformations.evolutions.size())
+    {
+        if(
+                (monsterInformations.evolutions.at(sub_index).type==Monster::EvolutionType_Level && monsterInformations.evolutions.at(sub_index).level<=public_and_private_informations.playerMonster.at(index).level)
+                ||
+                (monsterInformations.evolutions.at(sub_index).type==Monster::EvolutionType_Trade && GlobalServerData::serverPrivateVariables.tradedMonster.find(public_and_private_informations.playerMonster.at(index).id)!=GlobalServerData::serverPrivateVariables.tradedMonster.cend())
+        )
         {
-            const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.at(public_and_private_informations.playerMonster.at(index).monster);
-            unsigned int sub_index=0;
-            while(sub_index<monsterInformations.evolutions.size())
-            {
-                if(
-                        (monsterInformations.evolutions.at(sub_index).type==Monster::EvolutionType_Level && monsterInformations.evolutions.at(sub_index).level<=public_and_private_informations.playerMonster.at(index).level)
-                        ||
-                        (monsterInformations.evolutions.at(sub_index).type==Monster::EvolutionType_Trade && GlobalServerData::serverPrivateVariables.tradedMonster.find(public_and_private_informations.playerMonster.at(index).id)!=GlobalServerData::serverPrivateVariables.tradedMonster.cend())
-                )
-                {
-                    confirmEvolutionTo(&public_and_private_informations.playerMonster[index],monsterInformations.evolutions.at(sub_index).evolveTo);
-                    return;
-                }
-                sub_index++;
-            }
-            errorOutput("Evolution not found");
+            confirmEvolutionTo(&public_and_private_informations.playerMonster[index],monsterInformations.evolutions.at(sub_index).evolveTo);
             return;
         }
-        index++;
+        sub_index++;
     }
-    errorOutput("Monster for evolution not found");
+    errorOutput("Evolution not found");
 }
 
 void Client::hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue)
