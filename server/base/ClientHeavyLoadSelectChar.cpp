@@ -173,8 +173,12 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     }
     paramToPassToCallBackType.pop();
     #endif
-    /*account(0),pseudo(1),skin(2),type(3),clan(4),cash(5),
-    warehouse_cash(6),clan_leader(7),time_to_delete(8),starter(9)*/
+
+    /* account(0),pseudo(1),skin(2),type(3),clan(4),cash(5),
+    warehouse_cash(6),clan_leader(7),time_to_delete(8),starter(9),
+    allow(10),item(11),item_warehouse(12),recipes(13),reputations(14),
+    encyclopedia_monster(15),encyclopedia_item(16),achievements(17)*/
+
     callbackRegistred.pop();
     if(!GlobalServerData::serverPrivateVariables.db_common->next())
     {
@@ -326,6 +330,245 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         characterSelectionIsWrong(query_id,0x04,"profile index: "+std::to_string(profileIndex)+" profil not valid");
         return;
     }
+
+    //allow
+    {
+        const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(10),&ok);
+        const char * const data_raw=data.data();
+        if(!ok)
+        {
+            characterSelectionIsWrong(query_id,0x04,"allow not in hexa");
+            return;
+        }
+        unsigned int pos=0;
+        while(pos<data.size())
+        {
+            const uint8_t &allow=data_raw[pos];
+            if(allow<1 || allow>1)
+                public_and_private_informations.allow.insert(static_cast<ActionAllow>(allow));
+            else
+            {
+                ok=false;
+                normalOutput("allow id: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" is not reverse");
+            }
+            pos+=1;
+        }
+    }
+    //item
+    {
+        const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(11),&ok);
+        if(!ok)
+        {
+            characterSelectionIsWrong(query_id,0x04,"item not in hexa");
+            return;
+        }
+        const char * const data_raw=data.data();
+        unsigned int pos=0;
+        if(data.size()%(2+4)!=0)
+        {
+            characterSelectionIsWrong(query_id,0x04,"item have wrong size");
+            return;
+        }
+        while(pos<data.size())
+        {
+            const uint16_t &item=le16toh(*reinterpret_cast<const uint16_t *>(data_raw+pos));
+            pos+=2;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(CommonDatapack::commonDatapack.items.item.find(item)==CommonDatapack::commonDatapack.items.item.cend())
+                normalOutput("Take care load unknown item: "+std::to_string(item));
+            #endif
+            const uint32_t &quantity=le32toh(*reinterpret_cast<const uint32_t *>(data_raw+pos));
+            pos+=4;
+            public_and_private_informations.items[item]=quantity;
+        }
+    }
+    //item_warehouse
+    {
+        const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(12),&ok);
+        if(!ok)
+        {
+            characterSelectionIsWrong(query_id,0x04,"item_warehouse not in hexa");
+            return;
+        }
+        const char * const data_raw=data.data();
+        unsigned int pos=0;
+        if(data.size()%(2+4)!=0)
+        {
+            characterSelectionIsWrong(query_id,0x04,"item have wrong size");
+            return;
+        }
+        while(pos<data.size())
+        {
+            const uint16_t &item=le16toh(*reinterpret_cast<const uint16_t *>(data_raw+pos));
+            pos+=2;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(CommonDatapack::commonDatapack.items.item.find(item)==CommonDatapack::commonDatapack.items.item.cend())
+                normalOutput("Take care load unknown item: "+std::to_string(item));
+            #endif
+            const uint32_t &quantity=le32toh(*reinterpret_cast<const uint32_t *>(data_raw+pos));
+            pos+=4;
+            public_and_private_informations.warehouse_items[item]=quantity;
+        }
+    }
+    //recipes
+    {
+        const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(13),&ok);
+        if(!ok)
+        {
+            characterSelectionIsWrong(query_id,0x04,"recipes not in hexa");
+            return;
+        }
+        const char * const data_raw=data.data();
+        if(public_and_private_informations.recipes!=NULL)
+        {
+            delete public_and_private_informations.recipes;
+            public_and_private_informations.recipes=NULL;
+        }
+        public_and_private_informations.recipes=(char *)malloc(CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
+        memset(public_and_private_informations.recipes,0x00,CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
+        if(data.size()>(uint16_t)(CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1))
+            memcpy(public_and_private_informations.recipes,data_raw,CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
+        else
+            memcpy(public_and_private_informations.recipes,data_raw,data.size());
+    }
+    //reputations
+    {
+        const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(14),&ok);
+        if(!ok)
+        {
+            characterSelectionIsWrong(query_id,0x04,"reputations not in hexa");
+            return;
+        }
+        const char * const data_raw=data.data();
+        unsigned int pos=0;
+        if(data.size()%(4+1+1)!=0)
+        {
+            characterSelectionIsWrong(query_id,0x04,"reputations have wrong size");
+            return;
+        }
+        while(pos<data.size())
+        {
+            PlayerReputation playerReputation;
+            playerReputation.point=le32toh(*reinterpret_cast<const uint32_t *>(data_raw+pos));
+            pos+=4;
+            const uint8_t &type=data_raw[pos];
+            pos+=1;
+            playerReputation.level=data_raw[pos];
+            pos+=1;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(playerReputation.level<-100 || playerReputation.level>100)
+            {
+                normalOutput("reputation level is <100 or >100, skip: "+std::to_string(type));
+                continue;
+            }
+            if(type>=DictionaryLogin::dictionary_reputation_database_to_internal.size())
+            {
+                normalOutput("The reputation: "+std::to_string(type)+" don't exist");
+                continue;
+            }
+            if(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)==-1)
+            {
+                normalOutput("The reputation: "+std::to_string(type)+" not resolved");
+                continue;
+            }
+            if(playerReputation.level>=0)
+            {
+                if((uint32_t)playerReputation.level>=CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)).reputation_positive.size())
+                {
+                    normalOutput("The reputation level "+std::to_string(type)+
+                                 " is wrong because is out of range (reputation level: "+std::to_string(playerReputation.level)+
+                                 " > max level: "+
+                                 std::to_string(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)).reputation_positive.size())+
+                                 ")");
+                    continue;
+                }
+            }
+            else
+            {
+                if((uint32_t)(-playerReputation.level)>CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)).reputation_negative.size())
+                {
+                    normalOutput("The reputation level "+std::to_string(type)+
+                                 " is wrong because is out of range (reputation level: "+std::to_string(playerReputation.level)+
+                                 " < max level: "+std::to_string(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)).reputation_negative.size())+")");
+                    continue;
+                }
+            }
+            if(playerReputation.point>0)
+            {
+                if(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)).reputation_positive.size()==(uint32_t)(playerReputation.level+1))//start at level 0 in positive
+                {
+                    normalOutput("The reputation level is already at max, drop point");
+                    playerReputation.point=0;
+                }
+                if(playerReputation.point>=CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)).reputation_positive.at(playerReputation.level+1))//start at level 0 in positive
+                {
+                    normalOutput("The reputation point "+std::to_string(playerReputation.point)+
+                                 " is greater than max "+std::to_string(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)).reputation_positive.at(playerReputation.level)));
+                    continue;
+                }
+            }
+            else if(playerReputation.point<0)
+            {
+                if(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)).reputation_negative.size()==(uint32_t)-playerReputation.level)//start at level -1 in negative
+                {
+                    normalOutput("The reputation level is already at min, drop point");
+                    playerReputation.point=0;
+                }
+                if(playerReputation.point<CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)).reputation_negative.at(-playerReputation.level))//start at level -1 in negative
+                {
+                    normalOutput("The reputation point "+std::to_string(playerReputation.point)+
+                                 " is greater than max "+std::to_string(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)).reputation_negative.at(playerReputation.level)));
+                    continue;
+                }
+            }
+            #endif
+            public_and_private_informations.reputation[type]=playerReputation;
+        }
+    }
+    //encyclopedia_monster
+    {
+        const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(15),&ok);
+        if(!ok)
+        {
+            characterSelectionIsWrong(query_id,0x04,"encyclopedia_monster not in hexa");
+            return;
+        }
+        const char * const data_raw=data.data();
+        if(public_and_private_informations.encyclopedia_monster!=NULL)
+        {
+            delete public_and_private_informations.encyclopedia_monster;
+            public_and_private_informations.encyclopedia_monster=NULL;
+        }
+        public_and_private_informations.encyclopedia_monster=(char *)malloc(CommonDatapack::commonDatapack.monstersMaxId/8+1);
+        memset(public_and_private_informations.encyclopedia_monster,0x00,CommonDatapack::commonDatapack.monstersMaxId/8+1);
+        if(data.size()>(uint16_t)(CommonDatapack::commonDatapack.monstersMaxId/8+1))
+            memcpy(public_and_private_informations.encyclopedia_monster,data_raw,CommonDatapack::commonDatapack.monstersMaxId/8+1);
+        else
+            memcpy(public_and_private_informations.encyclopedia_monster,data_raw,data.size());
+    }
+    //encyclopedia_item
+    {
+        const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(16),&ok);
+        if(!ok)
+        {
+            characterSelectionIsWrong(query_id,0x04,"encyclopedia_item not in hexa");
+            return;
+        }
+        const char * const data_raw=data.data();
+        if(public_and_private_informations.encyclopedia_item!=NULL)
+        {
+            delete public_and_private_informations.encyclopedia_item;
+            public_and_private_informations.encyclopedia_item=NULL;
+        }
+        public_and_private_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+        memset(public_and_private_informations.encyclopedia_item,0x00,CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+        if(data.size()>(uint16_t)(CommonDatapack::commonDatapack.items.itemMaxId/8+1))
+            memcpy(public_and_private_informations.encyclopedia_item,data_raw,CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+        else
+            memcpy(public_and_private_informations.encyclopedia_item,data_raw,data.size());
+    }
+
+    //achievements(17) ignored for now
 
     Client::selectCharacterServer(query_id,characterId);
 }
@@ -1399,20 +1642,6 @@ void Client::characterIsRightFinalStep()
     uint32_t index;
     uint32_t size;
 
-    //send recipes
-    {
-        index=0;
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.recipes.size());
-        posOutput+=2;
-        auto k=public_and_private_informations.recipes.begin();
-        while(k!=public_and_private_informations.recipes.cend())
-        {
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(*k);
-            posOutput+=2;
-            ++k;
-        }
-    }
-
     //send monster
     index=0;
     size=public_and_private_informations.playerMonster.size();
@@ -1450,6 +1679,63 @@ void Client::characterIsRightFinalStep()
             ++i;
         }
     }
+    /// \todo make the buffer overflow control here or above
+    {
+        auto posOutputTemp=posOutput;
+        //recipes
+        if(public_and_private_informations.recipes!=NULL)
+        {
+            *reinterpret_cast<int16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
+            posOutput+=2;
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutputTemp,public_and_private_informations.recipes,CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
+            posOutputTemp+=CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1;
+        }
+        else
+        {
+            *reinterpret_cast<int16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+            posOutput+=2;
+        }
+        //encyclopedia_monster
+        if(public_and_private_informations.encyclopedia_monster!=NULL)
+        {
+            *reinterpret_cast<int16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonDatapack::commonDatapack.monstersMaxId/8+1);
+            posOutput+=2;
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutputTemp,public_and_private_informations.encyclopedia_monster,CommonDatapack::commonDatapack.monstersMaxId/8+1);
+            posOutputTemp+=CommonDatapack::commonDatapack.monstersMaxId/8+1;
+        }
+        else
+        {
+            *reinterpret_cast<int16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+            posOutput+=2;
+        }
+        //encyclopedia_item
+        if(public_and_private_informations.encyclopedia_item!=NULL)
+        {
+            *reinterpret_cast<int16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+            posOutput+=2;
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutputTemp,public_and_private_informations.encyclopedia_item,CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+            posOutputTemp+=CommonDatapack::commonDatapack.items.itemMaxId/8+1;
+        }
+        else
+        {
+            *reinterpret_cast<int16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+            posOutput+=2;
+        }
+        //achievements
+        ProtocolParsingBase::tempBigBufferForOutput[posOutputTemp]=0;
+        posOutputTemp++;
+
+        //compress
+        const uint32_t &compressedSize=computeCompression(ProtocolParsingBase::tempBigBufferForOutput+posOutput,ProtocolParsingBase::tempBigBufferForCompressedOutput,(posOutputTemp-posOutput),sizeof(ProtocolParsingBase::tempBigBufferForCompressedOutput),ProtocolParsingBase::compressionTypeServer);
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForCompressedOutput,compressedSize);
+        //copy
+        *reinterpret_cast<int32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(compressedSize);
+        posOutput+=4;
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,ProtocolParsingBase::tempBigBufferForCompressedOutput,compressedSize);
+        posOutput+=compressedSize;
+    }
+
+    //------------------------------------------- End of common part, start of server specific part ----------------------------------
 
     /// \todo force to 255 max
     //send quest

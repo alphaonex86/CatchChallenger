@@ -38,6 +38,7 @@ unsigned char Client::protocolReplyCompressionNone[]={0x7F/*reply server to clie
                                                       #endif
                                                       ,0x00,0x00,0x00/*little endian*/
                                                       ,0x04/*compression: none*/};
+#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 unsigned char Client::protocolReplyCompresssionZlib[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01
                                                        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
                                                        +TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT/*reply size*/
@@ -56,6 +57,7 @@ unsigned char Client::protocolReplyCompressionLz4[]={0x7F/*reply server to clien
                                                     #endif
                                                     ,0x00,0x00,0x00/*little endian*/
                                                     ,0x07/*compression: Lz4*/};
+#endif
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 unsigned char Client::loginIsWrongBuffer[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size, little endian*/,0x00/*temp return code*/};

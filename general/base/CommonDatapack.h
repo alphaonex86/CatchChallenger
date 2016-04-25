@@ -36,6 +36,7 @@ public:
     #endif
     std::vector<Reputation> reputation;
     std::unordered_map<uint16_t,Monster> monsters;
+    uint16_t monstersMaxId;
     std::unordered_map<uint16_t,Skill> monsterSkills;
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     std::unordered_map<uint8_t,Buff> monsterBuffs;

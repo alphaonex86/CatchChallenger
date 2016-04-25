@@ -20,7 +20,9 @@ public:
 
     static std::unordered_map<std::string,uint8_t> skinList;
 
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     static std::unordered_set<std::string> compressedExtension;
+    #endif
     static std::unordered_set<std::string> extensionAllowed;
     static std::vector<char> rawFilesBuffer,compressedFilesBuffer;
     static int rawFilesBufferCount,compressedFilesBufferCount;

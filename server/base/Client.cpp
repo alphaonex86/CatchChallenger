@@ -94,6 +94,7 @@ Client::Client(
     ClientBase::public_and_private_informations_solo=&public_and_private_informations;
     #endif
     public_and_private_informations.repel_step=0;
+    public_and_private_informations.recipes=NULL;
     public_and_private_informations.encyclopedia_monster=NULL;
     public_and_private_informations.encyclopedia_item=NULL;
     #ifdef CATCHCHALLENGER_DDOS_FILTER
@@ -126,6 +127,11 @@ Client::~Client()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     ClientBase::public_and_private_informations_solo=NULL;
     #endif
+    if(public_and_private_informations.recipes!=NULL)
+    {
+        delete public_and_private_informations.recipes;
+        public_and_private_informations.recipes=NULL;
+    }
     if(public_and_private_informations.encyclopedia_monster!=NULL)
     {
         delete public_and_private_informations.encyclopedia_monster;

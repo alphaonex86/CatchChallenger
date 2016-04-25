@@ -11,7 +11,7 @@ StringWithReplacement PreparedDBQueryLogin::db_query_insert_login;
 
 #if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
 StringWithReplacement PreparedDBQueryCommonForLogin::db_query_characters;
-StringWithReplacement PreparedDBQueryCommonForLogin::db_query_characters_with_monsters;
+//StringWithReplacement PreparedDBQueryCommonForLogin::db_query_characters_with_monsters;
 StringWithReplacement PreparedDBQueryCommonForLogin::db_query_select_server_time;
 StringWithReplacement PreparedDBQueryCommonForLogin::db_query_delete_character;
 StringWithReplacement PreparedDBQueryCommonForLogin::db_query_delete_monster_by_character;
@@ -214,7 +214,7 @@ void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const Databa
         #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
         PreparedDBQueryCommonForLogin::db_query_characters="SELECT `id`,`pseudo`,`skin`,`time_to_delete`,`played_time`,`last_connect` FROM `character` WHERE `account`=%1";
-        PreparedDBQueryCommonForLogin::db_query_characters_with_monsters="SELECT LOWER(HEX(`monster`)),LOWER(HEX(`monster_warehouse`)),LOWER(HEX(`monster_market`)) FROM `character` WHERE `id`=%1";
+        //PreparedDBQueryCommonForLogin::db_query_characters_with_monsters="SELECT LOWER(HEX(`monster`)),LOWER(HEX(`monster_warehouse`)),LOWER(HEX(`monster_market`)) FROM `character` WHERE `id`=%1";
         PreparedDBQueryCommonForLogin::db_query_select_server_time="SELECT `server`,`played_time`,`last_connect` FROM `server_time` WHERE `account`=%1";//not by characters to prevent too hurge datas to store
         PreparedDBQueryCommonForLogin::db_query_delete_character="DELETE FROM `character` WHERE `id`=%1";
         PreparedDBQueryCommonForLogin::db_query_delete_monster_by_character="DELETE FROM `monster` WHERE `character`=%1";
@@ -228,7 +228,7 @@ void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const Databa
         #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::SQLite:
         PreparedDBQueryCommonForLogin::db_query_characters="SELECT id,pseudo,skin,time_to_delete,played_time,last_connect FROM character WHERE account=%1";
-        PreparedDBQueryCommonForLogin::db_query_characters_with_monsters="SELECT monster,monster_warehouse,monster_market FROM character WHERE id=%1";
+        //PreparedDBQueryCommonForLogin::db_query_characters_with_monsters="SELECT monster,monster_warehouse,monster_market FROM character WHERE id=%1";
         PreparedDBQueryCommonForLogin::db_query_select_server_time="SELECT server,played_time,last_connect FROM server_time WHERE account=%1";//not by characters to prevent too hurge datas to store
         PreparedDBQueryCommonForLogin::db_query_delete_character="DELETE FROM character WHERE id=%1";
         PreparedDBQueryCommonForLogin::db_query_delete_monster_by_character="DELETE FROM monster WHERE character=%1";
@@ -242,7 +242,7 @@ void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const Databa
         #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
         PreparedDBQueryCommonForLogin::db_query_characters="SELECT id,pseudo,skin,time_to_delete,played_time,last_connect FROM character WHERE account=%1";
-        PreparedDBQueryCommonForLogin::db_query_characters_with_monsters="SELECT encode(monster,'hex'),encode(monster_warehouse,'hex'),encode(monster_market,'hex') FROM character WHERE id=%1";
+        //PreparedDBQueryCommonForLogin::db_query_characters_with_monsters="SELECT encode(monster,'hex'),encode(monster_warehouse,'hex'),encode(monster_market,'hex') FROM character WHERE id=%1";
         PreparedDBQueryCommonForLogin::db_query_select_server_time="SELECT server,played_time,last_connect FROM server_time WHERE account=%1";//not by characters to prevent too hurge datas to store
         PreparedDBQueryCommonForLogin::db_query_delete_character="DELETE FROM character WHERE id=%1";
         PreparedDBQueryCommonForLogin::db_query_delete_monster_by_character="DELETE FROM monster WHERE character=%1";
@@ -317,7 +317,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
 
         PreparedDBQueryCommon::db_query_select_allow="SELECT `allow` FROM `character_allow` WHERE `character`=%1";
         PreparedDBQueryCommon::db_query_monster_skill="UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3";
-        PreparedDBQueryCommon::db_query_character_by_id="SELECT `account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`starter`,`allow`,`item`,`item_warehouse`,`recipes`,`reputations`,`encyclopedia_monster`,`encyclopedia_item`,`achievements`,`monster`,`monster_warehouse` FROM `character` WHERE `id`=%1";
+        PreparedDBQueryCommon::db_query_character_by_id="SELECT `account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`starter`,`allow`,`item`,`item_warehouse`,`recipes`,`reputations`,`encyclopedia_monster`,`encyclopedia_item`,`achievements` FROM `character` WHERE `id`=%1";
 
 
         PreparedDBQueryCommon::db_query_monster_by_character_id="SELECT `id` FROM `monster` WHERE `character`=%1";
@@ -428,7 +428,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
 
         PreparedDBQueryCommon::db_query_select_allow="SELECT allow FROM character_allow WHERE character=%1";
         PreparedDBQueryCommon::db_query_monster_skill="UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3";
-        PreparedDBQueryCommon::db_query_character_by_id="SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,allow,item,item_warehouse,recipes,reputations,encyclopedia_monster,encyclopedia_item,achievements,monster,monster_warehouse FROM character WHERE id=%1";
+        PreparedDBQueryCommon::db_query_character_by_id="SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,allow,item,item_warehouse,recipes,reputations,encyclopedia_monster,encyclopedia_item,achievements FROM character WHERE id=%1";
 
         PreparedDBQueryCommon::db_query_monster_by_character_id="SELECT id FROM monster WHERE character=%1";
         PreparedDBQueryCommon::db_query_delete_monster_buff="UPDATE monster SET buffs='' WHERE id=%1";
@@ -514,7 +514,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_monster_update_endurance="UPDATE monster SET skills_endurance='\\x%1' WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_monster_buff="UPDATE monster SET buffs='\\x%1' WHERE id=%2";
 
-        PreparedDBQueryCommon::db_query_character_by_id="SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,allow,item,item_warehouse,recipes,reputations,encyclopedia_monster,encyclopedia_item,achievements,monster,monster_warehouse FROM character WHERE id=%1";
+        PreparedDBQueryCommon::db_query_character_by_id="SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,allow,item,item_warehouse,recipes,reputations,encyclopedia_monster,encyclopedia_item,achievements FROM character WHERE id=%1";
         PreparedDBQueryCommon::db_query_set_character_time_to_delete_to_zero="UPDATE character SET time_to_delete=0 WHERE id=%1";
         PreparedDBQueryCommon::db_query_update_character_last_connect="UPDATE character SET last_connect=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_clan="SELECT name,cash FROM clan WHERE id=%1";

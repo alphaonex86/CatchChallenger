@@ -223,6 +223,8 @@ void ClientFightEngine::addPlayerMonster(const QList<PlayerMonster> &playerMonst
     int index=0;
     while(index<playerMonster.size())
     {
+        const uint16_t &monsterId=playerMonster.at(index).monster;
+        public_and_private_informations.encyclopedia_monster[monsterId/8]|=(1<<(7-monsterId%8));
         monsterList.push_back(playerMonster.at(index));
         index++;
     }
@@ -231,11 +233,19 @@ void ClientFightEngine::addPlayerMonster(const QList<PlayerMonster> &playerMonst
 
 void ClientFightEngine::addPlayerMonster(const std::vector<PlayerMonster> &playerMonster)
 {
+    unsigned int index=0;
+    while(index<playerMonster.size())
+    {
+        const uint16_t &monsterId=playerMonster.at(index).monster;
+        public_and_private_informations.encyclopedia_monster[monsterId/8]|=(1<<(7-monsterId%8));
+        index++;
+    }
     CommonFightEngine::addPlayerMonster(playerMonster);
 }
 
 void ClientFightEngine::addPlayerMonster(const PlayerMonster &playerMonster)
 {
+    public_and_private_informations.encyclopedia_monster[playerMonster.monster/8]|=(1<<(7-playerMonster.monster%8));
     CommonFightEngine::addPlayerMonster(playerMonster);
 }
 
