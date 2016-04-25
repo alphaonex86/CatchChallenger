@@ -1613,6 +1613,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
     (void)monsterBuffs;
     #endif
     ItemFull items;
+    items.itemMaxId=0;
     const std::vector<std::string> &fileList=FacilityLibGeneral::listFolder(folder+'/');
     unsigned int file_index=0;
     while(file_index<fileList.size())
@@ -1670,6 +1671,8 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                     {
                         if(items.item.find(id)==items.item.cend())
                         {
+                            if(items.itemMaxId<id)
+                                items.itemMaxId=id;
                             //load the price
                             {
                                 if(item->Attribute("price")!=NULL)

@@ -437,6 +437,7 @@ void Client::sendFileContent()
     }
 }
 
+#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 void Client::sendCompressedFileContent()
 {
     if(BaseServerMasterSendDatapack::compressedFilesBuffer.size()>0 && BaseServerMasterSendDatapack::compressedFilesBufferCount>0)
@@ -457,12 +458,14 @@ void Client::sendCompressedFileContent()
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,BaseServerMasterSendDatapack::compressedFilesBuffer.data(),BaseServerMasterSendDatapack::compressedFilesBuffer.size());
         posOutput+=BaseServerMasterSendDatapack::compressedFilesBuffer.size();
 
-        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+        const uint32_t &compressedSize=computeCompression(ProtocolParsingBase::tempBigBufferForOutput,ProtocolParsingBase::tempBigBufferForCompressedOutput,posOutput,sizeof(ProtocolParsingBase::tempBigBufferForCompressedOutput),ProtocolParsingBase::compressionTypeServer);
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForCompressedOutput,compressedSize);
 
         BaseServerMasterSendDatapack::compressedFilesBuffer.clear();
         BaseServerMasterSendDatapack::compressedFilesBufferCount=0;
     }
 }
+#endif
 
 bool Client::sendFile(const std::string &datapackPath,const std::string &fileName)
 {
@@ -479,6 +482,7 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
         const int &contentsize=content.size();
 
         const std::string &suffix=FacilityLibGeneral::getSuffix(fileName);
+        #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
         if(ProtocolParsing::compressionTypeServer!=ProtocolParsing::CompressionType::None &&
                 BaseServerMasterSendDatapack::compressedExtension.find(suffix)!=BaseServerMasterSendDatapack::compressedExtension.cend() &&
                 (
@@ -520,6 +524,7 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
             }
         }
         else
+        #endif
         {
             if(contentsize>CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB*1024)
             {

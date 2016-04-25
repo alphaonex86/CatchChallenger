@@ -137,6 +137,7 @@ void CommonDatapack::parseMonsters()
     monsters=FightLoader::loadMonster(datapackPath+DATAPACK_BASE_PATH_MONSTERS,monsterSkills
                                       #ifndef CATCHCHALLENGER_CLASS_MASTER
                                       ,types,items.item
+                                      ,items.itemMaxId
                                       #endif
                                       );
     std::cout << monsters.size() << " monster(s) loaded" << std::endl;

@@ -68,6 +68,8 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     if(extensionAllowed.isEmpty())
         extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
 
+    player_informations.encyclopedia_monster=NULL;
+    player_informations.encyclopedia_item=NULL;
     resetAll();
 
     connect(socket,&ConnectedSocket::destroyed,this,&Api_protocol::socketDestroyed,Qt::DirectConnection);
@@ -117,6 +119,16 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
 Api_protocol::~Api_protocol()
 {
     qDebug() << "Api_protocol::~Api_protocol()";
+    if(player_informations.encyclopedia_monster!=NULL)
+    {
+        delete player_informations.encyclopedia_monster;
+        player_informations.encyclopedia_monster=NULL;
+    }
+    if(player_informations.encyclopedia_item!=NULL)
+    {
+        delete player_informations.encyclopedia_item;
+        player_informations.encyclopedia_item=NULL;
+    }
 }
 
 void Api_protocol::disconnectClient()
@@ -125,6 +137,16 @@ void Api_protocol::disconnectClient()
         socket->disconnect();
     is_logged=false;
     character_selected=false;
+    if(player_informations.encyclopedia_monster!=NULL)
+    {
+        delete player_informations.encyclopedia_monster;
+        player_informations.encyclopedia_monster=NULL;
+    }
+    if(player_informations.encyclopedia_item!=NULL)
+    {
+        delete player_informations.encyclopedia_item;
+        player_informations.encyclopedia_item=NULL;
+    }
 }
 
 void Api_protocol::socketDestroyed()
@@ -1438,7 +1460,12 @@ void Api_protocol::useRecipe(const uint16_t &recipeId)
 
 void Api_protocol::addRecipe(const uint16_t &recipeId)
 {
-    player_informations.recipes.insert(recipeId);
+    if(player_informations.recipes==NULL)
+    {
+        std::cerr << "player_informations.recipes NULL, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return;
+    }
+    player_informations.recipes[recipeId/8]|=(1<<(7-recipeId%8));
 }
 
 void Api_protocol::battleRefused()
@@ -1708,7 +1735,6 @@ void Api_protocol::resetAll()
     player_informations.public_informations.speed=0;
     player_informations.public_informations.type=Player_type_normal;
     player_informations.repel_step=0;
-    player_informations.recipes.clear();
     player_informations.playerMonster.clear();
     player_informations.items.clear();
     player_informations.reputation.clear();
@@ -1726,6 +1752,21 @@ void Api_protocol::resetAll()
     mDatapackSub=mDatapackMain+"sub/[sub]/";
     CommonSettingsServer::commonSettingsServer.mainDatapackCode="[main]";
     CommonSettingsServer::commonSettingsServer.subDatapackCode="[sub]";
+    if(player_informations.recipes!=NULL)
+    {
+        delete player_informations.recipes;
+        player_informations.recipes=NULL;
+    }
+    if(player_informations.encyclopedia_monster!=NULL)
+    {
+        delete player_informations.encyclopedia_monster;
+        player_informations.encyclopedia_monster=NULL;
+    }
+    if(player_informations.encyclopedia_item!=NULL)
+    {
+        delete player_informations.encyclopedia_item;
+        player_informations.encyclopedia_item=NULL;
+    }
 
     ProtocolParsingInputOutput::reset();
     flags|=0x08;

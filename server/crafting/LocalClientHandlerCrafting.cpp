@@ -30,7 +30,7 @@ void Client::useSeed(const uint8_t &plant_id)
 void Client::useRecipe(const uint8_t &query_id,const uint32_t &recipe_id)
 {
     //don't check if the recipe exists, because the loading of the know recide do that's
-    if(public_and_private_informations.recipes.find(recipe_id)==public_and_private_informations.recipes.cend())
+    if(public_and_private_informations.recipes[recipe_id/8] & (1<<(7-recipe_id%8)))
     {
         errorOutput("The player have not this recipe as know: "+std::to_string(recipe_id));
         return;

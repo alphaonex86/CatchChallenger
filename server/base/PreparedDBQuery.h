@@ -26,7 +26,7 @@ public:
     static void initDatabaseQueryCommonForLogin(const DatabaseBase::DatabaseType &type);
 public:
     static StringWithReplacement db_query_characters;//should be already limited at creation (write access), not need limit on read
-    static StringWithReplacement db_query_characters_with_monsters;
+    //static StringWithReplacement db_query_characters_with_monsters;
     static StringWithReplacement db_query_select_server_time;
     static StringWithReplacement db_query_delete_character;
     static StringWithReplacement db_query_delete_monster_by_character;

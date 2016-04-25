@@ -1570,7 +1570,7 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
     if(CommonDatapack::commonDatapack.itemToCrafingRecipes.find(itemId)!=CommonDatapack::commonDatapack.itemToCrafingRecipes.cend())
     {
         const uint32_t &recipeId=CommonDatapack::commonDatapack.itemToCrafingRecipes.at(itemId);
-        if(public_and_private_informations.recipes.find(recipeId)!=public_and_private_informations.recipes.cend())
+        if(public_and_private_informations.recipes[recipeId/8] & (1<<(7-recipeId%8)))
         {
             errorOutput("Can't use the object: "+std::to_string(itemId)+", recipe already registred");
             return;
@@ -1580,7 +1580,7 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
             errorOutput("The player have not the requirement: "+std::to_string(recipeId)+" to to learn crafting recipe");
             return;
         }
-        public_and_private_informations.recipes.insert(recipeId);
+        public_and_private_informations.recipes[recipeId/8]|=(1<<(7-recipeId%8));
 
         removeFromQueryReceived(query_id);
         //send the network reply
@@ -1601,20 +1601,8 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         //add into db, bit to save
         {
-            const size_t size=CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1;
-            char bitlist[size];
-            memset(bitlist,0,size);
-
-            auto i=public_and_private_informations.recipes.begin();
-            while(i!=public_and_private_informations.recipes.cend())
-            {
-                uint16_t bittoUp=*i;
-                bitlist[bittoUp/8]|=(1<<(7-bittoUp%8));
-                ++i;
-            }
-
             dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_recipe.compose(
-                        binarytoHexa(bitlist,sizeof(bitlist)),
+                        binarytoHexa(public_and_private_informations.recipes,CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1),
                         std::to_string(character_id)
                         ));
         }
