@@ -308,6 +308,38 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
         else
             CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.clear();
     }
+    //Events not with default value list size
+    {
+        QList<QPair<uint8_t,uint8_t> > events;
+        uint8_t tempListSize;
+        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+        {
+            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            return false;
+        }
+        in >> tempListSize;
+        uint8_t event,value;
+        int index=0;
+        while(index<tempListSize)
+        {
+
+            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the event id, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                return false;
+            }
+            in >> event;
+            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the event value, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                return false;
+            }
+            in >> value;
+            index++;
+            events << QPair<uint8_t,uint8_t>(event,value);
+        }
+        setEvents(events);
+    }
 
     if(this->max_players<=255)
     {
@@ -391,37 +423,7 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
         player_informations.clan_leader=true;
     else
         player_informations.clan_leader=false;
-    {
-        QList<QPair<uint8_t,uint8_t> > events;
-        uint8_t tempListSize;
-        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
-        {
-            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-            return false;
-        }
-        in >> tempListSize;
-        uint8_t event,value;
-        int index=0;
-        while(index<tempListSize)
-        {
 
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
-            {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the event id, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-                return false;
-            }
-            in >> event;
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
-            {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the event value, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-                return false;
-            }
-            in >> value;
-            index++;
-            events << QPair<uint8_t,uint8_t>(event,value);
-        }
-        setEvents(events);
-    }
     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint64_t))
     {
         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player cash, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
@@ -437,77 +439,6 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
     }
     in >> cash;
     player_informations.warehouse_cash=cash;
-
-    //item on map
-    {
-        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
-        {
-            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player cash ware house, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-            return false;
-        }
-        uint8_t itemOnMapSize;
-        in >> itemOnMapSize;
-        uint8_t index=0;
-        while(index<itemOnMapSize)
-        {
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
-            {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player item on map, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-                return false;
-            }
-            uint8_t itemOnMap;
-            in >> itemOnMap;
-            player_informations.itemOnMap.insert(itemOnMap);
-            index++;
-        }
-    }
-
-    //plant on map
-    if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer)
-    {
-        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
-        {
-            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player cash ware house, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-            return false;
-        }
-        uint8_t plantOnMapSize;
-        in >> plantOnMapSize;
-        uint8_t index=0;
-        while(index<plantOnMapSize)
-        {
-            PlayerPlant playerPlant;
-
-            //plant on map,x,y getted
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
-            {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player item on map, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-                return false;
-            }
-            uint8_t plantOnMap;
-            in >> plantOnMap;
-
-            //plant
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
-            {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player item on map, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-                return false;
-            }
-            in >> playerPlant.plant;
-
-            //seconds to mature
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
-            {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player item on map, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-                return false;
-            }
-            uint16_t seconds_to_mature;
-            in >> seconds_to_mature;
-            playerPlant.mature_at=QDateTime::currentMSecsSinceEpoch()/1000+seconds_to_mature;
-
-            player_informations.plantOnMap[plantOnMap]=playerPlant;
-            index++;
-        }
-    }
 
     //recipes
     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
@@ -547,12 +478,12 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
         PlayerMonster monster;
         PlayerBuff buff;
         PlayerMonster::PlayerSkill skill;
-        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
+        /*if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
         {
             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster id bd, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
             return false;
         }
-        in >> monster.id;
+        in >> monster.id;*/
         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
         {
             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster id, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
@@ -919,6 +850,78 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
         player_informations.bot_already_beaten.insert(bot_already_beaten);
         index++;
     }
+
+    //item on map
+    {
+        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+        {
+            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player cash ware house, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            return false;
+        }
+        uint8_t itemOnMapSize;
+        in >> itemOnMapSize;
+        uint8_t index=0;
+        while(index<itemOnMapSize)
+        {
+            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player item on map, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                return false;
+            }
+            uint8_t itemOnMap;
+            in >> itemOnMap;
+            player_informations.itemOnMap.insert(itemOnMap);
+            index++;
+        }
+    }
+
+    //plant on map
+    if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer)
+    {
+        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+        {
+            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player cash ware house, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            return false;
+        }
+        uint8_t plantOnMapSize;
+        in >> plantOnMapSize;
+        uint8_t index=0;
+        while(index<plantOnMapSize)
+        {
+            PlayerPlant playerPlant;
+
+            //plant on map,x,y getted
+            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player item on map, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                return false;
+            }
+            uint8_t plantOnMap;
+            in >> plantOnMap;
+
+            //plant
+            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player item on map, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                return false;
+            }
+            in >> playerPlant.plant;
+
+            //seconds to mature
+            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player item on map, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                return false;
+            }
+            uint16_t seconds_to_mature;
+            in >> seconds_to_mature;
+            playerPlant.mature_at=QDateTime::currentMSecsSinceEpoch()/1000+seconds_to_mature;
+
+            player_informations.plantOnMap[plantOnMap]=playerPlant;
+            index++;
+        }
+    }
+
     character_selected=true;
     haveCharacter();
     return true;

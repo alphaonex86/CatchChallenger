@@ -939,7 +939,7 @@ void Api_protocol::requestFight(const uint32_t &fightId)
     is_logged=character_selected=packOutcommingData(0x0C,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::changeOfMonsterInFight(const uint32_t &monsterId)
+void Api_protocol::changeOfMonsterInFightByPosition(const uint8_t &monsterPosition)
 {
     if(!is_logged)
     {
@@ -954,7 +954,7 @@ void Api_protocol::changeOfMonsterInFight(const uint32_t &monsterId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint32_t)monsterId;
+    out << (uint8_t)monsterPosition;
     is_logged=character_selected=packOutcommingData(0x0E,outputData.constData(),outputData.size());
 }
 
@@ -977,7 +977,7 @@ void Api_protocol::useSkill(const uint16_t &skill)
     is_logged=character_selected=packOutcommingData(0x11,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::learnSkill(const uint32_t &monsterId,const uint16_t &skill)
+void Api_protocol::learnSkillByPosition(const uint8_t &monsterPosition,const uint16_t &skill)
 {
     if(!is_logged)
     {
@@ -992,7 +992,7 @@ void Api_protocol::learnSkill(const uint32_t &monsterId,const uint16_t &skill)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint32_t)monsterId;
+    out << (uint8_t)monsterPosition;
     out << (uint16_t)skill;
     is_logged=character_selected=packOutcommingData(0x09,outputData.constData(),outputData.size());
 }
@@ -1279,7 +1279,7 @@ void Api_protocol::buyMarketObject(const uint32_t &marketObjectId, const uint32_
     is_logged=character_selected=packOutcommingQuery(0x8E,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::buyMarketMonster(const uint32_t &monsterId)
+void Api_protocol::buyMarketMonsterByPosition(const uint16_t &monsterPosition)
 {
     if(!is_logged)
     {
@@ -1295,11 +1295,11 @@ void Api_protocol::buyMarketMonster(const uint32_t &monsterId)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x02;
-    out << monsterId;
+    out << monsterPosition;
     is_logged=character_selected=packOutcommingQuery(0x8E,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::putMarketObject(const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price)
+void Api_protocol::putMarketObject(const uint32_t &objectId, const uint32_t &quantity, const uint64_t &price)
 {
     if(!is_logged)
     {
@@ -1317,11 +1317,11 @@ void Api_protocol::putMarketObject(const uint32_t &objectId,const uint32_t &quan
     out << (uint8_t)0x01;
     out << objectId;
     out << quantity;
-    out << price;
+    out << (quint64)price;
     is_logged=character_selected=packOutcommingQuery(0x8F,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::putMarketMonster(const uint32_t &monsterId,const uint32_t &price)
+void Api_protocol::putMarketMonsterByPosition(const uint8_t &monsterPosition,const uint64_t &price)
 {
     if(!is_logged)
     {
@@ -1337,8 +1337,8 @@ void Api_protocol::putMarketMonster(const uint32_t &monsterId,const uint32_t &pr
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x02;
-    out << monsterId;
-    out << price;
+    out << monsterPosition;
+    out << (quint64)price;
     is_logged=character_selected=packOutcommingQuery(0x8F,queryNumber(),outputData.constData(),outputData.size());
 }
 
@@ -1357,7 +1357,7 @@ void Api_protocol::recoverMarketCash()
     is_logged=character_selected=packOutcommingQuery(0x90,queryNumber(),NULL,0);
 }
 
-void Api_protocol::withdrawMarketObject(const uint32_t &objectId,const uint32_t &quantity)
+void Api_protocol::withdrawMarketObject(const uint16_t &objectPosition,const uint32_t &quantity)
 {
     if(!is_logged)
     {
@@ -1373,12 +1373,12 @@ void Api_protocol::withdrawMarketObject(const uint32_t &objectId,const uint32_t 
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x01;
-    out << objectId;
+    out << objectPosition;
     out << quantity;
     is_logged=character_selected=packOutcommingQuery(0x91,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::withdrawMarketMonster(const uint32_t &monsterId)
+void Api_protocol::withdrawMarketMonsterByPosition(const uint16_t &monsterPosition)
 {
     if(!is_logged)
     {
@@ -1394,7 +1394,7 @@ void Api_protocol::withdrawMarketMonster(const uint32_t &monsterId)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x02;
-    out << monsterId;
+    out << monsterPosition;
     is_logged=character_selected=packOutcommingQuery(0x91,queryNumber(),outputData.constData(),outputData.size());
 }
 
@@ -1645,7 +1645,7 @@ void Api_protocol::addObject(const uint16_t &item, const uint32_t &quantity)
     is_logged=character_selected=packOutcommingData(0x14,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::addMonster(const uint32_t &monsterId)
+void Api_protocol::addMonsterByPosition(const uint8_t &monsterPosition)
 {
     if(!is_logged)
     {
@@ -1666,7 +1666,7 @@ void Api_protocol::addMonster(const uint32_t &monsterId)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x03;
-    out << monsterId;
+    out << monsterPosition;
     is_logged=character_selected=packOutcommingData(0x14,outputData.constData(),outputData.size());
 }
 

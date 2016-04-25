@@ -523,7 +523,7 @@ private:
     uint32_t removeWarehouseObject(const uint16_t &item,const uint32_t &quantity=1);
 
     bool haveReputationRequirements(const std::vector<ReputationRequirements> &reputationList) const;
-    void confirmEvolution(const uint32_t &monsterId);
+    void confirmEvolution(const uint8_t &monsterPosition);
     void sendHandlerCommand(const std::string &command,const std::string &extraText);
     void addEventInQueue(const uint8_t &event, const uint8_t &event_value, const uint64_t &currentDateTime);
     void removeFirstEventInQueue();
@@ -548,7 +548,7 @@ private:
     void tradeFinished();
     void tradeAddTradeCash(const uint64_t &cash);
     void tradeAddTradeObject(const uint16_t &item,const uint32_t &quantity);
-    void tradeAddTradeMonster(const uint32_t &monsterId);
+    void tradeAddTradeMonster(const uint8_t &monsterPosition);
     //quest
     void newQuestAction(const QuestAction &action,const uint32_t &questId);
     void appendAllow(const ActionAllow &allow);
@@ -572,7 +572,7 @@ private:
     virtual bool tryEscape();
     void heal();
     void requestFight(const uint16_t &fightId);
-    bool learnSkill(const uint32_t &monsterId,const uint16_t &skill);
+    bool learnSkill(const uint8_t &monsterPosition,const uint16_t &skill);
     Client * getLocalClientHandlerFight();
     //clan
     void clanAction(const uint8_t &query_id,const uint8_t &action,const std::string &text);
@@ -599,12 +599,12 @@ private:
     //market
     void getMarketList(const uint32_t &query_id);
     void buyMarketObject(const uint32_t &query_id,const uint32_t &marketObjectId,const uint32_t &quantity);
-    void buyMarketMonster(const uint32_t &query_id,const uint32_t &monsterId);
+    void buyMarketMonster(const uint32_t &query_id, const uint32_t &marketMonsterUniqueId/*To ident even if the position have changed, imply search at server*/);
     void putMarketObject(const uint32_t &query_id,const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price);
-    void putMarketMonster(const uint32_t &query_id, const uint32_t &monsterId, const uint32_t &price);
+    void putMarketMonster(const uint32_t &query_id, const uint8_t &monsterPosition, const uint32_t &price);
     void withdrawMarketCash(const uint32_t &query_id);
     void withdrawMarketObject(const uint32_t &query_id,const uint32_t &objectId,const uint32_t &quantity);
-    void withdrawMarketMonster(const uint32_t &query_id, const uint32_t &monsterId);
+    void withdrawMarketMonster(const uint32_t &query_id, const uint32_t &marketMonsterUniqueId/*To ident even if the position have changed, imply search at server*/);
 
     static std::string directionToStringToSave(const Direction &direction);
     static std::string orientationToStringToSave(const Orientation &orientation);
@@ -628,7 +628,7 @@ private:
     void syncMonsterBuff(const PlayerMonster &monster);
     bool checkLoose();
     bool isInBattle() const;
-    bool learnSkillInternal(const uint32_t &monsterId,const uint32_t &skill);
+    bool learnSkillInternal(const uint8_t &monsterPosition,const uint32_t &skill);
     void getRandomNumberIfNeeded() const;
     bool botFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y);
     bool checkFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y);
@@ -845,7 +845,7 @@ private:
 */
 
     uint32_t tryCapture(const uint16_t &item);
-    bool changeOfMonsterInFight(const uint32_t &monsterId);
+    bool changeOfMonsterInFight(const uint8_t &monsterPosition);
     void confirmEvolutionTo(PlayerMonster * playerMonster,const uint32_t &monster);
     void addPlayerMonster(const std::vector<PlayerMonster> &playerMonster);
     void addPlayerMonster(const PlayerMonster &playerMonster);

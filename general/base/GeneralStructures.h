@@ -230,8 +230,8 @@ struct Event
 enum ObjectUsage : uint8_t
 {
     ObjectUsage_correctlyUsed=0x01,//is correctly used
-    ObjectUsage_failed=0x02,//failed to use with consumption of the object
-    ObjectUsage_impossible=0x03//failed to use without consumption of the object
+    ObjectUsage_failedWithConsumption=0x02,//failed to use with consumption of the object
+    ObjectUsage_failedWithoutConsumption=0x03//failed to use without consumption of the object
 };
 
 enum BuyStat : uint8_t
@@ -317,7 +317,7 @@ class PlayerMonster : public PublicPlayerMonster
     uint32_t egg_step;
     //in form of list to get random into the list
     std::vector<PlayerSkill> skills;
-    uint32_t id;//id into the db
+    uint32_t id;//id into the db, only on server part, but no way to leave from here with risk of structure problem
     uint32_t character_origin;
 };
 
@@ -773,17 +773,17 @@ struct BotFight
 
 struct MarketObject
 {
-    uint32_t marketObjectId;
-    uint32_t objectId;
+    uint16_t index;
+    uint16_t objectId;
     uint32_t quantity;
-    uint32_t price;
+    uint64_t price;
 };
 struct MarketMonster
 {
-    uint32_t monsterId;
-    uint32_t monster;
+    uint16_t index;
+    uint16_t monster;
     uint8_t level;
-    uint32_t price;
+    uint64_t price;
 };
 
 struct IndustryStatus

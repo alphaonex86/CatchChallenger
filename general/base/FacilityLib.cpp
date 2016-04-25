@@ -85,11 +85,11 @@ uint16_t FacilityLib::playerMonsterToBinary(char *data,const PlayerMonster &play
 PlayerMonster FacilityLib::botFightMonsterToPlayerMonster(const BotFight::BotFightMonster &botFightMonster,const Monster::Stat &stat)
 {
     PlayerMonster tempPlayerMonster;
+    tempPlayerMonster.id=0;
     tempPlayerMonster.catched_with=0;
     tempPlayerMonster.egg_step=0;
     tempPlayerMonster.gender=Gender_Unknown;
     tempPlayerMonster.hp=stat.hp;
-    tempPlayerMonster.id=0;
     tempPlayerMonster.level=botFightMonster.level;
     tempPlayerMonster.monster=botFightMonster.id;
     tempPlayerMonster.remaining_xp=0;
@@ -145,8 +145,6 @@ uint32_t FacilityLib::privateMonsterToBinary(char *data,const PlayerMonster &mon
     //send the network reply
     uint32_t posOutput=0;
 
-    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(monster.id);
-    posOutput+=4;
     *reinterpret_cast<uint16_t *>(data+posOutput)=htole16(monster.monster);
     posOutput+=2;
     data[posOutput]=monster.level;
