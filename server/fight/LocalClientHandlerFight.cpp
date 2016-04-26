@@ -79,21 +79,21 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
         if(CommonSettingsServer::commonSettingsServer.useSP)
         {
             const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_xp_hp_level.compose(
-                        std::to_string(monster.id),
                         std::to_string(monster.hp),
                         std::to_string(monster.remaining_xp),
                         std::to_string(monster.level),
-                        std::to_string(monster.sp)
+                        std::to_string(monster.sp),
+                        std::to_string(monster.id)
                         );
             dbQueryWriteCommon(queryText);
         }
         else
         {
             const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_xp_hp_level.compose(
-                        std::to_string(monster.id),
                         std::to_string(monster.hp),
                         std::to_string(monster.remaining_xp),
-                        std::to_string(monster.level)
+                        std::to_string(monster.level),
+                        std::to_string(monster.id)
                         );
             dbQueryWriteCommon(queryText);
         }
@@ -917,20 +917,20 @@ bool Client::giveXPSP(int xp,int sp)
             if(haveChangeOfLevel)
             {
                 const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_xp_hp_level.compose(
-                            std::to_string(currentMonster->id),
                             std::to_string(currentMonster->hp),
                             std::to_string(currentMonster->remaining_xp),
                             std::to_string(currentMonster->level),
-                            std::to_string(currentMonster->sp)
+                            std::to_string(currentMonster->sp),
+                            std::to_string(currentMonster->id)
                             );
                 dbQueryWriteCommon(queryText);
             }
             else
             {
                 const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_xp.compose(
-                            std::to_string(currentMonster->id),
                             std::to_string(currentMonster->remaining_xp),
-                            std::to_string(currentMonster->sp)
+                            std::to_string(currentMonster->sp),
+                            std::to_string(currentMonster->id)
                             );
                 dbQueryWriteCommon(queryText);
             }
@@ -940,18 +940,18 @@ bool Client::giveXPSP(int xp,int sp)
             if(haveChangeOfLevel)
             {
                 const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_xp_hp_level.compose(
-                            std::to_string(currentMonster->id),
                             std::to_string(currentMonster->hp),
                             std::to_string(currentMonster->remaining_xp),
-                            std::to_string(currentMonster->level)
+                            std::to_string(currentMonster->level),
+                            std::to_string(currentMonster->id)
                             );
                 dbQueryWriteCommon(queryText);
             }
             else
             {
                 const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_xp.compose(
-                            std::to_string(currentMonster->id),
-                            std::to_string(currentMonster->remaining_xp)
+                            std::to_string(currentMonster->remaining_xp),
+                            std::to_string(currentMonster->id)
                             );
                 dbQueryWriteCommon(queryText);
             }
