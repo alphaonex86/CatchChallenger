@@ -103,9 +103,12 @@ void StringWithReplacement::set(const std::string &query)
             previousStringPos=size;
             *reinterpret_cast<uint16_t *>(preparedQueryTemp+1)=pos-3-(numberOfReplace*2+1);
             //copy
-            preparedQuery=new unsigned char[pos];
+            preparedQuery=new unsigned char[pos+1];
             memcpy(preparedQuery,preparedQueryTemp,pos);
             //dump:
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            std::cout << "StringWithReplacement: saved: " << originalQuery() << std::endl;
+            #endif
             return;
         }
         --numberOfReplace;
@@ -124,16 +127,52 @@ void StringWithReplacement::operator=(const std::string &query)
     set(query);
 }
 
+std::string StringWithReplacement::originalQuery() const
+{
+    if(preparedQuery==NULL)
+    {
+        std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
+        return std::string();
+    }
+    //copy the first segments
+    const uint16_t &firstChunkSize=*reinterpret_cast<uint16_t *>(preparedQuery+1+2);
+    memcpy(composeBuffer,preparedQuery+1+2+2,firstChunkSize);
+    uint16_t posComposeBuffer=firstChunkSize;
+    uint16_t pos=1+2+2+firstChunkSize;
+    uint8_t index=0;
+    while(index<preparedQuery[0])
+    {
+        std::string arg("%"+std::to_string(index+1));
+        memcpy(composeBuffer+posComposeBuffer,arg.data(),arg.size());
+        posComposeBuffer+=arg.size();
+
+        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+2,*reinterpret_cast<uint16_t *>(preparedQuery+pos));
+        posComposeBuffer+=preparedQuery[pos];
+        pos+=2+preparedQuery[pos];
+        ++index;
+    }
+    return std::string(composeBuffer,posComposeBuffer);
+}
+
 std::string StringWithReplacement::compose(const std::string &arg1) const
 {
     if(preparedQuery==NULL)
     {
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if(preparedQuery[0]!=1)
     {
-        std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+arg1.size()+1)>=sizeof(composeBuffer))
@@ -176,11 +215,17 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     if(preparedQuery==NULL)
     {
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if(preparedQuery[0]!=2)
     {
-        std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+arg1.size()+arg2.size()+1)>=sizeof(composeBuffer))
@@ -228,11 +273,17 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     if(preparedQuery==NULL)
     {
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if(preparedQuery[0]!=3)
     {
-        std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
@@ -287,11 +338,17 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     if(preparedQuery==NULL)
     {
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if(preparedQuery[0]!=4)
     {
-        std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
@@ -351,11 +408,17 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     if(preparedQuery==NULL)
     {
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if(preparedQuery[0]!=5)
     {
-        std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
@@ -421,11 +484,17 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     if(preparedQuery==NULL)
     {
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if(preparedQuery[0]!=6)
     {
-        std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
@@ -496,11 +565,17 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     if(preparedQuery==NULL)
     {
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if(preparedQuery[0]!=7)
     {
-        std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
@@ -576,11 +651,17 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     if(preparedQuery==NULL)
     {
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if(preparedQuery[0]!=8)
     {
-        std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
@@ -661,11 +742,17 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     if(preparedQuery==NULL)
     {
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if(preparedQuery[0]!=9)
     {
-        std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
@@ -760,11 +847,17 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     if(preparedQuery==NULL)
     {
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if(preparedQuery[0]!=10)
     {
-        std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
@@ -856,11 +949,17 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     if(preparedQuery==NULL)
     {
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if(preparedQuery[0]!=11)
     {
-        std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
@@ -957,11 +1056,17 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     if(preparedQuery==NULL)
     {
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if(preparedQuery[0]!=12)
     {
-        std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
@@ -1063,11 +1168,17 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     if(preparedQuery==NULL)
     {
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if(preparedQuery[0]!=13)
     {
-        std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
@@ -1175,11 +1286,17 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     if(preparedQuery==NULL)
     {
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if(preparedQuery[0]!=14)
     {
-        std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+
@@ -1292,11 +1409,17 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     if(preparedQuery==NULL)
     {
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if(preparedQuery[0]!=15)
     {
-        std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
         return std::string();
     }
     if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+

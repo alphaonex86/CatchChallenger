@@ -146,6 +146,7 @@ public:
                         const std::string &arg14,
                         const std::string &arg15
                         ) const;
+    std::string originalQuery() const;
 private:
     /* [0]: occurence to replace
      * [1,2]: total size of the String
