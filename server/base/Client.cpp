@@ -266,6 +266,7 @@ void Client::disconnectClient()
     }
     else if(stat==ClientStat::CharacterSelected)
     {
+        const std::string &character_id_string=std::to_string(character_id);
         if(map!=NULL)
             removeClientOnMap(map
                               #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
@@ -296,8 +297,8 @@ void Client::disconnectClient()
         {
             {
                 const std::string &queryText=PreparedDBQueryCommon::db_query_played_time.compose(
-                            std::to_string(character_id),
-                            std::to_string(addTime)
+                            std::to_string(addTime),
+                            character_id_string
                             );
                 dbQueryWriteCommon(queryText);
             }
@@ -306,7 +307,7 @@ void Client::disconnectClient()
                 const std::string &queryText=PreparedDBQueryCommon::db_query_update_server_time_played_time.compose(
                             std::to_string(addTime),
                             std::to_string(0),
-                            std::to_string(character_id)
+                            character_id_string
                             );
                 dbQueryWriteCommon(queryText);
             }
@@ -324,24 +325,22 @@ void Client::disconnectClient()
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
                 if(CommonSettingsServer::commonSettingsServer.useSP)
                 {
-                    const std::string &queryText=PreparedDBQueryCommon::db_query_monster_update_mix.compose(
-                                std::to_string(playerMonster.id),
-                                std::to_string(character_id),
+                    const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_xp_hp_level.compose(
                                 std::to_string(playerMonster.hp),
                                 std::to_string(playerMonster.remaining_xp),
                                 std::to_string(playerMonster.level),
-                                std::to_string(playerMonster.sp)
+                                std::to_string(playerMonster.sp),
+                                std::to_string(playerMonster.id)
                                 );
                     dbQueryWriteCommon(queryText);
                 }
                 else
                 {
-                    const std::string &queryText=PreparedDBQueryCommon::db_query_monster_update_mix.compose(
-                                std::to_string(playerMonster.id),
-                                std::to_string(character_id),
+                    const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_xp_hp_level.compose(
                                 std::to_string(playerMonster.hp),
                                 std::to_string(playerMonster.remaining_xp),
-                                std::to_string(playerMonster.level)
+                                std::to_string(playerMonster.level),
+                                std::to_string(playerMonster.id)
                                 );
                     dbQueryWriteCommon(queryText);
                 }

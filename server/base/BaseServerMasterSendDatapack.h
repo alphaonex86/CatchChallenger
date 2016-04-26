@@ -20,12 +20,15 @@ public:
 
     static std::unordered_map<std::string,uint8_t> skinList;
 
+    #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     static std::unordered_set<std::string> compressedExtension;
+    static std::vector<char> compressedFilesBuffer;
+    static int compressedFilesBufferCount;
     #endif
     static std::unordered_set<std::string> extensionAllowed;
-    static std::vector<char> rawFilesBuffer,compressedFilesBuffer;
-    static int rawFilesBufferCount,compressedFilesBufferCount;
+    static std::vector<char> rawFilesBuffer;
+    static int rawFilesBufferCount;
     struct DatapackCacheFile
     {
         uint32_t mtime;
@@ -33,6 +36,7 @@ public:
     };
     static std::unordered_map<std::string,uint32_t> datapack_file_list_cache;
     static std::unordered_map<std::string,DatapackCacheFile> datapack_file_hash_cache;
+    #endif
     static std::regex fileNameStartStringRegex;
 private:
     void preload_the_skin();

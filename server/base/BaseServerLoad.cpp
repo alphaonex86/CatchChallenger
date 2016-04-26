@@ -837,13 +837,20 @@ void BaseServer::preload_profile()
 
 
 
+    GlobalServerData::serverPrivateVariables.serverProfileInternalList.resize(CommonDatapack::commonDatapack.profileList.size());
     const DatabaseBase::DatabaseType &type=GlobalServerData::serverPrivateVariables.db_common->databaseType();
 
     unsigned int index=0;
     while(index<CommonDatapack::commonDatapack.profileList.size())
     {
         const Profile &profile=CommonDatapack::commonDatapack.profileList.at(index);
+        const ServerSpecProfile &serverProfile=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.at(index);
         ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(index);
+        serverProfileInternal.map=
+                static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.at(serverProfile.mapString));
+        serverProfileInternal.x=serverProfile.x;
+        serverProfileInternal.y=serverProfile.y;
+        serverProfileInternal.orientation=serverProfile.orientation;
 
         std::string encyclopedia_item,item;
         if(profile.items.empty())
@@ -1644,13 +1651,17 @@ void BaseServer::preload_the_skin()
 
 void BaseServer::preload_the_datapack()
 {
+    #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+BaseServer::text_dotcomma+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
     BaseServerMasterSendDatapack::extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     std::vector<std::string> compressedExtensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
     BaseServerMasterSendDatapack::compressedExtension=std::unordered_set<std::string>(compressedExtensionAllowedTemp.begin(),compressedExtensionAllowedTemp.end());
+    #endif
     Client::datapack_list_cache_timestamp_base=0;
     Client::datapack_list_cache_timestamp_main=0;
     Client::datapack_list_cache_timestamp_sub=0;
+    #endif
 
     GlobalServerData::serverPrivateVariables.mainDatapackFolder=
             GlobalServerData::serverSettings.datapack_basePath+
@@ -1838,10 +1849,12 @@ void BaseServer::preload_the_datapack()
                     //read and load the file
                     const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
 
+                    #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                     if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
                         if(GlobalServerData::serverSettings.max_players>1)//if not internal
                         {
+                            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                             if(BaseServerMasterSendDatapack::compressedExtension.find(FacilityLibGeneral::getSuffix(datapack_file_temp.at(index)))!=BaseServerMasterSendDatapack::compressedExtension.end())
                             {
                                 if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
@@ -1851,12 +1864,14 @@ void BaseServer::preload_the_datapack()
                                 }
                             }
                             else
+                            #endif
                             {
                                 std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size" << std::endl;
                                 abort();
                             }
                         }
                     }
+                    #endif
 
                     //switch the data to correct hash or drop it
                     if(regex_search(datapack_file_temp.at(index),mainDatapackFolderFilter))
@@ -1864,6 +1879,7 @@ void BaseServer::preload_the_datapack()
                     }
                     else
                     {
+                        #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                         SHA256_CTX hashFile;
                         if(SHA224_Init(&hashFile)!=1)
                         {
@@ -1875,6 +1891,7 @@ void BaseServer::preload_the_datapack()
                         SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
                         cacheFile.partialHash=*reinterpret_cast<const uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput);
                         Client::datapack_file_hash_cache_main[datapack_file_temp.at(index)]=cacheFile;
+                        #endif
 
                         SHA224_Update(&hashMain,data.data(),data.size());
                     }
@@ -1914,10 +1931,12 @@ void BaseServer::preload_the_datapack()
                     //read and load the file
                     const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
 
+                    #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                     if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
                         if(GlobalServerData::serverSettings.max_players>1)//if not internal
                         {
+                            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                             if(BaseServerMasterSendDatapack::compressedExtension.find(FacilityLibGeneral::getSuffix(datapack_file_temp.at(index)))!=BaseServerMasterSendDatapack::compressedExtension.end())
                             {
                                 if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
@@ -1927,13 +1946,16 @@ void BaseServer::preload_the_datapack()
                                 }
                             }
                             else
+                            #endif
                             {
                                 std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size" << std::endl;
                                 abort();
                             }
                         }
                     }
+                    #endif
 
+                    #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                     //switch the data to correct hash or drop it
                     SHA256_CTX hashFile;
                     if(SHA224_Init(&hashFile)!=1)
@@ -1946,6 +1968,7 @@ void BaseServer::preload_the_datapack()
                     SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
                     cacheFile.partialHash=*reinterpret_cast<const uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput);
                     Client::datapack_file_hash_cache_sub[datapack_file_temp.at(index)]=cacheFile;
+                    #endif
 
                     SHA224_Update(&hashSub,data.data(),data.size());
                 }
@@ -1970,6 +1993,7 @@ void BaseServer::preload_the_datapack()
         abort();
     }
     #endif
+    #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     if(Client::datapack_file_hash_cache_main.size()==0)
     {
         std::cout << "0 file for datapack loaded main (abort)" << std::endl;
@@ -1982,6 +2006,7 @@ void BaseServer::preload_the_datapack()
               << " file for datapack loaded main, "
               << Client::datapack_file_hash_cache_sub.size()
               << " file for datapack loaded sub" << std::endl;
+    #endif
     std::cout << binarytoHexa(CommonSettingsCommon::commonSettingsCommon.datapackHashBase)
               << " hash for datapack loaded base, "
               << binarytoHexa(CommonSettingsServer::commonSettingsServer.datapackHashServerMain)

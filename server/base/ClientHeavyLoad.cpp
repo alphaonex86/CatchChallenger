@@ -48,6 +48,12 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
         returnList=FacilityLibGeneral::listFolder(path);
     else
         returnList=FacilityLibGeneral::listFolderWithExclude(path,exclude);
+
+    #ifdef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+    const std::vector<std::string> &extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
+    const std::unordered_set<std::string> &extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+    #endif
+
     int index=0;
     const int &size=returnList.size();
     while(index<size)
@@ -61,8 +67,12 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
         {
             const std::string &suffix=FacilityLibGeneral::getSuffix(fileName);
             if(!suffix.empty() &&
+            #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                     BaseServerMasterSendDatapack::extensionAllowed.find(suffix)
                     !=BaseServerMasterSendDatapack::extensionAllowed.cend())
+            #else
+                    extensionAllowed.find(suffix)!=extensionAllowed.cend())
+            #endif
             {
                 DatapackCacheFile datapackCacheFile;
                 if(withHash)
