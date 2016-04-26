@@ -240,6 +240,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         PreparedDBQueryLogin::initDatabaseQueryLogin(EpollClientLoginSlave::databaseBaseLogin.databaseType());
+        PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(EpollClientLoginSlave::databaseBaseLogin.databaseType());
         #endif
         //PreparedDBQueryBase::initDatabaseQueryBase(EpollClientLoginSlave::databaseBaseLogin.databaseType());//don't exist, allow dictionary and loaded without cache
     }

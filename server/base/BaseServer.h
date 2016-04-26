@@ -184,6 +184,9 @@ protected:
     int entryListIndex;
     int plant_on_the_map;
     std::vector<Map_semi> semi_loaded_map;
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    std::vector<TiXmlDocument *> toDeleteAfterBotLoad;
+    #endif
 
     static std::regex regexXmlFile;
     static const std::string text_dotxml;
