@@ -1631,6 +1631,17 @@ bool BaseServer::preload_the_map()
     std::cout << GlobalServerData::serverPrivateVariables.map_list.size() << " map(s) loaded" << std::endl;
 
     DictionaryServer::dictionary_pointOnMap_internal_to_database.clear();
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    {
+        unsigned int index=0;
+        while(index<toDeleteAfterBotLoad.size())
+        {
+            delete toDeleteAfterBotLoad.at(index);
+            index++;
+        }
+        toDeleteAfterBotLoad.clear();
+    }
+    #endif
     botFiles.clear();
     return true;
 }
@@ -2657,7 +2668,9 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
         }
         child = child->NextSiblingElement("bot");
     }
+
     #ifdef EPOLLCATCHCHALLENGERSERVER
-    delete domDocument;
+    toDeleteAfterBotLoad.push_back(domDocument);
     #endif
+    //delete domDocument;->reused after, need near botFiles.clear
 }

@@ -16,8 +16,7 @@ const std::string CharactersGroupForLogin::gender_female("2");
 void CharactersGroupForLogin::character_list(EpollClientLoginSlave * const client,const uint32_t &account_id)
 {
     const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_characters.compose(
-                std::to_string(account_id),
-                std::to_string(CommonSettingsCommon::commonSettingsCommon.max_character*2)
+                std::to_string(account_id)
                 );
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText,this,&CharactersGroupForLogin::character_list_static);
     if(callback==NULL)
