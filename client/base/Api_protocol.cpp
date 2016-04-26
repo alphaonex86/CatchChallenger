@@ -68,6 +68,7 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     if(extensionAllowed.isEmpty())
         extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
 
+    player_informations.recipes=NULL;
     player_informations.encyclopedia_monster=NULL;
     player_informations.encyclopedia_item=NULL;
     resetAll();
