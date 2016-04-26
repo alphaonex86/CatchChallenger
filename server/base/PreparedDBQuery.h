@@ -70,7 +70,6 @@ public:
     static StringWithReplacement db_query_update_monster_xp;
     static StringWithReplacement db_query_insert_clan;
     static StringWithReplacement db_query_played_time;
-    static StringWithReplacement db_query_monster_update_mix;
     static StringWithReplacement db_query_monster_update_skill_and_endurance;
     static StringWithReplacement db_query_monster_update_endurance;
     static StringWithReplacement db_query_update_monster_buff;

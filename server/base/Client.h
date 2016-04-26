@@ -112,7 +112,9 @@ public:
     static int privateChatDropTotalCache;
     static int privateChatDropNewValue;
     static std::vector<uint16_t> marketObjectIdList;
+    #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     static uint64_t datapack_list_cache_timestamp_base,datapack_list_cache_timestamp_main,datapack_list_cache_timestamp_sub;
+    #endif
     static std::vector<uint16_t> simplifiedIdList;
     static std::unordered_map<std::string,Client *> playerByPseudo;
     static std::unordered_map<uint32_t,Clan *> clanList;
@@ -344,18 +346,22 @@ private:
     static const std::string text_restart;
     static const std::string text_unknown_send_command_slash;
     static const std::string text_commands_seem_not_right;
-    static uint8_t tempDatapackListReplySize;
-    static std::vector<char> tempDatapackListReplyArray;
-    static uint8_t tempDatapackListReply;
-    static unsigned int tempDatapackListReplyTestCount;
+
     struct DatapackCacheFile
     {
         //uint32_t mtime;
         uint32_t partialHash;
     };
+    #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+    static uint8_t tempDatapackListReplySize;
+    static std::vector<char> tempDatapackListReplyArray;
+    static uint8_t tempDatapackListReply;
+    static unsigned int tempDatapackListReplyTestCount;
     //static std::unordered_map<std::string,uint32_t> datapack_file_list_cache_base,datapack_file_list_cache_main,datapack_file_list_cache_sub;//same than above
     static std::unordered_map<std::string,DatapackCacheFile> datapack_file_hash_cache_base,datapack_file_hash_cache_main,datapack_file_hash_cache_sub;
+    #endif
     static std::regex fileNameStartStringRegex;
+
     static std::string single_quote;
     static std::string antislash_single_quote;
     static const std::string text_dotslash;

@@ -64,6 +64,9 @@ void StringWithReplacement::set(const std::string &query)
                     if(foundinternal<previousStringPos)
                     {
                         std::cerr << "StringWithReplacement::operator=(): id to replace need be ordened" << std::endl;
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        abort();
+                        #endif
                         return;
                     }
                     const uint16_t &size=foundinternal-previousStringPos;
@@ -80,6 +83,9 @@ void StringWithReplacement::set(const std::string &query)
                 else
                 {
                     std::cerr << "StringWithReplacement::operator=(): missing id to replace" << std::endl;
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    abort();
+                    #endif
                     return;
                 }
                 index++;

@@ -17,16 +17,21 @@ using namespace CatchChallenger;
 
 std::unordered_map<std::string,uint8_t> BaseServerMasterSendDatapack::skinList;
 
+#ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 std::unordered_set<std::string> BaseServerMasterSendDatapack::compressedExtension;
+std::vector<char> BaseServerMasterSendDatapack::compressedFilesBuffer;
+int BaseServerMasterSendDatapack::compressedFilesBufferCount;
+#endif
 std::unordered_set<std::string> BaseServerMasterSendDatapack::extensionAllowed;
 
 std::vector<char> BaseServerMasterSendDatapack::rawFilesBuffer;
-std::vector<char> BaseServerMasterSendDatapack::compressedFilesBuffer;
 int BaseServerMasterSendDatapack::rawFilesBufferCount;
-int BaseServerMasterSendDatapack::compressedFilesBufferCount;
 
 std::unordered_map<std::string,uint32_t> BaseServerMasterSendDatapack::datapack_file_list_cache;
 std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> BaseServerMasterSendDatapack::datapack_file_hash_cache;
+#endif
+
 std::regex BaseServerMasterSendDatapack::fileNameStartStringRegex=std::regex("^[a-zA-Z]:/");
 
 BaseServerMasterSendDatapack::BaseServerMasterSendDatapack()
@@ -58,12 +63,18 @@ void BaseServerMasterSendDatapack::preload_the_skin()
 
 void BaseServerMasterSendDatapack::loadTheDatapackFileList()
 {
+    #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     char tempBigBufferForOutput[CATCHCHALLENGER_SHA224HASH_SIZE];
+    #endif
 
+    #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
     extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     std::vector<std::string> compressedExtensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
     compressedExtension=std::unordered_set<std::string>(compressedExtensionAllowedTemp.begin(),compressedExtensionAllowedTemp.end());
+    #endif
+    #endif
     std::regex datapack_rightFileName = std::regex(DATAPACK_FILE_REGEX);
 
     std::string text_datapack(datapack_basePathLogin);
@@ -87,7 +98,9 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
                 struct stat buf;
                 if(stat((text_datapack+datapack_file_temp.at(index)).c_str(),&buf)==0)
                 {
+                    #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                     if(buf.st_size<=CATCHCHALLENGER_MAX_FILE_SIZE)
+                    #endif
                     {
                         FILE *filedesc = fopen((text_datapack+datapack_file_temp.at(index)).c_str(), "rb");
                         if(filedesc!=NULL)
@@ -101,22 +114,28 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
                                     abort();
                                 }
                                 SHA224_Update(&hashFile,data.data(),data.size());
+                                #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                                 BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
                                 cacheFile.mtime=buf.st_mtime;
                                 SHA224_Final(reinterpret_cast<unsigned char *>(tempBigBufferForOutput),&hashFile);
                                 cacheFile.partialHash=*reinterpret_cast<const uint32_t *>(tempBigBufferForOutput);
                                 datapack_file_hash_cache[datapack_file_temp.at(index)]=cacheFile;
+                                #endif
                             }
                             SHA224_Update(&hashBase,data.data(),data.size());
                         }
+                        #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                         else
                         {
                             std::cerr << "Stop now! Unable to open the file " << text_datapack+datapack_file_temp.at(index) << " to do the datapack checksum for the mirror" << std::endl;
                             abort();
                         }
+                        #endif
                     }
+                    #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                     else
-                        std::cerr << "File to big: " << text_datapack+datapack_file_temp.at(index) << " size: " << buf.st_size << std::endl;
+                        std::cerr << "File too big: " << text_datapack+datapack_file_temp.at(index) << " size: " << buf.st_size << ">CATCHCHALLENGER_MAX_FILE_SIZE: " << CATCHCHALLENGER_MAX_FILE_SIZE << std::endl;
+                    #endif
                 }
                 else
                     std::cerr << "Unable to stat the file: " << text_datapack+datapack_file_temp.at(index) << std::endl;
@@ -137,10 +156,14 @@ void BaseServerMasterSendDatapack::unload()
 {
     skinList.clear();
 
+    #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     compressedExtension.clear();
+    compressedFilesBuffer.clear();
+    #endif
     extensionAllowed.clear();
     rawFilesBuffer.clear();
-    compressedFilesBuffer.clear();
     datapack_file_list_cache.clear();
     datapack_file_hash_cache.clear();
+    #endif
 }
