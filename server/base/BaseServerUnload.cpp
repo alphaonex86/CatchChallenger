@@ -174,10 +174,14 @@ void BaseServer::unload_the_events()
 
 void BaseServer::unload_the_datapack()
 {
+    #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     baseServerMasterSendDatapack.compressedExtension.clear();
+    #endif
     Client::datapack_file_hash_cache_base.clear();
     Client::datapack_file_hash_cache_main.clear();
     Client::datapack_file_hash_cache_sub.clear();
+    #endif
 }
 
 void BaseServer::unload_the_players()

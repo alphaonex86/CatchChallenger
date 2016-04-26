@@ -98,6 +98,8 @@ uint8_t Client::indexOfDirtOnMap;//index of plant on map, ordened by map and x,y
 std::vector<uint8_t> Client::selectCharacterQueryId;
 
 std::vector<uint16_t> Client::simplifiedIdList;
+
+#ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
 uint8_t Client::tempDatapackListReplySize=0;
 uint8_t Client::tempDatapackListReply=0;
 std::vector<char> Client::tempDatapackListReplyArray;
@@ -108,6 +110,8 @@ uint64_t Client::datapack_list_cache_timestamp_sub;
 std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_hash_cache_base;
 std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_hash_cache_main;
 std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_hash_cache_sub;
+#endif
+
 std::regex Client::fileNameStartStringRegex=std::regex("^[a-zA-Z]:/");
 std::string Client::single_quote="'";
 std::string Client::antislash_single_quote="\\'";
