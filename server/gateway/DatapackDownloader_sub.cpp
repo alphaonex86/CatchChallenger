@@ -435,7 +435,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListSub(const std::vector
             while(index<content.size())
             {
                 const std::string &line=content.at(index);
-                size_t const &found=line.find(' ');
+                const auto &found=line.find(' ');
                 if(found!=std::string::npos)
                 {
                     correctContent++;

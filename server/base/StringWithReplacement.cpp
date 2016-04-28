@@ -44,7 +44,7 @@ void StringWithReplacement::set(const std::string &query)
     uint8_t numberOfReplace=15;
     while(1)
     {
-        const std::size_t &found = query.find("%"+std::to_string(numberOfReplace));
+        const auto &found = query.find("%"+std::to_string(numberOfReplace));
         if(found!=std::string::npos)
         {
             const uint16_t &arraysize=1+numberOfReplace+query.size()+2;
@@ -58,7 +58,7 @@ void StringWithReplacement::set(const std::string &query)
             do
             {
                 const std::string testToFind("%"+std::to_string(index));
-                const std::size_t &foundinternal = query.find(testToFind);
+                const auto &foundinternal = query.find(testToFind);
                 if(foundinternal!=std::string::npos)
                 {
                     if(foundinternal<previousStringPos)
@@ -103,7 +103,7 @@ void StringWithReplacement::set(const std::string &query)
             previousStringPos=size;
             *reinterpret_cast<uint16_t *>(preparedQueryTemp+1)=pos-3-(numberOfReplace*2+1);
             //copy
-            preparedQuery=new unsigned char[pos+1];
+            preparedQuery=(unsigned char *)malloc(pos+1);
             memcpy(preparedQuery,preparedQueryTemp,pos);
             //dump:
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -155,6 +155,62 @@ std::string StringWithReplacement::originalQuery() const
         ++index;
     }
     return std::string(composeBuffer,posComposeBuffer);
+}
+
+StringWithReplacement::StringWithReplacement(const StringWithReplacement& other) // copy constructor
+{
+    if(other.preparedQuery==nullptr)
+    {
+        preparedQuery=nullptr;
+        return;
+    }
+    const uint16_t &size=StringWithReplacement::preparedQuerySize(other.preparedQuery);
+    preparedQuery = new unsigned char[size + 1];
+    memcpy(preparedQuery,other.preparedQuery,size);
+}
+
+StringWithReplacement::StringWithReplacement(StringWithReplacement&& other) // move constructor
+    : preparedQuery(other.preparedQuery)
+{
+    other.preparedQuery = nullptr;
+}
+
+StringWithReplacement& StringWithReplacement::operator=(const StringWithReplacement& other) // copy assignment
+{
+    if(preparedQuery!=NULL)
+        delete preparedQuery;
+    if(other.preparedQuery==nullptr)
+    {
+        preparedQuery=nullptr;
+        return *this;
+    }
+    const uint16_t &size=StringWithReplacement::preparedQuerySize(other.preparedQuery);
+    preparedQuery = new unsigned char[size + 1];
+    memcpy(preparedQuery,other.preparedQuery,size);
+    return *this;
+}
+
+StringWithReplacement& StringWithReplacement::operator=(StringWithReplacement&& other) // move assignment
+{
+    if(preparedQuery!=NULL)
+        delete preparedQuery;
+    preparedQuery = other.preparedQuery;
+    other.preparedQuery = nullptr;
+    return *this;
+}
+
+uint16_t StringWithReplacement::preparedQuerySize(const unsigned char * const preparedQuery)
+{
+    //copy the first segments
+    const uint16_t &firstChunkSize=*reinterpret_cast<const uint16_t *>(preparedQuery+1+2);
+    uint16_t pos=1+2+2+firstChunkSize;
+    uint8_t index=0;
+    while(index<preparedQuery[0])
+    {
+        pos+=2+preparedQuery[pos];
+        ++index;
+    }
+    return pos;
 }
 
 std::string StringWithReplacement::compose(const std::string &arg1) const
