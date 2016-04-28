@@ -423,6 +423,8 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::removeClient()
 
 void MapVisibilityAlgorithm_WithBorder_StoreOnSender::mapVisiblity_unloadFromTheMap()
 {
+    if(map==NULL)
+        return;
     removeClient();
 }
 
