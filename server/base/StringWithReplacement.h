@@ -9,6 +9,11 @@ public:
     StringWithReplacement();
     StringWithReplacement(const std::string &query);
     ~StringWithReplacement();
+    StringWithReplacement(const StringWithReplacement& other);// copy constructor
+    StringWithReplacement(StringWithReplacement&& other);// move constructor
+    StringWithReplacement& operator=(const StringWithReplacement& other);// copy assignment
+    StringWithReplacement& operator=(StringWithReplacement&& other);// move assignment
+    static uint16_t preparedQuerySize(const unsigned char * const preparedQuery);
     void operator=(const std::string &query);
     void set(const std::string &query);
     bool empty() const;

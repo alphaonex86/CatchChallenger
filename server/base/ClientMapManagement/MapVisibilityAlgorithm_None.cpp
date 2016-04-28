@@ -43,6 +43,8 @@ void MapVisibilityAlgorithm_None::removeClient()
 
 void MapVisibilityAlgorithm_None::mapVisiblity_unloadFromTheMap()
 {
+    if(map==NULL)
+        return;
     removeClient();
 }
 

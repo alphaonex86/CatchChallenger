@@ -316,6 +316,8 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::unloadFromTheMap()
         return;
     }
     #endif
+    if(map==NULL)
+        return;
     vectorremoveOne(static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(map)->clients,this);
     mapVisiblity_unloadFromTheMap();
 }
