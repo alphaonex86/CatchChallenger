@@ -19,7 +19,7 @@
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/ConnectedSocket.h"
-#include "../base/RssNews.h"
+#include "../base/FeedNews.h"
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "../base/Audio.h"
 #endif
@@ -111,7 +111,7 @@ private slots:
     void serverError(const QString &error);
     void on_languages_clicked();
     void newUpdate(const QString &version);
-    void rssEntryList(const QList<RssNews::RssEntry> &entryList);
+    void feedEntryList(const QList<FeedNews::FeedEntry> &entryList, QString error);
     void on_lineEditLogin_textChanged(const QString &arg1);
     void logged();
     void gameIsLoaded();

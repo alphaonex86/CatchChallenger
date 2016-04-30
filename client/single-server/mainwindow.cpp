@@ -33,7 +33,7 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
-    qRegisterMetaType<QList<RssNews::RssEntry> >("QList<RssNews::RssEntry>");
+    qRegisterMetaType<QList<FeedNews::FeedEntry> >("QList<FeedNews::FeedEntry>");
 
     realSslSocket=new QSslSocket();
     socket=NULL;
@@ -534,7 +534,13 @@ void MainWindow::rssEntryList(const QList<RssNews::RssEntry> &entryList)
 {
     if(entryList.isEmpty())
     {
-        ui->news->setVisible(false);
+        if(error.isEmpty())
+            ui->news->setVisible(false);
+        else
+        {
+            ui->news->setToolTip(error);
+            ui->news->setStyleSheet("#news{background-color: rgb(220, 220, 240);\nborder: 1px solid rgb(100, 150, 240);\nborder-radius:5px;\ncolor: rgb(0, 0, 0);\nbackground-image: url(:/images/multi/warning.png);\nbackground-repeat: no-repeat;\nbackground-position: right;}");
+        }
         return;
     }
     if(entryList.size()==1)
@@ -548,10 +554,10 @@ void MainWindow::rssEntryList(const QList<RssNews::RssEntry> &entryList)
             entryHtmlList << QStringLiteral(" - <a href=\"%1\">%2</a>").arg(entryList.at(index).link).arg(entryList.at(index).title);
             index++;
         }
-        ui->news->setText(tr("Latest news:")+QStringLiteral("<br />")+entryHtmlList.join(QStringLiteral("<br />")));
+        ui->news->setText(tr("Latest news:")+QStringLiteral("<br />")+entryHtmlList.join("<br />"));
     }
     settings.setValue("news",ui->news->text());
-    ui->news->setStyleSheet("background-color:rgb(220,220,240);border:1px solid rgb(100,150,240);border-radius:5px;color:rgb(0,0,0);");
+    ui->news->setStyleSheet("#news{background-color:rgb(220,220,240);border:1px solid rgb(100,150,240);border-radius:5px;color:rgb(0,0,0);}");
     ui->news->setVisible(true);
 }
 
