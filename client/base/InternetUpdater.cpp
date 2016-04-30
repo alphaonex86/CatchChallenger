@@ -58,8 +58,10 @@ void InternetUpdater::downloadFile()
     #if defined(_WIN32) || defined(Q_OS_MAC)
     catchChallengerVersion+=QStringLiteral(" (OS: %1)").arg(GetOSDisplayString());
     #endif
-    QNetworkRequest networkRequest(QStringLiteral("%1?platform=%2").arg(CATCHCHALLENGER_UPDATER_URL).arg(CATCHCHALLENGER_PLATFORM_CODE));
+    catchChallengerVersion+=QStringLiteral(" ")+CATCHCHALLENGER_PLATFORM_CODE;
+    QNetworkRequest networkRequest(QStringLiteral(CATCHCHALLENGER_UPDATER_URL));
     networkRequest.setHeader(QNetworkRequest::UserAgentHeader,catchChallengerVersion);
+    networkRequest.setRawHeader("Connection", "Close");
     reply = qnam.get(networkRequest);
     connect(reply, &QNetworkReply::finished, this, &InternetUpdater::httpFinished);
 }
@@ -75,6 +77,8 @@ void InternetUpdater::httpFinished()
     }
     else if(reply->error())
     {
+        newUpdateTimer.stop();
+        newUpdateTimer.start(24*60*60*1000);
         qDebug() << (QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
         reply->deleteLater();
         return;
