@@ -17,7 +17,6 @@
         <file>images/chat/developer.png</file>
         <file>images/chat/premium.png</file>
         <file>images/interface/top.png</file>
-        <file>images/multi/slow.png</file>
         <file>other/default_server_list.xml</file>
         <file>images/interface/server_list/star1.png</file>
         <file>images/interface/server_list/star2.png</file>
@@ -30,6 +29,8 @@
         <file>images/interface/server_list/stat3.png</file>
         <file>images/interface/server_list/stat4.png</file>
         <file>images/interface/server_list/bug.png</file>
+        <file>images/multi/slow.png</file>
         <file>images/multi/busy.png</file>
+        <file>images/multi/warning.png</file>
     </qresource>
 </RCC>
