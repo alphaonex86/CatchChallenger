@@ -1,4 +1,4 @@
-SOURCES += $$PWD/RssNews.cpp \
+SOURCES += $$PWD/FeedNews.cpp \
     $$PWD/Api_client_real.cpp \
     $$PWD/Api_client_real_base.cpp \
     $$PWD/Api_client_real_main.cpp \
@@ -9,7 +9,7 @@ SOURCES += $$PWD/RssNews.cpp \
     $$PWD/BlacklistPassword.cpp \
     $$PWD/SslCert.cpp
 
-HEADERS  += $$PWD/RssNews.h \
+HEADERS  += $$PWD/FeedNews.h \
     $$PWD/Api_client_real.h \
     $$PWD/qt-tar-xz/QXzDecodeThread.h \
     $$PWD/qt-tar-xz/QXzDecode.h \

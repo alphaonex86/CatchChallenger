@@ -84,7 +84,7 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("CatchChallenger::Player_private_and_public_informations");
     qRegisterMetaType<CatchChallenger::Player_public_informations>("CatchChallenger::Player_public_informations");
     qRegisterMetaType<CatchChallenger::Direction>("CatchChallenger::Direction");
-    qRegisterMetaType<QList<RssNews::RssEntry> >("QList<RssNews::RssEntry>");
+    qRegisterMetaType<QList<FeedNews::FeedEntry> >("QList<FeedNews::FeedEntry>");
 
     socket=NULL;
     realSslSocket=NULL;
@@ -104,8 +104,9 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->news->setVisible(false);
     InternetUpdater::internetUpdater=new InternetUpdater();
     connect(InternetUpdater::internetUpdater,&InternetUpdater::newUpdate,this,&MainWindow::newUpdate);
-    RssNews::rssNews=new RssNews();
-    connect(RssNews::rssNews,&RssNews::rssEntryList,this,&MainWindow::rssEntryList);
+    FeedNews::rssNews=new FeedNews();
+    if(connect(FeedNews::rssNews,&FeedNews::feedEntryList,this,&MainWindow::feedEntryList))
+        qDebug() << "connect(RssNews::rssNews,&RssNews::rssEntryList,this,&MainWindow::rssEntryList) failed";
     solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/internal/"),QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/savegames/"),false);
     connect(solowindow,&SoloWindow::back,this,&MainWindow::gameSolo_back);
     connect(solowindow,&SoloWindow::play,this,&MainWindow::gameSolo_play);
@@ -1787,11 +1788,17 @@ void MainWindow::newUpdate(const QString &version)
     ui->update->setVisible(true);
 }
 
-void MainWindow::rssEntryList(const QList<RssNews::RssEntry> &entryList)
+void MainWindow::feedEntryList(const QList<FeedNews::FeedEntry> &entryList,QString error)
 {
     if(entryList.isEmpty())
     {
-        ui->news->setVisible(false);
+        if(error.isEmpty())
+            ui->news->setVisible(false);
+        else
+        {
+            ui->news->setToolTip(error);
+            ui->news->setStyleSheet("#news{background-color: rgb(220, 220, 240);\nborder: 1px solid rgb(100, 150, 240);\nborder-radius:5px;\ncolor: rgb(0, 0, 0);\nbackground-image: url(:/images/multi/warning.png);\nbackground-repeat: no-repeat;\nbackground-position: right;}");
+        }
         return;
     }
     if(entryList.size()==1)
@@ -1808,7 +1815,7 @@ void MainWindow::rssEntryList(const QList<RssNews::RssEntry> &entryList)
         ui->news->setText(tr("Latest news:")+QStringLiteral("<br />")+entryHtmlList.join("<br />"));
     }
     settings.setValue("news",ui->news->text());
-    ui->news->setStyleSheet("background-color:rgb(220,220,240);border:1px solid rgb(100,150,240);border-radius:5px;color:rgb(0,0,0);");
+    ui->news->setStyleSheet("#news{background-color:rgb(220,220,240);border:1px solid rgb(100,150,240);border-radius:5px;color:rgb(0,0,0);}");
     ui->news->setVisible(true);
 }
 

@@ -384,13 +384,15 @@ padding: 0 5px;</string>
         <item>
          <widget class="QLabel" name="news">
           <property name="styleSheet">
-           <string notr="true">background-color: rgb(220, 220, 240);
+           <string notr="true">#news{
+background-color: rgb(220, 220, 240);
 border: 1px solid rgb(100, 150, 240);
 border-radius:5px;
 color: rgb(0, 0, 0);
 background-image: url(:/images/multi/busy.png);
 background-repeat: no-repeat;
-background-position: right;</string>
+background-position: right;
+}</string>
           </property>
           <property name="text">
            <string/>
