@@ -578,7 +578,7 @@ void EpollServerLoginSlave::preload_profile()
         EpollServerLoginSlave::LoginProfile &profile=EpollServerLoginSlave::loginProfileList[index];
 
         std::string encyclopedia_item,item;
-        if(profile.items.empty())
+        if(!profile.items.empty())
         {
             auto max=profile.items.at(0).id;
             uint32_t pos=0;
@@ -611,7 +611,7 @@ void EpollServerLoginSlave::preload_profile()
             encyclopedia_item=binarytoHexa(bitlist,sizeof(bitlist));
         }
         std::string reputations;
-        if(profile.reputations.empty())
+        if(!profile.reputations.empty())
         {
             uint32_t pos=0;
             char reputation_raw[(1+4+1)*profile.reputations.size()];
@@ -726,28 +726,28 @@ void EpollServerLoginSlave::preload_profile()
                 profile.character_insert=std::string("INSERT INTO `character`("
                         "`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,"
                         "`time_to_delete`,`played_time`,`last_connect`,`starter`,`item`,`reputations`,`encyclopedia_monster`,`encyclopedia_item`"
-                        ") VALUES(%1,%2,'%3',%4,0,0,"+
+                        ",`blob_version`) VALUES(%1,%2,'%3',%4,0,0,"+
                         std::to_string(profile.cash)+",%5,0,0,"
                         "0,0,0,"+
-                        std::to_string(profile.databaseId/*starter*/)+",UNHEX('"+item+"'),UNHEX('"+reputations+"'),%6,UNHEX('"+encyclopedia_item+"'));");
+                        std::to_string(profile.databaseId/*starter*/)+",UNHEX('"+item+"'),UNHEX('"+reputations+"'),UNHEX('%6'),UNHEX('"+encyclopedia_item+"'),"+std::to_string(CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION)+");");
             break;
             case DatabaseBase::DatabaseType::SQLite:
                 profile.character_insert=std::string("INSERT INTO character("
                         "id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,"
                         "time_to_delete,played_time,last_connect,starter,item,reputations,encyclopedia_monster,encyclopedia_item"
-                        ") VALUES(%1,%2,'%3',%4,0,0,"+
+                        ",blob_version) VALUES(%1,%2,'%3',%4,0,0,"+
                         std::to_string(profile.cash)+",%5,0,0,"
                         "0,0,0,"+
-                        std::to_string(profile.databaseId/*starter*/)+",'"+item+"','"+reputations+"',%6,'"+encyclopedia_item+"');");
+                        std::to_string(profile.databaseId/*starter*/)+",'"+item+"','"+reputations+"','%6','"+encyclopedia_item+"',"+std::to_string(CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION)+");");
             break;
             case DatabaseBase::DatabaseType::PostgreSQL:
                 profile.character_insert=std::string("INSERT INTO character("
                         "id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,"
                         "time_to_delete,played_time,last_connect,starter,item,reputations,encyclopedia_monster,encyclopedia_item"
-                        ") VALUES(%1,%2,'%3',%4,0,0,"+
-                        std::to_string(profile.cash)+",%5,0,0,"
+                        ",blob_version) VALUES(%1,%2,'%3',%4,0,0,"+
+                        std::to_string(profile.cash)+",%5,0,FALSE,"
                         "0,0,0,"+
-                        std::to_string(profile.databaseId/*starter*/)+",'\\x"+item+"','\\x"+reputations+"',%6,'\\x"+encyclopedia_item+"');");
+                        std::to_string(profile.databaseId/*starter*/)+",'\\x"+item+"','\\x"+reputations+"','\\x%6'','\\x"+encyclopedia_item+"',"+std::to_string(CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION)+");");
             break;
         }
 

@@ -247,19 +247,6 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
         }
         else
         {
-            const uint8_t &blob_version=databaseBaseLogin.stringtouint8(databaseBaseLogin.value(2),&ok);
-            if(!ok)
-            {
-                loginIsWrong(askLoginParam->query_id,0x04,"Blob version not a number");
-                delete askLoginParam;
-                return;
-            }
-            if(blob_version!=CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION)
-            {
-                loginIsWrong(askLoginParam->query_id,0x04,"Blob version incorrect");
-                delete askLoginParam;
-                return;
-            }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             std::vector<char> tempAddedToken;
             std::vector<char> secretTokenBinary;
@@ -654,8 +641,7 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
                         std::to_string(account_id),
                         binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE),
                         binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE),
-                        std::to_string(sFrom1970()),
-                        std::to_string(CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION)
+                        std::to_string(sFrom1970())
                         );
             dbQueryWriteLogin(queryText);
         }

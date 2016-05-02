@@ -853,7 +853,7 @@ void BaseServer::preload_profile()
         serverProfileInternal.orientation=serverProfile.orientation;
 
         std::string encyclopedia_item,item;
-        if(profile.items.empty())
+        if(!profile.items.empty())
         {
             auto max=profile.items.at(0).id;
             uint32_t pos=0;
@@ -886,7 +886,7 @@ void BaseServer::preload_profile()
             encyclopedia_item=binarytoHexa(bitlist,sizeof(bitlist));
         }
         std::string reputations;
-        if(profile.reputations.empty())
+        if(!profile.reputations.empty())
         {
             uint32_t pos=0;
             char reputation_raw[(1+4+1)*profile.reputations.size()];
@@ -1004,28 +1004,28 @@ void BaseServer::preload_profile()
                 serverProfileInternal.character_insert=std::string("INSERT INTO `character`("
                         "`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,"
                         "`time_to_delete`,`played_time`,`last_connect`,`starter`,`item`,`reputations`,`encyclopedia_monster`,`encyclopedia_item`"
-                        ") VALUES(%1,%2,'%3',%4,0,0,"+
+                        ",`blob_version`) VALUES(%1,%2,'%3',%4,0,0,"+
                         std::to_string(profile.cash)+",%5,0,0,"
                         "0,0,0,"+
-                        std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",UNHEX('"+item+"'),UNHEX('"+reputations+"'),%6,UNHEX('"+encyclopedia_item+"'));");
+                        std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",UNHEX('"+item+"'),UNHEX('"+reputations+"'),UNHEX('%6'),UNHEX('"+encyclopedia_item+"'),"+std::to_string(CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION)+");");
             break;
             case DatabaseBase::DatabaseType::SQLite:
                 serverProfileInternal.character_insert=std::string("INSERT INTO character("
                         "id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,"
                         "time_to_delete,played_time,last_connect,starter,item,reputations,encyclopedia_monster,encyclopedia_item"
-                        ") VALUES(%1,%2,'%3',%4,0,0,"+
+                        ",blob_version) VALUES(%1,%2,'%3',%4,0,0,"+
                         std::to_string(profile.cash)+",%5,0,0,"
                         "0,0,0,"+
-                        std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",'"+item+"','"+reputations+"',%6,'"+encyclopedia_item+"');");
+                        std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",'"+item+"','"+reputations+"','%6'','"+encyclopedia_item+"',"+std::to_string(CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION)+");");
             break;
             case DatabaseBase::DatabaseType::PostgreSQL:
                 serverProfileInternal.character_insert=std::string("INSERT INTO character("
                         "id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,"
                         "time_to_delete,played_time,last_connect,starter,item,reputations,encyclopedia_monster,encyclopedia_item"
-                        ") VALUES(%1,%2,'%3',%4,0,0,"+
-                        std::to_string(profile.cash)+",%5,0,0,"
+                        ",blob_version) VALUES(%1,%2,'%3',%4,0,0,"+
+                        std::to_string(profile.cash)+",%5,0,FALSE,"
                         "0,0,0,"+
-                        std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",'\\x"+item+"','\\x"+reputations+"',%6,'\\x"+encyclopedia_item+"');");
+                        std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",'\\x"+item+"','\\x"+reputations+"','\\x%6','\\x"+encyclopedia_item+"',"+std::to_string(CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION)+");");
             break;
         }
         const std::string &mapQuery=std::to_string(serverProfileInternal.map->reverse_db_id)+
@@ -1051,6 +1051,7 @@ void BaseServer::preload_profile()
                 "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0);");
             break;
         }
+        serverProfileInternal.valid=true;
 
         index++;
     }
