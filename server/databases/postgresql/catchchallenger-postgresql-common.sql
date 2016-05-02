@@ -41,7 +41,8 @@ CREATE TABLE "character" (
     reputations bytea,
     encyclopedia_monster bytea,
     encyclopedia_item bytea,
-    achievements bytea
+    achievements bytea,
+    blob_version smallint
 );
 
 

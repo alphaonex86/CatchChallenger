@@ -175,22 +175,22 @@ void PreparedDBQueryLogin::initDatabaseQueryLogin(const DatabaseBase::DatabaseTy
         return;
         #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
-        PreparedDBQueryLogin::db_query_login="SELECT `id`,LOWER(HEX(`password`)),blob_version FROM `account` WHERE `login`=UNHEX('%1')";
-        PreparedDBQueryLogin::db_query_insert_login="INSERT INTO account(id,login,password,date,blob_version) VALUES(%1,UNHEX('%2'),UNHEX('%3'),%4,%5)";
+        PreparedDBQueryLogin::db_query_login="SELECT `id`,LOWER(HEX(`password`)) FROM `account` WHERE `login`=UNHEX('%1')";
+        PreparedDBQueryLogin::db_query_insert_login="INSERT INTO account(id,login,password,date) VALUES(%1,UNHEX('%2'),UNHEX('%3'),%4)";
         break;
         #endif
 
         #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::SQLite:
-        PreparedDBQueryLogin::db_query_login="SELECT id,password,blob_version FROM account WHERE login='%1'";
-        PreparedDBQueryLogin::db_query_insert_login="INSERT INTO account(id,login,password,date,blob_version) VALUES(%1,'%2','%3',%4,%5)";
+        PreparedDBQueryLogin::db_query_login="SELECT id,password FROM account WHERE login='%1'";
+        PreparedDBQueryLogin::db_query_insert_login="INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4)";
         break;
         #endif
 
         #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
-        PreparedDBQueryLogin::db_query_login="SELECT id,encode(password,'hex'),blob_version FROM account WHERE login='\\x%1'";
-        PreparedDBQueryLogin::db_query_insert_login="INSERT INTO account(id,login,password,date,blob_version) VALUES(%1,'\\x%2','\\x%3',%4,%5)";
+        PreparedDBQueryLogin::db_query_login="SELECT id,encode(password,'hex') FROM account WHERE login='\\x%1'";
+        PreparedDBQueryLogin::db_query_insert_login="INSERT INTO account(id,login,password,date) VALUES(%1,'\\x%2','\\x%3',%4)";
         break;
         #endif
     }
@@ -316,7 +316,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
 
         PreparedDBQueryCommon::db_query_select_allow="SELECT `allow` FROM `character_allow` WHERE `character`=%1";
         PreparedDBQueryCommon::db_query_monster_skill="UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3";
-        PreparedDBQueryCommon::db_query_character_by_id="SELECT `account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`starter`,`allow`,`item`,`item_warehouse`,`recipes`,`reputations`,`encyclopedia_monster`,`encyclopedia_item`,`achievements` FROM `character` WHERE `id`=%1";
+        PreparedDBQueryCommon::db_query_character_by_id="SELECT `account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`starter`,`allow`,`item`,`item_warehouse`,`recipes`,`reputations`,`encyclopedia_monster`,`encyclopedia_item`,`achievements`,`blob_version` FROM `character` WHERE `id`=%1";
 
 
         PreparedDBQueryCommon::db_query_monster_by_character_id="SELECT `id` FROM `monster` WHERE `character`=%1";
@@ -427,7 +427,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
 
         PreparedDBQueryCommon::db_query_select_allow="SELECT allow FROM character_allow WHERE character=%1";
         PreparedDBQueryCommon::db_query_monster_skill="UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3";
-        PreparedDBQueryCommon::db_query_character_by_id="SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,allow,item,item_warehouse,recipes,reputations,encyclopedia_monster,encyclopedia_item,achievements FROM character WHERE id=%1";
+        PreparedDBQueryCommon::db_query_character_by_id="SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,allow,item,item_warehouse,recipes,reputations,encyclopedia_monster,encyclopedia_item,achievements,blob_version FROM character WHERE id=%1";
 
         PreparedDBQueryCommon::db_query_monster_by_character_id="SELECT id FROM monster WHERE character=%1";
         PreparedDBQueryCommon::db_query_delete_monster_buff="UPDATE monster SET buffs='' WHERE id=%1";
@@ -513,7 +513,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_monster_update_endurance="UPDATE monster SET skills_endurance='\\x%1' WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_monster_buff="UPDATE monster SET buffs='\\x%1' WHERE id=%2";
 
-        PreparedDBQueryCommon::db_query_character_by_id="SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,allow,item,item_warehouse,recipes,reputations,encyclopedia_monster,encyclopedia_item,achievements FROM character WHERE id=%1";
+        PreparedDBQueryCommon::db_query_character_by_id="SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,allow,item,item_warehouse,recipes,reputations,encyclopedia_monster,encyclopedia_item,achievements,blob_version FROM character WHERE id=%1";
         PreparedDBQueryCommon::db_query_set_character_time_to_delete_to_zero="UPDATE character SET time_to_delete=0 WHERE id=%1";
         PreparedDBQueryCommon::db_query_update_character_last_connect="UPDATE character SET last_connect=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_clan="SELECT name,cash FROM clan WHERE id=%1";

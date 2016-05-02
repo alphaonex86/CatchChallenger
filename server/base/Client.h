@@ -388,6 +388,9 @@ private:
 
     static const std::string text_0;
     static const std::string text_1;
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    static const std::string text_2;
+    #endif
     static const std::string text_false;
     static const std::string text_true;
     static const std::string text_to;
