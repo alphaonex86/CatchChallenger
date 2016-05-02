@@ -423,7 +423,10 @@ const std::string EpollPostgresql::value(const int &value) const
 {
     if(result==NULL || tuleIndex<0)
         return emptyString;
-    return PQgetvalue(result,tuleIndex,value);
+    const auto &content=PQgetvalue(result,tuleIndex,value);
+    if(content==NULL)
+        return emptyString;
+    return content;
 }
 
 bool EpollPostgresql::stringtobool(const std::string &string,bool *ok)

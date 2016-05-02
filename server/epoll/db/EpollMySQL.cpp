@@ -353,6 +353,9 @@ const std::string EpollMySQL::value(const int &value) const
 {
     if(result==NULL || tuleIndex<0 || value>=nfields)
         return emptyString;
-    return row[value];
+    const auto &content=row[value];
+    if(content==NULL)
+        return emptyString;
+    return content;
 }
 #endif

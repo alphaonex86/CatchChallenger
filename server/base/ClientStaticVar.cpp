@@ -161,6 +161,9 @@ std::unordered_map<uint32_t,Clan *> Client::clanList;
 
 const std::string Client::text_0="0";
 const std::string Client::text_1="1";
+#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+const std::string Client::text_2="2";
+#endif
 const std::string Client::text_false="false";
 const std::string Client::text_true="true";
 const std::string Client::text_to="to";

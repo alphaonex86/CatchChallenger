@@ -107,7 +107,7 @@ void StringWithReplacement::set(const std::string &query)
             memcpy(preparedQuery,preparedQueryTemp,pos);
             //dump:
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            std::cout << "StringWithReplacement: saved: " << originalQuery() << std::endl;
+            //std::cout << "StringWithReplacement: saved: " << originalQuery() << std::endl;
             #endif
             return;
         }
