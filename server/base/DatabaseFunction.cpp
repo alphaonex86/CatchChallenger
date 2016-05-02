@@ -1,6 +1,11 @@
 #include "DatabaseFunction.h"
 #include "../../general/base/cpp11addition.h"
+#include "../../general/base/GeneralVariable.h"
 #include "../VariableServer.h"
+
+#ifdef CATCHCHALLENGER_EXTRA_CHECK
+#include <iostream>
+#endif
 
 using namespace CatchChallenger;
 
@@ -9,6 +14,15 @@ uint8_t DatabaseFunction::stringtouint8(const std::string &string,bool *ok)
 {
     if(ok!=NULL)
         *ok=true;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(string.empty())
+    {
+        std::cerr << "string.empty() for database convertion to number" << std::endl;
+        if(ok!=NULL)
+            *ok=false;
+        abort();
+    }
+    #endif
     return std::stoull(string);
 }
 
@@ -16,6 +30,15 @@ uint16_t DatabaseFunction::stringtouint16(const std::string &string,bool *ok)
 {
     if(ok!=NULL)
         *ok=true;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(string.empty())
+    {
+        std::cerr << "string.empty() for database convertion to number" << std::endl;
+        if(ok!=NULL)
+            *ok=false;
+        abort();
+    }
+    #endif
     return std::stoull(string);
 }
 
@@ -23,6 +46,15 @@ uint32_t DatabaseFunction::stringtouint32(const std::string &string,bool *ok)
 {
     if(ok!=NULL)
         *ok=true;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(string.empty())
+    {
+        std::cerr << "string.empty() for database convertion to number" << std::endl;
+        if(ok!=NULL)
+            *ok=false;
+        abort();
+    }
+    #endif
     return std::stoull(string);
 }
 
@@ -30,6 +62,15 @@ bool DatabaseFunction::stringtobool(const std::string &string,bool *ok)
 {
     if(ok!=NULL)
         *ok=true;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(string.empty())
+    {
+        std::cerr << "string.empty() for database convertion to number" << std::endl;
+        if(ok!=NULL)
+            *ok=false;
+        abort();
+    }
+    #endif
     if(string=="1" || string=="true" || string=="t" /*postgresql*/ || string=="TRUE")
         return true;
     else
@@ -40,6 +81,15 @@ uint64_t DatabaseFunction::stringtouint64(const std::string &string,bool *ok)
 {
     if(ok!=NULL)
         *ok=true;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(string.empty())
+    {
+        std::cerr << "string.empty() for database convertion to number" << std::endl;
+        if(ok!=NULL)
+            *ok=false;
+        abort();
+    }
+    #endif
     return std::stoull(string);
 }
 
@@ -47,6 +97,15 @@ int8_t DatabaseFunction::stringtoint8(const std::string &string,bool *ok)
 {
     if(ok!=NULL)
         *ok=true;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(string.empty())
+    {
+        std::cerr << "string.empty() for database convertion to number" << std::endl;
+        if(ok!=NULL)
+            *ok=false;
+        abort();
+    }
+    #endif
     return std::stoi(string);
 }
 
@@ -54,6 +113,15 @@ int16_t DatabaseFunction::stringtoint16(const std::string &string,bool *ok)
 {
     if(ok!=NULL)
         *ok=true;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(string.empty())
+    {
+        std::cerr << "string.empty() for database convertion to number" << std::endl;
+        if(ok!=NULL)
+            *ok=false;
+        abort();
+    }
+    #endif
     return std::stoi(string);
 }
 
@@ -61,6 +129,15 @@ int32_t DatabaseFunction::stringtoint32(const std::string &string,bool *ok)
 {
     if(ok!=NULL)
         *ok=true;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(string.empty())
+    {
+        std::cerr << "string.empty() for database convertion to number" << std::endl;
+        if(ok!=NULL)
+            *ok=false;
+        abort();
+    }
+    #endif
     return std::stoi(string);
 }
 
@@ -68,6 +145,15 @@ int64_t DatabaseFunction::stringtoint64(const std::string &string,bool *ok)
 {
     if(ok!=NULL)
         *ok=true;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(string.empty())
+    {
+        std::cerr << "string.empty() for database convertion to number" << std::endl;
+        if(ok!=NULL)
+            *ok=false;
+        abort();
+    }
+    #endif
     return std::stoll(string);
 }
 
@@ -75,6 +161,15 @@ float DatabaseFunction::stringtofloat(const std::string &string,bool *ok)
 {
     if(ok!=NULL)
         *ok=true;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(string.empty())
+    {
+        std::cerr << "string.empty() for database convertion to number" << std::endl;
+        if(ok!=NULL)
+            *ok=false;
+        abort();
+    }
+    #endif
     return std::stof(string);
 }
 
@@ -82,6 +177,15 @@ double DatabaseFunction::stringtodouble(const std::string &string,bool *ok)
 {
     if(ok!=NULL)
         *ok=true;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(string.empty())
+    {
+        std::cerr << "string.empty() for database convertion to number" << std::endl;
+        if(ok!=NULL)
+            *ok=false;
+        abort();
+    }
+    #endif
     return std::stod(string);
 }
 

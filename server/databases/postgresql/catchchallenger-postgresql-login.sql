@@ -20,8 +20,7 @@ CREATE TABLE account (
     login bytea,
     password bytea,
     date bigint,
-    email text,
-    blob_version smallint
+    email text
 );
 
 
