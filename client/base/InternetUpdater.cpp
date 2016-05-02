@@ -1,6 +1,7 @@
 #include "InternetUpdater.h"
 #include "PlatformMacro.h"
 #include "../../general/base/GeneralVariable.h"
+#include "ClientVariable.h"
 
 #include <QNetworkRequest>
 #include <QUrl>
@@ -110,7 +111,7 @@ void InternetUpdater::httpFinished()
         reply->deleteLater();
         return;
     }
-    qDebug() << "newVersion:" << newVersion;
+    newUpdateTimer.stop();
     emit newUpdate(newVersion);
     reply->deleteLater();
 }

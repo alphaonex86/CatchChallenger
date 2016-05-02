@@ -10,6 +10,10 @@
 #include <QInputDialog>
 #include <QSettings>
 
+#include "../../general/base/GeneralVariable.h"
+#include "../base/PlatformMacro.h"
+#include "../base/ClientVariable.h"
+
 #ifdef Q_CC_GNU
 //this next header is needed to change file time/date under gcc
 #include <utime.h>
@@ -1457,8 +1461,27 @@ void MainWindow::on_deleteDatapack_clicked()
 
 void MainWindow::downloadFile()
 {
+    QString catchChallengerVersion;
+    #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
+    catchChallengerVersion=QStringLiteral("CatchChallenger Ultimate/%1").arg(CATCHCHALLENGER_VERSION);
+    #else
+        #ifdef CATCHCHALLENGER_VERSION_SINGLESERVER
+        catchChallengerVersion=QStringLiteral("CatchChallenger SingleServer/%1").arg(CATCHCHALLENGER_VERSION);
+        #else
+            #ifdef CATCHCHALLENGER_VERSION_SOLO
+            catchChallengerVersion=QStringLiteral("CatchChallenger Solo/%1").arg(CATCHCHALLENGER_VERSION);
+            #else
+            catchChallengerVersion=QStringLiteral("CatchChallenger/%1").arg(CATCHCHALLENGER_VERSION);
+            #endif
+        #endif
+    #endif
+    #if defined(_WIN32) || defined(Q_OS_MAC)
+    catchChallengerVersion+=QStringLiteral(" (OS: %1)").arg(InternetUpdater::GetOSDisplayString());
+    #endif
+    catchChallengerVersion+=QStringLiteral(" ")+CATCHCHALLENGER_PLATFORM_CODE;
+
     QNetworkRequest networkRequest(QString(CATCHCHALLENGER_SERVER_LIST_URL));
-    networkRequest.setHeader(QNetworkRequest::UserAgentHeader,QStringLiteral("CatchChallenger Multi server %1").arg(CATCHCHALLENGER_VERSION));
+    networkRequest.setHeader(QNetworkRequest::UserAgentHeader,catchChallengerVersion);
     reply = qnam.get(networkRequest);
     connect(reply, &QNetworkReply::finished, this, &MainWindow::httpFinished);
     connect(reply, &QNetworkReply::metaDataChanged, this, &MainWindow::metaDataChanged);
