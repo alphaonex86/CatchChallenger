@@ -1,6 +1,7 @@
 #include "FeedNews.h"
 #include "PlatformMacro.h"
 #include "../../general/base/GeneralVariable.h"
+#include "ClientVariable.h"
 
 #include <QNetworkRequest>
 #include <QUrl>
@@ -30,9 +31,27 @@ FeedNews::~FeedNews()
 
 void FeedNews::downloadFile()
 {
+    QString catchChallengerVersion;
+    #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
+    catchChallengerVersion=QStringLiteral("CatchChallenger Ultimate/%1").arg(CATCHCHALLENGER_VERSION);
+    #else
+        #ifdef CATCHCHALLENGER_VERSION_SINGLESERVER
+        catchChallengerVersion=QStringLiteral("CatchChallenger SingleServer/%1").arg(CATCHCHALLENGER_VERSION);
+        #else
+            #ifdef CATCHCHALLENGER_VERSION_SOLO
+            catchChallengerVersion=QStringLiteral("CatchChallenger Solo/%1").arg(CATCHCHALLENGER_VERSION);
+            #else
+            catchChallengerVersion=QStringLiteral("CatchChallenger/%1").arg(CATCHCHALLENGER_VERSION);
+            #endif
+        #endif
+    #endif
+    #if defined(_WIN32) || defined(Q_OS_MAC)
+    catchChallengerVersion+=QStringLiteral(" (OS: %1)").arg(InternetUpdater::GetOSDisplayString());
+    #endif
     if(qnam==NULL)
         qnam=new QNetworkAccessManager(this);
     QNetworkRequest networkRequest(QStringLiteral(CATCHCHALLENGER_RSS_URL));
+    networkRequest.setHeader(QNetworkRequest::UserAgentHeader,catchChallengerVersion);
     reply = qnam->get(networkRequest);
     connect(reply, &QNetworkReply::finished, this, &FeedNews::httpFinished);
 }
