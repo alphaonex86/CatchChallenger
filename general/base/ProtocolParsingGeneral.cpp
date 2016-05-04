@@ -55,11 +55,16 @@ static void logZlibError(int error)
         std::cerr << "Incorrect zlib compressed data!" << std::endl;
         break;
     default:
+    {
         std::cerr << "Unknown error while (de)compressing data!" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
+    }
     }
 }
 
-uint32_t ProtocolParsing::decompressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
+int32_t ProtocolParsing::decompressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
 {
     z_stream strm;
 
@@ -75,7 +80,7 @@ uint32_t ProtocolParsing::decompressZlib(const char * const input, const uint32_
 
     if (ret != Z_OK) {
     logZlibError(ret);
-    return 0;
+    return -1;
     }
 
     do {
@@ -89,24 +94,24 @@ uint32_t ProtocolParsing::decompressZlib(const char * const input, const uint32_
         case Z_MEM_ERROR:
         inflateEnd(&strm);
         logZlibError(ret);
-        return 0;
+        return -1;
     }
 
     if (ret != Z_OK && ret != Z_STREAM_END) {
         if((strm.next_out-reinterpret_cast<unsigned char * const>(output))>maxOutputSize)
         {
             logZlibError(Z_STREAM_ERROR);
-            return 0;
+            return -1;
         }
         logZlibError(ret);
-        return 0;
+        return -1;
     }
     }
     while (ret != Z_STREAM_END);
 
     if (strm.avail_in != 0) {
     logZlibError(Z_DATA_ERROR);
-    return 0;
+    return -1;
     }
 
     inflateEnd(&strm);
@@ -114,7 +119,7 @@ uint32_t ProtocolParsing::decompressZlib(const char * const input, const uint32_
     return maxOutputSize-strm.avail_out;
 }
 
-uint32_t ProtocolParsing::compressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
+int32_t ProtocolParsing::compressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
 {
     z_stream strm;
 
@@ -130,7 +135,7 @@ uint32_t ProtocolParsing::compressZlib(const char * const input, const uint32_t 
 
     if (ret != Z_OK) {
     logZlibError(ret);
-    return 0;
+    return -1;
     }
 
     do {
@@ -144,17 +149,17 @@ uint32_t ProtocolParsing::compressZlib(const char * const input, const uint32_t 
         case Z_MEM_ERROR:
         deflateEnd(&strm);
         logZlibError(ret);
-        return 0;
+        return -1;
     }
 
     if (ret != Z_OK && ret != Z_STREAM_END) {
         if((strm.next_out-reinterpret_cast<unsigned char * const>(output))>maxOutputSize)
         {
             logZlibError(Z_STREAM_ERROR);
-            return 0;
+            return -1;
         }
         logZlibError(Z_STREAM_ERROR);
-        return 0;
+        return -1;
     }
     }
     while (ret != Z_STREAM_END);
@@ -163,7 +168,7 @@ uint32_t ProtocolParsing::compressZlib(const char * const input, const uint32_t 
     return maxOutputSize-strm.avail_out;
 }
 
-uint32_t ProtocolParsing::decompressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
+int32_t ProtocolParsing::decompressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
 {
     lzma_stream strm = LZMA_STREAM_INIT; /* alloc and init lzma_stream struct */
     const uint32_t flags = LZMA_TELL_UNSUPPORTED_CHECK;
@@ -172,7 +177,7 @@ uint32_t ProtocolParsing::decompressXz(const char * const input, const uint32_t 
 
     ret_xz = lzma_stream_decoder (&strm, memory_limit, flags);
     if (ret_xz != LZMA_OK) {
-        return 0;
+        return -1;
     }
 
     strm.next_in = (Bytef *) input;
@@ -214,14 +219,14 @@ uint32_t ProtocolParsing::decompressXz(const char * const input, const uint32_t 
             fprintf(stderr, "Decoder error: "
                     "%s (error code %u)\n",
                     msg, ret_xz);
-            return 0;
+            return -1;
         }
     } while (strm.avail_out == 0);
     lzma_end (&strm);
     return maxOutputSize-strm.avail_out;
 }
 
-uint32_t ProtocolParsing::compressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
+int32_t ProtocolParsing::compressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
 {
     std::vector<char> arr;
     lzma_check check = LZMA_CHECK_CRC64;
@@ -239,7 +244,7 @@ uint32_t ProtocolParsing::compressXz(const char * const input, const uint32_t &i
     /* initialize xz encoder */
     ret_xz = lzma_easy_encoder (&strm, ProtocolParsing::compressionLevel, check);
     if (ret_xz != LZMA_OK) {
-        return 0;
+        return -1;
     }
 
     do {
@@ -276,7 +281,7 @@ uint32_t ProtocolParsing::compressXz(const char * const input, const uint32_t &i
             fprintf(stderr, "Decoder error: "
                     "%s (error code %u)\n",
                     msg, ret_xz);
-            return 0;
+            return -1;
         }
     } while (strm.avail_out == 0);
     lzma_end (&strm);

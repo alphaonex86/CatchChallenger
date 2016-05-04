@@ -90,14 +90,14 @@ public:
     ProtocolParsing();
     static void initialiseTheVariable(const InitialiseTheVariableType &initialiseTheVariableType=InitialiseTheVariableType::AllInOne);
     static void setMaxPlayers(const uint16_t &maxPlayers);
-    static uint32_t decompressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
-    static uint32_t compressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
-    static uint32_t decompressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
-    static uint32_t compressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
+    static int32_t decompressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
+    static int32_t compressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
+    static int32_t decompressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
+    static int32_t compressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
 
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    uint32_t computeDecompression(const char* const source, char* const dest, unsigned int compressedSize, unsigned int maxDecompressedSize, const CompressionType &compressionType);
-    uint32_t computeCompression(const char* const source, char* const dest, unsigned int uncompressedSize, unsigned int maxCompressedSize, const CompressionType &compressionType);
+    int32_t computeDecompression(const char* const source, char* const dest, unsigned int compressedSize, unsigned int maxDecompressedSize, const CompressionType &compressionType);
+    int32_t computeCompression(const char* const source, char* const dest, unsigned int uncompressedSize, unsigned int maxCompressedSize, const CompressionType &compressionType);
     #endif
 protected:
     virtual void errorParsingLayer(const std::string &error) = 0;
