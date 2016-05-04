@@ -654,7 +654,7 @@ int32_t ProtocolParsing::computeCompression(const char* const source, char* cons
             return ProtocolParsing::compressXz(source,compressedSize,dest,maxDecompressedSize);
         break;
         case CompressionType::Lz4:
-            return LZ4_compress_default(source,dest,compressedSize,maxDecompressedSize);
+            return LZ4_compress_fast(source,dest,compressedSize,maxDecompressedSize,ProtocolParsing::compressionLevel);
         break;
     }
 }
