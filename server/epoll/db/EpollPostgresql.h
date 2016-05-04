@@ -33,6 +33,7 @@ public:
 
     //over load of: CatchChallenger::DatabaseFunction
     bool stringtobool(const std::string &string,bool *ok=NULL);
+    std::vector<char> hexatoBinary(const std::string &data,bool *ok=NULL);
 private:
     PGconn *conn;
     int tuleIndex;

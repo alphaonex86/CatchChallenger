@@ -197,16 +197,23 @@ std::vector<char> DatabaseFunction::hexatoBinary(const std::string &data,bool *o
             *ok=false;
         return std::vector<char>();
     }
-    if(ok!=NULL)
-        *ok=true;
+    bool ok2;
     std::vector<char> out;
     out.reserve(data.length()/2);
     for(size_t i=0;i<data.length();i+=2)
     {
         const std::string &partpfchain=data.substr(i,2);
-        uint8_t x=::hexToDecUnit(partpfchain);
+        const uint8_t &x=::hexToDecUnit(partpfchain,&ok2);
+        if(!ok2)
+        {
+            if(ok!=NULL)
+                *ok=false;
+            return std::vector<char>();
+        }
         out.push_back(x);
     }
+    if(ok!=NULL)
+        *ok=true;
     return out;
 }
 #else
@@ -265,7 +272,7 @@ double DatabaseFunction::stringtodouble(const std::string &string,bool *ok)
     return ::stringtodouble(string,ok);
 }
 
-std::vector<char> DatabaseFunction::hexatoBinary(const std::string &data)
+std::vector<char> DatabaseFunction::hexatoBinary(const std::string &data,bool *ok)
 {
     return ::hexatoBinary(data);
 }

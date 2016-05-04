@@ -536,7 +536,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                 {
                     if(stageConnexion==StageConnexion::Stage4)
                         qDebug() << QStringLiteral("stageConnexion==StageConnexion::Stage4");
-                    if(serverFromPoolForDisplay.host.isEmpty())
+                    if(serverFromPoolForDisplay.host.isEmpty() && proxyMode==Api_protocol::ProxyMode::Reconnect)
                         qDebug() << QStringLiteral("serverFromPoolForDisplay.host.isEmpty()");
                     return parseCharacterBlock(
                                 packetCode,queryNumber,

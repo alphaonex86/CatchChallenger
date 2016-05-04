@@ -109,7 +109,7 @@ MainWindow::MainWindow(QWidget *parent) :
     InternetUpdater::internetUpdater=new InternetUpdater();
     connect(InternetUpdater::internetUpdater,&InternetUpdater::newUpdate,this,&MainWindow::newUpdate);
     FeedNews::rssNews=new FeedNews();
-    if(connect(FeedNews::rssNews,&FeedNews::feedEntryList,this,&MainWindow::feedEntryList))
+    if(!connect(FeedNews::rssNews,&FeedNews::feedEntryList,this,&MainWindow::feedEntryList))
         qDebug() << "connect(RssNews::rssNews,&RssNews::rssEntryList,this,&MainWindow::rssEntryList) failed";
     solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/internal/"),QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/savegames/"),false);
     connect(solowindow,&SoloWindow::back,this,&MainWindow::gameSolo_back);

@@ -601,7 +601,7 @@ int8_t ProtocolParsingBase::parseData(const char * const commonBuffer, const uin
 }
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-uint32_t ProtocolParsing::computeDecompression(const char* const source, char* const dest, unsigned int compressedSize, unsigned int maxDecompressedSize, const CompressionType &compressionType)
+int32_t ProtocolParsing::computeDecompression(const char* const source, char* const dest, unsigned int compressedSize, unsigned int maxDecompressedSize, const CompressionType &compressionType)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(maxDecompressedSize<compressedSize)
@@ -630,7 +630,7 @@ uint32_t ProtocolParsing::computeDecompression(const char* const source, char* c
     }
 }
 
-uint32_t ProtocolParsing::computeCompression(const char* const source, char* const dest, unsigned int compressedSize, unsigned int maxDecompressedSize, const CompressionType &compressionType)
+int32_t ProtocolParsing::computeCompression(const char* const source, char* const dest, unsigned int compressedSize, unsigned int maxDecompressedSize, const CompressionType &compressionType)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(maxDecompressedSize<compressedSize)

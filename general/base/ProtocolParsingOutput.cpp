@@ -88,7 +88,7 @@ bool ProtocolParsingBase::internalSendRawSmallPacket(const char * const data,con
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size<=0)
     {
-        std::cerr << "ProtocolParsingInputOutput::internalSendRawSmallPacket size is null" << __LINE__ << std::endl;
+        std::cerr << "ProtocolParsingInputOutput::internalSendRawSmallPacket size is null " << __FILE__ << ":" << __LINE__ << std::endl;
         abort();
         return false;
     }
