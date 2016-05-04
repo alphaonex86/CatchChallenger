@@ -131,36 +131,37 @@ int32_t ProtocolParsing::compressZlib(const char * const input, const uint32_t &
     strm.next_out = (Bytef *) output;
     strm.avail_out = maxOutputSize;
 
-    int ret = deflateInit(&strm, Z_BEST_COMPRESSION);
-
-    if (ret != Z_OK) {
-    logZlibError(ret);
-    return -1;
-    }
-
-    do {
-    ret = deflate(&strm, Z_SYNC_FLUSH);
-
-    switch (ret) {
-        case Z_NEED_DICT:
-        case Z_STREAM_ERROR:
-        ret = Z_DATA_ERROR;
-        case Z_DATA_ERROR:
-        case Z_MEM_ERROR:
-        deflateEnd(&strm);
+    int ret = deflateInit(&strm, ProtocolParsing::compressionLevel);
+    if(ret != Z_OK)
+    {
         logZlibError(ret);
         return -1;
     }
 
-    if (ret != Z_OK && ret != Z_STREAM_END) {
-        if((strm.next_out-reinterpret_cast<unsigned char * const>(output))>maxOutputSize)
+    do {
+        ret = deflate(&strm, Z_SYNC_FLUSH);
+
+        switch (ret) {
+            case Z_NEED_DICT:
+            case Z_STREAM_ERROR:
+            ret = Z_DATA_ERROR;
+            case Z_DATA_ERROR:
+            case Z_MEM_ERROR:
+            deflateEnd(&strm);
+            logZlibError(ret);
+            return -1;
+        }
+
+        if(ret != Z_OK && ret != Z_STREAM_END)
         {
+            if((strm.next_out-reinterpret_cast<unsigned char * const>(output))>maxOutputSize)
+            {
+                logZlibError(Z_STREAM_ERROR);
+                return -1;
+            }
             logZlibError(Z_STREAM_ERROR);
             return -1;
         }
-        logZlibError(Z_STREAM_ERROR);
-        return -1;
-    }
     }
     while (ret != Z_STREAM_END);
     deflateEnd(&strm);
