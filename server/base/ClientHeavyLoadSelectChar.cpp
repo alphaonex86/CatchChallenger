@@ -1743,7 +1743,11 @@ void Client::characterIsRightFinalStep()
         posOutputTemp++;
 
         if(ProtocolParsingBase::compressionTypeServer==CompressionType::None)
-            posOutput=posOutputTemp;
+        {
+            *reinterpret_cast<int32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(posOutputTemp);
+            posOutput+=4;
+            posOutput+=posOutputTemp;
+        }
         else
         {
             //compress
