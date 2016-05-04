@@ -1693,62 +1693,71 @@ void Client::characterIsRightFinalStep()
     }
     /// \todo make the buffer overflow control here or above
     {
-        auto posOutputTemp=posOutput;
+        char *buffer;
+        if(ProtocolParsingBase::compressionTypeServer==CompressionType::None)
+            buffer=ProtocolParsingBase::tempBigBufferForOutput+posOutput;
+        else
+            buffer=ProtocolParsingBase::tempBigBufferForCompressedOutput;
+        uint32_t posOutputTemp=0;
         //recipes
         if(public_and_private_informations.recipes!=NULL)
         {
-            *reinterpret_cast<int16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
-            posOutput+=2;
-            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutputTemp,public_and_private_informations.recipes,CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
+            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
+            posOutputTemp+=2;
+            memcpy(buffer+posOutputTemp,public_and_private_informations.recipes,CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
             posOutputTemp+=CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1;
         }
         else
         {
-            *reinterpret_cast<int16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
-            posOutput+=2;
+            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=0;
+            posOutputTemp+=2;
         }
         //encyclopedia_monster
         if(public_and_private_informations.encyclopedia_monster!=NULL)
         {
-            *reinterpret_cast<int16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonDatapack::commonDatapack.monstersMaxId/8+1);
-            posOutput+=2;
-            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutputTemp,public_and_private_informations.encyclopedia_monster,CommonDatapack::commonDatapack.monstersMaxId/8+1);
+            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(CommonDatapack::commonDatapack.monstersMaxId/8+1);
+            posOutputTemp+=2;
+            memcpy(buffer+posOutputTemp,public_and_private_informations.encyclopedia_monster,CommonDatapack::commonDatapack.monstersMaxId/8+1);
             posOutputTemp+=CommonDatapack::commonDatapack.monstersMaxId/8+1;
         }
         else
         {
-            *reinterpret_cast<int16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
-            posOutput+=2;
+            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=0;
+            posOutputTemp+=2;
         }
         //encyclopedia_item
         if(public_and_private_informations.encyclopedia_item!=NULL)
         {
-            *reinterpret_cast<int16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonDatapack::commonDatapack.items.itemMaxId/8+1);
-            posOutput+=2;
-            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutputTemp,public_and_private_informations.encyclopedia_item,CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+            posOutputTemp+=2;
+            memcpy(buffer+posOutputTemp,public_and_private_informations.encyclopedia_item,CommonDatapack::commonDatapack.items.itemMaxId/8+1);
             posOutputTemp+=CommonDatapack::commonDatapack.items.itemMaxId/8+1;
         }
         else
         {
-            *reinterpret_cast<int16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
-            posOutput+=2;
+            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=0;
+            posOutputTemp+=2;
         }
         //achievements
-        ProtocolParsingBase::tempBigBufferForOutput[posOutputTemp]=0;
+        buffer[posOutputTemp]=0;
         posOutputTemp++;
 
-        //compress
-        const int32_t &compressedSize=computeCompression(ProtocolParsingBase::tempBigBufferForOutput+posOutput,ProtocolParsingBase::tempBigBufferForCompressedOutput,(posOutputTemp-posOutput),sizeof(ProtocolParsingBase::tempBigBufferForCompressedOutput),ProtocolParsingBase::compressionTypeServer);
-        if(compressedSize<0)
+        if(ProtocolParsingBase::compressionTypeServer==CompressionType::None)
+            posOutput=posOutputTemp;
+        else
         {
-            errorOutput("Error to compress the data");
-            return;
+            //compress
+            const int32_t &compressedSize=computeCompression(buffer,ProtocolParsingBase::tempBigBufferForOutput+posOutput+4,posOutputTemp,sizeof(ProtocolParsingBase::tempBigBufferForOutput)-posOutput-1-4,ProtocolParsingBase::compressionTypeServer);
+            if(compressedSize<0)
+            {
+                errorOutput("Error to compress the data");
+                return;
+            }
+            //copy
+            *reinterpret_cast<int32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(compressedSize);
+            posOutput+=4;
+            posOutput+=compressedSize;
         }
-        //copy
-        *reinterpret_cast<int32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(compressedSize);
-        posOutput+=4;
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,ProtocolParsingBase::tempBigBufferForCompressedOutput,compressedSize);
-        posOutput+=compressedSize;
     }
 
     //------------------------------------------- End of common part, start of server specific part ----------------------------------
