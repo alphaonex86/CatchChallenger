@@ -20,6 +20,7 @@ void Client::loadMonsters()
         return;
     }
     #endif
+    //don't filter by place, dispatched in internal, market volume should be low
     const std::string &queryText=PreparedDBQueryCommon::db_query_select_monsters_by_player_id.compose(
                 std::to_string(character_id)
                 );

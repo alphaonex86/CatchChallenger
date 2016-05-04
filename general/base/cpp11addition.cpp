@@ -194,6 +194,9 @@ uint8_t stringtouint8(const std::string &string,bool *ok)
             return tempValue;
         else
         {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+            #endif
             if(ok!=NULL)
                 *ok=false;
             return 0;
@@ -201,6 +204,9 @@ uint8_t stringtouint8(const std::string &string,bool *ok)
     }
     else
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+        #endif
         if(ok!=NULL)
             *ok=false;
         return 0;
@@ -218,6 +224,9 @@ uint16_t stringtouint16(const std::string &string,bool *ok)
             return tempValue;
         else
         {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+            #endif
             if(ok!=NULL)
                 *ok=false;
             return 0;
@@ -225,6 +234,9 @@ uint16_t stringtouint16(const std::string &string,bool *ok)
     }
     else
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+        #endif
         if(ok!=NULL)
             *ok=false;
         return 0;
@@ -242,6 +254,9 @@ uint32_t stringtouint32(const std::string &string,bool *ok)
             return tempValue;
         else
         {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+            #endif
             if(ok!=NULL)
                 *ok=false;
             return 0;
@@ -249,6 +264,9 @@ uint32_t stringtouint32(const std::string &string,bool *ok)
     }
     else
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+        #endif
         if(ok!=NULL)
             *ok=false;
         return 0;
@@ -281,6 +299,9 @@ bool stringtobool(const std::string &string,bool *ok)
             *ok=true;
         return false;
     }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+    #endif
     if(ok!=NULL)
         *ok=false;
     return false;
@@ -296,6 +317,9 @@ uint64_t stringtouint64(const std::string &string,bool *ok)
     }
     else
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+        #endif
         if(ok!=NULL)
             *ok=false;
         return 0;
@@ -313,6 +337,9 @@ int8_t stringtoint8(const std::string &string,bool *ok)
             return tempValue;
         else
         {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+            #endif
             if(ok!=NULL)
                 *ok=false;
             return 0;
@@ -320,6 +347,9 @@ int8_t stringtoint8(const std::string &string,bool *ok)
     }
     else
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+        #endif
         if(ok!=NULL)
             *ok=false;
         return 0;
@@ -337,6 +367,9 @@ int16_t stringtoint16(const std::string &string,bool *ok)
             return tempValue;
         else
         {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+            #endif
             if(ok!=NULL)
                 *ok=false;
             return 0;
@@ -344,6 +377,9 @@ int16_t stringtoint16(const std::string &string,bool *ok)
     }
     else
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+        #endif
         if(ok!=NULL)
             *ok=false;
         return 0;
@@ -360,6 +396,9 @@ int32_t stringtoint32(const std::string &string,bool *ok)
     }
     else
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+        #endif
         if(ok!=NULL)
             *ok=false;
         return 0;
@@ -376,6 +415,9 @@ int64_t stringtoint64(const std::string &string,bool *ok)
     }
     else
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+        #endif
         if(ok!=NULL)
             *ok=false;
         return 0;
@@ -392,6 +434,9 @@ float stringtofloat(const std::string &string,bool *ok)
     }
     else
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+        #endif
         if(ok!=NULL)
             *ok=false;
         return 0;
@@ -408,6 +453,9 @@ double stringtodouble(const std::string &string,bool *ok)
     }
     else
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+        #endif
         if(ok!=NULL)
             *ok=false;
         return 0;
@@ -416,12 +464,6 @@ double stringtodouble(const std::string &string,bool *ok)
 
 std::string binarytoHexa(const std::vector<char> &data, bool *ok)
 {
-    if(data.size()%2!=0)
-    {
-        if(ok!=NULL)
-           *ok=false;
-        return std::string();
-    }
     if(ok!=NULL)
        *ok=true;
     std::string output;
@@ -442,12 +484,6 @@ std::string binarytoHexa(const unsigned char * const data, const uint32_t &size,
 
 std::string binarytoHexa(const char * const data, const uint32_t &size, bool *ok)
 {
-    if(size%2!=0)
-    {
-        if(ok!=NULL)
-           *ok=false;
-        return std::string();
-    }
     if(ok!=NULL)
        *ok=true;
     std::string output;
@@ -461,10 +497,12 @@ std::string binarytoHexa(const char * const data, const uint32_t &size, bool *ok
     return output;
 }
 
-uint8_t hexToDecUnit(const std::string& data)
+uint8_t hexToDecUnit(const std::string& data, bool *ok)
 {
-     auto fromHex = [](char c)
+     auto fromHex = [](char c, bool *ok)
      {
+         if(ok!=NULL)
+             *ok=true;
         if (isdigit(c)) return c - '0';
         switch(c)
         {
@@ -508,27 +546,60 @@ uint8_t hexToDecUnit(const std::string& data)
             case 'F':
                 return 15;
         }
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+        #endif
+        if(ok!=NULL)
+            *ok=false;
         return 0;
     };
-    return fromHex(data[0]) << 4 | fromHex(data[1]);
+    return fromHex(data[0],ok) << 4 | fromHex(data[1],ok);
 }
 
-std::vector<char> hexatoBinary(const std::string &data)
+std::vector<char> hexatoBinary(const std::string &data,bool *ok)
 {
+    if(data.size()%2!=0)
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+        #endif
+        if(ok!=NULL)
+           *ok=false;
+        return std::vector<char>();
+    }
     if(Q_LIKELY(std::regex_match(data,ishexa)))
     {
+        bool ok2;
         std::vector<char> out;
         out.reserve(data.length()/2);
         for(size_t i=0;i<data.length();i+=2)
         {
             const std::string &partpfchain=data.substr(i,2);
-            uint8_t x=hexToDecUnit(partpfchain);
+            const uint8_t &x=hexToDecUnit(partpfchain,&ok2);
+            if(!ok2)
+            {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+                #endif
+                if(ok!=NULL)
+                    *ok=false;
+                return std::vector<char>();
+            }
             out.push_back(x);
         }
+        if(ok!=NULL)
+            *ok=true;
         return out;
     }
     else
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+        #endif
+        if(ok!=NULL)
+            *ok=false;
         return std::vector<char>();
+    }
 }
 
 void binaryAppend(std::vector<char> &data,const std::vector<char> &add)

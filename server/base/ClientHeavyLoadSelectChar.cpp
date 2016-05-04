@@ -1738,8 +1738,12 @@ void Client::characterIsRightFinalStep()
         posOutputTemp++;
 
         //compress
-        const uint32_t &compressedSize=computeCompression(ProtocolParsingBase::tempBigBufferForOutput+posOutput,ProtocolParsingBase::tempBigBufferForCompressedOutput,(posOutputTemp-posOutput),sizeof(ProtocolParsingBase::tempBigBufferForCompressedOutput),ProtocolParsingBase::compressionTypeServer);
-        sendRawBlock(ProtocolParsingBase::tempBigBufferForCompressedOutput,compressedSize);
+        const int32_t &compressedSize=computeCompression(ProtocolParsingBase::tempBigBufferForOutput+posOutput,ProtocolParsingBase::tempBigBufferForCompressedOutput,(posOutputTemp-posOutput),sizeof(ProtocolParsingBase::tempBigBufferForCompressedOutput),ProtocolParsingBase::compressionTypeServer);
+        if(compressedSize<0)
+        {
+            errorOutput("Error to compress the data");
+            return;
+        }
         //copy
         *reinterpret_cast<int32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(compressedSize);
         posOutput+=4;

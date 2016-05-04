@@ -83,7 +83,7 @@ public:
     static StringWithReplacement db_query_update_monster_position;
     static StringWithReplacement db_query_update_monster_and_hp;
     static StringWithReplacement db_query_update_monster_hp_and_level;
-    static StringWithReplacement db_query_select_monsters_by_player_id;
+    static StringWithReplacement db_query_select_monsters_by_player_id;//don't filter by place, dispatched in internal, market volume should be low
 
     #if defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
     static StringWithReplacement db_query_insert_server_time;

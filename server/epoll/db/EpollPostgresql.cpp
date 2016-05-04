@@ -453,10 +453,110 @@ bool EpollPostgresql::stringtobool(const std::string &string,bool *ok)
     }
     else
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+        #endif
         if(ok!=NULL)
             *ok=false;
         return false;
     }
     #endif
 }
+
+std::vector<char> EpollPostgresql::hexatoBinary(const std::string &data,bool *ok)
+{
+    if(data.empty())
+        return std::vector<char>();
+    if(data.size()%2!=0)
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+        #endif
+        if(ok!=NULL)
+           *ok=false;
+        return std::vector<char>();
+    }
+    if(data.at(0)=='\\')
+    {
+        if(data.size()==2)
+            return std::vector<char>();
+        const std::string &hexaextract=data.substr(2,data.size()-2);
+        #ifdef CATCHCHALLENGER_SERVER_TRUSTINTODATABASENUMBERRETURN
+        if(hexaextract.size()%2!=0)
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+            #endif
+            if(ok!=NULL)
+                *ok=false;
+            return std::vector<char>();
+        }
+        bool ok2;
+        if(ok!=NULL)
+            *ok=true;
+        std::vector<char> out;
+        out.reserve(hexaextract.length()/2);
+        for(size_t i=0;i<hexaextract.length();i+=2)
+        {
+            const std::string &partpfchain=hexaextract.substr(i,2);
+            const uint8_t &x=::hexToDecUnit(partpfchain,&ok2);
+            if(!ok2)
+            {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+                #endif
+                if(ok!=NULL)
+                    *ok=false;
+                return std::vector<char>();
+            }
+            out.push_back(x);
+        }
+        if(ok!=NULL)
+            *ok=true;
+        return out;
+        #else
+        return ::hexatoBinary(hexaextract,ok);
+        #endif
+    }
+    else
+    {
+        #ifdef CATCHCHALLENGER_SERVER_TRUSTINTODATABASENUMBERRETURN
+        if(data.size()%2!=0)
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+            #endif
+            if(ok!=NULL)
+                *ok=false;
+            return std::vector<char>();
+        }
+        bool ok2;
+        if(ok!=NULL)
+            *ok=true;
+        std::vector<char> out;
+        out.reserve(data.length()/2);
+        for(size_t i=0;i<data.length();i+=2)
+        {
+            const std::string &partpfchain=data.substr(i,2);
+            const uint8_t &x=::hexToDecUnit(partpfchain,&ok2);
+            if(!ok2)
+            {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
+                #endif
+                if(ok!=NULL)
+                    *ok=false;
+                return std::vector<char>();
+            }
+            out.push_back(x);
+        }
+        if(ok!=NULL)
+            *ok=true;
+        return out;
+        #else
+        return ::hexatoBinary(data,ok);
+        #endif
+    }
+}
+
 #endif
