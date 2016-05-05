@@ -1788,6 +1788,7 @@ void BaseServer::preload_the_datapack()
                     //read and load the file
                     const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
 
+                    #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                     if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
                         if(GlobalServerData::serverSettings.max_players>1)//if not internal
@@ -1807,12 +1808,14 @@ void BaseServer::preload_the_datapack()
                             }
                         }
                     }
+                    #endif
 
                     //switch the data to correct hash or drop it
                     if(regex_search(datapack_file_temp.at(index),mainDatapackBaseFilter))
                     {}
                     else
                     {
+                        #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                         SHA256_CTX hashFile;
                         if(SHA224_Init(&hashFile)!=1)
                         {
@@ -1824,6 +1827,7 @@ void BaseServer::preload_the_datapack()
                         SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
                         cacheFile.partialHash=*reinterpret_cast<const uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput);
                         Client::datapack_file_hash_cache_base[datapack_file_temp.at(index)]=cacheFile;
+                        #endif
 
                         SHA224_Update(&hashBase,data.data(),data.size());
                     }
@@ -2018,11 +2022,13 @@ void BaseServer::preload_the_datapack()
     }
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     if(Client::datapack_file_hash_cache_base.size()==0)
     {
         std::cout << "0 file for datapack loaded base (abort)" << std::endl;
         abort();
     }
+    #endif
     #endif
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     if(Client::datapack_file_hash_cache_main.size()==0)

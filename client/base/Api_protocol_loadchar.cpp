@@ -522,12 +522,16 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
             return false;
         }
         in >> monster.egg_step;
-        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
+        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
         {
             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster character_origin, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
             return false;
         }
-        in >> monster.character_origin;
+        {
+            quint8 character_origin;
+            in >> character_origin;
+            monster.character_origin=character_origin;
+        }
 
         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
         {
@@ -668,12 +672,16 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
             return false;
         }
         in >> monster.egg_step;
-        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
+        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
         {
             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster character_origin, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
             return false;
         }
-        in >> monster.character_origin;
+        {
+            quint8 character_origin;
+            in >> character_origin;
+            monster.character_origin=character_origin;
+        }
 
         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
         {
@@ -782,7 +790,14 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the reputation list size, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return false;
     }
-    const uint32_t &decompressedSize=computeDecompression(data.data()+in.device()->pos(),ProtocolParsingBase::tempBigBufferForUncompressedInput,sub_size32,sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput),ProtocolParsingBase::compressionTypeClient);
+    uint32_t decompressedSize=0;
+    if(ProtocolParsingBase::compressionTypeClient==CompressionType::None)
+    {
+        decompressedSize=sub_size32;
+        memcpy(ProtocolParsingBase::tempBigBufferForUncompressedInput,data.data()+in.device()->pos(),sub_size32);
+    }
+    else
+        decompressedSize=computeDecompression(data.data()+in.device()->pos(),ProtocolParsingBase::tempBigBufferForUncompressedInput,sub_size32,sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput),ProtocolParsingBase::compressionTypeClient);
     {
         const QByteArray data2(ProtocolParsingBase::tempBigBufferForUncompressedInput,decompressedSize);
         QDataStream in2(data2);
@@ -902,7 +917,7 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
 
         if(in2.device()->size()!=in2.device()->pos())
         {
-            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max player, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the in2.device()->size() %1 != in2.device()->pos() %2, line: %3").arg(in2.device()->size()).arg(in2.device()->pos()).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
             return false;
         }
     }
