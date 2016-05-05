@@ -140,7 +140,7 @@ uint64_t FacilityLib::nextCaptureTime(const City &city)
     return std::mktime(nextCityCapture);
 }
 
-uint32_t FacilityLib::privateMonsterToBinary(char *data,const PlayerMonster &monster)
+uint32_t FacilityLib::privateMonsterToBinary(char *data,const PlayerMonster &monster,const uint32_t &character_id)
 {
     //send the network reply
     uint32_t posOutput=0;
@@ -161,8 +161,8 @@ uint32_t FacilityLib::privateMonsterToBinary(char *data,const PlayerMonster &mon
     posOutput+=1;
     *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(monster.egg_step);
     posOutput+=4;
-    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(monster.character_origin);
-    posOutput+=4;
+    data[posOutput]=(uint8_t)monster.character_origin==character_id;
+    posOutput+=1;
 
     uint16_t sub_index=0;
     data[posOutput]=monster.buffs.size();
