@@ -4613,7 +4613,7 @@ void Client::withdrawMarketMonster(const uint32_t &query_id,const uint32_t &mons
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
             posOutput+=1;
 
-            posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.playerMonster.back());
+            posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.playerMonster.back(),character_id);
 
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);

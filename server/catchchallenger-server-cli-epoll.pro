@@ -10,6 +10,7 @@ QT       -= gui widgets network sql
 QMAKE_CFLAGS+="-fstack-protector-all -std=c++0x"
 QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x"
 
+DEFINES += CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
 DEFINES += SERVERNOBUFFER
 #DEFINES += SERVERSSL
 #DEFINES += SERVERBENCHMARK

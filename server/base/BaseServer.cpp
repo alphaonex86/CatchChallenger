@@ -321,6 +321,24 @@ void BaseServer::SQL_common_load_finish()
 
 void BaseServer::preload_finish()
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(CommonDatapack::commonDatapack.crafingRecipesMaxId==0)
+    {
+        std::cerr << "CommonDatapack::commonDatapack.crafingRecipesMaxId==0" << std::endl;
+        abort();
+    }
+    if(CommonDatapack::commonDatapack.monstersMaxId==0)
+    {
+        std::cerr << "CommonDatapack::commonDatapack.monstersMaxId==0" << std::endl;
+        abort();
+    }
+    if(CommonDatapack::commonDatapack.items.itemMaxId==0)
+    {
+        std::cerr << "CommonDatapack::commonDatapack.items.itemMaxId==0" << std::endl;
+        abort();
+    }
+    #endif
+
     std::cout << plant_on_the_map << " SQL plant on map" << std::endl;
     std::cout << GlobalServerData::serverPrivateVariables.marketItemList.size() << " SQL market item" << std::endl;
     const auto &now = msFrom1970();
