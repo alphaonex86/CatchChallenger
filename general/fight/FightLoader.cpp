@@ -224,8 +224,8 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
 
 std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string &folder, const std::unordered_map<uint16_t, Skill> &monsterSkills
                                                 #ifndef CATCHCHALLENGER_CLASS_MASTER
-                                                ,const std::vector<Type> &types,const std::unordered_map<uint16_t, Item> &items,
-                                                uint16_t monstersMaxId
+                                                , const std::vector<Type> &types, const std::unordered_map<uint16_t, Item> &items,
+                                                uint16_t &monstersMaxId
                                                 #endif
                                                 )
 {
@@ -803,9 +803,9 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                             #endif
                             #endif
 
+                            #endif // CATCHCHALLENGER_CLASS_MASTER
                             if(monstersMaxId<id)
                                 monstersMaxId=id;
-                            #endif // CATCHCHALLENGER_CLASS_MASTER
                             monsters[id]=monster;
                         }
                         else

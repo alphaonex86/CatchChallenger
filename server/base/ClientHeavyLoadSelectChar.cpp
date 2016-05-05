@@ -1661,7 +1661,7 @@ void Client::characterIsRightFinalStep()
     posOutput+=1;
     while(index<size)
     {
-        posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.playerMonster.at(index));
+        posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.playerMonster.at(index),character_id);
         index++;
     }
     index=0;
@@ -1670,7 +1670,7 @@ void Client::characterIsRightFinalStep()
     posOutput+=1;
     while(index<size)
     {
-        posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.warehouse_playerMonster.at(index));
+        posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.warehouse_playerMonster.at(index),character_id);
         index++;
     }
 
@@ -1691,56 +1691,85 @@ void Client::characterIsRightFinalStep()
             ++i;
         }
     }
+    std::cerr << "data to send: " << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << " " << __FILE__ << ":" << __LINE__ << std::endl;
     /// \todo make the buffer overflow control here or above
     {
         char *buffer;
         if(ProtocolParsingBase::compressionTypeServer==CompressionType::None)
-            buffer=ProtocolParsingBase::tempBigBufferForOutput+posOutput;
+            buffer=ProtocolParsingBase::tempBigBufferForOutput+posOutput+4;
         else
             buffer=ProtocolParsingBase::tempBigBufferForCompressedOutput;
         uint32_t posOutputTemp=0;
         //recipes
         if(public_and_private_informations.recipes!=NULL)
         {
-            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(CommonDatapack::commonDatapack.crafingRecipesMaxId==0)
+            {
+                errorOutput("CommonDatapack::commonDatapack.crafingRecipesMaxId==0");
+                return;
+            }
+            #endif
+            const auto &binarySize=CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1;
+            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(binarySize);
             posOutputTemp+=2;
-            memcpy(buffer+posOutputTemp,public_and_private_informations.recipes,CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
-            posOutputTemp+=CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1;
+            memcpy(buffer+posOutputTemp,public_and_private_informations.recipes,binarySize);
+            posOutputTemp+=binarySize;
         }
         else
         {
             *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=0;
             posOutputTemp+=2;
         }
+        std::cerr << "data to send: " << binarytoHexa(buffer,posOutputTemp) << " " << __FILE__ << ":" << __LINE__ << std::endl;
         //encyclopedia_monster
         if(public_and_private_informations.encyclopedia_monster!=NULL)
         {
-            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(CommonDatapack::commonDatapack.monstersMaxId/8+1);
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(CommonDatapack::commonDatapack.monstersMaxId==0)
+            {
+                errorOutput("CommonDatapack::commonDatapack.monstersMaxId==0");
+                return;
+            }
+            #endif
+            const auto &binarySize=CommonDatapack::commonDatapack.monstersMaxId/8+1;
+            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(binarySize);
             posOutputTemp+=2;
-            memcpy(buffer+posOutputTemp,public_and_private_informations.encyclopedia_monster,CommonDatapack::commonDatapack.monstersMaxId/8+1);
-            posOutputTemp+=CommonDatapack::commonDatapack.monstersMaxId/8+1;
+            memcpy(buffer+posOutputTemp,public_and_private_informations.encyclopedia_monster,binarySize);
+            posOutputTemp+=binarySize;
         }
         else
         {
             *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=0;
             posOutputTemp+=2;
         }
+        std::cerr << "data to send: " << binarytoHexa(buffer,posOutputTemp) << " " << __FILE__ << ":" << __LINE__ << std::endl;
         //encyclopedia_item
         if(public_and_private_informations.encyclopedia_item!=NULL)
         {
-            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(CommonDatapack::commonDatapack.items.itemMaxId==0)
+            {
+                errorOutput("CommonDatapack::commonDatapack.items.itemMaxId==0");
+                return;
+            }
+            #endif
+            const auto &binarySize=CommonDatapack::commonDatapack.items.itemMaxId/8+1;
+            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(binarySize);
             posOutputTemp+=2;
-            memcpy(buffer+posOutputTemp,public_and_private_informations.encyclopedia_item,CommonDatapack::commonDatapack.items.itemMaxId/8+1);
-            posOutputTemp+=CommonDatapack::commonDatapack.items.itemMaxId/8+1;
+            memcpy(buffer+posOutputTemp,public_and_private_informations.encyclopedia_item,binarySize);
+            posOutputTemp+=binarySize;
         }
         else
         {
             *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=0;
             posOutputTemp+=2;
         }
+        std::cerr << "data to send: " << binarytoHexa(buffer,posOutputTemp) << " " << __FILE__ << ":" << __LINE__ << std::endl;
         //achievements
         buffer[posOutputTemp]=0;
         posOutputTemp++;
+        std::cerr << "data to send: " << binarytoHexa(buffer,posOutputTemp) << " " << __FILE__ << ":" << __LINE__ << std::endl;
 
         if(ProtocolParsingBase::compressionTypeServer==CompressionType::None)
         {
@@ -1763,6 +1792,7 @@ void Client::characterIsRightFinalStep()
             posOutput+=compressedSize;
         }
     }
+    std::cerr << "data to send: " << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << " " << __FILE__ << ":" << __LINE__ << std::endl;
 
     //------------------------------------------- End of common part, start of server specific part ----------------------------------
 
@@ -1830,6 +1860,7 @@ void Client::characterIsRightFinalStep()
         ++i;
     }
     #endif
+    std::cerr << "data to send: " << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << " " << __FILE__ << ":" << __LINE__ << std::endl;
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(this->map==NULL)

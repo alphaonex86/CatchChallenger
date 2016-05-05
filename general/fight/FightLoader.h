@@ -17,7 +17,7 @@ public:
     static std::unordered_map<uint16_t,Monster> loadMonster(const std::string &folder, const std::unordered_map<uint16_t,Skill> &monsterSkills
                                               #ifndef CATCHCHALLENGER_CLASS_MASTER
                                               , const std::vector<Type> &types, const std::unordered_map<uint16_t, Item> &items,
-                                              uint16_t monstersMaxId
+                                              uint16_t &monstersMaxId
                                               #endif
                                               );
     static std::unordered_map<uint16_t,Skill> loadMonsterSkill(const std::string &folder

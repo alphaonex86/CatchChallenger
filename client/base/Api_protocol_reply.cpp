@@ -1176,12 +1176,16 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     return false;
                 }
                 in >> monster.egg_step;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
+                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster character_origin, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                     return false;
                 }
-                in >> monster.character_origin;
+                {
+                    quint8 character_origin;
+                    in >> character_origin;
+                    monster.character_origin=character_origin;
+                }
 
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
                 {
@@ -1396,12 +1400,16 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                         return false;
                     }
                     in >> monster.egg_step;
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
+                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                     {
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster character_origin, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                         return false;
                     }
-                    in >> monster.character_origin;
+                    {
+                        quint8 character_origin;
+                        in >> character_origin;
+                        monster.character_origin=character_origin;
+                    }
 
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
                     {
