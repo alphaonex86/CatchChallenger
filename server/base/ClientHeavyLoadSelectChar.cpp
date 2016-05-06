@@ -116,7 +116,7 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
     selectCharacterParam->characterId=characterId;
     stat=ClientStat::CharacterSelecting;
 
-    std::string queryText=PreparedDBQueryCommon::db_query_character_by_id.compose(
+    const std::string &queryText=PreparedDBQueryCommon::db_query_character_by_id.compose(
                 std::to_string(characterId)
                 );
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::selectCharacter_static);
@@ -177,7 +177,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     /* account(0),pseudo(1),skin(2),type(3),clan(4),cash(5),
     warehouse_cash(6),clan_leader(7),time_to_delete(8),starter(9),
     allow(10),item(11),item_warehouse(12),recipes(13),reputations(14),
-    encyclopedia_monster(15),encyclopedia_item(16),achievements(17),blob_version(18)*/
+    encyclopedia_monster(15),encyclopedia_item(16),achievements(17),blob_version(18),date(19)*/
 
     callbackRegistred.pop();
     if(!GlobalServerData::serverPrivateVariables.db_common->next())
@@ -582,7 +582,13 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
 
     //achievements(17) ignored for now
 
-    Client::selectCharacterServer(query_id,characterId);
+    const uint64_t &commonCharacterDate=GlobalServerData::serverPrivateVariables.db_common->stringtouint64(GlobalServerData::serverPrivateVariables.db_common->value(19),&ok);
+    if(!ok)
+    {
+        characterSelectionIsWrong(query_id,0x04,"creation date wrong");
+        return;
+    }
+    Client::selectCharacterServer(query_id,characterId,commonCharacterDate);
 }
 
 
@@ -613,7 +619,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
 
 
 
-void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &characterId)
+void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &characterId, const uint64_t &characterCreationDate)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryServer::db_query_character_server_by_id.empty())
@@ -639,6 +645,8 @@ void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &char
     }
     else
     {
+        characterCreationDateList[characterId]=characterCreationDate;
+
         paramToPassToCallBack.push(selectCharacterParam);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         paramToPassToCallBackType.push("SelectCharacterParam");
@@ -687,7 +695,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     /*map(0),x(1),y(2),orientation(3),
     rescue_map(4),rescue_x(5),rescue_y(6),rescue_orientation(7),
     unvalidated_rescue_map(8),unvalidated_rescue_x(9),unvalidated_rescue_y(10),unvalidated_rescue_orientation(11),
-    market_cash(12),botfight_id(13),itemonmap(14),quest(15),blob_version(16),plants(17)*/
+    market_cash(12),botfight_id(13),itemonmap(14),quest(15),blob_version(16),date(17),plants(18)*/
     callbackRegistred.pop();
     const auto &characterIdString=std::to_string(characterId);
     const auto &sFrom1970String=std::to_string(sFrom1970());
@@ -723,8 +731,56 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
             serverProfileInternal.y,
             serverProfileInternal.orientation
         );
+        characterCreationDateList.erase(characterId);
         return;
     }
+    else
+    {
+        bool ok;
+        const uint64_t &server_date=GlobalServerData::serverPrivateVariables.db_server->stringtouint64(GlobalServerData::serverPrivateVariables.db_server->value(17),&ok);
+        if(!ok || server_date<characterCreationDateList.at(characterId))
+        {
+            //drop before re-add
+            dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_character_server_by_id.compose(
+                                   characterIdString
+                                   )
+                               );
+
+            const ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex);
+
+            dbQueryWriteServer(serverProfileInternal.preparedQueryAddCharacterForServer.compose(
+                                   characterIdString,
+                                   sFrom1970String
+                                   )
+                               );
+            const std::string &queryText=PreparedDBQueryCommon::db_query_update_character_last_connect.compose(
+                        sFrom1970String,
+                        characterIdString
+                        );
+            dbQueryWriteCommon(queryText);
+
+            characterIsRightWithParsedRescue(query_id,
+                characterId,
+                serverProfileInternal.map,
+                serverProfileInternal.x,
+                serverProfileInternal.y,
+                serverProfileInternal.orientation,
+                //rescue
+                serverProfileInternal.map,
+                serverProfileInternal.x,
+                serverProfileInternal.y,
+                serverProfileInternal.orientation,
+                //last unvalidated
+                serverProfileInternal.map,
+                serverProfileInternal.x,
+                serverProfileInternal.y,
+                serverProfileInternal.orientation
+            );
+            characterCreationDateList.erase(characterId);
+            return;
+        }
+    }
+    characterCreationDateList.erase(characterId);
 
     bool ok;
     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
@@ -848,7 +904,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     //plants
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     {
-        const std::vector<char> &plants=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(17),&ok);
+        const std::vector<char> &plants=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(18),&ok);
         const char * const raw_plants=plants.data();
         if(!ok)
         {

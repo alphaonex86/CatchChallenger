@@ -803,9 +803,9 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                             #endif
                             #endif
 
-                            #endif // CATCHCHALLENGER_CLASS_MASTER
                             if(monstersMaxId<id)
                                 monstersMaxId=id;
+                            #endif // CATCHCHALLENGER_CLASS_MASTER
                             monsters[id]=monster;
                         }
                         else
