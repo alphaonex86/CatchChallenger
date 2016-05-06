@@ -88,6 +88,7 @@ StringWithReplacement PreparedDBQueryServer::db_query_insert_monster_market_pric
 StringWithReplacement PreparedDBQueryServer::db_query_delete_monster_market_price;
 StringWithReplacement PreparedDBQueryServer::db_query_update_character_quests;
 StringWithReplacement PreparedDBQueryServer::db_query_character_server_by_id;
+StringWithReplacement PreparedDBQueryServer::db_query_delete_character_server_by_id;
 StringWithReplacement PreparedDBQueryServer::db_query_update_plant;
 StringWithReplacement PreparedDBQueryServer::db_query_update_itemonmap;
 StringWithReplacement PreparedDBQueryServer::db_query_update_character_bot_already_beaten;
@@ -317,7 +318,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
 
         PreparedDBQueryCommon::db_query_select_allow="SELECT `allow` FROM `character_allow` WHERE `character`=%1";
         PreparedDBQueryCommon::db_query_monster_skill="UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3";
-        PreparedDBQueryCommon::db_query_character_by_id="SELECT `account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`starter`,`allow`,`item`,`item_warehouse`,`recipes`,`reputations`,`encyclopedia_monster`,`encyclopedia_item`,`achievements`,`blob_version` FROM `character` WHERE `id`=%1";
+        PreparedDBQueryCommon::db_query_character_by_id="SELECT `account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`starter`,`allow`,`item`,`item_warehouse`,`recipes`,`reputations`,`encyclopedia_monster`,`encyclopedia_item`,`achievements`,`blob_version`,`date` FROM `character` WHERE `id`=%1";
 
 
         PreparedDBQueryCommon::db_query_monster_by_character_id="SELECT `id` FROM `monster` WHERE `character`=%1";
@@ -428,7 +429,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
 
         PreparedDBQueryCommon::db_query_select_allow="SELECT allow FROM character_allow WHERE character=%1";
         PreparedDBQueryCommon::db_query_monster_skill="UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3";
-        PreparedDBQueryCommon::db_query_character_by_id="SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,allow,item,item_warehouse,recipes,reputations,encyclopedia_monster,encyclopedia_item,achievements,blob_version FROM character WHERE id=%1";
+        PreparedDBQueryCommon::db_query_character_by_id="SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,allow,item,item_warehouse,recipes,reputations,encyclopedia_monster,encyclopedia_item,achievements,blob_version,date FROM character WHERE id=%1";
 
         PreparedDBQueryCommon::db_query_monster_by_character_id="SELECT id FROM monster WHERE character=%1";
         PreparedDBQueryCommon::db_query_delete_monster_buff="UPDATE monster SET buffs='' WHERE id=%1";
@@ -514,7 +515,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_monster_update_endurance="UPDATE monster SET skills_endurance='\\x%1' WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_monster_buff="UPDATE monster SET buffs='\\x%1' WHERE id=%2";
 
-        PreparedDBQueryCommon::db_query_character_by_id="SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,allow,item,item_warehouse,recipes,reputations,encyclopedia_monster,encyclopedia_item,achievements,blob_version FROM character WHERE id=%1";
+        PreparedDBQueryCommon::db_query_character_by_id="SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,allow,item,item_warehouse,recipes,reputations,encyclopedia_monster,encyclopedia_item,achievements,blob_version,date FROM character WHERE id=%1";
         PreparedDBQueryCommon::db_query_set_character_time_to_delete_to_zero="UPDATE character SET time_to_delete=0 WHERE id=%1";
         PreparedDBQueryCommon::db_query_update_character_last_connect="UPDATE character SET last_connect=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_clan="SELECT name,cash FROM clan WHERE id=%1";
@@ -693,10 +694,11 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         case DatabaseBase::DatabaseType::Mysql:
         PreparedDBQueryServer::db_query_update_character_forserver_map="UPDATE `character_forserver` SET `map`=%1,`x`=%2,`y`=%3,`orientation`=%4,`rescue_map`=%5,`rescue_x`=%6,`rescue_y`=%7,`rescue_orientation`=%8,`unvalidated_rescue_map`=%9,`unvalidated_rescue_x`=%10,`unvalidated_rescue_y`=%11,`unvalidated_rescue_orientation`=%12 WHERE `character`=%13";
         #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-        PreparedDBQueryServer::db_query_character_server_by_id="SELECT `map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`botfight_id`,`itemonmap`,`quest`,`blob_version`,`plants` FROM `character_forserver` WHERE `character`=%1";
+        PreparedDBQueryServer::db_query_character_server_by_id="SELECT `map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`botfight_id`,`itemonmap`,`quest`,`blob_version`,`date`,`plants` FROM `character_forserver` WHERE `character`=%1";
         #else
-        PreparedDBQueryServer::db_query_character_server_by_id="SELECT `map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`botfight_id`,`itemonmap`,`quest`,`blob_version` FROM `character_forserver` WHERE `character`=%1";
+        PreparedDBQueryServer::db_query_character_server_by_id="SELECT `map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`botfight_id`,`itemonmap`,`quest`,`blob_version`,`date` FROM `character_forserver` WHERE `character`=%1";
         #endif
+        PreparedDBQueryServer::db_query_delete_character_server_by_id="DELETE FROM `character_forserver` WHERE `character`=%1";
         PreparedDBQueryServer::db_query_delete_all_item_market="DELETE FROM `item_market` WHERE `character`=%1";
         PreparedDBQueryServer::db_query_insert_item_market="INSERT INTO `item_market`(`item`,`character`,`quantity`,`market_price`) VALUES(%1,%2,%3,%4)";
         PreparedDBQueryServer::db_query_delete_item_market="DELETE FROM `item_market` WHERE `item`=%1 AND `character`=%2";
@@ -738,10 +740,11 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_update_character_forserver_map="UPDATE character_forserver SET map=%1,x=%2,y=%3,orientation=%4,rescue_map=%5,rescue_x=%6,rescue_y=%7,rescue_orientation=%8,unvalidated_rescue_map=%9,unvalidated_rescue_x=%10,unvalidated_rescue_y=%11,unvalidated_rescue_orientation=%12 WHERE character=%13";
 
         #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-        PreparedDBQueryServer::db_query_character_server_by_id="SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,botfight_id,itemonmap,quest,blob_version,plants FROM character_forserver WHERE character=%1";
+        PreparedDBQueryServer::db_query_character_server_by_id="SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,botfight_id,itemonmap,quest,blob_version,date,plants FROM character_forserver WHERE character=%1";
         #else
-        PreparedDBQueryServer::db_query_character_server_by_id="SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,botfight_id,itemonmap,quest,blob_version FROM character_forserver WHERE character=%1";
+        PreparedDBQueryServer::db_query_character_server_by_id="SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,botfight_id,itemonmap,quest,blob_version,date FROM character_forserver WHERE character=%1";
         #endif
+        PreparedDBQueryServer::db_query_delete_character_server_by_id="DELETE FROM character_forserver WHERE character=%1";
         PreparedDBQueryServer::db_query_delete_all_item_market="DELETE FROM item_market WHERE character=%1";
         PreparedDBQueryServer::db_query_insert_item_market="INSERT INTO item_market(item,character,quantity,market_price) VALUES(%1,%2,%3,%4)";
         PreparedDBQueryServer::db_query_delete_item_market="DELETE FROM item_market WHERE item=%1 AND character=%2";
@@ -801,10 +804,11 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_delete_monster_market_price="DELETE FROM monster_market_price WHERE id=%1";
         PreparedDBQueryServer::db_query_update_character_quests="UPDATE character_forserver SET quest='\\x%1' WHERE id=%2";
         #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-        PreparedDBQueryServer::db_query_character_server_by_id="SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,botfight_id,itemonmap,quest,blob_version,plants FROM character_forserver WHERE character=%1";
+        PreparedDBQueryServer::db_query_character_server_by_id="SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,botfight_id,itemonmap,quest,blob_version,date,plants FROM character_forserver WHERE character=%1";
         #else
-        PreparedDBQueryServer::db_query_character_server_by_id="SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,botfight_id,itemonmap,quest,blob_version FROM character_forserver WHERE character=%1";
+        PreparedDBQueryServer::db_query_character_server_by_id="SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,botfight_id,itemonmap,quest,blob_version,date FROM character_forserver WHERE character=%1";
         #endif
+        PreparedDBQueryServer::db_query_delete_character_server_by_id="DELETE FROM character_forserver WHERE character=%1";
         PreparedDBQueryServer::db_query_update_plant="UPDATE character_forserver SET plants='\\x%1' WHERE id=%2";
         PreparedDBQueryServer::db_query_update_itemonmap="UPDATE character_forserver SET itemonmap='\\x%1' WHERE id=%2";
         PreparedDBQueryServer::db_query_update_character_bot_already_beaten="UPDATE character_forserver SET bot_already_beaten='\\x%1' WHERE id=%2";

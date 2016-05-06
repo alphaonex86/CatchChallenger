@@ -385,6 +385,7 @@ private:
     static std::unordered_map<uint32_t,Client *> playerById;
     static std::unordered_map<std::string,std::vector<Client *> > captureCity;
     static std::unordered_map<std::string,CaptureCityValidated> captureCityValidatedList;
+    static std::unordered_map<uint32_t,uint64_t> characterCreationDateList;
 
     static const std::string text_0;
     static const std::string text_1;
@@ -474,7 +475,7 @@ private:
     static void selectCharacter_static(void *object);
     void selectCharacter_object();
     void selectCharacter_return(const uint8_t &query_id, const uint32_t &characterId);
-    void selectCharacterServer(const uint8_t &query_id, const uint32_t &characterId);
+    void selectCharacterServer(const uint8_t &query_id, const uint32_t &characterId, const uint64_t &characterCreationDate);
     static void selectCharacterServer_static(void *object);
     void selectCharacterServer_object();
     void selectCharacterServer_return(const uint8_t &query_id, const uint32_t &characterId);

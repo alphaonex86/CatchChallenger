@@ -291,6 +291,7 @@ void Client::disconnectClient()
             std::cout << "Client::disconnectClient(): vectorremoveOne(clientBroadCastList,this)" << std::endl;
         playerByPseudo.erase(public_and_private_informations.public_informations.pseudo);
         playerById.erase(character_id);
+        characterCreationDateList.erase(character_id);
         leaveTheCityCapture();
         const uint64_t &addTime=sFrom1970()-connectedSince;
         if(addTime>5)
@@ -351,6 +352,7 @@ void Client::disconnectClient()
         if(map!=NULL)
             savePosition();
         map=NULL;
+        character_id=0;
         stat=ClientStat::None;
     }
 
