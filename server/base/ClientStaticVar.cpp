@@ -157,6 +157,7 @@ Direction Client::temp_direction;
 std::unordered_map<uint32_t,Client *> Client::playerById;
 std::unordered_map<std::string,std::vector<Client *> > Client::captureCity;
 std::unordered_map<std::string,CaptureCityValidated> Client::captureCityValidatedList;
+std::unordered_map<uint32_t,uint64_t> Client::characterCreationDateList;
 std::unordered_map<uint32_t,Clan *> Client::clanList;
 
 const std::string Client::text_0="0";

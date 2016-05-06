@@ -252,7 +252,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
             }
         }
     }
-    std::string queryText=PreparedDBQueryCommonForLogin::db_query_characters.compose(
+    const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_characters.compose(
                 std::to_string(account_id)
                 );
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::character_list_static);
