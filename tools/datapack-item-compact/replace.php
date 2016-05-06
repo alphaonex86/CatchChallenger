@@ -1,7 +1,7 @@
 <?php
 
 if(!isset($argc) || $argc!=3)
-    die('pass the correcty arg count');
+    die('pass the correcty arg count: '.$argc);
 $datapack_path=$argv[1];
 if(!is_dir($datapack_path))
     die('datapack not dir');
