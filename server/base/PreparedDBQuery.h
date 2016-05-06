@@ -163,6 +163,7 @@ public:
     static StringWithReplacement db_query_insert_monster_market;
     static StringWithReplacement db_query_update_character_quests;
     static StringWithReplacement db_query_character_server_by_id;
+    static StringWithReplacement db_query_delete_character_server_by_id;
     static StringWithReplacement db_query_update_plant;
     static StringWithReplacement db_query_update_itemonmap;
     static StringWithReplacement db_query_update_character_bot_already_beaten;
