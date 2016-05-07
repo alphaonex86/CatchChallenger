@@ -26,7 +26,7 @@
    <string notr="true">CatchChallenger</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../resources/client-resources.qrc">
+   <iconset resource="../../../server/all-server-resources.qrc">
     <normaloff>:/images/catchchallenger.png</normaloff>:/images/catchchallenger.png</iconset>
   </property>
   <property name="styleSheet">
@@ -71,7 +71,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>3</number>
+        <number>20</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -934,6 +934,37 @@ background-position:left bottom;
 }
 QToolButton { 
 background-image: url(:/images/interface/option-options.png);
+border-image: url(:/images/empty.png);
+}</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QToolButton" name="toolButtonEncyclopedia">
+              <property name="minimumSize">
+               <size>
+                <width>28</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>28</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Encyclopedia</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QToolButton::hover {
+background-position:left center;
+}
+QToolButton::pressed {
+background-position:left bottom;
+}
+QToolButton { 
+background-image: url(:/images/interface/option-map.png);
 border-image: url(:/images/empty.png);
 }</string>
               </property>
@@ -7066,6 +7097,149 @@ padding-bottom:3px;
          </property>
         </layout>
        </widget>
+       <widget class="QWidget" name="page_encyclopedia">
+        <property name="styleSheet">
+         <string notr="true">#page_encyclopedia{background-image: url(:/images/inventory/background.jpg);}
+</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_37">
+         <item>
+          <widget class="QTabWidget" name="tabWidgetEncyclopedia">
+           <property name="currentIndex">
+            <number>1</number>
+           </property>
+           <widget class="QWidget" name="tabEncyclopediaMonster">
+            <attribute name="icon">
+             <iconset resource="../../fight/resources/client-resources-fight.qrc">
+              <normaloff>:/images/monsters/default/small.png</normaloff>:/images/monsters/default/small.png</iconset>
+            </attribute>
+            <attribute name="title">
+             <string>Monster</string>
+            </attribute>
+            <layout class="QHBoxLayout" name="horizontalLayout_60">
+             <item>
+              <widget class="QListWidget" name="listWidgetEncyclopediaMonster">
+               <property name="minimumSize">
+                <size>
+                 <width>200</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>200</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>32</width>
+                 <height>32</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="labelEncyclopediaMonster">
+               <property name="textFormat">
+                <enum>Qt::RichText</enum>
+               </property>
+               <property name="wordWrap">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QWidget" name="tabEncyclopediaItem">
+            <attribute name="icon">
+             <iconset resource="../resources/client-resources-multi.qrc">
+              <normaloff>:/images/interface/server_list/star1.png</normaloff>:/images/interface/server_list/star1.png</iconset>
+            </attribute>
+            <attribute name="title">
+             <string>Item</string>
+            </attribute>
+            <layout class="QHBoxLayout" name="horizontalLayout_61">
+             <item>
+              <widget class="QListWidget" name="listWidgetEncyclopediaItem">
+               <property name="minimumSize">
+                <size>
+                 <width>200</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>200</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>24</width>
+                 <height>24</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="labelEncyclopediaItem">
+               <property name="wordWrap">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_62">
+           <item>
+            <spacer name="horizontalSpacer_60">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QToolButton" name="toolButton_quit_encyclopedia">
+             <property name="minimumSize">
+              <size>
+               <width>22</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>22</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QToolButton::hover {
+background-position:left center;
+}
+QToolButton::pressed {
+background-position:left bottom;
+}
+QToolButton { 
+background-image: url(:/images/interface/quit.png);
+border-image: url(:/images/empty.png);
+}</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
       </widget>
      </item>
     </layout>
@@ -7074,9 +7248,10 @@ padding-bottom:3px;
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="../../fight/resources/client-resources-fight.qrc"/>
-  <include location="../resources/client-resources.qrc"/>
+  <include location="../../../server/all-server-resources.qrc"/>
   <include location="../resources/client-resources-multi.qrc"/>
+  <include location="../resources/client-resources.qrc"/>
+  <include location="../../fight/resources/client-resources-fight.qrc"/>
  </resources>
  <connections>
   <connection>

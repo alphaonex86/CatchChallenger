@@ -457,6 +457,11 @@ private slots:
     void addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *item, const uint64_t &currentDate, const bool &fullView=true);
     void on_serverList_activated(const QModelIndex &index);
     void on_serverListSelect_clicked();
+    void on_toolButtonEncyclopedia_clicked();
+    void on_toolButton_quit_encyclopedia_clicked();
+    void on_listWidgetEncyclopediaMonster_itemActivated(QListWidgetItem *item);
+    void on_listWidgetEncyclopediaItem_itemActivated(QListWidgetItem *item);
+
 protected slots:
     //datapack
     void datapackParsed();
