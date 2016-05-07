@@ -3680,3 +3680,8 @@ void BaseWindow::on_serverListSelect_clicked()
     serverSelected=selectedItem->data(99,99).toUInt();
     updateConnectingStatus();
 }
+
+void CatchChallenger::BaseWindow::on_toolButton_quit_encyclopedia_clicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
+}
