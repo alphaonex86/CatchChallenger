@@ -276,7 +276,7 @@ void BaseWindow::have_character_position()
 
 void BaseWindow::have_main_and_sub_datapack_loaded()
 {
-    Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    const Player_private_and_public_informations &informations=CatchChallenger::Api_client_real::client->get_player_informations();
 
     clan=informations.clan;
     allow=informations.allow;
@@ -902,7 +902,7 @@ void BaseWindow::updatePlayerImage()
 {
     if(haveCharacterPosition && haveDatapack)
     {
-        Player_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations().public_informations;
+        const Player_public_informations &informations=CatchChallenger::Api_client_real::client->get_player_informations().public_informations;
         playerFrontImage=getFrontSkin(informations.skinId);
         playerBackImage=getBackSkin(informations.skinId);
         playerFrontImagePath=getFrontSkinPath(informations.skinId);
@@ -1393,4 +1393,120 @@ void BaseWindow::customMessageHandler(QtMsgType type, const QMessageLogContext &
         debugFile.write(txt.toUtf8());
         debugFile.flush();
     }
+}
+
+void CatchChallenger::BaseWindow::on_toolButtonEncyclopedia_clicked()
+{
+    const Player_private_and_public_informations &informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    ui->listWidgetEncyclopediaMonster->clear();
+    ui->listWidgetEncyclopediaItem->clear();
+    ui->labelEncyclopediaMonster->setText("");
+    ui->labelEncyclopediaItem->setText("");
+
+    {
+        QList<uint32_t> keys=DatapackClientLoader::datapackLoader.monsterExtra.keys();
+        qSort(keys.begin(),keys.end());
+        int32_t i=0;
+        while (i<keys.size())
+        {
+            const uint32_t &monsterId=keys.value(i);
+            const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(monsterId);
+            QListWidgetItem *item=new QListWidgetItem();
+            const uint16_t &bitgetUp=monsterId;
+            if(informations.encyclopedia_monster[bitgetUp/8] & (1<<(7-bitgetUp%8)))
+            {
+                item->setText(monsterExtra.name);
+                item->setData(99,monsterId);
+                item->setIcon(QIcon(monsterExtra.thumb));
+            }
+            else
+            {
+                item->setTextColor(QColor(100,100,100));
+                item->setText(tr("Unknown"));
+                item->setData(99,0);
+                item->setIcon(QIcon(":/images/monsters/default/small.png"));
+            }
+            ui->listWidgetEncyclopediaMonster->addItem(item);
+            ++i;
+        }
+    }
+    {
+        QList<uint32_t> keys=DatapackClientLoader::datapackLoader.itemsExtra.keys();
+        qSort(keys.begin(),keys.end());
+        int32_t i=0;
+        while (i<keys.size())
+        {
+            const uint32_t &itemId=keys.value(i);
+            const DatapackClientLoader::ItemExtra &itemsExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(itemId);
+            QListWidgetItem *item=new QListWidgetItem();
+            const uint16_t &bitgetUp=itemId;
+            if(informations.encyclopedia_item[bitgetUp/8] & (1<<(7-bitgetUp%8)))
+            {
+                item->setText(itemsExtra.name);
+                item->setData(99,itemId);
+                item->setIcon(QIcon(itemsExtra.image));
+            }
+            else
+            {
+                item->setTextColor(QColor(100,100,100));
+                item->setText(tr("Unknown"));
+                item->setData(99,0);
+                item->setIcon(QIcon(":/images/monsters/default/small.png"));
+            }
+            ui->listWidgetEncyclopediaItem->addItem(item);
+            ++i;
+        }
+}
+
+    ui->tabWidgetEncyclopedia->setCurrentIndex(0);
+    ui->stackedWidget->setCurrentWidget(ui->page_encyclopedia);
+}
+
+void CatchChallenger::BaseWindow::on_listWidgetEncyclopediaMonster_itemActivated(QListWidgetItem *item)
+{
+    if(item==NULL || item->data(99)==0)
+    {
+        ui->labelEncyclopediaMonster->setText("");
+        return;
+    }
+
+    const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(item->data(99).toUInt());
+    ui->labelEncyclopediaMonster->setText("");
+    QByteArray byteArray;
+    QBuffer buffer(&byteArray);
+    monsterExtra.front.save(&buffer, "PNG");
+    ui->labelEncyclopediaMonster->setText(
+                QStringLiteral("<img src=\"data:image/png;base64,%1\" /><br />").arg(QString(byteArray.toBase64()))+
+                tr("Name: <b>%1</b><br />Description: %2")
+                .arg(monsterExtra.name)
+                .arg(monsterExtra.description)
+                );
+    if(!monsterExtra.kind.isEmpty())
+        ui->labelEncyclopediaMonster->setText(ui->labelEncyclopediaMonster->text()+"<br />"+tr("Kind: %1").arg(monsterExtra.kind));
+    if(!monsterExtra.habitat.isEmpty())
+        ui->labelEncyclopediaMonster->setText(ui->labelEncyclopediaMonster->text()+"<br />"+tr("Habitat: %1").arg(monsterExtra.habitat));
+}
+
+void CatchChallenger::BaseWindow::on_listWidgetEncyclopediaItem_itemActivated(QListWidgetItem *item)
+{
+    if(item==NULL || item->data(99)==0)
+    {
+        ui->labelEncyclopediaItem->setText("");
+        return;
+    }
+
+    const Item &itemCommon=CommonDatapack::commonDatapack.items.item.at(item->data(99).toUInt());
+    const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(item->data(99).toUInt());
+    ui->labelEncyclopediaItem->setText("");
+    QByteArray byteArray;
+    QBuffer buffer(&byteArray);
+    itemExtra.image.save(&buffer, "PNG");
+    ui->labelEncyclopediaItem->setText(
+                QStringLiteral("<img src=\"data:image/png;base64,%1\" /><br />").arg(QString(byteArray.toBase64()))+
+                tr("Name: <b>%1</b><br />Description: %2")
+                .arg(itemExtra.name)
+                .arg(itemExtra.description)
+                );
+    if(itemCommon.price>0)
+        ui->labelEncyclopediaItem->setText(ui->labelEncyclopediaItem->text()+"<br />"+tr("Price: %1").arg(itemCommon.price));
 }
