@@ -110,6 +110,7 @@ void CatchChallenger::recordDisconnectByServer(void * client)
 
 void send_settings()
 {
+    bool ok;
     GameServerSettings formatedServerSettings=server->getSettings();
     NormalServerSettings formatedServerNormalSettings=server->getNormalSettings();
 
@@ -148,6 +149,28 @@ void send_settings()
     formatedServerNormalSettings.proxy					= settings->value("proxy");
     formatedServerNormalSettings.proxy_port				= stringtouint32(settings->value("proxy_port"));
     formatedServerNormalSettings.useSsl					= stringtobool(settings->value("useSsl"));
+    formatedServerSettings.common_blobversion_datapack= stringtouint8(settings->value("common_blobversion_datapack"),&ok);
+    if(!ok)
+    {
+        std::cerr << "common_blobversion_datapack is not a number" << std::endl;
+        abort();
+    }
+    if(formatedServerSettings.common_blobversion_datapack>15)
+    {
+        std::cerr << "common_blobversion_datapack > 15" << std::endl;
+        abort();
+    }
+    formatedServerSettings.server_blobversion_datapack= stringtouint8(settings->value("server_blobversion_datapack"),&ok);
+    if(!ok)
+    {
+        std::cerr << "server_blobversion_datapack is not a number" << std::endl;
+        abort();
+    }
+    if(formatedServerSettings.server_blobversion_datapack>15)
+    {
+        std::cerr << "server_blobversion_datapack > 15" << std::endl;
+        abort();
+    }
 
     if(settings->contains("mainDatapackCode"))
         CommonSettingsServer::commonSettingsServer.mainDatapackCode=settings->value("mainDatapackCode","[main]");

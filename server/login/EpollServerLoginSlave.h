@@ -73,6 +73,7 @@ public:
 private:
     std::string server_ip;
     std::string server_port;
+    uint8_t common_blobversion_datapack;
 private:
     void preload_profile();
     void generateToken(TinyXMLSettings &settings);

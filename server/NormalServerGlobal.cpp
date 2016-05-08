@@ -80,6 +80,10 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings, const std
     #endif
     if(!settings->contains("server-ip"))
         settings->setValue("server-ip","");
+    if(!settings->contains("common_blobversion_datapack"))
+        settings->setValue("common_blobversion_datapack",0);
+    if(!settings->contains("server_blobversion_datapack"))
+        settings->setValue("server_blobversion_datapack",0);
     if(!settings->contains("pvp"))
         settings->setValue("pvp",true);
     if(!settings->contains("useSP"))

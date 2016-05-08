@@ -161,6 +161,9 @@ struct GameServerSettings
     Database database_common;
     Database database_server;
 
+    uint8_t common_blobversion_datapack;
+    uint8_t server_blobversion_datapack;
+
     //connection
     bool automatic_account_creation;
 
@@ -318,6 +321,9 @@ struct ServerPrivateVariables
     std::unordered_map<uint32_t,std::string > cityStatusListReverse;
     std::unordered_set<uint32_t> tradedMonster;
     std::vector<char> randomData;
+
+    uint8_t common_blobversion_datapack;
+    uint8_t server_blobversion_datapack;
 
     //market
     std::vector<MarketItem> marketItemList;
