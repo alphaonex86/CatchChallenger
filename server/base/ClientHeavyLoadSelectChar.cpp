@@ -337,7 +337,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         characterSelectionIsWrong(query_id,0x04,"Blob version not a number");
         return;
     }
-    if(blob_version!=CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION)
+    if(blob_version!=GlobalServerData::serverPrivateVariables.server_blobversion_datapack)
     {
         characterSelectionIsWrong(query_id,0x04,"Blob version incorrect");
         return;
@@ -804,7 +804,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         characterSelectionIsWrong(query_id,0x04,"Blob version not a number");
         return;
     }
-    if(blob_version!=CATCHCHALLENGER_SERVER_DATABASE_SERVER_BLOBVERSION)
+    if(blob_version!=GlobalServerData::serverPrivateVariables.server_blobversion_datapack)
     {
         characterSelectionIsWrong(query_id,0x04,"Blob version incorrect");
         return;

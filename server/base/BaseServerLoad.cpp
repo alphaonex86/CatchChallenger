@@ -1007,7 +1007,7 @@ void BaseServer::preload_profile()
                         ",`blob_version`) VALUES(%1,%2,'%3',%4,0,0,"+
                         std::to_string(profile.cash)+",%5,0,0,"
                         "0,0,0,"+
-                        std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",UNHEX('"+item+"'),UNHEX('"+reputations+"'),UNHEX('%6'),UNHEX('"+encyclopedia_item+"'),"+std::to_string(CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION)+");");
+                        std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",UNHEX('"+item+"'),UNHEX('"+reputations+"'),UNHEX('%6'),UNHEX('"+encyclopedia_item+"'),"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+");");
             break;
             case DatabaseBase::DatabaseType::SQLite:
                 serverProfileInternal.character_insert=std::string("INSERT INTO character("
@@ -1016,7 +1016,7 @@ void BaseServer::preload_profile()
                         ",blob_version) VALUES(%1,%2,'%3',%4,0,0,"+
                         std::to_string(profile.cash)+",%5,0,0,"
                         "0,0,0,"+
-                        std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",'"+item+"','"+reputations+"','%6'','"+encyclopedia_item+"',"+std::to_string(CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION)+");");
+                        std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",'"+item+"','"+reputations+"','%6'','"+encyclopedia_item+"',"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+");");
             break;
             case DatabaseBase::DatabaseType::PostgreSQL:
                 serverProfileInternal.character_insert=std::string("INSERT INTO character("
@@ -1025,7 +1025,7 @@ void BaseServer::preload_profile()
                         ",blob_version) VALUES(%1,%2,'%3',%4,0,0,"+
                         std::to_string(profile.cash)+",%5,0,FALSE,"
                         "0,0,0,"+
-                        std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",'\\x"+item+"','\\x"+reputations+"','\\x%6','\\x"+encyclopedia_item+"',"+std::to_string(CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION)+");");
+                        std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",'\\x"+item+"','\\x"+reputations+"','\\x%6','\\x"+encyclopedia_item+"',"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+");");
             break;
         }
         const std::string &mapQuery=std::to_string(serverProfileInternal.map->reverse_db_id)+
@@ -1041,15 +1041,15 @@ void BaseServer::preload_profile()
             default:
             case DatabaseBase::DatabaseType::Mysql:
                 serverProfileInternal.preparedQueryAddCharacterForServer=std::string("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`,`botfight_id`,`itemonmap`,plants`,`blob_version`,`quest`) VALUES("
-                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,UNHEX(''),UNHEX(''),UNHEX(''),"+std::to_string(CATCHCHALLENGER_SERVER_DATABASE_SERVER_BLOBVERSION)+",UNHEX(''));");
+                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,UNHEX(''),UNHEX(''),UNHEX(''),"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",UNHEX(''));");
             break;
             case DatabaseBase::DatabaseType::SQLite:
                 serverProfileInternal.preparedQueryAddCharacterForServer=std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,plants,blob_version,quest) VALUES("
-                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'','','',"+std::to_string(CATCHCHALLENGER_SERVER_DATABASE_SERVER_BLOBVERSION)+",'');");
+                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'','','',"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",'');");
             break;
             case DatabaseBase::DatabaseType::PostgreSQL:
                 serverProfileInternal.preparedQueryAddCharacterForServer=std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,plants,blob_version,quest) VALUES("
-                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'\\x','\\x','\\x',"+std::to_string(CATCHCHALLENGER_SERVER_DATABASE_SERVER_BLOBVERSION)+",'\\x');");
+                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'\\x','\\x','\\x',"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",'\\x');");
             break;
         }
         #else
@@ -1058,15 +1058,15 @@ void BaseServer::preload_profile()
             default:
             case DatabaseBase::DatabaseType::Mysql:
                 serverProfileInternal.preparedQueryAddCharacterForServer=std::string("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`,`botfight_id`,`itemonmap`,`blob_version`,`quest`) VALUES("
-                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,UNHEX(''),UNHEX(''),"+std::to_string(CATCHCHALLENGER_SERVER_DATABASE_SERVER_BLOBVERSION)+",UNHEX(''));");
+                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,UNHEX(''),UNHEX(''),"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",UNHEX(''));");
             break;
             case DatabaseBase::DatabaseType::SQLite:
                 serverProfileInternal.preparedQueryAddCharacterForServer=std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,blob_version,quest) VALUES("
-                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'','',"+std::to_string(CATCHCHALLENGER_SERVER_DATABASE_SERVER_BLOBVERSION)+",'');");
+                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'','',"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",'');");
             break;
             case DatabaseBase::DatabaseType::PostgreSQL:
                 serverProfileInternal.preparedQueryAddCharacterForServer=std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,blob_version,quest) VALUES("
-                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'\\x','\\x',"+std::to_string(CATCHCHALLENGER_SERVER_DATABASE_SERVER_BLOBVERSION)+",'\\x');");
+                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'\\x','\\x',"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",'\\x');");
             break;
         }
         #endif

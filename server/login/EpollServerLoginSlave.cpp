@@ -54,6 +54,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         memcpy(LinkToGameServer::protocolHeaderToMatchGameServer+2,tocopy,5);
     }
 
+    bool ok;
     srand(time(NULL));
 
     if(!settings.contains("ip"))
@@ -62,6 +63,25 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     if(!settings.contains("port"))
         settings.setValue("port",rand()%40000+10000);
     server_port=settings.value("port");
+
+    #if CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION > 15
+    #error CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION can t be greater than 15
+    #endif
+    if(!settings.contains("common_blobversion_datapack"))
+        settings.setValue("common_blobversion_datapack",0);
+    common_blobversion_datapack=stringtouint8(settings.value("common_blobversion_datapack"),&ok);
+    if(!ok)
+    {
+        std::cerr << "common_blobversion_datapack is not a number" << std::endl;
+        abort();
+    }
+    if(common_blobversion_datapack>15)
+    {
+        std::cerr << "common_blobversion_datapack > 15" << std::endl;
+        abort();
+    }
+    common_blobversion_datapack*=16;
+    common_blobversion_datapack|=CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION;
 
     //token
     settings.beginGroup("master");
@@ -189,7 +209,6 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     std::string login;
     std::string pass;
     std::string type;
-    bool ok;
     //here to have by login server an auth
     {
         settings.beginGroup("db-login");
@@ -729,7 +748,7 @@ void EpollServerLoginSlave::preload_profile()
                         ",`blob_version`) VALUES(%1,%2,'%3',%4,0,0,"+
                         std::to_string(profile.cash)+",%5,0,0,"
                         "0,0,0,"+
-                        std::to_string(profile.databaseId/*starter*/)+",UNHEX('"+item+"'),UNHEX('"+reputations+"'),UNHEX('%6'),UNHEX('"+encyclopedia_item+"'),"+std::to_string(CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION)+");");
+                        std::to_string(profile.databaseId/*starter*/)+",UNHEX('"+item+"'),UNHEX('"+reputations+"'),UNHEX('%6'),UNHEX('"+encyclopedia_item+"'),"+std::to_string(common_blobversion_datapack)+");");
             break;
             case DatabaseBase::DatabaseType::SQLite:
                 profile.character_insert=std::string("INSERT INTO character("
@@ -738,7 +757,7 @@ void EpollServerLoginSlave::preload_profile()
                         ",blob_version) VALUES(%1,%2,'%3',%4,0,0,"+
                         std::to_string(profile.cash)+",%5,0,0,"
                         "0,0,0,"+
-                        std::to_string(profile.databaseId/*starter*/)+",'"+item+"','"+reputations+"','%6','"+encyclopedia_item+"',"+std::to_string(CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION)+");");
+                        std::to_string(profile.databaseId/*starter*/)+",'"+item+"','"+reputations+"','%6','"+encyclopedia_item+"',"+std::to_string(common_blobversion_datapack)+");");
             break;
             case DatabaseBase::DatabaseType::PostgreSQL:
                 profile.character_insert=std::string("INSERT INTO character("
@@ -747,7 +766,7 @@ void EpollServerLoginSlave::preload_profile()
                         ",blob_version) VALUES(%1,%2,'%3',%4,0,0,"+
                         std::to_string(profile.cash)+",%5,0,FALSE,"
                         "0,0,0,"+
-                        std::to_string(profile.databaseId/*starter*/)+",'\\x"+item+"','\\x"+reputations+"','\\x%6'','\\x"+encyclopedia_item+"',"+std::to_string(CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION)+");");
+                        std::to_string(profile.databaseId/*starter*/)+",'\\x"+item+"','\\x"+reputations+"','\\x%6'','\\x"+encyclopedia_item+"',"+std::to_string(common_blobversion_datapack)+");");
             break;
         }
 
