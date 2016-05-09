@@ -85,7 +85,8 @@ bool EpollMySQL::syncConnectInternal()
     }
     if(!mysql_real_connect(conn,strCohost,strCouser,strCopass,strCodatabase,3306,NULL,0))
     {
-        std::cerr << "mysql connexion not OK, retrying..." << std::endl;
+        std::string lastErrorMessage=errorMessage();
+        std::cerr << "mysql connexion not OK: " << lastErrorMessage << ", retrying..." << std::endl;
 
         bool connectionisbad=true;
         unsigned int index=0;
@@ -98,6 +99,12 @@ bool EpollMySQL::syncConnectInternal()
             std::chrono::duration<double, std::milli> elapsed = end-start;
             if(elapsed.count()<(uint32_t)tryInterval*1000 && connectionisbad)
             {
+                std::string newErrorMessage=errorMessage();
+                if(lastErrorMessage!=newErrorMessage)
+                {
+                    std::cerr << "pg connexion not OK: " << lastErrorMessage << ", retrying..." << std::endl;
+                    lastErrorMessage=newErrorMessage;
+                }
                 const unsigned int ms=(uint32_t)tryInterval*1000-elapsed.count();
                 std::this_thread::sleep_for(std::chrono::milliseconds(ms));
             }
