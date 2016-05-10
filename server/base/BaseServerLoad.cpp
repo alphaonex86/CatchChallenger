@@ -1853,9 +1853,13 @@ void BaseServer::preload_the_datapack()
         if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()==CATCHCHALLENGER_SHA224HASH_SIZE)
         {
             SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashBase);
-            if(memcpy(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),ProtocolParsingBase::tempBigBufferForOutput,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
+            if(memcmp(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),ProtocolParsingBase::tempBigBufferForOutput,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
             {
-                std::cerr << "datapackHashBase sha224 sum not match (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                std::cerr << "datapackHashBase sha224 sum not match master "
+                          << binarytoHexa(CommonSettingsCommon::commonSettingsCommon.datapackHashBase)
+                          << " != master "
+                          << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,CATCHCHALLENGER_SHA224HASH_SIZE)
+                          << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                 abort();
             }
         }

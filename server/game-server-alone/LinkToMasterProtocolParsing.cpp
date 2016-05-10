@@ -247,11 +247,6 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     pos+=1;
                     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
                     pos+=2;
-                    if((size-pos)!=0)
-                    {
-                        std::cerr << "reply to 07 size remaining != 0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
-                        abort();
-                    }
 
                     //reputation
                     {
@@ -273,7 +268,9 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                             const uint16_t &databaseId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
                             pos+=sizeof(uint16_t);
                             //index is the internal id
-                            DictionaryLogin::dictionary_starter_database_to_internal[databaseId]=reputationListIndex;
+                            while((uint16_t)DictionaryLogin::dictionary_reputation_database_to_internal.size()<(databaseId+1))
+                                DictionaryLogin::dictionary_reputation_database_to_internal.push_back(-1);
+                            DictionaryLogin::dictionary_reputation_database_to_internal[databaseId]=reputationListIndex;
                             reputationListIndex++;
                         }
                     }
@@ -297,6 +294,8 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                             const uint16_t &databaseId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
                             pos+=sizeof(uint16_t);
                             //index is the internal id
+                            while((uint16_t)DictionaryLogin::dictionary_skin_database_to_internal.size()<(databaseId+1))
+                                DictionaryLogin::dictionary_skin_database_to_internal.push_back(0);
                             DictionaryLogin::dictionary_skin_database_to_internal[databaseId]=skinListIndex;
                             skinListIndex++;
                         }
@@ -321,6 +320,8 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                             const uint16_t &databaseId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
                             pos+=sizeof(uint16_t);
                             //index is the internal id
+                            while((uint16_t)DictionaryLogin::dictionary_starter_database_to_internal.size()<(databaseId+1))
+                                DictionaryLogin::dictionary_starter_database_to_internal.push_back(0);
                             DictionaryLogin::dictionary_starter_database_to_internal[databaseId]=starterListIndex;
                             starterListIndex++;
                         }
@@ -334,9 +335,13 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     }
                     if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()==CATCHCHALLENGER_SHA224HASH_SIZE)
                     {
-                        if(memcpy(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
+                        if(memcmp(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
                         {
-                            std::cerr << "datapackHashBase sha224 sum not match (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                            std::cerr << "datapackHashBase sha224 sum not match local "
+                                      << binarytoHexa(CommonSettingsCommon::commonSettingsCommon.datapackHashBase)
+                                      << " != master "
+                                      << binarytoHexa(data+pos,CATCHCHALLENGER_SHA224HASH_SIZE)
+                                      << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                             abort();
                         }
                     }
@@ -346,6 +351,12 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                         memcpy(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
                     }
                     pos+=28;
+
+                    if((size-pos)!=0)
+                    {
+                        std::cerr << "reply to 07 size remaining != 0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        abort();
+                    }
                 }
                 stat=Stat::Logged;
                 return true;

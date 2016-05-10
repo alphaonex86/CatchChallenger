@@ -358,6 +358,9 @@ void BaseServer::preload_finish()
     Map_loader::teleportConditionsUnparsed.clear();
     #endif
     entryListZone.clear();
+    CommonSettingsCommon::commonSettingsCommon.datapackHashBase.clear();
+    CommonSettingsServer::commonSettingsServer.datapackHashServerMain.clear();
+    CommonSettingsServer::commonSettingsServer.datapackHashServerSub.clear();
 }
 
 bool BaseServer::load_next_city_capture()
