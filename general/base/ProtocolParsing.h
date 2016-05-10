@@ -256,10 +256,10 @@ class ProtocolParsing
 {
 public:
     static uint8_t compressionLevel;
-    static uint32_t decompressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
-    static uint32_t compressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
-    static uint32_t decompressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
-    static uint32_t compressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
+    static int32_t decompressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
+    static int32_t compressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
+    static int32_t decompressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
+    static int32_t compressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
 };
 #endif
 
