@@ -995,7 +995,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                 }
                 if(vectorHaveDuplicatesForSmallList(EpollClientLoginSlave::maxAccountIdList))
                 {
-                    std::cerr << "reply to 08: duplicate maxAccountIdList in " << __FILE__ << ":" <<__LINE__ << ", content: " << std::endl;
+                    std::cerr << "reply to 08: duplicate maxAccountIdList in " << __FILE__ << ":" <<__LINE__ << ", content: ";
                     unsigned int index=0;
                     while(index<EpollClientLoginSlave::maxAccountIdList.size())
                     {
@@ -1027,7 +1027,16 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     }
                     if(vectorHaveDuplicatesForSmallList(CharactersGroupForLogin::list[groupIndex]->maxCharacterId))
                     {
-                        std::cerr << "reply to 08: duplicate maxCharacterId in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        std::cerr << "reply to 08: duplicate maxCharacterId " << groupIndex << " in " << __FILE__ << ":" <<__LINE__ << ", content: ";
+                        unsigned int index=0;
+                        while(index<CharactersGroupForLogin::list[groupIndex]->maxCharacterId.size())
+                        {
+                            if(index>0)
+                                std::cerr << ", ";
+                            std::cerr << CharactersGroupForLogin::list[groupIndex]->maxCharacterId[index];
+                            index++;
+                        }
+                        std::cerr << std::endl;
                         abort();
                     }
 
@@ -1046,7 +1055,16 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     }
                     if(vectorHaveDuplicatesForSmallList(CharactersGroupForLogin::list[groupIndex]->maxMonsterId))
                     {
-                        std::cerr << "reply to 08: duplicate maxMonsterId in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        std::cerr << "reply to 08: duplicate maxMonsterId " << groupIndex << " in " << __FILE__ << ":" <<__LINE__ << ", content: ";
+                        unsigned int index=0;
+                        while(index<CharactersGroupForLogin::list[groupIndex]->maxMonsterId.size())
+                        {
+                            if(index>0)
+                                std::cerr << ", ";
+                            std::cerr << CharactersGroupForLogin::list[groupIndex]->maxMonsterId[index];
+                            index++;
+                        }
+                        std::cerr << std::endl;
                         abort();
                     }
 
