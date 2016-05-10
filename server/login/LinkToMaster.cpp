@@ -12,6 +12,7 @@
 #include <chrono>         // std::chrono::seconds
 #include <unistd.h>
 #include <string.h>
+#include "CharactersGroupForLogin.h"
 
 using namespace CatchChallenger;
 
@@ -299,6 +300,17 @@ void LinkToMaster::tryReconnect()
     EpollClientLoginSlave::maxAccountIdList.clear();
     EpollClientLoginSlave::maxCharacterIdList.clear();
     EpollClientLoginSlave::maxClanIdList.clear();
+    {
+        unsigned int index=0;
+        while(index<CharactersGroupForLogin::list.size())
+        {
+            CharactersGroupForLogin * const group=CharactersGroupForLogin::list.at(index);
+            group->maxCharacterId.clear();
+            group->maxMonsterId.clear();
+            index++;
+        }
+    }
+
     if(stat!=Stat::Unconnected)
         return;
     else
