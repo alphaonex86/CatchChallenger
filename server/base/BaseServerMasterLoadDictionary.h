@@ -1,6 +1,7 @@
 #ifndef CATCHCHALLENGER_BASESERVERMASTERLOGINDICTIONARY_H
 #define CATCHCHALLENGER_BASESERVERMASTERLOGINDICTIONARY_H
 
+#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include <vector>
 #include <regex>
 #include "../../general/base/GeneralStructures.h"
@@ -19,8 +20,6 @@ public:
 public:
     DatabaseBase *databaseBaseBase;
 
-    std::vector<ActionAllow> dictionary_allow_database_to_internal;
-    std::vector<uint8_t> dictionary_allow_internal_to_database;
     std::vector<int> dictionary_reputation_database_to_internal;//negative == not found
     std::vector<uint8_t> dictionary_skin_database_to_internal;
     std::vector<uint32_t> dictionary_skin_internal_to_database;
@@ -29,9 +28,6 @@ public:
 private:
     virtual void SQL_common_load_finish() = 0;
 
-    void preload_dictionary_allow();
-    static void preload_dictionary_allow_static(void *object);
-    void preload_dictionary_allow_return();
     void preload_dictionary_reputation();
     static void preload_dictionary_reputation_static(void *object);
     void preload_dictionary_reputation_return();
@@ -45,5 +41,6 @@ protected:
     void unload();
 };
 }
+#endif
 
 #endif

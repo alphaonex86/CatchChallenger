@@ -1,6 +1,7 @@
 #include "LinkToMaster.h"
 #include "../base/Client.h"
 #include "../base/GlobalServerData.h"
+#include "../base/DictionaryLogin.h"
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/FacilityLibGeneral.h"
 #include <iostream>
@@ -251,6 +252,100 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                         std::cerr << "reply to 07 size remaining != 0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                         abort();
                     }
+
+                    //reputation
+                    {
+                        if((size-pos)<1)
+                        {
+                            std::cerr << "C211 too small for skinListSize (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                            abort();
+                        }
+                        const uint8_t &skinListSize=data[pos];
+                        pos+=1;
+                        uint8_t reputationListIndex=0;
+                        while(reputationListIndex<skinListSize)
+                        {
+                            if((size-pos)<(int)sizeof(uint16_t))
+                            {
+                                std::cerr << "C211 too small for databaseId skin (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            const uint16_t &databaseId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+                            pos+=sizeof(uint16_t);
+                            //index is the internal id
+                            DictionaryLogin::dictionary_starter_database_to_internal[databaseId]=reputationListIndex;
+                            reputationListIndex++;
+                        }
+                    }
+                    //skins
+                    {
+                        if((size-pos)<1)
+                        {
+                            std::cerr << "C211 too small for skinListSize (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                            abort();
+                        }
+                        const uint8_t &skinListSize=data[pos];
+                        pos+=1;
+                        uint8_t skinListIndex=0;
+                        while(skinListIndex<skinListSize)
+                        {
+                            if((size-pos)<(int)sizeof(uint16_t))
+                            {
+                                std::cerr << "C211 too small for databaseId skin (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            const uint16_t &databaseId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+                            pos+=sizeof(uint16_t);
+                            //index is the internal id
+                            DictionaryLogin::dictionary_skin_database_to_internal[databaseId]=skinListIndex;
+                            skinListIndex++;
+                        }
+                    }
+                    //starter
+                    {
+                        if((size-pos)<1)
+                        {
+                            std::cerr << "C211 too small for skinListSize (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                            abort();
+                        }
+                        const uint8_t &skinListSize=data[pos];
+                        pos+=1;
+                        uint8_t starterListIndex=0;
+                        while(starterListIndex<skinListSize)
+                        {
+                            if((size-pos)<(int)sizeof(uint16_t))
+                            {
+                                std::cerr << "C211 too small for databaseId skin (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            const uint16_t &databaseId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+                            pos+=sizeof(uint16_t);
+                            //index is the internal id
+                            DictionaryLogin::dictionary_starter_database_to_internal[databaseId]=starterListIndex;
+                            starterListIndex++;
+                        }
+                    }
+
+                    //sha224 sum
+                    if((size-pos)<28)
+                    {
+                        std::cerr << "C211 sha224 sum item list (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        abort();
+                    }
+                    if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()==CATCHCHALLENGER_SHA224HASH_SIZE)
+                    {
+                        if(memcpy(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
+                        {
+                            std::cerr << "datapackHashBase sha224 sum not match (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                            abort();
+                        }
+                    }
+                    else
+                    {
+                        CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+                        memcpy(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
+                    }
+                    pos+=28;
                 }
                 stat=Stat::Logged;
                 return true;

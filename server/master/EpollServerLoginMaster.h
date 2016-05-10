@@ -27,6 +27,8 @@ public:
     void doTheServerList();
     void doTheReplyCache();
     static EpollServerLoginMaster *epollServerLoginMaster;
+    static char * fixedValuesRawDictionaryCacheForGameserver;
+    static int fixedValuesRawDictionaryCacheForGameserverSize;
 private:
     PurgeTheLockedAccount * purgeTheLockedAccount;
     CheckTimeoutGameServer * checkTimeoutGameServer;
@@ -57,6 +59,7 @@ private:
     void charactersGroupListReply(std::vector<std::string> &charactersGroupList);
     void doTheLogicalGroup(TinyXMLSettings &settings);
     void loadTheProfile();
+    void loadTheDictionary();
     void SQL_common_load_finish();
 };
 }
