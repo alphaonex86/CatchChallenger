@@ -1,3 +1,4 @@
+#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "BaseServerMasterLoadDictionary.h"
 #include "BaseServerMasterSendDatapack.h"
 #include "../../general/base/CommonDatapackServerSpec.h"
@@ -22,99 +23,6 @@ BaseServerMasterLoadDictionary::~BaseServerMasterLoadDictionary()
 void BaseServerMasterLoadDictionary::load(DatabaseBase * const databaseBase)
 {
     this->databaseBaseBase=databaseBase;
-    preload_dictionary_allow();
-}
-
-void BaseServerMasterLoadDictionary::preload_dictionary_allow()
-{
-    std::string queryText;
-    switch(databaseBaseBase->databaseType())
-    {
-        default:
-        case DatabaseBase::DatabaseType::Mysql:
-            queryText="SELECT `id`,`allow` FROM `dictionary_allow` ORDER BY `allow`";
-        break;
-        case DatabaseBase::DatabaseType::SQLite:
-            queryText="SELECT id,allow FROM dictionary_allow ORDER BY allow";
-        break;
-        case DatabaseBase::DatabaseType::PostgreSQL:
-            queryText="SELECT id,allow FROM dictionary_allow ORDER BY allow";
-        break;
-    }
-    if(databaseBaseBase->asyncRead(queryText,this,&BaseServerMasterLoadDictionary::preload_dictionary_allow_static)==NULL)
-    {
-        std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseBase->errorMessage() << std::endl;
-        abort();//stop because can't resolv the name
-    }
-}
-
-void BaseServerMasterLoadDictionary::preload_dictionary_allow_static(void *object)
-{
-    static_cast<BaseServerMasterLoadDictionary *>(object)->preload_dictionary_allow_return();
-}
-
-void BaseServerMasterLoadDictionary::preload_dictionary_allow_return()
-{
-    dictionary_allow_internal_to_database={0x00,0x00};
-    bool haveAllowClan=false;
-    std::string allowClan("clan");
-    unsigned int lastId=0;
-    while(databaseBaseBase->next())
-    {
-        bool ok;
-        lastId=stringtouint32(databaseBaseBase->value(0),&ok);
-        const std::string &allow=std::string(databaseBaseBase->value(1));
-        if(dictionary_allow_database_to_internal.size()<=lastId)
-        {
-            unsigned int index=dictionary_allow_database_to_internal.size();
-            while(index<=lastId)
-            {
-                dictionary_allow_database_to_internal.push_back(ActionAllow_Nothing);
-                index++;
-            }
-        }
-        if(allow==allowClan)
-        {
-            haveAllowClan=true;
-            dictionary_allow_database_to_internal[lastId]=ActionAllow_Clan;
-            dictionary_allow_internal_to_database[ActionAllow_Clan]=lastId;
-        }
-        else
-            dictionary_allow_database_to_internal.push_back(ActionAllow_Nothing);
-    }
-    databaseBaseBase->clear();
-    if(!haveAllowClan)
-    {
-        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-        lastId++;
-        std::string queryText;
-        switch(databaseBaseBase->databaseType())
-        {
-            default:
-            case DatabaseBase::DatabaseType::Mysql:
-                queryText="INSERT INTO `dictionary_allow`(`id`,`allow`) VALUES("+std::to_string(lastId)+",'clan');";
-            break;
-            case DatabaseBase::DatabaseType::SQLite:
-                queryText="INSERT INTO dictionary_allow(id,allow) VALUES("+std::to_string(lastId)+",'clan');";
-            break;
-            case DatabaseBase::DatabaseType::PostgreSQL:
-                queryText="INSERT INTO dictionary_allow(id,allow) VALUES("+std::to_string(lastId)+",'clan');";
-            break;
-        }
-        if(!databaseBaseBase->asyncWrite(queryText))
-        {
-            std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseBase->errorMessage() << std::endl;
-            abort();//stop because can't resolv the name
-        }
-        while(dictionary_allow_database_to_internal.size()<lastId)
-            dictionary_allow_database_to_internal.push_back(ActionAllow_Nothing);
-        dictionary_allow_database_to_internal.push_back(ActionAllow_Clan);
-        dictionary_allow_internal_to_database[ActionAllow_Clan]=lastId;
-        #else
-        std::cerr << "Dictionary allow mismatch (abort)" << std::endl;
-        abort();
-        #endif
-    }
     preload_dictionary_reputation();
 }
 
@@ -447,7 +355,6 @@ void BaseServerMasterLoadDictionary::unload()
     dictionary_skin_database_to_internal.clear();
     dictionary_skin_internal_to_database.clear();
     dictionary_reputation_database_to_internal.clear();
-    dictionary_allow_database_to_internal.clear();
-    dictionary_allow_internal_to_database.clear();
     databaseBaseBase=NULL;
 }
+#endif
