@@ -57,8 +57,6 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings, const std
     if(!settings->contains("max-players"))
         settings->setValue("max-players",200);
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    if(!settings->contains("announce"))
-        settings->setValue("announce",false);
     if(!settings->contains("character_delete_time"))
         settings->setValue("character_delete_time",604800);
     if(!settings->contains("max_pseudo_size"))

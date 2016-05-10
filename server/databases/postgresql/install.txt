@@ -33,9 +33,6 @@ echo 'DROP DATABASE IF EXISTS catchchallenger_base;' | psql postgres postgres
 echo 'CREATE DATABASE catchchallenger_base;' | psql postgres postgres
 psql catchchallenger_base postgres < catchchallenger-postgresql-base.sql
 echo 'GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO master;' | psql catchchallenger_base postgres
-echo 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO server1;' | psql catchchallenger_base postgres
-echo 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO server2;' | psql catchchallenger_base postgres
-echo 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO server3;' | psql catchchallenger_base postgres
 * Base common 1
 createuser -P master -U postgres
 createuser -P login1 -U postgres

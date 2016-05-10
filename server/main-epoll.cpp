@@ -115,12 +115,6 @@ void send_settings()
     NormalServerSettings formatedServerNormalSettings=server->getNormalSettings();
 
     //common var
-    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    CommonSettingsCommon::commonSettingsCommon.min_character					= stringtouint8(settings->value("min_character"));
-    CommonSettingsCommon::commonSettingsCommon.max_character					= stringtouint8(settings->value("max_character"));
-    CommonSettingsCommon::commonSettingsCommon.max_pseudo_size					= stringtouint8(settings->value("max_pseudo_size"));
-    CommonSettingsCommon::commonSettingsCommon.character_delete_time			= stringtouint32(settings->value("character_delete_time"));
-    #endif
     CommonSettingsServer::commonSettingsServer.useSP                            = stringtobool(settings->value("useSP"));
     CommonSettingsServer::commonSettingsServer.autoLearn                        = stringtobool(settings->value("autoLearn")) && !CommonSettingsServer::commonSettingsServer.useSP;
     CommonSettingsServer::commonSettingsServer.forcedSpeed                      = stringtouint32(settings->value("forcedSpeed"));
@@ -129,10 +123,27 @@ void send_settings()
     CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange		= stringtobool(settings->value("forceClientToSendAtMapChange"));
     CommonSettingsServer::commonSettingsServer.exportedXml                      = settings->value("exportedXml");
     formatedServerSettings.dontSendPlayerType                                   = stringtobool(settings->value("dontSendPlayerType"));
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    CommonSettingsCommon::commonSettingsCommon.min_character					= stringtouint8(settings->value("min_character"));
+    CommonSettingsCommon::commonSettingsCommon.max_character					= stringtouint8(settings->value("max_character"));
+    CommonSettingsCommon::commonSettingsCommon.max_pseudo_size					= stringtouint8(settings->value("max_pseudo_size"));
+    CommonSettingsCommon::commonSettingsCommon.character_delete_time			= stringtouint32(settings->value("character_delete_time"));
     CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters                = stringtouint32(settings->value("maxPlayerMonsters"));
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters       = stringtouint32(settings->value("maxWarehousePlayerMonsters"));
     CommonSettingsCommon::commonSettingsCommon.maxPlayerItems                   = stringtouint32(settings->value("maxPlayerItems"));
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems          = stringtouint32(settings->value("maxWarehousePlayerItems"));
+    //connection
+    formatedServerSettings.automatic_account_creation   = stringtobool(settings->value("automatic_account_creation"));
+    #endif
+
+    if(!settings->contains("compressionLevel"))
+        settings->setValue("compressionLevel","6");
+    formatedServerSettings.compressionLevel          = stringtouint8(settings->value("compressionLevel"),&ok);
+    if(!ok)
+    {
+        std::cerr << "Compression level not a number fixed by 6" << std::endl;
+        formatedServerSettings.compressionLevel=6;
+    }
     formatedServerSettings.compressionLevel                                     = stringtouint32(settings->value("compressionLevel"));
     if(settings->value("compression")=="none")
         formatedServerSettings.compressionType                                = CompressionType_None;
@@ -385,7 +396,6 @@ void send_settings()
     settings->endGroup();
 
     //connection
-    formatedServerSettings.automatic_account_creation   = stringtobool(settings->value("automatic_account_creation"));
     formatedServerSettings.max_players					= stringtouint32(settings->value("max-players"));
 
     //visibility algorithm

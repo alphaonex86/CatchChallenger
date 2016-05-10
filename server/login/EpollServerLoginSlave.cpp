@@ -191,7 +191,14 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Lz4;
     else
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Zlib;
-    ProtocolParsing::compressionLevel          = stringtouint8(settings.value("compressionLevel"));
+    if(!settings.contains("compressionLevel"))
+        settings.setValue("compressionLevel","6");
+    ProtocolParsing::compressionLevel          = stringtouint8(settings.value("compressionLevel"),&ok);
+    if(!ok)
+    {
+        std::cerr << "Compression level not a number fixed by 6" << std::endl;
+        ProtocolParsing::compressionLevel=6;
+    }
     #endif
 
     settings.beginGroup("Linux");
