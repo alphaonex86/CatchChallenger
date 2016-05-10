@@ -107,7 +107,7 @@ bool EpollPostgresql::syncConnectInternal()
     if(connStatusType==CONNECTION_BAD)
     {
         std::string lastErrorMessage=errorMessage();
-        if(lastErrorMessage.find("no pg_hba.conf entry")!=std::string::npos)
+        if(lastErrorMessage.find("pg_hba.conf")!=std::string::npos)
             return false;
         std::cerr << "pg connexion not OK: " << lastErrorMessage << ", retrying..." << std::endl;
 
@@ -131,8 +131,9 @@ bool EpollPostgresql::syncConnectInternal()
                 const unsigned int ms=(uint32_t)tryInterval*1000-elapsed.count();
                 std::this_thread::sleep_for(std::chrono::milliseconds(ms));
             }
-            if(lastErrorMessage.find("the database system is starting up")==std::string::npos)
-                index++;
+            index++;
+            if(lastErrorMessage.find("the database system is starting up")!=std::string::npos || lastErrorMessage.find("the database system is shutting down")!=std::string::npos)
+                index=0;
         }
         if(connStatusType==CONNECTION_BAD)
             return false;

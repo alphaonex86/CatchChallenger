@@ -27,7 +27,11 @@
 #include "BaseServerLogin.h"
 
 namespace CatchChallenger {
-class BaseServer : public BaseServerMasterLoadDictionary, public BaseServerLogin
+class BaseServer :
+        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+        public BaseServerMasterLoadDictionary,
+        #endif
+        public BaseServerLogin
 {
 public:
     explicit BaseServer();
@@ -54,7 +58,9 @@ protected:
     void initAll();//call before all
     //remove all finished client
     bool load_next_city_capture();
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     void SQL_common_load_finish();
+    #endif
 protected:
     virtual void parseJustLoadedMap(const Map_to_send &,const std::string &);
     void closeDB();
@@ -96,6 +102,7 @@ protected:
     void preload_market_monsters_prices_sql();//unique table due to linked datas like skills/buffers product need of id, to be accruate on max id
     void preload_market_monsters_sql();//unique table due to linked datas like skills/buffers product need of id, to be accruate on max id
     void preload_market_items();
+    void baseServerMasterLoadDictionaryLoad();
     bool preload_the_city_capture();
     bool preload_the_map();
     void preload_the_skin();

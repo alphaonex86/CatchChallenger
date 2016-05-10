@@ -478,24 +478,13 @@ bool EpollClientLoginMaster::sendGameServerRegistrationReply(const uint8_t query
         abort();
     }
     //Max player monsters
-    {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
-        posOutput+=1;
-    }
     //Max warehouse player monsters
-    {
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
-        posOutput+=2;
-    }
     //Max player items
-    {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
-        posOutput+=1;
-    }
     //Max warehouse player monsters
+    //send the dictionary
     {
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
-        posOutput+=2;
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver,EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserverSize);
+        posOutput+=EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserverSize;
     }
 
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size

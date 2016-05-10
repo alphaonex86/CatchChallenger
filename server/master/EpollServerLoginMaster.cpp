@@ -27,6 +27,8 @@ using namespace CatchChallenger;
 #include "EpollClientLoginMaster.h"
 
 EpollServerLoginMaster *EpollServerLoginMaster::epollServerLoginMaster=NULL;
+char * EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver=NULL;
+int EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserverSize=0;
 
 EpollServerLoginMaster::EpollServerLoginMaster() :
     purgeTheLockedAccount(NULL),
@@ -109,6 +111,12 @@ EpollServerLoginMaster::~EpollServerLoginMaster()
         delete rawServerListForC211;
         rawServerListForC211=NULL;
         rawServerListForC211Size=0;
+    }
+    if(EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver!=NULL)
+    {
+        delete EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver;
+        EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver=NULL;
+        EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserverSize=0;
     }
     /*
     auto i = CharactersGroup::hash.begin();
@@ -923,6 +931,11 @@ void EpollServerLoginMaster::SQL_common_load_finish()
     CharactersGroup::serverWaitedToBeReady--;
 
     loadTheProfile();
+    loadTheDictionary();
+
+    CommonDatapack::commonDatapack.unload();
+    baseServerMasterSendDatapack.unload();
+    BaseServerMasterLoadDictionary::unload();
 }
 
 void EpollServerLoginMaster::loadTheProfile()
@@ -1108,15 +1121,84 @@ void EpollServerLoginMaster::loadTheProfile()
     memcpy(EpollClientLoginMaster::loginSettingsAndCharactersGroup+1+4,rawServerListForC211,rawServerListForC211Size);
     EpollClientLoginMaster::loginSettingsAndCharactersGroupSize=1+4+rawServerListForC211Size;
 
+    delete rawServerListForC211;
+    rawServerListForC211=NULL;
+    rawServerListForC211Size=0;
+
     if(EpollClientLoginMaster::loginSettingsAndCharactersGroupSize==0)
     {
         std::cerr << "EpollClientLoginMaster::serverLogicalGroupListSize==0 (abort)" << std::endl;
         abort();
     }
 
-    CommonDatapack::commonDatapack.unload();
-    baseServerMasterSendDatapack.unload();
-    BaseServerMasterLoadDictionary::unload();
-
     doTheReplyCache();
+}
+
+void EpollServerLoginMaster::loadTheDictionary()
+{
+    uint32_t posOutput=0;
+
+    //Max player monsters
+    {
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
+        posOutput+=1;
+    }
+    //Max warehouse player monsters
+    {
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
+        posOutput+=2;
+    }
+    //Max player items
+    {
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
+        posOutput+=1;
+    }
+    //Max warehouse player monsters
+    {
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
+        posOutput+=2;
+    }
+    //send reputation
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonDatapack::commonDatapack.reputation.size();
+    posOutput+=1;
+    unsigned int index=0;
+    while(index<CommonDatapack::commonDatapack.reputation.size())
+    {
+        const Reputation &reputation=CommonDatapack::commonDatapack.reputation.at(index);
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=
+                htole16(reputation.reverse_database_id);
+        posOutput+=2;
+        index++;
+    }
+    //send skin
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonDatapack::commonDatapack.skins.size();
+    posOutput+=1;
+    index=0;
+    while(index<CommonDatapack::commonDatapack.skins.size())
+    {
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=
+                htole16(BaseServerMasterLoadDictionary::dictionary_skin_internal_to_database.at(index));
+        posOutput+=2;
+        index++;
+    }
+    //send starter
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonDatapack::commonDatapack.profileList.size();
+    posOutput+=1;
+    index=0;
+    while(index<CommonDatapack::commonDatapack.profileList.size())
+    {
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=
+                htole16(BaseServerMasterLoadDictionary::dictionary_starter_internal_to_database.at(index));
+        posOutput+=2;
+        index++;
+    }
+
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size());
+    posOutput+=CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size();
+
+    if(EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver!=NULL)
+        delete EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver;
+    EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver=(char *)malloc(posOutput+1);
+    EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserverSize=posOutput;
+    memcpy(EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver,ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }

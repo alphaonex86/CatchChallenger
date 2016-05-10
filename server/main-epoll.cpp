@@ -290,7 +290,6 @@ void send_settings()
     formatedServerSettings.database_login.tryInterval       = stringtouint32(settings->value("tryInterval"));
     formatedServerSettings.database_login.considerDownAfterNumberOfTry = stringtouint32(settings->value("considerDownAfterNumberOfTry"));
     settings->endGroup();
-    #endif
 
     settings->beginGroup("db-base");
     if(settings->value("type")=="mysql")
@@ -318,6 +317,7 @@ void send_settings()
     formatedServerSettings.database_base.tryInterval       = stringtouint32(settings->value("tryInterval"));
     formatedServerSettings.database_base.considerDownAfterNumberOfTry = stringtouint32(settings->value("considerDownAfterNumberOfTry"));
     settings->endGroup();
+    #endif
 
     settings->beginGroup("db-common");
     if(settings->value("type")=="mysql")
@@ -680,7 +680,6 @@ int main(int argc, char *argv[])
                 settings->endGroup();
                 return EXIT_FAILURE;
             }
-            #endif
             if(
                     true
                     #ifdef CATCHCHALLENGER_DB_POSTGRESQL
@@ -696,6 +695,7 @@ int main(int argc, char *argv[])
                 settings->endGroup();
                 return EXIT_FAILURE;
             }
+            #endif
             if(
                     true
                     #ifdef CATCHCHALLENGER_DB_POSTGRESQL
@@ -790,7 +790,6 @@ int main(int argc, char *argv[])
         std::cerr << "Unable to connect to database login:" << GlobalServerData::serverPrivateVariables.db_login->errorMessage() << std::endl;
         return EXIT_FAILURE;
     }
-    #endif
     if(!GlobalServerData::serverPrivateVariables.db_base->syncConnect(
                 GlobalServerData::serverSettings.database_base.host,
                 GlobalServerData::serverSettings.database_base.db,
@@ -800,6 +799,7 @@ int main(int argc, char *argv[])
         std::cerr << "Unable to connect to database base:" << GlobalServerData::serverPrivateVariables.db_base->errorMessage() << std::endl;
         return EXIT_FAILURE;
     }
+    #endif
     if(!GlobalServerData::serverPrivateVariables.db_common->syncConnect(
                 GlobalServerData::serverSettings.database_common.host,
                 GlobalServerData::serverSettings.database_common.db,

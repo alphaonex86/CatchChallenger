@@ -815,8 +815,22 @@ void BaseServer::preload_market_items()
             load_character_max_id();
         else
         #endif
-            BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_base);
+        baseServerMasterLoadDictionaryLoad();
     }
+}
+
+void BaseServer::baseServerMasterLoadDictionaryLoad()
+{
+#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_base);
+#else
+    preload_profile();
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    load_sql_monsters_max_id();
+    #else
+    preload_industries();
+    #endif
+#endif
 }
 
 void BaseServer::preload_market_items_static(void *object)
@@ -871,7 +885,7 @@ void BaseServer::preload_market_items_return()
         load_character_max_id();
     else
     #endif
-        BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_base);
+    baseServerMasterLoadDictionaryLoad();
 }
 
 void BaseServer::loadMonsterBuffs(const uint32_t &index)
@@ -1117,7 +1131,7 @@ void BaseServer::load_account_max_id()
         if(CommonSettingsCommon::commonSettingsCommon.max_character)
             load_character_max_id();
         else
-            BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_base);
+            baseServerMasterLoadDictionaryLoad();
     }
     //start to 0 due to pre incrementation before use
     GlobalServerData::serverPrivateVariables.maxAccountId=0;
@@ -1146,7 +1160,7 @@ void BaseServer::load_account_max_id_return()
     if(CommonSettingsCommon::commonSettingsCommon.max_character)
         load_character_max_id();
     else
-        BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_base);
+        baseServerMasterLoadDictionaryLoad();
 }
 
 void BaseServer::load_character_max_id()
@@ -1168,7 +1182,7 @@ void BaseServer::load_character_max_id()
     if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&BaseServer::load_character_max_id_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
-        BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_base);
+        baseServerMasterLoadDictionaryLoad();
     }
     //start to 0 due to pre incrementation before use
     GlobalServerData::serverPrivateVariables.maxCharacterId=0;
@@ -1194,6 +1208,6 @@ void BaseServer::load_character_max_id_return()
             continue;
         }
     }
-    BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_base);
+    baseServerMasterLoadDictionaryLoad();
 }
 #endif
