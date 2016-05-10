@@ -718,7 +718,9 @@ void BaseServer::preload_map_semi_after_db_id()
  * */
 void BaseServer::preload_profile()
 {
-    std::cout << DictionaryLogin::dictionary_skin_internal_to_database.size() << " SQL skin dictionary" << std::endl;
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    std::cout << DictionaryLogin::dictionary_skin_database_to_internal.size() << " SQL skin dictionary" << std::endl;
+    #endif
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     /*if(CommonDatapack::commonDatapack.profileList.size()!=GlobalServerData::serverPrivateVariables.serverProfileList.size())
@@ -838,12 +840,13 @@ void BaseServer::preload_profile()
 
 
     GlobalServerData::serverPrivateVariables.serverProfileInternalList.resize(CommonDatapack::commonDatapack.profileList.size());
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     const DatabaseBase::DatabaseType &type=GlobalServerData::serverPrivateVariables.db_common->databaseType();
+    #endif
 
     unsigned int index=0;
     while(index<CommonDatapack::commonDatapack.profileList.size())
     {
-        const Profile &profile=CommonDatapack::commonDatapack.profileList.at(index);
         const ServerSpecProfile &serverProfile=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.at(index);
         ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(index);
         serverProfileInternal.map=
@@ -851,6 +854,9 @@ void BaseServer::preload_profile()
         serverProfileInternal.x=serverProfile.x;
         serverProfileInternal.y=serverProfile.y;
         serverProfileInternal.orientation=serverProfile.orientation;
+
+        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+        const Profile &profile=CommonDatapack::commonDatapack.profileList.at(index);
 
         std::string encyclopedia_item,item;
         if(!profile.items.empty())
@@ -1028,6 +1034,7 @@ void BaseServer::preload_profile()
                         std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",'\\x"+item+"','\\x"+reputations+"','\\x%6','\\x"+encyclopedia_item+"',"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+");");
             break;
         }
+        #endif
         const std::string &mapQuery=std::to_string(serverProfileInternal.map->reverse_db_id)+
                 ","+
                 std::to_string(serverProfileInternal.x)+
@@ -1746,7 +1753,6 @@ void BaseServer::preload_the_datapack()
     }
     #endif
 
-    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     //do the base
     {
         SHA256_CTX hashBase;
@@ -1815,6 +1821,7 @@ void BaseServer::preload_the_datapack()
                     {}
                     else
                     {
+                        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
                         #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                         SHA256_CTX hashFile;
                         if(SHA224_Init(&hashFile)!=1)
@@ -1827,6 +1834,7 @@ void BaseServer::preload_the_datapack()
                         SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
                         cacheFile.partialHash=*reinterpret_cast<const uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput);
                         Client::datapack_file_hash_cache_base[datapack_file_temp.at(index)]=cacheFile;
+                        #endif
                         #endif
 
                         SHA224_Update(&hashBase,data.data(),data.size());
@@ -1842,10 +1850,21 @@ void BaseServer::preload_the_datapack()
                 std::cerr << "File excluded because don't match the regex (1): " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << std::endl;
             index++;
         }
-        CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-        SHA224_Final(reinterpret_cast<unsigned char *>(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data()),&hashBase);
+        if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()==CATCHCHALLENGER_SHA224HASH_SIZE)
+        {
+            SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashBase);
+            if(memcpy(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),ProtocolParsingBase::tempBigBufferForOutput,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
+            {
+                std::cerr << "datapackHashBase sha224 sum not match (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                abort();
+            }
+        }
+        else
+        {
+            CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+            SHA224_Final(reinterpret_cast<unsigned char *>(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data()),&hashBase);
+        }
     }
-    #endif
     /// \todo check if big file is compressible under 1MB
 
     //do the main

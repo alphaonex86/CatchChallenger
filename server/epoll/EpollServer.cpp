@@ -21,8 +21,8 @@ EpollServer::EpollServer()
     #endif
     GlobalServerData::serverPrivateVariables.db_server=NULL;
     GlobalServerData::serverPrivateVariables.db_common=NULL;
-    GlobalServerData::serverPrivateVariables.db_base=NULL;
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    GlobalServerData::serverPrivateVariables.db_base=NULL;
     GlobalServerData::serverPrivateVariables.db_login=NULL;
     #endif
 }
@@ -46,7 +46,6 @@ void EpollServer::initTheDatabase()
             std::cerr << "database type wrong " << DatabaseBase::databaseTypeToString(GlobalServerData::serverSettings.database_login.tryOpenType) << std::endl;
         abort();
     }
-    #endif
     switch(GlobalServerData::serverSettings.database_base.tryOpenType)
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
@@ -63,6 +62,7 @@ void EpollServer::initTheDatabase()
             std::cerr << "database type wrong " << DatabaseBase::databaseTypeToString(GlobalServerData::serverSettings.database_base.tryOpenType) << std::endl;
         abort();
     }
+    #endif
     switch(GlobalServerData::serverSettings.database_common.tryOpenType)
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
@@ -130,6 +130,7 @@ EpollServer::~EpollServer()
         default:
         break;
     }
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     switch(GlobalServerData::serverSettings.database_base.tryOpenType)
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
@@ -145,7 +146,6 @@ EpollServer::~EpollServer()
         default:
         break;
     }
-    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     switch(GlobalServerData::serverSettings.database_login.tryOpenType)
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL

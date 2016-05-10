@@ -68,7 +68,9 @@ void BaseServer::unload_profile()
 
 void BaseServer::unload_dictionary()
 {
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     BaseServerMasterLoadDictionary::unload();
+    #endif
     baseServerMasterSendDatapack.unload();
     DictionaryServer::dictionary_pointOnMap_internal_to_database.clear();
     DictionaryServer::dictionary_pointOnMap_database_to_internal.clear();
@@ -174,6 +176,9 @@ void BaseServer::unload_the_events()
 
 void BaseServer::unload_the_datapack()
 {
+    CommonSettingsCommon::commonSettingsCommon.datapackHashBase.clear();
+    CommonSettingsServer::commonSettingsServer.datapackHashServerMain.clear();
+    CommonSettingsServer::commonSettingsServer.datapackHashServerSub.clear();
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     baseServerMasterSendDatapack.compressedExtension.clear();

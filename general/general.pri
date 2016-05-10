@@ -77,3 +77,4 @@ win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc
 mac:INCLUDEPATH += /usr/local/include/
 mac:LIBS += -L/usr/local/lib/
 win32:LIBS += -lWs2_32
+linux:DEFINES += __linux__

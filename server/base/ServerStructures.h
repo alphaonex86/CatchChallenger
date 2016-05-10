@@ -156,8 +156,8 @@ struct GameServerSettings
     };
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     Database database_login;
-    #endif
     Database database_base;
+    #endif
     Database database_common;
     Database database_server;
 
@@ -269,10 +269,12 @@ struct ServerProfileInternal
     /*COORD_TYPE*/ uint8_t y;
     Orientation orientation;
 
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     std::vector<std::string> monster_encyclopedia_insert;
     std::vector<std::vector<StringWithReplacement> > monster_insert;
 
     StringWithReplacement character_insert;
+    #endif
 
     StringWithReplacement preparedQueryAddCharacterForServer;
     bool valid;
@@ -284,8 +286,8 @@ struct ServerPrivateVariables
     #ifdef EPOLLCATCHCHALLENGERSERVER
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     CatchChallenger::DatabaseBase *db_login;
-    #endif
     CatchChallenger::DatabaseBase *db_base;
+    #endif
     CatchChallenger::DatabaseBase *db_common;
     CatchChallenger::DatabaseBase *db_server;//pointer to don't change the code for below preprocessor code
     std::vector<TimerEvents *> timerEvents;

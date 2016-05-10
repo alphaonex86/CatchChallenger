@@ -313,7 +313,6 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings, const std
     if(!settings->contains("tryInterval"))
         settings->setValue("tryInterval",5);
     settings->endGroup();
-    #endif
 
     settings->beginGroup("db-base");
     if(!settings->contains("type"))
@@ -331,6 +330,7 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings, const std
     if(!settings->contains("tryInterval"))
         settings->setValue("tryInterval",5);
     settings->endGroup();
+    #endif
 
     settings->beginGroup("db-common");
     if(!settings->contains("type"))

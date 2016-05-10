@@ -191,9 +191,9 @@ BaseServer::BaseServer() :
     GlobalServerData::serverPrivateVariables.maxMonsterId=1;
     GlobalServerData::serverSettings.database_login.tryInterval=5;
     GlobalServerData::serverSettings.database_login.considerDownAfterNumberOfTry=3;
-    #endif
     GlobalServerData::serverSettings.database_base.tryInterval=5;
     GlobalServerData::serverSettings.database_base.considerDownAfterNumberOfTry=3;
+    #endif
     GlobalServerData::serverSettings.database_common.tryInterval=5;
     GlobalServerData::serverSettings.database_common.considerDownAfterNumberOfTry=3;
     GlobalServerData::serverSettings.database_server.tryInterval=5;
@@ -230,9 +230,9 @@ void BaseServer::closeDB()
         GlobalServerData::serverPrivateVariables.db_server->syncDisconnect();
     if(GlobalServerData::serverPrivateVariables.db_common!=NULL)
         GlobalServerData::serverPrivateVariables.db_common->syncDisconnect();
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     if(GlobalServerData::serverPrivateVariables.db_base!=NULL)
         GlobalServerData::serverPrivateVariables.db_base->syncDisconnect();
-    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     if(GlobalServerData::serverPrivateVariables.db_login!=NULL)
         GlobalServerData::serverPrivateVariables.db_login->syncDisconnect();
     #endif
@@ -303,6 +303,7 @@ void BaseServer::criticalDatabaseQueryFailed()
     quitForCriticalDatabaseQueryFailed();
 }
 
+#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void BaseServer::SQL_common_load_finish()
 {
     std::cout << dictionary_reputation_database_to_internal.size() << " SQL reputation dictionary" << std::endl;
@@ -322,6 +323,7 @@ void BaseServer::SQL_common_load_finish()
     preload_industries();
     #endif
 }
+#endif
 
 void BaseServer::preload_finish()
 {
@@ -421,13 +423,13 @@ bool BaseServer::initialize_the_database()
                   << " at " << GlobalServerData::serverSettings.database_login.host << std::endl;
         GlobalServerData::serverPrivateVariables.db_login->syncDisconnect();
     }
-    #endif
     if(GlobalServerData::serverPrivateVariables.db_base->isConnected())
     {
         std::cout << "Disconnected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_base->databaseType())
                   << " at " << GlobalServerData::serverSettings.database_base.host << std::endl;
         GlobalServerData::serverPrivateVariables.db_base->syncDisconnect();
     }
+    #endif
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     switch(GlobalServerData::serverSettings.database_login.tryOpenType)
     {
@@ -493,7 +495,7 @@ bool BaseServer::initialize_the_database()
         std::cerr << "Basic test failed: " << GlobalServerData::serverPrivateVariables.db_login->errorMessage() << std::endl;
         return false;
     }
-    #endif
+
     switch(GlobalServerData::serverSettings.database_base.tryOpenType)
     {
         default:
@@ -558,6 +560,8 @@ bool BaseServer::initialize_the_database()
         std::cerr << "Basic test failed: " << GlobalServerData::serverPrivateVariables.db_base->errorMessage() << std::endl;
         return false;
     }
+    #endif
+
     switch(GlobalServerData::serverSettings.database_common.tryOpenType)
     {
         default:
@@ -788,7 +792,6 @@ void BaseServer::loadAndFixSettings()
         GlobalServerData::serverSettings.database_login.tryInterval=5;
         GlobalServerData::serverSettings.database_login.considerDownAfterNumberOfTry=3;
     }
-    #endif
 
     if(GlobalServerData::serverSettings.database_base.tryInterval<1)
     {
@@ -806,6 +809,7 @@ void BaseServer::loadAndFixSettings()
         GlobalServerData::serverSettings.database_base.tryInterval=5;
         GlobalServerData::serverSettings.database_base.considerDownAfterNumberOfTry=3;
     }
+    #endif
 
     if(GlobalServerData::serverSettings.database_common.tryInterval<1)
     {
@@ -1101,7 +1105,6 @@ void BaseServer::loadAndFixSettings()
             GlobalServerData::serverSettings.database_login.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Mysql;
         break;
     }
-    #endif
     switch(GlobalServerData::serverSettings.database_base.tryOpenType)
     {
         case CatchChallenger::DatabaseBase::DatabaseType::SQLite:
@@ -1113,6 +1116,7 @@ void BaseServer::loadAndFixSettings()
             GlobalServerData::serverSettings.database_base.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Mysql;
         break;
     }
+    #endif
     switch(GlobalServerData::serverSettings.database_common.tryOpenType)
     {
         case CatchChallenger::DatabaseBase::DatabaseType::SQLite:

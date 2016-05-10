@@ -86,6 +86,8 @@ bool EpollMySQL::syncConnectInternal()
     if(!mysql_real_connect(conn,strCohost,strCouser,strCopass,strCodatabase,3306,NULL,0))
     {
         std::string lastErrorMessage=errorMessage();
+        if(mysql_errno()==ER_ACCESS_DENIED_ERROR || mysql_sqlstate()==28000)
+            return false;
         std::cerr << "mysql connexion not OK: " << lastErrorMessage << ", retrying..." << std::endl;
 
         bool connectionisbad=true;

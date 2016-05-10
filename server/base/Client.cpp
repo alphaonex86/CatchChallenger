@@ -200,8 +200,8 @@ void Client::disconnectClient()
     /// \warning global clear from client call?
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     GlobalServerData::serverPrivateVariables.db_login->clear();
-    #endif
     GlobalServerData::serverPrivateVariables.db_base->clear();
+    #endif
     GlobalServerData::serverPrivateVariables.db_common->clear();
     GlobalServerData::serverPrivateVariables.db_server->clear();
     #ifndef EPOLLCATCHCHALLENGERSERVER
