@@ -72,7 +72,13 @@ $resultsid = $stmtid->fetchAll(PDO::FETCH_ASSOC);
 foreach($resultsid as $row)
     $maxid=$row['id'];
 echo 'maxid: '.$maxid."\n";
+if($maxid<=0)
+    exit;
 
+$usetransaction=false;
+if($usetransaction)
+    if(!$pdo->beginTransaction())
+        die("An error occurred. ".$pdo->errorInfo()[0].','.$pdo->errorInfo()[1].','.$pdo->errorInfo()[2]." at character id ".$row['id']."\n");
 $indexcharacter=0;
 while($indexcharacter<=$maxid)
 {
@@ -144,8 +150,18 @@ while($indexcharacter<=$maxid)
         }
     }
 
+    if($indexcharacter%1000==0 && $indexcharacter>0 && $usetransaction)
+    {
+        if(!$pdo->commit())
+            die("An error occurred. ".$pdo->errorInfo()[0].','.$pdo->errorInfo()[1].','.$pdo->errorInfo()[2]." at character id ".$row['id']."\n");
+        if(!$pdo->beginTransaction())
+            die("An error occurred. ".$pdo->errorInfo()[0].','.$pdo->errorInfo()[1].','.$pdo->errorInfo()[2]." at character id ".$row['id']."\n");
+    }
     $indexcharacter++;
 }
+if($usetransaction)
+    if(!$pdo->commit())
+        die("An error occurred. ".$pdo->errorInfo()[0].','.$pdo->errorInfo()[1].','.$pdo->errorInfo()[2]." at character id ".$row['id']."\n");
 
 /*$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $sql = "SELECT id,blob_version,encode(item,'hex') as item,encode(item_warehouse,'hex') as item_warehouse FROM character";

@@ -1,7 +1,7 @@
 <?php
 
 if(!isset($argc) || $argc!=3)
-    die('pass the correcty arg count: '.$argc);
+    die('pass the correcty arg count: '.$argc.', pass: datapack path, item list');
 $datapack_path=$argv[1];
 if(!is_dir($datapack_path))
     die('datapack not dir');
@@ -27,7 +27,7 @@ function getXmlList($dir,$sub_dir='')
             if($entry != '.' && $entry != '..') {
                     if(is_dir($dir.$sub_dir.$entry))
                         $files_list=array_merge($files_list,getXmlList($dir,$sub_dir.$entry.'/'));
-                    else if(preg_match('#\\.xml$#',$entry))
+                    else if(preg_match('#\\.xml$#',$entry) || preg_match('#\\.tmx$#',$entry))
                         $files_list[]=$sub_dir.$entry;
                 }
             }
@@ -135,6 +135,20 @@ foreach($files as $file)
         if(!isset($convertItemTo[$matches[3]]))
             die('item not found, die: '.$matches[3].', line: '.__LINE__);
         return str_replace(' itemId="'.$matches[3].'"',' itemId="'.$convertItemTo[$matches[3]].'"',$matches[0]);
+    },$content);
+    $content=preg_replace_callback('#<gain( quantity="([0-9]+)")? item="([0-9]+)"#isU',function ($matches)
+    {
+        global $convertItemTo;
+        if(!isset($convertItemTo[$matches[3]]))
+            die('item not found, die: '.$matches[3].', line: '.__LINE__);
+        return str_replace(' item="'.$matches[3].'"',' item="'.$convertItemTo[$matches[3]].'"',$matches[0]);
+    },$content);
+    $content=preg_replace_callback('#<condition( id="([0-9]+)")?( type="item")?( id="([0-9]+)")? item="([0-9]+)"#isU',function ($matches)
+    {
+        global $convertItemTo;
+        if(!isset($convertItemTo[$matches[6]]))
+            die('item not found, die: '.$matches[6].', line: '.__LINE__);
+        return str_replace(' item="'.$matches[6].'"',' item="'.$convertItemTo[$matches[6]].'"',$matches[0]);
     },$content);
     filewrite($folder.$file,$content);
 }
