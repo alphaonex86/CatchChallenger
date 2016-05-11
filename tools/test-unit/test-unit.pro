@@ -21,11 +21,13 @@ SOURCES += main.cpp \
     TestUnitCpp.cpp \
     TestString.cpp \
     TestUnitMessageParsing.cpp \
-    ../../server/base/StringWithReplacement.cpp
+    ../../server/base/StringWithReplacement.cpp \
+    TestUnitCompression.cpp
 
 HEADERS += \
     reputation/TestUnitReputation.h \
     TestUnitCpp.h \
     TestString.h \
     TestUnitMessageParsing.h \
-    ../../server/base/StringWithReplacement.h
+    ../../server/base/StringWithReplacement.h \
+    TestUnitCompression.h

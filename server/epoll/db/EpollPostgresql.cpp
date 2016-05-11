@@ -109,6 +109,8 @@ bool EpollPostgresql::syncConnectInternal()
         std::string lastErrorMessage=errorMessage();
         if(lastErrorMessage.find("pg_hba.conf")!=std::string::npos)
             return false;
+        if(lastErrorMessage.find("authentication failed")!=std::string::npos)
+            return false;
         std::cerr << "pg connexion not OK: " << lastErrorMessage << ", retrying..." << std::endl;
 
         unsigned int index=0;
