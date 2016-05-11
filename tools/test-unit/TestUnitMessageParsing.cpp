@@ -4,7 +4,7 @@
 TestUnitMessageParsing::TestUnitMessageParsing() :
     CatchChallenger::ProtocolParsingBase(PacketModeTransmission_Server)
 {
-
+    ProtocolParsing::initialiseTheVariable();
 }
 
 void TestUnitMessageParsing::testDropAllPlayer()
