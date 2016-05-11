@@ -2,6 +2,7 @@
 #include <QDebug>
 #include "reputation/TestUnitReputation.h"
 #include "TestUnitCpp.h"
+#include "TestUnitCompression.h"
 #include "TestString.h"
 #include "TestUnitMessageParsing.h"
 
@@ -42,6 +43,23 @@ int main(int argc, char *argv[])
             testUnitCpp.testFSabsoluteFilePath();
 
         if(!testUnitCpp.finalResult)
+        {
+            qDebug() << "Final result: Failed: " << __FILE__ << ":" <<  __LINE__;
+            return EXIT_FAILURE;
+        }
+    }
+
+    {
+        TestUnitCompression testUnitCompression;
+
+        testUnitCompression.finalResult=true;
+        testUnitCompression.testZlib();
+        if(testUnitCompression.finalResult)
+            testUnitCompression.testLz4();
+        if(testUnitCompression.finalResult)
+            testUnitCompression.testXZ();
+
+        if(!testUnitCompression.finalResult)
         {
             qDebug() << "Final result: Failed: " << __FILE__ << ":" <<  __LINE__;
             return EXIT_FAILURE;

@@ -84,36 +84,38 @@ int32_t ProtocolParsing::decompressZlib(const char * const input, const uint32_t
     }
 
     do {
-    ret = inflate(&strm, Z_SYNC_FLUSH);
+        ret=inflate(&strm, Z_SYNC_FLUSH);
 
-    switch (ret) {
-        case Z_NEED_DICT:
-        case Z_STREAM_ERROR:
-        ret = Z_DATA_ERROR;
-        case Z_DATA_ERROR:
-        case Z_MEM_ERROR:
-        inflateEnd(&strm);
-        logZlibError(ret);
-        return -1;
-    }
-
-    if (ret != Z_OK && ret != Z_STREAM_END) {
-        if((strm.next_out-reinterpret_cast<unsigned char * const>(output))>maxOutputSize)
+        switch(ret)
         {
-            logZlibError(Z_STREAM_ERROR);
+            case Z_NEED_DICT:
+            case Z_STREAM_ERROR:
+            ret = Z_DATA_ERROR;
+            case Z_DATA_ERROR:
+            case Z_MEM_ERROR:
+            inflateEnd(&strm);
+            logZlibError(ret);
             return -1;
         }
-        logZlibError(ret);
+
+        if (ret != Z_OK && ret != Z_STREAM_END)
+        {
+            if((strm.next_out-reinterpret_cast<unsigned char * const>(output))>maxOutputSize)
+            {
+                logZlibError(Z_STREAM_ERROR);
+                return -1;
+            }
+            logZlibError(ret);
+            return -1;
+        }
+    }
+    while(ret!=Z_STREAM_END);
+
+    if(strm.avail_in!=0)
+    {
+        logZlibError(Z_DATA_ERROR);
         return -1;
     }
-    }
-    while (ret != Z_STREAM_END);
-
-    if (strm.avail_in != 0) {
-    logZlibError(Z_DATA_ERROR);
-    return -1;
-    }
-
     inflateEnd(&strm);
 
     return maxOutputSize-strm.avail_out;
@@ -128,10 +130,12 @@ int32_t ProtocolParsing::compressZlib(const char * const input, const uint32_t &
     strm.opaque = Z_NULL;
     strm.next_in = (Bytef *) input;
     strm.avail_in = intputSize;
+    strm.total_in = intputSize;
     strm.next_out = (Bytef *) output;
     strm.avail_out = maxOutputSize;
+    strm.total_out = maxOutputSize;
 
-    int ret = deflateInit(&strm, ProtocolParsing::compressionLevel);
+    /*int ret = deflateInit(&strm, ProtocolParsing::compressionLevel);
     if(ret != Z_OK)
     {
         logZlibError(ret);
@@ -166,7 +170,28 @@ int32_t ProtocolParsing::compressZlib(const char * const input, const uint32_t &
     while (ret != Z_STREAM_END);
     deflateEnd(&strm);
 
-    return maxOutputSize-strm.avail_out;
+    return maxOutputSize-strm.avail_out;*/
+
+    int nErr,nRet=-1;
+    nErr=deflateInit(&strm, ProtocolParsing::compressionLevel);
+    if(nErr==Z_OK)
+    {
+        nErr=deflate(&strm,Z_FINISH);
+        if(nErr==Z_STREAM_END)
+            nRet=strm.total_out;
+        else
+        {
+            logZlibError(nErr);
+            return -1;
+        }
+    }
+    else
+    {
+        logZlibError(nErr);
+        return -1;
+    }
+    deflateEnd(&strm);    // zlib function
+    return nRet;
 }
 
 int32_t ProtocolParsing::decompressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
