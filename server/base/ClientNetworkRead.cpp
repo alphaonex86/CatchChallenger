@@ -768,6 +768,11 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                         normalOutput(Client::text_commands_seem_not_right+text);
                 }
             }
+            if((size-pos)!=0)
+            {
+                errorOutput("remaining data at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                return false;
+            }
             return true;
         }
         break;

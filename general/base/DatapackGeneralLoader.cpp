@@ -787,7 +787,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                 else
                                 {
                                     ok=false;
-                                    std::cerr << "Unable to parse the plants file: " << file << ", fruits is null: child->ValueStr(): " << fruits->ValueStr() << " (at line: " << fruits->Row() << ")" << std::endl;
+                                    std::cerr << "Unable to parse the plants file: " << file << ", fruits is null: child->ValueStr(): " << grow->ValueStr() << " (at line: " << grow->Row() << ")" << std::endl;
                                 }
                                 const TiXmlElement * sprouted = grow->FirstChildElement("sprouted");
                                 if(sprouted!=NULL)
@@ -845,7 +845,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                 std::cerr << "Unable to parse the plants file: " << file << ", grow is not an element: child->ValueStr(): child->ValueStr(): " << grow->ValueStr() << " (at line: " << grow->Row() << ")" << std::endl;
                         }
                         else
-                            std::cerr << "Unable to parse the plants file: " << file << ", grow is null: child->ValueStr(): child->ValueStr(): " << grow->ValueStr() << " (at line: " << grow->Row() << ")" << std::endl;
+                            std::cerr << "Unable to parse the plants file: " << file << ", grow is null: child->ValueStr(): child->ValueStr(): " << plantItem->ValueStr() << " (at line: " << plantItem->Row() << ")" << std::endl;
                         if(ok)
                         {
                             bool needIntermediateTimeFix=false;
