@@ -461,7 +461,10 @@ private slots:
     void on_toolButton_quit_encyclopedia_clicked();
     void on_listWidgetEncyclopediaMonster_itemActivated(QListWidgetItem *item);
     void on_listWidgetEncyclopediaItem_itemActivated(QListWidgetItem *item);
-
+    void on_listWidgetEncyclopediaMonster_itemChanged(QListWidgetItem *item);
+    void on_listWidgetEncyclopediaItem_itemChanged(QListWidgetItem *item);
+    void on_listWidgetEncyclopediaItem_itemSelectionChanged();
+    void on_listWidgetEncyclopediaMonster_itemSelectionChanged();
 protected slots:
     //datapack
     void datapackParsed();

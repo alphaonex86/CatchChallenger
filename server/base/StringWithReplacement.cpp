@@ -100,7 +100,7 @@ void StringWithReplacement::set(const std::string &query)
                 memcpy(preparedQueryTemp+pos,extractedPart.data(),size);
                 pos+=size;
             }
-            previousStringPos=size;
+            //previousStringPos=size;
             *reinterpret_cast<uint16_t *>(preparedQueryTemp+1)=pos-3-(numberOfReplace*2+1);
             //copy
             preparedQuery=(unsigned char *)malloc(pos+1);

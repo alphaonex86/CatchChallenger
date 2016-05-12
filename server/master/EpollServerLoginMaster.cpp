@@ -770,9 +770,7 @@ void EpollServerLoginMaster::doTheServerList()
     }
 
     //send the network message
-    uint32_t posOutput=0;
     EpollClientLoginMaster::serverServerList[0x00]=0x45;
-    posOutput+=1+4;
     *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::serverServerList+1)=htole32(pos);//set the dynamic size
     memcpy(EpollClientLoginMaster::serverServerList+1+4,EpollClientLoginMaster::serverPartialServerList,pos);
     EpollClientLoginMaster::serverServerListSize=pos+1+4;
