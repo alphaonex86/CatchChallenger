@@ -501,7 +501,7 @@ char *Client::addAuthGetToken(const uint32_t &characterId, const uint32_t &accou
     if(returnedSize!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
     {
         std::cerr << "sizeof(newEntry.token) don't match with random size: " << returnedSize << std::endl;
-        delete newEntry.token;
+        delete[] newEntry.token;
         return NULL;
     }
     tokenAuthList.push_back(newEntry);

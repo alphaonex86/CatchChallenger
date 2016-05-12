@@ -1451,7 +1451,7 @@ void CatchChallenger::BaseWindow::on_toolButtonEncyclopedia_clicked()
                 item->setTextColor(QColor(100,100,100));
                 item->setText(tr("Unknown"));
                 item->setData(99,0);
-                item->setIcon(QIcon(":/images/monsters/default/small.png"));
+                //item->setIcon(QIcon(":/images/monsters/default/small.png"));
             }
             ui->listWidgetEncyclopediaItem->addItem(item);
             ++i;
@@ -1470,13 +1470,15 @@ void CatchChallenger::BaseWindow::on_listWidgetEncyclopediaMonster_itemActivated
         return;
     }
 
+    const Monster &monsterCommon=CommonDatapack::commonDatapack.monsters.at(item->data(99).toUInt());
     const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(item->data(99).toUInt());
     ui->labelEncyclopediaMonster->setText("");
     QByteArray byteArray;
     QBuffer buffer(&byteArray);
-    monsterExtra.front.save(&buffer, "PNG");
+    QPixmap image=monsterExtra.front;
+    image.scaled(image.width()*3,image.height()*3).save(&buffer, "PNG");
     ui->labelEncyclopediaMonster->setText(
-                QStringLiteral("<img src=\"data:image/png;base64,%1\" /><br />").arg(QString(byteArray.toBase64()))+
+                QStringLiteral("<center><img src=\"data:image/png;base64,%1\" /></center><br />").arg(QString(byteArray.toBase64()))+
                 tr("Name: <b>%1</b><br />Description: %2")
                 .arg(monsterExtra.name)
                 .arg(monsterExtra.description)
@@ -1485,6 +1487,36 @@ void CatchChallenger::BaseWindow::on_listWidgetEncyclopediaMonster_itemActivated
         ui->labelEncyclopediaMonster->setText(ui->labelEncyclopediaMonster->text()+"<br />"+tr("Kind: %1").arg(monsterExtra.kind));
     if(!monsterExtra.habitat.isEmpty())
         ui->labelEncyclopediaMonster->setText(ui->labelEncyclopediaMonster->text()+"<br />"+tr("Habitat: %1").arg(monsterExtra.habitat));
+    if(monsterCommon.ratio_gender<0 || monsterCommon.ratio_gender>100)
+        ui->labelEncyclopediaMonster->setText(ui->labelEncyclopediaMonster->text()+"<br />"+tr("Gender: Unknown"));
+    else if(monsterCommon.ratio_gender==0)
+        ui->labelEncyclopediaMonster->setText(ui->labelEncyclopediaMonster->text()+"<br />"+tr("Gender: <span style=\"color:#3068C2\">Male</span>"));
+    else if(monsterCommon.ratio_gender==100)
+        ui->labelEncyclopediaMonster->setText(ui->labelEncyclopediaMonster->text()+"<br />"+tr("Gender: <span style=\"color:#C25254\">Female</span>"));
+    else
+        ui->labelEncyclopediaMonster->setText(ui->labelEncyclopediaMonster->text()+"<br />"+tr("Gender: %1% <span style=\"color:#3068C2\">Male</span> and %2% <span style=\"color:#C25254\">Female</span>")
+                                              .arg(100-monsterCommon.ratio_gender)
+                                              .arg(monsterCommon.ratio_gender)
+                                              );
+    {
+        const std::vector<uint8_t> &types=monsterCommon.type;
+        if(!types.empty())
+        {
+            ui->labelEncyclopediaMonster->setText(ui->labelEncyclopediaMonster->text()+"<br />"+tr("Type:"));
+            unsigned int index=0;
+            while(index<types.size())
+            {
+                const uint8_t &type=types.at(index);
+                if(type<CommonDatapack::commonDatapack.types.size() && DatapackClientLoader::datapackLoader.typeExtra.contains(type))
+                {
+                    const DatapackClientLoader::TypeText &typeText=DatapackClientLoader::datapackLoader.typeExtra.value(type);
+                    //const Type &typeCommon=CommonDatapack::commonDatapack.types.at(type);
+                    ui->labelEncyclopediaMonster->setText(ui->labelEncyclopediaMonster->text()+" "+typeText.name);
+                }
+                index++;
+            }
+        }
+    }
 }
 
 void CatchChallenger::BaseWindow::on_listWidgetEncyclopediaItem_itemActivated(QListWidgetItem *item)
@@ -1500,13 +1532,39 @@ void CatchChallenger::BaseWindow::on_listWidgetEncyclopediaItem_itemActivated(QL
     ui->labelEncyclopediaItem->setText("");
     QByteArray byteArray;
     QBuffer buffer(&byteArray);
-    itemExtra.image.save(&buffer, "PNG");
+    QPixmap image=itemExtra.image;
+    image.scaled(image.width()*3,image.height()*3).save(&buffer, "PNG");
+    image.save(&buffer, "PNG");
     ui->labelEncyclopediaItem->setText(
-                QStringLiteral("<img src=\"data:image/png;base64,%1\" /><br />").arg(QString(byteArray.toBase64()))+
+                QStringLiteral("<center><img src=\"data:image/png;base64,%1\" /></center><br />").arg(QString(byteArray.toBase64()))+
                 tr("Name: <b>%1</b><br />Description: %2")
                 .arg(itemExtra.name)
                 .arg(itemExtra.description)
                 );
     if(itemCommon.price>0)
-        ui->labelEncyclopediaItem->setText(ui->labelEncyclopediaItem->text()+"<br />"+tr("Price: %1").arg(itemCommon.price));
+        ui->labelEncyclopediaItem->setText(ui->labelEncyclopediaItem->text()+"<br />"+tr("Price: %1$").arg(itemCommon.price));
+    else
+        ui->labelEncyclopediaItem->setText(ui->labelEncyclopediaItem->text()+"<br />"+tr("Can't be sold"));
+    if(!itemCommon.consumeAtUse)
+        ui->labelEncyclopediaItem->setText(ui->labelEncyclopediaItem->text()+"<br />"+tr("<b>Infinity use</b>"));
+}
+
+void CatchChallenger::BaseWindow::on_listWidgetEncyclopediaMonster_itemChanged(QListWidgetItem *item)
+{
+    on_listWidgetEncyclopediaMonster_itemActivated(item);
+}
+
+void CatchChallenger::BaseWindow::on_listWidgetEncyclopediaItem_itemChanged(QListWidgetItem *item)
+{
+    on_listWidgetEncyclopediaItem_itemActivated(item);
+}
+
+void CatchChallenger::BaseWindow::on_listWidgetEncyclopediaItem_itemSelectionChanged()
+{
+    on_listWidgetEncyclopediaItem_itemActivated(ui->listWidgetEncyclopediaItem->currentItem());
+}
+
+void CatchChallenger::BaseWindow::on_listWidgetEncyclopediaMonster_itemSelectionChanged()
+{
+    on_listWidgetEncyclopediaMonster_itemActivated(ui->listWidgetEncyclopediaMonster->currentItem());
 }
