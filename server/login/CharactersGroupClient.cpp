@@ -186,7 +186,7 @@ void CharactersGroupForLogin::server_list_object()
     EpollClientLoginSlave * const client=clientQueryForReadReturn.front();
     clientQueryForReadReturn.erase(clientQueryForReadReturn.begin());
 
-    char * const tempRawData=new char[4*1024];
+    char tempRawData[4*1024];
     //memset(tempRawData,0x00,sizeof(4*1024));
     int tempRawDataSize=0x00;
 
@@ -233,7 +233,6 @@ void CharactersGroupForLogin::server_list_object()
     }
 
     client->server_list_return(validServerCount,tempRawData,tempRawDataSize);
-    delete tempRawData;
 }
 
 void CharactersGroupForLogin::deleteCharacterNow(const uint32_t &characterId)

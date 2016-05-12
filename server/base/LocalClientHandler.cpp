@@ -410,10 +410,14 @@ bool Client::singleMove(const Direction &direction)
                 default:
                 break;
             }
+            if(teleporter.map==NULL)
+            {
+                errorOutput("This teleporter no valid teleporter.map==NULL: "+std::to_string(teleporter.condition.value)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
+                return false;
+            }
             x=teleporter.destination_x;
             y=teleporter.destination_y;
             map=teleporter.map;
-
             break;
         }
         index_search++;
@@ -464,7 +468,10 @@ bool Client::singleMove(const Direction &direction)
         }
         if(generateWildFightIfCollision(map,x,y,public_and_private_informations.items,mergedEvents))
         {
-            normalOutput("Client::singleMove(), now is in front of wild monster with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
+            if(map!=NULL)
+                normalOutput("Client::singleMove(), now is in front of wild monster with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
+            else
+                normalOutput("Client::singleMove(), now is in front of wild monster)");
             return true;
         }
     }
@@ -2394,6 +2401,8 @@ void Client::buyFactoryProduct(const uint8_t &query_id,const uint16_t &factoryId
     uint32_t actualPrice=0;
 
     Industry::Product product;
+    product.item=0;
+    product.quantity=0;
     //get the right product
     {
         unsigned int index=0;

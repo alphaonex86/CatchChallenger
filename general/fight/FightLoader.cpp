@@ -833,7 +833,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                 {
                     if(evolutionByLevel)
                     {
-                        std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " have already evolution by level: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+                        std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " have already evolution by level" << std::endl;
                         i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
                         continue;
                     }
@@ -843,7 +843,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                 {
                     if(evolutionByTrade)
                     {
-                        std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " have already evolution by trade: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+                        std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " have already evolution by trade" << std::endl;
                         i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
                         continue;
                     }
@@ -853,7 +853,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                 {
                     if(itemUse.find(i->second.evolutions.at(index).level)!=itemUse.cend())
                     {
-                        std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " have already evolution with this item: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+                        std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " have already evolution with this item" << std::endl;
                         i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
                         continue;
                     }
@@ -861,13 +861,13 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                 }
                 if(i->second.evolutions.at(index).evolveTo==i->first)
                 {
-                    std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " can't evolve into them self: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " can't evolve into them self" << std::endl;
                     i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
                     continue;
                 }
                 else if(monsters.find(i->second.evolutions.at(index).evolveTo)==monsters.cend())
                 {
-                    std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->second.evolutions.at(index).evolveTo << " for the evolution of " << i->first << " can't be found: child->ValueStr(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->second.evolutions.at(index).evolveTo << " for the evolution of " << i->first << " can't be found" << std::endl;
                     i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
                     continue;
                 }

@@ -655,13 +655,15 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const uint8_t &type,c
                 defense=otherStat.special_defense;
             if(defense<1)
                 defense=1;
-            int32_t effect_quantity=effect.quantity;
-            if(effect_quantity<0)
-                effect_quantity-=2;
             const uint8_t &seed=getOneSeed(17);
             quantity = effect_to_return.effective*(((float)currentMonster->level*(float)1.99+10.5)/(float)255*((float)attack/(float)defense)*(float)effect.quantity)*criticalHit*OtherMulti*(100-seed)/100;
             #ifdef CATCHCHALLENGER_DEBUG_FIGHT
-            std::cout << "quantity(" << quantity << ") = effect_to_return.effective(" << effect_to_return.effective << ")*(((float)currentMonster->level(" << currentMonster->level << ")*(float)1.99+10.5)/(float)255*((float)attack(" << attack << ")/(float)defense(" << defense << "))*(float)effect.quantity(" << effect.quantity << "))*criticalHit(" << criticalHit << ")*OtherMulti(" << OtherMulti << ")*(100-getOneSeed(17)(" << seed << "))/100;" << std::endl;
+            {
+                int32_t effect_quantity=effect.quantity;
+                if(effect_quantity<0)
+                    effect_quantity-=2;
+            }
+            std::cout << "quantity(" << quantity << ") = effect_to_return.effective(" << effect_to_return.effective << ")*(((float)currentMonster->level(" << currentMonster->level << ")*(float)1.99+10.5)/(float)255*((float)attack(" << attack << ")/(float)defense(" << defense << "))*(float)effect.quantity(" << effect.quantity << "))*criticalHit(" << criticalHit << ")*OtherMulti(" << OtherMulti << ")*(100-getOneSeed(17)(" << seed << "))/100; effect_quantity: " << effect_quantity << std::endl;
             #endif
             /*if(effect.quantity<0)
                 quantity=-((-effect.quantity*stat.attack)/(otherStat.defense*4));
@@ -1971,6 +1973,7 @@ void CommonFightEngine::doTheTurn(const uint32_t &skill,const uint8_t &skillLeve
             }
         }
     }
+    (void)turnIsEnd;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
         PlayerMonster * currentMonster=getCurrentMonster();

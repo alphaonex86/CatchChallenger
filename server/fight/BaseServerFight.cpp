@@ -133,6 +133,7 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
                                     if(drop->Attribute(BaseServer::text_item)!=NULL)
                                     {
                                         MonsterDrops dropVar;
+                                        dropVar.item=0;
                                         if(drop->Attribute(BaseServer::text_quantity_min)!=NULL)
                                         {
                                             dropVar.quantity_min=stringtouint32(*drop->Attribute(BaseServer::text_quantity_min),&ok);

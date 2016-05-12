@@ -26,7 +26,7 @@
    <string notr="true">CatchChallenger</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../../server/all-server-resources.qrc">
+   <iconset resource="../resources/client-resources.qrc">
     <normaloff>:/images/catchchallenger.png</normaloff>:/images/catchchallenger.png</iconset>
   </property>
   <property name="styleSheet">
@@ -7106,7 +7106,7 @@ padding-bottom:3px;
          <item>
           <widget class="QTabWidget" name="tabWidgetEncyclopedia">
            <property name="currentIndex">
-            <number>1</number>
+            <number>0</number>
            </property>
            <widget class="QWidget" name="tabEncyclopediaMonster">
             <attribute name="icon">
@@ -7248,10 +7248,9 @@ border-image: url(:/images/empty.png);
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="../../../server/all-server-resources.qrc"/>
-  <include location="../resources/client-resources-multi.qrc"/>
-  <include location="../resources/client-resources.qrc"/>
   <include location="../../fight/resources/client-resources-fight.qrc"/>
+  <include location="../resources/client-resources.qrc"/>
+  <include location="../resources/client-resources-multi.qrc"/>
  </resources>
  <connections>
   <connection>
