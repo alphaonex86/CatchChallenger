@@ -806,12 +806,14 @@ void MapVisualiserPlayer::finalPlayerStep()
     else
     {
         if(!nextPathStep())
+        {
             if(inMove)
             {
-                inMove=false;
                 emit send_player_direction(direction);
+                inMove=false;
                 parseStop();
             }
+        }
     }
 }
 

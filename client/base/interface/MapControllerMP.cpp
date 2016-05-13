@@ -1627,12 +1627,14 @@ CatchChallenger::Direction MapControllerMP::moveFromPath()
                 pathList.removeFirst();
         }
 
-        orientation=pathList.first().path.first().first;
-        pathList.first().path.first().second--;
-        if(pathList.first().path.first().second==0)
+        PathResolved &pathFirst=pathList.first();
+        QPair<CatchChallenger::Orientation,uint8_t> &pathFirstUnit=pathFirst.path.first();
+        orientation=pathFirstUnit.first;
+        pathFirstUnit.second--;
+        if(pathFirstUnit.second==0)
         {
-            pathList.first().path.removeFirst();
-            if(pathList.first().path.isEmpty())
+            pathFirst.path.removeFirst();
+            if(pathFirst.path.isEmpty())
             {
                 pathList.removeFirst();
                 if(!pathList.isEmpty())
@@ -1649,12 +1651,14 @@ CatchChallenger::Direction MapControllerMP::moveFromPath()
     }
     else
     {
-        orientation=pathList.first().path.first().first;
-        pathList.first().path.first().second--;
-        if(pathList.first().path.first().second==0)
+        PathResolved &pathFirst=pathList.first();
+        QPair<CatchChallenger::Orientation,uint8_t> &pathFirstUnit=pathFirst.path.first();
+        orientation=pathFirstUnit.first;
+        pathFirstUnit.second--;
+        if(pathFirstUnit.second==0)
         {
-            pathList.first().path.removeFirst();
-            if(pathList.first().path.isEmpty())
+            pathFirst.path.removeFirst();
+            if(pathFirst.path.isEmpty())
             {
                 pathList.removeFirst();
                 if(!pathList.isEmpty())
@@ -1703,41 +1707,49 @@ bool MapControllerMP::nextPathStep()//true if have step
 {
     if(!pathList.isEmpty())
     {
+        if(!inMove)
+        {
+            std::cerr << "inMove=false into MapControllerMP::nextPathStep(), fixed" << std::endl;
+            inMove=true;
+        }
         const CatchChallenger::Direction &direction=MapControllerMP::moveFromPath();
         if(canGoTo(direction,all_map.value(current_map)->logicalMap,x,y,true))
         {
             this->direction=direction;
             moveStep=0;
             moveStepSlot();
-            emit send_player_direction(direction);
             if(CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange)
             {
                 if(direction==CatchChallenger::Direction_move_at_bottom)
                 {
                     if(y==(all_map.value(current_map)->logicalMap.height-1))
-                        emit send_player_direction(CatchChallenger::Direction_look_at_right);
+                        emit send_player_direction(CatchChallenger::Direction_look_at_bottom);
                 }
-                if(direction==CatchChallenger::Direction_move_at_top)
+                else if(direction==CatchChallenger::Direction_move_at_top)
                 {
                     if(y==0)
                         emit send_player_direction(CatchChallenger::Direction_look_at_top);
                 }
-                if(direction==CatchChallenger::Direction_move_at_right)
+                else if(direction==CatchChallenger::Direction_move_at_right)
                 {
                     if(x==(all_map.value(current_map)->logicalMap.width-1))
                         emit send_player_direction(CatchChallenger::Direction_look_at_right);
                 }
-                if(direction==CatchChallenger::Direction_move_at_left)
+                else if(direction==CatchChallenger::Direction_move_at_left)
                 {
                     if(x==0)
                         emit send_player_direction(CatchChallenger::Direction_look_at_left);
                 }
             }
+            emit send_player_direction(direction);
             //startGrassAnimation(direction);
             return true;
         }
         else
+        {
+            std::cerr << "Error at path found, collision detected" << std::endl;
             pathList.clear();
+        }
     }
     return false;
 }
@@ -1757,6 +1769,7 @@ void MapControllerMP::pathFindingResult(const QString &current_map,const uint8_t
 
             if(!inMove)
             {
+                inMove=true;
                 if(this->current_map==current_map && this->x==x && this->y==y)
                 {
                     if(pathList.size()>1)

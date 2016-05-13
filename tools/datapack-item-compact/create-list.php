@@ -162,10 +162,14 @@ foreach($temp_items as $item_file)
 	}
 }
 
+$index=1;
 $item_convert=array();
 foreach($item_tree as $group=>$image_path_list)
     foreach($image_path_list as $image_path=>$name_list)
         foreach($name_list as $id)
-            $item_convert[]=$id;
+        {
+            $item_convert[$index]=$id;
+            $index++;
+        }
 $item_convert=array_flip($item_convert);
 echo json_encode($item_convert);
