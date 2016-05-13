@@ -137,7 +137,7 @@ private slots:
     void notLogged(QString reason);
     void protocol_is_good();
     void error(QString error);
-    void stderror(std::string error);
+    void stderror(const std::string &error);
     void errorWithTheCurrentMap();
     void repelEffectIsOver();
     void send_player_direction(const CatchChallenger::Direction &the_direction);

@@ -1747,7 +1747,6 @@ void Client::characterIsRightFinalStep()
             ++i;
         }
     }
-    std::cerr << "data to send: " << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << " " << __FILE__ << ":" << __LINE__ << std::endl;
     /// \todo make the buffer overflow control here or above
     {
         char *buffer;
@@ -1777,7 +1776,6 @@ void Client::characterIsRightFinalStep()
             *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=0;
             posOutputTemp+=2;
         }
-        std::cerr << "data to send: " << binarytoHexa(buffer,posOutputTemp) << " " << __FILE__ << ":" << __LINE__ << std::endl;
         //encyclopedia_monster
         if(public_and_private_informations.encyclopedia_monster!=NULL)
         {
@@ -1799,7 +1797,6 @@ void Client::characterIsRightFinalStep()
             *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=0;
             posOutputTemp+=2;
         }
-        std::cerr << "data to send: " << binarytoHexa(buffer,posOutputTemp) << " " << __FILE__ << ":" << __LINE__ << std::endl;
         //encyclopedia_item
         if(public_and_private_informations.encyclopedia_item!=NULL)
         {
@@ -1821,11 +1818,9 @@ void Client::characterIsRightFinalStep()
             *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=0;
             posOutputTemp+=2;
         }
-        std::cerr << "data to send: " << binarytoHexa(buffer,posOutputTemp) << " " << __FILE__ << ":" << __LINE__ << std::endl;
         //achievements
         buffer[posOutputTemp]=0;
         posOutputTemp++;
-        std::cerr << "data to send: " << binarytoHexa(buffer,posOutputTemp) << " " << __FILE__ << ":" << __LINE__ << std::endl;
 
         if(ProtocolParsingBase::compressionTypeServer==CompressionType::None)
         {
@@ -1848,7 +1843,6 @@ void Client::characterIsRightFinalStep()
             posOutput+=compressedSize;
         }
     }
-    std::cerr << "data to send: " << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << " " << __FILE__ << ":" << __LINE__ << std::endl;
 
     //------------------------------------------- End of common part, start of server specific part ----------------------------------
 
@@ -1916,7 +1910,6 @@ void Client::characterIsRightFinalStep()
         ++i;
     }
     #endif
-    std::cerr << "data to send: " << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << " " << __FILE__ << ":" << __LINE__ << std::endl;
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(this->map==NULL)
