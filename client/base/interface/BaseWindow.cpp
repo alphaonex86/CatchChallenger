@@ -157,55 +157,93 @@ BaseWindow::BaseWindow() :
     disableIntoListFont.setItalic(true);
     disableIntoListBrush=QBrush(QColor(200,20,20));
 
-    connect(this,&BaseWindow::sendsetMultiPlayer,Chat::chat,&Chat::setMultiPlayer,Qt::QueuedConnection);
+    if(!connect(this,&BaseWindow::sendsetMultiPlayer,Chat::chat,&Chat::setMultiPlayer,Qt::QueuedConnection))
+        abort();
 
     //connect the datapack loader
-    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsed,                  this,                                   &BaseWindow::datapackParsed,Qt::QueuedConnection);
-    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsedMainSub,           this,                                   &BaseWindow::datapackParsedMainSub,Qt::QueuedConnection);
-    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackChecksumError,           this,                                   &BaseWindow::datapackChecksumError,Qt::QueuedConnection);
-    connect(this,                                   &BaseWindow::parseDatapack,                             &DatapackClientLoader::datapackLoader,  &DatapackClientLoader::parseDatapack,Qt::QueuedConnection);
-    connect(this,                                   &BaseWindow::parseDatapackMainSub,                      &DatapackClientLoader::datapackLoader,  &DatapackClientLoader::parseDatapackMainSub,Qt::QueuedConnection);
-    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsed,                  MapController::mapController,           &MapController::datapackParsed,Qt::QueuedConnection);
-    connect(this,                                   &BaseWindow::datapackParsedMainSubMap,                  MapController::mapController,        &MapController::datapackParsedMainSub,Qt::QueuedConnection);
+    if(!connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsed,                  this,                                   &BaseWindow::datapackParsed,Qt::QueuedConnection))
+        abort();
+    if(!connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsedMainSub,           this,                                   &BaseWindow::datapackParsedMainSub,Qt::QueuedConnection))
+        abort();
+    if(!connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackChecksumError,           this,                                   &BaseWindow::datapackChecksumError,Qt::QueuedConnection))
+        abort();
+    if(!connect(this,                                   &BaseWindow::parseDatapack,                             &DatapackClientLoader::datapackLoader,  &DatapackClientLoader::parseDatapack,Qt::QueuedConnection))
+        abort();
+    if(!connect(this,                                   &BaseWindow::parseDatapackMainSub,                      &DatapackClientLoader::datapackLoader,  &DatapackClientLoader::parseDatapackMainSub,Qt::QueuedConnection))
+        abort();
+    if(!connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsed,                  MapController::mapController,           &MapController::datapackParsed,Qt::QueuedConnection))
+        abort();
+    if(!connect(this,                                   &BaseWindow::datapackParsedMainSubMap,                  MapController::mapController,        &MapController::datapackParsedMainSub,Qt::QueuedConnection))
+        abort();
 
     //render, logical part into Map_Client
-    connect(MapController::mapController,&MapController::stopped_in_front_of,   this,&BaseWindow::stopped_in_front_of);
-    connect(MapController::mapController,&MapController::actionOn,              this,&BaseWindow::actionOn);
-    connect(MapController::mapController,&MapController::actionOnNothing,       this,&BaseWindow::actionOnNothing);
-    connect(MapController::mapController,&MapController::blockedOn,             this,&BaseWindow::blockedOn);
-    connect(MapController::mapController,&MapController::error,                 this,&BaseWindow::error);
-    connect(MapController::mapController,&MapController::errorWithTheCurrentMap,this,&BaseWindow::errorWithTheCurrentMap);
-    connect(MapController::mapController,&MapController::repelEffectIsOver,     this,&BaseWindow::repelEffectIsOver);
-    connect(MapController::mapController,&MapController::send_player_direction, this,&BaseWindow::send_player_direction,Qt::QueuedConnection);
-    connect(MapController::mapController,&MapController::teleportConditionNotRespected, this,&BaseWindow::teleportConditionNotRespected,Qt::QueuedConnection);
+    if(!connect(MapController::mapController,&MapController::stopped_in_front_of,   this,&BaseWindow::stopped_in_front_of))
+        abort();
+    if(!connect(MapController::mapController,&MapController::actionOn,              this,&BaseWindow::actionOn))
+        abort();
+    if(!connect(MapController::mapController,&MapController::actionOnNothing,       this,&BaseWindow::actionOnNothing))
+        abort();
+    if(!connect(MapController::mapController,&MapController::blockedOn,             this,&BaseWindow::blockedOn))
+        abort();
+    if(!connect(MapController::mapController,&MapController::error,                 this,&BaseWindow::error))
+        abort();
+    if(!connect(MapController::mapController,&MapController::errorWithTheCurrentMap,this,&BaseWindow::errorWithTheCurrentMap))
+        abort();
+    if(!connect(MapController::mapController,&MapController::repelEffectIsOver,     this,&BaseWindow::repelEffectIsOver))
+        abort();
+    if(!connect(MapController::mapController,&MapController::send_player_direction, this,&BaseWindow::send_player_direction,Qt::QueuedConnection))
+        abort();
+    if(!connect(MapController::mapController,&MapController::teleportConditionNotRespected, this,&BaseWindow::teleportConditionNotRespected,Qt::QueuedConnection))
+        abort();
 
     //fight
-    connect(MapController::mapController,   &MapController::wildFightCollision,     this,&BaseWindow::wildFightCollision);
-    connect(MapController::mapController,   &MapController::botFightCollision,      this,&BaseWindow::botFightCollision);
-    connect(MapController::mapController,   &MapController::currentMapLoaded,       this,&BaseWindow::currentMapLoaded);
-    connect(MapController::mapController,   &MapController::pathFindingNotFound,    this,&BaseWindow::pathFindingNotFound);
-    connect(&moveFightMonsterBottomTimer,   &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterBottom);
-    connect(&moveFightMonsterTopTimer,      &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterTop);
-    connect(&moveFightMonsterBothTimer,     &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterBoth);
-    connect(&displayAttackTimer,            &QTimer::timeout,                       this,&BaseWindow::displayAttack);
-    connect(&displayExpTimer,               &QTimer::timeout,                       this,&BaseWindow::displayExperienceGain);
-    connect(&displayTrapTimer,              &QTimer::timeout,                       this,&BaseWindow::displayTrap);
-    connect(&doNextActionTimer,             &QTimer::timeout,                       this,&BaseWindow::doNextAction);
-    connect(&botFightTimer,                 &QTimer::timeout,                       this,&BaseWindow::botFightFullDiffered);
-    connect(ui->stackedWidget,              &QStackedWidget::currentChanged,        this,&BaseWindow::pageChanged);
+    if(!connect(MapController::mapController,   &MapController::wildFightCollision,     this,&BaseWindow::wildFightCollision))
+        abort();
+    if(!connect(MapController::mapController,   &MapController::botFightCollision,      this,&BaseWindow::botFightCollision))
+        abort();
+    if(!connect(MapController::mapController,   &MapController::currentMapLoaded,       this,&BaseWindow::currentMapLoaded))
+        abort();
+    if(!connect(MapController::mapController,   &MapController::pathFindingNotFound,    this,&BaseWindow::pathFindingNotFound))
+        abort();
+    if(!connect(&moveFightMonsterBottomTimer,   &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterBottom))
+        abort();
+    if(!connect(&moveFightMonsterTopTimer,      &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterTop))
+        abort();
+    if(!connect(&moveFightMonsterBothTimer,     &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterBoth))
+        abort();
+    if(!connect(&displayAttackTimer,            &QTimer::timeout,                       this,&BaseWindow::displayAttack))
+        abort();
+    if(!connect(&displayExpTimer,               &QTimer::timeout,                       this,&BaseWindow::displayExperienceGain))
+        abort();
+    if(!connect(&displayTrapTimer,              &QTimer::timeout,                       this,&BaseWindow::displayTrap))
+        abort();
+    if(!connect(&doNextActionTimer,             &QTimer::timeout,                       this,&BaseWindow::doNextAction))
+        abort();
+    if(!connect(&botFightTimer,                 &QTimer::timeout,                       this,&BaseWindow::botFightFullDiffered))
+        abort();
+    if(!connect(ui->stackedWidget,              &QStackedWidget::currentChanged,        this,&BaseWindow::pageChanged))
+        abort();
 
+    if(!connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::newError,  this,&BaseWindow::newError))
+        abort();
+    if(!connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::error,     this,&BaseWindow::error))
+        abort();
+    /*if(!connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::errorFightEngine,     this,&BaseWindow::stderror))
+        abort();*/
 
-    connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::newError,  this,&BaseWindow::newError);
-    connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::error,     this,&BaseWindow::error);
-    connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::errorFightEngine,     this,&BaseWindow::stderror);
+    if(!connect(&updateRXTXTimer,&QTimer::timeout,          this,&BaseWindow::updateRXTX))
+        abort();
 
-    connect(&updateRXTXTimer,&QTimer::timeout,          this,&BaseWindow::updateRXTX);
-
-    connect(&tip_timeout,&QTimer::timeout,              this,&BaseWindow::tipTimeout);
-    connect(&gain_timeout,&QTimer::timeout,             this,&BaseWindow::gainTimeout);
-    connect(&nextCityCatchTimer,&QTimer::timeout,     this,&BaseWindow::cityCaptureUpdateTime);
-    connect(&updater_page_zonecatch,&QTimer::timeout, this,&BaseWindow::updatePageZoneCatch);
-    connect(&animationControl,&AnimationControl::animationFinished,this,&BaseWindow::animationFinished,Qt::QueuedConnection);
+    if(!connect(&tip_timeout,&QTimer::timeout,              this,&BaseWindow::tipTimeout))
+        abort();
+    if(!connect(&gain_timeout,&QTimer::timeout,             this,&BaseWindow::gainTimeout))
+        abort();
+    if(!connect(&nextCityCatchTimer,&QTimer::timeout,     this,&BaseWindow::cityCaptureUpdateTime))
+        abort();
+    if(!connect(&updater_page_zonecatch,&QTimer::timeout, this,&BaseWindow::updatePageZoneCatch))
+        abort();
+    if(!connect(&animationControl,&AnimationControl::animationFinished,this,&BaseWindow::animationFinished,Qt::QueuedConnection))
+        abort();
 
     renderFrame = new QFrame(ui->page_map);
     renderFrame->setObjectName(QString::fromUtf8("renderFrame"));
@@ -1233,7 +1271,7 @@ void BaseWindow::error(QString error)
     emit newError(tr("Error with the protocol"),error);
 }
 
-void BaseWindow::stderror(std::string error)
+void BaseWindow::stderror(const std::string &error)
 {
     emit newError(tr("Error with the protocol"),QString::fromStdString(error));
 }
