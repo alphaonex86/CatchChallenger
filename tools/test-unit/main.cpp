@@ -1,6 +1,7 @@
 #include <QCoreApplication>
 #include <QDebug>
 #include "reputation/TestUnitReputation.h"
+#include "TestUnitTar.h"
 #include "TestUnitCpp.h"
 #include "TestUnitCompression.h"
 #include "TestString.h"
@@ -9,6 +10,7 @@
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+
     //test FacilityLib::appendReputationPoint
     {
         TestUnitReputation testUnitReputation;
@@ -60,6 +62,19 @@ int main(int argc, char *argv[])
             testUnitCompression.testXZ();
 
         if(!testUnitCompression.finalResult)
+        {
+            qDebug() << "Final result: Failed: " << __FILE__ << ":" <<  __LINE__;
+            return EXIT_FAILURE;
+        }
+    }
+
+    {
+        TestUnitTar testUnitTar;
+
+        testUnitTar.finalResult=true;
+        testUnitTar.testUncompress();
+
+        if(!testUnitTar.finalResult)
         {
             qDebug() << "Final result: Failed: " << __FILE__ << ":" <<  __LINE__;
             return EXIT_FAILURE;

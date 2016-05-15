@@ -22,6 +22,8 @@ class QTarDecode
         bool decodeData(const std::vector<char> &data);
         /// \brief to return error string
         std::string errorString();
+        uint64_t stringtouint64(const std::string &string,bool *ok);
+        uint64_t octaltouint64(const std::string &string,bool *ok);
     private:
         std::vector<std::string> fileList;
         std::vector<std::vector<char> > dataList;

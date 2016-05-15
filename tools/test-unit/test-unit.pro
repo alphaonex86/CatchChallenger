@@ -22,7 +22,9 @@ SOURCES += main.cpp \
     TestString.cpp \
     TestUnitMessageParsing.cpp \
     ../../server/base/StringWithReplacement.cpp \
-    TestUnitCompression.cpp
+    TestUnitCompression.cpp \
+    TestUnitTar.cpp \
+    ../../client/base/qt-tar-xz/QTarDecode.cpp
 
 HEADERS += \
     reputation/TestUnitReputation.h \
@@ -30,4 +32,9 @@ HEADERS += \
     TestString.h \
     TestUnitMessageParsing.h \
     ../../server/base/StringWithReplacement.h \
-    TestUnitCompression.h
+    TestUnitCompression.h \
+    TestUnitTar.h \
+    ../../client/base/qt-tar-xz/QTarDecode.h
+
+RESOURCES += \
+    res.qrc
