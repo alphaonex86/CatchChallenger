@@ -1,6 +1,6 @@
 CONFIG += c++11
-QMAKE_CFLAGS+="-std=c++0x -Wall -Wextra"
 QMAKE_CXXFLAGS+="-std=c++0x -Wall -Wextra"
+mac:QMAKE_CXXFLAGS+="-stdlib=libc++"
 
 QT       -= core
 DEFINES += TIXML_USE_STL
