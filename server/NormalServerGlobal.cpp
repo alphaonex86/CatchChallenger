@@ -137,7 +137,11 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings, const std
         {
             const std::string &string=fileInfoList.at(0).name;
             if(regex_search(string,std::regex("^[a-z0-9\\- _]+$",std::regex_constants::optimize)))
+                #ifdef CATCHCHALLENGER_CLASS_QT
+                settings->setValue("mainDatapackCode",QString::fromStdString(string));
+                #else
                 settings->setValue("mainDatapackCode",string);
+                #endif
         }
         else
             settings->setValue("mainDatapackCode","[main]");
