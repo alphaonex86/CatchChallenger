@@ -4,6 +4,7 @@
 #include <QSslSocket>
 #include <QTcpSocket>
 #include <QNetworkProxy>
+#include <QProcess>
 #include "base/ClientMapManagement/MapVisibilityAlgorithm_None.h"
 #include "base/ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.h"
 #include "base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.h"
@@ -19,8 +20,8 @@ using namespace CatchChallenger;
 
 bool NormalServer::oneInstanceRunning=false;
 
-std::string NormalServer::text_restart=QLatin1Literal("restart");
-std::string NormalServer::text_stop=QLatin1Literal("stop");
+std::string NormalServer::text_restart="restart";
+std::string NormalServer::text_stop="stop";
 
 NormalServer::NormalServer() :
     QtServer()
@@ -111,14 +112,14 @@ void NormalServer::start_internal_server()
     {
         if(!QFile(QCoreApplication::applicationDirPath()+"/server.key").exists() || !QFile(QCoreApplication::applicationDirPath()+"/server.crt").exists())
         {
-            std::stringList args;
+            QStringList args;
             args << "req" << "-newkey" << "rsa:4096" << "-sha512" << "-x509" << "-nodes" << "-days" << "3560" << "-out" << QCoreApplication::applicationDirPath()+"/server.crt"
                     << "-keyout" << QCoreApplication::applicationDirPath()+"/server.key" << "-subj" << "/C=FR/ST=South-West/L=Paris/O=Catchchallenger/OU=Developer Department/CN=*"
                     << "-extensions usr_cert";
             #ifdef _WIN32
-            std::string opensslAppPath=QCoreApplication::applicationDirPath()+"/openssl/openssl.exe";
+            QString opensslAppPath=QCoreApplication::applicationDirPath()+"/openssl/openssl.exe";
             #else
-            std::string opensslAppPath="/usr/bin/openssl";
+            QString opensslAppPath="/usr/bin/openssl";
             #endif
             QProcess process;
             process.start(opensslAppPath,args);
@@ -128,14 +129,19 @@ void NormalServer::start_internal_server()
             {
                 if(process.exitCode()!=0)
                 {
-                    DebugClass::debugConsole(std::stringLiteral("return code: %1, output: %2, error: %3, error string: %4, exitStatus: %5").arg(process.exitCode()).arg(std::string::fromLocal8Bit(process.readAll())).arg(process.error()).arg(process.errorString()).arg(process.exitStatus()));
-                    DebugClass::debugConsole(std::stringLiteral("for start: %1 %2").arg(opensslAppPath).arg(args.join(" ")));
+                    std::cerr << "return code: " << process.exitCode()
+                              << ", output: " << QString::fromLocal8Bit(process.readAll()).toStdString()
+                              << ", error: " << process.error()
+                              << ", error string: " << process.errorString().toStdString()
+                              << ", exitStatus: " << process.exitStatus()
+                              << std::endl;
+                    std::cerr << "To start: " << opensslAppPath.toStdString() << " " << args.join(" ").toStdString() << std::endl;
                 }
                 process.kill();
-                DebugClass::debugConsole(std::stringLiteral("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application"));
+                std::cerr << "Certificate for the ssl connexion not found, buy or generate self signed, and put near the application" << std::endl;
                 stat=Down;
                 is_started(false);
-                error(std::stringLiteral("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application"));
+                error("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application");
                 return;
             }
             process.kill();
@@ -146,21 +152,21 @@ void NormalServer::start_internal_server()
         QFile key(QCoreApplication::applicationDirPath()+"/server.key");
         if(!key.open(QIODevice::ReadOnly))
         {
-            DebugClass::debugConsole(std::stringLiteral("Unable to access to the server key: %1").arg(key.errorString()));
+            std::cerr << "Unable to access to the server key: " << key.errorString().toStdString() << std::endl;
             stat=Down;
             is_started(false);
-            error(std::stringLiteral("Unable to access to the server key"));
+            error("Unable to access to the server key");
             return;
         }
-        std::vector<char> keyData=key.readAll();
+        QByteArray keyData=key.readAll();
         key.close();
         QSslKey sslKey(keyData,QSsl::Rsa);
         if(sslKey.isNull())
         {
-            DebugClass::debugConsole(std::stringLiteral("Server key is wrong"));
+            std::cerr << "Server key is wrong" << std::endl;
             stat=Down;
             is_started(false);
-            error(std::stringLiteral("Server key is wrong"));
+            error("Server key is wrong");
             return;
         }
 
@@ -169,21 +175,21 @@ void NormalServer::start_internal_server()
         QFile certificate(QCoreApplication::applicationDirPath()+"/server.crt");
         if(!certificate.open(QIODevice::ReadOnly))
         {
-            DebugClass::debugConsole(std::stringLiteral("Unable to access to the server certificate: %1").arg(certificate.errorString()));
+            std::cerr << "Unable to access to the server certificate: " << certificate.errorString().toStdString() << std::endl;
             stat=Down;
             is_started(false);
-            error(std::stringLiteral("Unable to access to the server certificate"));
+            error("Unable to access to the server certificate");
             return;
         }
-        std::vector<char> certificateData=certificate.readAll();
+        QByteArray certificateData=certificate.readAll();
         certificate.close();
         QSslCertificate sslCertificate(certificateData);
         if(sslCertificate.isNull())
         {
-            DebugClass::debugConsole(std::stringLiteral("Server certificate is wrong"));
+            std::cerr << "Server certificate is wrong" << std::endl;
             stat=Down;
             is_started(false);
-            error(std::stringLiteral("Server certificate is wrong"));
+            error("Server certificate is wrong");
             return;
         }
         if(sslServer==NULL)
@@ -197,47 +203,49 @@ void NormalServer::start_internal_server()
     connect(sslServer,&QTcpServer::newConnection,this,&NormalServer::newConnection,Qt::QueuedConnection);
     if(sslServer->isListening())
     {
-        DebugClass::debugConsole(std::stringLiteral("Already listening on %1").arg(listenIpAndPort(sslServer->serverAddress().toString(),sslServer->serverPort())));
-        error(std::stringLiteral("Already listening on %1").arg(listenIpAndPort(sslServer->serverAddress().toString(),sslServer->serverPort())));
+        const std::string &listenAddressAndPort=listenIpAndPort(sslServer->serverAddress().toString().toStdString(),sslServer->serverPort());
+        std::cerr << "Already listening on " <<  listenAddressAndPort << std::endl;
+        error(QString::fromStdString("Already listening on "+listenAddressAndPort));
         return;
     }
     if(oneInstanceRunning)
     {
-        DebugClass::debugConsole("Other instance already running");
+        std::cerr << "Other instance already running" << std::endl;
         return;
     }
     if(stat!=Down)
     {
-        DebugClass::debugConsole("In wrong stat");
+        std::cerr << "In wrong stat" << std::endl;
         return;
     }
     stat=InUp;
     load_settings();
     QHostAddress address = QHostAddress::Any;
-    if(!normalServerSettings.server_ip.isEmpty())
-        address.setAddress(normalServerSettings.server_ip);
-    if(!normalServerSettings.proxy.isEmpty())
+    if(!normalServerSettings.server_ip.empty())
+        address.setAddress(QString::fromStdString(normalServerSettings.server_ip));
+    if(!normalServerSettings.proxy.empty())
     {
         QNetworkProxy proxy=sslServer->proxy();
         proxy.setType(QNetworkProxy::Socks5Proxy);
-        proxy.setHostName(normalServerSettings.proxy);
+        proxy.setHostName(QString::fromStdString(normalServerSettings.proxy));
         proxy.setPort(normalServerSettings.proxy_port);
         sslServer->setProxy(proxy);
     }
     if(!sslServer->listen(address,normalServerSettings.server_port))
     {
-        DebugClass::debugConsole(std::stringLiteral("Unable to listen: %1, errror: %2").arg(listenIpAndPort(normalServerSettings.server_ip,normalServerSettings.server_port)).arg(sslServer->errorString()));
+        const std::string &listenAddressAndPort=listenIpAndPort(sslServer->serverAddress().toString().toStdString(),sslServer->serverPort());
+        std::cerr << "Unable to listen: " << listenAddressAndPort << ", errror: " << sslServer->errorString().toStdString() << std::endl;
         stat=Down;
         is_started(false);
-        error(std::stringLiteral("Unable to listen: %1, errror: %2").arg(listenIpAndPort(normalServerSettings.server_ip,normalServerSettings.server_port)).arg(sslServer->errorString()));
+        error(QString::fromStdString("Unable to listen: "+listenAddressAndPort+", errror: "+sslServer->errorString().toStdString()));
         return;
     }
     if(!QFakeServer::server.listen())
     {
-        DebugClass::debugConsole(std::stringLiteral("Unable to listen the internal server"));
+        std::cerr << "Unable to listen the internal server" << std::endl;
         stat=Down;
         is_started(false);
-        error(std::stringLiteral("Unable to listen the internal server"));
+        error("Unable to listen the internal server");
         return;
     }
     #ifdef __linux__
@@ -248,10 +256,10 @@ void NormalServer::start_internal_server()
         {
             int state = 1;
             if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-                DebugClass::debugConsole(std::stringLiteral("Unable to apply tcp cork under linux"));
+                std::cerr << "Unable to apply tcp cork under linux" << std::endl;
         }
         else
-            DebugClass::debugConsole(std::stringLiteral("Unable to get socket descriptor to apply tcp cork under linux"));
+            std::cerr << "Unable to get socket descriptor to apply tcp cork under linux" << std::endl;
     }
     else if(normalServerSettings.tcpNodelay)
     {
@@ -260,17 +268,17 @@ void NormalServer::start_internal_server()
         {
             int state = 1;
             if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_NODELAY, &state, sizeof(state))!=0)
-                DebugClass::debugConsole(std::stringLiteral("Unable to apply tcp cork under linux"));
+                std::cerr << "Unable to apply tcp cork under linux" << std::endl;
         }
         else
-            DebugClass::debugConsole(std::stringLiteral("Unable to get socket descriptor to apply tcp cork under linux"));
+            std::cerr << "Unable to get socket descriptor to apply tcp cork under linux" << std::endl;
     }
     #endif
 
-    if(normalServerSettings.server_ip.isEmpty())
-        DebugClass::debugConsole(std::stringLiteral("Listen *:%1").arg(normalServerSettings.server_port));
+    if(normalServerSettings.server_ip.empty())
+        std::cout << "Listen *:" << std::to_string(normalServerSettings.server_port) << std::endl;
     else
-        DebugClass::debugConsole("Listen "+normalServerSettings.server_ip+":"+std::to_string(normalServerSettings.server_port));
+        std::cout << "Listen "+normalServerSettings.server_ip+":"+std::to_string(normalServerSettings.server_port) << std::endl;
 
     if(!initialize_the_database())
     {
@@ -358,9 +366,9 @@ void NormalServer::serverCommand(const std::string &command, const std::string &
 //////////////////////////////////// Function secondary //////////////////////////////
 std::string NormalServer::listenIpAndPort(std::string server_ip,uint16_t server_port)
 {
-    if(server_ip.isEmpty())
-        server_ip=QLatin1Literal("*");
-    return server_ip+QLatin1Literal(":")+std::to_string(server_port);
+    if(server_ip.empty())
+        server_ip="*";
+    return server_ip+":"+std::to_string(server_port);
 }
 
 void NormalServer::newConnection()
@@ -370,7 +378,7 @@ void NormalServer::newConnection()
         QFakeSocket *socket = QFakeServer::server.nextPendingConnection();
         if(socket!=NULL)
         {
-            DebugClass::debugConsole(std::stringLiteral("new client connected on internal socket"));
+            std::cout << "new client connected on internal socket" << std::endl;
             switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
             {
                 case MapVisibilityAlgorithmSelection_Simple:
@@ -386,7 +394,7 @@ void NormalServer::newConnection()
             }
         }
         else
-            DebugClass::debugConsole("NULL client with fake socket");
+            std::cout << "NULL client with fake socket" << std::endl;
     }
     if(sslServer!=NULL)
         while(sslServer->hasPendingConnections())
@@ -402,7 +410,7 @@ void NormalServer::newConnection()
                 }
             if(!kicked)
             {
-                connect(socket,static_cast<void(QSslSocket::*)(const std::vector<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&NormalServer::sslErrors);
+                connect(socket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&NormalServer::sslErrors);
                 if(socket!=NULL)
                 {
                     #ifdef __linux__
@@ -413,10 +421,10 @@ void NormalServer::newConnection()
                         {
                             int state = 1;
                             if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-                                DebugClass::debugConsole(std::stringLiteral("Unable to apply tcp cork under linux"));
+                                std::cerr << "Unable to apply tcp cork under linux" << std::endl;
                         }
                         else
-                            DebugClass::debugConsole(std::stringLiteral("Unable to get socket descriptor to apply tcp cork under linux"));
+                            std::cerr << "Unable to get socket descriptor to apply tcp cork under linux" << std::endl;
                     }
                     else if(normalServerSettings.tcpNodelay)
                     {
@@ -425,10 +433,10 @@ void NormalServer::newConnection()
                         {
                             int state = 1;
                             if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_NODELAY, &state, sizeof(state))!=0)
-                                DebugClass::debugConsole(std::stringLiteral("Unable to apply tcp cork under linux"));
+                                std::cerr << "Unable to apply tcp cork under linux" << std::endl;
                         }
                         else
-                            DebugClass::debugConsole(std::stringLiteral("Unable to get socket descriptor to apply tcp cork under linux"));
+                            std::cerr << "Unable to get socket descriptor to apply tcp cork under linux" << std::endl;
                     }
                     #endif
                     //DebugClass::debugConsole(std::stringLiteral("new client connected by tcp socket"));-> prevent DDOS logs
@@ -450,7 +458,7 @@ void NormalServer::newConnection()
                     //connect(client,&Client::kicked,this,&NormalServer::kicked,Qt::QueuedConnection);
                 }
                 else
-                    DebugClass::debugConsole("NULL client: "+socket->peerAddress().toString());
+                    std::cerr << "NULL client: " << socket->peerAddress().toString().toStdString() << std::endl;
             }
             else
                 socket->disconnectFromHost();
@@ -467,13 +475,13 @@ void NormalServer::purgeKickedHost()
 {
     std::vector<QHostAddress> hostsToRemove;
     const QDateTime &currentDateTime=QDateTime::currentDateTime();
-    std::unordered_mapIterator<QHostAddress,QDateTime> i(kickedHosts);
+    QHashIterator<QHostAddress,QDateTime> i(kickedHosts);
     while (i.hasNext()) {
         i.next();
         if((currentDateTime.toTime_t()-i.value().toTime_t())>=(uint32_t)CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick)
-            hostsToRemove << i.key();
+            hostsToRemove.push_back(i.key());
     }
-    int index=0;
+    unsigned int index=0;
     while(index<hostsToRemove.size())
     {
         kickedHosts.remove(hostsToRemove.at(index));
@@ -481,12 +489,13 @@ void NormalServer::purgeKickedHost()
     }
 }
 
-void NormalServer::sslErrors(const std::vector<QSslError> &errors)
+void NormalServer::sslErrors(const QList<QSslError> &errors)
 {
+    std::cerr << "Ssl error: " << std::endl;
     int index=0;
     while(index<errors.size())
     {
-        DebugClass::debugConsole(std::stringLiteral("Ssl error: %1").arg(errors.at(index).errorString()));
+        std::cerr << errors.at(index).errorString().toStdString() << std::endl;
         index++;
     }
 }
@@ -528,18 +537,18 @@ void NormalServer::loadAndFixSettings()
     if(normalServerSettings.server_port<=0)
     {
         normalServerSettings.server_port=42489;
-        qDebug() << std::stringLiteral("normalServerSettings.server_port<=0 fix by 42489");
+        std::cerr << "normalServerSettings.server_port<=0 fix by 42489" << std::endl;
     }
     if(normalServerSettings.proxy_port<=0)
     {
         normalServerSettings.proxy=std::string();
-        fix that's
-        qDebug() << std::stringLiteral("normalServerSettings.proxy_port<=0 fix by 8080");
+        normalServerSettings.server_port=8080;
+        std::cerr << "normalServerSettings.proxy_port<=0 fix by 8080" << std::endl;
     }
 }
 
 void NormalServer::preload_finish()
 {
     QtServer::preload_finish();
-    qDebug() << std::stringLiteral("Waiting connection on port %1").arg(normalServerSettings.server_port);
+    std::cerr << "Waiting connection on port " << normalServerSettings.server_port << std::endl;
 }
