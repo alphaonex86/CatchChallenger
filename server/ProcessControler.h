@@ -4,7 +4,6 @@
 #include <QCoreApplication>
 
 #include "NormalServer.h"
-#include "../general/base/DebugClass.h"
 #include "../general/base/GeneralStructures.h"
 
 class ProcessControler : public QObject

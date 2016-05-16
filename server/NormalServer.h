@@ -6,8 +6,7 @@
 #include <QTcpServer>
 #include <QTimer>
 #include <QCoreApplication>
-#include <std::vector>
-#include <std::vector<char>>
+#include <vector>
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QDir>
@@ -67,7 +66,7 @@ private:
     static bool oneInstanceRunning;
     QSslCertificate *sslCertificate;
     QSslKey *sslKey;
-    std::unordered_map<QHostAddress,QDateTime> kickedHosts;
+    QHash<QHostAddress,QDateTime> kickedHosts;
     QTimer purgeKickedHostTimer;
     NormalServerSettings normalServerSettings;
 
@@ -87,7 +86,7 @@ private:
     void stop_internal_server();
     bool check_if_now_stopped();
     virtual void start_internal_server();
-    void sslErrors(const std::vector<QSslError> &errors);
+    void sslErrors(const QList<QSslError> &errors);
     virtual void loadAndFixSettings();
     void preload_finish();
 signals:

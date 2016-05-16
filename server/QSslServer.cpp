@@ -1,9 +1,7 @@
 #include "QSslServer.h"
-#include "../general/base/DebugClass.h"
 #include <QSslSocket>
 #include <unistd.h>
-
-using namespace CatchChallenger;
+#include <iostream>
 
 QSslServer::QSslServer(const QSslCertificate &sslCertificate,const QSslKey &sslKey)
 {
@@ -26,23 +24,23 @@ void QSslServer::incomingConnection(qintptr socketDescriptor)
     {
         socket->setPrivateKey(sslKey);
         socket->setLocalCertificate(sslCertificate);
-        std::vector<QSslCertificate> certificates;
+        QList<QSslCertificate> certificates;
         certificates << sslCertificate;
         socket->setCaCertificates(certificates);
         socket->setPeerVerifyMode(QSslSocket::VerifyNone);
         socket->ignoreSslErrors();
         socket->startServerEncryption();
-        connect(socket,static_cast<void(QSslSocket::*)(const std::vector<QSslError> &errors)>(&QSslSocket::sslErrors),this,&QSslServer::sslErrors);
+        connect(socket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),this,&QSslServer::sslErrors);
     }
     addPendingConnection(socket);
 }
 
-void QSslServer::sslErrors(const std::vector<QSslError> &errors)
+void QSslServer::sslErrors(const QList<QSslError> &errors)
 {
     int index=0;
     while(index<errors.size())
     {
-        DebugClass::debugConsole(std::stringLiteral("Ssl error: %1").arg(errors.at(index).errorString()));
+        std::cerr << "Ssl error: " << errors.at(index).errorString().toStdString() << std::endl;
         index++;
     }
     QSslSocket *socket=qobject_cast<QSslSocket *>(QObject::sender());

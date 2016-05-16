@@ -1,6 +1,7 @@
 include(catchchallenger-server.pri)
 
 QT       += sql core
+DEFINES += CATCHCHALLENGER_CLASS_QT
 
 RESOURCES += $$PWD/all-server-resources.qrc
 

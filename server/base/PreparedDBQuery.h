@@ -7,7 +7,7 @@
 
 namespace CatchChallenger {
 
-#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
 class PreparedDBQueryLogin
 {
 public:
@@ -19,7 +19,7 @@ public:
 };
 #endif
 
-#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
 class PreparedDBQueryCommonForLogin
 {
 public:
@@ -37,7 +37,7 @@ public:
 };
 #endif
 
-#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
 class PreparedDBQueryCommon
 {
 public:
@@ -48,7 +48,7 @@ public:
     static StringWithReplacement db_query_delete_monster_by_id;
     static StringWithReplacement db_query_insert_monster;
 
-    #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+    #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
     static StringWithReplacement db_query_update_character_item;
     static StringWithReplacement db_query_update_character_item_and_encyclopedia;
     static StringWithReplacement db_query_update_character_item_warehouse;
@@ -85,7 +85,7 @@ public:
     static StringWithReplacement db_query_update_monster_hp_and_level;
     static StringWithReplacement db_query_select_monsters_by_player_id;//don't filter by place, dispatched in internal, market volume should be low
 
-    #if defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+    #if defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
     static StringWithReplacement db_query_insert_server_time;
     static StringWithReplacement db_query_update_server_time_played_time;
     static StringWithReplacement db_query_update_server_time_last_connect;
@@ -139,7 +139,7 @@ public:
 };
 #endif
 
-#if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER)
+#if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
 class PreparedDBQueryServer
 {
 public:
