@@ -187,7 +187,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         if(GlobalServerData::serverSettings.database_common.host=="localhost")
             std::cerr << "localhost";
         else
-            std::cerr << GlobalServerData::serverSettings.database_common.host << ":" << GlobalServerData::serverSettings.database_common.host;
+            std::cerr << GlobalServerData::serverSettings.database_common.host/* << ":" << GlobalServerData::serverSettings.database_common.port*/;
         std::cerr << " on " << GlobalServerData::serverSettings.database_common.db << std::endl;
         characterSelectionIsWrong(query_id,0x02,"Result return query wrong");
         return;

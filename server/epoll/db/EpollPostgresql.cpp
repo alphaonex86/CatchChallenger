@@ -368,6 +368,7 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                             std::cerr << "Query to database failed: " << errorMessage() << std::endl;
                         else
                             std::cerr << "Query to database failed: " << errorMessage() << queriesList.front() << std::endl;
+                        abort();//prevent continue running to prevent data corruption
                         tuleIndex=0;
                     }
                     else

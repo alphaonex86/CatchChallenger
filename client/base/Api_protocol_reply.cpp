@@ -8,6 +8,7 @@ using namespace CatchChallenger;
 #include <sys/stat.h>
 #endif
 #include <iostream>
+#include <string>
 
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/GeneralVariable.h"
@@ -472,7 +473,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             }
             uint32_t characterId;
             in >> characterId;
-            std::cout << "created character with id: " << characterId << ", returnCode: " << returnCode << ", line: " << __FILE__ << ": " << __LINE__ << std::endl;
+            std::cout << "created character with id: " << characterId << ", returnCode: " << std::to_string(returnCode) << ", line: " << __FILE__ << ": " << __LINE__ << std::endl;
             newCharacterId(returnCode,characterId);
         }
         break;

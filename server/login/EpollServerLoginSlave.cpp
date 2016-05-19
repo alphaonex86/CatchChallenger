@@ -773,7 +773,7 @@ void EpollServerLoginSlave::preload_profile()
                         ",blob_version) VALUES(%1,%2,'%3',%4,0,0,"+
                         std::to_string(profile.cash)+",%5,0,FALSE,"
                         "0,0,0,"+
-                        std::to_string(profile.databaseId/*starter*/)+",'\\x"+item+"','\\x"+reputations+"','\\x%6'','\\x"+encyclopedia_item+"',"+std::to_string(common_blobversion_datapack)+");");
+                        std::to_string(profile.databaseId/*starter*/)+",'\\x"+item+"','\\x"+reputations+"','\\x%6','\\x"+encyclopedia_item+"',"+std::to_string(common_blobversion_datapack)+");");
             break;
         }
 
