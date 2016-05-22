@@ -134,6 +134,8 @@ int main(int argc, char *argv[])
             std::cerr << "Unable to open the output file: " << LinkToLogin::linkToLogin->pFilePath << std::endl;
             abort();
         }
+        else
+            std::cout << "Write the status to: " << LinkToLogin::linkToLogin->pFilePath << std::endl;
     }
 
     char buf[4096];
