@@ -2488,7 +2488,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         text = actualBot.step.at(step)->FirstChildElement(std::string("text"));
         while(text!=NULL)
         {
-            if(text->Attribute(std::string("lang"))!=NULL && *text->Attribute(std::string("lang"))==language.toStdString())
+            if(text->Attribute(std::string("lang"))==NULL || *text->Attribute(std::string("lang"))==language.toStdString())
             {
                 QString textToShow=text->GetText();
                 textToShow=parseHtmlToDisplay(textToShow);
