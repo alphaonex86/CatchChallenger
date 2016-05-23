@@ -387,9 +387,13 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             characterSelectionIsWrong(query_id,0x04,"item have wrong size");
             return;
         }
+        uint32_t lastItemId=0;
         while(pos<data.size())
         {
-            const uint16_t &item=le16toh(*reinterpret_cast<const uint16_t *>(data_raw+pos));
+            uint32_t item=(uint32_t)le16toh(*reinterpret_cast<const uint16_t *>(data_raw+pos))+lastItemId;
+            if(item>65535)
+                item-=65536;
+            lastItemId=item;
             pos+=2;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(CommonDatapack::commonDatapack.items.item.find(item)==CommonDatapack::commonDatapack.items.item.cend())
@@ -415,9 +419,13 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             characterSelectionIsWrong(query_id,0x04,"item warehouse have wrong size");
             return;
         }
+        uint32_t lastItemId=0;
         while(pos<data.size())
         {
-            const uint16_t &item=le16toh(*reinterpret_cast<const uint16_t *>(data_raw+pos));
+            uint32_t item=(uint32_t)le16toh(*reinterpret_cast<const uint16_t *>(data_raw+pos))+lastItemId;
+            if(item>65535)
+                item-=65536;
+            lastItemId=item;
             pos+=2;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(CommonDatapack::commonDatapack.items.item.find(item)==CommonDatapack::commonDatapack.items.item.cend())
@@ -464,12 +472,16 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             characterSelectionIsWrong(query_id,0x04,"reputations have wrong size");
             return;
         }
+        uint32_t lastReputationId=0;
         while(pos<data.size())
         {
             PlayerReputation playerReputation;
             playerReputation.point=le32toh(*reinterpret_cast<const uint32_t *>(data_raw+pos));
             pos+=4;
-            const uint8_t &type=data_raw[pos];
+            uint32_t type=(uint32_t)data_raw[pos]+lastReputationId;
+            if(type>255)
+                type-=256;
+            lastReputationId=type;
             pos+=1;
             playerReputation.level=data_raw[pos];
             pos+=1;
@@ -865,17 +877,23 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         }
         else
         {
+            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
             public_and_private_informations.itemOnMap.reserve(itemonmap.size());
+            #endif
+            uint32_t lastItemonmapId=0;
             uint32_t pos=0;
             while(pos<itemonmap.size())
             {
-                const uint32_t &pointOnMapDatabaseId=
+                uint32_t pointOnMapDatabaseId=(uint32_t)
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 itemonmap
                 #else
                 raw_itemonmap
                 #endif
-                [pos];
+                [pos]+lastItemonmapId;
+                if(pointOnMapDatabaseId>255)
+                    pointOnMapDatabaseId-=256;
+                lastItemonmapId=pointOnMapDatabaseId;
                 if(!ok)
                 {
                     normalOutput("wrong value type for item on map, skip: "+std::to_string(pointOnMapDatabaseId));
@@ -926,18 +944,24 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
             }
             else
             {
+                #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
                 public_and_private_informations.plantOnMap.reserve(plants.size()/(1+1+8));
+                #endif
                 PlayerPlant plant;
+                uint32_t lastPlantId=0;
                 uint32_t pos=0;
                 while(pos<plants.size())
                 {
-                    const uint8_t &pointOnMap=
+                    uint32_t pointOnMap=(uint32_t)
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             plants
                             #else
                             raw_plants
                             #endif
-                            [pos];
+                            [pos]+lastPlantId;
+                    if(pointOnMap>255)
+                        pointOnMap-=256;
+                    lastPlantId=pointOnMap;
                     ++pos;
 
                     if(pointOnMap>=DictionaryServer::dictionary_pointOnMap_database_to_internal.size())
@@ -1009,18 +1033,24 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
             }
             else
             {
+                #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
                 public_and_private_informations.quests.reserve(quests.size()/(1+1+1));
+                #endif
                 PlayerQuest playerQuest;
+                uint32_t lastQuestId=0;
                 uint32_t pos=0;
                 while(pos<quests.size())
                 {
-                    uint8_t questId=
+                    uint32_t questId=(uint32_t)
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             quests
                             #else
                             raw_quests
                             #endif
-                            [pos];
+                            [pos]+lastQuestId;
+                    if(questId>255)
+                        questId-=256;
+                    lastQuestId=questId;
                     ++pos;
                     playerQuest.finish_one_time=
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK

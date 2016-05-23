@@ -30,9 +30,10 @@ StringWithReplacement PreparedDBQueryCommon::db_query_insert_monster;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_character_item;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_character_item_and_encyclopedia;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_character_item_warehouse;
-StringWithReplacement PreparedDBQueryCommon::db_query_update_character_monster;
+/*StringWithReplacement PreparedDBQueryCommon::db_query_update_character_monster;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_character_monster_and_encyclopedia;
-StringWithReplacement PreparedDBQueryCommon::db_query_update_character_monster_warehouse;
+StringWithReplacement PreparedDBQueryCommon::db_query_update_character_monster_warehouse;*/
+StringWithReplacement PreparedDBQueryCommon::db_query_update_character_monster_encyclopedia;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_cash;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_warehouse_cash;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_character_recipe;
@@ -58,6 +59,8 @@ StringWithReplacement PreparedDBQueryCommon::db_query_change_right;
 StringWithReplacement PreparedDBQueryCommon::db_query_delete_monster_buff;
 StringWithReplacement PreparedDBQueryCommon::db_query_insert_warehouse_monster;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_position;
+StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_position_and_place;
+StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_place;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_and_hp;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_hp_and_level;
 StringWithReplacement PreparedDBQueryCommon::db_query_select_monsters_by_player_id;
@@ -281,9 +284,10 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_character_item="UPDATE `character` SET `item`=UNHEX('%1') WHERE `id`=%2";
         PreparedDBQueryCommon::db_query_update_character_item_and_encyclopedia="UPDATE `character` SET `item`=UNHEX('%1'),`encyclopedia_item`=UNHEX('%2') WHERE `id`=%3";
         PreparedDBQueryCommon::db_query_update_character_item_warehouse="UPDATE `character_warehouse` SET `item`=UNHEX('%1') WHERE `id`=%2";
-        PreparedDBQueryCommon::db_query_update_character_monster="UPDATE `character` SET `monster`=UNHEX('%1') WHERE `id`=%2";
+        /*PreparedDBQueryCommon::db_query_update_character_monster="UPDATE `character` SET `monster`=UNHEX('%1') WHERE `id`=%2";
         PreparedDBQueryCommon::db_query_update_character_monster_and_encyclopedia="UPDATE `character` SET `monster`=UNHEX('%1'),`encyclopedia_monster`=UNHEX('%2') WHERE `id`=%3";
-        PreparedDBQueryCommon::db_query_update_character_monster_warehouse="UPDATE `character_warehouse` SET `monster`=UNHEX('%1') WHERE `id`=%2";
+        PreparedDBQueryCommon::db_query_update_character_monster_warehouse="UPDATE `character_warehouse` SET `monster`=UNHEX('%1') WHERE `id`=%2";*/
+        PreparedDBQueryCommon::db_query_update_character_monster_encyclopedia="UPDATE `character` SET `encyclopedia_monster`=UNHEX('%1') WHERE `id`=%2";
         PreparedDBQueryCommon::db_query_update_cash="UPDATE `character` SET `cash`=%1 WHERE `id`=%2";
         PreparedDBQueryCommon::db_query_update_warehouse_cash="UPDATE `character` SET `warehouse_cash`=%1 WHERE `id`=%2";
         PreparedDBQueryCommon::db_query_update_character_recipe="UPDATE `character` SET `recipes`=UNHEX('%1') WHERE `id`=%2";
@@ -362,6 +366,8 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_monster_buff_level="UPDATE `monster` SET `level`=%3 WHERE `monster`=%1 AND `buff`=%2";
         PreparedDBQueryCommon::db_query_delete_monster_specific_buff="DELETE FROM `monster_buff` WHERE `monster`=%1 AND `buff`=%2";
         PreparedDBQueryCommon::db_query_update_monster_position="UPDATE `monster` SET `position`=%1 WHERE `id`=%2";
+        PreparedDBQueryCommon::db_query_update_monster_position_and_place="UPDATE `monster` SET `position`=%1,`position`=%2 WHERE `id`=%3";
+        PreparedDBQueryCommon::db_query_update_monster_place="UPDATE `monster` SET `position`=%1 WHERE `id`=%2";
         PreparedDBQueryCommon::db_query_update_monster_skill_level="UPDATE `monster_skill` SET `level`=%1 WHERE `monster`=%2 AND `skill`=%3";
         PreparedDBQueryCommon::db_query_insert_monster_buff="INSERT INTO `monster_buff`(`monster`,`buff`,`level`) VALUES(%1,%2,%3)";
 
@@ -385,9 +391,10 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_character_item="UPDATE character SET item='%1' WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_character_item_and_encyclopedia="UPDATE character SET item='%1',encyclopedia_item='%2' WHERE id=%3";
         PreparedDBQueryCommon::db_query_update_character_item_warehouse="UPDATE character SET item_warehouse='%1' WHERE id=%2";
-        PreparedDBQueryCommon::db_query_update_character_monster="UPDATE character SET monster='%1' WHERE id=%2";
+        /*PreparedDBQueryCommon::db_query_update_character_monster="UPDATE character SET monster='%1' WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_character_monster_and_encyclopedia="UPDATE character SET monster='%1',encyclopedia_monster='%2' WHERE id=%3";
-        PreparedDBQueryCommon::db_query_update_character_monster_warehouse="UPDATE character SET monster_warehouse='%1' WHERE id=%2";
+        PreparedDBQueryCommon::db_query_update_character_monster_warehouse="UPDATE character SET monster_warehouse='%1' WHERE id=%2";*/
+        PreparedDBQueryCommon::db_query_update_character_monster_encyclopedia="UPDATE character SET encyclopedia_monster='%1' WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_cash="UPDATE character SET cash=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_warehouse_cash="UPDATE character SET warehouse_cash=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_character_recipe="UPDATE character SET recipes='%1' WHERE id=%2";
@@ -415,6 +422,8 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_insert_warehouse_monster="INSERT INTO monster(id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,skills,skills_endurance) "
                                                        "VALUES(%1,%2,%3,%4,0,0,%5,%6,0,%7,'%8','%9')";
         PreparedDBQueryCommon::db_query_update_monster_position="UPDATE monster SET position=%1 WHERE id=%2";
+        PreparedDBQueryCommon::db_query_update_monster_position_and_place="UPDATE monster SET position=%1,place=%2 WHERE id=%3";
+        PreparedDBQueryCommon::db_query_update_monster_place="UPDATE monster SET place=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_monster_and_hp="UPDATE monster SET hp=%1,monster=%2 WHERE id=%3";
         PreparedDBQueryCommon::db_query_update_monster_hp_and_level="UPDATE monster SET hp=%1,level=%2 WHERE id=%3";
         #endif
@@ -432,9 +441,10 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_character_item="UPDATE character SET item='\\x%1' WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_character_item_and_encyclopedia="UPDATE character SET item='\\x%1',encyclopedia_item='\\x%2' WHERE id=%3";
         PreparedDBQueryCommon::db_query_update_character_item_warehouse="UPDATE character SET item_warehouse='\\x%1' WHERE id=%2";
-        PreparedDBQueryCommon::db_query_update_character_monster="UPDATE character SET monster='\\x%1' WHERE id=%2";
+        /*PreparedDBQueryCommon::db_query_update_character_monster="UPDATE character SET monster='\\x%1' WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_character_monster_and_encyclopedia="UPDATE character SET monster='\\x%1',encyclopedia_monster='\\x%2' WHERE id=%3";
-        PreparedDBQueryCommon::db_query_update_character_monster_warehouse="UPDATE character SET monster_warehouse='\\x%1' WHERE id=%2";
+        PreparedDBQueryCommon::db_query_update_character_monster_warehouse="UPDATE character SET monster_warehouse='\\x%1' WHERE id=%2";*/
+        PreparedDBQueryCommon::db_query_update_character_monster_encyclopedia="UPDATE character SET encyclopedia_monster='\\x%1' WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_cash="UPDATE character SET cash=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_warehouse_cash="UPDATE character SET warehouse_cash=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_character_recipe="UPDATE character SET recipes='\\x%1' WHERE id=%2";
@@ -462,6 +472,8 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_insert_warehouse_monster="INSERT INTO monster(id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,skills,skills_endurance) "
                                                        "VALUES(%1,%2,%3,%4,0,0,%5,%6,0,%7,'\\x%8','\\x%9')";
         PreparedDBQueryCommon::db_query_update_monster_position="UPDATE monster SET position=%1 WHERE id=%2";
+        PreparedDBQueryCommon::db_query_update_monster_position_and_place="UPDATE monster SET position=%1,place=%2 WHERE id=%3";
+        PreparedDBQueryCommon::db_query_update_monster_place="UPDATE monster SET place=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_monster_and_hp="UPDATE monster SET hp=%1,monster=%2 WHERE id=%3";
         PreparedDBQueryCommon::db_query_update_monster_hp_and_level="UPDATE monster SET hp=%1,level=%2 WHERE id=%3";
         #endif

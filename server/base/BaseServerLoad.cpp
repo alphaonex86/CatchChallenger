@@ -744,101 +744,6 @@ void BaseServer::preload_profile()
     }
     GlobalServerData::serverPrivateVariables.serverProfileInternalList.clear();
 
-    /*
-    unsigned int index=0;
-    while(index<CommonDatapack::commonDatapack.profileList.size())
-    {
-        const Profile &profile=CommonDatapack::commonDatapack.profileList.at(index);
-        const ServerProfile &serverProfile=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.at(index);
-        ServerProfileInternal serverProfileInternal;
-        serverProfileInternal.valid=false;
-        if(serverProfile.mapString.size()>0 && GlobalServerData::serverPrivateVariables.map_list.find(serverProfile.mapString)!=GlobalServerData::serverPrivateVariables.map_list.end())
-        {
-            serverProfileInternal.map=
-                    static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.at(serverProfile.mapString));
-            serverProfileInternal.x=serverProfile.x;
-            serverProfileInternal.y=serverProfile.y;
-            serverProfileInternal.orientation=serverProfile.orientation;
-            const uint32_t &mapId=serverProfileInternal.map->reverse_db_id;
-            const std::string &mapQuery=std::to_string(mapId)+
-                    ","+
-                    std::to_string(serverProfile.x)+
-                    ","+
-                    std::to_string(serverProfile.y)+
-                    ","+
-                    std::to_string(Orientation_bottom);
-            switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
-            {
-                default:
-                case DatabaseBase::DatabaseType::Mysql:
-                    serverProfileInternal.preparedQueryAddCharacter.push_back("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(");
-                    serverProfileInternal.preparedQueryAddCharacter.push_back(id ",");
-                    serverProfileInternal.preparedQueryAddCharacter.push_back(account ",'");
-                    serverProfileInternal.preparedQueryAddCharacter.push_back(pseudo "',");
-                    serverProfileInternal.preparedQueryAddCharacter.push_back(skin ",0,0,"+
-                            std::to_string(profile.cash)+",");
-                    serverProfileInternal.preparedQueryAddCharacter.push_back(QDateTime::currentDateTime().toTime_t() ",0,0,0,0,0,"+
-                            std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+");");
-                break;
-                case DatabaseBase::DatabaseType::SQLite:
-                    serverProfileInternal.preparedQueryAddCharacter.push_back("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
-                    serverProfileInternal.preparedQueryAddCharacter.push_back(id ",");
-                    serverProfileInternal.preparedQueryAddCharacter.push_back(account ",'");
-                    serverProfileInternal.preparedQueryAddCharacter.push_back(pseudo "',");
-                    serverProfileInternal.preparedQueryAddCharacter.push_back(skin ",0,0,"+
-                            std::to_string(profile.cash)+",");
-                    serverProfileInternal.preparedQueryAddCharacter.push_back(QDateTime::currentDateTime().toTime_t() ",0,0,0,0,0,"+
-                            std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+");");
-                break;
-                case DatabaseBase::DatabaseType::PostgreSQL:
-                    serverProfileInternal.preparedQueryAddCharacter.push_back("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
-                    serverProfileInternal.preparedQueryAddCharacter.push_back(id ",");
-                    serverProfileInternal.preparedQueryAddCharacter.push_back(account ",'");
-                    serverProfileInternal.preparedQueryAddCharacter.push_back(pseudo "',");
-                    serverProfileInternal.preparedQueryAddCharacter.push_back(skin ",0,0,"+
-                            std::to_string(profile.cash)+",");
-                    serverProfileInternal.preparedQueryAddCharacter.push_back(QDateTime::currentDateTime().toTime_t() ",0,FALSE,0,0,0,"+
-                            std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+");");
-                break;
-            }
-            switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
-            {
-                default:
-                case DatabaseBase::DatabaseType::Mysql:
-                    serverProfileInternal.preparedQueryAddCharacterForServer.push_back("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`) VALUES(");
-                    serverProfileInternal.preparedQueryAddCharacterForServer.push_back(id ","+mapQuery+","+mapQuery+","+mapQuery+",");
-                    serverProfileInternal.preparedQueryAddCharacterForServer.push_back(QDateTime::currentDateTime().toTime_t() ",0);");
-                break;
-                case DatabaseBase::DatabaseType::SQLite:
-                    serverProfileInternal.preparedQueryAddCharacterForServer.push_back("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
-                    serverProfileInternal.preparedQueryAddCharacterForServer.push_back(id ","+mapQuery+","+mapQuery+","+mapQuery+",");
-                    serverProfileInternal.preparedQueryAddCharacterForServer.push_back(QDateTime::currentDateTime().toTime_t() ",0);");
-                break;
-                case DatabaseBase::DatabaseType::PostgreSQL:
-                    serverProfileInternal.preparedQueryAddCharacterForServer.push_back("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
-                    serverProfileInternal.preparedQueryAddCharacterForServer.push_back(id ","+mapQuery+","+mapQuery+","+mapQuery+",");
-                    serverProfileInternal.preparedQueryAddCharacterForServer.push_back(QDateTime::currentDateTime().toTime_t() ",0);");
-                break;
-            }
-            serverProfileInternal.valid=true;
-        }
-        GlobalServerData::serverPrivateVariables.serverProfileInternalList.push_back(serverProfileInternal);
-        index++;
-    }*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     GlobalServerData::serverPrivateVariables.serverProfileInternalList.resize(CommonDatapack::commonDatapack.profileList.size());
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     const DatabaseBase::DatabaseType &type=GlobalServerData::serverPrivateVariables.db_common->databaseType();
@@ -861,17 +766,21 @@ void BaseServer::preload_profile()
         std::string encyclopedia_item,item;
         if(!profile.items.empty())
         {
-            auto max=profile.items.at(0).id;
+            uint32_t lastItemId=0;
+            auto item_list=profile.items;
+            std::sort(item_list.begin(),item_list.end(),[](const Profile::Item &a, const Profile::Item &b) {
+                return a.id<b.id;
+            });
+            auto max=item_list.at(item_list.size()-1).id;
             uint32_t pos=0;
-            char item_raw[(2+4)*profile.items.size()];
+            char item_raw[(2+4)*item.size()];
             unsigned int index=0;
-            while(index<profile.items.size())
+            while(index<item.size())
             {
-                const auto &item=profile.items.at(index);
-                if(max<item.id)
-                    max=item.id;
-                *reinterpret_cast<uint16_t *>(item_raw+pos)=htole16(item.id);
+                const auto &item=item_list.at(index);
+                *reinterpret_cast<uint16_t *>(item_raw+pos)=htole16(item.id-lastItemId);
                 pos+=2;
+                lastItemId=item.id;
                 *reinterpret_cast<uint32_t *>(item_raw+pos)=htole32(item.quantity);
                 pos+=4;
                 index++;
@@ -894,16 +803,22 @@ void BaseServer::preload_profile()
         std::string reputations;
         if(!profile.reputations.empty())
         {
+            uint32_t lastReputationId=0;
+            auto reputations_list=profile.reputations;
+            std::sort(reputations_list.begin(),reputations_list.end(),[](const Profile::Reputation &a, const Profile::Reputation &b) {
+                return a.reputationDatabaseId<b.reputationDatabaseId;
+            });
             uint32_t pos=0;
-            char reputation_raw[(1+4+1)*profile.reputations.size()];
+            char reputation_raw[(1+4+1)*reputations_list.size()];
             unsigned int index=0;
-            while(index<profile.reputations.size())
+            while(index<reputations_list.size())
             {
-                const auto &reputation=profile.reputations.at(index);
+                const auto &reputation=reputations_list.at(index);
                 *reinterpret_cast<uint32_t *>(reputation_raw+pos)=htole32(reputation.point);
                 pos+=4;
-                reputation_raw[pos]=reputation.reputationDatabaseId;
+                reputation_raw[pos]=reputation.reputationDatabaseId-lastReputationId;
                 pos+=1;
+                lastReputationId=reputation.reputationDatabaseId;
                 reputation_raw[pos]=reputation.level;
                 pos+=1;
                 index++;
@@ -926,19 +841,24 @@ void BaseServer::preload_profile()
                     const auto &monster=monsters.at(monsterIndex);
                     const auto &monsterDatapack=CommonDatapack::commonDatapack.monsters.at(monster.id);
                     const Monster::Stat &monsterStat=CommonFightEngineBase::getStat(monsterDatapack,monster.level);
-                    const std::vector<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngineBase::generateWildSkill(monsterDatapack,monster.level);
-                    if(skills.empty())
+                    std::vector<CatchChallenger::PlayerMonster::PlayerSkill> skills_list=CommonFightEngineBase::generateWildSkill(monsterDatapack,monster.level);
+                    if(skills_list.empty())
                     {
-                        std::cerr << "skills.empty() for some profile" << std::endl;
+                        std::cerr << "skills_list.empty() for some profile" << std::endl;
                         abort();
                     }
-                    char raw_skill[(2+1)*skills.size()],raw_skill_endurance[1*skills.size()];
+                    uint32_t lastSkillId=0;
+                    std::sort(skills_list.begin(),skills_list.end(),[](const CatchChallenger::PlayerMonster::PlayerSkill &a, const CatchChallenger::PlayerMonster::PlayerSkill &b) {
+                        return a.skill<b.skill;
+                    });
+                    char raw_skill[(2+1)*skills_list.size()],raw_skill_endurance[1*skills_list.size()];
                     //the skills
                     unsigned int sub_index=0;
-                    while(sub_index<skills.size())
+                    while(sub_index<skills_list.size())
                     {
-                        const auto &skill=skills.at(sub_index);
-                        *reinterpret_cast<uint16_t *>(raw_skill+sub_index*(2+1))=htole16(skill.skill);
+                        const auto &skill=skills_list.at(sub_index);
+                        *reinterpret_cast<uint16_t *>(raw_skill+sub_index*(2+1))=htole16(skill.skill-lastSkillId);
+                        lastSkillId=skill.skill;
                         raw_skill[sub_index*(2+1)+2]=skill.level;
                         raw_skill_endurance[sub_index]=skill.endurance;
                         sub_index++;

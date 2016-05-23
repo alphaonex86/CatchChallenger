@@ -2284,7 +2284,13 @@ void CommonFightEngine::startTheFight()
 }
 
 //return true if now have wild monter to fight
-bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y,const std::unordered_map<uint16_t,uint32_t> &items,const std::vector<uint8_t> &events)
+bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map, const COORD_TYPE &x, const COORD_TYPE &y,
+                                                     #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
+                                                     const std::unordered_map<uint16_t, uint32_t> &items
+                                                     #else
+                                                     const std::map<uint16_t, uint32_t> &items
+                                                     #endif
+                                                     , const std::vector<uint8_t> &events)
 {
     bool ok;
     if(isInFight())
