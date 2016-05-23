@@ -19,6 +19,7 @@ NewProfile::NewProfile(const QString &datapackPath, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::NewProfile)
 {
+    srand(time(NULL));
     ui->setupUi(this);
     this->datapackPath=datapackPath;
     this->mOk=false;
@@ -40,6 +41,7 @@ NewProfile::NewProfile(const QString &datapackPath, QWidget *parent) :
     }
     if(ui->comboBox->count()>0)
     {
+        ui->comboBox->setCurrentIndex(rand()%ui->comboBox->count());
         ui->description->setText(profileTextList.at(ui->comboBox->currentIndex()).description);
         ui->ok->setEnabled(true);
     }
