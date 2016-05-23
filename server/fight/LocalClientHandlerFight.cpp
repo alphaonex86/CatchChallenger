@@ -121,11 +121,31 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
 void Client::syncMonsterBuff(const PlayerMonster &monster)
 {
     char raw_buff[(1+1+1)*monster.buffs.size()];
+    uint8_t lastBuffId=0;
     uint32_t sub_index=0;
     while(sub_index<monster.buffs.size())
     {
         const PlayerBuff &buff=monster.buffs.at(sub_index);
-        raw_buff[sub_index*3+0]=buff.buff;
+
+        #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
+        //not ordened
+        if(lastBuffId<=buff.buff)
+        {
+            const uint8_t &buffInt=buff.buff-lastBuffId;
+            lastBuffId=buff.buff;
+        }
+        else
+        {
+            const uint8_t &buffInt=256-lastBuffId+buff.buff;
+            lastBuffId=buff.buff;
+        }
+        #else
+        //ordened
+        const uint8_t &buffInt=buff.buff-lastBuffId;
+        lastBuffId=buff.buff;
+        #endif
+
+        raw_buff[sub_index*3+0]=buffInt;
         raw_buff[sub_index*3+1]=buff.level;
         raw_buff[sub_index*3+2]=buff.remainingNumberOfTurn;
         sub_index++;
@@ -142,13 +162,32 @@ void Client::syncMonsterSkillAndEndurance(const PlayerMonster &monster)
     char skills_endurance[monster.skills.size()*(1)];
     char skills[monster.skills.size()*(2+1)];
     unsigned int sub_index=0;
+    uint16_t lastSkillId=0;
     const unsigned int &sub_size=monster.skills.size();
     while(sub_index<sub_size)
     {
         const PlayerMonster::PlayerSkill &playerSkill=monster.skills.at(sub_index);
         skills_endurance[sub_index]=playerSkill.endurance;
 
-        *reinterpret_cast<uint16_t *>(skills+sub_index*(2+1))=htole16(playerSkill.skill);
+        #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
+        //not ordened
+        if(lastSkillId<=playerSkill.skill)
+        {
+            const uint16_t &skillInt=playerSkill.skill-lastSkillId;
+            lastSkillId=playerSkill.skill;
+        }
+        else
+        {
+            const uint16_t &skillInt=65536-lastSkillId+playerSkill.skill;
+            lastSkillId=playerSkill.skill;
+        }
+        #else
+        //ordened
+        const uint16_t &skillInt=playerSkill.skill-lastSkillId;
+        lastSkillId=playerSkill.skill;
+        #endif
+
+        *reinterpret_cast<uint16_t *>(skills+sub_index*(2+1))=htole16(skillInt);
         skills[2+sub_index*(2+1)]=playerSkill.level;
 
         sub_index++;
@@ -1446,18 +1485,20 @@ void Client::addPlayerMonster(const std::vector<PlayerMonster> &playerMonster)
         index++;
     }
     if(haveChange)
-        updateMonsterInDatabase();
+        updateMonsterInDatabaseEncyclopedia();
+        /*if(haveChange)updateMonsterInDatabase();
     else
-        updateMonsterInDatabaseAndEncyclopedia();
+        updateMonsterInDatabaseAndEncyclopedia();*/
 }
 
 void Client::addPlayerMonster(const PlayerMonster &playerMonster)
 {
     CommonFightEngine::addPlayerMonster(playerMonster);
     if(addPlayerMonsterWithChange(playerMonster))
-        updateMonsterInDatabase();
-    else
-        updateMonsterInDatabaseAndEncyclopedia();
+        updateMonsterInDatabaseEncyclopedia();
+            /*if(haveChange)updateMonsterInDatabase();
+        else
+            updateMonsterInDatabaseAndEncyclopedia();*/
 }
 
 bool Client::addPlayerMonsterWithChange(const PlayerMonster &playerMonster)

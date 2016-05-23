@@ -191,16 +191,21 @@ void Client::loadMonsters_return()
                 {
                     playerMonster.buffs.reserve(buffs.size()/(1+1+1));
                     PlayerBuff buff;
+                    uint32_t lastBuffId=0;
                     uint32_t pos=0;
                     while(pos<buffs.size())
                     {
-                        buff.buff=
+                        uint32_t buffint=(uint32_t)
                                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                                 buffs
                                 #else
                                 raw_buffs
                                 #endif
-                                [pos];
+                                [pos]+lastBuffId;
+                        if(buffint>255)
+                            buffint-=256;
+                        lastBuffId=buffint;
+                        buff.buff=buffint;
                         ++pos;
                         buff.level=
                                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -263,10 +268,15 @@ void Client::loadMonsters_return()
                 {
                     playerMonster.skills.reserve(skills.size()/(1+2));
                     PlayerMonster::PlayerSkill skill;
+                    uint32_t lastSkillId=0;
                     uint32_t pos=0;
                     while(pos<skills.size())
                     {
-                        skill.skill=le16toh(*reinterpret_cast<const uint16_t *>(raw_skills+pos));
+                        uint32_t skillInt=(uint32_t)le16toh(*reinterpret_cast<const uint16_t *>(raw_skills+pos))+lastSkillId;
+                        if(skillInt>65535)
+                            skillInt-=65536;
+                        lastSkillId=skillInt;
+                        skill.skill=skillInt;
                         pos+=2;
                         skill.level=
                                 #ifdef CATCHCHALLENGER_EXTRA_CHECK

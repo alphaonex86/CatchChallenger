@@ -522,7 +522,7 @@ void Client::addObjectAndSend(const uint16_t &item,const uint32_t &quantity)
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
-void Client::addObject(const uint16_t &item,const uint32_t &quantity)
+void Client::addObject(const uint16_t &item, const uint32_t &quantity, bool databaseSync)
 {
     if(CommonDatapack::commonDatapack.items.item.find(item)==CommonDatapack::commonDatapack.items.item.cend())
     {
@@ -537,7 +537,8 @@ void Client::addObject(const uint16_t &item,const uint32_t &quantity)
         stringreplaceOne(queryText,"%2",std::to_string(item));
         stringreplaceOne(queryText,"%3",std::to_string(character_id));
         dbQueryWriteCommon(queryText);*/
-        updateObjectInDatabase();
+        if(databaseSync)
+            updateObjectInDatabase();
     }
     else
     {
@@ -548,14 +549,21 @@ void Client::addObject(const uint16_t &item,const uint32_t &quantity)
         dbQueryWriteCommon(queryText);*/
         public_and_private_informations.items[item]=quantity;
         if(public_and_private_informations.encyclopedia_item==NULL)
-            updateObjectInDatabase();
+        {
+            if(databaseSync)
+                updateObjectInDatabase();
+        }
         else if(public_and_private_informations.encyclopedia_item[item/8] & (1<<(7-item%8)))
         {
             public_and_private_informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
-            updateObjectInDatabaseAndEncyclopedia();
+            if(databaseSync)
+                updateObjectInDatabaseAndEncyclopedia();
         }
         else
-            updateObjectInDatabase();
+        {
+            if(databaseSync)
+                updateObjectInDatabase();
+        }
     }
 }
 
@@ -571,12 +579,29 @@ void Client::updateObjectInDatabase()
     }
     else
     {
+        uint32_t lastItemId=0;
         uint32_t pos=0;
         char item_raw[(2+4)*public_and_private_informations.items.size()];
         auto i=public_and_private_informations.items.begin();
         while(i!=public_and_private_informations.items.cend())
         {
-            const uint16_t &item=i->first;
+            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
+            //not ordened
+            if(lastItemId<=i->first)
+            {
+                const uint16_t &item=i->first-lastItemId;
+                lastItemId=i->first;
+            }
+            else
+            {
+                const uint16_t &item=65536-lastItemId+i->first;
+                lastItemId=i->first;
+            }
+            #else
+            //ordened
+            const uint16_t &item=i->first-lastItemId;
+            lastItemId=i->first;
+            #endif
             const uint32_t &quantity=i->second;
             *reinterpret_cast<uint16_t *>(item_raw+pos)=htole16(item);
             pos+=2;
@@ -586,19 +611,21 @@ void Client::updateObjectInDatabase()
         }
         dbQueryWriteCommon(
                     PreparedDBQueryCommon::db_query_update_character_item.compose(
-                        binarytoHexa(item_raw,sizeof(item_raw))
+                        binarytoHexa(item_raw,sizeof(item_raw)),
+                        std::to_string(character_id)
                         )
                     );
     }
 }
 
-void Client::updateMonsterInDatabase()
+/*void Client::updateMonsterInDatabase()
 {
     if(public_and_private_informations.playerMonster.empty())
     {
         dbQueryWriteCommon(
                     PreparedDBQueryCommon::db_query_update_character_monster.compose(
-                        std::string()
+                        std::string(),
+                    std::to_string(character_id)
                         )
                     );
     }
@@ -617,11 +644,12 @@ void Client::updateMonsterInDatabase()
         monster=binarytoHexa(monster_raw,sizeof(monster_raw));
         dbQueryWriteCommon(
                     PreparedDBQueryCommon::db_query_update_character_monster.compose(
-                        binarytoHexa(monster_raw,sizeof(monster_raw))
+                        binarytoHexa(monster_raw,sizeof(monster_raw)),
+                    std::to_string(character_id)
                         )
                     );
     }
-}
+}*/
 
 void Client::updateObjectInWarehouseDatabase()
 {
@@ -629,18 +657,36 @@ void Client::updateObjectInWarehouseDatabase()
     {
         dbQueryWriteCommon(
                     PreparedDBQueryCommon::db_query_update_character_item_warehouse.compose(
-                        std::string()
+                        std::string(),
+                        std::to_string(character_id)
                         )
                     );
     }
     else
     {
+        uint32_t lastItemId=0;
         uint32_t pos=0;
         char item_raw[(2+4)*public_and_private_informations.warehouse_items.size()];
         auto i=public_and_private_informations.warehouse_items.begin();
         while(i!=public_and_private_informations.warehouse_items.cend())
         {
-            const uint16_t &item=i->first;
+            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
+            //not ordened
+            if(lastItemId<=i->first)
+            {
+                const uint16_t &item=i->first-lastItemId;
+                lastItemId=i->first;
+            }
+            else
+            {
+                const uint16_t &item=65536-lastItemId+i->first;
+                lastItemId=i->first;
+            }
+            #else
+            //ordened
+            const uint16_t &item=i->first-lastItemId;
+            lastItemId=i->first;
+            #endif
             const uint32_t &quantity=i->second;
             *reinterpret_cast<uint16_t *>(item_raw+pos)=htole16(item);
             pos+=2;
@@ -650,13 +696,14 @@ void Client::updateObjectInWarehouseDatabase()
         }
         dbQueryWriteCommon(
                     PreparedDBQueryCommon::db_query_update_character_item_warehouse.compose(
-                        binarytoHexa(item_raw,sizeof(item_raw))
+                        binarytoHexa(item_raw,sizeof(item_raw)),
+                        std::to_string(character_id)
                         )
                     );
     }
 }
 
-void Client::updateMonsterInWarehouseDatabase()
+/*void Client::updateMonsterInWarehouseDatabase()
 {
     if(public_and_private_informations.warehouse_playerMonster.empty())
     {
@@ -681,23 +728,41 @@ void Client::updateMonsterInWarehouseDatabase()
         monster=binarytoHexa(monster_raw,sizeof(monster_raw));
         dbQueryWriteCommon(
                     PreparedDBQueryCommon::db_query_update_character_monster_warehouse.compose(
-                        binarytoHexa(monster_raw,sizeof(monster_raw))
+                        binarytoHexa(monster_raw,sizeof(monster_raw)),
+                    std::to_string(character_id)
                         )
                     );
     }
-}
+}*/
 
 void Client::updateObjectInDatabaseAndEncyclopedia()
 {
     std::string item;
     if(!public_and_private_informations.items.empty())
     {
+        uint32_t lastItemId=0;
         uint32_t pos=0;
         char item_raw[(2+4)*public_and_private_informations.items.size()];
         auto i=public_and_private_informations.items.begin();
         while(i!=public_and_private_informations.items.cend())
         {
-            const uint16_t &item=i->first;
+            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
+            //not ordened
+            if(lastItemId<=i->first)
+            {
+                const uint16_t &item=i->first-lastItemId;
+                lastItemId=i->first;
+            }
+            else
+            {
+                const uint16_t &item=65536-lastItemId+i->first;
+                lastItemId=i->first;
+            }
+            #else
+            //ordened
+            const uint16_t &item=i->first-lastItemId;
+            lastItemId=i->first;
+            #endif
             const uint32_t &quantity=i->second;
             *reinterpret_cast<uint16_t *>(item_raw+pos)=htole16(item);
             pos+=2;
@@ -710,64 +775,55 @@ void Client::updateObjectInDatabaseAndEncyclopedia()
     dbQueryWriteCommon(
                 PreparedDBQueryCommon::db_query_update_character_item_and_encyclopedia.compose(
                     item,
-                    binarytoHexa(public_and_private_informations.encyclopedia_item,CommonDatapack::commonDatapack.items.item.size()/8+1)
+                    binarytoHexa(public_and_private_informations.encyclopedia_item,CommonDatapack::commonDatapack.items.item.size()/8+1),
+                    std::to_string(character_id)
                     )
                 );
 }
 
-void Client::updateMonsterInDatabaseAndEncyclopedia()
+void Client::updateMonsterInDatabaseEncyclopedia()
 {
-    std::string monster;
-    if(!public_and_private_informations.playerMonster.empty())
-    {
-        uint32_t pos=0;
-        char monster_raw[(2+4)*public_and_private_informations.playerMonster.size()];
-        unsigned int index=0;
-        while(index<public_and_private_informations.playerMonster.size())
-        {
-            *reinterpret_cast<uint32_t *>(monster_raw+pos)=htole32(public_and_private_informations.playerMonster.at(index).id);
-            pos+=4;
-            index++;
-        }
-        monster=binarytoHexa(monster_raw,sizeof(monster_raw));
-    }
     dbQueryWriteCommon(
-                PreparedDBQueryCommon::db_query_update_character_monster_and_encyclopedia.compose(
-                    monster,
-                    binarytoHexa(public_and_private_informations.encyclopedia_monster,CommonDatapack::commonDatapack.monsters.size()/8+1)
+                PreparedDBQueryCommon::db_query_update_character_monster_encyclopedia.compose(
+                    binarytoHexa(public_and_private_informations.encyclopedia_monster,CommonDatapack::commonDatapack.monsters.size()/8+1),
+                    std::to_string(character_id)
                     )
                 );
 }
 
-void Client::addWarehouseObject(const uint16_t &item,const uint32_t &quantity)
+void Client::addWarehouseObject(const uint16_t &item,const uint32_t &quantity,const bool databaseSync)
 {
     if(public_and_private_informations.warehouse_items.find(item)!=public_and_private_informations.warehouse_items.cend())
     {
         public_and_private_informations.warehouse_items[item]+=quantity;
-        updateObjectInWarehouseDatabase();
+        if(databaseSync)
+            updateObjectInWarehouseDatabase();
     }
     else
     {
-        updateObjectInWarehouseDatabase();
         public_and_private_informations.warehouse_items[item]=quantity;
+        if(databaseSync)
+            updateObjectInWarehouseDatabase();
     }
 }
 
-uint32_t Client::removeWarehouseObject(const uint16_t &item,const uint32_t &quantity)
+uint32_t Client::removeWarehouseObject(const uint16_t &item,const uint32_t &quantity,const bool databaseSync)
 {
     if(public_and_private_informations.warehouse_items.find(item)!=public_and_private_informations.warehouse_items.cend())
     {
         if(public_and_private_informations.warehouse_items.at(item)>quantity)
         {
             public_and_private_informations.warehouse_items[item]-=quantity;
-            updateObjectInWarehouseDatabase();
+            if(databaseSync)
+                updateObjectInWarehouseDatabase();
             return quantity;
         }
         else
         {
             const uint32_t removed_quantity=public_and_private_informations.warehouse_items.at(item);
             public_and_private_informations.warehouse_items.erase(item);
-            updateObjectInWarehouseDatabase();
+            if(databaseSync)
+                updateObjectInWarehouseDatabase();
             return removed_quantity;
         }
     }
@@ -796,7 +852,7 @@ void Client::saveObjectRetention(const uint16_t &item)
     updateObjectInDatabase();
 }
 
-uint32_t Client::removeObject(const uint16_t &item, const uint32_t &quantity)
+uint32_t Client::removeObject(const uint16_t &item, const uint32_t &quantity, bool databaseSync)
 {
     if(public_and_private_informations.items.find(item)!=public_and_private_informations.items.cend())
     {
@@ -808,7 +864,8 @@ uint32_t Client::removeObject(const uint16_t &item, const uint32_t &quantity)
             stringreplaceOne(queryText,"%2",std::to_string(item));
             stringreplaceOne(queryText,"%3",std::to_string(character_id));
             dbQueryWriteCommon(queryText);*/
-            updateObjectInDatabase();
+            if(databaseSync)
+                updateObjectInDatabase();
             return quantity;
         }
         else
@@ -819,7 +876,8 @@ uint32_t Client::removeObject(const uint16_t &item, const uint32_t &quantity)
             stringreplaceOne(queryText,"%1",std::to_string(item));
             stringreplaceOne(queryText,"%2",std::to_string(character_id));
             dbQueryWriteCommon(queryText);*/
-            updateObjectInDatabase();
+            if(databaseSync)
+                updateObjectInDatabase();
             return removed_quantity;
         }
     }
@@ -955,6 +1013,12 @@ void Client::wareHouseStore(const int64_t &cash, const std::vector<std::pair<uin
                 const PlayerMonster &playerMonsterinWarehouse=public_and_private_informations.warehouse_playerMonster.at(sub_index);
                 if(playerMonsterinWarehouse.id==withdrawMonsters.at(index))
                 {
+                    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_position_and_place.compose(
+                                           std::to_string(public_and_private_informations.playerMonster.size()),
+                                           "1",
+                                           std::to_string(playerMonsterinWarehouse.id)
+                                           )
+                                       );
                     public_and_private_informations.playerMonster.push_back(public_and_private_informations.warehouse_playerMonster.at(sub_index));
                     public_and_private_informations.warehouse_playerMonster.erase(public_and_private_informations.warehouse_playerMonster.cbegin()+sub_index);
                     break;
@@ -974,6 +1038,12 @@ void Client::wareHouseStore(const int64_t &cash, const std::vector<std::pair<uin
                 const PlayerMonster &playerMonsterOnPlayer=public_and_private_informations.playerMonster.at(sub_index);
                 if(playerMonsterOnPlayer.id==depositeMonsters.at(index))
                 {
+                    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_position_and_place.compose(
+                                           std::to_string(public_and_private_informations.warehouse_playerMonster.size()),
+                                           "2",
+                                           std::to_string(playerMonsterOnPlayer.id)
+                                           )
+                                       );
                     public_and_private_informations.warehouse_playerMonster.push_back(public_and_private_informations.playerMonster.at(sub_index));
                     public_and_private_informations.playerMonster.erase(public_and_private_informations.playerMonster.cbegin()+sub_index);
                     break;
@@ -984,13 +1054,17 @@ void Client::wareHouseStore(const int64_t &cash, const std::vector<std::pair<uin
         }
     }
     if(depositeMonsters.size()>0 || withdrawMonsters.size()>0)
+    {
         if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheDisconnexion)
             saveMonsterStat(public_and_private_informations.playerMonster.back());
-
-    //updateObjectInDatabase();//do above in bad way, improve this
-    updateMonsterInDatabase();
-    //updateObjectInWarehouseDatabase();//do above in bad way, improve this
-    updateMonsterInWarehouseDatabase();
+//        updateMonsterInDatabase();
+//        updateMonsterInWarehouseDatabase();
+    }
+    if(!items.empty())
+    {
+        updateObjectInDatabase();//do above in bad way, improve this
+        updateObjectInWarehouseDatabase();//do above in bad way, improve this
+    }
 }
 
 bool Client::wareHouseStoreCheck(const int64_t &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint32_t> &withdrawMonsters, const std::vector<uint32_t> &depositeMonsters)
@@ -2727,51 +2801,51 @@ void Client::appendReputationPoint(const uint8_t &reputationId, const int32_t &p
 
 void Client::syncDatabaseReputation()
 {
+    char *buffer=NULL;
     if(public_and_private_informations.reputation.size()*(4+1+1)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
-    {
-        uint32_t posOutput=0;
-        char tempBigBufferForOutput[public_and_private_informations.reputation.size()*(4+1+1)];
-        auto i=public_and_private_informations.reputation.begin();
-        while(i!=public_and_private_informations.reputation.cend())
-        {
-            const uint8_t &type=i->first;
-            const PlayerReputation &reputation=i->second;
-            *reinterpret_cast<uint32_t *>(tempBigBufferForOutput+posOutput)=htole32(reputation.point);
-            posOutput+=4;
-            tempBigBufferForOutput[posOutput]=type;
-            posOutput+=1;
-            tempBigBufferForOutput[posOutput]=reputation.level;
-            posOutput+=1;
-            ++i;
-        }
-        const std::string &queryText=PreparedDBQueryCommon::db_query_update_character_reputations.compose(
-                    binarytoHexa(tempBigBufferForOutput,posOutput),
-                    std::to_string(character_id)
-                    );
-        dbQueryWriteCommon(queryText);
-    }
+        buffer=(char *)malloc(public_and_private_informations.reputation.size()*(4+1+1));
     else
+        buffer=ProtocolParsingBase::tempBigBufferForOutput;
+
+    uint8_t lastReputationId=0;
+    uint32_t posOutput=0;
+    auto i=public_and_private_informations.reputation.begin();
+    while(i!=public_and_private_informations.reputation.cend())
     {
-        uint32_t posOutput=0;
-        auto i=public_and_private_informations.reputation.begin();
-        while(i!=public_and_private_informations.reputation.cend())
+        #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
+        //not ordened
+        if(lastItemId<=i->first)
         {
-            const uint8_t &type=i->first;
-            const PlayerReputation &reputation=i->second;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(reputation.point);
-            posOutput+=4;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=type;
-            posOutput+=1;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=reputation.level;
-            posOutput+=1;
-            ++i;
+            const uint8_t &type=i->first-lastReputationId;
+            lastReputationId=i->first;
         }
-        const std::string &queryText=PreparedDBQueryCommon::db_query_update_character_reputations.compose(
-                    binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput),
-                    std::to_string(character_id)
-                    );
-        dbQueryWriteCommon(queryText);
+        else
+        {
+            const uint8_t &type=256-lastReputationId+i->first;
+            lastReputationId=i->first;
+        }
+        #else
+        //ordened
+        const uint8_t &type=i->first-lastReputationId;
+        lastReputationId=i->first;
+        #endif
+        const PlayerReputation &reputation=i->second;
+        *reinterpret_cast<uint32_t *>(buffer+posOutput)=htole32(reputation.point);
+        posOutput+=4;
+        buffer[posOutput]=type;
+        posOutput+=1;
+        buffer[posOutput]=reputation.level;
+        posOutput+=1;
+        ++i;
     }
+    const std::string &queryText=PreparedDBQueryCommon::db_query_update_character_reputations.compose(
+                binarytoHexa(buffer,posOutput),
+                std::to_string(character_id)
+                );
+    dbQueryWriteCommon(queryText);
+
+    if(public_and_private_informations.reputation.size()*(4+1+1)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+        delete buffer;
 }
 
 void Client::syncBotAlreadyBeaten()
@@ -4433,10 +4507,15 @@ void Client::putMarketMonster(const uint32_t &query_id,const uint8_t &monsterPos
     marketPlayerMonster.cash=price;
     marketPlayerMonster.monster=playerMonster;
     marketPlayerMonster.player=character_id;
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_place.compose(
+                           "3",
+                           std::to_string(marketPlayerMonster.monster.id)
+                           )
+                       );
     public_and_private_informations.playerMonster.erase(public_and_private_informations.playerMonster.begin()+index);
     GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.push_back(marketPlayerMonster);
     //save the player drop monster
-    updateMonsterInDatabase();
+    //updateMonsterInDatabase();
 
     {
         const std::string &queryText=PreparedDBQueryServer::db_query_insert_monster_market_price.compose(

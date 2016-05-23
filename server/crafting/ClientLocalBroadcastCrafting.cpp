@@ -148,11 +148,28 @@ bool Client::syncDatabasePlant()
     }
     else
     {
+        uint16_t lastPlantId=0;
         uint32_t posOutput=0;
         auto i=public_and_private_informations.plantOnMap.begin();
         while(i!=public_and_private_informations.plantOnMap.cend())
         {
-            const uint8_t &dirtOnMap=i->first;
+            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
+            //not ordened
+            if(lastPlantId<=i->first)
+            {
+                const uint8_t &dirtOnMap=i->first-lastPlantId;
+                lastPlantId=i->first;
+            }
+            else
+            {
+                const uint8_t &dirtOnMap=256-lastPlantId+i->first;
+                lastPlantId=i->first;
+            }
+            #else
+            //ordened
+            const uint8_t &dirtOnMap=i->first-lastPlantId;
+            lastPlantId=i->first;
+            #endif
             const PlayerPlant &plant=i->second;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=dirtOnMap;
             posOutput+=1;

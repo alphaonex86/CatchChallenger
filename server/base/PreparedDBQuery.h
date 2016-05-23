@@ -52,9 +52,10 @@ public:
     static StringWithReplacement db_query_update_character_item;
     static StringWithReplacement db_query_update_character_item_and_encyclopedia;
     static StringWithReplacement db_query_update_character_item_warehouse;
-    static StringWithReplacement db_query_update_character_monster;
+    /*static StringWithReplacement db_query_update_character_monster;
     static StringWithReplacement db_query_update_character_monster_and_encyclopedia;
-    static StringWithReplacement db_query_update_character_monster_warehouse;
+    static StringWithReplacement db_query_update_character_monster_warehouse;*/
+    static StringWithReplacement db_query_update_character_monster_encyclopedia;
     static StringWithReplacement db_query_update_cash;
     static StringWithReplacement db_query_update_warehouse_cash;
     static StringWithReplacement db_query_update_character_recipe;
@@ -81,6 +82,8 @@ public:
     static StringWithReplacement db_query_delete_monster_buff;
     static StringWithReplacement db_query_insert_warehouse_monster;
     static StringWithReplacement db_query_update_monster_position;
+    static StringWithReplacement db_query_update_monster_position_and_place;
+    static StringWithReplacement db_query_update_monster_place;
     static StringWithReplacement db_query_update_monster_and_hp;
     static StringWithReplacement db_query_update_monster_hp_and_level;
     static StringWithReplacement db_query_select_monsters_by_player_id;//don't filter by place, dispatched in internal, market volume should be low
