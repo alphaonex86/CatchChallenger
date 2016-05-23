@@ -205,6 +205,9 @@ CatchChallenger::DatabaseBase::CallBack * EpollMySQL::asyncRead(const std::strin
         abort();
     }
     #endif
+    #ifdef DEBUG_MESSAGE_CLIENT_SQL
+    std::cout << "host: " << strCohost << ", database: " << strCodatabase << ", query " << query << std::endl;
+    #endif
     const int &query_id=mysql_send_query(conn,query.c_str(),stringlen);
     if(query_id<0)
     {
@@ -236,6 +239,9 @@ bool EpollMySQL::asyncWrite(const std::string &query)
         std::cerr << "query " << query << ", stringlen==0" << std::endl;
         abort();
     }
+    #endif
+    #ifdef DEBUG_MESSAGE_CLIENT_SQL
+    std::cout << "host: " << strCohost << ", database: " << strCodatabase << ", query " << query << std::endl;
     #endif
     const int &query_id=mysql_send_query(conn,query.c_str(),stringlen);
     if(query_id==0)

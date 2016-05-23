@@ -233,6 +233,9 @@ CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncRead(const std::
         abort();
     }
     #endif
+    #ifdef DEBUG_MESSAGE_CLIENT_SQL
+    std::cout << strCoPG << ", query " << query << std::endl;
+    #endif
     const int &query_id=PQsendQuery(conn,query.c_str());
     if(query_id==0)
     {
@@ -257,13 +260,16 @@ bool EpollPostgresql::asyncWrite(const std::string &query)
         return true;
     }
     queriesList.push_back(query);
-        const int &stringlen=query.size();
+    const int &stringlen=query.size();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(stringlen==0)
     {
         std::cerr << "query " << query << ", stringlen==0" << std::endl;
         abort();
     }
+    #endif
+    #ifdef DEBUG_MESSAGE_CLIENT_SQL
+    std::cout << strCoPG << ", query " << query << std::endl;
     #endif
     const int &query_id=PQsendQuery(conn,query.c_str());
     if(query_id==0)
