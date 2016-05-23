@@ -914,19 +914,19 @@ void BaseServer::preload_profile()
         //assume here all is the same type
         {
             unsigned int monsterGroupIndex=0;
-            const auto &monsters=profile.monstergroup.at(monsterGroupIndex);
-            serverProfileInternal.monster_insert.resize(monsters.size());
-            while(monsterGroupIndex<monsters.size())
+            serverProfileInternal.monster_insert.resize(profile.monstergroup.size());
+            while(monsterGroupIndex<profile.monstergroup.size())
             {
+                const auto &monsters=profile.monstergroup.at(monsterGroupIndex);
                 std::vector<uint16_t> monsterForEncyclopedia;
-                unsigned int monsterIndex=0;
-                const auto &monster=monsters.at(monsterIndex);
-                const auto &monsterDatapack=CommonDatapack::commonDatapack.monsters.at(monster.id);
-                const Monster::Stat &monsterStat=CommonFightEngineBase::getStat(monsterDatapack,monster.level);
-                const std::vector<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngineBase::generateWildSkill(monsterDatapack,monster.level);
                 std::vector<StringWithReplacement> &monsterGroupQuery=serverProfileInternal.monster_insert[monsterGroupIndex];
+                unsigned int monsterIndex=0;
                 while(monsterIndex<monsters.size())
                 {
+                    const auto &monster=monsters.at(monsterIndex);
+                    const auto &monsterDatapack=CommonDatapack::commonDatapack.monsters.at(monster.id);
+                    const Monster::Stat &monsterStat=CommonFightEngineBase::getStat(monsterDatapack,monster.level);
+                    const std::vector<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngineBase::generateWildSkill(monsterDatapack,monster.level);
                     if(skills.empty())
                     {
                         std::cerr << "skills.empty() for some profile" << std::endl;
