@@ -516,16 +516,16 @@ private:
     void takeAnObjectOnMap();
     //inventory
     void addObjectAndSend(const uint16_t &item,const uint32_t &quantity=1);
-    void addObject(const uint16_t &item,const uint32_t &quantity=1);
+    void addObject(const uint16_t &item,const uint32_t &quantity=1,const bool databaseSync=true);
     void saveObjectRetention(const uint16_t &item);
-    uint32_t removeObject(const uint16_t &item,const uint32_t &quantity=1);
+    uint32_t removeObject(const uint16_t &item,const uint32_t &quantity=1,const bool databaseSync=true);
     void sendRemoveObject(const uint16_t &item,const uint32_t &quantity=1);
     void updateObjectInDatabase();
-    void updateMonsterInDatabase();
+    //void updateMonsterInDatabase();
     void updateObjectInWarehouseDatabase();
-    void updateMonsterInWarehouseDatabase();
+    //void updateMonsterInWarehouseDatabase();
     void updateObjectInDatabaseAndEncyclopedia();
-    void updateMonsterInDatabaseAndEncyclopedia();
+    void updateMonsterInDatabaseEncyclopedia();
     uint32_t objectQuantity(const uint16_t &item) const;
     bool addMarketCashWithoutSave(const uint64_t &cash);
     void addCash(const uint64_t &cash,const bool &forceSave=false);
@@ -534,8 +534,8 @@ private:
     void removeWarehouseCash(const uint64_t &cash);
     void wareHouseStore(const int64_t &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint32_t> &withdrawMonsters, const std::vector<uint32_t> &depositeMonsters);
     bool wareHouseStoreCheck(const int64_t &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint32_t> &withdrawMonsters, const std::vector<uint32_t> &depositeMonsters);
-    void addWarehouseObject(const uint16_t &item,const uint32_t &quantity=1);
-    uint32_t removeWarehouseObject(const uint16_t &item,const uint32_t &quantity=1);
+    void addWarehouseObject(const uint16_t &item,const uint32_t &quantity=1,const bool databaseSync=true);
+    uint32_t removeWarehouseObject(const uint16_t &item,const uint32_t &quantity=1,const bool databaseSync=true);
 
     bool haveReputationRequirements(const std::vector<ReputationRequirements> &reputationList) const;
     void confirmEvolution(const uint8_t &monsterPosition);
