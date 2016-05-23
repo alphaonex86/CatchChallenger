@@ -606,17 +606,21 @@ void EpollServerLoginSlave::preload_profile()
         std::string encyclopedia_item,item;
         if(!profile.items.empty())
         {
-            auto max=profile.items.at(0).id;
+            uint32_t lastItemId=0;
+            auto item_list=profile.items;
+            std::sort(item_list.begin(),item_list.end(),[](const LoginProfile::Item &a, const LoginProfile::Item &b) {
+                return a.id<b.id;
+            });
+            auto max=item_list.at(item_list.size()-1).id;
             uint32_t pos=0;
-            char item_raw[(2+4)*profile.items.size()];
+            char item_raw[(2+4)*item.size()];
             unsigned int index=0;
-            while(index<profile.items.size())
+            while(index<item.size())
             {
-                const auto &item=profile.items.at(index);
-                if(max<item.id)
-                    max=item.id;
-                *reinterpret_cast<uint16_t *>(item_raw+pos)=htole16(item.id);
+                const auto &item=item_list.at(index);
+                *reinterpret_cast<uint16_t *>(item_raw+pos)=htole16(item.id-lastItemId);
                 pos+=2;
+                lastItemId=item.id;
                 *reinterpret_cast<uint32_t *>(item_raw+pos)=htole32(item.quantity);
                 pos+=4;
                 index++;
@@ -627,9 +631,9 @@ void EpollServerLoginSlave::preload_profile()
             char bitlist[size];
             memset(bitlist,0,size);
             index=0;
-            while(index<profile.items.size())
+            while(index<item.size())
             {
-                const auto &item=profile.items.at(index);
+                const auto &item=item_list.at(index);
                 uint16_t bittoUp=item.id;
                 bitlist[bittoUp/8]|=(1<<(7-bittoUp%8));
                 index++;
@@ -639,16 +643,22 @@ void EpollServerLoginSlave::preload_profile()
         std::string reputations;
         if(!profile.reputations.empty())
         {
+            uint32_t lastReputationId=0;
+            auto reputations_list=profile.reputations;
+            std::sort(reputations_list.begin(),reputations_list.end(),[](const LoginProfile::Reputation &a, const LoginProfile::Reputation &b) {
+                return a.reputationDatabaseId<b.reputationDatabaseId;
+            });
             uint32_t pos=0;
-            char reputation_raw[(1+4+1)*profile.reputations.size()];
+            char reputation_raw[(1+4+1)*reputations_list.size()];
             unsigned int index=0;
-            while(index<profile.reputations.size())
+            while(index<reputations_list.size())
             {
-                const auto &reputation=profile.reputations.at(index);
+                const auto &reputation=reputations_list.at(index);
                 *reinterpret_cast<uint32_t *>(reputation_raw+pos)=htole32(reputation.point);
                 pos+=4;
-                reputation_raw[pos]=reputation.reputationDatabaseId;
+                reputation_raw[pos]=reputation.reputationDatabaseId-lastReputationId;
                 pos+=1;
+                lastReputationId=reputation.reputationDatabaseId;
                 reputation_raw[pos]=reputation.level;
                 pos+=1;
                 index++;
@@ -674,13 +684,20 @@ void EpollServerLoginSlave::preload_profile()
                         std::cerr << "monster.skills.empty() for some profile" << std::endl;
                         abort();
                     }
-                    char raw_skill[(2+1)*monster.skills.size()],raw_skill_endurance[1*monster.skills.size()];
+                    uint32_t lastSkillId=0;
+                    auto skills_list=monster.skills;
+                    std::sort(skills_list.begin(),skills_list.end(),[](const LoginProfile::Monster::Skill &a, const LoginProfile::Monster::Skill &b) {
+                        return a.id<b.id;
+                    });
+
+                    char raw_skill[(2+1)*skills_list.size()],raw_skill_endurance[1*skills_list.size()];
                     //the skills
                     unsigned int sub_index=0;
-                    while(sub_index<monster.skills.size())
+                    while(sub_index<skills_list.size())
                     {
-                        const auto &skill=monster.skills.at(sub_index);
-                        *reinterpret_cast<uint16_t *>(raw_skill+sub_index*(2+1))=htole16(skill.id);
+                        const auto &skill=skills_list.at(sub_index);
+                        *reinterpret_cast<uint16_t *>(raw_skill+sub_index*(2+1))=htole16(skill.id-lastSkillId);
+                        lastSkillId=skill.id;
                         raw_skill[sub_index*(2+1)+2]=skill.level;
                         raw_skill_endurance[sub_index]=skill.endurance;
                         sub_index++;

@@ -13,6 +13,13 @@
 #include "../../server/VariableServer.h"
 #endif
 
+//#define MAXIMIZEPERFORMANCEOVERDATABASESIZE
+
+#ifndef MAXIMIZEPERFORMANCEOVERDATABASESIZE
+#include <map>
+#include <set>
+#endif
+
 #define COORD_TYPE uint8_t
 #define SIMPLIFIED_PLAYER_ID_TYPE uint16_t
 #define CLAN_ID_TYPE uint32_t
@@ -346,30 +353,47 @@ struct Player_private_and_public_informations
 {
     Player_public_informations public_informations;
     uint64_t cash,warehouse_cash;
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t/*quantity*/> items,warehouse_items;
     //crafting
     char * recipes;
-    std::unordered_map<uint8_t,PlayerReputation> reputation;
-    //fight
-    std::unordered_set<uint16_t> bot_already_beaten;
     /// \todo put out of here to have mutalised engine
     std::vector<PlayerMonster> playerMonster,warehouse_playerMonster;
-    std::unordered_map<uint16_t, PlayerQuest> quests;
     CLAN_ID_TYPE clan;
-    std::unordered_set<ActionAllow,std::hash<uint8_t>/*what hash use*/ > allow;
-    //here to send at character login
-    std::unordered_set<uint8_t> itemOnMap;
-    #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
-        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-        std::unordered_map<uint8_t/*dirtOnMap*/,PlayerPlant> plantOnMap;
-        #endif
-    #else
-        std::unordered_map<uint8_t/*dirtOnMap*/,PlayerPlant> plantOnMap;
-    #endif
     char * encyclopedia_monster;
     char * encyclopedia_item;//should be: CommonDatapack::commonDatapack.items.item.size()/8+1
     uint32_t repel_step;
     bool clan_leader;
+
+    #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
+        std::unordered_set<ActionAllow,std::hash<uint8_t>/*what hash use*/ > allow;
+        //here to send at character login
+        std::unordered_set<uint8_t> itemOnMap;
+        #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
+            #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+            std::unordered_map<uint8_t/*dirtOnMap*/,PlayerPlant> plantOnMap;
+            #endif
+        #else
+            std::unordered_map<uint8_t/*dirtOnMap*/,PlayerPlant> plantOnMap;
+        #endif
+        std::unordered_map<uint16_t, PlayerQuest> quests;
+        std::unordered_map<uint8_t,PlayerReputation> reputation;
+        std::unordered_set<uint16_t> bot_already_beaten;
+        std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t/*quantity*/> items,warehouse_items;
+    #else
+        std::set<ActionAllow> allow;
+        //here to send at character login
+        std::set<uint8_t> itemOnMap;
+        #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
+            #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+            std::map<uint8_t/*dirtOnMap*/,PlayerPlant> plantOnMap;
+            #endif
+        #else
+            std::map<uint8_t/*dirtOnMap*/,PlayerPlant> plantOnMap;
+        #endif
+        std::map<uint16_t, PlayerQuest> quests;
+        std::map<uint8_t,PlayerReputation> reputation;
+        std::set<uint16_t> bot_already_beaten;
+        std::map<CATCHCHALLENGER_TYPE_ITEM,uint32_t/*quantity*/> items,warehouse_items;
+    #endif
 };
 
 struct CharacterEntry

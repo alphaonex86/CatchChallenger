@@ -207,11 +207,28 @@ void Client::syncDatabaseQuest()
     if(public_and_private_informations.quests.size()*(1+1+1)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
     {
         uint32_t posOutput=0;
+        uint8_t lastQuestId=0;
         char tempBigBufferForOutput[public_and_private_informations.quests.size()*(1+1+1)];
         auto i=public_and_private_informations.quests.begin();
         while(i!=public_and_private_informations.quests.cend())
         {
-            const uint8_t &type=i->first;
+            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
+            //not ordened
+            if(lastQuestId<=i->first)
+            {
+                const uint8_t &type=i->first-lastQuestId;
+                lastQuestId=i->first;
+            }
+            else
+            {
+                const uint8_t &type=256-lastQuestId+i->first;
+                lastQuestId=i->first;
+            }
+            #else
+            //ordened
+            const uint8_t &type=i->first-lastQuestId;
+            lastQuestId=i->first;
+            #endif
             const PlayerQuest &quest=i->second;
             tempBigBufferForOutput[posOutput]=type;
             posOutput+=1;
