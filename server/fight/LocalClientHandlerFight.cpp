@@ -129,14 +129,15 @@ void Client::syncMonsterBuff(const PlayerMonster &monster)
 
         #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
         //not ordened
+        uint8_t buffInt;
         if(lastBuffId<=buff.buff)
         {
-            const uint8_t &buffInt=buff.buff-lastBuffId;
+            buffInt=buff.buff-lastBuffId;
             lastBuffId=buff.buff;
         }
         else
         {
-            const uint8_t &buffInt=256-lastBuffId+buff.buff;
+            buffInt=256-lastBuffId+buff.buff;
             lastBuffId=buff.buff;
         }
         #else
@@ -171,14 +172,15 @@ void Client::syncMonsterSkillAndEndurance(const PlayerMonster &monster)
 
         #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
         //not ordened
+        uint16_t skillInt;
         if(lastSkillId<=playerSkill.skill)
         {
-            const uint16_t &skillInt=playerSkill.skill-lastSkillId;
+            skillInt=playerSkill.skill-lastSkillId;
             lastSkillId=playerSkill.skill;
         }
         else
         {
-            const uint16_t &skillInt=65536-lastSkillId+playerSkill.skill;
+            skillInt=65536-lastSkillId+playerSkill.skill;
             lastSkillId=playerSkill.skill;
         }
         #else
