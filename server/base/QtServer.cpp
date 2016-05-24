@@ -11,6 +11,7 @@ using namespace CatchChallenger;
 
 QtServer::QtServer()
 {
+    qRegisterMetaType<std::string>("std::string");
     qRegisterMetaType<QSqlDatabase>("QSqlDatabase");
     qRegisterMetaType<QSqlQuery>("QSqlQuery");
     connect(GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove,	&QTimer::timeout,this,&QtServer::send_insert_move_remove,Qt::QueuedConnection);

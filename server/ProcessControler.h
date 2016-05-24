@@ -5,6 +5,10 @@
 
 #include "NormalServer.h"
 #include "../general/base/GeneralStructures.h"
+#include "../general/base/FacilityLibGeneral.h"
+#include "../general/base/FacilityLib.h"
+#include "base/TinyXMLSettings.h"
+#include "base/GlobalServerData.h"
 
 class ProcessControler : public QObject
 {
@@ -20,9 +24,10 @@ private:
     bool need_be_closed;
     std::string sizeToString(double size);
     std::string adaptString(float size);
-    QSettings *settings;
+    TinyXMLSettings *settings;
     void send_settings();
     void haveQuitForCriticalDatabaseQueryFailed();
+    void generateTokenStatClient(TinyXMLSettings &settings,char * const data);
 private slots:
     void server_is_started(bool is_started);
     void server_need_be_stopped();
