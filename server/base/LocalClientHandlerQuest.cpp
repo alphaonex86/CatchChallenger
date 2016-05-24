@@ -214,14 +214,15 @@ void Client::syncDatabaseQuest()
         {
             #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
             //not ordened
+            uint8_t type;
             if(lastQuestId<=i->first)
             {
-                const uint8_t &type=i->first-lastQuestId;
+                type=i->first-lastQuestId;
                 lastQuestId=i->first;
             }
             else
             {
-                const uint8_t &type=256-lastQuestId+i->first;
+                type=256-lastQuestId+i->first;
                 lastQuestId=i->first;
             }
             #else

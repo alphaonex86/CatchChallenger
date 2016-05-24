@@ -587,14 +587,15 @@ void Client::updateObjectInDatabase()
         {
             #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
             //not ordened
+            uint16_t item;
             if(lastItemId<=i->first)
             {
-                const uint16_t &item=i->first-lastItemId;
+                item=i->first-lastItemId;
                 lastItemId=i->first;
             }
             else
             {
-                const uint16_t &item=65536-lastItemId+i->first;
+                item=65536-lastItemId+i->first;
                 lastItemId=i->first;
             }
             #else
@@ -672,14 +673,15 @@ void Client::updateObjectInWarehouseDatabase()
         {
             #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
             //not ordened
+            uint16_t item;
             if(lastItemId<=i->first)
             {
-                const uint16_t &item=i->first-lastItemId;
+                item=i->first-lastItemId;
                 lastItemId=i->first;
             }
             else
             {
-                const uint16_t &item=65536-lastItemId+i->first;
+                item=65536-lastItemId+i->first;
                 lastItemId=i->first;
             }
             #else
@@ -748,14 +750,15 @@ void Client::updateObjectInDatabaseAndEncyclopedia()
         {
             #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
             //not ordened
+            uint16_t item;
             if(lastItemId<=i->first)
             {
-                const uint16_t &item=i->first-lastItemId;
+                item=i->first-lastItemId;
                 lastItemId=i->first;
             }
             else
             {
-                const uint16_t &item=65536-lastItemId+i->first;
+                item=65536-lastItemId+i->first;
                 lastItemId=i->first;
             }
             #else
@@ -2814,14 +2817,15 @@ void Client::syncDatabaseReputation()
     {
         #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
         //not ordened
-        if(lastItemId<=i->first)
+        uint8_t type;
+        if(lastReputationId<=i->first)
         {
-            const uint8_t &type=i->first-lastReputationId;
+            type=i->first-lastReputationId;
             lastReputationId=i->first;
         }
         else
         {
-            const uint8_t &type=256-lastReputationId+i->first;
+            type=256-lastReputationId+i->first;
             lastReputationId=i->first;
         }
         #else
