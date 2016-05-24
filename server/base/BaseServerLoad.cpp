@@ -773,9 +773,9 @@ void BaseServer::preload_profile()
             });
             auto max=item_list.at(item_list.size()-1).id;
             uint32_t pos=0;
-            char item_raw[(2+4)*item.size()];
+            char item_raw[(2+4)*item_list.size()];
             unsigned int index=0;
-            while(index<item.size())
+            while(index<item_list.size())
             {
                 const auto &item=item_list.at(index);
                 *reinterpret_cast<uint16_t *>(item_raw+pos)=htole16(item.id-lastItemId);
@@ -791,7 +791,7 @@ void BaseServer::preload_profile()
             char bitlist[size];
             memset(bitlist,0,size);
             index=0;
-            while(index<profile.items.size())
+            while(index<item_list.size())
             {
                 const auto &item=profile.items.at(index);
                 uint16_t bittoUp=item.id;
