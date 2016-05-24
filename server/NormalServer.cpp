@@ -205,7 +205,7 @@ void NormalServer::start_internal_server()
     {
         const std::string &listenAddressAndPort=listenIpAndPort(sslServer->serverAddress().toString().toStdString(),sslServer->serverPort());
         std::cerr << "Already listening on " <<  listenAddressAndPort << std::endl;
-        error(QString::fromStdString("Already listening on "+listenAddressAndPort));
+        error("Already listening on "+listenAddressAndPort);
         return;
     }
     if(oneInstanceRunning)
@@ -237,7 +237,7 @@ void NormalServer::start_internal_server()
         std::cerr << "Unable to listen: " << listenAddressAndPort << ", errror: " << sslServer->errorString().toStdString() << std::endl;
         stat=Down;
         is_started(false);
-        error(QString::fromStdString("Unable to listen: "+listenAddressAndPort+", errror: "+sslServer->errorString().toStdString()));
+        error("Unable to listen: "+listenAddressAndPort+", errror: "+sslServer->errorString().toStdString());
         return;
     }
     if(!QFakeServer::server.listen())

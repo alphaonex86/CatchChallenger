@@ -33,7 +33,7 @@ signals:
     void need_be_started() const;
     //stat
     void is_started(const bool &) const;
-    void error(const QString &error) const;
+    void error(const std::string &error) const;
 
     void haveQuitForCriticalDatabaseQueryFailed();
 private:
