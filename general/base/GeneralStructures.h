@@ -13,6 +13,12 @@
 #include "../../server/VariableServer.h"
 #endif
 
+#if defined(CATCHCHALLENGER_CLIENT)
+//client
+#define MAXIMIZEPERFORMANCEOVERDATABASESIZE
+#endif
+
+//server
 //#define MAXIMIZEPERFORMANCEOVERDATABASESIZE
 
 #ifndef MAXIMIZEPERFORMANCEOVERDATABASESIZE

@@ -155,14 +155,15 @@ bool Client::syncDatabasePlant()
         {
             #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
             //not ordened
+            uint8_t dirtOnMap;
             if(lastPlantId<=i->first)
             {
-                const uint8_t &dirtOnMap=i->first-lastPlantId;
+                dirtOnMap=i->first-lastPlantId;
                 lastPlantId=i->first;
             }
             else
             {
-                const uint8_t &dirtOnMap=256-lastPlantId+i->first;
+                dirtOnMap=256-lastPlantId+i->first;
                 lastPlantId=i->first;
             }
             #else
