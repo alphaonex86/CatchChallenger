@@ -204,14 +204,15 @@ bool Client::syncDatabaseItemOnMap()
         {
             #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
             //not ordened
+            uint8_t itemonmapInt;
             if(lastItemonmapId<=*i)
             {
-                const uint8_t &itemonmapInt=*i-lastItemonmapId;
+                itemonmapInt=*i-lastItemonmapId;
                 lastItemonmapId=*i;
             }
             else
             {
-                const uint8_t &itemonmapInt=256-lastItemonmapId+*i;
+                itemonmapInt=256-lastItemonmapId+*i;
                 lastItemonmapId=*i;
             }
             #else
