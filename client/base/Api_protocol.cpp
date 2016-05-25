@@ -2128,6 +2128,7 @@ void Api_protocol::connectTheExternalSocketInternal()
         {
             if(socket->sslSocket->mode()==QSslSocket::UnencryptedMode)
             {
+                #if !defined(CATCHCHALLENGER_VERSION_SOLO) || defined(CATCHCHALLENGER_MULTI)
                 SslCert sslCert(NULL);
                 sslCert.exec();
                 if(sslCert.validated())
@@ -2137,11 +2138,13 @@ void Api_protocol::connectTheExternalSocketInternal()
                     socket->sslSocket->disconnectFromHost();
                     return;
                 }
+                #endif
             }
             else if(certFile.open(QIODevice::ReadOnly))
             {
                 if(socket->sslSocket->peerCertificate().publicKey().toPem()!=certFile.readAll())
                 {
+                    #if !defined(CATCHCHALLENGER_VERSION_SOLO) || defined(CATCHCHALLENGER_MULTI)
                     SslCert sslCert(NULL);
                     sslCert.exec();
                     if(sslCert.validated())
@@ -2151,6 +2154,7 @@ void Api_protocol::connectTheExternalSocketInternal()
                         socket->sslSocket->disconnectFromHost();
                         return;
                     }
+                    #endif
                 }
                 certFile.close();
             }

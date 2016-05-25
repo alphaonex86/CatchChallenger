@@ -1,6 +1,8 @@
 #include "SimpleSoloServer.h"
 #include "ui_SimpleSoloServer.h"
 #include <QStandardPaths>
+#include "../../general/base/CommonSettingsServer.h"
+#include "../../general/base/CommonSettingsCommon.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -11,10 +13,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(solowindow,&SoloWindow::play,this,&MainWindow::play);
 
     socket=new CatchChallenger::ConnectedSocket(new CatchChallenger::QFakeSocket());
-    CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_virtual(socket,QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/"));
+    CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_virtual(socket);
     internalServer=new CatchChallenger::InternalServer();
     connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&MainWindow::is_started,Qt::QueuedConnection);
-    connect(internalServer,&CatchChallenger::InternalServer::error,this,&MainWindow::serverError,Qt::QueuedConnection);
+    connect(internalServer,&CatchChallenger::InternalServer::error,this,&MainWindow::serverErrorStd,Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good);
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message);
@@ -31,6 +33,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //solowindow->show();
     setWindowTitle(QStringLiteral("CatchChallenger"));
 
+    #ifndef CATCHCHALLENGER_NOAUDIO
     vlcPlayer=NULL;
     if(Audio::audio.vlcInstance!=NULL)
     {
@@ -80,16 +83,19 @@ MainWindow::MainWindow(QWidget *parent) :
         if(string!=NULL)
             qDebug() << string;
     }
+    #endif
     connect(CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::gameIsLoaded,this,&MainWindow::gameIsLoaded);
 }
 
 MainWindow::~MainWindow()
 {
+    #ifndef CATCHCHALLENGER_NOAUDIO
     if(vlcPlayer!=NULL)
     {
         libvlc_media_player_stop(vlcPlayer);
         Audio::audio.removePlayer(vlcPlayer);
     }
+    #endif
     if(internalServer!=NULL)
     {
         delete internalServer;
@@ -126,37 +132,36 @@ void MainWindow::play(const QString &savegamesPath)
 
 bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,const QString &savegamesPath)
 {
-    CatchChallenger::ServerSettings formatedServerSettings=internalServer->getSettings();
+    CatchChallenger::GameServerSettings formatedServerSettings=internalServer->getSettings();
 
-    CommonSettings::commonSettings.waitBeforeConnectAfterKick=0;
-    CommonSettings::commonSettings.max_character=1;
-    CommonSettings::commonSettings.min_character=1;
+    CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick=0;
+    CommonSettingsCommon::commonSettingsCommon.max_character=1;
+    CommonSettingsCommon::commonSettingsCommon.min_character=1;
 
     formatedServerSettings.automatic_account_creation=true;
     formatedServerSettings.max_players=1;
-    formatedServerSettings.tolerantMode=false;
     formatedServerSettings.sendPlayerNumber = false;
     formatedServerSettings.compressionType=CatchChallenger::CompressionType_None;
 
-    formatedServerSettings.database_login.tryOpenType=CatchChallenger::DatabaseBase::Type::SQLite;
-    formatedServerSettings.database_login.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
+    formatedServerSettings.database_login.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
+    formatedServerSettings.database_login.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
     formatedServerSettings.database_base.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
     formatedServerSettings.database_base.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
-    formatedServerSettings.database_common.tryOpenType=CatchChallenger::DatabaseBase::Type::SQLite;
-    formatedServerSettings.database_common.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
-    formatedServerSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::Type::SQLite;
-    formatedServerSettings.database_server.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
+    formatedServerSettings.database_common.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
+    formatedServerSettings.database_common.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
+    formatedServerSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
+    formatedServerSettings.database_server.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
     formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_None;
-    formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->datapackPath();
+    formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->datapackPathBase().toStdString();
 
     {
-        CatchChallenger::ServerSettings::ProgrammedEvent &event=formatedServerSettings.programmedEventList["day"]["day"];
+        CatchChallenger::GameServerSettings::ProgrammedEvent &event=formatedServerSettings.programmedEventList["day"]["day"];
         event.cycle=60;
         event.offset=0;
         event.value="day";
     }
     {
-        CatchChallenger::ServerSettings::ProgrammedEvent &event=formatedServerSettings.programmedEventList["day"]["night"];
+        CatchChallenger::GameServerSettings::ProgrammedEvent &event=formatedServerSettings.programmedEventList["day"]["night"];
         event.cycle=60;
         event.offset=30;
         event.value="night";
@@ -254,7 +259,7 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
         }
         /*never be wrong, single player
         if(CatchChallenger::Api_client_real::client!=NULL && CatchChallenger::Api_client_real::client->protocolWrong())
-            QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));*/1
+            QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));*/
         if(internalServer!=NULL)
             internalServer->stop();
         resetAll();
@@ -270,6 +275,12 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
 void MainWindow::serverError(const QString &error)
 {
     QMessageBox::critical(NULL,tr("Error"),tr("The engine is closed due to: %1").arg(error));
+    resetAll();
+}
+
+void MainWindow::serverErrorStd(const std::string &error)
+{
+    QMessageBox::critical(NULL,tr("Error"),tr("The engine is closed due to: %1").arg(QString::fromStdString(error)));
     resetAll();
 }
 
@@ -303,14 +314,14 @@ void MainWindow::saveTime()
             if(metaData.status()==QSettings::NoError)
             {
                 QString locaction=CatchChallenger::BaseWindow::baseWindow->lastLocation();
-                QString mapPath=internalServer->getSettings().datapack_basePath+DATAPACK_BASE_PATH_MAP;
+                const QString &mapPath=QString::fromStdString(internalServer->getSettings().datapack_basePath)+DATAPACK_BASE_PATH_MAPMAIN+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/";//internalServer->getSettings().mainDatapackCode
                 if(locaction.startsWith(mapPath))
                     locaction.remove(0,mapPath.size());
                 if(!locaction.isEmpty())
                     metaData.setValue(QStringLiteral("location"),locaction);
                 uint64_t current_date_time=QDateTime::currentDateTimeUtc().toTime_t();
                 if(current_date_time>timeLaunched)
-                    metaData.setValue(QStringLiteral("time_played"),metaData.value(QStringLiteral("time_played")).toUInt()+(current_date_time-timeLaunched));
+                    metaData.setValue("time_played",metaData.value("time_played").toUInt()+(uint32_t)(current_date_time-timeLaunched));
                 settingOk=true;
             }
             else
@@ -370,10 +381,13 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::gameIsLoaded()
 {
+    #ifndef CATCHCHALLENGER_NOAUDIO
     if(vlcPlayer!=NULL)
         libvlc_media_player_stop(vlcPlayer);
+    #endif
 }
 
+#ifndef CATCHCHALLENGER_NOAUDIO
 void MainWindow::vlcevent(const libvlc_event_t *event, void *ptr)
 {
     qDebug() << "vlc event";
@@ -393,3 +407,4 @@ void MainWindow::vlcevent(const libvlc_event_t *event, void *ptr)
         break;
     }
 }
+#endif
