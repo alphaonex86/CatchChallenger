@@ -23,7 +23,7 @@ public:
     };
     explicit FeedNews();
     ~FeedNews();
-    static FeedNews *rssNews;
+    static FeedNews *feedNews;
     static QString getText(const QString &version);
 signals:
     void feedEntryList(const QList<FeedNews::FeedEntry> &entryList, QString error=QString()) const;
