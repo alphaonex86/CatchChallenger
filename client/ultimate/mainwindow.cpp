@@ -1621,7 +1621,7 @@ void MainWindow::gameSolo_play(const QString &savegamesPath)
     if(!sendSettings(internalServer,savegamesPath))
         return;
     connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&MainWindow::is_started,Qt::QueuedConnection);
-    connect(internalServer,&CatchChallenger::InternalServer::error,this,&MainWindow::serverError,Qt::QueuedConnection);
+    connect(internalServer,&CatchChallenger::InternalServer::error,this,&MainWindow::serverErrorStd,Qt::QueuedConnection);
     internalServer->start();
 
     CatchChallenger::BaseWindow::baseWindow->serverIsLoading();
@@ -1630,6 +1630,12 @@ void MainWindow::gameSolo_play(const QString &savegamesPath)
 void MainWindow::serverError(const QString &error)
 {
     QMessageBox::critical(NULL,tr("Error"),tr("The engine is closed due to: %1").arg(error));
+    resetAll();
+}
+
+void MainWindow::serverErrorStd(const std::string &error)
+{
+    QMessageBox::critical(NULL,tr("Error"),tr("The engine is closed due to: %1").arg(QString::fromStdString(error)));
     resetAll();
 }
 
