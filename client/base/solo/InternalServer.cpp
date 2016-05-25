@@ -33,7 +33,7 @@ void InternalServer::start_internal_server()
     {
         qDebug() << (QStringLiteral("Unable to listen the internal server"));
         stat=Down;
-        emit error(QStringLiteral("Unable to listen the internal server"));
+        emit error("Unable to listen the internal server");
         emit is_started(false);
         return;
     }
