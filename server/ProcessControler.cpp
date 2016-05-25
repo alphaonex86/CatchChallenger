@@ -32,14 +32,26 @@ void ProcessControler::generateTokenStatClient(TinyXMLSettings &settings,char * 
     FILE *fpRandomFile = fopen(RANDOMFILEDEVICE,"rb");
     if(fpRandomFile==NULL)
     {
-        std::cerr << "Unable to open " << RANDOMFILEDEVICE << " to generate random token" << std::endl;
-        abort();
+        std::cerr << "Unable to open " << RANDOMFILEDEVICE << " to generate random token, use unsafe rand()" << std::endl;
+        unsigned int index=0;
+        while(index<TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+        {
+            data[index]=rand();
+            index++;
+        }
+        return;
     }
     const int &returnedSize=fread(data,1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,fpRandomFile);
     if(returnedSize!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
     {
-        std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT << " needed to do the token from " << RANDOMFILEDEVICE << std::endl;
-        abort();
+        std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT << " needed to do the token from, use unsafe rand()" << RANDOMFILEDEVICE << std::endl;
+        unsigned int index=0;
+        while(index<TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+        {
+            data[index]=rand();
+            index++;
+        }
+        return;
     }
     settings.setValue("token",binarytoHexa(reinterpret_cast<char *>(data)
                                            ,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT).c_str());
@@ -173,7 +185,7 @@ void ProcessControler::send_settings()
     #endif
 
     //fight
-    //CommonSettingsCommon::commonSettingsCommon.pvp			= stringtobool(settings->value("pvp"));
+    //CommonSettingsServer::commonSettingsServer.pvp			= stringtobool(settings->value("pvp"));
     formatedServerSettings.sendPlayerNumber         = stringtobool(settings->value("sendPlayerNumber"));
 
     //rates
