@@ -109,6 +109,7 @@ private slots:
     void is_started(bool started);
     void saveTime();
     void serverError(const QString &error);
+    void serverErrorStd(const std::string &error);
     void on_languages_clicked();
     void newUpdate(const QString &version);
     void feedEntryList(const QList<FeedNews::FeedEntry> &entryList, QString error);
