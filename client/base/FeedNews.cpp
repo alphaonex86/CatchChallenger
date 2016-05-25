@@ -9,7 +9,7 @@
 #include <QDomElement>
 #include <QRegularExpression>
 
-FeedNews *FeedNews::rssNews=NULL;
+FeedNews *FeedNews::feedNews=NULL;
 
 FeedNews::FeedNews()
 {
