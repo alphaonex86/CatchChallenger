@@ -1,11 +1,11 @@
 #include <QApplication>
 #include <QMessageBox>
-#include <std::string>
+#include <string>
 #include "MainWindow.h"
 
 int main(int argc, char *argv[])
 {
-    NormalServer::displayInfo();
+    NormalServerGlobal::displayInfo();
 
     QApplication a(argc, argv);
     if(argc<1)
@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     QFileInfo datapackFolder(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/informations.xml"));
     if(!datapackFolder.isFile())
     {
-        QMessageBox::critical(NULL,"Critical error",std::string("No datapack found, look at file: ")+datapackFolder.absoluteFilePath());
+        QMessageBox::critical(NULL,"Critical error",QString("No datapack found, look at file: ")+datapackFolder.absoluteFilePath());
         qDebug() << "No datapack found, look at file: " << datapackFolder.absoluteFilePath();
         return EXIT_FAILURE;
     }
