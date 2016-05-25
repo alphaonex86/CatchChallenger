@@ -104,6 +104,8 @@ ALTER TABLE ONLY "character"
 ALTER TABLE ONLY clan
     ADD CONSTRAINT clan_pkey PRIMARY KEY (id);
 
+ALTER TABLE ONLY monster ADD CONSTRAINT monster_pkey PRIMARY KEY (id);
+
 
 --
 -- Name: server_time_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
@@ -138,12 +140,6 @@ CREATE UNIQUE INDEX character_bypseudo ON "character" USING btree (pseudo);
 --
 
 CREATE INDEX character_clan ON "character" USING btree ("clan") WHERE clan>0;
-
---
--- Name: monster_unique; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE UNIQUE INDEX monster_unique ON monster USING btree (id);
 
 --
 -- Name: monster_unique; Type: INDEX; Schema: public; Owner: root; Tablespace: 
