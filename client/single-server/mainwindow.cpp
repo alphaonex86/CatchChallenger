@@ -8,7 +8,8 @@
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "../base/Audio.h"
 #endif
-#include "../../general/base/CommonSettings.h"
+#include "../../general/base/CommonSettingsCommon.h"
+#include "../../general/base/CommonSettingsServer.h"
 #include "../base/SslCert.h"
 #include <QNetworkProxy>
 #include <QStandardPaths>
@@ -80,8 +81,8 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     InternetUpdater::internetUpdater=new InternetUpdater();
     connect(InternetUpdater::internetUpdater,&InternetUpdater::newUpdate,this,&MainWindow::newUpdate);
-    RssNews::rssNews=new RssNews();
-    connect(RssNews::rssNews,&RssNews::rssEntryList,this,&MainWindow::rssEntryList);
+    FeedNews::feedNews=new FeedNews();
+    connect(FeedNews::feedNews,&FeedNews::feedEntryList,this,&MainWindow::feedEntryList);
     CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
     ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
     {
@@ -126,6 +127,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     setWindowTitle(QStringLiteral("CatchChallenger - ")+server_name);
 
+    #ifndef CATCHCHALLENGER_NOAUDIO
     vlcPlayer=NULL;
     if(Audio::audio.vlcInstance!=NULL)
     {
@@ -175,6 +177,7 @@ MainWindow::MainWindow(QWidget *parent) :
         if(string!=NULL)
             qDebug() << string;
     }
+    #endif
     connect(CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::gameIsLoaded,this,&MainWindow::gameIsLoaded);
     #ifdef CATCHCHALLENGER_GITCOMMIT
     ui->version->setText(QStringLiteral(CATCHCHALLENGER_VERSION)+QStringLiteral(" - ")+QStringLiteral(CATCHCHALLENGER_GITCOMMIT));
@@ -185,11 +188,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    #ifndef CATCHCHALLENGER_NOAUDIO
     if(vlcPlayer!=NULL)
     {
         libvlc_media_player_stop(vlcPlayer);
         Audio::audio.removePlayer(vlcPlayer);
     }
+    #endif
     if(CatchChallenger::Api_client_real::client!=NULL)
     {
         CatchChallenger::Api_client_real::client->tryDisconnect();
@@ -351,7 +356,7 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         realSslSocket->setProxy(proxy);
     }
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
-    connect(realSslSocket,&QSslSocket::readyRead,this,&MainWindow::readForFirstHeader,Qt::DirectConnection);
+    //connect(realSslSocket,&QSslSocket::readyRead,this,&MainWindow::readForFirstHeader,Qt::DirectConnection);
 
     CatchChallenger::BaseWindow::baseWindow->stateChanged(QAbstractSocket::ConnectingState);
     connect(realSslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),  this,&MainWindow::sslErrors,Qt::QueuedConnection);
@@ -386,7 +391,7 @@ void MainWindow::connectTheExternalSocket()
             return;
         }
     CatchChallenger::Api_client_real::client->setDatapackPath(datapack.absolutePath());
-    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPath());
+    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPathBase(),CatchChallenger::Api_client_real::client->mainDatapackCode());
     CatchChallenger::BaseWindow::baseWindow->stateChanged(QAbstractSocket::ConnectedState);
 }
 
@@ -494,7 +499,7 @@ void MainWindow::needQuit()
 
 void MainWindow::have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations)
 {
-    setWindowTitle(QStringLiteral("CatchChallenger - %1 - %2").arg(server_name).arg(informations.public_informations.pseudo));
+    setWindowTitle(QStringLiteral("CatchChallenger - %1 - %2").arg(server_name).arg(QString::fromStdString(informations.public_informations.pseudo)));
 }
 
 void MainWindow::on_languages_clicked()
@@ -530,7 +535,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     QCoreApplication::quit();
 }
 
-void MainWindow::rssEntryList(const QList<RssNews::RssEntry> &entryList)
+void MainWindow::feedEntryList(const QList<FeedNews::FeedEntry> &entryList,QString error)
 {
     if(entryList.isEmpty())
     {
@@ -571,7 +576,7 @@ void MainWindow::on_lineEditLogin_textChanged(const QString &arg1)
 
 void MainWindow::logged()
 {
-    lastServerWaitBeforeConnectAfterKick[server_dns_or_ip]=CommonSettings::commonSettings.waitBeforeConnectAfterKick;
+    lastServerWaitBeforeConnectAfterKick[server_dns_or_ip]=CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick;
 }
 
 void MainWindow::updateTheOkButton()
@@ -609,10 +614,13 @@ void MainWindow::updateTheOkButton()
 
 void MainWindow::gameIsLoaded()
 {
+    #ifndef CATCHCHALLENGER_NOAUDIO
     if(vlcPlayer!=NULL)
         libvlc_media_player_stop(vlcPlayer);
+    #endif
 }
 
+#ifndef CATCHCHALLENGER_NOAUDIO
 void MainWindow::vlcevent(const libvlc_event_t *event, void *ptr)
 {
     qDebug() << "vlc event";
@@ -632,3 +640,4 @@ void MainWindow::vlcevent(const libvlc_event_t *event, void *ptr)
         break;
     }
 }
+#endif
