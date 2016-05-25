@@ -9,11 +9,10 @@
 #include <QMessageBox>
 #include <QTimer>
 #include <QTime>
-#include <std::vectorWidgetItem>
+#include <QListWidgetItem>
 
 #include "NormalServer.h"
 #include "base/GlobalServerData.h"
-#include "../general/base/DebugClass.h"
 #include "../general/base/GeneralStructures.h"
 #include "../general/base/ChatParsing.h"
 
@@ -35,18 +34,19 @@ private:
     bool need_be_restarted;
     bool need_be_closed;
     void closeEvent(QCloseEvent *event);
-    QSettings *settings;
+    TinyXMLSettings *settings;
     void load_settings();
     void send_settings();
-    std::vector<Player_private_and_public_informations> players;
+    QList<Player_private_and_public_informations> players;
     QTimer timer_update_the_info;
     QTimer check_latency;
     QTime time_latency;
     uint16_t internal_currentLatency;
     std::vector<Event> events;
     std::unordered_map<std::string,std::unordered_map<std::string,GameServerSettings::ProgrammedEvent> > programmedEventList;
-    std::string sizeToString(double size);
-    std::string adaptString(float size);
+    QString sizeToString(double size);
+    QString adaptString(float size);
+    void generateTokenStatClient(TinyXMLSettings &settings,char * const data);
 private slots:
     void on_lineEdit_returnPressed();
     void updateActionButton();
@@ -126,7 +126,7 @@ private slots:
     void on_useSP_toggled(bool checked);
     void on_autoLearn_toggled(bool checked);
     void on_programmedEventType_currentIndexChanged(int index);
-    void on_programmedEventList_itemActivated(std::vectorWidgetItem *item);
+    void on_programmedEventList_itemActivated(QListWidgetItem *item);
     void on_programmedEventAdd_clicked();
     void on_programmedEventEdit_clicked();
     void on_programmedEventRemove_clicked();

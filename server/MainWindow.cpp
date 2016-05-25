@@ -12,8 +12,8 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    settings=new QSettings(QCoreApplication::applicationDirPath()+QLatin1Literal("/server.properties"),QSettings::IniFormat);
-    NormalServer::checkSettingsFile(settings);
+    settings=new TinyXMLSettings((QCoreApplication::applicationDirPath()+QLatin1Literal("/server-properties.xml")).toStdString());
+    NormalServer::checkSettingsFile(settings,FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/");
     ui->setupUi(this);
     updateActionButton();
     qRegisterMetaType<Chat_type>("Chat_type");
@@ -38,11 +38,11 @@ MainWindow::MainWindow(QWidget *parent) :
     load_settings();
     updateDbGroupbox();
     {
-        events=DatapackGeneralLoader::loadEvents(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/player/event.xml"));
-        int index=0;
+        events=DatapackGeneralLoader::loadEvents(FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/player/event.xml");
+        unsigned int index=0;
         while(index<events.size())
         {
-            ui->programmedEventType->addItem(events.at(index).name);
+            ui->programmedEventType->addItem(QString::fromStdString(events.at(index).name));
             index++;
         }
     }
@@ -75,6 +75,38 @@ void MainWindow::changeEvent(QEvent *e)
     default:
     break;
     }
+}
+
+void MainWindow::generateTokenStatClient(TinyXMLSettings &settings,char * const data)
+{
+    FILE *fpRandomFile = fopen(RANDOMFILEDEVICE,"rb");
+    if(fpRandomFile==NULL)
+    {
+        std::cerr << "Unable to open " << RANDOMFILEDEVICE << " to generate random token, use unsafe rand()" << std::endl;
+        unsigned int index=0;
+        while(index<TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+        {
+            data[index]=rand();
+            index++;
+        }
+        return;
+    }
+    const int &returnedSize=fread(data,1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,fpRandomFile);
+    if(returnedSize!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+    {
+        std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT << " needed to do the token from, use unsafe rand()" << RANDOMFILEDEVICE << std::endl;
+        unsigned int index=0;
+        while(index<TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+        {
+            data[index]=rand();
+            index++;
+        }
+        return;
+    }
+    settings.setValue("token",binarytoHexa(reinterpret_cast<char *>(data)
+                                           ,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT).c_str());
+    fclose(fpRandomFile);
+    settings.sync();
 }
 
 void MainWindow::on_lineEdit_returnPressed()
@@ -128,10 +160,10 @@ void MainWindow::server_is_started(bool is_started)
             send_settings();
             server.start_server();
         }
-        ui->displayPort->setText(std::string());
+        ui->displayPort->setText(QString());
     }
     else
-        ui->displayPort->setText(std::to_string(server.getNormalSettings().server_port));
+        ui->displayPort->setText(QString::number(server.getNormalSettings().server_port));
 }
 
 void MainWindow::server_need_be_stopped()
@@ -163,13 +195,13 @@ void MainWindow::new_player_is_connected(Player_private_and_public_informations 
         break;
     }
 
-    ui->listPlayer->addItem(new std::vectorWidgetItem(icon,player.public_informations.pseudo));
+    ui->listPlayer->addItem(new QListWidgetItem(icon,QString::fromStdString(player.public_informations.pseudo)));
     players << player;
 }
 
 void MainWindow::player_is_disconnected(std::string pseudo)
 {
-    std::vector<std::vectorWidgetItem *> tempList=ui->listPlayer->findItems(pseudo,Qt::MatchExactly);
+    QList<QListWidgetItem *> tempList=ui->listPlayer->findItems(QString::fromStdString(pseudo),Qt::MatchExactly);
     int index=0;
     while(index<tempList.size())
     {
@@ -195,8 +227,15 @@ void MainWindow::new_chat_message(std::string pseudo,Chat_type type,std::string 
     {
         if(players.at(index).public_informations.pseudo==pseudo)
         {
-            std::string html=ui->textBrowserChat->toHtml();
-            html+=ChatParsing::new_chat_message(players.at(index).public_informations.pseudo,players.at(index).public_informations.type,type,text);
+            QString html=ui->textBrowserChat->toHtml();
+            html+=QString::fromStdString(
+                        ChatParsing::new_chat_message(
+                            players.at(index).public_informations.pseudo,
+                            players.at(index).public_informations.type,
+                            type,
+                            text
+                            )
+                        );
             if(html.size()>1024*1024)
                 html=html.mid(html.size()-1024*1024,1024*1024);
             ui->textBrowserChat->setHtml(html);
@@ -209,7 +248,7 @@ void MainWindow::new_chat_message(std::string pseudo,Chat_type type,std::string 
 
 void MainWindow::server_error(std::string error)
 {
-    QMessageBox::information(this,"Warning",error);
+    QMessageBox::information(this,"Warning",QString::fromStdString(error));
 }
 
 void MainWindow::haveQuitForCriticalDatabaseQueryFailed()
@@ -228,7 +267,7 @@ void MainWindow::update_the_info()
         uint16_t player_current,player_max;
         player_current=server.player_current();
         player_max=server.player_max();
-        ui->label_player->setText(std::stringLiteral("%1/%2").arg(player_current).arg(player_max));
+        ui->label_player->setText(QStringLiteral("%1/%2").arg(player_current).arg(player_max));
         ui->progressBar_player->setMaximum(player_max);
         ui->progressBar_player->setValue(player_current);
     }
@@ -238,10 +277,10 @@ void MainWindow::update_the_info()
     }
 }
 
-std::string MainWindow::sizeToString(double size)
+QString MainWindow::sizeToString(double size)
 {
     if(size<1024)
-        return std::to_string(size)+tr("B");
+        return QString::number(size)+tr("B");
     if((size=size/1024)<1024)
         return adaptString(size)+tr("KB");
     if((size=size/1024)<1024)
@@ -261,12 +300,12 @@ std::string MainWindow::sizeToString(double size)
     return tr("Too big");
 }
 
-std::string MainWindow::adaptString(float size)
+QString MainWindow::adaptString(float size)
 {
     if(size>=100)
-        return std::to_string(size,'f',0);
+        return QString::number(size,'f',0);
     else
-        return std::to_string(size,'g',3);
+        return QString::number(size,'g',3);
 }
 
 
@@ -304,45 +343,469 @@ void MainWindow::clean_updated_info()
 
 void MainWindow::load_settings()
 {
+    bool ok;
+    CatchChallenger::GameServerSettings formatedServerSettings=server.getSettings();
+    NormalServerSettings formatedServerNormalSettings=server.getNormalSettings();
+
+    {
+        //common var
+        CommonSettingsServer::commonSettingsServer.useSP                            = stringtobool(settings->value("useSP"));
+        CommonSettingsServer::commonSettingsServer.autoLearn                        = stringtobool(settings->value("autoLearn")) && !CommonSettingsServer::commonSettingsServer.useSP;
+        CommonSettingsServer::commonSettingsServer.forcedSpeed                      = stringtouint32(settings->value("forcedSpeed"));
+        CommonSettingsServer::commonSettingsServer.dontSendPseudo					= stringtobool(settings->value("dontSendPseudo"));
+        CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer  		= stringtobool(settings->value("plantOnlyVisibleByPlayer"));
+        CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange		= stringtobool(settings->value("forceClientToSendAtMapChange"));
+        CommonSettingsServer::commonSettingsServer.exportedXml                      = settings->value("exportedXml");
+        formatedServerSettings.dontSendPlayerType                                   = stringtobool(settings->value("dontSendPlayerType"));
+        CommonSettingsCommon::commonSettingsCommon.min_character					= stringtouint8(settings->value("min_character"));
+        CommonSettingsCommon::commonSettingsCommon.max_character					= stringtouint8(settings->value("max_character"));
+        CommonSettingsCommon::commonSettingsCommon.max_pseudo_size					= stringtouint8(settings->value("max_pseudo_size"));
+        CommonSettingsCommon::commonSettingsCommon.character_delete_time			= stringtouint32(settings->value("character_delete_time"));
+        CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters                = stringtouint32(settings->value("maxPlayerMonsters"));
+        CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters       = stringtouint32(settings->value("maxWarehousePlayerMonsters"));
+        CommonSettingsCommon::commonSettingsCommon.maxPlayerItems                   = stringtouint32(settings->value("maxPlayerItems"));
+        CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems          = stringtouint32(settings->value("maxWarehousePlayerItems"));
+        //connection
+        formatedServerSettings.automatic_account_creation   = stringtobool(settings->value("automatic_account_creation"));
+
+        if(!settings->contains("compressionLevel"))
+            settings->setValue("compressionLevel","6");
+        formatedServerSettings.compressionLevel          = stringtouint8(settings->value("compressionLevel"),&ok);
+        if(!ok)
+        {
+            std::cerr << "Compression level not a number fixed by 6" << std::endl;
+            formatedServerSettings.compressionLevel=6;
+        }
+        formatedServerSettings.compressionLevel                                     = stringtouint32(settings->value("compressionLevel"));
+        if(settings->value("compression")=="none")
+            formatedServerSettings.compressionType                                = CompressionType_None;
+        else if(settings->value("compression")=="xz")
+            formatedServerSettings.compressionType                                = CompressionType_Xz;
+        else if(settings->value("compression")=="lz4")
+            formatedServerSettings.compressionType                                = CompressionType_Lz4;
+        else
+            formatedServerSettings.compressionType                                = CompressionType_Zlib;
+
+        //the listen
+        formatedServerNormalSettings.server_port			= stringtouint32(settings->value("server-port"));
+        formatedServerNormalSettings.server_ip				= settings->value("server-ip");
+        formatedServerNormalSettings.proxy					= settings->value("proxy");
+        formatedServerNormalSettings.proxy_port				= stringtouint32(settings->value("proxy_port"));
+        formatedServerNormalSettings.useSsl					= stringtobool(settings->value("useSsl"));
+        formatedServerSettings.common_blobversion_datapack= stringtouint8(settings->value("common_blobversion_datapack"),&ok);
+        if(!ok)
+        {
+            std::cerr << "common_blobversion_datapack is not a number" << std::endl;
+            abort();
+        }
+        if(formatedServerSettings.common_blobversion_datapack>15)
+        {
+            std::cerr << "common_blobversion_datapack > 15" << std::endl;
+            abort();
+        }
+        formatedServerSettings.server_blobversion_datapack= stringtouint8(settings->value("server_blobversion_datapack"),&ok);
+        if(!ok)
+        {
+            std::cerr << "server_blobversion_datapack is not a number" << std::endl;
+            abort();
+        }
+        if(formatedServerSettings.server_blobversion_datapack>15)
+        {
+            std::cerr << "server_blobversion_datapack > 15" << std::endl;
+            abort();
+        }
+
+        if(settings->contains("mainDatapackCode"))
+            CommonSettingsServer::commonSettingsServer.mainDatapackCode=settings->value("mainDatapackCode","[main]");
+        else
+        {
+            const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &list=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(GlobalServerData::serverSettings.datapack_basePath+"/map/main/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
+            if(list.empty())
+            {
+                std::cerr << "No main code detected into the current datapack (abort)" << std::endl;
+                settings->sync();
+                abort();
+            }
+            if(list.size()==1)
+            {
+                settings->setValue("mainDatapackCode",list.at(0).name);
+                CommonSettingsServer::commonSettingsServer.mainDatapackCode=list.at(0).name;
+            }
+        }
+        if(settings->contains("subDatapackCode"))
+            CommonSettingsServer::commonSettingsServer.subDatapackCode=settings->value("subDatapackCode","");
+        else
+        {
+            const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &list=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(GlobalServerData::serverSettings.datapack_basePath+"/map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/sub/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
+            if(!list.empty())
+            {
+                if(list.size()==1)
+                {
+                    settings->setValue("subDatapackCode",list.at(0).name);
+                    CommonSettingsServer::commonSettingsServer.subDatapackCode=list.at(0).name;
+                }
+                else
+                {
+                    std::cerr << "No sub code detected into the current datapack" << std::endl;
+                    settings->setValue("subDatapackCode","");
+                    settings->sync();
+                    CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
+                }
+            }
+            else
+                CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
+        }
+        formatedServerSettings.anonymous					= stringtobool(settings->value("anonymous"));
+        formatedServerSettings.server_message				= settings->value("server_message");
+        CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase	= settings->value("httpDatapackMirror");
+        CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase;
+        formatedServerSettings.datapackCache				= stringtoint32(settings->value("datapackCache"));
+        #ifdef __linux__
+        settings->beginGroup("Linux");
+        CommonSettingsServer::commonSettingsServer.tcpCork	= stringtobool(settings->value("tcpCork"));
+        formatedServerNormalSettings.tcpNodelay= stringtobool(settings->value("tcpNodelay"));
+        settings->endGroup();
+        #endif
+
+        //fight
+        //CommonSettingsCommon::commonSettingsCommon.pvp			= stringtobool(settings->value("pvp"));
+        formatedServerSettings.sendPlayerNumber         = stringtobool(settings->value("sendPlayerNumber"));
+
+        //rates
+        settings->beginGroup("rates");
+        CommonSettingsServer::commonSettingsServer.rates_xp             = stringtodouble(settings->value("xp_normal"));
+        CommonSettingsServer::commonSettingsServer.rates_gold			= stringtodouble(settings->value("gold_normal"));
+        CommonSettingsServer::commonSettingsServer.rates_xp_pow			= stringtodouble(settings->value("xp_pow_normal"));
+        CommonSettingsServer::commonSettingsServer.rates_drop			= stringtodouble(settings->value("drop_normal"));
+        //formatedServerSettings.rates_xp_premium                         = stringtodouble(settings->value("xp_premium"));
+        //formatedServerSettings.rates_gold_premium                       = stringtodouble(settings->value("gold_premium"));
+        /*CommonSettingsCommon::commonSettingsCommon.rates_shiny		= stringtodouble(settings->value("shiny_normal"));
+        formatedServerSettings.rates_shiny_premium                      = stringtodouble(settings->value("shiny_premium"));*/
+        settings->endGroup();
+
+        settings->beginGroup("DDOS");
+        CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick         = stringtouint32(settings->value("waitBeforeConnectAfterKick"));
+        formatedServerSettings.ddos.computeAverageValueNumberOfValue      = stringtouint32(settings->value("computeAverageValueNumberOfValue"));
+        formatedServerSettings.ddos.computeAverageValueTimeInterval       = stringtouint32(settings->value("computeAverageValueTimeInterval"));
+        #ifdef CATCHCHALLENGER_DDOS_FILTER
+        formatedServerSettings.ddos.kickLimitMove                         = stringtouint32(settings->value("kickLimitMove"));
+        formatedServerSettings.ddos.kickLimitChat                         = stringtouint32(settings->value("kickLimitChat"));
+        formatedServerSettings.ddos.kickLimitOther                        = stringtouint32(settings->value("kickLimitOther"));
+        #endif
+        formatedServerSettings.ddos.dropGlobalChatMessageGeneral          = stringtouint32(settings->value("dropGlobalChatMessageGeneral"));
+        formatedServerSettings.ddos.dropGlobalChatMessageLocalClan        = stringtouint32(settings->value("dropGlobalChatMessageLocalClan"));
+        formatedServerSettings.ddos.dropGlobalChatMessagePrivate          = stringtouint32(settings->value("dropGlobalChatMessagePrivate"));
+        settings->endGroup();
+
+        //chat allowed
+        settings->beginGroup("chat");
+        CommonSettingsServer::commonSettingsServer.chat_allow_all         = stringtobool(settings->value("allow-all"));
+        CommonSettingsServer::commonSettingsServer.chat_allow_local		= stringtobool(settings->value("allow-local"));
+        CommonSettingsServer::commonSettingsServer.chat_allow_private		= stringtobool(settings->value("allow-private"));
+        //CommonSettingsServer::commonSettingsServer.chat_allow_aliance		= stringtobool(settings->value("allow-aliance"));
+        CommonSettingsServer::commonSettingsServer.chat_allow_clan		= stringtobool(settings->value("allow-clan"));
+        settings->endGroup();
+
+        settings->beginGroup("db-login");
+        if(settings->value("type")=="mysql")
+            formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
+        else if(settings->value("type")=="sqlite")
+            formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::SQLite;
+        else if(settings->value("type")=="postgresql")
+            formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::PostgreSQL;
+        else
+            formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
+        switch(formatedServerSettings.database_login.tryOpenType)
+        {
+            default:
+            case DatabaseBase::DatabaseType::PostgreSQL:
+            case DatabaseBase::DatabaseType::Mysql:
+                formatedServerSettings.database_login.host				= settings->value("host");
+                formatedServerSettings.database_login.db				= settings->value("db");
+                formatedServerSettings.database_login.login				= settings->value("login");
+                formatedServerSettings.database_login.pass				= settings->value("pass");
+            break;
+            case DatabaseBase::DatabaseType::SQLite:
+                formatedServerSettings.database_login.file				= settings->value("file");
+            break;
+        }
+        formatedServerSettings.database_login.tryInterval       = stringtouint32(settings->value("tryInterval"));
+        formatedServerSettings.database_login.considerDownAfterNumberOfTry = stringtouint32(settings->value("considerDownAfterNumberOfTry"));
+        settings->endGroup();
+
+        settings->beginGroup("db-base");
+        if(settings->value("type")=="mysql")
+            formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::DatabaseType::Mysql;
+        else if(settings->value("type")=="sqlite")
+            formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::DatabaseType::SQLite;
+        else if(settings->value("type")=="postgresql")
+            formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::DatabaseType::PostgreSQL;
+        else
+            formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::DatabaseType::Mysql;
+        switch(formatedServerSettings.database_base.tryOpenType)
+        {
+            default:
+            case DatabaseBase::DatabaseType::PostgreSQL:
+            case DatabaseBase::DatabaseType::Mysql:
+                formatedServerSettings.database_base.host              = settings->value("host");
+                formatedServerSettings.database_base.db                = settings->value("db");
+                formatedServerSettings.database_base.login             = settings->value("login");
+                formatedServerSettings.database_base.pass              = settings->value("pass");
+            break;
+            case DatabaseBase::DatabaseType::SQLite:
+                formatedServerSettings.database_base.file              = settings->value("file");
+            break;
+        }
+        formatedServerSettings.database_base.tryInterval       = stringtouint32(settings->value("tryInterval"));
+        formatedServerSettings.database_base.considerDownAfterNumberOfTry = stringtouint32(settings->value("considerDownAfterNumberOfTry"));
+        settings->endGroup();
+
+        settings->beginGroup("db-common");
+        if(settings->value("type")=="mysql")
+            formatedServerSettings.database_common.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
+        else if(settings->value("type")=="sqlite")
+            formatedServerSettings.database_common.tryOpenType					= DatabaseBase::DatabaseType::SQLite;
+        else if(settings->value("type")=="postgresql")
+            formatedServerSettings.database_common.tryOpenType					= DatabaseBase::DatabaseType::PostgreSQL;
+        else
+            formatedServerSettings.database_common.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
+        switch(formatedServerSettings.database_common.tryOpenType)
+        {
+            default:
+            case DatabaseBase::DatabaseType::PostgreSQL:
+            case DatabaseBase::DatabaseType::Mysql:
+                formatedServerSettings.database_common.host				= settings->value("host");
+                formatedServerSettings.database_common.db				= settings->value("db");
+                formatedServerSettings.database_common.login				= settings->value("login");
+                formatedServerSettings.database_common.pass				= settings->value("pass");
+            break;
+            case DatabaseBase::DatabaseType::SQLite:
+                formatedServerSettings.database_common.file				= settings->value("file");
+            break;
+        }
+        formatedServerSettings.database_common.tryInterval       = stringtouint32(settings->value("tryInterval"));
+        formatedServerSettings.database_common.considerDownAfterNumberOfTry = stringtouint32(settings->value("considerDownAfterNumberOfTry"));
+        settings->endGroup();
+
+        settings->beginGroup("db-server");
+        if(settings->value("type")=="mysql")
+            formatedServerSettings.database_server.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
+        else if(settings->value("type")=="sqlite")
+            formatedServerSettings.database_server.tryOpenType					= DatabaseBase::DatabaseType::SQLite;
+        else if(settings->value("type")=="postgresql")
+            formatedServerSettings.database_server.tryOpenType					= DatabaseBase::DatabaseType::PostgreSQL;
+        else
+            formatedServerSettings.database_server.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
+        switch(formatedServerSettings.database_server.tryOpenType)
+        {
+            default:
+            case DatabaseBase::DatabaseType::PostgreSQL:
+            case DatabaseBase::DatabaseType::Mysql:
+                formatedServerSettings.database_server.host				= settings->value("host");
+                formatedServerSettings.database_server.db				= settings->value("db");
+                formatedServerSettings.database_server.login				= settings->value("login");
+                formatedServerSettings.database_server.pass				= settings->value("pass");
+            break;
+            case DatabaseBase::DatabaseType::SQLite:
+                formatedServerSettings.database_server.file				= settings->value("file");
+            break;
+        }
+        formatedServerSettings.database_server.tryInterval       = stringtouint32(settings->value("tryInterval"));
+        formatedServerSettings.database_server.considerDownAfterNumberOfTry = stringtouint32(settings->value("considerDownAfterNumberOfTry"));
+        settings->endGroup();
+
+        settings->beginGroup("db");
+        if(settings->value("db_fight_sync")=="FightSync_AtEachTurn")
+            formatedServerSettings.fightSync                       = CatchChallenger::GameServerSettings::FightSync_AtEachTurn;
+        else if(settings->value("db_fight_sync")=="FightSync_AtTheDisconnexion")
+            formatedServerSettings.fightSync                       = CatchChallenger::GameServerSettings::FightSync_AtTheDisconnexion;
+        else
+            formatedServerSettings.fightSync                       = CatchChallenger::GameServerSettings::FightSync_AtTheEndOfBattle;
+        formatedServerSettings.positionTeleportSync=stringtobool(settings->value("positionTeleportSync"));
+        formatedServerSettings.secondToPositionSync=stringtouint32(settings->value("secondToPositionSync"));
+        settings->endGroup();
+
+        //connection
+        formatedServerSettings.max_players					= stringtouint32(settings->value("max-players"));
+
+        //visibility algorithm
+        settings->beginGroup("MapVisibilityAlgorithm");
+        switch(stringtouint32(settings->value("MapVisibilityAlgorithm")))
+        {
+            case 0:
+                formatedServerSettings.mapVisibility.mapVisibilityAlgorithm		= MapVisibilityAlgorithmSelection_Simple;
+            break;
+            case 1:
+                formatedServerSettings.mapVisibility.mapVisibilityAlgorithm		= MapVisibilityAlgorithmSelection_None;
+            break;
+            case 2:
+                formatedServerSettings.mapVisibility.mapVisibilityAlgorithm		= MapVisibilityAlgorithmSelection_WithBorder;
+            break;
+            default:
+                formatedServerSettings.mapVisibility.mapVisibilityAlgorithm		= MapVisibilityAlgorithmSelection_Simple;
+            break;
+        }
+        settings->endGroup();
+        if(formatedServerSettings.mapVisibility.mapVisibilityAlgorithm==MapVisibilityAlgorithmSelection_Simple)
+        {
+            settings->beginGroup("MapVisibilityAlgorithm-Simple");
+            formatedServerSettings.mapVisibility.simple.max				= stringtouint32(settings->value("Max"));
+            formatedServerSettings.mapVisibility.simple.reshow			= stringtouint32(settings->value("Reshow"));
+            formatedServerSettings.mapVisibility.simple.reemit          = stringtobool(settings->value("Reemit"));
+            settings->endGroup();
+        }
+        else if(formatedServerSettings.mapVisibility.mapVisibilityAlgorithm==MapVisibilityAlgorithmSelection_WithBorder)
+        {
+            settings->beginGroup("MapVisibilityAlgorithm-WithBorder");
+            formatedServerSettings.mapVisibility.withBorder.maxWithBorder	= stringtouint32(settings->value("MaxWithBorder"));
+            formatedServerSettings.mapVisibility.withBorder.reshowWithBorder= stringtouint32(settings->value("ReshowWithBorder"));
+            formatedServerSettings.mapVisibility.withBorder.max				= stringtouint32(settings->value("Max"));
+            formatedServerSettings.mapVisibility.withBorder.reshow			= stringtouint32(settings->value("Reshow"));
+            settings->endGroup();
+        }
+
+        {
+            settings->beginGroup("programmedEvent");
+                const std::vector<std::string> &tempListType=stringsplit(settings->value("types"),';');
+                unsigned int indexType=0;
+                while(indexType<tempListType.size())
+                {
+                    const std::string &type=tempListType.at(indexType);
+                    settings->beginGroup(type);
+                        const std::vector<std::string> &tempList=stringsplit(settings->value("group"),';');
+                        unsigned int index=0;
+                        while(index<tempList.size())
+                        {
+                            const std::string &groupName=tempList.at(index);
+                            settings->beginGroup(groupName);
+                            if(settings->contains("value") && settings->contains("cycle") && settings->contains("offset"))
+                            {
+                                GameServerSettings::ProgrammedEvent event;
+                                event.value=settings->value("value");
+                                bool ok;
+                                event.cycle=stringtouint32(settings->value("cycle"),&ok);
+                                if(!ok)
+                                    event.cycle=0;
+                                event.offset=stringtouint32(settings->value("offset"),&ok);
+                                if(!ok)
+                                    event.offset=0;
+                                if(event.cycle>0)
+                                    formatedServerSettings.programmedEventList[type][groupName]=event;
+                            }
+                            settings->endGroup();
+                            index++;
+                        }
+                    settings->endGroup();
+                    indexType++;
+                }
+            settings->endGroup();
+        }
+
+        settings->beginGroup("city");
+        if(settings->value("capture_frequency")=="week")
+            formatedServerSettings.city.capture.frenquency=City::Capture::Frequency_week;
+        else
+            formatedServerSettings.city.capture.frenquency=City::Capture::Frequency_month;
+
+        if(settings->value("capture_day")=="monday")
+            formatedServerSettings.city.capture.day=City::Capture::Monday;
+        else if(settings->value("capture_day")=="tuesday")
+            formatedServerSettings.city.capture.day=City::Capture::Tuesday;
+        else if(settings->value("capture_day")=="wednesday")
+            formatedServerSettings.city.capture.day=City::Capture::Wednesday;
+        else if(settings->value("capture_day")=="thursday")
+            formatedServerSettings.city.capture.day=City::Capture::Thursday;
+        else if(settings->value("capture_day")=="friday")
+            formatedServerSettings.city.capture.day=City::Capture::Friday;
+        else if(settings->value("capture_day")=="saturday")
+            formatedServerSettings.city.capture.day=City::Capture::Saturday;
+        else if(settings->value("capture_day")=="sunday")
+            formatedServerSettings.city.capture.day=City::Capture::Sunday;
+        else
+            formatedServerSettings.city.capture.day=City::Capture::Monday;
+        formatedServerSettings.city.capture.hour=0;
+        formatedServerSettings.city.capture.minute=0;
+        const std::vector<std::string> &capture_time_string_list=stringsplit(settings->value("capture_time"),':');
+        if(capture_time_string_list.size()==2)
+        {
+            bool ok;
+            formatedServerSettings.city.capture.hour=stringtouint32(capture_time_string_list.front(),&ok);
+            if(!ok)
+                formatedServerSettings.city.capture.hour=0;
+            else
+            {
+                formatedServerSettings.city.capture.minute=stringtouint32(capture_time_string_list.back(),&ok);
+                if(!ok)
+                    formatedServerSettings.city.capture.minute=0;
+            }
+        }
+        settings->endGroup();
+
+        settings->beginGroup("statclient");
+        {
+            if(!settings->contains("token"))
+                generateTokenStatClient(*settings,formatedServerSettings.private_token_statclient);
+            std::string token=settings->value("token");
+            if(token.size()!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT*2/*String Hexa, not binary*/)
+                generateTokenStatClient(*settings,formatedServerSettings.private_token_statclient);
+            token=settings->value("token");
+            const std::vector<char> &tokenBinary=hexatoBinary(token);
+            if(tokenBinary.empty())
+            {
+                std::cerr << "convertion to binary for pass failed for: " << token << std::endl;
+                abort();
+            }
+            memcpy(formatedServerSettings.private_token_statclient,tokenBinary.data(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+        }
+        settings->endGroup();
+    }
+
     // --------------------------------------------------
-    ui->max_player->setValue(settings->value(QLatin1Literal("max-players")).toUInt());
-    ui->announce->setChecked(settings->value(QLatin1Literal("announce")).toBool());
-    ui->server_ip->setText(settings->value(QLatin1Literal("server-ip")).toString());
-    ui->pvp->setChecked(settings->value(QLatin1Literal("pvp")).toBool());
-    ui->sendPlayerNumber->setChecked(settings->value(QLatin1Literal("sendPlayerNumber")).toBool());
-    ui->server_port->setValue(settings->value(QLatin1Literal("server-port")).toUInt());
-    ui->tolerantMode->setChecked(settings->value(QLatin1Literal("tolerantMode")).toBool());
-    ui->forceClientToSendAtMapChange->setChecked(settings->value(QLatin1Literal("forceClientToSendAtMapChange")).toBool());
-    ui->useSsl->setChecked(settings->value(QLatin1Literal("useSsl")).toBool());
-    ui->autoLearn->setChecked(settings->value(QLatin1Literal("autoLearn")).toBool());
-    ui->useSP->setChecked(settings->value(QLatin1Literal("useSP")).toBool());
-    if(settings->value(QLatin1Literal("compression")).toString()==QLatin1Literal("none"))
-        ui->compression->setCurrentIndex(0);
-    else if(settings->value(QLatin1Literal("compression")).toString()==QLatin1Literal("xz"))
-        ui->compression->setCurrentIndex(2);
-    else if(settings->value(QLatin1Literal("compression")).toString()==QLatin1Literal("lz4"))
-        ui->compression->setCurrentIndex(3);
-    else
-        ui->compression->setCurrentIndex(1);
-    ui->compressionLevel->setValue(settings->value(QLatin1Literal("compressionLevel")).toUInt());
-    ui->maxPlayerMonsters->setValue(settings->value(QLatin1Literal("maxPlayerMonsters")).toUInt());
-    ui->maxWarehousePlayerMonsters->setValue(settings->value(QLatin1Literal("maxWarehousePlayerMonsters")).toUInt());
-    ui->maxPlayerItems->setValue(settings->value(QLatin1Literal("maxPlayerItems")).toUInt());
-    ui->maxWarehousePlayerItems->setValue(settings->value(QLatin1Literal("maxWarehousePlayerItems")).toUInt());
-    ui->min_character->setValue(settings->value(QLatin1Literal("min_character")).toUInt());
-    ui->max_character->setValue(settings->value(QLatin1Literal("max_character")).toUInt());
-    ui->max_pseudo_size->setValue(settings->value(QLatin1Literal("max_pseudo_size")).toUInt());
-    ui->character_delete_time->setValue(settings->value(QLatin1Literal("character_delete_time")).toUInt()/3600);
-    ui->automatic_account_creation->setChecked(settings->value(QLatin1Literal("automatic_account_creation")).toBool());
-    ui->anonymous->setChecked(settings->value(QLatin1Literal("anonymous")).toBool());
+    ui->max_player->setValue(formatedServerSettings.max_players);
+    ui->server_ip->setText(QString::fromStdString(formatedServerNormalSettings.server_ip));
+    //ui->pvp->setChecked(settings->value(QLatin1Literal("pvp")).toBool());
+    ui->sendPlayerNumber->setChecked(formatedServerSettings.sendPlayerNumber);
+    ui->server_port->setValue(formatedServerNormalSettings.server_port);
+    //ui->tolerantMode->setChecked(settings->value(QLatin1Literal("tolerantMode")).toBool());
+    ui->forceClientToSendAtMapChange->setChecked(CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange);
+    ui->useSsl->setChecked(formatedServerNormalSettings.useSsl);
+    ui->autoLearn->setChecked(CommonSettingsServer::commonSettingsServer.autoLearn);
+    ui->useSP->setChecked(CommonSettingsServer::commonSettingsServer.useSP);
+    switch(formatedServerSettings.compressionType)
+    {
+        case CompressionType_None:
+            ui->compression->setCurrentIndex(0);
+        break;
+        case CompressionType_Xz:
+            ui->compression->setCurrentIndex(2);
+        break;
+        case CompressionType_Lz4:
+            ui->compression->setCurrentIndex(3);
+        break;
+        default:
+        case CompressionType_Zlib:
+            ui->compression->setCurrentIndex(1);
+        break;
+    }
+    ui->compressionLevel->setValue(formatedServerSettings.compressionLevel);
+    ui->maxPlayerMonsters->setValue(CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters);
+    ui->maxWarehousePlayerMonsters->setValue(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
+    ui->maxPlayerItems->setValue(CommonSettingsCommon::commonSettingsCommon.maxPlayerItems);
+    ui->maxWarehousePlayerItems->setValue(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
+    ui->min_character->setValue(CommonSettingsCommon::commonSettingsCommon.min_character);
+    ui->max_character->setValue(CommonSettingsCommon::commonSettingsCommon.max_character);
+    ui->max_pseudo_size->setValue(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size);
+    ui->character_delete_time->setValue(CommonSettingsCommon::commonSettingsCommon.character_delete_time);
+    ui->automatic_account_creation->setChecked(formatedServerSettings.automatic_account_creation);
+    ui->anonymous->setChecked(formatedServerSettings.anonymous);
     ui->min_character->setMaximum(ui->max_character->value());
     ui->max_character->setMinimum(ui->min_character->value());
-    ui->server_message->setPlainText(settings->value(QLatin1Literal("server_message")).toString());
-    ui->proxy->setText(settings->value(QLatin1Literal("proxy")).toString());
-    ui->proxy_port->setValue(settings->value(QLatin1Literal("proxy_port")).toUInt());
-    ui->httpDatapackMirror->setText(settings->value(QLatin1Literal("httpDatapackMirror")).toString());
+    ui->server_message->setPlainText(QString::fromStdString(formatedServerSettings.server_message));
+    ui->proxy->setText(QString::fromStdString(formatedServerNormalSettings.proxy));
+    ui->proxy_port->setValue(formatedServerNormalSettings.proxy_port);
+    ui->blobversion->setValue(formatedServerSettings.common_blobversion_datapack);
     {
-        const int32_t &datapackCache=settings->value(QLatin1Literal("datapackCache")).toInt();
+        const int32_t &datapackCache=formatedServerSettings.datapackCache;
         if(datapackCache<0)
         {
             ui->datapack_cache->setChecked(false);
@@ -368,60 +831,18 @@ void MainWindow::load_settings()
             ui->datapack_cache_timeout->setEnabled(ui->datapack_cache->isChecked() && ui->datapack_cache_timeout_checkbox->isChecked());
         }
     }
-    {
-        settings->beginGroup(QLatin1Literal("programmedEvent"));
-            const std::stringList &tempListType=settings->childGroups();
-            int indexType=0;
-            while(indexType<tempListType.size())
-            {
-                const std::string &type=tempListType.at(indexType);
-                settings->beginGroup(type);
-                    const std::stringList &tempList=settings->childGroups();
-                    int index=0;
-                    while(index<tempList.size())
-                    {
-                        const std::string &groupName=tempList.at(index);
-                        settings->beginGroup(groupName);
-                        if(settings->contains(QLatin1Literal("value")) && settings->contains(QLatin1Literal("cycle")) && settings->contains(QLatin1Literal("offset")))
-                        {
-                            GameServerSettings::ProgrammedEvent event;
-                            event.value=settings->value(QLatin1Literal("value")).toString();
-                            bool ok;
-                            event.cycle=settings->value(QLatin1Literal("cycle")).toUInt(&ok);
-                            if(!ok)
-                                event.cycle=0;
-                            event.offset=settings->value(QLatin1Literal("offset")).toUInt(&ok);
-                            if(!ok)
-                                event.offset=0;
-                            if(event.cycle>0)
-                                programmedEventList[type][groupName]=event;
-                        }
-                        settings->endGroup();
-                        index++;
-                    }
-                settings->endGroup();
-                indexType++;
-            }
-        settings->endGroup();
-        if(ui->programmedEventType->count()>0)
-            on_programmedEventType_currentIndexChanged(0);
-    }
+    if(ui->programmedEventType->count()>0)
+        on_programmedEventType_currentIndexChanged(0);
     {
         #ifdef __linux__
-        bool tcpNodelay=false;
-        bool tcpCork=true;
-        settings->beginGroup(QLatin1Literal("Linux"));
-        tcpCork=settings->value(QLatin1Literal("tcpCork")).toBool();
-        tcpNodelay=settings->value(QLatin1Literal("tcpNodelay")).toBool();
-        settings->endGroup();
-        ui->linux_socket_cork->setChecked(tcpCork);
-        ui->tcpNodelay->setChecked(tcpNodelay);
+        ui->linux_socket_cork->setChecked(CommonSettingsServer::commonSettingsServer.tcpCork);
+        ui->tcpNodelay->setChecked(formatedServerNormalSettings.tcpNodelay);
         #else
         ui->linux_socket_cork->setEnabled(false);
         ui->tcpNodelay->setEnabled(false);
         #endif
     }
-    if(settings->value(QLatin1Literal("forcedSpeed")).toUInt()==0)
+    if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
     {
         ui->forceSpeed->setChecked(true);
         ui->speed->setEnabled(false);
@@ -429,76 +850,51 @@ void MainWindow::load_settings()
     else
     {
         ui->forceSpeed->setChecked(false);
-        ui->speed->setValue(settings->value(QLatin1Literal("forcedSpeed")).toUInt());
+        ui->speed->setValue(CommonSettingsServer::commonSettingsServer.forcedSpeed);
         ui->speed->setEnabled(true);
     }
-    ui->dontSendPseudo->setChecked(settings->value(QLatin1Literal("dontSendPseudo")).toBool());
-    ui->dontSendPlayerType->setChecked(settings->value(QLatin1Literal("dontSendPlayerType")).toBool());
+    ui->dontSendPseudo->setChecked(CommonSettingsServer::commonSettingsServer.dontSendPseudo);
+    ui->dontSendPlayerType->setChecked(formatedServerSettings.dontSendPlayerType);
 
-    uint32_t tempValue=0;
-    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm"));
-    tempValue=settings->value(QLatin1Literal("MapVisibilityAlgorithm")).toUInt();
-    settings->endGroup();
-    if(tempValue<(uint32_t)ui->MapVisibilityAlgorithm->count())
-        ui->MapVisibilityAlgorithm->setCurrentIndex(tempValue);
-    ui->groupBoxMapVisibilityAlgorithmSimple->setEnabled(tempValue==0);
-    ui->groupBoxMapVisibilityAlgorithmWithBorder->setEnabled(tempValue==2);
+    if(formatedServerSettings.mapVisibility.mapVisibilityAlgorithm<(uint32_t)ui->MapVisibilityAlgorithm->count())
+        ui->MapVisibilityAlgorithm->setCurrentIndex(formatedServerSettings.mapVisibility.mapVisibilityAlgorithm);
+    ui->groupBoxMapVisibilityAlgorithmSimple->setEnabled(formatedServerSettings.mapVisibility.mapVisibilityAlgorithm==0);
+    ui->groupBoxMapVisibilityAlgorithmWithBorder->setEnabled(formatedServerSettings.mapVisibility.mapVisibilityAlgorithm==2);
 
+    ui->MapVisibilityAlgorithmSimpleMax->setValue(formatedServerSettings.mapVisibility.simple.max);
+    ui->MapVisibilityAlgorithmSimpleReshow->setValue(formatedServerSettings.mapVisibility.simple.reshow);
+    ui->MapVisibilityAlgorithmSimpleReshow->setMaximum(formatedServerSettings.mapVisibility.simple.max);
+    ui->MapVisibilityAlgorithmSimpleReemit->setChecked(formatedServerSettings.mapVisibility.simple.reemit);
     {
-        uint32_t reshow=0;
-        settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-Simple"));
-        tempValue=settings->value(QLatin1Literal("Max")).toUInt();
-        reshow=settings->value(QLatin1Literal("Reshow")).toUInt();
-        if(reshow>tempValue)
+        if(formatedServerSettings.mapVisibility.withBorder.reshow>formatedServerSettings.mapVisibility.withBorder.max)
         {
-            DebugClass::debugConsole("Reshow number corrected");
-            reshow=tempValue;
-            settings->setValue(QLatin1Literal("Reshow"),reshow);
+            std::cerr << "Reshow number corrected" << std::endl;
+            formatedServerSettings.mapVisibility.withBorder.reshow=formatedServerSettings.mapVisibility.withBorder.max;
+            //settings->setValue(QLatin1Literal("Reshow"),formatedServerSettings.mapVisibility.withBorder.reshow);
+        }
+        if(formatedServerSettings.mapVisibility.withBorder.reshowWithBorder>formatedServerSettings.mapVisibility.withBorder.maxWithBorder)
+        {
+            std::cerr << "ReshowWithBorder number corrected" << std::endl;
+            formatedServerSettings.mapVisibility.withBorder.reshowWithBorder=formatedServerSettings.mapVisibility.withBorder.maxWithBorder;
+            //settings->setValue(QLatin1Literal("ReshowWithBorder"),formatedServerSettings.mapVisibility.withBorder.reshow);
+        }
+        if(formatedServerSettings.mapVisibility.withBorder.maxWithBorder>formatedServerSettings.mapVisibility.withBorder.max)
+        {
+            std::cerr << "MaxWithBorder number corrected" << std::endl;
+            formatedServerSettings.mapVisibility.withBorder.maxWithBorder=formatedServerSettings.mapVisibility.withBorder.max;
+            //settings->setValue(QLatin1Literal("MaxWithBorder"),formatedServerSettings.mapVisibility.withBorder.reshow);
+        }
+        if(formatedServerSettings.mapVisibility.withBorder.reshowWithBorder>formatedServerSettings.mapVisibility.withBorder.reshow)
+        {
+            std::cerr << "ReshowWithBorder number corrected" << std::endl;
+            formatedServerSettings.mapVisibility.withBorder.reshowWithBorder=formatedServerSettings.mapVisibility.withBorder.reshow;
+            //settings->setValue(QLatin1Literal("ReshowWithBorder"),formatedServerSettings.mapVisibility.withBorder.reshow);
         }
         settings->endGroup();
-        ui->MapVisibilityAlgorithmSimpleMax->setValue(tempValue);
-        ui->MapVisibilityAlgorithmSimpleReshow->setValue(reshow);
-        ui->MapVisibilityAlgorithmSimpleReshow->setMaximum(ui->MapVisibilityAlgorithmSimpleMax->value());
-        ui->MapVisibilityAlgorithmSimpleReemit->setChecked(settings->value(QLatin1Literal("Reemit")).toBool());
-    }
-    {
-        uint32_t tempValueWithBorder=0;
-        uint32_t reshowWithBorder=0;
-        uint32_t reshow=0;
-        settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-WithBorder"));
-        tempValueWithBorder=settings->value(QLatin1Literal("MaxWithBorder")).toUInt();
-        reshowWithBorder=settings->value(QLatin1Literal("ReshowWithBorder")).toUInt();
-        tempValue=settings->value(QLatin1Literal("Max")).toUInt();
-        reshow=settings->value(QLatin1Literal("Reshow")).toUInt();
-        if(reshow>tempValue)
-        {
-            DebugClass::debugConsole("Reshow number corrected");
-            reshow=tempValue;
-            settings->setValue(QLatin1Literal("Reshow"),reshow);
-        }
-        if(reshowWithBorder>tempValueWithBorder)
-        {
-            DebugClass::debugConsole("ReshowWithBorder number corrected");
-            reshowWithBorder=tempValueWithBorder;
-            settings->setValue(QLatin1Literal("ReshowWithBorder"),reshow);
-        }
-        if(tempValueWithBorder>tempValue)
-        {
-            DebugClass::debugConsole("MaxWithBorder number corrected");
-            tempValueWithBorder=tempValue;
-            settings->setValue(QLatin1Literal("MaxWithBorder"),reshow);
-        }
-        if(reshowWithBorder>reshow)
-        {
-            DebugClass::debugConsole("ReshowWithBorder number corrected");
-            reshowWithBorder=reshow;
-            settings->setValue(QLatin1Literal("ReshowWithBorder"),reshow);
-        }
-        settings->endGroup();
-        ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->setValue(tempValueWithBorder);
-        ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setValue(reshowWithBorder);
-        ui->MapVisibilityAlgorithmWithBorderMax->setValue(tempValue);
-        ui->MapVisibilityAlgorithmWithBorderReshow->setValue(reshow);
+        ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->setValue(formatedServerSettings.mapVisibility.withBorder.maxWithBorder);
+        ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setValue(formatedServerSettings.mapVisibility.withBorder.reshowWithBorder);
+        ui->MapVisibilityAlgorithmWithBorderMax->setValue(formatedServerSettings.mapVisibility.withBorder.max);
+        ui->MapVisibilityAlgorithmWithBorderReshow->setValue(formatedServerSettings.mapVisibility.withBorder.reshow);
         ui->MapVisibilityAlgorithmWithBorderReshow->setMaximum(ui->MapVisibilityAlgorithmWithBorderMax->value());
         ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderMax->value());
         if(ui->MapVisibilityAlgorithmWithBorderReshow->value()>ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value())
@@ -508,140 +904,71 @@ void MainWindow::load_settings()
     }
 
     {
-        settings->beginGroup(QLatin1Literal("rates"));
-        double rates_xp_normal=settings->value(QLatin1Literal("xp_normal")).toFloat();
-        double rates_gold_normal=settings->value(QLatin1Literal("gold_normal")).toFloat();
-        double rates_xp_pow_normal=settings->value(QLatin1Literal("xp_pow_normal")).toFloat();
-        double rates_drop_normal=settings->value(QLatin1Literal("drop_normal")).toFloat();
-        settings->endGroup();
-
-        ui->rates_xp_normal->setValue(rates_xp_normal);
-        ui->rates_gold_normal->setValue(rates_gold_normal);
-        ui->rates_xp_pow_normal->setValue(rates_xp_pow_normal);
-        ui->rates_drop_normal->setValue(rates_drop_normal);
+        ui->rates_xp_normal->setValue(CommonSettingsServer::commonSettingsServer.rates_xp);
+        ui->rates_gold_normal->setValue(CommonSettingsServer::commonSettingsServer.rates_gold);
+        ui->rates_xp_pow_normal->setValue(CommonSettingsServer::commonSettingsServer.rates_xp_pow);
+        ui->rates_drop_normal->setValue(CommonSettingsServer::commonSettingsServer.rates_drop);
     }
 
     {
-        settings->beginGroup(QLatin1Literal("chat"));
-        bool chat_allow_all=settings->value(QLatin1Literal("allow-all")).toBool();
-        bool chat_allow_local=settings->value(QLatin1Literal("allow-local")).toBool();
-        bool chat_allow_private=settings->value(QLatin1Literal("allow-private")).toBool();
-        bool chat_allow_clan=settings->value(QLatin1Literal("allow-clan")).toBool();
-        settings->endGroup();
-
-        ui->chat_allow_all->setChecked(chat_allow_all);
-        ui->chat_allow_local->setChecked(chat_allow_local);
-        ui->chat_allow_private->setChecked(chat_allow_private);
-        ui->chat_allow_clan->setChecked(chat_allow_clan);
+        ui->chat_allow_all->setChecked(CommonSettingsServer::commonSettingsServer.chat_allow_all);
+        ui->chat_allow_local->setChecked(CommonSettingsServer::commonSettingsServer.chat_allow_local);
+        ui->chat_allow_private->setChecked(CommonSettingsServer::commonSettingsServer.chat_allow_private);
+        ui->chat_allow_clan->setChecked(CommonSettingsServer::commonSettingsServer.chat_allow_clan);
     }
 
-    settings->beginGroup(QLatin1Literal("db"));
-    std::string db_type=settings->value(QLatin1Literal("type")).toString();
-    std::string db_mysql_host=settings->value(QLatin1Literal("mysql_host")).toString();
-    std::string db_mysql_login=settings->value(QLatin1Literal("mysql_login")).toString();
-    std::string db_mysql_pass=settings->value(QLatin1Literal("mysql_pass")).toString();
-    std::string db_mysql_base=settings->value(QLatin1Literal("mysql_db")).toString();
-    std::string db_fight_sync=settings->value(QLatin1Literal("db_fight_sync")).toString();
-    bool positionTeleportSync=settings->value(QLatin1Literal("positionTeleportSync")).toBool();
-    uint32_t secondToPositionSync=settings->value(QLatin1Literal("secondToPositionSync")).toUInt();
+    ui->DDOSwaitBeforeConnectAfterKick->setValue(CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick);
+    ui->DDOScomputeAverageValueNumberOfValue->setValue(formatedServerSettings.ddos.computeAverageValueNumberOfValue);
+    ui->DDOScomputeAverageValueTimeInterval->setValue(formatedServerSettings.ddos.computeAverageValueTimeInterval);
+    ui->DDOSkickLimitMove->setValue(formatedServerSettings.ddos.kickLimitMove);
+    ui->DDOSkickLimitChat->setValue(formatedServerSettings.ddos.kickLimitChat);
+    ui->DDOSkickLimitOther->setValue(formatedServerSettings.ddos.kickLimitOther);
+    ui->DDOSdropGlobalChatMessageGeneral->setValue(formatedServerSettings.ddos.dropGlobalChatMessageGeneral);
+    ui->DDOSdropGlobalChatMessageLocalClan->setValue(formatedServerSettings.ddos.dropGlobalChatMessageLocalClan);
+    ui->DDOSdropGlobalChatMessagePrivate->setValue(formatedServerSettings.ddos.dropGlobalChatMessagePrivate);
 
-    if(!settings->contains(QLatin1Literal("db_fight_sync")))
-        settings->setValue(QLatin1Literal("db_fight_sync"),"FightSync_AtTheEndOfBattle");
-    uint32_t tryInterval;
-    uint32_t considerDownAfterNumberOfTry;
-    tryInterval=settings->value(QLatin1Literal("tryInterval")).toUInt();
-    considerDownAfterNumberOfTry=settings->value(QLatin1Literal("considerDownAfterNumberOfTry")).toUInt();
-    settings->endGroup();
-    ui->tryInterval->setValue(tryInterval);
-    ui->considerDownAfterNumberOfTry->setValue(considerDownAfterNumberOfTry);
+    switch(formatedServerSettings.database_login.tryOpenType)
+    {
+        case DatabaseBase::DatabaseType::SQLite:
+            ui->db_type->setCurrentIndex(1);
+        break;
+        case DatabaseBase::DatabaseType::PostgreSQL:
+            ui->db_type->setCurrentIndex(2);
+        break;
+        default:
+        case DatabaseBase::DatabaseType::Mysql:
+            ui->db_type->setCurrentIndex(1);
+        break;
+    }
+    ui->tryInterval->setValue(formatedServerSettings.database_login.tryInterval);
+    ui->considerDownAfterNumberOfTry->setValue(formatedServerSettings.database_login.considerDownAfterNumberOfTry);
 
-    settings->beginGroup(QLatin1Literal("DDOS"));
-    ui->DDOSwaitBeforeConnectAfterKick->setValue(settings->value(QLatin1Literal("waitBeforeConnectAfterKick")).toUInt());
-    ui->DDOScomputeAverageValueNumberOfValue->setValue(settings->value(QLatin1Literal("computeAverageValueNumberOfValue")).toUInt());
-    ui->DDOScomputeAverageValueTimeInterval->setValue(settings->value(QLatin1Literal("computeAverageValueTimeInterval")).toUInt());
-    ui->DDOSkickLimitMove->setValue(settings->value(QLatin1Literal("kickLimitMove")).toUInt());
-    ui->DDOSkickLimitChat->setValue(settings->value(QLatin1Literal("kickLimitChat")).toUInt());
-    ui->DDOSkickLimitOther->setValue(settings->value(QLatin1Literal("kickLimitOther")).toUInt());
-    ui->DDOSdropGlobalChatMessageGeneral->setValue(settings->value(QLatin1Literal("dropGlobalChatMessageGeneral")).toUInt());
-    ui->DDOSdropGlobalChatMessageLocalClan->setValue(settings->value(QLatin1Literal("dropGlobalChatMessageLocalClan")).toUInt());
-    ui->DDOSdropGlobalChatMessagePrivate->setValue(settings->value(QLatin1Literal("dropGlobalChatMessagePrivate")).toUInt());
-    settings->endGroup();
+    ui->db_mysql_host->setText(QString::fromStdString(formatedServerSettings.database_login.host));
+    ui->db_mysql_login->setText(QString::fromStdString(formatedServerSettings.database_login.login));
+    ui->db_mysql_pass->setText(QString::fromStdString(formatedServerSettings.database_login.pass));
+    ui->db_mysql_base->setText(QString::fromStdString(formatedServerSettings.database_login.db));
+    ui->db_sqlite_file->setText(QString::fromStdString(formatedServerSettings.database_login.file));
 
-    if(db_type==QLatin1Literal("mysql"))
-        ui->db_type->setCurrentIndex(0);
-    else if(db_type==QLatin1Literal("sqlite"))
-        ui->db_type->setCurrentIndex(1);
-    else if(db_type==QLatin1Literal("postgresql"))
-        ui->db_type->setCurrentIndex(2);
-    else
-        ui->db_type->setCurrentIndex(1);
-    ui->db_mysql_host->setText(db_mysql_host);
-    ui->db_mysql_login->setText(db_mysql_login);
-    ui->db_mysql_pass->setText(db_mysql_pass);
-    ui->db_mysql_base->setText(db_mysql_base);
-    if(db_fight_sync==QLatin1Literal("FightSync_AtEachTurn"))
+    switch(formatedServerSettings.fightSync)
+    {
+    case CatchChallenger::GameServerSettings::FightSync_AtEachTurn:
         ui->db_fight_sync->setCurrentIndex(0);
-    else if(db_fight_sync==QLatin1Literal("FightSync_AtTheEndOfBattle"))
-        ui->db_fight_sync->setCurrentIndex(1);
-    else if(db_fight_sync==QLatin1Literal("FightSync_AtTheDisconnexion"))
+    break;
+    case CatchChallenger::GameServerSettings::FightSync_AtTheDisconnexion:
         ui->db_fight_sync->setCurrentIndex(2);
-    else
-        ui->db_fight_sync->setCurrentIndex(0);
-    ui->positionTeleportSync->setChecked(positionTeleportSync);
-    ui->secondToPositionSync->setValue(secondToPositionSync);
-
-    ui->db_sqlite_file->setText(QCoreApplication::applicationDirPath()+QLatin1Literal("/catchchallenger.db.sqlite"));
-
-    {
-        settings->beginGroup(QLatin1Literal("city"));
-        if(!settings->contains(QLatin1Literal("capture_frequency")))
-            settings->setValue(QLatin1Literal("capture_frequency"),QLatin1Literal("day"));
-        int capture_frequency_int=0;
-        if(settings->value(QLatin1Literal("capture_frequency")).toString()==QLatin1Literal("week"))
-            capture_frequency_int=0;
-        else if(settings->value(QLatin1Literal("capture_frequency")).toString()==QLatin1Literal("month"))
-            capture_frequency_int=1;
-        update_capture();
-        int capture_day_int=0;
-        if(settings->value(QLatin1Literal("capture_day")).toString()==QLatin1Literal("monday"))
-            capture_day_int=0;
-        else if(settings->value(QLatin1Literal("capture_day")).toString()==QLatin1Literal("tuesday"))
-            capture_day_int=1;
-        else if(settings->value(QLatin1Literal("capture_day")).toString()==QLatin1Literal("wednesday"))
-            capture_day_int=2;
-        else if(settings->value(QLatin1Literal("capture_day")).toString()==QLatin1Literal("thursday"))
-            capture_day_int=3;
-        else if(settings->value(QLatin1Literal("capture_day")).toString()==QLatin1Literal("friday"))
-            capture_day_int=4;
-        else if(settings->value(QLatin1Literal("capture_day")).toString()==QLatin1Literal("saturday"))
-            capture_day_int=5;
-        else if(settings->value(QLatin1Literal("capture_day")).toString()==QLatin1Literal("sunday"))
-            capture_day_int=6;
-        int capture_time_hours=0,capture_time_minutes=0;
-        std::stringList capture_time_string_list=settings->value(QLatin1Literal("capture_time")).toString().split(QLatin1Literal(":"));
-        if(capture_time_string_list.size()!=2)
-            settings->setValue(QLatin1Literal("capture_time"),QLatin1Literal("0:0"));
-        else
-        {
-            bool ok;
-            capture_time_hours=capture_time_string_list.first().toUInt(&ok);
-            if(!ok)
-                settings->setValue(QLatin1Literal("capture_time"),QLatin1Literal("0:0"));
-            else
-            {
-                capture_time_minutes=capture_time_string_list.last().toUInt(&ok);
-                if(!ok)
-                    settings->setValue(QLatin1Literal("capture_time"),QLatin1Literal("0:0"));
-            }
-        }
-        settings->endGroup();
-        ui->comboBox_city_capture_frequency->setCurrentIndex(capture_frequency_int);
-        ui->comboBox_city_capture_day->setCurrentIndex(capture_day_int);
-        ui->timeEdit_city_capture_time->setTime(QTime(capture_time_hours,capture_time_minutes));
+    break;
+    default:
+    case CatchChallenger::GameServerSettings::FightSync_AtTheEndOfBattle:
+        ui->db_fight_sync->setCurrentIndex(1);
+    break;
     }
-#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-memcpy(settings.private_token_statclient,Client::private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-#endif
+
+    ui->positionTeleportSync->setChecked(formatedServerSettings.positionTeleportSync);
+    ui->secondToPositionSync->setValue(formatedServerSettings.secondToPositionSync);
+
+    ui->comboBox_city_capture_frequency->setCurrentIndex(formatedServerSettings.city.capture.frenquency);
+    ui->comboBox_city_capture_day->setCurrentIndex(formatedServerSettings.city.capture.day);
+    ui->timeEdit_city_capture_time->setTime(QTime(formatedServerSettings.city.capture.hour,formatedServerSettings.city.capture.minute));
 
     send_settings();
 }
@@ -1085,7 +1412,7 @@ void MainWindow::on_timeEdit_city_capture_time_editingFinished()
 {
     settings->beginGroup(QLatin1Literal("city"));
     QTime time=ui->timeEdit_city_capture_time->time();
-    settings->setValue(QLatin1Literal("capture_time"),std::stringLiteral("%1:%2").arg(time.hour()).arg(time.minute()));
+    settings->setValue(QLatin1Literal("capture_time"),QStringLiteral("%1:%2").arg(time.hour()).arg(time.minute()));
     settings->endGroup();
 }
 
@@ -1358,7 +1685,7 @@ void CatchChallenger::MainWindow::on_programmedEventType_currentIndexChanged(int
         std::unordered_mapIterator<std::string,GameServerSettings::ProgrammedEvent> i(list);
         while (i.hasNext()) {
             i.next();
-            std::vectorWidgetItem *listWidgetItem=new std::vectorWidgetItem(
+            QListWidgetItem *listWidgetItem=new QListWidgetItem(
                         tr("%1\nCycle: %2mins, offset: %3mins\nValue: %4")
                         .arg(i.key())
                         .arg(i.value().cycle)
@@ -1371,7 +1698,7 @@ void CatchChallenger::MainWindow::on_programmedEventType_currentIndexChanged(int
     }
 }
 
-void CatchChallenger::MainWindow::on_programmedEventList_itemActivated(std::vectorWidgetItem *item)
+void CatchChallenger::MainWindow::on_programmedEventList_itemActivated(QListWidgetItem *item)
 {
     Q_UNUSED(item);
     on_programmedEventEdit_clicked();
@@ -1416,7 +1743,7 @@ void CatchChallenger::MainWindow::on_programmedEventAdd_clicked()
 
 void CatchChallenger::MainWindow::on_programmedEventEdit_clicked()
 {
-    const std::vector<std::vectorWidgetItem*> &selectedItems=ui->programmedEventList->selectedItems();
+    const QList<QListWidgetItem*> &selectedItems=ui->programmedEventList->selectedItems();
     if(selectedItems.size()!=1)
         return;
     const std::string &selectedEvent=ui->programmedEventType->currentText();
@@ -1462,7 +1789,7 @@ void CatchChallenger::MainWindow::on_programmedEventEdit_clicked()
 
 void CatchChallenger::MainWindow::on_programmedEventRemove_clicked()
 {
-    const std::vector<std::vectorWidgetItem*> &selectedItems=ui->programmedEventList->selectedItems();
+    const QList<QListWidgetItem*> &selectedItems=ui->programmedEventList->selectedItems();
     if(selectedItems.size()!=1)
         return;
     const std::string &selectedEvent=ui->programmedEventType->currentText();
