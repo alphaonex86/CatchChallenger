@@ -28,13 +28,22 @@
     <property name="spacing">
      <number>0</number>
     </property>
-    <property name="margin">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
      <number>0</number>
     </property>
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>4</number>
+       <number>10</number>
       </property>
       <widget class="QWidget" name="starting">
        <attribute name="title">
@@ -174,7 +183,16 @@
         <property name="spacing">
          <number>1</number>
         </property>
-        <property name="margin">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
          <number>0</number>
         </property>
         <item>
@@ -276,45 +294,38 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="1">
-         <widget class="QCheckBox" name="tolerantMode">
-          <property name="text">
-           <string>Tolerant mode (less security)</string>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="0">
+        <item row="3" column="0">
          <widget class="QLabel" name="label_8">
           <property name="text">
            <string>Min character</string>
           </property>
          </widget>
         </item>
-        <item row="4" column="1">
+        <item row="3" column="1">
          <widget class="QSpinBox" name="min_character"/>
         </item>
-        <item row="5" column="0">
+        <item row="4" column="0">
          <widget class="QLabel" name="label_10">
           <property name="text">
            <string>Max character</string>
           </property>
          </widget>
         </item>
-        <item row="5" column="1">
+        <item row="4" column="1">
          <widget class="QSpinBox" name="max_character">
           <property name="value">
            <number>3</number>
           </property>
          </widget>
         </item>
-        <item row="7" column="0">
+        <item row="6" column="0">
          <widget class="QLabel" name="label_11">
           <property name="text">
            <string>Max pseudo size</string>
           </property>
          </widget>
         </item>
-        <item row="7" column="1">
+        <item row="6" column="1">
          <widget class="QSpinBox" name="max_pseudo_size">
           <property name="minimum">
            <number>1</number>
@@ -324,14 +335,14 @@
           </property>
          </widget>
         </item>
-        <item row="9" column="0">
+        <item row="8" column="0">
          <widget class="QLabel" name="label_12">
           <property name="text">
            <string>Character delete time</string>
           </property>
          </widget>
         </item>
-        <item row="9" column="1">
+        <item row="8" column="1">
          <widget class="QSpinBox" name="character_delete_time">
           <property name="suffix">
            <string> hour(s)</string>
@@ -347,35 +358,42 @@
           </property>
          </widget>
         </item>
-        <item row="10" column="1">
+        <item row="9" column="1">
          <widget class="QCheckBox" name="useSsl">
           <property name="text">
            <string>Use ssl</string>
           </property>
          </widget>
         </item>
-        <item row="11" column="1">
+        <item row="10" column="1">
          <widget class="QCheckBox" name="anonymous">
           <property name="text">
            <string>Anonymous</string>
           </property>
          </widget>
         </item>
-        <item row="12" column="1">
+        <item row="11" column="1">
          <widget class="QCheckBox" name="automatic_account_creation">
           <property name="text">
            <string>Automatic account creation</string>
           </property>
          </widget>
         </item>
-        <item row="14" column="0">
+        <item row="12" column="1">
+         <widget class="QCheckBox" name="announce">
+          <property name="text">
+           <string>Announce as public</string>
+          </property>
+         </widget>
+        </item>
+        <item row="13" column="0">
          <widget class="QLabel" name="label_31">
           <property name="text">
            <string>Server message</string>
           </property>
          </widget>
         </item>
-        <item row="14" column="1">
+        <item row="13" column="1">
          <widget class="QPlainTextEdit" name="server_message">
           <property name="maximumSize">
            <size>
@@ -385,21 +403,21 @@
           </property>
          </widget>
         </item>
-        <item row="15" column="1">
+        <item row="14" column="1">
          <widget class="QCheckBox" name="dontSendPlayerType">
           <property name="text">
            <string>Don't send the player type</string>
           </property>
          </widget>
         </item>
-        <item row="16" column="0">
+        <item row="15" column="0">
          <widget class="QLabel" name="label_32">
           <property name="text">
            <string>Proxy</string>
           </property>
          </widget>
         </item>
-        <item row="16" column="1">
+        <item row="15" column="1">
          <layout class="QHBoxLayout" name="horizontalLayout_9">
           <item>
            <widget class="QLineEdit" name="proxy">
@@ -435,13 +453,6 @@
            </spacer>
           </item>
          </layout>
-        </item>
-        <item row="13" column="1">
-         <widget class="QCheckBox" name="announce">
-          <property name="text">
-           <string>Announce as public</string>
-          </property>
-         </widget>
         </item>
        </layout>
       </widget>
@@ -1468,69 +1479,61 @@
            </size>
           </property>
           <property name="title">
-           <string>Connection</string>
+           <string>Other</string>
           </property>
-          <widget class="QLabel" name="label_49">
-           <property name="geometry">
-            <rect>
-             <x>10</x>
-             <y>10</y>
-             <width>221</width>
-             <height>16</height>
-            </rect>
-           </property>
-           <property name="text">
-            <string>Try connection interval</string>
-           </property>
-          </widget>
-          <widget class="QLabel" name="label_50">
-           <property name="geometry">
-            <rect>
-             <x>10</x>
-             <y>30</y>
-             <width>521</width>
-             <height>20</height>
-            </rect>
-           </property>
-           <property name="text">
-            <string>Consider down after number of try</string>
-           </property>
-          </widget>
-          <widget class="QSpinBox" name="tryInterval">
-           <property name="geometry">
-            <rect>
-             <x>610</x>
-             <y>10</y>
-             <width>56</width>
-             <height>22</height>
-            </rect>
-           </property>
-           <property name="suffix">
-            <string>s</string>
-           </property>
-           <property name="minimum">
-            <number>1</number>
-           </property>
-           <property name="maximum">
-            <number>3600</number>
-           </property>
-          </widget>
-          <widget class="QSpinBox" name="considerDownAfterNumberOfTry">
-           <property name="geometry">
-            <rect>
-             <x>610</x>
-             <y>30</y>
-             <width>56</width>
-             <height>22</height>
-            </rect>
-           </property>
-           <property name="minimum">
-            <number>1</number>
-           </property>
-           <property name="maximum">
-            <number>1000</number>
-           </property>
-          </widget>
+          <layout class="QFormLayout" name="formLayout_10">
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_49">
+             <property name="text">
+              <string>Try connection interval</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QSpinBox" name="tryInterval">
+             <property name="suffix">
+              <string>s</string>
+             </property>
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>3600</number>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_50">
+             <property name="text">
+              <string>Consider down after number of try</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QSpinBox" name="considerDownAfterNumberOfTry">
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>1000</number>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_52">
+             <property name="text">
+              <string>Blob version</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QSpinBox" name="blobversion">
+             <property name="maximum">
+              <number>15</number>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </item>
         <item>
@@ -1738,7 +1741,7 @@
           <property name="sizeHint" stdset="0">
            <size>
             <width>20</width>
-            <height>391</height>
+            <height>40</height>
            </size>
           </property>
          </spacer>

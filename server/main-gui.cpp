@@ -6,7 +6,7 @@
 int main(int argc, char *argv[])
 {
     NormalServer::displayInfo();
-    
+
     QApplication a(argc, argv);
     if(argc<1)
     {
@@ -14,6 +14,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     CatchChallenger::FacilityLibGeneral::applicationDirPath=argv[0];
+    CatchChallenger::GlobalServerData::serverSettings.datapack_basePath=CatchChallenger::FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/";
 
     QFileInfo datapackFolder(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/informations.xml"));
     if(!datapackFolder.isFile())
