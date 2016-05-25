@@ -1001,13 +1001,13 @@ void MainWindow::send_settings()
 
     //the listen
     formatedServerNormalSettings.server_port			= ui->server_port->value();
-    formatedServerNormalSettings.server_ip				= ui->server_ip->text();
-    formatedServerNormalSettings.proxy    				= ui->proxy->text();
+    formatedServerNormalSettings.server_ip				= ui->server_ip->text().toStdString();
+    formatedServerNormalSettings.proxy    				= ui->proxy->text().toStdString();
     formatedServerNormalSettings.proxy_port				= ui->proxy_port->value();
     formatedServerNormalSettings.useSsl					= ui->useSsl->isChecked();
     formatedServerSettings.anonymous					= ui->anonymous->isChecked();
-    formatedServerSettings.server_message				= ui->server_message->toPlainText();
-    CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase    		= ui->httpDatapackMirror->text();
+    formatedServerSettings.server_message				= ui->server_message->toPlainText().toStdString();
+    CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase    		= ui->httpDatapackMirror->text().toStdString();
     CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase;
     if(!ui->datapack_cache->isChecked())
         formatedServerSettings.datapackCache			= -1;
@@ -1071,44 +1071,68 @@ void MainWindow::send_settings()
     {
         default:
         case 0:
-            formatedServerSettings.database.tryOpenType					= DatabaseBase::Type::Mysql;
+            formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
         break;
         case 1:
-            formatedServerSettings.database.tryOpenType					= DatabaseBase::Type::SQLite;
+            formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::SQLite;
         break;
         case 2:
-            formatedServerSettings.database.tryOpenType					= DatabaseBase::Type::PostgreSQL;
+            formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::PostgreSQL;
         break;
     }
-    switch(formatedServerSettings.database.tryOpenType)
+    formatedServerSettings.database_base.tryOpenType					= formatedServerSettings.database_login.tryOpenType;
+    formatedServerSettings.database_common.tryOpenType					= formatedServerSettings.database_login.tryOpenType;
+    formatedServerSettings.database_server.tryOpenType					= formatedServerSettings.database_login.tryOpenType;
+    switch(formatedServerSettings.database_login.tryOpenType)
     {
         default:
-        case DatabaseBase::Type::Mysql:
-            formatedServerSettings.database.host				= ui->db_mysql_host->text();
-            formatedServerSettings.database.db                  = ui->db_mysql_base->text();
-            formatedServerSettings.database.login				= ui->db_mysql_login->text();
-            formatedServerSettings.database.pass				= ui->db_mysql_pass->text();
+        case DatabaseBase::DatabaseType::Mysql:
+            formatedServerSettings.database_login.host				= ui->db_mysql_host->text().toStdString();
+            formatedServerSettings.database_login.db                  = ui->db_mysql_base->text().toStdString();
+            formatedServerSettings.database_login.login				= ui->db_mysql_login->text().toStdString();
+            formatedServerSettings.database_login.pass				= ui->db_mysql_pass->text().toStdString();
         break;
-        case DatabaseBase::Type::SQLite:
-            formatedServerSettings.database.file				= ui->db_sqlite_file->text();
+        case DatabaseBase::DatabaseType::SQLite:
+            formatedServerSettings.database_login.file				= ui->db_sqlite_file->text().toStdString();
         break;
-        case DatabaseBase::Type::PostgreSQL:
-            formatedServerSettings.database.host				= ui->db_mysql_host->text();
-            formatedServerSettings.database.db                  = ui->db_mysql_base->text();
-            formatedServerSettings.database.login				= ui->db_mysql_login->text();
-            formatedServerSettings.database.pass				= ui->db_mysql_pass->text();
+        case DatabaseBase::DatabaseType::PostgreSQL:
+            formatedServerSettings.database_login.host				= ui->db_mysql_host->text().toStdString();
+            formatedServerSettings.database_login.db                  = ui->db_mysql_base->text().toStdString();
+            formatedServerSettings.database_login.login				= ui->db_mysql_login->text().toStdString();
+            formatedServerSettings.database_login.pass				= ui->db_mysql_pass->text().toStdString();
         break;
     }
-    formatedServerSettings.database.fightSync                       = (GameServerSettings::Database::FightSync)ui->db_fight_sync->currentIndex();
-    formatedServerSettings.database.positionTeleportSync=ui->positionTeleportSync->isChecked();
-    formatedServerSettings.database.secondToPositionSync=ui->secondToPositionSync->value();
-    formatedServerSettings.database.tryInterval=ui->tryInterval->value();
-    formatedServerSettings.database.considerDownAfterNumberOfTry=ui->considerDownAfterNumberOfTry->value();
+    formatedServerSettings.database_base.host				= formatedServerSettings.database_login.host;
+    formatedServerSettings.database_base.db                 = formatedServerSettings.database_login.db;
+    formatedServerSettings.database_base.login				= formatedServerSettings.database_login.login;
+    formatedServerSettings.database_base.pass				= formatedServerSettings.database_login.pass;
+    formatedServerSettings.database_base.file				= formatedServerSettings.database_login.file;
+    formatedServerSettings.database_common.host				= formatedServerSettings.database_login.host;
+    formatedServerSettings.database_common.db               = formatedServerSettings.database_login.db;
+    formatedServerSettings.database_common.login			= formatedServerSettings.database_login.login;
+    formatedServerSettings.database_common.pass				= formatedServerSettings.database_login.pass;
+    formatedServerSettings.database_common.file				= formatedServerSettings.database_login.file;
+    formatedServerSettings.database_server.host				= formatedServerSettings.database_login.host;
+    formatedServerSettings.database_server.db               = formatedServerSettings.database_login.db;
+    formatedServerSettings.database_server.login			= formatedServerSettings.database_login.login;
+    formatedServerSettings.database_server.pass				= formatedServerSettings.database_login.pass;
+    formatedServerSettings.database_server.file				= formatedServerSettings.database_login.file;
+
+    formatedServerSettings.fightSync                       = (CatchChallenger::GameServerSettings::FightSync)ui->db_fight_sync->currentIndex();
+    formatedServerSettings.positionTeleportSync=ui->positionTeleportSync->isChecked();
+    formatedServerSettings.secondToPositionSync=ui->secondToPositionSync->value();
+    formatedServerSettings.database_login.tryInterval=ui->tryInterval->value();
+    formatedServerSettings.database_base.tryInterval=formatedServerSettings.database_login.tryInterval;
+    formatedServerSettings.database_common.tryInterval=formatedServerSettings.database_login.tryInterval;
+    formatedServerSettings.database_server.tryInterval=formatedServerSettings.database_login.tryInterval;
+    formatedServerSettings.database_login.considerDownAfterNumberOfTry=ui->considerDownAfterNumberOfTry->value();
+    formatedServerSettings.database_base.considerDownAfterNumberOfTry=formatedServerSettings.database_login.considerDownAfterNumberOfTry;
+    formatedServerSettings.database_common.considerDownAfterNumberOfTry=formatedServerSettings.database_login.considerDownAfterNumberOfTry;
+    formatedServerSettings.database_server.considerDownAfterNumberOfTry=formatedServerSettings.database_login.considerDownAfterNumberOfTry;
 
     //connection
     formatedServerSettings.automatic_account_creation   = ui->automatic_account_creation->isChecked();
     formatedServerSettings.max_players					= ui->max_player->value();
-    formatedServerSettings.tolerantMode                 = ui->tolerantMode->isChecked();
 
     //visibility algorithm
     switch(ui->MapVisibilityAlgorithm->currentIndex())
@@ -1174,102 +1198,98 @@ void MainWindow::send_settings()
     formatedServerSettings.city.capture.hour=time.hour();
     formatedServerSettings.city.capture.minute=time.minute();
 
-#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-memcpy(settings.private_token_statclient,Client::private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-#endif
-
     server.setSettings(formatedServerSettings);
     server.setNormalSettings(formatedServerNormalSettings);
 }
 
 void MainWindow::on_max_player_valueChanged(int arg1)
 {
-    settings->setValue(QLatin1Literal("max-players"),arg1);
+    settings->setValue("max-players",arg1);
 }
 
 void MainWindow::on_server_ip_editingFinished()
 {
-    settings->setValue(QLatin1Literal("server-ip"),ui->server_ip->text());
+    settings->setValue("server-ip",ui->server_ip->text().toStdString());
 }
 
 void MainWindow::on_pvp_stateChanged(int arg1)
 {
     Q_UNUSED(arg1)
-    settings->setValue(QLatin1Literal("pvp"),ui->pvp->isChecked());
+    settings->setValue("pvp",ui->pvp->isChecked());
 }
 
 void MainWindow::on_server_port_valueChanged(int arg1)
 {
-    settings->setValue(QLatin1Literal("server-port"),arg1);
+    settings->setValue("server-port",arg1);
 }
 
 void MainWindow::on_rates_xp_normal_valueChanged(double arg1)
 {
-    settings->beginGroup(QLatin1Literal("rates"));
-    settings->setValue(QLatin1Literal("xp_normal"),arg1);
+    settings->beginGroup("rates");
+    settings->setValue("xp_normal",arg1);
     settings->endGroup();
 }
 
 void MainWindow::on_rates_gold_normal_valueChanged(double arg1)
 {
-    settings->beginGroup(QLatin1Literal("rates"));
-    settings->setValue(QLatin1Literal("gold_normal"),arg1);
+    settings->beginGroup("rates");
+    settings->setValue("gold_normal",arg1);
     settings->endGroup();
 }
 
 void MainWindow::on_chat_allow_all_toggled(bool checked)
 {
-    settings->beginGroup(QLatin1Literal("chat"));
-    settings->setValue(QLatin1Literal("allow-all"),checked);
+    settings->beginGroup("chat");
+    settings->setValue("allow-all",checked);
     settings->endGroup();
 }
 
 void MainWindow::on_chat_allow_local_toggled(bool checked)
 {
-    settings->beginGroup(QLatin1Literal("chat"));
-    settings->setValue(QLatin1Literal("allow-local"),checked);
+    settings->beginGroup("chat");
+    settings->setValue("allow-local",checked);
     settings->endGroup();
 }
 
 void MainWindow::on_chat_allow_private_toggled(bool checked)
 {
-    settings->beginGroup(QLatin1Literal("chat"));
-    settings->setValue(QLatin1Literal("allow-private"),checked);
+    settings->beginGroup("chat");
+    settings->setValue("allow-private",checked);
     settings->endGroup();
 }
 
 void MainWindow::on_chat_allow_clan_toggled(bool checked)
 {
-    settings->beginGroup(QLatin1Literal("chat"));
-    settings->setValue(QLatin1Literal("allow-clan"),checked);
+    settings->beginGroup("chat");
+    settings->setValue("allow-clan",checked);
     settings->endGroup();
 }
 
 void MainWindow::on_db_mysql_host_editingFinished()
 {
-    settings->beginGroup(QLatin1Literal("db"));
-    settings->setValue(QLatin1Literal("mysql_host"),ui->db_mysql_host->text());
+    settings->beginGroup("db");
+    settings->setValue("mysql_host",ui->db_mysql_host->text().toStdString());
     settings->endGroup();
 }
 
 void MainWindow::on_db_mysql_login_editingFinished()
 {
-    settings->beginGroup(QLatin1Literal("db"));
-    settings->setValue(QLatin1Literal("mysql_login"),ui->db_mysql_login->text());
+    settings->beginGroup("db");
+    settings->setValue("mysql_login",ui->db_mysql_login->text().toStdString());
     settings->endGroup();
 }
 
 void MainWindow::on_db_mysql_pass_editingFinished()
 {
-    settings->beginGroup(QLatin1Literal("db"));
-    settings->setValue(QLatin1Literal("mysql_pass"),ui->db_mysql_pass->text());
+    settings->beginGroup("db");
+    settings->setValue("mysql_pass",ui->db_mysql_pass->text().toStdString());
     settings->endGroup();
 }
 
 void MainWindow::on_db_mysql_base_editingFinished()
 {
-    settings->beginGroup(QLatin1Literal("db"));
-    settings->setValue(QLatin1Literal("mysql_db"),ui->db_mysql_base->text());
+    settings->beginGroup("db");
+    settings->setValue("mysql_db",ui->db_mysql_base->text().toStdString());
     settings->endGroup();
 }
 
@@ -1277,15 +1297,15 @@ void MainWindow::on_MapVisibilityAlgorithm_currentIndexChanged(int index)
 {
     ui->groupBoxMapVisibilityAlgorithmSimple->setEnabled(index==0);
     ui->groupBoxMapVisibilityAlgorithmWithBorder->setEnabled(index==2);
-    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm"));
-    settings->setValue(QLatin1Literal("MapVisibilityAlgorithm"),index);
+    settings->beginGroup("MapVisibilityAlgorithm");
+    settings->setValue("MapVisibilityAlgorithm",index);
     settings->endGroup();
 }
 
 void MainWindow::on_MapVisibilityAlgorithmSimpleMax_valueChanged(int arg1)
 {
-    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-Simple"));
-    settings->setValue(QLatin1Literal("Max"),arg1);
+    settings->beginGroup("MapVisibilityAlgorithm-Simple");
+    settings->setValue("Max",arg1);
     settings->endGroup();
     ui->MapVisibilityAlgorithmSimpleReshow->setMaximum(arg1);
 }
@@ -1293,25 +1313,25 @@ void MainWindow::on_MapVisibilityAlgorithmSimpleMax_valueChanged(int arg1)
 
 void MainWindow::on_MapVisibilityAlgorithmSimpleReshow_editingFinished()
 {
-    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-Simple"));
-    settings->setValue(QLatin1Literal("Reshow"),ui->MapVisibilityAlgorithmSimpleReshow->value());
+    settings->beginGroup("MapVisibilityAlgorithm-Simple");
+    settings->setValue("Reshow",ui->MapVisibilityAlgorithmSimpleReshow->value());
     settings->endGroup();
 }
 
 void MainWindow::on_db_type_currentIndexChanged(int index)
 {
-    settings->beginGroup(QLatin1Literal("db"));
+    settings->beginGroup("db");
     switch(index)
     {
         case 0:
         default:
-            settings->setValue(QLatin1Literal("type"),QLatin1Literal("mysql"));
+            settings->setValue("type","mysql");
         break;
         case 1:
-            settings->setValue(QLatin1Literal("type"),QLatin1Literal("sqlite"));
+            settings->setValue("type","sqlite");
         break;
         case 2:
-            settings->setValue(QLatin1Literal("type"),QLatin1Literal("postgresql"));
+            settings->setValue("type","postgresql");
         break;
     }
     settings->endGroup();
@@ -1328,33 +1348,33 @@ void MainWindow::updateDbGroupbox()
 void MainWindow::on_sendPlayerNumber_toggled(bool checked)
 {
     Q_UNUSED(checked);
-    settings->setValue(QLatin1Literal("sendPlayerNumber"),ui->sendPlayerNumber->isChecked());
+    settings->setValue("sendPlayerNumber",ui->sendPlayerNumber->isChecked());
 }
 
 void MainWindow::on_db_sqlite_browse_clicked()
 {
-    std::string file=QFileDialog::getOpenFileName(this,tr("Select the SQLite database"));
-    if(file.isEmpty())
+    std::string file=QFileDialog::getOpenFileName(this,tr("Select the SQLite database")).toStdString();
+    if(file.empty())
         return;
-    ui->db_sqlite_file->setText(file);
+    ui->db_sqlite_file->setText(QString::fromStdString(file));
 }
 
 void MainWindow::on_tolerantMode_toggled(bool checked)
 {
-    settings->setValue(QLatin1Literal("tolerantMode"),checked);
+    settings->setValue("tolerantMode",checked);
 }
 
 void MainWindow::on_db_fight_sync_currentIndexChanged(int index)
 {
-    settings->beginGroup(QLatin1Literal("db"));
+    settings->beginGroup("db");
     switch(index)
     {
         case 0:
-            settings->setValue(QLatin1Literal("db_fight_sync"),QLatin1Literal("FightSync_AtEachTurn"));
+            settings->setValue("db_fight_sync","FightSync_AtEachTurn");
         break;
         case 1:
         default:
-            settings->setValue(QLatin1Literal("db_fight_sync"),QLatin1Literal("FightSync_AtTheEndOfBattle"));
+            settings->setValue("db_fight_sync","FightSync_AtTheEndOfBattle");
         break;
     }
     settings->endGroup();
@@ -1362,15 +1382,15 @@ void MainWindow::on_db_fight_sync_currentIndexChanged(int index)
 
 void MainWindow::on_comboBox_city_capture_frequency_currentIndexChanged(int index)
 {
-    settings->beginGroup(QLatin1Literal("city"));
+    settings->beginGroup("city");
     switch(index)
     {
         default:
         case 0:
-            settings->setValue(QLatin1Literal("capture_frequency"),QLatin1Literal("week"));
+            settings->setValue("capture_frequency","week");
         break;
         case 1:
-            settings->setValue(QLatin1Literal("capture_frequency"),QLatin1Literal("month"));
+            settings->setValue("capture_frequency","month");
         break;
     }
     settings->endGroup();
@@ -1379,30 +1399,30 @@ void MainWindow::on_comboBox_city_capture_frequency_currentIndexChanged(int inde
 
 void MainWindow::on_comboBox_city_capture_day_currentIndexChanged(int index)
 {
-    settings->beginGroup(QLatin1Literal("city"));
+    settings->beginGroup("city");
     switch(index)
     {
         default:
         case 0:
-            settings->setValue(QLatin1Literal("capture_day"),QLatin1Literal("monday"));
+            settings->setValue("capture_day","monday");
         break;
         case 1:
-            settings->setValue(QLatin1Literal("capture_day"),QLatin1Literal("tuesday"));
+            settings->setValue("capture_day","tuesday");
         break;
         case 2:
-            settings->setValue(QLatin1Literal("capture_day"),QLatin1Literal("wednesday"));
+            settings->setValue("capture_day","wednesday");
         break;
         case 3:
-            settings->setValue(QLatin1Literal("capture_day"),QLatin1Literal("thursday"));
+            settings->setValue("capture_day","thursday");
         break;
         case 4:
-            settings->setValue(QLatin1Literal("capture_day"),QLatin1Literal("friday"));
+            settings->setValue("capture_day","friday");
         break;
         case 5:
-            settings->setValue(QLatin1Literal("capture_day"),QLatin1Literal("saturday"));
+            settings->setValue("capture_day","saturday");
         break;
         case 6:
-            settings->setValue(QLatin1Literal("capture_day"),QLatin1Literal("sunday"));
+            settings->setValue("capture_day","sunday");
         break;
     }
     settings->endGroup();
@@ -1410,9 +1430,9 @@ void MainWindow::on_comboBox_city_capture_day_currentIndexChanged(int index)
 
 void MainWindow::on_timeEdit_city_capture_time_editingFinished()
 {
-    settings->beginGroup(QLatin1Literal("city"));
+    settings->beginGroup("city");
     QTime time=ui->timeEdit_city_capture_time->time();
-    settings->setValue(QLatin1Literal("capture_time"),QStringLiteral("%1:%2").arg(time.hour()).arg(time.minute()));
+    settings->setValue("capture_time",(QStringLiteral("%1:%2").arg(time.hour()).arg(time.minute())).toStdString());
     settings->endGroup();
 }
 
@@ -1449,67 +1469,67 @@ void MainWindow::on_compression_currentIndexChanged(int index)
     switch(index)
     {
         case 0:
-        settings->setValue(QLatin1Literal("compression"),QLatin1Literal("none"));
+        settings->setValue("compression","none");
         break;
         default:
         case 1:
-        settings->setValue(QLatin1Literal("compression"),QLatin1Literal("zlib"));
+        settings->setValue("compression","zlib");
         break;
         case 2:
-        settings->setValue(QLatin1Literal("compression"),QLatin1Literal("xz"));
+        settings->setValue("compression","xz");
         break;
         case 3:
-        settings->setValue(QLatin1Literal("compression"),QLatin1Literal("lz4"));
+        settings->setValue("compression","lz4");
         break;
     }
 }
 
 void MainWindow::on_min_character_editingFinished()
 {
-    settings->setValue(QLatin1Literal("min_character"),ui->min_character->value());
+    settings->setValue("min_character",ui->min_character->value());
     ui->max_character->setMinimum(ui->min_character->value());
 }
 
 void MainWindow::on_max_character_editingFinished()
 {
-    settings->setValue(QLatin1Literal("max_character"),ui->max_character->value());
+    settings->setValue("max_character",ui->max_character->value());
     ui->min_character->setMaximum(ui->max_character->value());
 }
 
 void MainWindow::on_max_pseudo_size_editingFinished()
 {
-    settings->setValue(QLatin1Literal("max_pseudo_size"),ui->max_pseudo_size->value());
+    settings->setValue("max_pseudo_size",ui->max_pseudo_size->value());
 }
 
 void MainWindow::on_character_delete_time_editingFinished()
 {
-    settings->setValue(QLatin1Literal("character_delete_time"),ui->character_delete_time->value()*3600);
+    settings->setValue("character_delete_time",ui->character_delete_time->value()*3600);
 }
 
 void MainWindow::on_automatic_account_creation_clicked()
 {
-    settings->setValue(QLatin1Literal("automatic_account_creation"),ui->automatic_account_creation->isChecked());
+    settings->setValue("automatic_account_creation",ui->automatic_account_creation->isChecked());
 }
 
 void MainWindow::on_anonymous_toggled(bool checked)
 {
     Q_UNUSED(checked);
-    settings->setValue(QLatin1Literal("anonymous"),ui->anonymous->isChecked());
+    settings->setValue("anonymous",ui->anonymous->isChecked());
 }
 
 void MainWindow::on_server_message_textChanged()
 {
-    settings->setValue(QLatin1Literal("server_message"),ui->server_message->toPlainText());
+    settings->setValue("server_message",ui->server_message->toPlainText().toStdString());
 }
 
 void MainWindow::on_proxy_editingFinished()
 {
-    settings->setValue(QLatin1Literal("proxy"),ui->proxy->text());
+    settings->setValue("proxy",ui->proxy->text().toStdString());
 }
 
 void MainWindow::on_proxy_port_editingFinished()
 {
-    settings->setValue(QLatin1Literal("proxy_port"),ui->proxy_port->value());
+    settings->setValue("proxy_port",ui->proxy_port->value());
 }
 
 void MainWindow::on_forceSpeed_toggled(bool checked)
@@ -1517,56 +1537,56 @@ void MainWindow::on_forceSpeed_toggled(bool checked)
     Q_UNUSED(checked);
     ui->speed->setEnabled(ui->forceSpeed->isChecked());
     if(!ui->forceSpeed->isChecked())
-        settings->setValue(QLatin1Literal("forcedSpeed"),0);
+        settings->setValue("forcedSpeed",0);
     else
-        settings->setValue(QLatin1Literal("forcedSpeed"),ui->speed->value());
+        settings->setValue("forcedSpeed",ui->speed->value());
 }
 
 void MainWindow::on_speed_editingFinished()
 {
     ui->speed->setEnabled(ui->forceSpeed->isChecked());
     if(!ui->forceSpeed->isChecked())
-        settings->setValue(QLatin1Literal("forcedSpeed"),0);
+        settings->setValue("forcedSpeed",0);
     else
-        settings->setValue(QLatin1Literal("forcedSpeed"),ui->speed->value());
+        settings->setValue("forcedSpeed",ui->speed->value());
 }
 
 void MainWindow::on_dontSendPseudo_toggled(bool checked)
 {
     Q_UNUSED(checked);
-    settings->setValue(QLatin1Literal("dontSendPseudo"),ui->dontSendPseudo->isChecked());
+    settings->setValue("dontSendPseudo",ui->dontSendPseudo->isChecked());
 }
 
 void MainWindow::on_dontSendPlayerType_toggled(bool checked)
 {
     Q_UNUSED(checked);
-    settings->setValue(QLatin1Literal("dontSendPlayerType"),ui->dontSendPlayerType->isChecked());
+    settings->setValue("dontSendPlayerType",ui->dontSendPlayerType->isChecked());
 }
 
 void MainWindow::on_rates_xp_pow_normal_valueChanged(double arg1)
 {
-    settings->beginGroup(QLatin1Literal("rates"));
-    settings->setValue(QLatin1Literal("xp_pow_normal"),arg1);
+    settings->beginGroup("rates");
+    settings->setValue("xp_pow_normal",arg1);
     settings->endGroup();
 }
 
 void MainWindow::on_rates_drop_normal_valueChanged(double arg1)
 {
-    settings->beginGroup(QLatin1Literal("rates"));
-    settings->setValue(QLatin1Literal("drop_normal"),arg1);
+    settings->beginGroup("rates");
+    settings->setValue("drop_normal",arg1);
     settings->endGroup();
 }
 
 void MainWindow::on_forceClientToSendAtMapChange_toggled(bool checked)
 {
     Q_UNUSED(checked);
-    settings->setValue(QLatin1Literal("forceClientToSendAtMapChange"),ui->forceClientToSendAtMapChange->isChecked());
+    settings->setValue("forceClientToSendAtMapChange",ui->forceClientToSendAtMapChange->isChecked());
 }
 
 void MainWindow::on_MapVisibilityAlgorithmWithBorderMax_editingFinished()
 {
-    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-WithBorder"));
-    settings->setValue(QLatin1Literal("Max"),ui->MapVisibilityAlgorithmWithBorderMax->value());
+    settings->beginGroup("MapVisibilityAlgorithm-WithBorder");
+    settings->setValue("Max",ui->MapVisibilityAlgorithmWithBorderMax->value());
     settings->endGroup();
     ui->MapVisibilityAlgorithmWithBorderReshow->setMaximum(ui->MapVisibilityAlgorithmWithBorderMax->value());
     ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderMax->value());
@@ -1578,8 +1598,8 @@ void MainWindow::on_MapVisibilityAlgorithmWithBorderMax_editingFinished()
 
 void MainWindow::on_MapVisibilityAlgorithmWithBorderReshow_editingFinished()
 {
-    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-WithBorder"));
-    settings->setValue(QLatin1Literal("Reshow"),ui->MapVisibilityAlgorithmSimpleReshow->value());
+    settings->beginGroup("MapVisibilityAlgorithm-WithBorder");
+    settings->setValue("Reshow",ui->MapVisibilityAlgorithmSimpleReshow->value());
     settings->endGroup();
     if(ui->MapVisibilityAlgorithmWithBorderReshow->value()>ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value())
         ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value());
@@ -1589,8 +1609,8 @@ void MainWindow::on_MapVisibilityAlgorithmWithBorderReshow_editingFinished()
 
 void MainWindow::on_MapVisibilityAlgorithmWithBorderMaxWithBorder_editingFinished()
 {
-    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-WithBorder"));
-    settings->setValue(QLatin1Literal("MaxWithBorder"),ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value());
+    settings->beginGroup("MapVisibilityAlgorithm-WithBorder");
+    settings->setValue("MaxWithBorder",ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value());
     settings->endGroup();
     if(ui->MapVisibilityAlgorithmWithBorderReshow->value()>ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value())
         ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value());
@@ -1600,14 +1620,14 @@ void MainWindow::on_MapVisibilityAlgorithmWithBorderMaxWithBorder_editingFinishe
 
 void MainWindow::on_MapVisibilityAlgorithmWithBorderReshowWithBorder_editingFinished()
 {
-    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-WithBorder"));
-    settings->setValue(QLatin1Literal("ReshowWithBorder"),ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->value());
+    settings->beginGroup("MapVisibilityAlgorithm-WithBorder");
+    settings->setValue("ReshowWithBorder",ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->value());
     settings->endGroup();
 }
 
 void MainWindow::on_httpDatapackMirror_editingFinished()
 {
-    settings->setValue(QLatin1Literal("httpDatapackMirror"),ui->httpDatapackMirror->text());
+    settings->setValue("httpDatapackMirror",ui->httpDatapackMirror->text().toStdString());
 }
 
 void MainWindow::on_datapack_cache_toggled(bool checked)
@@ -1634,66 +1654,67 @@ void MainWindow::on_datapack_cache_timeout_editingFinished()
 void MainWindow::datapack_cache_save()
 {
     if(!ui->datapack_cache->isChecked())
-        settings->setValue(QLatin1Literal("datapackCache"),-1);
+        settings->setValue("datapackCache",-1);
     else if(!ui->datapack_cache_timeout_checkbox->isChecked())
-        settings->setValue(QLatin1Literal("datapackCache"),0);
+        settings->setValue("datapackCache",0);
     else
-        settings->setValue(QLatin1Literal("datapackCache"),ui->datapack_cache_timeout->value());
+        settings->setValue("datapackCache",ui->datapack_cache_timeout->value());
 }
 
 void MainWindow::on_linux_socket_cork_toggled(bool checked)
 {
     #ifdef __linux__
-    settings->beginGroup(QLatin1Literal("Linux"));
-    settings->setValue(QLatin1Literal("tcpCork"),checked);
+    settings->beginGroup("Linux");
+    settings->setValue("tcpCork",checked);
     settings->endGroup();
     #endif
 }
 
 void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmSimpleReemit_toggled(bool checked)
 {
-    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-Simple"));
-    settings->setValue(QLatin1Literal("Reemit"),checked);
+    settings->beginGroup("MapVisibilityAlgorithm-Simple");
+    settings->setValue("Reemit",checked);
     settings->endGroup();
 }
 
 void CatchChallenger::MainWindow::on_useSsl_toggled(bool checked)
 {
-    settings->setValue(QLatin1Literal("useSsl"),checked);
+    settings->setValue("useSsl",checked);
 }
 
 void CatchChallenger::MainWindow::on_useSP_toggled(bool checked)
 {
-    settings->setValue(QLatin1Literal("useSP"),checked);
+    settings->setValue("useSP",checked);
 }
 
 void CatchChallenger::MainWindow::on_autoLearn_toggled(bool checked)
 {
-    settings->setValue(QLatin1Literal("autoLearn"),checked);
+    settings->setValue("autoLearn",checked);
 }
 
 void CatchChallenger::MainWindow::on_programmedEventType_currentIndexChanged(int index)
 {
     Q_UNUSED(index);
     ui->programmedEventList->clear();
-    const std::string &selectedEvent=ui->programmedEventType->currentText();
-    if(selectedEvent.isEmpty())
+    const std::string &selectedEvent=ui->programmedEventType->currentText().toStdString();
+    if(selectedEvent.empty())
         return;
-    if(programmedEventList.contains(selectedEvent))
+    if(programmedEventList.find(selectedEvent)!=programmedEventList.cend())
     {
-        const std::unordered_map<std::string,GameServerSettings::ProgrammedEvent> &list=programmedEventList.value(selectedEvent);
-        std::unordered_mapIterator<std::string,GameServerSettings::ProgrammedEvent> i(list);
-        while (i.hasNext()) {
-            i.next();
+        const std::unordered_map<std::string,GameServerSettings::ProgrammedEvent> &list=programmedEventList.at(selectedEvent);
+        auto i=list.begin();
+        while(i!=list.cend())
+        {
             QListWidgetItem *listWidgetItem=new QListWidgetItem(
                         tr("%1\nCycle: %2mins, offset: %3mins\nValue: %4")
-                        .arg(i.key())
-                        .arg(i.value().cycle)
-                        .arg(i.value().offset)
-                        .arg(i.value().value)
+                        .arg(QString::fromStdString(i->first))
+                        .arg(i->second.cycle)
+                        .arg(i->second.offset)
+                        .arg(QString::fromStdString(i->second.value))
                         );
-            listWidgetItem->setData(99,i.key());
+            listWidgetItem->setData(99,QString::fromStdString(i->first));
             ui->programmedEventList->addItem(listWidgetItem);
+            ++i;
         }
     }
 }
@@ -1706,15 +1727,15 @@ void CatchChallenger::MainWindow::on_programmedEventList_itemActivated(QListWidg
 
 void CatchChallenger::MainWindow::on_programmedEventAdd_clicked()
 {
-    const std::string &selectedEvent=ui->programmedEventType->currentText();
-    if(selectedEvent.isEmpty())
+    const std::string &selectedEvent=ui->programmedEventType->currentText().toStdString();
+    if(selectedEvent.empty())
         return;
     GameServerSettings::ProgrammedEvent programmedEvent;
     bool ok;
-    const std::string &name=QInputDialog::getText(this,tr("Name"),tr("Name:"),QLineEdit::Normal,std::string(),&ok);
+    const std::string &name=QInputDialog::getText(this,tr("Name"),tr("Name:"),QLineEdit::Normal,QString(),&ok).toStdString();
     if(!ok)
         return;
-    if(programmedEventList.value(selectedEvent).contains(name))
+    if(programmedEventList[selectedEvent].find(name)!=programmedEventList[selectedEvent].cend())
     {
         QMessageBox::warning(this,tr("Error"),tr("Entry already name"));
         return;
@@ -1725,16 +1746,16 @@ void CatchChallenger::MainWindow::on_programmedEventAdd_clicked()
     programmedEvent.offset=QInputDialog::getInt(this,tr("Name"),tr("Name:"),0,1,60*24,1,&ok);
     if(!ok)
         return;
-    programmedEvent.value=QInputDialog::getText(this,tr("Value"),tr("Value:"),QLineEdit::Normal,std::string(),&ok);
+    programmedEvent.value=QInputDialog::getText(this,tr("Value"),tr("Value:"),QLineEdit::Normal,QString(),&ok).toStdString();
     if(!ok)
         return;
     programmedEventList[selectedEvent][name]=programmedEvent;
-    settings->beginGroup(QLatin1Literal("programmedEvent"));
+    settings->beginGroup("programmedEvent");
         settings->beginGroup(selectedEvent);
             settings->beginGroup(name);
-                settings->setValue(QLatin1Literal("value"),programmedEvent.value);
-                settings->setValue(QLatin1Literal("cycle"),programmedEvent.cycle);
-                settings->setValue(QLatin1Literal("offset"),programmedEvent.offset);
+                settings->setValue("value",programmedEvent.value);
+                settings->setValue("cycle",programmedEvent.cycle);
+                settings->setValue("offset",programmedEvent.offset);
             settings->endGroup();
         settings->endGroup();
     settings->endGroup();
@@ -1746,16 +1767,16 @@ void CatchChallenger::MainWindow::on_programmedEventEdit_clicked()
     const QList<QListWidgetItem*> &selectedItems=ui->programmedEventList->selectedItems();
     if(selectedItems.size()!=1)
         return;
-    const std::string &selectedEvent=ui->programmedEventType->currentText();
-    if(selectedEvent.isEmpty())
+    const std::string &selectedEvent=ui->programmedEventType->currentText().toStdString();
+    if(selectedEvent.empty())
         return;
     GameServerSettings::ProgrammedEvent programmedEvent;
     bool ok;
-    const std::string &oldName=selectedItems.first()->data(99).toString();
-    const std::string &name=QInputDialog::getText(this,tr("Name"),tr("Name:"),QLineEdit::Normal,oldName,&ok);
+    const std::string &oldName=selectedItems.first()->data(99).toString().toStdString();
+    const std::string &name=QInputDialog::getText(this,tr("Name"),tr("Name:"),QLineEdit::Normal,QString::fromStdString(oldName),&ok).toStdString();
     if(!ok)
         return;
-    if(programmedEventList.value(selectedEvent).contains(name))
+    if(programmedEventList[selectedEvent].find(name)!=programmedEventList[selectedEvent].cend())
     {
         QMessageBox::warning(this,tr("Error"),tr("Entry already name"));
         return;
@@ -1766,21 +1787,21 @@ void CatchChallenger::MainWindow::on_programmedEventEdit_clicked()
     programmedEvent.offset=QInputDialog::getInt(this,tr("Name"),tr("Name:"),0,1,60*24,1,&ok);
     if(!ok)
         return;
-    programmedEvent.value=QInputDialog::getText(this,tr("Value"),tr("Value:"),QLineEdit::Normal,std::string(),&ok);
+    programmedEvent.value=QInputDialog::getText(this,tr("Value"),tr("Value:"),QLineEdit::Normal,QString(),&ok).toStdString();
     if(!ok)
         return;
     if(oldName!=name)
-        programmedEventList[selectedEvent].remove(oldName);
+        programmedEventList[selectedEvent].erase(oldName);
     programmedEventList[selectedEvent][name]=programmedEvent;
-    settings->beginGroup(QLatin1Literal("programmedEvent"));
+    settings->beginGroup("programmedEvent");
         settings->beginGroup(selectedEvent);
             settings->beginGroup(oldName);
-                settings->remove("");
+                //settings->remove("");
             settings->endGroup();
             settings->beginGroup(name);
-                settings->setValue(QLatin1Literal("value"),programmedEvent.value);
-                settings->setValue(QLatin1Literal("cycle"),programmedEvent.cycle);
-                settings->setValue(QLatin1Literal("offset"),programmedEvent.offset);
+                settings->setValue("value",programmedEvent.value);
+                settings->setValue("cycle",programmedEvent.cycle);
+                settings->setValue("offset",programmedEvent.offset);
             settings->endGroup();
         settings->endGroup();
     settings->endGroup();
@@ -1792,15 +1813,15 @@ void CatchChallenger::MainWindow::on_programmedEventRemove_clicked()
     const QList<QListWidgetItem*> &selectedItems=ui->programmedEventList->selectedItems();
     if(selectedItems.size()!=1)
         return;
-    const std::string &selectedEvent=ui->programmedEventType->currentText();
-    if(selectedEvent.isEmpty())
+    const std::string &selectedEvent=ui->programmedEventType->currentText().toStdString();
+    if(selectedEvent.empty())
         return;
-    const std::string &name=selectedItems.first()->data(99).toString();
-    programmedEventList[selectedEvent].remove(name);
-    settings->beginGroup(QLatin1Literal("programmedEvent"));
+    const std::string &name=selectedItems.first()->data(99).toString().toStdString();
+    programmedEventList[selectedEvent].erase(name);
+    settings->beginGroup("programmedEvent");
         settings->beginGroup(selectedEvent);
             settings->beginGroup(name);
-                settings->remove("");
+                //settings->remove("");
             settings->endGroup();
         settings->endGroup();
     settings->endGroup();
@@ -1810,52 +1831,53 @@ void CatchChallenger::MainWindow::on_programmedEventRemove_clicked()
 void CatchChallenger::MainWindow::on_tcpNodelay_toggled(bool checked)
 {
     #ifdef __linux__
-    settings->beginGroup(QLatin1Literal("Linux"));
-    settings->setValue(QLatin1Literal("tcpNodelay"),checked);
+    settings->beginGroup("Linux");
+    settings->setValue("tcpNodelay",checked);
     settings->endGroup();
     #endif
 }
 
 void CatchChallenger::MainWindow::on_maxPlayerMonsters_editingFinished()
 {
-    settings->setValue(QLatin1Literal("maxPlayerMonsters"),ui->maxPlayerMonsters->value());
+    settings->setValue("maxPlayerMonsters",ui->maxPlayerMonsters->value());
 }
 
 void CatchChallenger::MainWindow::on_maxWarehousePlayerMonsters_editingFinished()
 {
-    settings->setValue(QLatin1Literal("maxWarehousePlayerMonsters"),ui->maxWarehousePlayerMonsters->value());
+    settings->setValue("maxWarehousePlayerMonsters",ui->maxWarehousePlayerMonsters->value());
 }
 
 void CatchChallenger::MainWindow::on_maxPlayerItems_editingFinished()
 {
-    settings->setValue(QLatin1Literal("maxPlayerItems"),ui->maxPlayerItems->value());
+    settings->setValue("maxPlayerItems",ui->maxPlayerItems->value());
 }
 
 void CatchChallenger::MainWindow::on_maxWarehousePlayerItems_editingFinished()
 {
-    settings->setValue(QLatin1Literal("maxWarehousePlayerItems"),ui->maxWarehousePlayerItems->value());
+    settings->setValue("maxWarehousePlayerItems",ui->maxWarehousePlayerItems->value());
 }
 
 void CatchChallenger::MainWindow::on_tryInterval_editingFinished()
 {
-    settings->beginGroup(QLatin1Literal("db"));
-    settings->setValue(QLatin1Literal("tryInterval"),ui->tryInterval->value());
+    settings->beginGroup("db");
+    settings->setValue("tryInterval",ui->tryInterval->value());
     settings->endGroup();
 }
 
 void CatchChallenger::MainWindow::on_considerDownAfterNumberOfTry_editingFinished()
 {
-    settings->beginGroup(QLatin1Literal("db"));
-    settings->setValue(QLatin1Literal("considerDownAfterNumberOfTry"),ui->considerDownAfterNumberOfTry->value());
+    settings->beginGroup("db");
+    settings->setValue("considerDownAfterNumberOfTry",ui->considerDownAfterNumberOfTry->value());
     settings->endGroup();
 }
 
 void CatchChallenger::MainWindow::on_announce_toggled(bool checked)
 {
-    //settings->setValue(QLatin1Literal("announce"),ui->announce->value());
+    (void)checked;
+    //settings->setValue("announce",ui->announce->value());
 }
 
 void CatchChallenger::MainWindow::on_compressionLevel_valueChanged(int value)
 {
-    settings->setValue(QLatin1Literal("compressionLevel"),value);
+    settings->setValue("compressionLevel",value);
 }
