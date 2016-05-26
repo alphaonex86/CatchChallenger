@@ -398,6 +398,9 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                             std::cerr << "query async send failed: " << errorMessage() << ", where query list is not empty: " << stringimplode(queriesList,';') << std::endl;
                             return false;
                         }
+                        #ifdef DEBUG_MESSAGE_CLIENT_SQL
+                        std::cout << strCoPG << ", query " << queriesList.front() << " from queue" << std::endl;
+                        #endif
                     }
                     result=PQgetResult(conn);
                 }
