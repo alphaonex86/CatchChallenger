@@ -992,9 +992,9 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player cash ware house, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
             return false;
         }
-        uint8_t itemOnMapSize;
+        uint16_t itemOnMapSize;
         in >> itemOnMapSize;
-        uint8_t index=0;
+        uint16_t index=0;
         while(index<itemOnMapSize)
         {
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
@@ -1002,7 +1002,7 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
                 parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player item on map, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                 return false;
             }
-            uint8_t itemOnMap;
+            uint16_t itemOnMap;
             in >> itemOnMap;
             player_informations.itemOnMap.insert(itemOnMap);
             index++;
@@ -1017,9 +1017,9 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player cash ware house, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
             return false;
         }
-        uint8_t plantOnMapSize;
+        uint16_t plantOnMapSize;
         in >> plantOnMapSize;
-        uint8_t index=0;
+        uint16_t index=0;
         while(index<plantOnMapSize)
         {
             PlayerPlant playerPlant;
@@ -1030,7 +1030,7 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
                 parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player item on map, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                 return false;
             }
-            uint8_t plantOnMap;
+            uint16_t plantOnMap;
             in >> plantOnMap;
 
             //plant

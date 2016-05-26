@@ -162,12 +162,12 @@ void Client::takeAnObjectOnMap()
     }
     std::pair<uint8_t,uint8_t> pos(x,y);
     //check if is dirt
-    if(static_cast<MapServer *>(map)->itemsOnMap.find(pos)==static_cast<MapServer *>(map)->itemsOnMap.cend())
+    if(static_cast<MapServer *>(map)->pointOnMap_Item.find(pos)==static_cast<MapServer *>(map)->pointOnMap_Item.cend())
     {
         errorOutput("Not on map item on this place");
         return;
     }
-    const MapServer::ItemOnMap &item=static_cast<MapServer *>(map)->itemsOnMap.at(pos);
+    const MapServer::ItemOnMap &item=static_cast<MapServer *>(map)->pointOnMap_Item.at(pos);
     //add get item from db
     if(!item.infinite)
     {

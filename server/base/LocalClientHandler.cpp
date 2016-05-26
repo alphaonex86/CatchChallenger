@@ -573,7 +573,8 @@ void Client::updateObjectInDatabase()
     {
         dbQueryWriteCommon(
                     PreparedDBQueryCommon::db_query_update_character_item.compose(
-                        std::string()
+                        std::string(),
+                        std::to_string(character_id)
                         )
                     );
     }
@@ -874,7 +875,8 @@ uint32_t Client::removeObject(const uint16_t &item, const uint32_t &quantity, bo
         else
         {
             const uint32_t removed_quantity=public_and_private_informations.items.at(item);
-            /*public_and_private_informations.items.erase(item);
+            public_and_private_informations.items.erase(item);
+            /*
             std::string queryText=PreparedDBQueryCommon::db_query_delete_item;
             stringreplaceOne(queryText,"%1",std::to_string(item));
             stringreplaceOne(queryText,"%2",std::to_string(character_id));

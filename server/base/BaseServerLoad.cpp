@@ -482,10 +482,7 @@ void BaseServer::preload_map_semi_after_db_id()
         std::cerr << "Need be called after preload_dictionary_map()" << std::endl;
         abort();
     }
-    Client::indexOfItemOnMap=0;//index of item on map, ordened by map and x,y ordened into the xml file, less bandwith than send map,x,y
-    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-    Client::indexOfDirtOnMap=0;//index of plant on map, ordened by map and x,y ordened into the xml file, less bandwith than send map,x,y
-    #endif
+
     unsigned int indexMapSemi=0;
     while(indexMapSemi<semi_loaded_map.size())
     {
@@ -504,15 +501,12 @@ void BaseServer::preload_map_semi_after_db_id()
                 bool found=false;
                 if(DictionaryServer::dictionary_pointOnMap_internal_to_database.find(sortFileName)!=DictionaryServer::dictionary_pointOnMap_internal_to_database.end())
                 {
-                    const std::unordered_map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/,pairhash> &subItem=DictionaryServer::dictionary_pointOnMap_internal_to_database.at(sortFileName);
+                    const std::map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/> &subItem=DictionaryServer::dictionary_pointOnMap_internal_to_database.at(sortFileName);
                     if(subItem.find(pair)!=subItem.end())
                         found=true;
                 }
                 if(found)
-                {
                     pointOnMapDbCode=DictionaryServer::dictionary_pointOnMap_internal_to_database.at(sortFileName).at(pair);
-                    DictionaryServer::dictionary_pointOnMap_database_to_internal[pointOnMapDbCode].indexOfItemOnMap=Client::indexOfItemOnMap;
-                }
                 else
                 {
                     dictionary_pointOnMap_maxId++;
@@ -557,11 +551,6 @@ void BaseServer::preload_map_semi_after_db_id()
                         mapAndPoint.map=NULL;
                         mapAndPoint.x=0;
                         mapAndPoint.y=0;
-                        //less bandwith than send map,x,y
-                        mapAndPoint.indexOfItemOnMap=255;
-                        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-                        mapAndPoint.indexOfDirtOnMap=255;
-                        #endif
                         DictionaryServer::dictionary_pointOnMap_database_to_internal.push_back(mapAndPoint);
                     }
                     {
@@ -569,8 +558,6 @@ void BaseServer::preload_map_semi_after_db_id()
                         mapAndPoint.map=mapServer;
                         mapAndPoint.x=item.point.x;
                         mapAndPoint.y=item.point.y;
-                        //less bandwith than send map,x,y
-                        mapAndPoint.indexOfItemOnMap=Client::indexOfItemOnMap;
                         DictionaryServer::dictionary_pointOnMap_database_to_internal[dictionary_pointOnMap_maxId]=mapAndPoint;
                     }
 
@@ -581,15 +568,7 @@ void BaseServer::preload_map_semi_after_db_id()
                 itemOnMap.infinite=item.infinite;
                 itemOnMap.item=item.item;
                 itemOnMap.pointOnMapDbCode=pointOnMapDbCode;
-                itemOnMap.indexOfOnMap=Client::indexOfItemOnMap;
-                mapServer->itemsOnMap[std::pair<uint8_t,uint8_t>(item.point.x,item.point.y)]=itemOnMap;
-
-                if(Client::indexOfItemOnMap>=254)//255 reserved
-                {
-                    std::cerr << "indexOfItemOnMap will be more than 255, overflow, too many item on map" << std::endl;
-                    abort();
-                }
-                Client::indexOfItemOnMap++;
+                mapServer->pointOnMap_Item[pair]=itemOnMap;
                 index++;
             }
         }
@@ -605,16 +584,13 @@ void BaseServer::preload_map_semi_after_db_id()
                 bool found=false;
                 if(DictionaryServer::dictionary_pointOnMap_internal_to_database.find(sortFileName)!=DictionaryServer::dictionary_pointOnMap_internal_to_database.end())
                 {
-                    const std::unordered_map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/,pairhash> &subItem=DictionaryServer::dictionary_pointOnMap_internal_to_database.at(sortFileName);
+                    const std::map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/> &subItem=DictionaryServer::dictionary_pointOnMap_internal_to_database.at(sortFileName);
                     if(subItem.find(pair)!=subItem.end())
                         found=true;
                 }
                 if(found)
                 {
                     pointOnMapDbCode=DictionaryServer::dictionary_pointOnMap_internal_to_database.at(sortFileName).at(pair);
-                    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-                    DictionaryServer::dictionary_pointOnMap_database_to_internal[pointOnMapDbCode].indexOfDirtOnMap=Client::indexOfDirtOnMap;
-                    #endif
                 }
                 else
                 {
@@ -660,11 +636,6 @@ void BaseServer::preload_map_semi_after_db_id()
                         mapAndPoint.map=NULL;
                         mapAndPoint.x=0;
                         mapAndPoint.y=0;
-                        //less bandwith than send map,x,y
-                        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-                        mapAndPoint.indexOfDirtOnMap=255;
-                        #endif
-                        mapAndPoint.indexOfItemOnMap=255;
                         DictionaryServer::dictionary_pointOnMap_database_to_internal.push_back(mapAndPoint);
                     }
                     {
@@ -672,10 +643,6 @@ void BaseServer::preload_map_semi_after_db_id()
                         mapAndPoint.map=mapServer;
                         mapAndPoint.x=dirt.point.x;
                         mapAndPoint.y=dirt.point.y;
-                        //less bandwith than send map,x,y
-                        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-                        mapAndPoint.indexOfDirtOnMap=Client::indexOfDirtOnMap;
-                        #endif
                         DictionaryServer::dictionary_pointOnMap_database_to_internal[dictionary_pointOnMap_maxId]=mapAndPoint;
                     }
 
@@ -688,20 +655,10 @@ void BaseServer::preload_map_semi_after_db_id()
                 plantOnMap.character=0;//player id
                 plantOnMap.mature_at=0;//timestamp when is mature
                 plantOnMap.player_owned_expire_at=0;//timestamp when is mature
-                #else
-                plantOnMap.indexOfOnMap=Client::indexOfDirtOnMap;
                 #endif
                 plantOnMap.pointOnMapDbCode=pointOnMapDbCode;
-                mapServer->plants[std::pair<uint8_t,uint8_t>(dirt.point.x,dirt.point.y)]=plantOnMap;
+                mapServer->plants[pair]=plantOnMap;
 
-                #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-                if(Client::indexOfDirtOnMap>=254)//255 reserved
-                {
-                    std::cerr << "indexOfDirtOnMap will be more than 255, overflow, too many dirt on map" << std::endl;
-                    abort();
-                }
-                Client::indexOfDirtOnMap++;
-                #endif
                 index++;
             }
         }
@@ -1539,6 +1496,8 @@ bool BaseServer::preload_the_map()
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.y_offset=0;
         index++;
     }
+
+    //preload_map_semi_after_db_id load the item id
 
     //nead be after the offet
     preload_the_bots(semi_loaded_map);

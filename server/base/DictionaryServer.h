@@ -14,18 +14,13 @@ class DictionaryServer
 public:
     static std::vector<MapServer *> dictionary_map_database_to_internal;
     ///used only at map loading, \see BaseServer::preload_the_map()
-    static std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/,pairhash> > dictionary_pointOnMap_internal_to_database;
+    static std::map<std::string,std::map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/> > dictionary_pointOnMap_internal_to_database;
 
     struct MapAndPoint
     {
         MapServer *map;
         uint8_t x;
         uint8_t y;
-        //can't be common for plant and item on map, else plant + item will < 255
-        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-        uint8_t indexOfDirtOnMap;
-        #endif
-        uint8_t indexOfItemOnMap;
     };
     static std::vector<MapAndPoint> dictionary_pointOnMap_database_to_internal;
 };
