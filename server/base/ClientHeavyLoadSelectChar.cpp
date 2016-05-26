@@ -904,23 +904,13 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                     normalOutput("item on map is not into the map list (1), skip: "+std::to_string(pointOnMapDatabaseId));
                     continue;
                 }
-                if(DictionaryServer::dictionary_pointOnMap_database_to_internal.at(pointOnMapDatabaseId).map==NULL)
+                const DictionaryServer::MapAndPoint &resolvedEntry=DictionaryServer::dictionary_pointOnMap_database_to_internal.at(pointOnMapDatabaseId);
+                if(resolvedEntry.map==NULL)
                 {
                     normalOutput("item on map is not into the map list (2), skip: "+std::to_string(pointOnMapDatabaseId));
                     continue;
                 }
-                const uint8_t &indexOfItemOnMap=DictionaryServer::dictionary_pointOnMap_database_to_internal.at(pointOnMapDatabaseId).indexOfItemOnMap;
-                if(indexOfItemOnMap==255)
-                {
-                    normalOutput("item on map is not into the map list (3), skip: "+std::to_string(pointOnMapDatabaseId));
-                    continue;
-                }
-                if(indexOfItemOnMap>=Client::indexOfItemOnMap)
-                {
-                    normalOutput("item on map is not into the map list (4), skip: "+std::to_string(indexOfItemOnMap)+" on "+std::to_string(Client::indexOfItemOnMap));
-                    continue;
-                }
-                public_and_private_informations.itemOnMap.insert(indexOfItemOnMap);
+                public_and_private_informations.itemOnMap.insert(pointOnMapDatabaseId);
                 ++pos;
             }
         }
@@ -973,13 +963,6 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                     if(DictionaryServer::dictionary_pointOnMap_database_to_internal.at(pointOnMap).map==NULL)
                     {
                         normalOutput("dirt on map is not into the map list (2), skip: "+std::to_string(pointOnMap));
-                        pos+=1+8;
-                        continue;
-                    }
-                    const uint8_t &indexOfDirtOnMap=DictionaryServer::dictionary_pointOnMap_database_to_internal.at(pointOnMap).indexOfDirtOnMap;
-                    if(indexOfDirtOnMap==255)
-                    {
-                        normalOutput("dirt on map is not into the map list (3), skip: "+std::to_string(pointOnMap));
                         pos+=1+8;
                         continue;
                     }
@@ -1913,14 +1896,14 @@ void Client::characterIsRightFinalStep()
         }
     }
 
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.itemOnMap.size();
-    posOutput+=1;
+    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.itemOnMap.size());
+    posOutput+=2;
     {
         auto i=public_and_private_informations.itemOnMap.begin();
         while (i!=public_and_private_informations.itemOnMap.cend())
         {
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=*i;
-            posOutput+=1;
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(*i);
+            posOutput+=2;
             ++i;
         }
     }
@@ -1928,13 +1911,13 @@ void Client::characterIsRightFinalStep()
     //send plant on map
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     const auto &time=sFrom1970();
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.plantOnMap.size();
-    posOutput+=1;
+    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.plantOnMap.size());
+    posOutput+=2;
     auto i=public_and_private_informations.plantOnMap.begin();
     while(i!=public_and_private_informations.plantOnMap.cend())
     {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i->first;
-        posOutput+=1;
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(i->first);
+        posOutput+=2;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i->second.plant;
         posOutput+=1;
         /// \todo Can essaylly int 16 ovbertflow

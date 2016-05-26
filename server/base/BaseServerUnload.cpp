@@ -72,8 +72,6 @@ void BaseServer::unload_dictionary()
     BaseServerMasterLoadDictionary::unload();
     #endif
     baseServerMasterSendDatapack.unload();
-    DictionaryServer::dictionary_pointOnMap_internal_to_database.clear();
-    DictionaryServer::dictionary_pointOnMap_database_to_internal.clear();
 }
 
 void BaseServer::unload_the_static_data()
@@ -131,10 +129,6 @@ void BaseServer::unload_the_map()
         GlobalServerData::serverPrivateVariables.flat_map_list=NULL;
     }
     botIdLoaded.clear();
-    Client::indexOfItemOnMap=0;
-    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-    Client::indexOfDirtOnMap=0;//index of plant on map, ordened by map and x,y ordened into the xml file, less bandwith than send map,x,y
-    #endif
 }
 
 void BaseServer::unload_the_skin()

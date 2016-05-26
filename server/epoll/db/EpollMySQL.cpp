@@ -312,6 +312,9 @@ bool EpollMySQL::epollEvent(const uint32_t &events)
             {
                 const std::string &query=queriesList.front();
                 const int &query_id=mysql_send_query(conn,query.c_str(),query.size());
+                #ifdef DEBUG_MESSAGE_CLIENT_SQL
+                std::cout << strCoPG << ", query " << query << " from queue" << std::endl;
+                #endif
                 if(query_id!=0)
                 {
                     std::cerr << "query async send failed: " << errorMessage() << ", where query list is not empty: " << stringimplode(queriesList,';') << std::endl;

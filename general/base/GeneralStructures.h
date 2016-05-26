@@ -372,13 +372,13 @@ struct Player_private_and_public_informations
     #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
         std::unordered_set<ActionAllow,std::hash<uint8_t>/*what hash use*/ > allow;
         //here to send at character login
-        std::unordered_set<uint8_t> itemOnMap;
+        std::unordered_set<uint16_t> itemOnMap;
         #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
             #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-            std::unordered_map<uint8_t/*dirtOnMap*/,PlayerPlant> plantOnMap;
+            std::unordered_map<uint16_t/*pointOnMap*/,PlayerPlant> plantOnMap;
             #endif
         #else
-            std::unordered_map<uint8_t/*dirtOnMap*/,PlayerPlant> plantOnMap;
+            std::unordered_map<uint16_t/*pointOnMap*/,PlayerPlant> plantOnMap;
         #endif
         std::unordered_map<uint16_t, PlayerQuest> quests;
         std::unordered_map<uint8_t,PlayerReputation> reputation;
@@ -387,13 +387,13 @@ struct Player_private_and_public_informations
     #else
         std::set<ActionAllow> allow;
         //here to send at character login
-        std::set<uint8_t> itemOnMap;
+        std::set<uint16_t> itemOnMap;
         #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
             #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-            std::map<uint8_t/*dirtOnMap*/,PlayerPlant> plantOnMap;
+            std::map<uint16_t/*pointOnMap*/,PlayerPlant> plantOnMap;
             #endif
         #else
-            std::map<uint8_t/*dirtOnMap*/,PlayerPlant> plantOnMap;
+            std::map<uint16_t/*pointOnMap*/,PlayerPlant> plantOnMap;
         #endif
         std::map<uint16_t, PlayerQuest> quests;
         std::map<uint8_t,PlayerReputation> reputation;

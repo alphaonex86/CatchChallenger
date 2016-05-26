@@ -21,6 +21,8 @@
 #include <QQuickView>
 #include <QTreeWidgetItem>
 #include <unordered_set>
+#include <set>
+#include <map>
 
 #include "../../crafting/interface/QmlInterface/CraftingAnimation.h"
 #include "../../../general/base/ChatParsing.h"
@@ -588,8 +590,8 @@ private:
     QList<MarketMonster> marketWithdrawMonsterList;
 
     //player items
-    std::unordered_set<uint8_t> itemOnMap;
-    std::unordered_map<uint8_t/*dirtOnMap*/,PlayerPlant> plantOnMap;
+    std::unordered_set<uint16_t> itemOnMap;
+    std::unordered_map<uint16_t/*dirtOnMap*/,PlayerPlant> plantOnMap;
     QHash<uint16_t,int32_t> change_warehouse_items;//negative = deposite, positive = withdraw
     std::unordered_map<uint16_t,uint32_t> items,warehouse_items;
     QHash<QListWidgetItem *,uint32_t> items_graphical;

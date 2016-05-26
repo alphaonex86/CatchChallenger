@@ -147,10 +147,6 @@ BaseServer::BaseServer() :
     CommonSettingsCommon::commonSettingsCommon.max_pseudo_size        = 20;
     CommonSettingsCommon::commonSettingsCommon.character_delete_time  = 604800; // 7 day
     #endif
-    Client::indexOfItemOnMap=0;
-    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-    Client::indexOfDirtOnMap=0;//index of plant on map, ordened by map and x,y ordened into the xml file, less bandwith than send map,x,y
-    #endif
     CommonSettingsServer::commonSettingsServer.rates_gold             = 1.0;
     CommonSettingsServer::commonSettingsServer.rates_drop             = 1.0;
     CommonSettingsServer::commonSettingsServer.rates_xp               = 1.0;

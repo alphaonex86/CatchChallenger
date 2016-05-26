@@ -71,16 +71,6 @@ void BaseServer::preload_zone_sql()
 
 void BaseServer::preload_pointOnMap_sql()
 {
-    if(DictionaryServer::dictionary_map_database_to_internal.size()==0)
-    {
-        std::cerr << "Need be called after preload_dictionary_map()" << std::endl;
-        abort();
-    }
-    if(DictionaryServer::dictionary_pointOnMap_internal_to_database.size()>0)
-    {
-        std::cerr << "!DictionaryServer::dictionary_pointOnMap_internal_to_database.isEmpty(), already called?" << std::endl;
-        abort();
-    }
     std::string queryText;
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
@@ -120,11 +110,6 @@ void BaseServer::preload_pointOnMap_static(void *object)
 
 void BaseServer::preload_pointOnMap_return()
 {
-    if(DictionaryServer::dictionary_map_database_to_internal.size()==0)
-    {
-        std::cerr << "Call preload_dictionary_map() before" << std::endl;
-        abort();
-    }
     bool ok;
     dictionary_pointOnMap_maxId=0;
     while(GlobalServerData::serverPrivateVariables.db_server->next())
@@ -134,7 +119,8 @@ void BaseServer::preload_pointOnMap_return()
             std::cerr << "preload_itemOnMap_return(): Id not found: " << GlobalServerData::serverPrivateVariables.db_server->value(0) << std::endl;
         else
         {
-            dictionary_pointOnMap_maxId=id;//here to prevent later bug create problem with max id
+            if(dictionary_pointOnMap_maxId<id)
+                dictionary_pointOnMap_maxId=id;//here to prevent later bug create problem with max id
             const uint32_t &map_id=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
             if(!ok)
                 std::cerr << "preload_itemOnMap_return(): map id not number: " << GlobalServerData::serverPrivateVariables.db_server->value(1) << std::endl;
@@ -144,7 +130,8 @@ void BaseServer::preload_pointOnMap_return()
                     std::cerr << "preload_itemOnMap_return(): map out of range: " << map_id << std::endl;
                 else
                 {
-                    if(DictionaryServer::dictionary_map_database_to_internal.at(map_id)==NULL)
+                    MapServer * const map_server=DictionaryServer::dictionary_map_database_to_internal.at(map_id);
+                    if(map_server==NULL)
                         std::cerr << "preload_itemOnMap_return(): map == NULL for this id, map not found: " << map_id << std::endl;
                     else
                     {
@@ -153,7 +140,7 @@ void BaseServer::preload_pointOnMap_return()
                             std::cerr << "preload_itemOnMap_return(): x not number: " << GlobalServerData::serverPrivateVariables.db_server->value(2) << std::endl;
                         else
                         {
-                            if(x>255 || x>=DictionaryServer::dictionary_map_database_to_internal.at(map_id)->width)
+                            if(x>255 || x>=map_server->width)
                                 std::cerr << "preload_itemOnMap_return(): x out of range: " << x << ", for " << map_id << std::endl;
                             else
                             {
@@ -162,14 +149,18 @@ void BaseServer::preload_pointOnMap_return()
                                     std::cerr << "preload_itemOnMap_return(): y not number: " << GlobalServerData::serverPrivateVariables.db_server->value(3) << ", for " << map_id << std::endl;
                                 else
                                 {
-                                    if(y>255 || y>=DictionaryServer::dictionary_map_database_to_internal.at(map_id)->height)
+                                    if(y>255 || y>=map_server->height)
                                         std::cerr << "preload_itemOnMap_return(): y out of range: " << y << ", for " << map_id << std::endl;
                                     else
                                     {
-                                        const std::string &map_file=DictionaryServer::dictionary_map_database_to_internal.at(map_id)->map_file;
+                                        const auto &pair=std::pair<uint8_t,uint8_t>(x,y);
+                                        //const std::string &map_file=map_server->map_file;
 
                                         ///used only at map loading, \see BaseServer::preload_the_map()
-                                        DictionaryServer::dictionary_pointOnMap_internal_to_database[map_file][std::pair<uint8_t/*x*/,uint8_t/*y*/>(x,y)]=id;
+                                        if(map_server->pointOnMap_Item.find(pair)!=map_server->pointOnMap_Item.cend())
+                                            map_server->pointOnMap_Item[pair].pointOnMapDbCode=id;
+                                        if(map_server->plants.find(pair)!=map_server->plants.cend())
+                                            map_server->plants[pair].pointOnMapDbCode=id;
 
                                         while((uint32_t)DictionaryServer::dictionary_pointOnMap_database_to_internal.size()<=id)
                                         {
@@ -177,23 +168,17 @@ void BaseServer::preload_pointOnMap_return()
                                             mapAndPoint.map=NULL;
                                             mapAndPoint.x=0;
                                             mapAndPoint.y=0;
-                                            //less bandwith than send map,x,y
-                                            mapAndPoint.indexOfItemOnMap=255;
-                                            #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-                                            mapAndPoint.indexOfDirtOnMap=255;
-                                            #endif
                                             DictionaryServer::dictionary_pointOnMap_database_to_internal.push_back(mapAndPoint);
                                         }
 
                                         DictionaryServer::MapAndPoint mapAndPoint;
-                                        mapAndPoint.indexOfItemOnMap=255;
-                                        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-                                        mapAndPoint.indexOfDirtOnMap=255;
-                                        #endif
-                                        mapAndPoint.map=DictionaryServer::dictionary_map_database_to_internal.at(map_id);
+                                        mapAndPoint.map=map_server;
                                         mapAndPoint.x=x;
                                         mapAndPoint.y=y;
                                         DictionaryServer::dictionary_pointOnMap_database_to_internal[id]=mapAndPoint;
+
+                                        //std::string,std::map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/,pairhash>
+                                        DictionaryServer::dictionary_pointOnMap_internal_to_database[map_server->map_file][pair]=id;
                                     }
                                 }
                             }
