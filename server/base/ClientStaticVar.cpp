@@ -90,13 +90,8 @@ std::vector<uint16_t> Client::marketObjectIdList;
 #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
 std::queue<Client::PlantInWaiting> Client::plant_list_in_waiting;
 #endif
-uint8_t Client::indexOfItemOnMap;
-#ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-uint8_t Client::indexOfDirtOnMap;//index of plant on map, ordened by map and x,y ordened into the xml file, less bandwith than send map,x,y
-#endif
 
 std::vector<uint8_t> Client::selectCharacterQueryId;
-
 std::vector<uint16_t> Client::simplifiedIdList;
 
 #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR

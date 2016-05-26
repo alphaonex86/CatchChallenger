@@ -19,7 +19,7 @@ class MapServer : public CommonMap, public MapServerCrafting
 public:
     MapServer();
     void doDDOSLocalChat();
-    std::unordered_map<std::pair<uint8_t,uint8_t>,Orientation,pairhash> rescue;
+    std::map<std::pair<uint8_t,uint8_t>,Orientation/*,pairhash*/> rescue;
     int localChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
     int localChatDropTotalCache;
     int localChatDropNewValue;
@@ -29,13 +29,13 @@ public:
     std::vector<Client *> clientsForBroadcast;//frequent remove/insert due to map change
     struct ItemOnMap
     {
-        uint8_t indexOfOnMap;
-        uint16_t item;
         uint16_t pointOnMapDbCode;
+
+        uint16_t item;
         bool infinite;
     };
-    std::unordered_map<std::pair<uint8_t,uint8_t>,ItemOnMap,pairhash> itemsOnMap;//first is x,y, second is db code, item
-    std::unordered_map<std::pair<uint8_t,uint8_t>,uint32_t,pairhash> dictionary_pointOnMap_internal_to_database;
+    std::map<std::pair<uint8_t,uint8_t>,ItemOnMap/*,pairhash*/> pointOnMap_Item;//first is x,y, second is db code, item
+    //std::map<std::pair<uint8_t,uint8_t>,PlantOnMap,pairhash> plants;->see MapServerCrafting
 };
 
 class Map_server_MapVisibility_Simple_StoreOnReceiver : public MapServer

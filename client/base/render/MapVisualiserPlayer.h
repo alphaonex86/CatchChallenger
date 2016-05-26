@@ -48,7 +48,7 @@ public:
     virtual void datapackParsed();
     virtual void datapackParsedMainSub();
 
-    void setInformations(std::unordered_map<uint16_t,uint32_t> *items, std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> *quests, std::vector<uint8_t> *events, std::unordered_set<uint8_t> *itemOnMap, std::unordered_map<uint8_t/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap);
+    void setInformations(std::unordered_map<uint16_t,uint32_t> *items, std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> *quests, std::vector<uint8_t> *events, std::unordered_set<uint16_t> *itemOnMap, std::unordered_map<uint16_t, CatchChallenger::PlayerPlant> *plantOnMap);
     void unblock();
 protected:
     //datapack
@@ -97,8 +97,8 @@ protected:
     std::vector<uint8_t> *events;
     std::unordered_map<uint16_t,uint32_t> *items;
     std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> *quests;
-    std::unordered_set<uint8_t> *itemOnMap;
-    std::unordered_map<uint8_t/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap;
+    std::unordered_set<uint16_t> *itemOnMap;
+    std::unordered_map<uint16_t/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap;
 protected:
     static QString text_slashtrainerpng;
     static QString text_slash;

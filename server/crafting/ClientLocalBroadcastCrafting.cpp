@@ -108,7 +108,7 @@ void Client::plantSeed(
     {
         const MapServer::PlantOnMap &plantOnMap=static_cast<MapServer *>(map)->plants.at(std::pair<uint8_t,uint8_t>(x,y));
         #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-        if(public_and_private_informations.plantOnMap.find(plantOnMap.indexOfOnMap)!=public_and_private_informations.plantOnMap.cend())
+        if(public_and_private_informations.plantOnMap.find(plantOnMap.pointOnMapDbCode)!=public_and_private_informations.plantOnMap.cend())
         {
             errorOutput("Have already a plant in plantOnlyVisibleByPlayer==true");
             return;
@@ -179,7 +179,7 @@ bool Client::syncDatabasePlant()
             const uint64_t mature_at=htole64(plant.mature_at);
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&mature_at,sizeof(mature_at));
             // *reinterpret_cast<uint64_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole64(plant.mature_at);
-            posOutput+=4;
+            posOutput+=8;
 
             ++i;
         }
@@ -240,7 +240,7 @@ void Client::seedValidated()
         PlayerPlant plantOnMapPlayer;
         plantOnMapPlayer.plant=plant_list_in_waiting.front().plant_id;
         plantOnMapPlayer.mature_at=current_time+CommonDatapack::commonDatapack.plants.at(plantOnMapPlayer.plant).fruits_seconds;
-        public_and_private_informations.plantOnMap[plantOnMap.indexOfOnMap]=plantOnMapPlayer;
+        public_and_private_informations.plantOnMap[plantOnMap.pointOnMapDbCode]=plantOnMapPlayer;
     }
     {
         syncDatabasePlant();
@@ -478,9 +478,9 @@ void Client::collectPlant(
     const auto &current_time=sFrom1970();
     const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.at(std::pair<uint8_t,uint8_t>(x,y));
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-    if(public_and_private_informations.plantOnMap.find(plant.indexOfOnMap)!=public_and_private_informations.plantOnMap.cend())
+    if(public_and_private_informations.plantOnMap.find(plant.pointOnMapDbCode)!=public_and_private_informations.plantOnMap.cend())
     {
-        const PlayerPlant &playerPlant=public_and_private_informations.plantOnMap.at(plant.indexOfOnMap);
+        const PlayerPlant &playerPlant=public_and_private_informations.plantOnMap.at(plant.pointOnMapDbCode);
         if(current_time<playerPlant.mature_at)
         {
             errorOutput("current_time<plant.mature_at");
@@ -502,7 +502,7 @@ void Client::collectPlant(
         addObjectAndSend(CommonDatapack::commonDatapack.plants.at(playerPlant.plant).itemUsed,quantity);
 
         //clear the server dirt
-        public_and_private_informations.plantOnMap.erase(plant.indexOfOnMap);
+        public_and_private_informations.plantOnMap.erase(plant.pointOnMapDbCode);
         return;
     }
     else

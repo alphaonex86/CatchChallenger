@@ -119,10 +119,6 @@ public:
     static std::unordered_map<std::string,Client *> playerByPseudo;
     static std::unordered_map<uint32_t,Clan *> clanList;
     static std::vector<Client *> clientBroadCastList;
-    static uint8_t indexOfItemOnMap;
-    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-    static uint8_t indexOfDirtOnMap;//index of plant on map, ordened by map and x,y ordened into the xml file, less bandwith than send map,x,y
-    #endif
 
     static unsigned char protocolReplyProtocolNotSupported[7];
     static unsigned char protocolReplyServerFull[7];
