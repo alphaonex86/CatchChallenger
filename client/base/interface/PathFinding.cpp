@@ -387,7 +387,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
                     }
                     else
                     {
-                        qDebug() << "Path result into" << time.elapsed() << "ms";
+                        //qDebug() << "Path result into" << time.elapsed() << "ms";
                         returnedVar.last().second--;
                         emit result(current_map,x,y,returnedVar);
                         return;
@@ -395,6 +395,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
                 }
                 else
                 {
+                    returnedVar.clear();
                     qDebug() << "Bug due to resolved path is empty";
                     return;
                 }

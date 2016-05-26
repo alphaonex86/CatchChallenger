@@ -809,7 +809,7 @@ void MapVisualiserPlayer::finalPlayerStep()
         {
             if(inMove)
             {
-                emit send_player_direction(direction);
+                emit send_player_direction(direction);/// \todo already send into nextPathStep()
                 inMove=false;
                 parseStop();
             }
