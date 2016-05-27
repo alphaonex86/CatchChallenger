@@ -1165,6 +1165,7 @@ void BaseWindow::add_to_inventory(const QList<QPair<uint16_t,uint32_t> > &items,
 
 void BaseWindow::add_to_inventory(const QHash<uint16_t,uint32_t> &items,const bool &showGain)
 {
+    Player_private_and_public_informations &informations=CatchChallenger::Api_client_real::client->get_player_informations();
     if(items.empty())
         return;
     if(showGain)
@@ -1175,7 +1176,10 @@ void BaseWindow::add_to_inventory(const QHash<uint16_t,uint32_t> &items,const bo
             i.next();
 
             const uint16_t &item=i.key();
-            ClientFightEngine::fightEngine.public_and_private_informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
+            if(informations.encyclopedia_item!=NULL)
+                informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
+            else
+                std::cerr << "encyclopedia_item is null, unable to set" << std::endl;
             //add really to the list
             if(this->items.find(item)!=this->items.cend())
                 this->items[item]+=i.value();
@@ -1221,7 +1225,10 @@ void BaseWindow::add_to_inventory(const QHash<uint16_t,uint32_t> &items,const bo
             i.next();
 
             const uint16_t &item=i.key();
-            ClientFightEngine::fightEngine.public_and_private_informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
+            if(informations.encyclopedia_item!=NULL)
+                informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
+            else
+                std::cerr << "encyclopedia_item is null, unable to set" << std::endl;
             //add really to the list
             if(this->items.find(item)!=this->items.cend())
                 this->items[item]+=i.value();

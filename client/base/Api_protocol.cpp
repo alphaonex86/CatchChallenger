@@ -186,7 +186,7 @@ void Api_protocol::parseError(const QString &userMessage,const QString &errorStr
     }
 }
 
-Player_private_and_public_informations Api_protocol::get_player_informations()
+Player_private_and_public_informations &Api_protocol::get_player_informations()
 {
     return player_informations;
 }

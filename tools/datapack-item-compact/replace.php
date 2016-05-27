@@ -230,6 +230,16 @@ foreach($files as $file)
     filewrite($folder.$file,$content);
 }
 
-
+$folder=$datapack_path.'/map/';
+$file='layers.xml';
+$content=fileopen($folder.$file);
+$content=preg_replace_callback('# item="([0-9]+)"#isU',function ($matches)
+{
+    global $convertItemTo;
+    if(!isset($convertItemTo[$matches[1]]))
+        die('item not found, die: '.$matches[1].', line: '.__LINE__);
+    return str_replace(' item="'.$matches[1].'"',' item="'.$convertItemTo[$matches[1]].'"',$matches[0]);
+},$content);
+filewrite($folder.$file,$content);
 
 
