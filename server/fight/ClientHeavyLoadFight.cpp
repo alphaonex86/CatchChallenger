@@ -367,6 +367,7 @@ void Client::loadMonsters_return()
         //finish it
         if(ok)
         {
+            public_and_private_informations.encyclopedia_monster[playerMonster.monster/8]|=(1<<(7-playerMonster.monster%8));
             if(place==0x01)
                 public_and_private_informations.playerMonster.push_back(playerMonster);
             else
