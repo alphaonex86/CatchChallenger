@@ -21,8 +21,14 @@ public:
         MapServer *map;
         uint8_t x;
         uint8_t y;
+        /** \warning can have entry in database but not into datapack, deleted
+         * used only to send to player the correct pos */
+        uint16_t datapack_index_item;
+        uint16_t datapack_index_plant;
     };
     static std::vector<MapAndPoint> dictionary_pointOnMap_database_to_internal;
+    static uint16_t datapack_index_temp_for_item;
+    static uint16_t datapack_index_temp_for_plant;
 };
 }
 

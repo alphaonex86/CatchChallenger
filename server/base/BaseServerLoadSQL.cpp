@@ -162,12 +162,13 @@ void BaseServer::preload_pointOnMap_return()
                                         if(map_server->plants.find(pair)!=map_server->plants.cend())
                                             map_server->plants[pair].pointOnMapDbCode=id;
 
-                                        while((uint32_t)DictionaryServer::dictionary_pointOnMap_database_to_internal.size()<=id)
+                                        /* do after the datapack is loaded while((uint32_t)DictionaryServer::dictionary_pointOnMap_database_to_internal.size()<=id)
                                         {
                                             DictionaryServer::MapAndPoint mapAndPoint;
                                             mapAndPoint.map=NULL;
                                             mapAndPoint.x=0;
                                             mapAndPoint.y=0;
+                                            mapAndPoint.datapack_index=0;
                                             DictionaryServer::dictionary_pointOnMap_database_to_internal.push_back(mapAndPoint);
                                         }
 
@@ -175,7 +176,8 @@ void BaseServer::preload_pointOnMap_return()
                                         mapAndPoint.map=map_server;
                                         mapAndPoint.x=x;
                                         mapAndPoint.y=y;
-                                        DictionaryServer::dictionary_pointOnMap_database_to_internal[id]=mapAndPoint;
+                                        mapAndPoint.datapack_index=0;
+                                        DictionaryServer::dictionary_pointOnMap_database_to_internal[id]=mapAndPoint;*/
 
                                         //std::string,std::map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/,pairhash>
                                         DictionaryServer::dictionary_pointOnMap_internal_to_database[map_server->map_file][pair]=id;
