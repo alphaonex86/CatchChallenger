@@ -137,6 +137,17 @@ void BaseWindow::resetAll()
     add_to_inventoryGainTime.clear();
     add_to_inventoryGainExtraList.clear();
     add_to_inventoryGainExtraTime.clear();
+    /*this is only mirror, drop into Api_protocol::resetAll()
+    if(ClientFightEngine::fightEngine.public_and_private_informations.encyclopedia_item!=NULL)
+    {
+        delete ClientFightEngine::fightEngine.public_and_private_informations.encyclopedia_item;
+        ClientFightEngine::fightEngine.public_and_private_informations.encyclopedia_item=NULL;
+    }
+    if(ClientFightEngine::fightEngine.public_and_private_informations.encyclopedia_monster!=NULL)
+    {
+        delete ClientFightEngine::fightEngine.public_and_private_informations.encyclopedia_monster;
+        ClientFightEngine::fightEngine.public_and_private_informations.encyclopedia_monster=NULL;
+    }*/
     while(!ambianceList.isEmpty())
     {
         #ifndef CATCHCHALLENGER_NOAUDIO

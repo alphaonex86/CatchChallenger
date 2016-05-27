@@ -213,6 +213,8 @@ void ClientFightEngine::resetAll()
 
     battleCurrentMonster.clear();
     battleStat.clear();
+    public_and_private_informations.encyclopedia_monster=NULL;
+    public_and_private_informations.encyclopedia_item=NULL;
 
     CommonFightEngine::resetAll();
 }
@@ -224,7 +226,10 @@ void ClientFightEngine::addPlayerMonster(const QList<PlayerMonster> &playerMonst
     while(index<playerMonster.size())
     {
         const uint16_t &monsterId=playerMonster.at(index).monster;
-        public_and_private_informations.encyclopedia_monster[monsterId/8]|=(1<<(7-monsterId%8));
+        if(public_and_private_informations.encyclopedia_monster!=NULL)
+            public_and_private_informations.encyclopedia_monster[monsterId/8]|=(1<<(7-monsterId%8));
+        else
+            std::cerr << "encyclopedia_monster is null, unable to set" << std::endl;
         monsterList.push_back(playerMonster.at(index));
         index++;
     }
@@ -237,7 +242,10 @@ void ClientFightEngine::addPlayerMonster(const std::vector<PlayerMonster> &playe
     while(index<playerMonster.size())
     {
         const uint16_t &monsterId=playerMonster.at(index).monster;
-        public_and_private_informations.encyclopedia_monster[monsterId/8]|=(1<<(7-monsterId%8));
+        if(public_and_private_informations.encyclopedia_monster!=NULL)
+            public_and_private_informations.encyclopedia_monster[monsterId/8]|=(1<<(7-monsterId%8));
+        else
+            std::cerr << "encyclopedia_monster is null, unable to set" << std::endl;
         index++;
     }
     CommonFightEngine::addPlayerMonster(playerMonster);
@@ -245,7 +253,10 @@ void ClientFightEngine::addPlayerMonster(const std::vector<PlayerMonster> &playe
 
 void ClientFightEngine::addPlayerMonster(const PlayerMonster &playerMonster)
 {
-    public_and_private_informations.encyclopedia_monster[playerMonster.monster/8]|=(1<<(7-playerMonster.monster%8));
+    if(public_and_private_informations.encyclopedia_monster!=NULL)
+        public_and_private_informations.encyclopedia_monster[playerMonster.monster/8]|=(1<<(7-playerMonster.monster%8));
+    else
+        std::cerr << "encyclopedia_monster is null, unable to set" << std::endl;
     CommonFightEngine::addPlayerMonster(playerMonster);
 }
 

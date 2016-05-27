@@ -1511,7 +1511,6 @@ bool Client::addPlayerMonsterWithChange(const PlayerMonster &playerMonster)
         return false;
     }
     const uint16_t bittoUp=playerMonster.monster;
-    public_and_private_informations.encyclopedia_monster[bittoUp/8]|=(1<<(7-bittoUp%8));
     if(public_and_private_informations.encyclopedia_monster[bittoUp/8] & (1<<(7-bittoUp%8)))
         return false;
     else
