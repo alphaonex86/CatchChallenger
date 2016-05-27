@@ -372,6 +372,48 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             pos+=1;
         }
     }
+    //encyclopedia_monster
+    {
+        const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(15),&ok);
+        if(!ok)
+        {
+            characterSelectionIsWrong(query_id,0x04,"encyclopedia_monster not in hexa");
+            return;
+        }
+        const char * const data_raw=data.data();
+        if(public_and_private_informations.encyclopedia_monster!=NULL)
+        {
+            delete public_and_private_informations.encyclopedia_monster;
+            public_and_private_informations.encyclopedia_monster=NULL;
+        }
+        public_and_private_informations.encyclopedia_monster=(char *)malloc(CommonDatapack::commonDatapack.monstersMaxId/8+1);
+        memset(public_and_private_informations.encyclopedia_monster,0x00,CommonDatapack::commonDatapack.monstersMaxId/8+1);
+        if(data.size()>(uint16_t)(CommonDatapack::commonDatapack.monstersMaxId/8+1))
+            memcpy(public_and_private_informations.encyclopedia_monster,data_raw,CommonDatapack::commonDatapack.monstersMaxId/8+1);
+        else
+            memcpy(public_and_private_informations.encyclopedia_monster,data_raw,data.size());
+    }
+    //encyclopedia_item
+    {
+        const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(16),&ok);
+        if(!ok)
+        {
+            characterSelectionIsWrong(query_id,0x04,"encyclopedia_item not in hexa");
+            return;
+        }
+        const char * const data_raw=data.data();
+        if(public_and_private_informations.encyclopedia_item!=NULL)
+        {
+            delete public_and_private_informations.encyclopedia_item;
+            public_and_private_informations.encyclopedia_item=NULL;
+        }
+        public_and_private_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+        memset(public_and_private_informations.encyclopedia_item,0x00,CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+        if(data.size()>(uint16_t)(CommonDatapack::commonDatapack.items.itemMaxId/8+1))
+            memcpy(public_and_private_informations.encyclopedia_item,data_raw,CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+        else
+            memcpy(public_and_private_informations.encyclopedia_item,data_raw,data.size());
+    }
     //item
     {
         const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(11),&ok);
@@ -401,6 +443,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             #endif
             const uint32_t &quantity=le32toh(*reinterpret_cast<const uint32_t *>(data_raw+pos));
             pos+=4;
+            public_and_private_informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
             public_and_private_informations.items[item]=quantity;
         }
     }
@@ -433,6 +476,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             #endif
             const uint32_t &quantity=le32toh(*reinterpret_cast<const uint32_t *>(data_raw+pos));
             pos+=4;
+            public_and_private_informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
             public_and_private_informations.warehouse_items[item]=quantity;
         }
     }
@@ -555,49 +599,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             public_and_private_informations.reputation[type]=playerReputation;
         }
     }
-    //encyclopedia_monster
-    {
-        const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(15),&ok);
-        if(!ok)
-        {
-            characterSelectionIsWrong(query_id,0x04,"encyclopedia_monster not in hexa");
-            return;
-        }
-        const char * const data_raw=data.data();
-        if(public_and_private_informations.encyclopedia_monster!=NULL)
-        {
-            delete public_and_private_informations.encyclopedia_monster;
-            public_and_private_informations.encyclopedia_monster=NULL;
-        }
-        public_and_private_informations.encyclopedia_monster=(char *)malloc(CommonDatapack::commonDatapack.monstersMaxId/8+1);
-        memset(public_and_private_informations.encyclopedia_monster,0x00,CommonDatapack::commonDatapack.monstersMaxId/8+1);
-        if(data.size()>(uint16_t)(CommonDatapack::commonDatapack.monstersMaxId/8+1))
-            memcpy(public_and_private_informations.encyclopedia_monster,data_raw,CommonDatapack::commonDatapack.monstersMaxId/8+1);
-        else
-            memcpy(public_and_private_informations.encyclopedia_monster,data_raw,data.size());
-    }
-    //encyclopedia_item
-    {
-        const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(16),&ok);
-        if(!ok)
-        {
-            characterSelectionIsWrong(query_id,0x04,"encyclopedia_item not in hexa");
-            return;
-        }
-        const char * const data_raw=data.data();
-        if(public_and_private_informations.encyclopedia_item!=NULL)
-        {
-            delete public_and_private_informations.encyclopedia_item;
-            public_and_private_informations.encyclopedia_item=NULL;
-        }
-        public_and_private_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.items.itemMaxId/8+1);
-        memset(public_and_private_informations.encyclopedia_item,0x00,CommonDatapack::commonDatapack.items.itemMaxId/8+1);
-        if(data.size()>(uint16_t)(CommonDatapack::commonDatapack.items.itemMaxId/8+1))
-            memcpy(public_and_private_informations.encyclopedia_item,data_raw,CommonDatapack::commonDatapack.items.itemMaxId/8+1);
-        else
-            memcpy(public_and_private_informations.encyclopedia_item,data_raw,data.size());
-    }
-
     //achievements(17) ignored for now
 
     const uint64_t &commonCharacterDate=GlobalServerData::serverPrivateVariables.db_common->stringtouint64(GlobalServerData::serverPrivateVariables.db_common->value(19),&ok);
