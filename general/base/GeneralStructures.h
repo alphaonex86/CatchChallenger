@@ -369,6 +369,10 @@ struct Player_private_and_public_informations
     uint32_t repel_step;
     bool clan_leader;
 
+    /* item and plant is keep under database format to keep the dataintegrity and save quickly the data
+     * More memory usage by 2x, but improve the code maintenance because the id in memory is id in database
+     * Less dictionary resolution to improve the cache flush */
+
     #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
         std::unordered_set<ActionAllow,std::hash<uint8_t>/*what hash use*/ > allow;
         //here to send at character login
