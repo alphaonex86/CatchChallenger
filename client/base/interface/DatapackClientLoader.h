@@ -127,9 +127,9 @@ public:
     QStringList maps,skins;
     QHash<QString,uint32_t> mapToId;
     QHash<QString,uint32_t> fullMapPathToId;
-    QHash<QString,QHash<QPair<uint8_t,uint8_t>,uint8_t> > itemOnMap;
-    QHash<QString,QHash<QPair<uint8_t,uint8_t>,uint8_t> > plantOnMap;
-    QHash<uint8_t,PlantIndexContent> plantIndexOfOnMap;
+    QHash<QString,QHash<QPair<uint8_t,uint8_t>,uint16_t> > itemOnMap;
+    QHash<QString,QHash<QPair<uint8_t,uint8_t>,uint16_t> > plantOnMap;
+    QHash<uint16_t,PlantIndexContent> plantIndexOfOnMap;
     QPixmap defaultInventoryImage();
     bool isParsingDatapack();
     QString getDatapackPath();

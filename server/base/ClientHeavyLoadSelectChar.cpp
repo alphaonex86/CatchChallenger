@@ -877,41 +877,52 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         }
         else
         {
-            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-            public_and_private_informations.itemOnMap.reserve(itemonmap.size());
-            #endif
-            uint32_t lastItemonmapId=0;
-            uint32_t pos=0;
-            while(pos<itemonmap.size())
+            if(itemonmap.size()%(2)!=0)
             {
-                uint32_t pointOnMapDatabaseId=(uint32_t)
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                itemonmap
-                #else
-                raw_itemonmap
+                characterSelectionIsWrong(query_id,0x04,"item on map missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(14));
+                return;
+            }
+            else
+            {
+                #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
+                public_and_private_informations.itemOnMap.reserve(itemonmap.size());
                 #endif
-                [pos]+lastItemonmapId;
-                if(pointOnMapDatabaseId>255)
-                    pointOnMapDatabaseId-=256;
-                lastItemonmapId=pointOnMapDatabaseId;
-                if(!ok)
+                uint32_t lastItemonmapId=0;
+                uint32_t pos=0;
+                while(pos<itemonmap.size())
                 {
-                    normalOutput("wrong value type for item on map, skip: "+std::to_string(pointOnMapDatabaseId));
-                    continue;
+                    uint32_t pointOnMapDatabaseId=(uint32_t)le16toh(*reinterpret_cast<const uint16_t *>(
+                                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                                        itemonmap.data()
+                                        #else
+                                        raw_itemonmap
+                                        #endif
+                                        +pos))+lastItemonmapId;
+                    if(pointOnMapDatabaseId>65535)
+                        pointOnMapDatabaseId-=65536;
+                    lastItemonmapId=pointOnMapDatabaseId;
+                    if(!ok)
+                    {
+                        normalOutput("wrong value type for item on map, skip: "+std::to_string(pointOnMapDatabaseId));
+                        pos+=2;
+                        continue;
+                    }
+                    if(pointOnMapDatabaseId>=DictionaryServer::dictionary_pointOnMap_database_to_internal.size())
+                    {
+                        normalOutput("item on map is not into the map list (1), skip: "+std::to_string(pointOnMapDatabaseId));
+                        pos+=2;
+                        continue;
+                    }
+                    const DictionaryServer::MapAndPoint &resolvedEntry=DictionaryServer::dictionary_pointOnMap_database_to_internal.at(pointOnMapDatabaseId);
+                    if(resolvedEntry.map==NULL)
+                    {
+                        normalOutput("item on map is not into the map list (2), skip: "+std::to_string(pointOnMapDatabaseId));
+                        pos+=2;
+                        continue;
+                    }
+                    public_and_private_informations.itemOnMap.insert(pointOnMapDatabaseId);
+                    pos+=2;
                 }
-                if(pointOnMapDatabaseId>=DictionaryServer::dictionary_pointOnMap_database_to_internal.size())
-                {
-                    normalOutput("item on map is not into the map list (1), skip: "+std::to_string(pointOnMapDatabaseId));
-                    continue;
-                }
-                const DictionaryServer::MapAndPoint &resolvedEntry=DictionaryServer::dictionary_pointOnMap_database_to_internal.at(pointOnMapDatabaseId);
-                if(resolvedEntry.map==NULL)
-                {
-                    normalOutput("item on map is not into the map list (2), skip: "+std::to_string(pointOnMapDatabaseId));
-                    continue;
-                }
-                public_and_private_informations.itemOnMap.insert(pointOnMapDatabaseId);
-                ++pos;
             }
         }
     }
@@ -927,7 +938,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         }
         else
         {
-            if(plants.size()%(1+1+8)!=0)
+            if(plants.size()%(2+1+8)!=0)
             {
                 characterSelectionIsWrong(query_id,0x04,"plants missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(17));
                 return;
@@ -942,17 +953,17 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                 uint32_t pos=0;
                 while(pos<plants.size())
                 {
-                    uint32_t pointOnMap=(uint32_t)
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                            plants
-                            #else
-                            raw_plants
-                            #endif
-                            [pos]+lastPlantId;
-                    if(pointOnMap>255)
-                        pointOnMap-=256;
+                    uint32_t pointOnMap=(uint32_t)le16toh(*reinterpret_cast<const uint16_t *>(
+                                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                                        plants.data()
+                                        #else
+                                        raw_plants
+                                        #endif
+                                        +pos))+lastPlantId;
+                    if(pointOnMap>65535)
+                        pointOnMap-=65536;
                     lastPlantId=pointOnMap;
-                    ++pos;
+                    pos+=2;
 
                     if(pointOnMap>=DictionaryServer::dictionary_pointOnMap_database_to_internal.size())
                     {
@@ -1063,11 +1074,13 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                     if((playerQuest.step<=0 && !playerQuest.finish_one_time) || playerQuest.step>datapackQuest.steps.size())
                     {
                         normalOutput("step out of quest range, skip: "+std::to_string(questId));
+                        pos+=2;
                         continue;
                     }
                     if(playerQuest.step<=0 && !playerQuest.finish_one_time)
                     {
                         normalOutput("can't be to step 0 if have never finish the quest, skip: "+std::to_string(questId));
+                        pos+=2;
                         continue;
                     }
                     public_and_private_informations.quests[questId]=playerQuest;
@@ -1902,7 +1915,9 @@ void Client::characterIsRightFinalStep()
         auto i=public_and_private_informations.itemOnMap.begin();
         while (i!=public_and_private_informations.itemOnMap.cend())
         {
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(*i);
+            /** \warning can have entry in database but not into datapack, deleted. Used only to send to player the correct pos */
+            const uint16_t &pointOnMapOnlyIntoDatapackIndex=DictionaryServer::dictionary_pointOnMap_database_to_internal.at(*i).datapack_index_item;
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(pointOnMapOnlyIntoDatapackIndex);
             posOutput+=2;
             ++i;
         }
@@ -1916,13 +1931,16 @@ void Client::characterIsRightFinalStep()
     auto i=public_and_private_informations.plantOnMap.begin();
     while(i!=public_and_private_informations.plantOnMap.cend())
     {
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(i->first);
+        /** \warning can have entry in database but not into datapack, deleted. Used only to send to player the correct pos */
+        const uint16_t &pointOnMapOnlyIntoDatapackIndex=DictionaryServer::dictionary_pointOnMap_database_to_internal.at(i->first).datapack_index_plant;
+        const PlayerPlant &playerPlant=i->second;
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(pointOnMapOnlyIntoDatapackIndex);
         posOutput+=2;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i->second.plant;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=playerPlant.plant;
         posOutput+=1;
         /// \todo Can essaylly int 16 ovbertflow
-        if(time<i->second.mature_at)
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(i->second.mature_at-time);
+        if(time<playerPlant.mature_at)
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(playerPlant.mature_at-time);
         else
             *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
         posOutput+=2;
