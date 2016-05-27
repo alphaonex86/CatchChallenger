@@ -204,7 +204,7 @@ bool Client::syncDatabaseItemOnMap()
         {
             #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
             //not ordened
-            uint8_t itemonmapInt;
+            uint16_t itemonmapInt;
             if(lastItemonmapId<=*i)
             {
                 itemonmapInt=*i-lastItemonmapId;
@@ -212,16 +212,16 @@ bool Client::syncDatabaseItemOnMap()
             }
             else
             {
-                itemonmapInt=256-lastItemonmapId+*i;
+                itemonmapInt=65536-lastItemonmapId+*i;
                 lastItemonmapId=*i;
             }
             #else
             //ordened
-            const uint8_t &itemonmapInt=*i-lastItemonmapId;
+            const uint16_t &itemonmapInt=*i-lastItemonmapId;
             lastItemonmapId=*i;
             #endif
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=itemonmapInt;
-            posOutput+=1;
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(itemonmapInt);
+            posOutput+=2;
 
             ++i;
         }

@@ -893,14 +893,14 @@ void DatapackClientLoader::parseMaps()
     const QStringList &returnList=CatchChallenger::FacilityLibClient::stdvectorstringToQStringList(CatchChallenger::FacilityLibGeneral::listFolder((datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN).toStdString()));
 
     //load the map
-    unsigned int plantOnMapIndex=0;
+    unsigned int pointOnMapIndexItem=0;
+    unsigned int pointOnMapIndexPlant=0;
     const int &size=returnList.size();
     int index=0;
     QRegularExpression mapFilter(QStringLiteral("\\.tmx$"));
     QRegularExpression mapExclude(QLatin1String("[\"']"));
     QHash<QString,QString> sortToFull;
     QStringList tempMapList;
-    int indexOfItemOnMap=0;
     while(index<size)
     {
         const QString &fileName=returnList.at(index);
@@ -996,13 +996,13 @@ void DatapackClientLoader::parseMaps()
                     while(index<mapLoader.map_to_send.dirts.size())
                     {
                         const CatchChallenger::Map_to_send::DirtOnMap_Semi &dirt=mapLoader.map_to_send.dirts.at(index);
-                        plantOnMap[basePath+fileName][QPair<uint8_t,uint8_t>(dirt.point.x,dirt.point.y)]=plantOnMapIndex;
+                        plantOnMap[basePath+fileName][QPair<uint8_t,uint8_t>(dirt.point.x,dirt.point.y)]=pointOnMapIndexPlant;
                         PlantIndexContent plantIndexContent;
                         plantIndexContent.map=basePath+fileName;
                         plantIndexContent.x=dirt.point.x;
                         plantIndexContent.y=dirt.point.y;
-                        plantIndexOfOnMap[plantOnMapIndex]=plantIndexContent;
-                        plantOnMapIndex++;
+                        plantIndexOfOnMap[pointOnMapIndexPlant]=plantIndexContent;
+                        pointOnMapIndexPlant++;
                         index++;
                     }
                 }
@@ -1036,8 +1036,8 @@ void DatapackClientLoader::parseMaps()
                                             const uint32_t &object_x=object.attribute(DatapackClientLoader::text_x).toUInt(&ok)/tilewidth;
                                             if(ok)
                                             {
-                                                itemOnMap[datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+fileName][QPair<uint8_t,uint8_t>(object_x,object_y)]=indexOfItemOnMap;
-                                                indexOfItemOnMap++;
+                                                itemOnMap[datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+fileName][QPair<uint8_t,uint8_t>(object_x,object_y)]=pointOnMapIndexItem;
+                                                pointOnMapIndexItem++;
                                             }
                                         }
                                     }

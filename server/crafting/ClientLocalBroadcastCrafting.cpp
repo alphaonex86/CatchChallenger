@@ -155,7 +155,7 @@ bool Client::syncDatabasePlant()
         {
             #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
             //not ordened
-            uint8_t dirtOnMap;
+            uint16_t dirtOnMap;
             if(lastPlantId<=i->first)
             {
                 dirtOnMap=i->first-lastPlantId;
@@ -163,17 +163,17 @@ bool Client::syncDatabasePlant()
             }
             else
             {
-                dirtOnMap=256-lastPlantId+i->first;
+                dirtOnMap=65536-lastPlantId+i->first;
                 lastPlantId=i->first;
             }
             #else
             //ordened
-            const uint8_t &dirtOnMap=i->first-lastPlantId;
+            const uint16_t &dirtOnMap=i->first-lastPlantId;
             lastPlantId=i->first;
             #endif
             const PlayerPlant &plant=i->second;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=dirtOnMap;
-            posOutput+=1;
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(dirtOnMap);
+            posOutput+=2;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=plant.plant;
             posOutput+=1;
             const uint64_t mature_at=htole64(plant.mature_at);
