@@ -126,6 +126,7 @@ protected slots:
     virtual void unloadPlayerFromCurrentMap();
     virtual void parseStop();
     virtual void parseAction();
+    void stopAndSend();
 
     //void setAnimationTilset(QString animationTilset);
     virtual void resetAll();

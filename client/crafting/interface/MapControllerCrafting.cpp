@@ -96,6 +96,8 @@ void MapController::getPlantTimerEvent()
     QTimer *clientPlantTimer=qobject_cast<QTimer *>(QObject::sender());
     if(clientPlantTimer==NULL)
         return;
+    if(!mHaveTheDatapack || mapVisualiserThread.stopIt)
+        return;
     updatePlantGrowing(static_cast<CatchChallenger::ClientPlantWithTimer *>(clientPlantTimer));
 }
 

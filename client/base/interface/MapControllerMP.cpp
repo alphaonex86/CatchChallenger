@@ -1723,38 +1723,22 @@ bool MapControllerMP::nextPathStep()//true if have step
                 if(direction==CatchChallenger::Direction_move_at_bottom)
                 {
                     if(y==(all_map.value(current_map)->logicalMap.height-1))
-                    {
-                        inMove=false;
                         emit send_player_direction(CatchChallenger::Direction_look_at_bottom);
-                        return false;
-                    }
                 }
                 else if(direction==CatchChallenger::Direction_move_at_top)
                 {
                     if(y==0)
-                    {
-                        inMove=false;
                         emit send_player_direction(CatchChallenger::Direction_look_at_top);
-                        return false;
-                    }
                 }
                 else if(direction==CatchChallenger::Direction_move_at_right)
                 {
                     if(x==(all_map.value(current_map)->logicalMap.width-1))
-                    {
-                        inMove=false;
                         emit send_player_direction(CatchChallenger::Direction_look_at_right);
-                        return false;
-                    }
                 }
                 else if(direction==CatchChallenger::Direction_move_at_left)
                 {
                     if(x==0)
-                    {
-                        inMove=false;
                         emit send_player_direction(CatchChallenger::Direction_look_at_left);
-                        return false;
-                    }
                 }
             }
             emit send_player_direction(direction);
@@ -1763,14 +1747,11 @@ bool MapControllerMP::nextPathStep()//true if have step
         }
         else
         {
-            inMove=false;
             std::cerr << "Error at path found, collision detected" << std::endl;
             pathList.clear();
             return false;
         }
     }
-    else
-        inMove=false;
     return false;
 }
 
@@ -1802,7 +1783,10 @@ void MapControllerMP::pathFindingResult(const QString &current_map,const uint8_t
                         pathList.removeLast();
                     pathList.append(pathResolved);
                     if(!nextPathStep())
-                        inMove=false;
+                    {
+                        stopAndSend();
+                        parseStop();
+                    }
                 }
                 else
                     std::cerr << "Wrong start point to start the path finding" << std::endl;
