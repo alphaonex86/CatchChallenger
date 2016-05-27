@@ -553,7 +553,7 @@ void Client::addObject(const uint16_t &item, const uint32_t &quantity, bool data
             if(databaseSync)
                 updateObjectInDatabase();
         }
-        else if(public_and_private_informations.encyclopedia_item[item/8] & (1<<(7-item%8)))
+        else if(!(public_and_private_informations.encyclopedia_item[item/8] & (1<<(7-item%8))))
         {
             public_and_private_informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
             if(databaseSync)

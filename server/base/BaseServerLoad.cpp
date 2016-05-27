@@ -561,7 +561,7 @@ void BaseServer::preload_map_semi_after_db_id()
                 mapServer->plants[pair]=plantOnMap;
 
                 {
-                    while((uint32_t)DictionaryServer::dictionary_pointOnMap_database_to_internal.size()<=dictionary_pointOnMap_maxId)
+                    while((uint32_t)DictionaryServer::dictionary_pointOnMap_database_to_internal.size()<=pointOnMapDbCode)
                     {
                         DictionaryServer::MapAndPoint mapAndPoint;
                         mapAndPoint.map=NULL;
@@ -571,7 +571,7 @@ void BaseServer::preload_map_semi_after_db_id()
                         mapAndPoint.datapack_index_plant=0;
                         DictionaryServer::dictionary_pointOnMap_database_to_internal.push_back(mapAndPoint);
                     }
-                    DictionaryServer::MapAndPoint &mapAndPoint=DictionaryServer::dictionary_pointOnMap_database_to_internal[dictionary_pointOnMap_maxId];
+                    DictionaryServer::MapAndPoint &mapAndPoint=DictionaryServer::dictionary_pointOnMap_database_to_internal[pointOnMapDbCode];
                     mapAndPoint.map=mapServer;
                     mapAndPoint.x=dirt.point.x;
                     mapAndPoint.y=dirt.point.y;
@@ -648,7 +648,7 @@ void BaseServer::preload_map_semi_after_db_id()
                 mapServer->pointOnMap_Item[pair]=itemOnMap;
 
                 {
-                    while((uint32_t)DictionaryServer::dictionary_pointOnMap_database_to_internal.size()<=dictionary_pointOnMap_maxId)
+                    while((uint32_t)DictionaryServer::dictionary_pointOnMap_database_to_internal.size()<=pointOnMapDbCode)
                     {
                         DictionaryServer::MapAndPoint mapAndPoint;
                         mapAndPoint.map=NULL;
@@ -658,7 +658,7 @@ void BaseServer::preload_map_semi_after_db_id()
                         mapAndPoint.datapack_index_plant=0;
                         DictionaryServer::dictionary_pointOnMap_database_to_internal.push_back(mapAndPoint);
                     }
-                    DictionaryServer::MapAndPoint &mapAndPoint=DictionaryServer::dictionary_pointOnMap_database_to_internal[dictionary_pointOnMap_maxId];
+                    DictionaryServer::MapAndPoint &mapAndPoint=DictionaryServer::dictionary_pointOnMap_database_to_internal[pointOnMapDbCode];
                     mapAndPoint.map=mapServer;
                     mapAndPoint.x=item.point.x;
                     mapAndPoint.y=item.point.y;
