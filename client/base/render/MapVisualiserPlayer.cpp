@@ -809,8 +809,7 @@ void MapVisualiserPlayer::finalPlayerStep()
         {
             if(inMove)
             {
-                emit send_player_direction(direction);/// \todo already send into nextPathStep()
-                inMove=false;
+                stopAndSend();
                 parseStop();
             }
         }
@@ -868,6 +867,23 @@ void MapVisualiserPlayer::parseStop()
         default:
         break;
     }
+}
+
+void MapVisualiserPlayer::stopAndSend()
+{
+    inMove=false;
+    switch(direction)
+    {
+        case CatchChallenger::Direction_move_at_bottom:
+        case CatchChallenger::Direction_move_at_left:
+        case CatchChallenger::Direction_move_at_right:
+        case CatchChallenger::Direction_move_at_top:
+            direction=(CatchChallenger::Direction)((uint8_t)direction-4);
+        break;
+        default:
+        break;
+    }
+    emit send_player_direction(direction);
 }
 
 void MapVisualiserPlayer::parseAction()
