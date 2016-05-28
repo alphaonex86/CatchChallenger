@@ -491,6 +491,9 @@ void Client::collectPlant(
         stringreplaceOne(queryText,"%1",std::to_string(character_id));
         stringreplaceOne(queryText,"%2",std::to_string(plant.pointOnMapDbCode));
         dbQueryWriteServer(queryText);*/
+
+        //clear the server dirt
+        public_and_private_informations.plantOnMap.erase(plant.pointOnMapDbCode);
         syncDatabasePlant();
 
         //add into the inventory
@@ -500,9 +503,6 @@ void Client::collectPlant(
 
         //send the object collected to the current character
         addObjectAndSend(CommonDatapack::commonDatapack.plants.at(playerPlant.plant).itemUsed,quantity);
-
-        //clear the server dirt
-        public_and_private_informations.plantOnMap.erase(plant.pointOnMapDbCode);
         return;
     }
     else
