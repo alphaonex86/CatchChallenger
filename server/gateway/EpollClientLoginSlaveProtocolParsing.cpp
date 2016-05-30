@@ -154,7 +154,9 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                 }
                 else
                 {
-                    parseNetworkReadError("not able to connect on the game server as gateway, parseReplyData("+std::to_string(mainCodeType)+","+std::to_string(queryNumber)+")");
+                    //parseNetworkReadError("not able to connect on the game server as gateway, parseReplyData("+std::to_string(mainCodeType)+","+std::to_string(queryNumber)+")");
+                    //Message done by LinkToGameServer::tryConnect()
+                    disconnectClient();
                     return false;
                 }
 
