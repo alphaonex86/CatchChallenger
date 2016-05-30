@@ -122,10 +122,18 @@ int LinkToGameServer::tryConnect(const char * const host, const uint16_t &port,c
          server->h_length);
     serv_addr.sin_port = htons(port);
 
-    std::cout << "Try connect to game server..." << std::endl;
+    //std::cout << "Try connect to game server..." << std::endl;
     int connStatusType=::connect(socketFd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
     if(connStatusType<0)
     {
+        {
+            const std::string &newConnectErrorMessage=std::string("Unable to connect on game server, retry: ")+std::string(host)+std::string(":")+std::to_string(port)+std::string(", errno: ")+std::to_string(errno);
+            if(lastconnectErrorMessage!=newConnectErrorMessage)
+            {
+                lastconnectErrorMessage=newConnectErrorMessage;
+                std::cerr << lastconnectErrorMessage << std::endl;
+            }
+        }
         unsigned int index=0;
         while(index<considerDownAfterNumberOfTry && connStatusType<0)
         {
@@ -143,11 +151,11 @@ int LinkToGameServer::tryConnect(const char * const host, const uint16_t &port,c
         }
         if(connStatusType<0)
         {
-            std::cerr << "ERROR connecting to game server server (abort) on: " << host << ":" << port << std::endl;
+            //std::cerr << "ERROR connecting to game server server (abort) on: " << host << ":" << port << std::endl;
             return -1;
         }
     }
-    std::cout << "Connected to game server" << std::endl;
+    //std::cout << "Connected to game server" << std::endl;
 
     return socketFd;
 }
@@ -156,7 +164,7 @@ void LinkToGameServer::setConnexionSettings()
 {
     if(socketFd==-1)
     {
-        std::cerr << "linkToMaster::setConnexionSettings() linkToMaster::linkToMasterSocketFd==-1 (abort)" << std::endl;
+        std::cerr << "linkToGameServer::setConnexionSettings() linkToGameServer::linkToGameServerSocketFd==-1 (abort)" << std::endl;
         abort();
     }
     {
@@ -204,7 +212,6 @@ void LinkToGameServer::readTheFirstSslHeader()
 {
     if(haveTheFirstSslHeader)
         return;
-    std::cout << "linkToMaster::readTheFirstSslHeader()" << std::endl;
     char buffer[1];
     const ssize_t &size=::read(socketFd,buffer,1);
     if(size<0)
