@@ -53,6 +53,7 @@ public:
     static std::string mDatapackBase;
     std::string main;
     std::string sub;
+    static std::string lastconnectErrorMessage;
 
     void setConnexionSettings();
     BaseClassSwitch::EpollObjectType getType() const;
