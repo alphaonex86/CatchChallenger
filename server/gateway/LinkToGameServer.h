@@ -22,18 +22,18 @@ public:
     ~LinkToGameServer();
     enum Stat
     {
-        Unconnected,
-        Connecting,
-        Connected,
-        ProtocolGood,
-        Reconnecting,
+        Unconnected=0,
+        Connecting=1,
+        Connected=2,
+        ProtocolGood=3,
+        Reconnecting=4,
     };
     Stat stat;
     enum GameServerMode
     {
-        None,
-        Proxy,
-        Reconnect,
+        None=0,
+        Proxy=1,
+        Reconnect=2,
     };
     GameServerMode gameServerMode;
     struct ServerReconnect

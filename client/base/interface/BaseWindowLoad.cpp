@@ -209,9 +209,11 @@ void BaseWindow::logged(const QList<ServerFromPoolForDisplay *> &serverOrdenedLi
 {
     this->serverOrdenedList=serverOrdenedList;
     this->characterListForSelection=characterEntryList;
+    #ifndef CATCHCHALLENGER_EXTRA_CHECK
     if(settings.contains("DatapackHashBase-"+CatchChallenger::Api_client_real::client->datapackPathBase()))
         CatchChallenger::Api_client_real::client->sendDatapackContentBase(settings.value("DatapackHashBase-"+CatchChallenger::Api_client_real::client->datapackPathBase()).toByteArray());
     else
+    #endif
         CatchChallenger::Api_client_real::client->sendDatapackContentBase();
     isLogged=true;
     updateConnectingStatus();
@@ -261,11 +263,13 @@ void BaseWindow::haveCharacter()
 
 void BaseWindow::sendDatapackContentMainSub()
 {
+    #ifndef CATCHCHALLENGER_EXTRA_CHECK
     if(settings.contains("DatapackHashMain-"+CatchChallenger::Api_client_real::client->datapackPathMain()) &&
             settings.contains("DatapackHashSub-"+CatchChallenger::Api_client_real::client->datapackPathSub()))
         CatchChallenger::Api_client_real::client->sendDatapackContentMainSub(settings.value("DatapackHashMain"+CatchChallenger::Api_client_real::client->datapackPathMain()).toByteArray(),
                                                                              settings.value("DatapackHashSub"+CatchChallenger::Api_client_real::client->datapackPathSub()).toByteArray());
     else
+    #endif
         CatchChallenger::Api_client_real::client->sendDatapackContentMainSub();
 }
 

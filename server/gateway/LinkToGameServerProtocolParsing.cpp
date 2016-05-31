@@ -33,6 +33,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                 if(returnCode>=0x04 && returnCode<=0x07)
                 {
                     if(!LinkToGameServer::compressionSet)
+                    {
                         switch(returnCode)
                         {
                             case 0x04:
@@ -53,6 +54,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                                                       ", type: query_type_protocol");
                             return false;
                         }
+                    }
                     else
                     {
                         ProtocolParsing::CompressionType tempCompression;
@@ -102,8 +104,9 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                 {
                     if(client!=NULL)
                     {
+                        stat=Stat::ProtocolGood;
                         //send the network reply
-                        removeFromQueryReceived(queryIdToReconnect);
+                        client->removeFromQueryReceived(queryIdToReconnect);
                         uint32_t posOutput=0;
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
                         posOutput+=1;
@@ -131,7 +134,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                     if(client!=NULL)
                     {
                         //send the network reply
-                        removeFromQueryReceived(queryNumber);
+                        client->removeFromQueryReceived(queryNumber);
                         uint32_t posOutput=0;
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
                         posOutput+=1;
@@ -164,6 +167,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                 if(returnCode>=0x04 && returnCode<=0x07)
                 {
                     if(!LinkToGameServer::compressionSet)
+                    {
                         switch(returnCode)
                         {
                             case 0x04:
@@ -183,6 +187,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                                                       " and queryNumber: "+std::to_string(queryNumber)+", type: query_type_protocol");
                             return false;
                         }
+                    }
                     else
                     {
                         ProtocolParsing::CompressionType tempCompression;
@@ -216,8 +221,9 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                     //send token to game server
                     if(client!=NULL)
                     {
+                        stat=Stat::ProtocolGood;
                         //send the network reply
-                        removeFromQueryReceived(queryNumber);
+                        client->removeFromQueryReceived(queryNumber);
                         uint32_t posOutput=0;
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
                         posOutput+=1;
@@ -415,7 +421,7 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
         }
         else
         {
-            parseNetworkReadError("parseFullMessage() not logged to send: "+std::to_string(mainCodeType));
+            parseNetworkReadError("parseFullMessage() not logged to send: "+std::to_string(mainCodeType)+", stat: "+std::to_string(stat));
             return false;
         }
     }
@@ -600,7 +606,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
         parseNetworkReadError("client not connected");
         return false;
     }
-    if(mainCodeType==0x03 && stat==Stat::Connected)
+    if(mainCodeType==0xA0 && stat==Stat::Connected)
         return parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
     //do the work here
 
@@ -690,7 +696,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             else
             {
                 //send the network reply
-                removeFromQueryReceived(queryNumber);
+                client->removeFromQueryReceived(queryNumber);
                 uint32_t posOutput=0;
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
                 posOutput+=1;
@@ -903,7 +909,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 else
                 {
                     //send the network reply
-                    removeFromQueryReceived(queryNumber);
+                    client->removeFromQueryReceived(queryNumber);
                     uint32_t posOutput=0;
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
                     posOutput+=1;

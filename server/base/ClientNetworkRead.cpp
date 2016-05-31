@@ -221,6 +221,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
     #endif
     switch(packetCode)
     {
+        //protocol header
         case 0xA0:
             if(memcmp(data,Client::protocolHeaderToMatch,sizeof(Client::protocolHeaderToMatch))==0)
             {
@@ -317,6 +318,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                     #endif
                 }
                 #endif
+                //normalOutput(std::string("Protocol reply send with token: ")+binarytoHexa(token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT));
                 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                 switch(ProtocolParsing::compressionTypeServer)
                 {
