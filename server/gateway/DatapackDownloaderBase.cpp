@@ -215,7 +215,7 @@ bool DatapackDownloaderBase::getHttpFileBase(const std::string &url, const std::
         if(res!=CURLE_OK || http_code!=200)
         {
             httpError=true;
-            std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << std::endl;
+            std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;
             datapackDownloadError();
             return false;
         }
@@ -360,7 +360,7 @@ void DatapackDownloaderBase::datapackChecksumDoneBase(const std::vector<std::str
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
             if(res!=CURLE_OK || http_code!=200)
             {
-                std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << std::endl;
+                std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;
                 httpFinishedForDatapackListBase();
                 return;
             }
@@ -389,7 +389,7 @@ void DatapackDownloaderBase::test_mirror_base()
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
         if(res!=CURLE_OK || http_code!=200)
         {
-            std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << std::endl;
+            std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;
             httpFinishedForDatapackListBase();
             return;
         }
@@ -417,7 +417,7 @@ void DatapackDownloaderBase::test_mirror_base()
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
         if(res!=CURLE_OK || http_code!=200)
         {
-            std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << std::endl;
+            std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;
             httpFinishedForDatapackListBase();
             return;
         }
