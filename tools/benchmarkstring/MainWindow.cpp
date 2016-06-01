@@ -2,6 +2,7 @@
 #include "ui_MainWindow.h"
 #include <QTime>
 #include <QDebug>
+#include "../../general/base/cpp11addition.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -533,4 +534,184 @@ void MainWindow::on_pushButton_6_clicked()
     }
 
     qDebug() << QString("Prepared: \n%1").arg(times.join("\n"));
+}
+
+void MainWindow::on_pushButton_7_clicked()
+{
+    QStringList times;
+    std::string testString="Test string é!";
+
+    {
+        QTime time;
+        time.restart();
+        quint64 index=0;
+        while(index<6553500)
+        {
+            if(testString!="test bis")
+            {}
+            if(testString=="test bis")
+            {}
+            index++;
+        }
+        times << QString("Condition with != and ==: %1ms").arg(time.elapsed());
+    }
+    {
+        QTime time;
+        time.restart();
+        quint64 index=0;
+        while(index<6553500)
+        {
+            item.hasAttribute("test bis");
+            index++;
+        }
+        times << QString("QDomElement::hasAttribute(): %1ms").arg(time.elapsed());
+    }
+    {
+        QTime time;
+        time.restart();
+        quint64 index=0;
+        while(index<6553500)
+        {
+            testString+"test bis";
+            index++;
+        }
+        times << QString("concat by +: %1ms").arg(time.elapsed());
+    }
+    {
+        QTime time;
+        time.restart();
+        quint64 index=0;
+        while(index<6553500)
+        {
+            stringreplaceAll(testString,"test bis",testString);
+            index++;
+        }
+        times << QString("replace format to QString: %1ms").arg(time.elapsed());
+    }
+    {
+        QTime time;
+        time.restart();
+        quint64 index=0;
+        while(index<6553500)
+        {
+            stringreplaceAll(testString,"test bis","test bis");
+            index++;
+        }
+        times << QString("replace format to format: %1ms").arg(time.elapsed());
+    }
+
+    qDebug() << QString("char * c++11: \n%1").arg(times.join("\n"));
+}
+
+void MainWindow::on_pushButton_8_clicked()
+{
+    QStringList times;
+    std::string testString="Test string é!";
+
+    {
+        QTime time;
+        time.restart();
+        quint64 index=0;
+        while(index<6553500)
+        {
+            if(testString!=std::string("test bis"))
+            {}
+            if(testString==std::string("test bis"))
+            {}
+            index++;
+        }
+        times << QString("Condition with != and ==: %1ms").arg(time.elapsed());
+    }
+    {
+        QTime time;
+        time.restart();
+        quint64 index=0;
+        while(index<6553500)
+        {
+            testString+std::string("test bis");
+            index++;
+        }
+        times << QString("concat by +: %1ms").arg(time.elapsed());
+    }
+    {
+        QTime time;
+        time.restart();
+        quint64 index=0;
+        while(index<6553500)
+        {
+            stringreplaceAll(testString,std::string("test bis"),testString);
+            index++;
+        }
+        times << QString("replace format to QString: %1ms").arg(time.elapsed());
+    }
+    {
+        QTime time;
+        time.restart();
+        quint64 index=0;
+        while(index<6553500)
+        {
+            stringreplaceAll(testString,std::string("test bis"),std::string("test bis"));
+            index++;
+        }
+        times << QString("replace format to format: %1ms").arg(time.elapsed());
+    }
+
+    qDebug() << QString("dyna string c++11: \n%1").arg(times.join("\n"));
+}
+
+void MainWindow::on_pushButton_9_clicked()
+{
+    QStringList times;
+    std::string testString="Test string é!";
+    std::string preparedString="sdflgsdfgpml$ùù";
+
+    {
+        QTime time;
+        time.restart();
+        quint64 index=0;
+        while(index<6553500)
+        {
+            if(testString!=preparedString)
+            {}
+            if(testString==preparedString)
+            {}
+            index++;
+        }
+        times << QString("Condition with != and ==: %1ms").arg(time.elapsed());
+    }
+    {
+        QTime time;
+        time.restart();
+        quint64 index=0;
+        while(index<6553500)
+        {
+            testString+preparedString;
+            index++;
+        }
+        times << QString("concat by +: %1ms").arg(time.elapsed());
+    }
+    {
+        QTime time;
+        time.restart();
+        quint64 index=0;
+        while(index<6553500)
+        {
+            stringreplaceAll(testString,preparedString,testString);
+            index++;
+        }
+        times << QString("replace format to QString: %1ms").arg(time.elapsed());
+    }
+    {
+        QTime time;
+        time.restart();
+        quint64 index=0;
+        while(index<6553500)
+        {
+            stringreplaceAll(testString,preparedString,preparedString);
+            index++;
+        }
+        times << QString("replace format to format: %1ms").arg(time.elapsed());
+    }
+
+    qDebug() << QString("Prepared c++11: \n%1").arg(times.join("\n"));
 }

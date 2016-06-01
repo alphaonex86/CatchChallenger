@@ -1,0 +1,1 @@
+Imported form https://github.com/leethomason/tinyxml2 The 1 June 2016, commit/31d6c877bde6b865d5bfb8c19055f6cd8e225c28

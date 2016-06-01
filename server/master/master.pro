@@ -1,7 +1,6 @@
 #QMAKE_CFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations -std=c++0x"
 #QMAKE_CXXFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations -std=c++0x"
 
-DEFINES += TIXML_USE_STL
 QT       -= gui widgets network sql
 QT       -= xml core
 
@@ -61,10 +60,6 @@ SOURCES += \
     ../epoll/EpollTimer.cpp \
     PurgeTheLockedAccount.cpp \
     ../../general/base/cpp11addition.cpp \
-    ../../general/base/tinyXML/tinystr.cpp \
-    ../../general/base/tinyXML/tinyxml.cpp \
-    ../../general/base/tinyXML/tinyxmlerror.cpp \
-    ../../general/base/tinyXML/tinyxmlparser.cpp \
     ../base/TinyXMLSettings.cpp \
     CheckTimeoutGameServer.cpp \
     AutomaticPingSend.cpp \
@@ -99,10 +94,29 @@ HEADERS += \
     ../epoll/EpollTimer.h \
     PurgeTheLockedAccount.h \
     ../../general/base/cpp11addition.h \
-    ../../general/base/tinyXML/tinystr.h \
-    ../../general/base/tinyXML/tinyxml.h \
     ../base/TinyXMLSettings.h \
     ../../general/base/GeneralVariable.h \
     CheckTimeoutGameServer.h \
     AutomaticPingSend.h \
     ../base/DatabaseFunction.h
+
+#choose one of:
+#DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML1
+DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
+
+defined(CATCHCHALLENGER_XLMPARSER_TINYXML1)
+{
+    DEFINES += TIXML_USE_STL
+    HEADERS += $$PWD/base/tinyXML/tinystr.h \
+        $$PWD/base/tinyXML/tinyxml.h
+
+    SOURCES += $$PWD/base/tinyXML/tinystr.cpp \
+        $$PWD/base/tinyXML/tinyxml.cpp \
+        $$PWD/base/tinyXML/tinyxmlerror.cpp \
+        $$PWD/base/tinyXML/tinyxmlparser.cpp
+}
+defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
+{
+    HEADERS += $$PWD/base/tinyXML2/tinyxml2.h
+    SOURCES += $$PWD/base/tinyXML2/tinyxml2.cpp
+}
