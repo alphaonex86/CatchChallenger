@@ -3,7 +3,6 @@
 
 QT       -= gui widgets sql xml network core
 
-DEFINES += TIXML_USE_STL
 DEFINES += SERVERNOBUFFER
 #DEFINES += SERVERSSL
 
@@ -64,11 +63,7 @@ SOURCES += \
     ../../general/base/lz4/lz4.c \
     ../../general/base/cpp11addition.cpp \
     FacilityLibGateway.cpp \
-    ../base/TinyXMLSettings.cpp \
-    ../../general/base/tinyXML/tinystr.cpp \
-    ../../general/base/tinyXML/tinyxml.cpp \
-    ../../general/base/tinyXML/tinyxmlerror.cpp \
-    ../../general/base/tinyXML/tinyxmlparser.cpp
+    ../base/TinyXMLSettings.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \
@@ -104,6 +99,25 @@ HEADERS += \
     ../../general/base/CommonSettingsServer.h \
     ../../general/base/lz4/lz4.h \
     FacilityLibGateway.h \
-    ../base/TinyXMLSettings.h \
-    ../../general/base/tinyXML/tinystr.h \
-    ../../general/base/tinyXML/tinyxml.h
+    ../base/TinyXMLSettings.h
+
+#choose one of:
+#DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML1
+DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
+
+defined(CATCHCHALLENGER_XLMPARSER_TINYXML1)
+{
+    DEFINES += TIXML_USE_STL
+    HEADERS += $$PWD/base/tinyXML/tinystr.h \
+        $$PWD/base/tinyXML/tinyxml.h
+
+    SOURCES += $$PWD/base/tinyXML/tinystr.cpp \
+        $$PWD/base/tinyXML/tinyxml.cpp \
+        $$PWD/base/tinyXML/tinyxmlerror.cpp \
+        $$PWD/base/tinyXML/tinyxmlparser.cpp
+}
+defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
+{
+    HEADERS += $$PWD/base/tinyXML2/tinyxml2.h
+    SOURCES += $$PWD/base/tinyXML2/tinyxml2.cpp
+}

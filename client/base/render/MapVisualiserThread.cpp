@@ -3,7 +3,11 @@
 #include "../../../general/base/FacilityLib.h"
 #include "../../../general/base/CommonDatapack.h"
 #include "../../../general/base/CommonDatapackServerSpec.h"
+#ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
 #include "../../../general/base/tinyXML/tinyxml.h"
+#elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
+#include "../../../general/base/tinyXML2/tinyxml2.h"
+#endif
 #include "../../tiled/tiled_mapobject.h"
 #include <QFileInfo>
 #include <QRegularExpression>

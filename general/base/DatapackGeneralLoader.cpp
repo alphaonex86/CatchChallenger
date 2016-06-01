@@ -3,7 +3,6 @@
 #include "CommonDatapack.h"
 #include "FacilityLib.h"
 #include "FacilityLibGeneral.h"
-#include "tinyXML/tinyxml.h"
 #include "cpp11addition.h"
 
 #include <vector>
@@ -1913,7 +1912,7 @@ std::vector<std::string> DatapackGeneralLoader::loadSkins(const std::string &fol
     return FacilityLibGeneral::skinIdList(folder);
 }
 
-std::pair<std::vector<const TiXmlElement *>, std::vector<Profile> > DatapackGeneralLoader::loadProfileList(const std::string &datapackPath, const std::string &file,
+std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> > DatapackGeneralLoader::loadProfileList(const std::string &datapackPath, const std::string &file,
                                                                                   #ifndef CATCHCHALLENGER_CLASS_MASTER
                                                                                   const std::unordered_map<uint16_t, Item> &items,
                                                                                   #endif // CATCHCHALLENGER_CLASS_MASTER

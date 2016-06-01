@@ -9,8 +9,12 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        MainWindow.cpp
+        MainWindow.cpp \
+    ../../general/base/cpp11addition.cpp \
+    ../../general/base/cpp11additionstringtointc.cpp \
+    ../../general/base/cpp11additionstringtointcpp.cpp
 
-HEADERS  += MainWindow.h
+HEADERS  += MainWindow.h \
+    ../../general/base/cpp11addition.h
 
 FORMS    += MainWindow.ui
