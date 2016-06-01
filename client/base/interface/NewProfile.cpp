@@ -8,7 +8,11 @@
 #include <QMessageBox>
 #include <QDebug>
 
+#ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
 #include "../../../general/base/tinyXML/tinyxml.h"
+#elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
+#include "../../../general/base/tinyXML2/tinyxml2.h"
+#endif
 #include "../../../general/base/CommonDatapack.h"
 #include "../../../general/base/DatapackGeneralLoader.h"
 #include "../../../general/base/GeneralVariable.h"

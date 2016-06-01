@@ -3,7 +3,6 @@ QMAKE_CXXFLAGS+="-std=c++0x -Wall -Wextra"
 mac:QMAKE_CXXFLAGS+="-stdlib=libc++"
 
 QT       -= core
-DEFINES += TIXML_USE_STL
 
 LIBS += -lz -llzma
 LIBS += -lcrypto
@@ -31,7 +30,11 @@ SOURCES += $$PWD/base/ChatParsing.cpp \
     $$PWD/fight/CommonFightEngineBase.cpp \
     $$PWD/base/CommonSettingsCommon.cpp \
     $$PWD/base/CommonSettingsServer.cpp \
-    $$PWD/base/cpp11addition.cpp
+    $$PWD/base/cpp11addition.cpp \
+    $$PWD/base/cpp11additionstringtointcpp.cpp \
+    $$PWD/base/cpp11additionstringtointc.cpp \
+    $$PWD/base/lz4/lz4.c \
+    $$PWD/base/CachedString.cpp
 
 HEADERS  += $$PWD/base/GeneralStructures.h \
     $$PWD/base/ClientBase.h \
@@ -58,19 +61,29 @@ HEADERS  += $$PWD/base/GeneralStructures.h \
     $$PWD/base/GeneralType.h \
     $$PWD/base/cpp11addition.h \
     $$PWD/base/GeneralStructuresXml.h \
-    $$PWD/base/PortableEndian.h
-
-HEADERS += \
+    $$PWD/base/PortableEndian.h \
     $$PWD/base/lz4/lz4.h \
-    $$PWD/base/tinyXML/tinystr.h \
-    $$PWD/base/tinyXML/tinyxml.h
+    $$PWD/base/CachedString.h
 
-SOURCES += \
-    $$PWD/base/lz4/lz4.c \
-    $$PWD/base/tinyXML/tinystr.cpp \
-    $$PWD/base/tinyXML/tinyxml.cpp \
-    $$PWD/base/tinyXML/tinyxmlerror.cpp \
-    $$PWD/base/tinyXML/tinyxmlparser.cpp
+#choose one of:
+#DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML1
+DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
+
+defined(CATCHCHALLENGER_XLMPARSER_TINYXML1)
+{
+    HEADERS += $$PWD/base/tinyXML/tinystr.h \
+        $$PWD/base/tinyXML/tinyxml.h
+
+    SOURCES += $$PWD/base/tinyXML/tinystr.cpp \
+        $$PWD/base/tinyXML/tinyxml.cpp \
+        $$PWD/base/tinyXML/tinyxmlerror.cpp \
+        $$PWD/base/tinyXML/tinyxmlparser.cpp
+}
+defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
+{
+    HEADERS += $$PWD/base/tinyXML2/tinyxml2.h
+    SOURCES += $$PWD/base/tinyXML2/tinyxml2.cpp
+}
 
 #only linux is C only, mac, windows, other is in Qt for compatibility
 win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc
