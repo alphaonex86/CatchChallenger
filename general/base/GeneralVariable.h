@@ -122,4 +122,27 @@
 #define CATCHCHALLENGER_SERVER_MINCLANIDBLOCK 1
 #define CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK 5
 
+#ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
+#include "tinyXML/tinyxml.h"
+#define CATCHCHALLENGER_XMLELEMENT TiXmlElement
+#define CATCHCHALLENGER_XMLDOCUMENT TiXmlDocument
+#define CATCHCHALLENGER_XMLDOCUMENTLOAD(a) LoadFile(a)
+#define CATCHCHALLENGER_XMLDOCUMENTERROR(a) ("Parse error at line "+std::to_string(a->ErrorRow())+" column "+std::to_string(a->ErrorCol())+": "+a->ErrorDesc())
+#define CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(a) (!a)
+#define CATCHCHALLENGER_XMLELENTVALUE() ValueStr().c_str()
+#define CATCHCHALLENGER_XMLELENTISXMLELEMENT(a) (a->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
+#define CATCHCHALLENGER_XMLELENTATLINE(a) std::to_string(a->Row())
+#define CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(a,b) (strcmp(a,b)==0)
+#elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
+#include "tinyXML2/tinyxml2.h"
+#define CATCHCHALLENGER_XMLELEMENT tinyxml2::XMLElement
+#define CATCHCHALLENGER_XMLDOCUMENT tinyxml2::XMLDocument
+#define CATCHCHALLENGER_XMLDOCUMENTLOAD(a) LoadFile(a.c_str())
+#define CATCHCHALLENGER_XMLDOCUMENTERROR(a) (std::string("Parse error: ")+std::string(a->GetErrorStr1())+" and "+std::string(a->GetErrorStr2())+", error id: "+std::to_string(a->ErrorID()))
+#define CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(a) (a!=0)
+#define CATCHCHALLENGER_XMLELENTVALUE() Name()
+#define CATCHCHALLENGER_XMLELENTISXMLELEMENT(a) (true)
+#define CATCHCHALLENGER_XMLELENTATLINE(a) std::string("???")
+#define CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(a,b) (strcmp(a,b)==0)
+#endif
 #endif // GENERALVARIABLE_H

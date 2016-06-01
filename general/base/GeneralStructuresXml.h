@@ -5,9 +5,14 @@
 #include <string>
 #include <unordered_map>
 
+#ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
 #include "tinyXML/tinyxml.h"
+#elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
+#include "tinyXML2/tinyxml2.h"
+#endif
 #include "GeneralType.h"
 #include "GeneralStructures.h"
+#include "GeneralVariable.h"
 
 namespace CatchChallenger {
 
@@ -16,7 +21,7 @@ struct Map_semi_teleport
     COORD_TYPE source_x,source_y;
     COORD_TYPE destination_x,destination_y;
     std::string map;
-    const TiXmlElement * conditionUnparsed;
+    const CATCHCHALLENGER_XMLELEMENT * conditionUnparsed;
     MapCondition condition;
 };
 
@@ -68,13 +73,13 @@ struct Map_to_send
     uint8_t *monstersCollisionMap;
     std::vector<MonstersCollisionValue> monstersCollisionList;
 
-    const TiXmlElement * xmlRoot;
+    const CATCHCHALLENGER_XMLELEMENT * xmlRoot;
 };
 
 //permanent bot on client, temp to parse on the server
 struct Bot
 {
-    std::unordered_map<uint8_t,const TiXmlElement *> step;
+    std::unordered_map<uint8_t,const CATCHCHALLENGER_XMLELEMENT *> step;
     std::unordered_map<std::string,std::string> properties;
     uint32_t botId;//id need be unique for the quests, then 32Bits
     std::string skin;

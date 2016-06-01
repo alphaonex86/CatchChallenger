@@ -5,7 +5,7 @@
 #include <string>
 
 #include "GeneralStructures.h"
-#include "tinyXML/tinyxml.h"
+#include "GeneralVariable.h"
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QDomDocument>
@@ -50,7 +50,7 @@ public:
     std::vector<Type> types;
     #endif
 
-    std::unordered_map<std::string/*file*/, TiXmlDocument> xmlLoadedFile;//keep for Map_loader::getXmlCondition(), need to be deleted later
+    std::unordered_map<std::string/*file*/,CATCHCHALLENGER_XMLDOCUMENT> xmlLoadedFile;//keep for Map_loader::getXmlCondition(), need to be deleted later
     #ifndef EPOLLCATCHCHALLENGERSERVER
     #ifndef EPOLLCATCHCHALLENGERSERVER
     std::unordered_map<std::string/*file*/, QDomDocument> xmlLoadedFileQt;
