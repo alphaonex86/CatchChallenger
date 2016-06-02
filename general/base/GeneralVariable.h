@@ -123,30 +123,43 @@
 #define CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK 5
 
 #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
-#include "tinyXML/tinyxml.h"
-#define CATCHCHALLENGER_XMLELEMENT TiXmlElement
-#define CATCHCHALLENGER_XMLDOCUMENT TiXmlDocument
-#define CATCHCHALLENGER_XMLDOCUMENTLOAD(a) LoadFile(a)
-#define CATCHCHALLENGER_XMLDOCUMENTERROR(a) ("Parse error at line "+std::to_string(a->ErrorRow())+" column "+std::to_string(a->ErrorCol())+": "+a->ErrorDesc())
-#define CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(a) (!a)
-#define CATCHCHALLENGER_XMLELENTVALUE() ValueStr().c_str()
-#define CATCHCHALLENGER_XMLELENTISXMLELEMENT(a) (a->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
-#define CATCHCHALLENGER_XMLELENTATLINE(a) std::to_string(a->Row())
-#define CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(a,b) (strcmp(a,b)==0)
-#define CATCHCHALLENGER_XMLERRORID() ErrorId()
-#define CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(a) (a)
+    #include "tinyXML/tinyxml.h"
+    #define CATCHCHALLENGER_XMLELEMENT TiXmlElement
+    #define CATCHCHALLENGER_XMLDOCUMENT TiXmlDocument
+    #define CATCHCHALLENGER_XMLDOCUMENTLOAD(a) LoadFile(a)
+    #define CATCHCHALLENGER_XMLDOCUMENTERROR(a) ("Parse error at line "+std::to_string(a->ErrorRow())+" column "+std::to_string(a->ErrorCol())+": "+a->ErrorDesc())
+    #define CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(a) a
+    #define CATCHCHALLENGER_XMLELENTISXMLELEMENT(a) (a->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
+    #define CATCHCHALLENGER_XMLELENTATLINE(a) std::to_string(a->Row())
+    #define CATCHCHALLENGER_XMLERRORID() ErrorId()
+    #ifdef TIXML_USE_STL
+        #define CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(a) (a)
+        #define CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(a,b) (a==b)
+        #define CATCHCHALLENGER_XMLELENTVALUE() ValueStr()
+        #define CATCHCHALLENGER_XMLATTRIBUTETOSTRING(a) *a
+        #define CATCHCHALLENGER_NATIVEMODESTDSTRING
+        #define CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING(a) std::string(a)
+    #else
+        #define CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(a) (a.c_str())
+        #define CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(a,b) (strcmp(a,b)==0)
+        #define CATCHCHALLENGER_XMLELENTVALUE() Value()
+        #define CATCHCHALLENGER_XMLATTRIBUTETOSTRING(a) a
+        #define CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING(a) a
+    #endif
 #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
-#include "tinyXML2/tinyxml2.h"
-#define CATCHCHALLENGER_XMLELEMENT tinyxml2::XMLElement
-#define CATCHCHALLENGER_XMLDOCUMENT tinyxml2::XMLDocument
-#define CATCHCHALLENGER_XMLDOCUMENTLOAD(a) LoadFile(a.c_str())
-#define CATCHCHALLENGER_XMLDOCUMENTERROR(a) (std::string("Parse error: ")+std::string(a->GetErrorStr1())+" and "+std::string(a->GetErrorStr2())+", error id: "+std::to_string(a->ErrorID()))
-#define CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(a) (a!=0)
-#define CATCHCHALLENGER_XMLELENTVALUE() Name()
-#define CATCHCHALLENGER_XMLELENTISXMLELEMENT(a) (true)
-#define CATCHCHALLENGER_XMLELENTATLINE(a) std::string("???")
-#define CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(a,b) (strcmp(a,b)==0)
-#define CATCHCHALLENGER_XMLERRORID() ErrorID()
-#define CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(a) (a.c_str())
+    #include "tinyXML2/tinyxml2.h"
+    #define CATCHCHALLENGER_XMLELEMENT tinyxml2::XMLElement
+    #define CATCHCHALLENGER_XMLDOCUMENT tinyxml2::XMLDocument
+    #define CATCHCHALLENGER_XMLDOCUMENTLOAD(a) LoadFile(a.c_str())
+    #define CATCHCHALLENGER_XMLDOCUMENTERROR(a) (std::string("Parse error: ")+std::string(a->GetErrorStr1())+" and "+std::string(a->GetErrorStr2())+", error id: "+std::to_string(a->ErrorID()))
+    #define CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(a) (a==0)
+    #define CATCHCHALLENGER_XMLELENTVALUE() Name()
+    #define CATCHCHALLENGER_XMLELENTISXMLELEMENT(a) (true)
+    #define CATCHCHALLENGER_XMLELENTATLINE(a) std::string("???")
+    #define CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(a,b) (strcmp(a,b)==0)
+    #define CATCHCHALLENGER_XMLERRORID() ErrorID()
+    #define CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(a) (a.c_str())
+    #define CATCHCHALLENGER_XMLATTRIBUTETOSTRING(a) a
+    #define CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING(a) a
 #endif
 #endif // GENERALVARIABLE_H

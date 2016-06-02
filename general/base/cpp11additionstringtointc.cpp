@@ -1,5 +1,5 @@
 #include "cpp11addition.h"
-
+/*
 uint8_t stringtouint8(const char * const string,bool *ok)
 {
     return stringtouint8(std::string(string),ok);
@@ -54,3 +54,4 @@ double stringtodouble(const char * const string,bool *ok)
 {
     return stringtodouble(std::string(string),ok);
 }
+*/

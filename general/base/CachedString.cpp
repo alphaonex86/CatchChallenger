@@ -86,10 +86,10 @@ CachedString::CachedString()
     x="x";
     y="y";
 
-    borderleft="borderleft";
-    borderright="borderright";
-    bordertop="bordertop";
-    borderbottom="borderbottom";
+    borderleft="border-left";
+    borderright="border-right";
+    bordertop="border-top";
+    borderbottom="border-bottom";
     map="map";
     condition_file="condition_file";
     condition_id="condition_id";
