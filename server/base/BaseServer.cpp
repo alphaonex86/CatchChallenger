@@ -36,51 +36,6 @@
 using namespace CatchChallenger;
 
 std::regex BaseServer::regexXmlFile=std::regex("^[a-zA-Z0-9 _-]+\\.xml$");
-const std::string BaseServer::text_dotxml=".xml";
-const std::string BaseServer::text_zone="zone";
-const std::string BaseServer::text_capture="capture";
-const std::string BaseServer::text_fightId="fightId";
-const std::string BaseServer::text_dotcomma=";";
-const std::string BaseServer::text_male="male";
-const std::string BaseServer::text_female="female";
-const std::string BaseServer::text_unknown="unknown";
-const std::string BaseServer::text_slash="/";
-const std::string BaseServer::text_antislash="\\";
-const std::string BaseServer::text_type="type";
-const std::string BaseServer::text_shop="shop";
-const std::string BaseServer::text_learn="learn";
-const std::string BaseServer::text_heal="heal";
-const std::string BaseServer::text_market="market";
-const std::string BaseServer::text_zonecapture="zonecapture";
-const std::string BaseServer::text_fight="fight";
-const std::string BaseServer::text_fightid="fightid";
-const std::string BaseServer::text_lookAt="lookAt";
-const std::string BaseServer::text_left="left";
-const std::string BaseServer::text_right="right";
-const std::string BaseServer::text_top="top";
-const std::string BaseServer::text_bottom="bottom";
-const std::string BaseServer::text_fightRange="fightRange";
-const std::string BaseServer::text_bots="bots";
-const std::string BaseServer::text_bot="bot";
-const std::string BaseServer::text_id="id";
-const std::string BaseServer::text_name="name";
-const std::string BaseServer::text_step="step";
-const std::string BaseServer::text_arrow="->";
-const std::string BaseServer::text_dottmx=".tmx";
-const std::string BaseServer::text_shops="shops";
-const std::string BaseServer::text_product="product";
-const std::string BaseServer::text_itemId="itemId";
-const std::string BaseServer::text_overridePrice="overridePrice";
-const std::string BaseServer::text_list="list";
-const std::string BaseServer::text_monster="monster";
-const std::string BaseServer::text_monsters="monsters";
-const std::string BaseServer::text_drops="drops";
-const std::string BaseServer::text_drop="drop";
-const std::string BaseServer::text_item="item";
-const std::string BaseServer::text_quantity_min="quantity_min";
-const std::string BaseServer::text_quantity_max="quantity_max";
-const std::string BaseServer::text_luck="luck";
-const std::string BaseServer::text_percent="percent";
 
 BaseServer::BaseServer() :
     stat(Down),
@@ -941,10 +896,10 @@ void BaseServer::loadAndFixSettings()
             {}//std::cerr << "Mirror wrong: " << mirror.toLocal8Bit() << std::endl; -> single player
             else
             {
-                if(stringEndsWith(mirror,BaseServer::text_slash))
+                if(stringEndsWith(mirror,CACHEDSTRING_slash))
                     newMirrorList.push_back(mirror);
                 else
-                    newMirrorList.push_back(mirror+BaseServer::text_slash);
+                    newMirrorList.push_back(mirror+CACHEDSTRING_slash);
             }
             index++;
         }

@@ -80,7 +80,7 @@ void BaseServer::load_monsters_max_id_return()
 
 std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterDrop(const std::string &file, std::unordered_map<uint16_t,Item> items,const std::unordered_map<uint16_t,Monster> &monsters)
 {
-    TiXmlDocument *domDocument;
+    CATCHCHALLENGER_XMLDOCUMENT *domDocument;
     std::unordered_map<uint16_t,std::vector<MonsterDrops> > monsterDrops;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     //open and quick check the file
@@ -90,19 +90,19 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         #else
-        domDocument=new TiXmlDocument();
+        domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif
-        const bool loadOkay=domDocument->LoadFile(file);
-        if(!loadOkay)
+        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
+        if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
         {
-            std::cerr << "Unable to open the file: " << file.c_str() << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
+            std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
             return monsterDrops;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
     }
     #endif
-    const TiXmlElement * root = domDocument->RootElement();;
-    if(root->ValueStr()!=BaseServer::text_monsters)
+    const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();;
+    if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),XMLCACHEDSTRING_monsters))
     {
         std::cerr << "Unable to open the xml file: " << file << ", \"monsters\" root balise not found for the xml file" << std::endl;
         return monsterDrops;
@@ -110,49 +110,49 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
 
     //load the content
     bool ok;
-    const TiXmlElement * item = root->FirstChildElement(BaseServer::text_monster);
+    const CATCHCHALLENGER_XMLELEMENT * item = root->FirstChildElement(XMLCACHEDSTRING_monster);
     while(item!=NULL)
     {
-        if(item->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
+        if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(item))
         {
-            if(item->Attribute(BaseServer::text_id)!=NULL)
+            if(item->Attribute(XMLCACHEDSTRING_id)!=NULL)
             {
-                const uint16_t &id=stringtouint16(*item->Attribute(BaseServer::text_id),&ok);
+                const uint16_t &id=stringtouint16(item->Attribute(XMLCACHEDSTRING_id),&ok);
                 if(!ok)
-                    std::cerr << "Unable to open the xml file: " << file << ", id not a number: child.tagName(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", id not a number: child.tagName(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                 else if(monsters.find(id)==monsters.cend())
-                    std::cerr << "Unable to open the xml file: " << file << ", id into the monster list, skip: child.tagName(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+                    std::cerr << "Unable to open the xml file: " << file << ", id into the monster list, skip: child.tagName(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                 else
                 {
-                    const TiXmlElement * drops = item->FirstChildElement(BaseServer::text_drops);
+                    const CATCHCHALLENGER_XMLELEMENT * drops = item->FirstChildElement(XMLCACHEDSTRING_drops);
                     if(drops!=NULL)
                     {
-                        if(drops->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
+                        if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(drops))
                         {
-                            const TiXmlElement * drop = drops->FirstChildElement(BaseServer::text_drop);
+                            const CATCHCHALLENGER_XMLELEMENT * drop = drops->FirstChildElement(XMLCACHEDSTRING_drop);
                             while(drop!=NULL)
                             {
-                                if(drop->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT)
+                                if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(drop))
                                 {
-                                    if(drop->Attribute(BaseServer::text_item)!=NULL)
+                                    if(drop->Attribute(XMLCACHEDSTRING_item)!=NULL)
                                     {
                                         MonsterDrops dropVar;
                                         dropVar.item=0;
-                                        if(drop->Attribute(BaseServer::text_quantity_min)!=NULL)
+                                        if(drop->Attribute(XMLCACHEDSTRING_quantity_min)!=NULL)
                                         {
-                                            dropVar.quantity_min=stringtouint32(*drop->Attribute(BaseServer::text_quantity_min),&ok);
+                                            dropVar.quantity_min=stringtouint32(drop->Attribute(XMLCACHEDSTRING_quantity_min),&ok);
                                             if(!ok)
-                                                std::cerr << "Unable to open the xml file: " << file << ", quantity_min is not a number: child.tagName(): " << drop->ValueStr() << " (at line: " << drop->Row() << ")" << std::endl;
+                                                std::cerr << "Unable to open the xml file: " << file << ", quantity_min is not a number: child.tagName(): " << drop->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
                                         }
                                         else
                                             dropVar.quantity_min=1;
                                         if(ok)
                                         {
-                                            if(drop->Attribute(BaseServer::text_quantity_max)!=NULL)
+                                            if(drop->Attribute(XMLCACHEDSTRING_quantity_max)!=NULL)
                                             {
-                                                dropVar.quantity_max=stringtouint32(*drop->Attribute(BaseServer::text_quantity_max),&ok);
+                                                dropVar.quantity_max=stringtouint32(drop->Attribute(XMLCACHEDSTRING_quantity_max),&ok);
                                                 if(!ok)
-                                                    std::cerr << "Unable to open the xml file: " << file << ", quantity_max is not a number: child.tagName(): " << drop->ValueStr() << " (at line: " << drop->Row() << ")" << std::endl;
+                                                    std::cerr << "Unable to open the xml file: " << file << ", quantity_max is not a number: child.tagName(): " << drop->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
                                             }
                                             else
                                                 dropVar.quantity_max=1;
@@ -162,7 +162,7 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
                                             if(dropVar.quantity_min<=0)
                                             {
                                                 ok=false;
-                                                std::cerr << "Unable to open the xml file: " << file << ", dropVar.quantity_min is 0: child.tagName(): " << drop->ValueStr() << " (at line: " << drop->Row() << ")" << std::endl;
+                                                std::cerr << "Unable to open the xml file: " << file << ", dropVar.quantity_min is 0: child.tagName(): " << drop->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
                                             }
                                         }
                                         if(ok)
@@ -170,7 +170,7 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
                                             if(dropVar.quantity_max<=0)
                                             {
                                                 ok=false;
-                                                std::cerr << "Unable to open the xml file: " << file << ", dropVar.quantity_max is 0: child.tagName(): " << drop->ValueStr() << " (at line: " << drop->Row() << ")" << std::endl;
+                                                std::cerr << "Unable to open the xml file: " << file << ", dropVar.quantity_max is 0: child.tagName(): " << drop->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
                                             }
                                         }
                                         if(ok)
@@ -178,20 +178,20 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
                                             if(dropVar.quantity_max<dropVar.quantity_min)
                                             {
                                                 ok=false;
-                                                std::cerr << "Unable to open the xml file: " << file << ", dropVar.quantity_max<dropVar.quantity_min: child.tagName(): " << drop->ValueStr() << " (at line: " << drop->Row() << ")" << std::endl;
+                                                std::cerr << "Unable to open the xml file: " << file << ", dropVar.quantity_max<dropVar.quantity_min: child.tagName(): " << drop->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
                                             }
                                         }
                                         if(ok)
                                         {
-                                            if(drop->Attribute(BaseServer::text_luck)!=NULL)
+                                            if(drop->Attribute(XMLCACHEDSTRING_luck)!=NULL)
                                             {
-                                                std::string luck=*drop->Attribute(BaseServer::text_luck);
+                                                std::string luck=drop->Attribute(XMLCACHEDSTRING_luck);
                                                 if(!luck.empty())
                                                     if(luck.back()=='%')
                                                         luck.resize(luck.size()-1);
                                                 dropVar.luck=stringtouint32(luck,&ok);
                                                 if(!ok)
-                                                    std::cerr << "Unable to open the xml file: " << file << ", luck is not a number: child.tagName(): " << drop->ValueStr() << " (at line: " << drop->Row() << ")" << std::endl;
+                                                    std::cerr << "Unable to open the xml file: " << file << ", luck is not a number: child.tagName(): " << drop->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
                                             }
                                             else
                                                 dropVar.luck=100;
@@ -201,21 +201,21 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
                                             if(dropVar.luck<=0)
                                             {
                                                 ok=false;
-                                                std::cerr << "Unable to open the xml file: " << file << ", luck is 0!: child.tagName(): " << drop->ValueStr() << " (at line: " << drop->Row() << ")" << std::endl;
+                                                std::cerr << "Unable to open the xml file: " << file << ", luck is 0!: child.tagName(): " << drop->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
                                             }
                                             if(dropVar.luck>100)
                                             {
                                                 ok=false;
-                                                std::cerr << "Unable to open the xml file: " << file << ", luck is greater than 100: child.tagName(): " << drop->ValueStr() << " (at line: " << drop->Row() << ")" << std::endl;
+                                                std::cerr << "Unable to open the xml file: " << file << ", luck is greater than 100: child.tagName(): " << drop->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
                                             }
                                         }
                                         if(ok)
                                         {
-                                            if(drop->Attribute(BaseServer::text_item)!=NULL)
+                                            if(drop->Attribute(XMLCACHEDSTRING_item)!=NULL)
                                             {
-                                                dropVar.item=stringtouint32(*drop->Attribute(BaseServer::text_item),&ok);
+                                                dropVar.item=stringtouint32(drop->Attribute(XMLCACHEDSTRING_item),&ok);
                                                 if(!ok)
-                                                    std::cerr << "Unable to open the xml file: " << file << ", item is not a number: child.tagName(): " << drop->ValueStr() << " (at line: " << drop->Row() << ")" << std::endl;
+                                                    std::cerr << "Unable to open the xml file: " << file << ", item is not a number: child.tagName(): " << drop->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
                                             }
                                             else
                                                 dropVar.luck=100;
@@ -246,24 +246,24 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
                                         }
                                     }
                                     else
-                                        std::cerr << "Unable to open the xml file: " << file << ", as not item attribute: child.tagName(): " << drop->ValueStr() << " (at line: " << drop->Row() << ")" << std::endl;
+                                        std::cerr << "Unable to open the xml file: " << file << ", as not item attribute: child.tagName(): " << drop->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
                                 }
                                 else
-                                    std::cerr << "Unable to open the xml file: " << file << ", effect balise is not an element: child.tagName(): " << drop->ValueStr() << " (at line: " << drop->Row() << ")" << std::endl;
-                                drop = drop->NextSiblingElement(BaseServer::text_drop);
+                                    std::cerr << "Unable to open the xml file: " << file << ", effect balise is not an element: child.tagName(): " << drop->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
+                                drop = drop->NextSiblingElement(XMLCACHEDSTRING_drop);
                             }
                         }
                         else
-                            std::cerr << "Unable to open the xml file: " << file << ", drops balise is not an element: child.tagName(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+                            std::cerr << "Unable to open the xml file: " << file << ", drops balise is not an element: child.tagName(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                     }
                 }
             }
             else
-                std::cerr << "Unable to open the xml file: " << file << ", have not the monster id: child.tagName(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
+                std::cerr << "Unable to open the xml file: " << file << ", have not the monster id: child.tagName(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
         }
         else
-            std::cerr << "Unable to open the xml file: " << file << ", is not an element: child.tagName(): " << item->ValueStr() << " (at line: " << item->Row() << ")" << std::endl;
-        item = item->NextSiblingElement(BaseServer::text_monster);
+            std::cerr << "Unable to open the xml file: " << file << ", is not an element: child.tagName(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
+        item = item->NextSiblingElement(XMLCACHEDSTRING_monster);
     }
     #ifdef EPOLLCATCHCHALLENGERSERVER
     delete domDocument;
