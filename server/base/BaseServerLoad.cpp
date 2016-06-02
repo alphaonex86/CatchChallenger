@@ -398,9 +398,9 @@ bool BaseServer::preload_zone_init()
             continue;
         }
         std::string zoneCodeName=entryListZone.at(index).name;
-        stringreplaceOne(zoneCodeName,BaseServer::text_dotxml,"");
+        stringreplaceOne(zoneCodeName,CACHEDSTRING_dotxml,"");
         const std::string &file=entryListZone.at(index).absoluteFilePath;
-        TiXmlDocument *domDocument;
+        CATCHCHALLENGER_XMLDOCUMENT *domDocument;
         #ifndef EPOLLCATCHCHALLENGERSERVER
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
@@ -408,12 +408,12 @@ bool BaseServer::preload_zone_init()
         {
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
             #else
-            domDocument=new TiXmlDocument();
+            domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
             #endif
-            const bool loadOkay=domDocument->LoadFile(file);
-            if(!loadOkay)
+            const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
+            if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
             {
-                std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
+                std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
                 index++;
                 continue;
             }
@@ -427,8 +427,8 @@ bool BaseServer::preload_zone_init()
             index++;
             continue;
         }
-        const TiXmlElement* root = domDocument->RootElement();
-        if(root->ValueStr()!=BaseServer::text_zone)
+        const CATCHCHALLENGER_XMLELEMENT* root = domDocument->RootElement();
+        if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),XMLCACHEDSTRING_zone))
         {
             std::cerr << "Unable to open the file: " << file.c_str() << ", \"zone\" root balise not found for the xml file" << std::endl;
             index++;
@@ -437,13 +437,13 @@ bool BaseServer::preload_zone_init()
 
         //load capture
         std::vector<uint16_t> fightIdList;
-        const TiXmlElement * capture=root->FirstChildElement(BaseServer::text_capture);
+        const CATCHCHALLENGER_XMLELEMENT * capture=root->FirstChildElement(XMLCACHEDSTRING_capture);
         if(capture!=NULL)
         {
-            if(capture->Type()==TiXmlNode::NodeType::TINYXML_ELEMENT && capture->Attribute(BaseServer::text_fightId)!=NULL)
+            if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(capture) && capture->Attribute(XMLCACHEDSTRING_fightId)!=NULL)
             {
                 bool ok;
-                const std::vector<std::string> &fightIdStringList=stringsplit(*capture->Attribute(BaseServer::text_fightId),';');
+                const std::vector<std::string> &fightIdStringList=stringsplit(capture->Attribute(XMLCACHEDSTRING_fightId),';');
                 int sub_index=0;
                 const int &listsize=fightIdStringList.size();
                 while(sub_index<listsize)
@@ -463,7 +463,7 @@ bool BaseServer::preload_zone_init()
                 break;
             }
             else
-                std::cerr << "Unable to open the file: " << file << ", is not an element: (at line: " << capture->Row() << ")" << std::endl;
+                std::cerr << "Unable to open the file: " << file << ", is not an element: (at line: " << CATCHCHALLENGER_XMLELENTATLINE(capture) << ")" << std::endl;
         }
         #ifdef EPOLLCATCHCHALLENGERSERVER
         delete domDocument;
@@ -701,7 +701,7 @@ void BaseServer::preload_profile()
         unsigned int index=0;
         while(index<CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.size())
         {
-            stringreplaceOne(CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList[index].mapString,BaseServer::text_dottmx,"");
+            stringreplaceOne(CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList[index].mapString,CACHEDSTRING_dottmx,"");
             index++;
         }
     }
@@ -992,7 +992,7 @@ void BaseServer::preload_zone_return()
     {
         bool ok;
         std::string zoneCodeName=entryListZone.at(entryListIndex).name;
-        stringreplaceOne(zoneCodeName,BaseServer::text_dotxml,"");
+        stringreplaceOne(zoneCodeName,CACHEDSTRING_dotxml,"");
         const std::string &tempString=std::string(GlobalServerData::serverPrivateVariables.db_server->value(0));
         const uint32_t &clanId=stringtouint32(tempString,&ok);
         if(ok)
@@ -1055,7 +1055,7 @@ bool BaseServer::preload_the_map()
     while(index<size)
     {
         std::string fileName=returnList.at(index);
-        stringreplaceAll(fileName,BaseServer::text_antislash,BaseServer::text_slash);
+        stringreplaceAll(fileName,CACHEDSTRING_antislash,CACHEDSTRING_slash);
         if(regex_search(fileName,mapFilter) && !regex_search(fileName,mapExclude))
         {
             #ifdef DEBUG_MESSAGE_MAP_LOAD
@@ -1097,25 +1097,25 @@ bool BaseServer::preload_the_map()
                 if(map_temp.map_to_send.border.top.fileName.size()>0)
                 {
                     map_semi.border.top.fileName		= Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.top.fileName,GlobalServerData::serverPrivateVariables.datapack_mapPath);
-                    stringreplaceOne(map_semi.border.top.fileName,BaseServer::text_dottmx,"");
+                    stringreplaceOne(map_semi.border.top.fileName,CACHEDSTRING_dottmx,"");
                     map_semi.border.top.x_offset		= map_temp.map_to_send.border.top.x_offset;
                 }
                 if(map_temp.map_to_send.border.bottom.fileName.size()>0)
                 {
                     map_semi.border.bottom.fileName		= Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.bottom.fileName,GlobalServerData::serverPrivateVariables.datapack_mapPath);
-                    stringreplaceOne(map_semi.border.bottom.fileName,BaseServer::text_dottmx,"");
+                    stringreplaceOne(map_semi.border.bottom.fileName,CACHEDSTRING_dottmx,"");
                     map_semi.border.bottom.x_offset		= map_temp.map_to_send.border.bottom.x_offset;
                 }
                 if(map_temp.map_to_send.border.left.fileName.size()>0)
                 {
                     map_semi.border.left.fileName		= Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.left.fileName,GlobalServerData::serverPrivateVariables.datapack_mapPath);
-                    stringreplaceOne(map_semi.border.left.fileName,BaseServer::text_dottmx,"");
+                    stringreplaceOne(map_semi.border.left.fileName,CACHEDSTRING_dottmx,"");
                     map_semi.border.left.y_offset		= map_temp.map_to_send.border.left.y_offset;
                 }
                 if(map_temp.map_to_send.border.right.fileName.size()>0)
                 {
                     map_semi.border.right.fileName		= Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.right.fileName,GlobalServerData::serverPrivateVariables.datapack_mapPath);
-                    stringreplaceOne(map_semi.border.right.fileName,BaseServer::text_dottmx,"");
+                    stringreplaceOne(map_semi.border.right.fileName,CACHEDSTRING_dottmx,"");
                     map_semi.border.right.y_offset		= map_temp.map_to_send.border.right.y_offset;
                 }
 
@@ -1124,7 +1124,7 @@ bool BaseServer::preload_the_map()
                 while(sub_index<listsize)
                 {
                     map_temp.map_to_send.teleport[sub_index].map=Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.teleport.at(sub_index).map,GlobalServerData::serverPrivateVariables.datapack_mapPath);
-                    stringreplaceOne(map_temp.map_to_send.teleport[sub_index].map,BaseServer::text_dottmx,"");
+                    stringreplaceOne(map_temp.map_to_send.teleport[sub_index].map,CACHEDSTRING_dottmx,"");
                     sub_index++;
                 }
 
@@ -1205,7 +1205,7 @@ bool BaseServer::preload_the_map()
         {
             const auto &teleport=map_semi.old_map.teleport.at(sub_index);
             std::string teleportString=teleport.map;
-            stringreplaceOne(teleportString,BaseServer::text_dottmx,"");
+            stringreplaceOne(teleportString,CACHEDSTRING_dottmx,"");
             if(GlobalServerData::serverPrivateVariables.map_list.find(teleportString)!=GlobalServerData::serverPrivateVariables.map_list.end())
             {
                 if(teleport.destination_x<GlobalServerData::serverPrivateVariables.map_list.at(teleportString)->width
@@ -1575,7 +1575,7 @@ void BaseServer::preload_the_skin()
 void BaseServer::preload_the_datapack()
 {
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-    std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+BaseServer::text_dotcomma+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
+    std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+CACHEDSTRING_dotcomma+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
     BaseServerMasterSendDatapack::extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     std::vector<std::string> compressedExtensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
@@ -2047,8 +2047,8 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
         {
             bots_number++;
             Map_to_send::Bot_Semi bot_Semi=semi_loaded_map.at(index).old_map.bots.at(sub_index);
-            if(!stringEndsWith(bot_Semi.file,BaseServer::text_dotxml))
-                bot_Semi.file+=BaseServer::text_dotxml;
+            if(!stringEndsWith(bot_Semi.file,CACHEDSTRING_dotxml))
+                bot_Semi.file+=CACHEDSTRING_dotxml;
             loadBotFile(semi_loaded_map.at(index).map->map_file,bot_Semi.file);
             if(botFiles.find(bot_Semi.file)!=botFiles.end())
                 if(botFiles.at(bot_Semi.file).find(bot_Semi.id)!=botFiles.at(bot_Semi.file).end())
@@ -2071,7 +2071,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                     auto i=step_list.begin();
                     while (i!=step_list.end())
                     {
-                        const TiXmlElement * step = i->second;
+                        const CATCHCHALLENGER_XMLELEMENT * step = i->second;
                         if(step==NULL)
                         {
                             ++i;
@@ -2079,15 +2079,15 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                         }
                         std::pair<uint8_t,uint8_t> pairpoint(bot_Semi.point.x,bot_Semi.point.y);
                         MapServer * const mapServer=static_cast<MapServer *>(semi_loaded_map.at(index).map);
-                        const std::string * const step_type=step->Attribute(BaseServer::text_type);
-                        if(step_type==NULL)
+                        if(step->Attribute(XMLCACHEDSTRING_type)==NULL)
                         {
                             ++i;
                             continue;
                         }
-                        if(*step_type==BaseServer::text_shop)
+                        const std::string step_type=step->Attribute(CACHEDSTRING_type);
+                        if(step_type==CACHEDSTRING_shop)
                         {
-                            if(step->Attribute(BaseServer::text_shop)==NULL)
+                            if(step->Attribute(XMLCACHEDSTRING_shop)==NULL)
                                 std::cerr << "Has not attribute \"shop\": for bot id: "
                                           << bot_Semi.id
                                           << " ("
@@ -2103,7 +2103,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                           << std::endl;
                             else
                             {
-                                uint32_t shop=stringtouint32(*step->Attribute(BaseServer::text_shop),&ok);
+                                uint32_t shop=stringtouint32(step->Attribute(XMLCACHEDSTRING_shop),&ok);
                                 if(!ok)
                                     std::cerr << "shop is not a number: for bot id: "
                                               << bot_Semi.id
@@ -2154,7 +2154,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 }
                             }
                         }
-                        else if(*step_type==BaseServer::text_learn)
+                        else if(step_type==CACHEDSTRING_learn)
                         {
                             if(mapServer->learn.find(pairpoint)!=mapServer->learn.end())
                                 std::cerr << "learn point already on the map: for bot id: "
@@ -2191,7 +2191,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 learnpoint_number++;
                             }
                         }
-                        else if(*step_type==BaseServer::text_heal)
+                        else if(step_type==CACHEDSTRING_heal)
                         {
                             if(mapServer->heal.find(pairpoint)!=mapServer->heal.end())
                                 std::cerr << "heal point already on the map: for bot id: "
@@ -2228,7 +2228,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 healpoint_number++;
                             }
                         }
-                        else if(*step_type==BaseServer::text_market)
+                        else if(step_type==CACHEDSTRING_market)
                         {
                             if(mapServer->market.find(pairpoint)!=mapServer->market.end())
                                 std::cerr << "market point already on the map: for bot id: "
@@ -2265,9 +2265,9 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 marketpoint_number++;
                             }
                         }
-                        else if(*step_type==BaseServer::text_zonecapture)
+                        else if(step_type==CACHEDSTRING_zonecapture)
                         {
-                            if(step->Attribute(BaseServer::text_zone)==NULL)
+                            if(step->Attribute(XMLCACHEDSTRING_zone)==NULL)
                                 std::cerr << "zonecapture point have not the zone attribute: for bot id: "
                                           << bot_Semi.id
                                           << " ("
@@ -2312,11 +2312,11 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                               << std::to_string(i->first)
                                               << std::endl;
                                 #endif
-                                mapServer->zonecapture[pairpoint]=*step->Attribute(BaseServer::text_zone);
+                                mapServer->zonecapture[pairpoint]=*step->Attribute(XMLCACHEDSTRING_zone);
                                 zonecapturepoint_number++;
                             }
                         }
-                        else if(*step_type==BaseServer::text_fight)
+                        else if(step_type==CACHEDSTRING_fight)
                         {
                             if(mapServer->botsFight.find(pairpoint)!=mapServer->botsFight.end())
                                 std::cerr << "botsFight point already on the map: for bot id: "
@@ -2334,24 +2334,27 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                           << std::endl;
                             else
                             {
-                                const uint32_t &fightid=stringtouint32(*step->Attribute(BaseServer::text_fightid),&ok);
+                                uint32_t fightid=0;
+                                ok=false;
+                                if(step->Attribute(XMLCACHEDSTRING_fightid)!=NULL)
+                                    fightid=stringtouint32(step->Attribute(XMLCACHEDSTRING_fightid),&ok);
                                 if(ok)
                                 {
                                     if(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightid)!=CommonDatapackServerSpec::commonDatapackServerSpec.botFights.end())
                                     {
-                                        if(bot_Semi.property_text.find(BaseServer::text_lookAt)!=bot_Semi.property_text.end())
+                                        if(bot_Semi.property_text.find(CACHEDSTRING_lookAt)!=bot_Semi.property_text.end())
                                         {
                                             Direction direction;
-                                            const std::string &lookAt=bot_Semi.property_text.at(BaseServer::text_lookAt);
-                                            if(lookAt==BaseServer::text_left)
+                                            const std::string &lookAt=bot_Semi.property_text.at(CACHEDSTRING_lookAt);
+                                            if(lookAt==CACHEDSTRING_left)
                                                 direction=CatchChallenger::Direction_move_at_left;
-                                            else if(lookAt==BaseServer::text_right)
+                                            else if(lookAt==CACHEDSTRING_right)
                                                 direction=CatchChallenger::Direction_move_at_right;
-                                            else if(lookAt==BaseServer::text_top)
+                                            else if(lookAt==CACHEDSTRING_top)
                                                 direction=CatchChallenger::Direction_move_at_top;
                                             else
                                             {
-                                                if(lookAt!=BaseServer::text_bottom)
+                                                if(lookAt!=CACHEDSTRING_bottom)
                                                     std::cerr << "Wrong direction for the botp: for bot id: "
                                                               << bot_Semi.id
                                                               << " ("
@@ -2386,9 +2389,9 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                             botfights_number++;
 
                                             uint8_t fightRange=5;
-                                            if(bot_Semi.property_text.find(BaseServer::text_fightRange)!=bot_Semi.property_text.end())
+                                            if(bot_Semi.property_text.find(CACHEDSTRING_fightRange)!=bot_Semi.property_text.end())
                                             {
-                                                fightRange=stringtouint8(bot_Semi.property_text.at(BaseServer::text_fightRange),&ok);
+                                                fightRange=stringtouint8(bot_Semi.property_text.at(CACHEDSTRING_fightRange),&ok);
                                                 if(!ok)
                                                 {
                                                     std::cerr << "fightRange is not a number: for bot id: "
@@ -2534,7 +2537,7 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
     if(botFiles.find(file)!=botFiles.cend())
         return;
     botFiles[file];//create the entry
-    TiXmlDocument *domDocument;
+    CATCHCHALLENGER_XMLDOCUMENT *domDocument;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
@@ -2542,50 +2545,50 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         #else
-        domDocument=new TiXmlDocument();
+        domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif
-        const bool loadOkay=domDocument->LoadFile(file);
-        if(!loadOkay)
+        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
+        if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
         {
-            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
+            std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
             return;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
     }
     #endif
     bool ok;
-    const TiXmlElement * root = domDocument->RootElement();
-    if(root->ValueStr()!="bots")
+    const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+    if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"bots"))
     {
         std::cerr << "\"bots\" root balise not found for the xml file" << std::endl;
         return;
     }
     //load the bots
-    const TiXmlElement * child = root->FirstChildElement("bot");
+    const CATCHCHALLENGER_XMLELEMENT * child = root->FirstChildElement("bot");
     while(child!=NULL)
     {
         if(child->Attribute("id")==NULL)
-            std::cerr << "Has not attribute \"id\": child->ValueStr(): " << child->ValueStr() << " (at line: " << child->Row() << ")" << std::endl;
-        else if(child->Type()!=TiXmlNode::NodeType::TINYXML_ELEMENT)
-            std::cerr << "Is not an element: child->ValueStr(): " << child->ValueStr() << ", name: " << child->Attribute("name") << " (at line: " << child->Row() << ")" << std::endl;
+            std::cerr << "Has not attribute \"id\": child->CATCHCHALLENGER_XMLELENTVALUE(): " << child->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(child) << ")" << std::endl;
+        else if(!CATCHCHALLENGER_XMLELENTISXMLELEMENT(child))
+            std::cerr << "Is not an element: child->CATCHCHALLENGER_XMLELENTVALUE(): " << child->CATCHCHALLENGER_XMLELENTVALUE() << ", name: " << child->Attribute("name") << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(child) << ")" << std::endl;
         else
         {
             uint32_t id=stringtouint32(child->Attribute("id"),&ok);
             if(ok)
             {
                 if(botIdLoaded.find(id)!=botIdLoaded.cend())
-                    std::cerr << "Bot " << id << " into file " << file << " have same id as another bot: bot->ValueStr(): " << child->ValueStr() << " (at line: " << child->Row() << ")" << std::endl;
+                    std::cerr << "Bot " << id << " into file " << file << " have same id as another bot: bot->CATCHCHALLENGER_XMLELENTVALUE(): " << child->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(child) << ")" << std::endl;
                 botIdLoaded.insert(id);
                 botFiles[file][id];
-                const TiXmlElement * step = child->FirstChildElement("step");
+                const CATCHCHALLENGER_XMLELEMENT * step = child->FirstChildElement("step");
                 while(step!=NULL)
                 {
                     if(step->Attribute("id")==NULL)
-                        std::cerr << "Has not attribute \"type\": bot->ValueStr(): " << step->ValueStr() << " (at line: " << step->Row() << ")" << std::endl;
+                        std::cerr << "Has not attribute \"type\": bot->CATCHCHALLENGER_XMLELENTVALUE(): " << step->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(step) << ")" << std::endl;
                     else if(step->Attribute("type")==NULL)
-                        std::cerr << "Has not attribute \"type\": bot->ValueStr(): " << step->ValueStr() << " (at line: " << step->Row() << ")" << std::endl;
-                    else if(step->Type()!=TiXmlNode::NodeType::TINYXML_ELEMENT)
-                        std::cerr << "Is not an element: bot->ValueStr(): " << step->ValueStr() << ", type: " << step->Attribute("type") << " (at line: " << step->Row() << ")" << std::endl;
+                        std::cerr << "Has not attribute \"type\": bot->CATCHCHALLENGER_XMLELENTVALUE(): " << step->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(step) << ")" << std::endl;
+                    else if(!CATCHCHALLENGER_XMLELENTISXMLELEMENT(step))
+                        std::cerr << "Is not an element: bot->CATCHCHALLENGER_XMLELENTVALUE(): " << step->CATCHCHALLENGER_XMLELENTVALUE() << ", type: " << step->Attribute("type") << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(step) << ")" << std::endl;
                     else
                     {
                         uint32_t stepId=stringtouint32(step->Attribute("id"),&ok);
@@ -2598,7 +2601,7 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
                     botFiles[file].erase(id);
             }
             else
-                std::cerr << "Attribute \"id\" is not a number: bot->ValueStr(): " << child->ValueStr() << " (at line: " << child->Row() << ")" << std::endl;
+                std::cerr << "Attribute \"id\" is not a number: bot->CATCHCHALLENGER_XMLELENTVALUE(): " << child->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(child) << ")" << std::endl;
         }
         child = child->NextSiblingElement("bot");
     }
