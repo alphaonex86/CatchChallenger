@@ -16,6 +16,7 @@
 #include "../../general/base/QFakeSocket.h"
 #endif
 
+#include "../../general/base/CachedString.h"
 #include "../../general/base/Map_loader.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/FacilityLibGeneral.h"
@@ -192,55 +193,10 @@ protected:
     int plant_on_the_map;
     std::vector<Map_semi> semi_loaded_map;
     #ifdef EPOLLCATCHCHALLENGERSERVER
-    std::vector<TiXmlDocument *> toDeleteAfterBotLoad;
+    std::vector<CATCHCHALLENGER_XMLDOCUMENT *> toDeleteAfterBotLoad;
     #endif
 
     static std::regex regexXmlFile;
-    static const std::string text_dotxml;
-    static const std::string text_zone;
-    static const std::string text_capture;
-    static const std::string text_fightId;
-    static const std::string text_dotcomma;
-    static const std::string text_male;
-    static const std::string text_female;
-    static const std::string text_unknown;
-    static const std::string text_slash;
-    static const std::string text_antislash;
-    static const std::string text_type;
-    static const std::string text_shop;
-    static const std::string text_learn;
-    static const std::string text_heal;
-    static const std::string text_market;
-    static const std::string text_zonecapture;
-    static const std::string text_fight;
-    static const std::string text_fightid;
-    static const std::string text_lookAt;
-    static const std::string text_left;
-    static const std::string text_right;
-    static const std::string text_top;
-    static const std::string text_bottom;
-    static const std::string text_fightRange;
-    static const std::string text_bots;
-    static const std::string text_bot;
-    static const std::string text_id;
-    static const std::string text_name;
-    static const std::string text_step;
-    static const std::string text_arrow;
-    static const std::string text_dottmx;
-    static const std::string text_shops;
-    static const std::string text_product;
-    static const std::string text_itemId;
-    static const std::string text_overridePrice;
-    static const std::string text_list;
-    static const std::string text_monster;
-    static const std::string text_monsters;
-    static const std::string text_drops;
-    static const std::string text_drop;
-    static const std::string text_item;
-    static const std::string text_quantity_min;
-    static const std::string text_quantity_max;
-    static const std::string text_luck;
-    static const std::string text_percent;
 };
 }
 

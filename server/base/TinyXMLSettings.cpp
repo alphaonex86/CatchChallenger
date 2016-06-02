@@ -18,19 +18,26 @@ TinyXMLSettings::TinyXMLSettings(const std::string &file) :
     modified(false)
 {
     this->file=file;
-    if(!document.LoadFile(file))
+    const auto loadOkay = document.CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
+    if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
     {
         modified=true;
-        if(document.ErrorId()==2 /*NOT 12! Error document empty. but can be just corrupted!*/ && errno==2)
+        if(document.CATCHCHALLENGER_XMLERRORID()==2 /*NOT 12! Error document empty. but can be just corrupted!*/ && errno==2)
         {
-            TiXmlElement * root = new TiXmlElement("configuration");
+            #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
+            CATCHCHALLENGER_XMLELEMENT * root = new CATCHCHALLENGER_XMLELEMENT("configuration");
             document.LinkEndChild(root);
+            #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
+            //???
+            #endif
         }
         else
         {
-            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << document.ErrorRow() << ", column " << document.ErrorCol() << ": " << document.ErrorDesc() << ", error id: " << document.ErrorId() << ", errno: " << errno << std::endl;
+            const CATCHCHALLENGER_XMLDOCUMENT * const documentBis=&document;
+            std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(documentBis) << std::endl;
             abort();
         }
+        return;
     }
     whereIs=document.RootElement();
     if(whereIs==NULL)
@@ -47,12 +54,12 @@ TinyXMLSettings::~TinyXMLSettings()
 
 void TinyXMLSettings::beginGroup(const std::string &group)
 {
-    TiXmlElement * item = whereIs->FirstChildElement(group);
+    CATCHCHALLENGER_XMLELEMENT * item = whereIs->FirstChildElement(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(group));
     if(item==NULL)
     {
-        TiXmlElement item(group);
+        CATCHCHALLENGER_XMLELEMENT item(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(group));
         whereIs->InsertEndChild(item);
-        whereIs=whereIs->FirstChildElement(group);
+        whereIs=whereIs->FirstChildElement(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(group));
     }
     else
         whereIs=item;
@@ -60,14 +67,14 @@ void TinyXMLSettings::beginGroup(const std::string &group)
 
 void TinyXMLSettings::endGroup()
 {
-    TiXmlElement * item = static_cast<TiXmlElement *>(whereIs->Parent());
+    CATCHCHALLENGER_XMLELEMENT * item = static_cast<CATCHCHALLENGER_XMLELEMENT *>(whereIs->Parent());
     if(item!=NULL)
         whereIs=item;
 }
 
 std::string TinyXMLSettings::value(const std::string &var, const std::string &defaultValue)
 {
-    TiXmlElement * item = whereIs->FirstChildElement(var);
+    CATCHCHALLENGER_XMLELEMENT * item = whereIs->FirstChildElement(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(var));
     if(item==NULL)
         return defaultValue;
     else
@@ -81,17 +88,17 @@ std::string TinyXMLSettings::value(const std::string &var, const std::string &de
 
 bool TinyXMLSettings::contains(const std::string &var)
 {
-    return whereIs->FirstChildElement(var)!=NULL;
+    return whereIs->FirstChildElement(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(var))!=NULL;
 }
 
 void TinyXMLSettings::setValue(const std::string &var,const std::string &value)
 {
-    TiXmlElement * item = whereIs->FirstChildElement(var);
+    CATCHCHALLENGER_XMLELEMENT * item = whereIs->FirstChildElement(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(var));
     if(item==NULL)
     {
         modified=true;
-        TiXmlElement item(var);
-        item.SetAttribute("value",value);
+        CATCHCHALLENGER_XMLELEMENT item(var);
+        item.SetAttribute("value",CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(value));
         whereIs->InsertEndChild(item);
     }
     else
@@ -99,7 +106,7 @@ void TinyXMLSettings::setValue(const std::string &var,const std::string &value)
         if(item->Attribute("value")==value)
             return;
         modified=true;
-        item->SetAttribute("value",value);
+        item->SetAttribute("value",CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(value));
     }
 }
 
@@ -130,9 +137,9 @@ void TinyXMLSettings::sync()
 {
     if(!modified)
         return;
-    if(!document.SaveFile(file))
+    if(!document.SaveFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file)))
     {
-        std::cerr << "Unable to save the file: " << file << ", Parse error at line " << document.ErrorRow() << ", column " << document.ErrorCol() << ": " << document.ErrorDesc() << std::endl;
+        std::cerr << "Unable to save the file: " << file << std::endl;
         abort();
     }
     modified=false;

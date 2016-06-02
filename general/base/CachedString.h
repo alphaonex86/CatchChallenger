@@ -96,6 +96,15 @@
 #define XMLCACHEDSTRING_condition CACHEDSTRING_condition
 #define XMLCACHEDSTRING_quest CACHEDSTRING_quest
 #define XMLCACHEDSTRING_fightBot CACHEDSTRING_fightBot
+#define XMLCACHEDSTRING_zone CACHEDSTRING_zone
+#define XMLCACHEDSTRING_capture CACHEDSTRING_capture
+#define XMLCACHEDSTRING_fightId CACHEDSTRING_fightId
+#define XMLCACHEDSTRING_shop CACHEDSTRING_shop
+#define XMLCACHEDSTRING_fightid CACHEDSTRING_fightid
+#define XMLCACHEDSTRING_drops CACHEDSTRING_drops
+#define XMLCACHEDSTRING_drop CACHEDSTRING_drop
+#define XMLCACHEDSTRING_quantity_min CACHEDSTRING_quantity_min
+#define XMLCACHEDSTRING_quantity_max CACHEDSTRING_quantity_max
 
 #else
 
@@ -191,6 +200,15 @@
 #define XMLCACHEDSTRING_condition "condition"
 #define XMLCACHEDSTRING_quest "quest"
 #define XMLCACHEDSTRING_fightBot "fightBot"
+#define XMLCACHEDSTRING_zone "zone"
+#define XMLCACHEDSTRING_capture "capture"
+#define XMLCACHEDSTRING_fightId "fightId"
+#define XMLCACHEDSTRING_shop "shop"
+#define XMLCACHEDSTRING_fightid "fightid"
+#define XMLCACHEDSTRING_drops "drops"
+#define XMLCACHEDSTRING_drop "drop"
+#define XMLCACHEDSTRING_quantity_min "quantity_min"
+#define XMLCACHEDSTRING_quantity_max "quantity_max"
 
 #endif
 
@@ -306,6 +324,27 @@
 #define CACHEDSTRING_fightBot CachedString::cachedString->fightBot
 #define CACHEDSTRING_cave CachedString::cachedString->cave
 #define CACHEDSTRING_clan CachedString::cachedString->clan
+#define CACHEDSTRING_slash CachedString::cachedString->slash
+#define CACHEDSTRING_zone CachedString::cachedString->zone
+#define CACHEDSTRING_capture CachedString::cachedString->capture
+#define CACHEDSTRING_fightId CachedString::cachedString->fightId
+#define CACHEDSTRING_shop CachedString::cachedString->shop
+#define CACHEDSTRING_fightid CachedString::cachedString->fightid
+#define CACHEDSTRING_dottmx CachedString::cachedString->dottmx
+#define CACHEDSTRING_antislash CachedString::cachedString->antislash
+#define CACHEDSTRING_learn CachedString::cachedString->learn
+#define CACHEDSTRING_heal CachedString::cachedString->heal
+#define CACHEDSTRING_market CachedString::cachedString->market
+#define CACHEDSTRING_zonecapture CachedString::cachedString->zonecapture
+#define CACHEDSTRING_left CachedString::cachedString->left
+#define CACHEDSTRING_right CachedString::cachedString->right
+#define CACHEDSTRING_top CachedString::cachedString->top
+#define CACHEDSTRING_bottom CachedString::cachedString->bottom
+#define CACHEDSTRING_fightRange CachedString::cachedString->fightRange
+#define CACHEDSTRING_drops CachedString::cachedString->drops
+#define CACHEDSTRING_drop CachedString::cachedString->drop
+#define CACHEDSTRING_quantity_min CachedString::cachedString->quantity_min
+#define CACHEDSTRING_quantity_max CachedString::cachedString->quantity_max
 
 class CachedString
 {
@@ -422,6 +461,27 @@ public:
     std::string fightBot;
     std::string cave;
     std::string clan;
+    std::string slash;
+    std::string zone;
+    std::string capture;
+    std::string fightId;
+    std::string shop;
+    std::string fightid;
+    std::string dottmx;
+    std::string antislash;
+    std::string learn;
+    std::string heal;
+    std::string market;
+    std::string zonecapture;
+    std::string left;
+    std::string right;
+    std::string top;
+    std::string bottom;
+    std::string fightRange;
+    std::string drops;
+    std::string drop;
+    std::string quantity_min;
+    std::string quantity_max;
 };
 
 #endif // CACHEDSTRING_H
@@ -526,6 +586,15 @@ public:
 #define XMLCACHEDSTRING_condition CATCHCHALLENGER_XMLDOCUMENTTONATIVETYPE(CACHEDSTRING_condition)
 #define XMLCACHEDSTRING_quest CATCHCHALLENGER_XMLDOCUMENTTONATIVETYPE(CACHEDSTRING_quest)
 #define XMLCACHEDSTRING_fightBot CATCHCHALLENGER_XMLDOCUMENTTONATIVETYPE(CACHEDSTRING_fightBot)
+#define XMLCACHEDSTRING_zone CATCHCHALLENGER_XMLDOCUMENTTONATIVETYPE(CACHEDSTRING_zone)
+#define XMLCACHEDSTRING_capture CATCHCHALLENGER_XMLDOCUMENTTONATIVETYPE(CACHEDSTRING_capture)
+#define XMLCACHEDSTRING_fightId CATCHCHALLENGER_XMLDOCUMENTTONATIVETYPE(CACHEDSTRING_fightId)
+#define XMLCACHEDSTRING_shop CATCHCHALLENGER_XMLDOCUMENTTONATIVETYPE(CACHEDSTRING_shop)
+#define XMLCACHEDSTRING_fightid CATCHCHALLENGER_XMLDOCUMENTTONATIVETYPE(CACHEDSTRING_fightid)
+#define XMLCACHEDSTRING_drops CATCHCHALLENGER_XMLDOCUMENTTONATIVETYPE(CACHEDSTRING_drops)
+#define XMLCACHEDSTRING_drop CATCHCHALLENGER_XMLDOCUMENTTONATIVETYPE(CACHEDSTRING_drop)
+#define XMLCACHEDSTRING_quantity_min CATCHCHALLENGER_XMLDOCUMENTTONATIVETYPE(CACHEDSTRING_quantity_min)
+#define XMLCACHEDSTRING_quantity_max CATCHCHALLENGER_XMLDOCUMENTTONATIVETYPE(CACHEDSTRING_quantity_max)
 
 #define CACHEDSTRING_yes "yes"
 #define CACHEDSTRING_no "no"
@@ -637,5 +706,26 @@ public:
 #define CACHEDSTRING_fightBot "fightBot"
 #define CACHEDSTRING_cave "cave"
 #define CACHEDSTRING_clan "clan"
+#define CACHEDSTRING_slash "/"
+#define CACHEDSTRING_zone "zone"
+#define CACHEDSTRING_capture "capture"
+#define CACHEDSTRING_fightId "fightId"
+#define CACHEDSTRING_shop "shop"
+#define CACHEDSTRING_fightid "fightid"
+#define CACHEDSTRING_dottmx "tmx"
+#define CACHEDSTRING_antislash "\\"
+#define CACHEDSTRING_learn "learn"
+#define CACHEDSTRING_heal "heal"
+#define CACHEDSTRING_market "market"
+#define CACHEDSTRING_zonecapture "zonecapture"
+#define CACHEDSTRING_left "left"
+#define CACHEDSTRING_right "right"
+#define CACHEDSTRING_top "top"
+#define CACHEDSTRING_bottom "bottom"
+#define CACHEDSTRING_fightRange "fightRange"
+#define CACHEDSTRING_drops "drops"
+#define CACHEDSTRING_drop "drop"
+#define CACHEDSTRING_quantity_min "quantity_min"
+#define CACHEDSTRING_quantity_max "quantity_max"
 
 #endif

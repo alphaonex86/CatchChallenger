@@ -115,6 +115,27 @@ CachedString::CachedString()
     fightBot="fightBot";
     cave="cave";
     clan="clan";
+    slash="/";
+    zone="zone";
+    capture="capture";
+    fightId="fightId";
+    shop="shop";
+    fightid="fightid";
+    dottmx=".tmx";
+    antislash="\\";
+    learn="learn";
+    heal="heal";
+    market="market";
+    zonecapture="zonecapture";
+    left="left";
+    right="right";
+    top="top";
+    bottom="bottom";
+    fightRange="fightRange";
+    drops="drops";
+    drop="drop";
+    quantity_min="quantity_min";
+    quantity_max="quantity_max";
 }
 
 #endif
