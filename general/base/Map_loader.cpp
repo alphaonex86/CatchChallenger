@@ -72,6 +72,11 @@ bool Map_loader::tryLoadMap(const std::string &file)
     }
     #endif
     const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+    if(root==NULL)
+    {
+        error=file+", tryLoadMap(): no root balise found for the xml file";
+        return false;
+    }
     if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"map"))
     {
         error=file+", tryLoadMap(): \"map\" root balise not found for the xml file";
@@ -1114,6 +1119,11 @@ bool Map_loader::loadMonsterMap(const std::string &file, std::vector<std::string
     }
     #endif
     this->map_to_send.xmlRoot = domDocument->RootElement();
+    if(map_to_send.xmlRoot==NULL)
+    {
+        std::cerr << file+", loadMonsterMap(): no root balise found for the xml file" << std::endl;
+        return false;
+    }
     if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(this->map_to_send.xmlRoot->CATCHCHALLENGER_XMLELENTVALUE(),"map"))
     {
         std::cerr << file+", loadMonsterMap(): \"map\" root balise not found for the xml file" << std::endl;
@@ -1423,6 +1433,11 @@ CATCHCHALLENGER_XMLELEMENT *Map_loader::getXmlCondition(const std::string &fileN
         }
     }
     const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+    if(root==NULL)
+    {
+        std::cerr << "no root balise found for the xml file " << file << std::endl;
+        return NULL;
+    }
     if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"conditions"))
     {
         std::cerr << "\"conditions\" root balise not found for the xml file " << file << std::endl;

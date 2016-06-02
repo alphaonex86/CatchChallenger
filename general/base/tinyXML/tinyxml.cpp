@@ -26,8 +26,8 @@ distribution.
 
 #ifdef TIXML_USE_STL
 #include <sstream>
-#include <iostream>
 #endif
+#include <iostream>
 
 #include "tinyxml.h"
 

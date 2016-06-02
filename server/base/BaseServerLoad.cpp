@@ -428,6 +428,11 @@ bool BaseServer::preload_zone_init()
             continue;
         }
         const CATCHCHALLENGER_XMLELEMENT* root = domDocument->RootElement();
+        if(root==NULL)
+        {
+            index++;
+            continue;
+        }
         if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),XMLCACHEDSTRING_zone))
         {
             std::cerr << "Unable to open the file: " << file.c_str() << ", \"zone\" root balise not found for the xml file" << std::endl;
@@ -2558,6 +2563,8 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
     #endif
     bool ok;
     const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+    if(root==NULL)
+        return;
     if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"bots"))
     {
         std::cerr << "\"bots\" root balise not found for the xml file" << std::endl;
