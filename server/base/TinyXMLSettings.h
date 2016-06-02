@@ -3,11 +3,7 @@
 
 #include <string>
 
-#ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
-#include "../../general/base/tinyXML/tinyxml.h"
-#elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
-#include "../../general/base/tinyXML2/tinyxml2.h"
-#endif
+#include "../../general/base/GeneralVariable.h"
 
 class TinyXMLSettings
 {
@@ -26,8 +22,8 @@ public:
     void setValue(const std::string &var,const char * const value);
     void sync();
 private:
-    TiXmlDocument document;
-    TiXmlElement * whereIs;
+    CATCHCHALLENGER_XMLDOCUMENT document;
+    CATCHCHALLENGER_XMLELEMENT * whereIs;
     std::string file;
     bool modified;
 };
