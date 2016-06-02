@@ -51,6 +51,11 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
     }
     #endif
     const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+    if(root==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
+        return types;
+    }
     if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"types"))
     {
         std::cerr << "Unable to open the file: " << file << ", \"types\" root balise not found for the xml file" << std::endl;
@@ -210,6 +215,11 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
         }
         #endif
         const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+        if(root==NULL)
+        {
+            file_index++;
+            continue;
+        }
         if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),CACHEDSTRING_monsters))
         {
             file_index++;
@@ -756,68 +766,70 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                 std::cerr << "Unable to open the xml file: " << file << ", is not an element: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
             item = item->NextSiblingElement(XMLCACHEDSTRING_monster);
         }
-        #ifndef CATCHCHALLENGER_CLASS_MASTER
-        //check the evolveTo
-        auto i = monsters.begin();
-        while(i!=monsters.cend())
-        {
-            unsigned int index=0;
-            bool evolutionByLevel=false,evolutionByTrade=false;
-            while(index<i->second.evolutions.size())
-            {
-                std::unordered_set<uint32_t> itemUse;
-                if(i->second.evolutions.at(index).type==Monster::EvolutionType_Level)
-                {
-                    if(evolutionByLevel)
-                    {
-                        std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " have already evolution by level" << std::endl;
-                        i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
-                        continue;
-                    }
-                    evolutionByLevel=true;
-                }
-                if(i->second.evolutions.at(index).type==Monster::EvolutionType_Trade)
-                {
-                    if(evolutionByTrade)
-                    {
-                        std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " have already evolution by trade" << std::endl;
-                        i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
-                        continue;
-                    }
-                    evolutionByTrade=true;
-                }
-                if(i->second.evolutions.at(index).type==Monster::EvolutionType_Item)
-                {
-                    if(itemUse.find(i->second.evolutions.at(index).level)!=itemUse.cend())
-                    {
-                        std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " have already evolution with this item" << std::endl;
-                        i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
-                        continue;
-                    }
-                    itemUse.insert(i->second.evolutions.at(index).level);
-                }
-                if(i->second.evolutions.at(index).evolveTo==i->first)
-                {
-                    std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->first << " can't evolve into them self" << std::endl;
-                    i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
-                    continue;
-                }
-                else if(monsters.find(i->second.evolutions.at(index).evolveTo)==monsters.cend())
-                {
-                    std::cerr << "Unable to open the xml file: " << file << ", the monster " << i->second.evolutions.at(index).evolveTo << " for the evolution of " << i->first << " can't be found" << std::endl;
-                    i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
-                    continue;
-                }
-                index++;
-            }
-            ++i;
-        }
-        #endif
         #ifdef EPOLLCATCHCHALLENGERSERVER
         delete domDocument;
         #endif
         file_index++;
     }
+
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
+    //check the evolveTo
+    auto i = monsters.begin();
+    while(i!=monsters.cend())
+    {
+        unsigned int index=0;
+        bool evolutionByLevel=false,evolutionByTrade=false;
+        while(index<i->second.evolutions.size())
+        {
+            std::unordered_set<uint32_t> itemUse;
+            if(i->second.evolutions.at(index).type==Monster::EvolutionType_Level)
+            {
+                if(evolutionByLevel)
+                {
+                    std::cerr << "The monster " << i->first << " have already evolution by level" << std::endl;
+                    i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
+                    continue;
+                }
+                evolutionByLevel=true;
+            }
+            if(i->second.evolutions.at(index).type==Monster::EvolutionType_Trade)
+            {
+                if(evolutionByTrade)
+                {
+                    std::cerr << "The monster " << i->first << " have already evolution by trade" << std::endl;
+                    i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
+                    continue;
+                }
+                evolutionByTrade=true;
+            }
+            if(i->second.evolutions.at(index).type==Monster::EvolutionType_Item)
+            {
+                if(itemUse.find(i->second.evolutions.at(index).level)!=itemUse.cend())
+                {
+                    std::cerr << "The monster " << i->first << " have already evolution with this item" << std::endl;
+                    i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
+                    continue;
+                }
+                itemUse.insert(i->second.evolutions.at(index).level);
+            }
+            if(i->second.evolutions.at(index).evolveTo==i->first)
+            {
+                std::cerr << "The monster " << i->first << " can't evolve into them self" << std::endl;
+                i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
+                continue;
+            }
+            else if(monsters.find(i->second.evolutions.at(index).evolveTo)==monsters.cend())
+            {
+                std::cerr << "The monster " << i->second.evolutions.at(index).evolveTo << " for the evolution of " << i->first << " can't be found" << std::endl;
+                i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
+                continue;
+            }
+            index++;
+        }
+        ++i;
+    }
+    #endif
+
     return monsters;
 }
 
@@ -919,6 +931,11 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
         }
         #endif
         const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+        if(root==NULL)
+        {
+            index_file++;
+            continue;
+        }
         if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"fights"))
         {
             std::cerr << "Unable to open the xml file: " << file << ", \"fights\" root balise not found for the xml file" << std::endl;
@@ -1176,6 +1193,11 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
         }
         #endif
         const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+        if(root==NULL)
+        {
+            file_index++;
+            continue;
+        }
         if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"skills"))
         {
             std::cerr << "Unable to open the xml file: " << file << ", \"list\" root balise not found for the xml file" << std::endl;
@@ -1452,47 +1474,49 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                 std::cerr << "Unable to open the xml file: " << file << ", is not an element: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
             item = item->NextSiblingElement(XMLCACHEDSTRING_skill);
         }
-        //check the default attack
-        if(monsterSkills.find(0)==monsterSkills.cend())
-            std::cerr << "Warning: no default monster attack if no more attack" << std::endl;
-        else if(monsterSkills.at(0).level.empty())
-        {
-            monsterSkills.erase(0);
-            std::cerr << "Warning: no level for default monster attack if no more attack" << std::endl;
-        }
-        else
-        {
-            #ifndef CATCHCHALLENGER_CLASS_MASTER
-            if(monsterSkills.at(0).level.front().life.empty())
-            {
-                monsterSkills.erase(0);
-                std::cerr << "Warning: no life effect for the default attack" << std::endl;
-            }
-            else
-            {
-                const unsigned int &list_size=monsterSkills.at(0).level.front().life.size();
-                unsigned int index=0;
-                while(index<list_size)
-                {
-                    const Skill::Life &life=monsterSkills.at(0).level.front().life.at(index);
-                    if(life.success==100 && life.effect.on==ApplyOn_AloneEnemy && life.effect.quantity<0)
-                        break;
-                    index++;
-                }
-                if(index==list_size)
-                {
-                    const Skill::Life &life=monsterSkills.at(0).level.front().life.front();
-                    monsterSkills.erase(0);
-                    std::cerr << "Warning: no valid life effect for the default attack (id: 0): success=100%: " << life.success << ", on=ApplyOn_AloneEnemy: " << life.effect.on << ", quantity<0: " << life.effect.quantity << " for skill" << std::endl;
-                }
-            }
-            #endif
-        }
         #ifdef EPOLLCATCHCHALLENGERSERVER
         delete domDocument;
         #endif
         file_index++;
     }
+
+    //check the default attack
+    if(monsterSkills.find(0)==monsterSkills.cend())
+        std::cerr << "Warning: no default monster attack if no more attack" << std::endl;
+    else if(monsterSkills.at(0).level.empty())
+    {
+        monsterSkills.erase(0);
+        std::cerr << "Warning: no level for default monster attack if no more attack" << std::endl;
+    }
+    else
+    {
+        #ifndef CATCHCHALLENGER_CLASS_MASTER
+        if(monsterSkills.at(0).level.front().life.empty())
+        {
+            monsterSkills.erase(0);
+            std::cerr << "Warning: no life effect for the default attack" << std::endl;
+        }
+        else
+        {
+            const unsigned int &list_size=monsterSkills.at(0).level.front().life.size();
+            unsigned int index=0;
+            while(index<list_size)
+            {
+                const Skill::Life &life=monsterSkills.at(0).level.front().life.at(index);
+                if(life.success==100 && life.effect.on==ApplyOn_AloneEnemy && life.effect.quantity<0)
+                    break;
+                index++;
+            }
+            if(index==list_size)
+            {
+                const Skill::Life &life=monsterSkills.at(0).level.front().life.front();
+                monsterSkills.erase(0);
+                std::cerr << "Warning: no valid life effect for the default attack (id: 0): success=100%: " << life.success << ", on=ApplyOn_AloneEnemy: " << life.effect.on << ", quantity<0: " << life.effect.quantity << " for skill" << std::endl;
+            }
+        }
+        #endif
+    }
+
     return monsterSkills;
 }
 
@@ -1532,6 +1556,11 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
         }
         #endif
         const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+        if(root==NULL)
+        {
+            file_index++;
+            continue;
+        }
         if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"buffs"))
         {
             std::cerr << "Unable to open the xml file: " << file << ", \"list\" root balise not found for the xml file" << std::endl;

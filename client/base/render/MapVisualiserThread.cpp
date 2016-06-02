@@ -840,6 +840,8 @@ void MapVisualiserThread::loadBotFile(const std::string &file)
     }
 
     const TiXmlElement * root = domDocument->RootElement();
+    if(root==NULL)
+        return;
     if(root->ValueStr()!="bots")
     {
         std::cerr << "Unable to open the file: " << file << ", \"reputations\" root balise not found for reputation of the xml file" << std::endl;

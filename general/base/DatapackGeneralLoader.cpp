@@ -35,6 +35,11 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
     }
     #endif
     const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+    if(root==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
+        return reputation;
+    }
     if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"reputations"))
     {
         std::cerr << "Unable to open the file: " << file << ", \"reputations\" root balise not found for reputation of the xml file" << std::endl;
@@ -262,6 +267,11 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     }
     #endif
     const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+    if(root==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
+        return std::pair<bool,Quest>(false,quest);
+    }
     if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"quest"))
     {
         std::cerr << "Unable to open the file: " << file << ", \"quest\" root balise not found for reputation of the xml file" << std::endl;
@@ -650,6 +660,11 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
     }
     #endif
     const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+    if(root==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
+        return plants;
+    }
     if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"plants"))
     {
         std::cerr << "Unable to open the file: " << file << ", \"plants\" root balise not found for reputation of the xml file" << std::endl;
@@ -938,6 +953,11 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
     }
     #endif
     const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+    if(root==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
+        return std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
+    }
     if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"recipes"))
     {
         std::cerr << "Unable to open the file: " << file << ", \"recipes\" root balise not found for reputation of the xml file" << std::endl;
@@ -1235,6 +1255,12 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
         }
         #endif
         const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+        if(root==NULL)
+        {
+            std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
+            file_index++;
+            continue;
+        }
         if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"industries"))
         {
             std::cerr << "Unable to open the file: " << file << ", \"industries\" root balise not found for reputation of the xml file" << std::endl;
@@ -1492,6 +1518,11 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
     }
     #endif
     const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+    if(root==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
+        return industriesLink;
+    }
     if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"industries"))
     {
         std::cerr << "Unable to open the file: " << file << ", \"industries\" root balise not found for reputation of the xml file" << std::endl;
@@ -1654,6 +1685,11 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
         }
         #endif
         const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+        if(root==NULL)
+        {
+            file_index++;
+            continue;
+        }
         if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"items"))
         {
             file_index++;
@@ -1966,6 +2002,11 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
     }
     #endif
     const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+    if(root==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
+        return returnVar;
+    }
     if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"profile"))
     {
         std::cerr << "Unable to open the file: " << file << ", \"profile\" root balise not found for reputation of the xml file" << std::endl;
@@ -2262,6 +2303,11 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
     }
     #endif
     const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+    if(root==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
+        return returnVar;
+    }
     if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"layers"))
     {
         std::cerr << "Unable to open the file: " << file << ", \"layers\" root balise not found for reputation of the xml file" << std::endl;
@@ -2452,6 +2498,11 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const std::string &file)
     }
     #endif
     const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+    if(root==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
+        return returnVar;
+    }
     if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"layers"))
     {
         std::cerr << "Unable to open the file: " << file << ", \"layers\" root balise not found for reputation of the xml file" << std::endl;
@@ -2507,6 +2558,11 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
     }
     #endif
     const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+    if(root==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
+        return returnVar;
+    }
     if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"events"))
     {
         std::cerr << "Unable to open the file: " << file << ", \"events\" root balise not found for reputation of the xml file" << std::endl;
@@ -2575,6 +2631,11 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
     }
     #endif
     const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+    if(root==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
+        return shops;
+    }
     if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"shops"))
     {
         std::cerr << "Unable to open the file: " << file << ", \"shops\" root balise not found for reputation of the xml file" << std::endl;
@@ -2737,6 +2798,11 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInter
     }
     #endif
     const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+    if(root==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
+        return serverProfileList;
+    }
     if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"profile"))
     {
         std::cerr << "Unable to open the file: " << file << ", \"profile\" root balise not found for reputation of the xml file" << std::endl;
