@@ -24,6 +24,7 @@
 #include <time.h>
 #include <iostream>
 #include <chrono>
+#include <unistd.h>
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QTimer>
 #include <QFile>
