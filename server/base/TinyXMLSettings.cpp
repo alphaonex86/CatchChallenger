@@ -18,11 +18,12 @@ TinyXMLSettings::TinyXMLSettings(const std::string &file) :
     modified(false)
 {
     this->file=file;
-    const auto loadOkay = document.CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-    if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+    const auto loadOkay = document.CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+    if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
     {
         modified=true;
-        if(document.CATCHCHALLENGER_XMLERRORID()==2 /*NOT 12! Error document empty. but can be just corrupted!*/ && errno==2)
+        const auto &errorId=document.CATCHCHALLENGER_XMLERRORID();
+        if(errorId==2 /*NOT 12! Error document empty. but can be just corrupted!*/ && errno==2)
         {
             #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
             CATCHCHALLENGER_XMLELEMENT * root = new CATCHCHALLENGER_XMLELEMENT("configuration");
@@ -97,7 +98,7 @@ void TinyXMLSettings::setValue(const std::string &var,const std::string &value)
     if(item==NULL)
     {
         modified=true;
-        CATCHCHALLENGER_XMLELEMENT item(var);
+        CATCHCHALLENGER_XMLELEMENT item(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(var));
         item.SetAttribute("value",CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(value));
         whereIs->InsertEndChild(item);
     }
