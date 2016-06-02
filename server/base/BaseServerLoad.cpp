@@ -410,8 +410,8 @@ bool BaseServer::preload_zone_init()
             #else
             domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
             #endif
-            const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-            if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+            const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+            if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
             {
                 std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
                 index++;
@@ -443,7 +443,7 @@ bool BaseServer::preload_zone_init()
             if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(capture) && capture->Attribute(XMLCACHEDSTRING_fightId)!=NULL)
             {
                 bool ok;
-                const std::vector<std::string> &fightIdStringList=stringsplit(capture->Attribute(XMLCACHEDSTRING_fightId),';');
+                const std::vector<std::string> &fightIdStringList=stringsplit(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(capture->Attribute(XMLCACHEDSTRING_fightId)),';');
                 int sub_index=0;
                 const int &listsize=fightIdStringList.size();
                 while(sub_index<listsize)
@@ -1575,7 +1575,7 @@ void BaseServer::preload_the_skin()
 void BaseServer::preload_the_datapack()
 {
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-    std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+CACHEDSTRING_dotcomma+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
+    std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+CACHEDSTRING_dotcoma+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
     BaseServerMasterSendDatapack::extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     std::vector<std::string> compressedExtensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
@@ -2084,7 +2084,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                             ++i;
                             continue;
                         }
-                        const std::string step_type=step->Attribute(CACHEDSTRING_type);
+                        const std::string step_type=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(step->Attribute(XMLCACHEDSTRING_type));
                         if(step_type==CACHEDSTRING_shop)
                         {
                             if(step->Attribute(XMLCACHEDSTRING_shop)==NULL)
@@ -2103,7 +2103,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                           << std::endl;
                             else
                             {
-                                uint32_t shop=stringtouint32(step->Attribute(XMLCACHEDSTRING_shop),&ok);
+                                uint32_t shop=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(step->Attribute(XMLCACHEDSTRING_shop)),&ok);
                                 if(!ok)
                                     std::cerr << "shop is not a number: for bot id: "
                                               << bot_Semi.id
@@ -2312,7 +2312,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                               << std::to_string(i->first)
                                               << std::endl;
                                 #endif
-                                mapServer->zonecapture[pairpoint]=*step->Attribute(XMLCACHEDSTRING_zone);
+                                mapServer->zonecapture[pairpoint]=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(step->Attribute(XMLCACHEDSTRING_zone));
                                 zonecapturepoint_number++;
                             }
                         }
@@ -2337,7 +2337,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 uint32_t fightid=0;
                                 ok=false;
                                 if(step->Attribute(XMLCACHEDSTRING_fightid)!=NULL)
-                                    fightid=stringtouint32(step->Attribute(XMLCACHEDSTRING_fightid),&ok);
+                                    fightid=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(step->Attribute(XMLCACHEDSTRING_fightid)),&ok);
                                 if(ok)
                                 {
                                     if(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightid)!=CommonDatapackServerSpec::commonDatapackServerSpec.botFights.end())
@@ -2547,8 +2547,8 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
         #else
         domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif
-        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-        if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
         {
             std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
             return;
@@ -2570,10 +2570,10 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
         if(child->Attribute("id")==NULL)
             std::cerr << "Has not attribute \"id\": child->CATCHCHALLENGER_XMLELENTVALUE(): " << child->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(child) << ")" << std::endl;
         else if(!CATCHCHALLENGER_XMLELENTISXMLELEMENT(child))
-            std::cerr << "Is not an element: child->CATCHCHALLENGER_XMLELENTVALUE(): " << child->CATCHCHALLENGER_XMLELENTVALUE() << ", name: " << child->Attribute("name") << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(child) << ")" << std::endl;
+            std::cerr << "Is not an element: child->CATCHCHALLENGER_XMLELENTVALUE(): " << child->CATCHCHALLENGER_XMLELENTVALUE() << ", name: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(child->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("name"))) << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(child) << ")" << std::endl;
         else
         {
-            uint32_t id=stringtouint32(child->Attribute("id"),&ok);
+            uint32_t id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(child->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
             if(ok)
             {
                 if(botIdLoaded.find(id)!=botIdLoaded.cend())
@@ -2588,10 +2588,10 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
                     else if(step->Attribute("type")==NULL)
                         std::cerr << "Has not attribute \"type\": bot->CATCHCHALLENGER_XMLELENTVALUE(): " << step->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(step) << ")" << std::endl;
                     else if(!CATCHCHALLENGER_XMLELENTISXMLELEMENT(step))
-                        std::cerr << "Is not an element: bot->CATCHCHALLENGER_XMLELENTVALUE(): " << step->CATCHCHALLENGER_XMLELENTVALUE() << ", type: " << step->Attribute("type") << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(step) << ")" << std::endl;
+                        std::cerr << "Is not an element: bot->CATCHCHALLENGER_XMLELENTVALUE(): " << step->CATCHCHALLENGER_XMLELENTVALUE() << ", type: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(step->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))) << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(step) << ")" << std::endl;
                     else
                     {
-                        uint32_t stepId=stringtouint32(step->Attribute("id"),&ok);
+                        uint32_t stepId=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(step->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                         if(ok)
                             botFiles[file][id].step[stepId]=step;
                     }

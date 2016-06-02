@@ -41,8 +41,8 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
         #else
         domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif
-        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-        if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
         {
             std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
             return types;
@@ -68,7 +68,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
             {
                 if(typeItem->Attribute(XMLCACHEDSTRING_name)!=NULL)
                 {
-                    std::string name=std::string(typeItem->Attribute(XMLCACHEDSTRING_name));
+                    std::string name=std::string(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(typeItem->Attribute(XMLCACHEDSTRING_name)));
                     if(duplicate.find(name)==duplicate.cend())
                     {
                         duplicate.insert(name);
@@ -97,7 +97,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
             {
                 if(typeItem->Attribute(XMLCACHEDSTRING_name)!=NULL)
                 {
-                    std::string name=std::string(typeItem->Attribute(XMLCACHEDSTRING_name));
+                    std::string name=std::string(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(typeItem->Attribute(XMLCACHEDSTRING_name)));
                     if(duplicate.find(name)==duplicate.cend())
                     {
                         duplicate.insert(name);
@@ -108,8 +108,8 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
                             {
                                 if(multiplicator->Attribute(XMLCACHEDSTRING_number)!=NULL && multiplicator->Attribute(XMLCACHEDSTRING_to)!=NULL)
                                 {
-                                    float number=stringtofloat(multiplicator->Attribute(XMLCACHEDSTRING_number),&ok);
-                                    std::vector<std::string> to=stringsplit(multiplicator->Attribute(XMLCACHEDSTRING_to),';');
+                                    float number=stringtofloat(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(multiplicator->Attribute(XMLCACHEDSTRING_number)),&ok);
+                                    std::vector<std::string> to=stringsplit(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(multiplicator->Attribute(XMLCACHEDSTRING_to)),';');
                                     if(ok && (number==2.0 || number==0.5 || number==0.0))
                                     {
                                         unsigned int index=0;
@@ -199,8 +199,8 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
             #else
             domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
             #endif
-            const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-            if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+            const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+            if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
             {
                 std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
                 file_index++;
@@ -243,7 +243,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                 else
                 {
                     if(item->Attribute(XMLCACHEDSTRING_xp_for_max_level)==NULL)
-                        item->SetAttribute(XMLCACHEDSTRING_xp_for_max_level,*item->Attribute(XMLCACHEDSTRING_xp_max));
+                        item->SetAttribute(XMLCACHEDSTRING_xp_for_max_level,CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_xp_max)));
                 }
                 if(item->Attribute(XMLCACHEDSTRING_hp)==NULL)
                 {
@@ -292,7 +292,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                     #ifndef CATCHCHALLENGER_CLASS_MASTER
                     monster.catch_rate=100;
                     #endif
-                    uint32_t id=stringtouint32(item->Attribute(XMLCACHEDSTRING_id),&ok);
+                    uint32_t id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_id)),&ok);
                     if(!ok)
                         std::cerr << "Unable to open the xml file: " << file << ", id not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                     else if(monsters.find(id)!=monsters.cend())
@@ -303,40 +303,40 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                         if(item->Attribute(XMLCACHEDSTRING_catch_rate)!=NULL)
                         {
                             bool ok2;
-                            uint32_t catch_rate=stringtouint32(item->Attribute(XMLCACHEDSTRING_catch_rate),&ok2);
+                            uint32_t catch_rate=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_catch_rate)),&ok2);
                             if(ok2)
                             {
                                 if(catch_rate<=255)
                                     monster.catch_rate=catch_rate;
                                 else
-                                    std::cerr << "Unable to open the xml file: " << file << ", catch_rate is not a number: " << item->Attribute(XMLCACHEDSTRING_catch_rate) << " child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
+                                    std::cerr << "Unable to open the xml file: " << file << ", catch_rate is not a number: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_catch_rate)) << " child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                             }
                             else
-                                std::cerr << "Unable to open the xml file: " << file << ", catch_rate is not a number: " << item->Attribute(XMLCACHEDSTRING_catch_rate) << " child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
+                                std::cerr << "Unable to open the xml file: " << file << ", catch_rate is not a number: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_catch_rate)) << " child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                         }
                         if(item->Attribute(XMLCACHEDSTRING_type)!=NULL)
                         {
-                            const std::vector<std::string> &typeList=stringsplit(item->Attribute(XMLCACHEDSTRING_type),';');
+                            const std::vector<std::string> &typeList=stringsplit(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_type)),';');
                             unsigned int index=0;
                             while(index<typeList.size())
                             {
                                 if(typeNameToId.find(typeList.at(index))!=typeNameToId.cend())
                                     monster.type.push_back(typeNameToId.at(typeList.at(index)));
                                 else
-                                    std::cerr << "Unable to open the xml file: " << file << ", type not found into the list: " << item->Attribute(XMLCACHEDSTRING_type) << " child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
+                                    std::cerr << "Unable to open the xml file: " << file << ", type not found into the list: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_type)) << " child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                                 index++;
                             }
                         }
                         if(item->Attribute(XMLCACHEDSTRING_type2)!=NULL)
                         {
-                            const std::vector<std::string> &typeList=stringsplit(item->Attribute(XMLCACHEDSTRING_type2),';');
+                            const std::vector<std::string> &typeList=stringsplit(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_type2)),';');
                             unsigned int index=0;
                             while(index<typeList.size())
                             {
                                 if(typeNameToId.find(typeList.at(index))!=typeNameToId.cend())
                                     monster.type.push_back(typeNameToId.at(typeList.at(index)));
                                 else
-                                    std::cerr << "Unable to open the xml file: " << file << ", type not found into the list: " << item->Attribute(XMLCACHEDSTRING_type2) << " child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
+                                    std::cerr << "Unable to open the xml file: " << file << ", type not found into the list: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_type2)) << " child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                                 index++;
                             }
                         }
@@ -345,7 +345,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                         {
                             if(item->Attribute(XMLCACHEDSTRING_pow)!=NULL)
                             {
-                                powerVar=stringtodouble(item->Attribute(XMLCACHEDSTRING_pow),&ok);
+                                powerVar=stringtodouble(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_pow)),&ok);
                                 if(!ok)
                                 {
                                     powerVar=1.0;
@@ -369,64 +369,64 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                         #endif
                         if(ok)
                         {
-                            monster.egg_step=stringtouint32(item->Attribute(XMLCACHEDSTRING_egg_step),&ok);
+                            monster.egg_step=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_egg_step)),&ok);
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", egg_step is not number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.xp_for_max_level=stringtouint32(item->Attribute(XMLCACHEDSTRING_xp_for_max_level),&ok);
+                            monster.xp_for_max_level=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_xp_for_max_level)),&ok);
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", xp_for_max_level is not number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                         }
                         #endif
                         if(ok)
                         {
-                            monster.stat.hp=stringtouint32(item->Attribute(XMLCACHEDSTRING_hp),&ok);
+                            monster.stat.hp=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_hp)),&ok);
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", hp is not number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                         }
                         #ifndef CATCHCHALLENGER_CLASS_MASTER
                         if(ok)
                         {
-                            monster.stat.attack=stringtouint32(item->Attribute(XMLCACHEDSTRING_attack),&ok);
+                            monster.stat.attack=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_attack)),&ok);
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", attack is not number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.stat.defense=stringtouint32(item->Attribute(XMLCACHEDSTRING_defense),&ok);
+                            monster.stat.defense=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_defense)),&ok);
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", defense is not number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.stat.special_attack=stringtouint32(item->Attribute(XMLCACHEDSTRING_special_attack),&ok);
+                            monster.stat.special_attack=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_special_attack)),&ok);
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", special_attack is not number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.stat.special_defense=stringtouint32(item->Attribute(XMLCACHEDSTRING_special_defense),&ok);
+                            monster.stat.special_defense=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_special_defense)),&ok);
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", special_defense is not number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.stat.speed=stringtouint32(item->Attribute(XMLCACHEDSTRING_speed),&ok);
+                            monster.stat.speed=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_speed)),&ok);
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", speed is not number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                         }
                         #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
                         if(ok)
                         {
-                            monster.give_xp=stringtouint32(item->Attribute(XMLCACHEDSTRING_give_xp),&ok)*CommonSettingsServer::commonSettingsServer.rates_xp;
+                            monster.give_xp=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_give_xp)),&ok)*CommonSettingsServer::commonSettingsServer.rates_xp;
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", give_xp is not number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                         }
                         if(ok)
                         {
-                            monster.give_sp=stringtouint32(item->Attribute(XMLCACHEDSTRING_give_sp),&ok)*CommonSettingsServer::commonSettingsServer.rates_xp;
+                            monster.give_sp=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_give_sp)),&ok)*CommonSettingsServer::commonSettingsServer.rates_xp;
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", give_sp is not number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                         }
@@ -439,7 +439,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                         {
                             if(item->Attribute(XMLCACHEDSTRING_ratio_gender)!=NULL)
                             {
-                                std::string ratio_gender=std::string(item->Attribute(XMLCACHEDSTRING_ratio_gender));
+                                std::string ratio_gender=std::string(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_ratio_gender)));
                                 stringreplaceOne(ratio_gender,CACHEDSTRING_percent,"");
                                 monster.ratio_gender=stringtouint8(ratio_gender,&ok2);
                                 if(!ok2)
@@ -472,13 +472,13 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                 {
                                                     ok=true;
                                                     if(attack->Attribute(XMLCACHEDSTRING_skill)==NULL)
-                                                        attack->SetAttribute(XMLCACHEDSTRING_skill,*attack->Attribute(XMLCACHEDSTRING_id));
+                                                        attack->SetAttribute(XMLCACHEDSTRING_skill,CATCHCHALLENGER_XMLATTRIBUTETOSTRING(attack->Attribute(XMLCACHEDSTRING_id)));
                                                     Monster::AttackToLearn attackVar;
                                                     if(attack->Attribute(XMLCACHEDSTRING_skill_level)!=NULL || attack->Attribute(XMLCACHEDSTRING_attack_level)!=NULL)
                                                     {
                                                         if(attack->Attribute(XMLCACHEDSTRING_skill_level)==NULL)
-                                                            attack->SetAttribute(XMLCACHEDSTRING_skill_level,*attack->Attribute(XMLCACHEDSTRING_attack_level));
-                                                        attackVar.learnSkillLevel=stringtouint32(attack->Attribute(XMLCACHEDSTRING_skill_level),&ok);
+                                                            attack->SetAttribute(XMLCACHEDSTRING_skill_level,CATCHCHALLENGER_XMLATTRIBUTETOSTRING(attack->Attribute(XMLCACHEDSTRING_attack_level)));
+                                                        attackVar.learnSkillLevel=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(attack->Attribute(XMLCACHEDSTRING_skill_level)),&ok);
                                                         if(!ok)
                                                             std::cerr << "Unable to open the xml file: " << file << ", skill_level is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << attack->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(attack) << ")" << std::endl;
                                                     }
@@ -486,7 +486,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                         attackVar.learnSkillLevel=1;
                                                     if(ok)
                                                     {
-                                                        attackVar.learnSkill=stringtouint32(attack->Attribute(XMLCACHEDSTRING_skill),&ok);
+                                                        attackVar.learnSkill=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(attack->Attribute(XMLCACHEDSTRING_skill)),&ok);
                                                         if(!ok)
                                                             std::cerr << "Unable to open the xml file: " << file << ", skill is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << attack->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(attack) << ")" << std::endl;
                                                     }
@@ -510,7 +510,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                     {
                                                         if(ok)
                                                         {
-                                                            attackVar.learnAtLevel=stringtouint8(attack->Attribute(XMLCACHEDSTRING_level),&ok);
+                                                            attackVar.learnAtLevel=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(attack->Attribute(XMLCACHEDSTRING_level)) ,&ok);
                                                             if(ok)
                                                             {
                                                                 unsigned int index;
@@ -571,9 +571,9 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                             uint32_t itemId;
                                                             if(ok)
                                                             {
-                                                                itemId=stringtouint32(attack->Attribute(XMLCACHEDSTRING_byitem),&ok);
+                                                                itemId=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(attack->Attribute(XMLCACHEDSTRING_byitem)),&ok);
                                                                 if(!ok)
-                                                                    std::cerr << "Unable to open the xml file: " << file << ", item to learn is not a number " << attack->Attribute(XMLCACHEDSTRING_byitem) << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << attack->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(attack) << ")" << std::endl;
+                                                                    std::cerr << "Unable to open the xml file: " << file << ", item to learn is not a number " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(attack->Attribute(XMLCACHEDSTRING_byitem)) << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << attack->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(attack) << ")" << std::endl;
                                                             }
                                                             if(ok)
                                                             {
@@ -636,20 +636,20 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                             {
                                                 if(evolutionItem->Attribute(XMLCACHEDSTRING_type)!=NULL && (
                                                        evolutionItem->Attribute(XMLCACHEDSTRING_level)!=NULL ||
-                                                       (CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(evolutionItem->Attribute(XMLCACHEDSTRING_type),CACHEDSTRING_trade) && evolutionItem->Attribute(XMLCACHEDSTRING_evolveTo)!=NULL) ||
-                                                       (CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(evolutionItem->Attribute(XMLCACHEDSTRING_type),CACHEDSTRING_item) && evolutionItem->Attribute(XMLCACHEDSTRING_item)!=NULL)
+                                                       (CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(evolutionItem->Attribute(XMLCACHEDSTRING_type)),CACHEDSTRING_trade) && evolutionItem->Attribute(XMLCACHEDSTRING_evolveTo)!=NULL) ||
+                                                       (CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(evolutionItem->Attribute(XMLCACHEDSTRING_type)),CACHEDSTRING_item) && evolutionItem->Attribute(XMLCACHEDSTRING_item)!=NULL)
                                                        )
                                                    )
                                                 {
                                                     ok=true;
                                                     Monster::Evolution evolutionVar;
-                                                    const std::string &typeText=std::string(evolutionItem->Attribute(XMLCACHEDSTRING_type));
+                                                    const std::string &typeText=std::string(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(evolutionItem->Attribute(XMLCACHEDSTRING_type)));
                                                     if(typeText!=CACHEDSTRING_trade)
                                                     {
                                                         if(typeText==CACHEDSTRING_item)
-                                                            evolutionVar.level=stringtouint32(evolutionItem->Attribute(XMLCACHEDSTRING_item),&ok);
+                                                            evolutionVar.level=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(evolutionItem->Attribute(XMLCACHEDSTRING_item)),&ok);
                                                         else
-                                                            evolutionVar.level=stringtouint32(evolutionItem->Attribute(XMLCACHEDSTRING_level),&ok);
+                                                            evolutionVar.level=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(evolutionItem->Attribute(XMLCACHEDSTRING_level)),&ok);
                                                         if(!ok)
                                                             std::cerr << "Unable to open the xml file: " << file << ", level is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << evolutionItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(evolutionItem) << ")" << std::endl;
                                                     }
@@ -657,7 +657,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                         evolutionVar.level=0;
                                                     if(ok)
                                                     {
-                                                        evolutionVar.evolveTo=stringtouint32(evolutionItem->Attribute(XMLCACHEDSTRING_evolveTo),&ok);
+                                                        evolutionVar.evolveTo=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(evolutionItem->Attribute(XMLCACHEDSTRING_evolveTo)),&ok);
                                                         if(!ok)
                                                             std::cerr << "Unable to open the xml file: " << file << ", evolveTo is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << evolutionItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(evolutionItem) << ")" << std::endl;
                                                     }
@@ -908,8 +908,8 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
             #else
             domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
             #endif
-            const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-            if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+            const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+            if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
             {
                 std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
                 index_file++;
@@ -935,7 +935,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
             {
                 if(item->Attribute(XMLCACHEDSTRING_id)!=NULL)
                 {
-                    uint32_t id=stringtouint32(item->Attribute(XMLCACHEDSTRING_id),&ok);
+                    uint32_t id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_id)),&ok);
                     if(ok)
                     {
                         bool entryValid=true;
@@ -947,13 +947,17 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                             {
                                 if(monster->Attribute(XMLCACHEDSTRING_id)==NULL)
                                     std::cerr << "Has not attribute \"id\": CATCHCHALLENGER_XMLELENTVALUE(): " << monster->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monster) << ")" << std::endl;
-                                else if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(monster))
-                                    std::cerr << "Is not an element: type: " << monster->Attribute(XMLCACHEDSTRING_type) << " CATCHCHALLENGER_XMLELENTVALUE(): " << monster->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monster) << ")" << std::endl;
+                                else if(!CATCHCHALLENGER_XMLELENTISXMLELEMENT(monster))
+                                {
+                                    std::cerr << "Is not an element: type: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monster->Attribute(XMLCACHEDSTRING_id))
+                                              << " CATCHCHALLENGER_XMLELENTVALUE(): " << monster->CATCHCHALLENGER_XMLELENTVALUE()
+                                              << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monster) << ")" << std::endl;
+                                }
                                 else
                                 {
                                     CatchChallenger::BotFight::BotFightMonster botFightMonster;
                                     botFightMonster.level=1;
-                                    botFightMonster.id=stringtouint32(monster->Attribute(XMLCACHEDSTRING_id),&ok);
+                                    botFightMonster.id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monster->Attribute(XMLCACHEDSTRING_id)),&ok);
                                     if(ok)
                                     {
                                         if(monsters.find(botFightMonster.id)==monsters.cend())
@@ -964,15 +968,15 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                                         }
                                         if(monster->Attribute(XMLCACHEDSTRING_level)!=NULL)
                                         {
-                                            botFightMonster.level=stringtouint16(monster->Attribute(XMLCACHEDSTRING_level),&ok);
+                                            botFightMonster.level=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monster->Attribute(XMLCACHEDSTRING_level)),&ok);
                                             if(!ok)
                                             {
-                                                std::cerr << "The level is not a number: type: " << monster->Attribute(XMLCACHEDSTRING_type) << " CATCHCHALLENGER_XMLELENTVALUE(): " << monster->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monster) << "), file: " << file << std::endl;
+                                                std::cerr << "The level is not a number: type: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monster->Attribute(XMLCACHEDSTRING_type)) << " CATCHCHALLENGER_XMLELENTVALUE(): " << monster->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monster) << "), file: " << file << std::endl;
                                                 botFightMonster.level=1;
                                             }
                                             if(botFightMonster.level<1)
                                             {
-                                                std::cerr << "Can't be 0 or negative: type: " << monster->Attribute(XMLCACHEDSTRING_type) << " CATCHCHALLENGER_XMLELENTVALUE(): " << monster->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monster) << "), file: " << file << std::endl;
+                                                std::cerr << "Can't be 0 or negative: type: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monster->Attribute(XMLCACHEDSTRING_type)) << " CATCHCHALLENGER_XMLELENTVALUE(): " << monster->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monster) << "), file: " << file << std::endl;
                                                 botFightMonster.level=1;
                                             }
                                         }
@@ -986,7 +990,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                                                 std::cerr << "Is not an element: CATCHCHALLENGER_XMLELENTVALUE(): " << attack->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(attack) << "), file: " << file << std::endl;
                                             else
                                             {
-                                                uint32_t attackId=stringtouint32(attack->Attribute(XMLCACHEDSTRING_id),&ok);
+                                                uint32_t attackId=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(attack->Attribute(XMLCACHEDSTRING_id)),&ok);
                                                 if(ok)
                                                 {
                                                     if(monsterSkills.find(attackId)==monsterSkills.cend())
@@ -997,7 +1001,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                                                     }
                                                     if(attack->Attribute(XMLCACHEDSTRING_level)!=NULL)
                                                     {
-                                                        attackLevel=stringtouint16(attack->Attribute(XMLCACHEDSTRING_level),&ok);
+                                                        attackLevel=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(attack->Attribute(XMLCACHEDSTRING_level)),&ok);
                                                         if(!ok)
                                                         {
                                                             std::cerr << "The level is not a number: CATCHCHALLENGER_XMLELENTVALUE(): " << attack->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(attack) << "), file: " << file << std::endl;
@@ -1047,7 +1051,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                                 {
                                     if(gain->Attribute(XMLCACHEDSTRING_cash)!=NULL)
                                     {
-                                        const uint32_t &cash=stringtouint32(gain->Attribute(XMLCACHEDSTRING_cash),&ok)*CommonSettingsServer::commonSettingsServer.rates_gold;
+                                        const uint32_t &cash=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(gain->Attribute(XMLCACHEDSTRING_cash)),&ok)*CommonSettingsServer::commonSettingsServer.rates_gold;
                                         if(ok)
                                             botFight.cash+=cash;
                                         else
@@ -1057,14 +1061,14 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                                     {
                                         BotFight::Item itemVar;
                                         itemVar.quantity=1;
-                                        itemVar.id=stringtouint32(gain->Attribute(XMLCACHEDSTRING_item),&ok);
+                                        itemVar.id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(gain->Attribute(XMLCACHEDSTRING_item)),&ok);
                                         if(ok)
                                         {
                                             if(items.find(itemVar.id)!=items.cend())
                                             {
                                                 if(gain->Attribute(XMLCACHEDSTRING_quantity)!=NULL)
                                                 {
-                                                    itemVar.quantity=stringtouint32(gain->Attribute(XMLCACHEDSTRING_quantity),&ok);
+                                                    itemVar.quantity=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(gain->Attribute(XMLCACHEDSTRING_quantity)),&ok);
                                                     if(!ok || itemVar.quantity<1)
                                                     {
                                                         itemVar.quantity=1;
@@ -1083,7 +1087,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                                         std::cerr << "unknown fight gain: file: " << file << " child->CATCHCHALLENGER_XMLELENTVALUE(): " << gain->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(gain) << ")" << std::endl;
                                 }
                                 else
-                                    std::cerr << "Is not an element: file: " << file << ", type: " << gain->Attribute(XMLCACHEDSTRING_type) << " child->CATCHCHALLENGER_XMLELENTVALUE(): " << gain->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(gain) << ")" << std::endl;
+                                    std::cerr << "Is not an element: file: " << file << ", type: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(gain->Attribute(XMLCACHEDSTRING_type)) << " child->CATCHCHALLENGER_XMLELENTVALUE(): " << gain->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(gain) << ")" << std::endl;
                                 gain = gain->NextSiblingElement(XMLCACHEDSTRING_gain);
                             }
                         }
@@ -1161,8 +1165,8 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
             #else
             domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
             #endif
-            const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-            if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+            const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+            if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
             {
                 std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
                 file_index++;
@@ -1191,7 +1195,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
             {
                 if(item->Attribute(XMLCACHEDSTRING_id)!=NULL)
                 {
-                    uint32_t id=stringtouint32(item->Attribute(XMLCACHEDSTRING_id),&ok);
+                    uint32_t id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_id)),&ok);
                     if(ok && monsterSkills.find(id)!=monsterSkills.cend())
                         std::cerr << "Unable to open the xml file: " << file << ", id already found: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                     else if(ok)
@@ -1212,7 +1216,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                             uint32_t sp=0;
                                             if(level->Attribute(XMLCACHEDSTRING_sp)!=NULL)
                                             {
-                                                sp=stringtouint32(level->Attribute(XMLCACHEDSTRING_sp),&ok);
+                                                sp=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(level->Attribute(XMLCACHEDSTRING_sp)),&ok);
                                                 if(!ok)
                                                 {
                                                     std::cerr << "Unable to open the xml file: " << file << ", sp is not number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << level->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(level) << ")" << std::endl;
@@ -1222,7 +1226,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                             uint8_t endurance=40;
                                             if(level->Attribute(XMLCACHEDSTRING_endurance)!=NULL)
                                             {
-                                                endurance=stringtouint32(level->Attribute(XMLCACHEDSTRING_endurance),&ok);
+                                                endurance=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(level->Attribute(XMLCACHEDSTRING_endurance)),&ok);
                                                 if(!ok)
                                                 {
                                                     std::cerr << "Unable to open the xml file: " << file << ", endurance is not number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << level->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(level) << ")" << std::endl;
@@ -1236,7 +1240,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                             }
                                             uint8_t number;
                                             if(ok)
-                                                number=stringtouint32(level->Attribute(XMLCACHEDSTRING_number),&ok);
+                                                number=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(level->Attribute(XMLCACHEDSTRING_number)),&ok);
                                             if(ok)
                                             {
                                                 levelDef[number].sp_to_learn=sp;
@@ -1253,7 +1257,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                                 Skill::Life effect;
                                                                 if(life->Attribute(XMLCACHEDSTRING_applyOn)!=NULL)
                                                                 {
-                                                                    const std::string &applyOn=life->Attribute(XMLCACHEDSTRING_applyOn);
+                                                                    const std::string &applyOn=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(life->Attribute(XMLCACHEDSTRING_applyOn));
                                                                     if(applyOn==CACHEDSTRING_aloneEnemy)
                                                                         effect.effect.on=ApplyOn_AloneEnemy;
                                                                     else if(applyOn==CACHEDSTRING_themself)
@@ -1266,7 +1270,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                                         effect.effect.on=ApplyOn_Nobody;
                                                                     else
                                                                     {
-                                                                        std::cerr << "Unable to open the xml file: " << file << ", applyOn tag wrong " << life->Attribute(XMLCACHEDSTRING_applyOn) << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
+                                                                        std::cerr << "Unable to open the xml file: " << file << ", applyOn tag wrong " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(life->Attribute(XMLCACHEDSTRING_applyOn)) << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                                                                         effect.effect.on=ApplyOn_AloneEnemy;
                                                                     }
                                                                 }
@@ -1274,7 +1278,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                                     effect.effect.on=ApplyOn_AloneEnemy;
                                                                 std::string text;
                                                                 if(life->Attribute(XMLCACHEDSTRING_quantity)!=NULL)
-                                                                    text=life->Attribute(XMLCACHEDSTRING_quantity);
+                                                                    text=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(life->Attribute(XMLCACHEDSTRING_quantity));
                                                                 if(stringEndsWith(text,"%"))
                                                                     effect.effect.type=QuantityType_Percent;
                                                                 else
@@ -1285,7 +1289,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                                 effect.success=100;
                                                                 if(life->Attribute(XMLCACHEDSTRING_success)!=NULL)
                                                                 {
-                                                                    std::string success=life->Attribute(XMLCACHEDSTRING_success);
+                                                                    std::string success=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(life->Attribute(XMLCACHEDSTRING_success));
                                                                     stringreplaceOne(success,"%","");
                                                                     effect.success=stringtouint8(success,&ok2);
                                                                     if(!ok2)
@@ -1315,13 +1319,13 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                             {
                                                                 if(buff->Attribute(XMLCACHEDSTRING_id)!=NULL)
                                                                 {
-                                                                    uint32_t idBuff=stringtouint32(buff->Attribute(XMLCACHEDSTRING_id),&ok);
+                                                                    uint32_t idBuff=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(buff->Attribute(XMLCACHEDSTRING_id)),&ok);
                                                                     if(ok)
                                                                     {
                                                                         Skill::Buff effect;
                                                                         if(buff->Attribute(XMLCACHEDSTRING_applyOn)!=NULL)
                                                                         {
-                                                                            const std::string &applyOn=buff->Attribute(XMLCACHEDSTRING_applyOn);
+                                                                            const std::string &applyOn=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(buff->Attribute(XMLCACHEDSTRING_applyOn));
                                                                             if(applyOn==CACHEDSTRING_aloneEnemy)
                                                                                 effect.effect.on=ApplyOn_AloneEnemy;
                                                                             else if(applyOn==CACHEDSTRING_themself)
@@ -1334,7 +1338,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                                                 effect.effect.on=ApplyOn_Nobody;
                                                                             else
                                                                             {
-                                                                                std::cerr << "Unable to open the xml file: " << file << ", applyOn tag wrong " << buff->Attribute(XMLCACHEDSTRING_applyOn) << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
+                                                                                std::cerr << "Unable to open the xml file: " << file << ", applyOn tag wrong " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(buff->Attribute(XMLCACHEDSTRING_applyOn)) << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                                                                                 effect.effect.on=ApplyOn_AloneEnemy;
                                                                             }
                                                                         }
@@ -1348,10 +1352,10 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                                             ok2=true;
                                                                             if(buff->Attribute(XMLCACHEDSTRING_level)!=NULL)
                                                                             {
-                                                                                const std::string &level=buff->Attribute(XMLCACHEDSTRING_level);
+                                                                                const std::string &level=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(buff->Attribute(XMLCACHEDSTRING_level));
                                                                                 effect.effect.level=stringtouint8(level,&ok2);
                                                                                 if(!ok2)
-                                                                                    std::cerr << "Unable to open the xml file: " << file << ", level wrong: " << buff->Attribute(XMLCACHEDSTRING_level) << " child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
+                                                                                    std::cerr << "Unable to open the xml file: " << file << ", level wrong: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(buff->Attribute(XMLCACHEDSTRING_level)) << " child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                                                                                 if(effect.effect.level<=0)
                                                                                 {
                                                                                     ok2=false;
@@ -1368,7 +1372,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                                                     effect.success=100;
                                                                                     if(buff->Attribute(XMLCACHEDSTRING_success)!=NULL)
                                                                                     {
-                                                                                        std::string success=buff->Attribute(XMLCACHEDSTRING_success);
+                                                                                        std::string success=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(buff->Attribute(XMLCACHEDSTRING_success));
                                                                                         stringreplaceOne(success,"%","");
                                                                                         effect.success=stringtouint8(success,&ok2);
                                                                                         if(!ok2)
@@ -1412,10 +1416,10 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                     #ifndef CATCHCHALLENGER_CLASS_MASTER
                                     if(item->Attribute(XMLCACHEDSTRING_type)!=NULL)
                                     {
-                                        if(typeNameToId.find(item->Attribute(XMLCACHEDSTRING_type))!=typeNameToId.cend())
-                                            monsterSkills[id].type=typeNameToId.at(item->Attribute(XMLCACHEDSTRING_type));
+                                        if(typeNameToId.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_type)))!=typeNameToId.cend())
+                                            monsterSkills[id].type=typeNameToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_type)));
                                         else
-                                            std::cerr << "Unable to open the xml file: " << file << ", type not found: " << item->Attribute(XMLCACHEDSTRING_type) << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
+                                            std::cerr << "Unable to open the xml file: " << file << ", type not found: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_type)) << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                                     }
                                     #endif // CATCHCHALLENGER_CLASS_MASTER
                                 }
@@ -1517,8 +1521,8 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
             #else
             domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
             #endif
-            const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-            if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+            const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+            if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
             {
                 std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
                 file_index++;
@@ -1544,7 +1548,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
             {
                 if(item->Attribute(XMLCACHEDSTRING_id)!=NULL)
                 {
-                    uint32_t id=stringtouint32(item->Attribute(XMLCACHEDSTRING_id),&ok);
+                    uint32_t id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_id)),&ok);
                     if(ok && monsterBuffs.find(id)!=monsterBuffs.cend())
                         std::cerr << "Unable to open the xml file: " << file << ", id already found: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                     else if(ok)
@@ -1554,7 +1558,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                         float general_capture_bonus=1.0;
                         if(item->Attribute(XMLCACHEDSTRING_capture_bonus)!=NULL)
                         {
-                           general_capture_bonus=stringtofloat(item->Attribute(XMLCACHEDSTRING_capture_bonus),&ok);
+                           general_capture_bonus=stringtofloat(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_capture_bonus)),&ok);
                             if(!ok)
                             {
                                 std::cerr << "Unable to open the xml file: " << file << ", capture_bonus is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
@@ -1563,13 +1567,13 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                         }
                         if(item->Attribute(XMLCACHEDSTRING_duration)!=NULL)
                         {
-                            if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(item->Attribute(XMLCACHEDSTRING_duration),CACHEDSTRING_Always))
+                            if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_duration)),CACHEDSTRING_Always))
                                 general_duration=Buff::Duration_Always;
-                            else if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(item->Attribute(XMLCACHEDSTRING_duration),CACHEDSTRING_NumberOfTurn))
+                            else if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_duration)),CACHEDSTRING_NumberOfTurn))
                             {
                                 if(item->Attribute(XMLCACHEDSTRING_durationNumberOfTurn)!=NULL)
                                 {
-                                    general_durationNumberOfTurn=stringtouint16(item->Attribute(XMLCACHEDSTRING_durationNumberOfTurn),&ok);
+                                    general_durationNumberOfTurn=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_durationNumberOfTurn)),&ok);
                                     if(!ok)
                                     {
                                         std::cerr << "Unable to open the xml file: " << file << ", durationNumberOfTurn is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
@@ -1585,11 +1589,11 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                     general_durationNumberOfTurn=3;
                                 general_duration=Buff::Duration_NumberOfTurn;
                             }
-                            else if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(item->Attribute(XMLCACHEDSTRING_duration),CACHEDSTRING_ThisFight))
+                            else if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_duration)),CACHEDSTRING_ThisFight))
                                 general_duration=Buff::Duration_ThisFight;
                             else
                             {
-                                std::cerr << "Unable to open the xml file: " << file << ", attribute duration have wrong value \"" << item->Attribute(XMLCACHEDSTRING_duration) << "\" is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
+                                std::cerr << "Unable to open the xml file: " << file << ", attribute duration have wrong value \"" << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_duration)) << "\" is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                                 general_duration=Buff::Duration_ThisFight;
                             }
                         }
@@ -1606,7 +1610,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                     {
                                         if(level->Attribute(XMLCACHEDSTRING_number)!=NULL)
                                         {
-                                            uint8_t number=stringtouint8(level->Attribute(XMLCACHEDSTRING_number),&ok);
+                                            uint8_t number=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(level->Attribute(XMLCACHEDSTRING_number)),&ok);
                                             if(ok)
                                             {
                                                 if(number>0)
@@ -1616,7 +1620,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                                     float capture_bonus=general_capture_bonus;
                                                     if(item->Attribute(XMLCACHEDSTRING_capture_bonus)!=NULL)
                                                     {
-                                                       capture_bonus=stringtofloat(item->Attribute(XMLCACHEDSTRING_capture_bonus),&ok);
+                                                       capture_bonus=stringtofloat(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_capture_bonus)),&ok);
                                                         if(!ok)
                                                         {
                                                             std::cerr << "Unable to open the xml file: " << file << ", capture_bonus is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
@@ -1625,13 +1629,13 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                                     }
                                                     if(item->Attribute(XMLCACHEDSTRING_duration)!=NULL)
                                                     {
-                                                        if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(item->Attribute(XMLCACHEDSTRING_duration),CACHEDSTRING_Always))
+                                                        if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_duration)),CACHEDSTRING_Always))
                                                             duration=Buff::Duration_Always;
-                                                        else if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(item->Attribute(XMLCACHEDSTRING_duration),CACHEDSTRING_NumberOfTurn))
+                                                        else if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_duration)),CACHEDSTRING_NumberOfTurn))
                                                         {
                                                             if(item->Attribute(XMLCACHEDSTRING_durationNumberOfTurn)!=NULL)
                                                             {
-                                                                durationNumberOfTurn=stringtouint16(item->Attribute(XMLCACHEDSTRING_durationNumberOfTurn),&ok);
+                                                                durationNumberOfTurn=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_durationNumberOfTurn)),&ok);
                                                                 if(!ok)
                                                                 {
                                                                     std::cerr << "Unable to open the xml file: " << file << ", durationNumberOfTurn is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
@@ -1642,11 +1646,11 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                                                 durationNumberOfTurn=general_durationNumberOfTurn;
                                                             duration=Buff::Duration_NumberOfTurn;
                                                         }
-                                                        else if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(item->Attribute(XMLCACHEDSTRING_duration),CACHEDSTRING_ThisFight))
+                                                        else if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_duration)),CACHEDSTRING_ThisFight))
                                                             duration=Buff::Duration_ThisFight;
                                                         else
                                                         {
-                                                            std::cerr << "Unable to open the xml file: " << file << ", attribute duration have wrong value \"" << item->Attribute(XMLCACHEDSTRING_duration) << "\" is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
+                                                            std::cerr << "Unable to open the xml file: " << file << ", attribute duration have wrong value \"" << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_duration)) << "\" is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                                                             duration=general_duration;
                                                         }
                                                     }
@@ -1666,17 +1670,17 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                                             std::string text;
                                                             if(inFight->Attribute(XMLCACHEDSTRING_hp)!=NULL)
                                                             {
-                                                                text=*inFight->Attribute(XMLCACHEDSTRING_hp);
+                                                                text=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(inFight->Attribute(XMLCACHEDSTRING_hp));
                                                                 effect.on=Buff::Effect::EffectOn_HP;
                                                             }
                                                             else if(inFight->Attribute(XMLCACHEDSTRING_defense)!=NULL)
                                                             {
-                                                                text=*inFight->Attribute(XMLCACHEDSTRING_defense);
+                                                                text=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(inFight->Attribute(XMLCACHEDSTRING_defense));
                                                                 effect.on=Buff::Effect::EffectOn_Defense;
                                                             }
                                                             else if(inFight->Attribute(XMLCACHEDSTRING_attack)!=NULL)
                                                             {
-                                                                text=*inFight->Attribute(XMLCACHEDSTRING_attack);
+                                                                text=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(inFight->Attribute(XMLCACHEDSTRING_attack));
                                                                 effect.on=Buff::Effect::EffectOn_Attack;
                                                             }
                                                             else
@@ -1708,7 +1712,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                                         {
                                                             if(inWalk->Attribute(XMLCACHEDSTRING_steps)!=NULL)
                                                             {
-                                                                uint32_t steps=stringtouint32(inWalk->Attribute(XMLCACHEDSTRING_steps),&ok);
+                                                                uint32_t steps=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(inWalk->Attribute(XMLCACHEDSTRING_steps)),&ok);
                                                                 if(ok)
                                                                 {
                                                                     Buff::EffectInWalk effect;
@@ -1716,12 +1720,12 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                                                     std::string text;
                                                                     if(inWalk->Attribute(XMLCACHEDSTRING_hp)!=NULL)
                                                                     {
-                                                                        text=*inWalk->Attribute(XMLCACHEDSTRING_hp);
+                                                                        text=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(inWalk->Attribute(XMLCACHEDSTRING_hp));
                                                                         effect.effect.on=Buff::Effect::EffectOn_HP;
                                                                     }
                                                                     else if(inWalk->Attribute(XMLCACHEDSTRING_defense)!=NULL)
                                                                     {
-                                                                        text=*inWalk->Attribute(XMLCACHEDSTRING_defense);
+                                                                        text=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(inWalk->Attribute(XMLCACHEDSTRING_defense));
                                                                         effect.effect.on=Buff::Effect::EffectOn_Defense;
                                                                     }
                                                                     else

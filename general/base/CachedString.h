@@ -1,3 +1,5 @@
+#include "GeneralVariable.h"
+
 #if defined(CATCHCHALLENGER_CLIENT)
 #ifndef CACHEDSTRING_H
 #define CACHEDSTRING_H
@@ -42,7 +44,7 @@
 #define XMLCACHEDSTRING_level CACHEDSTRING_level
 #define XMLCACHEDSTRING_byitem CACHEDSTRING_byitem
 #define XMLCACHEDSTRING_evolution CACHEDSTRING_evolution
-#define XMLCACHEDSTRINGdefine XMLCACHEDSTRING_evolutions CACHEDSTRING_evolutions
+#define XMLCACHEDSTRING_evolutions CACHEDSTRING_evolutions
 #define XMLCACHEDSTRING_trade CACHEDSTRING_trade
 #define XMLCACHEDSTRING_evolveTo CACHEDSTRING_evolveTo
 #define XMLCACHEDSTRING_item CACHEDSTRING_item
@@ -116,7 +118,7 @@
 #define XMLCACHEDSTRING_multiplicator "multiplicator"
 #define XMLCACHEDSTRING_number "number"
 #define XMLCACHEDSTRING_to "to"
-#define XMLCACHEDSTRING_dotcoma ""
+#define XMLCACHEDSTRING_dotcoma ";"
 #define XMLCACHEDSTRING_list "list"
 #define XMLCACHEDSTRING_monster "monster"
 #define XMLCACHEDSTRING_monsters "monsters"
@@ -349,6 +351,7 @@
 class CachedString
 {
 public:
+    CachedString();
     static CachedString *cachedString;
 public:
     std::string yes;
@@ -362,7 +365,7 @@ public:
     std::string dotcoma;
     std::string list;
     std::string monster;
-    std::string monster;
+    std::string monsters;
     std::string dotxml;
     std::string skills;
     std::string buffs;
@@ -604,7 +607,7 @@ public:
 #define CACHEDSTRING_multiplicator "multiplicator"
 #define CACHEDSTRING_number "number"
 #define CACHEDSTRING_to "to"
-#define CACHEDSTRING_dotcoma ""
+#define CACHEDSTRING_dotcoma ";"
 #define CACHEDSTRING_list "list"
 #define CACHEDSTRING_monster "monster"
 #define CACHEDSTRING_monsters "monsters"
@@ -677,10 +680,10 @@ public:
 #define CACHEDSTRING_x "x"
 #define CACHEDSTRING_y "y"
 
-#define CACHEDSTRING_borderleft "borderleft"
-#define CACHEDSTRING_borderright "borderright"
-#define CACHEDSTRING_bordertop "bordertop"
-#define CACHEDSTRING_borderbottom "borderbottom"
+#define CACHEDSTRING_borderleft "border-left"
+#define CACHEDSTRING_borderright "border-right"
+#define CACHEDSTRING_bordertop "border-top"
+#define CACHEDSTRING_borderbottom "border-bottom"
 #define CACHEDSTRING_map "map"
 #define CACHEDSTRING_condition_file "condition_file"
 #define CACHEDSTRING_condition_id "condition_id"
@@ -712,7 +715,7 @@ public:
 #define CACHEDSTRING_fightId "fightId"
 #define CACHEDSTRING_shop "shop"
 #define CACHEDSTRING_fightid "fightid"
-#define CACHEDSTRING_dottmx "tmx"
+#define CACHEDSTRING_dottmx ".tmx"
 #define CACHEDSTRING_antislash "\\"
 #define CACHEDSTRING_learn "learn"
 #define CACHEDSTRING_heal "heal"

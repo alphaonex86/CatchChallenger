@@ -25,8 +25,8 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
         #else
         domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif
-        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-        if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
         {
             std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
             return reputation;
@@ -60,7 +60,7 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
                     {
                         if(level->Attribute("point")!=NULL)
                         {
-                            const int32_t &point=stringtoint32(level->Attribute("point"),&ok);
+                            const int32_t &point=stringtoint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(level->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("point"))),&ok);
                             std::string text_val;
                             if(ok)
                             {
@@ -160,10 +160,10 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
                     }
                 if(ok)
                 {
-                    const std::string &type=item->Attribute("type");
+                    const std::string &type=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type")));
                     if(!std::regex_match(type,typeRegex))
                     {
-                        std::cerr << "Unable to open the file: " << file << ", the type " << item->Attribute("type") << " don't match wiuth the regex: ^[a-z]{1,32}$: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
+                        std::cerr << "Unable to open the file: " << file << ", the type " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))) << " don't match wiuth the regex: ^[a-z]{1,32}$: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                         ok=false;
                     }
                     else
@@ -252,8 +252,8 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
         #else
         domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif
-        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-        if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
         {
             std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
             return std::pair<bool,Quest>(false,quest);
@@ -274,11 +274,13 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     quest.id=0;
     quest.repeatable=false;
     if(root->Attribute("repeatable")!=NULL)
-        if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->Attribute("repeatable"),"yes") || CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->Attribute("repeatable"),"true"))
+        if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(root->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("repeatable"))),CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("yes"))
+            || CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(root->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("repeatable"))),CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("true"))
+           )
             quest.repeatable=true;
     if(root->Attribute("bot")!=NULL)
     {
-        const std::vector<std::string> &tempStringList=stringsplit(root->Attribute("bot"),';');
+        const std::vector<std::string> &tempStringList=stringsplit(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(root->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("bot"))),';');
         unsigned int index=0;
         while(index<tempStringList.size())
         {
@@ -304,9 +306,9 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     {
                         if(requirementsItem->Attribute("type")!=NULL && requirementsItem->Attribute("level")!=NULL)
                         {
-                            if(reputationNameToId.find(requirementsItem->Attribute("type"))!=reputationNameToId.cend())
+                            if(reputationNameToId.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(requirementsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))))!=reputationNameToId.cend())
                             {
-                                std::string stringLevel=requirementsItem->Attribute("level");
+                                std::string stringLevel=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(requirementsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("level")));
                                 bool positif=!stringStartWith(stringLevel,"-");
                                 if(!positif)
                                     stringLevel.erase(0,1);
@@ -316,14 +318,14 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                                     CatchChallenger::ReputationRequirements reputation;
                                     reputation.level=level;
                                     reputation.positif=positif;
-                                    reputation.reputationId=reputationNameToId.at(requirementsItem->Attribute("type"));
+                                    reputation.reputationId=reputationNameToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(requirementsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))));
                                     quest.requirements.reputation.push_back(reputation);
                                 }
                                 else
                                     std::cerr << "Unable to open the file: " << file << ", reputation is not a number " << stringLevel << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << requirementsItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(requirementsItem) << ")" << std::endl;
                             }
                             else
-                                std::cerr << "Has not the attribute: " << requirementsItem->Attribute("type") << ", reputation not found: child->CATCHCHALLENGER_XMLELENTVALUE(): " << requirementsItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(requirementsItem) << ")" << std::endl;
+                                std::cerr << "Has not the attribute: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(requirementsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))) << ", reputation not found: child->CATCHCHALLENGER_XMLELENTVALUE(): " << requirementsItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(requirementsItem) << ")" << std::endl;
                         }
                         else
                             std::cerr << "Has not the attribute: type level, have not attribute type or level: child->CATCHCHALLENGER_XMLELENTVALUE(): " << requirementsItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(requirementsItem) << ")" << std::endl;
@@ -342,19 +344,19 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     {
                         if(requirementsItem->Attribute("id")!=NULL)
                         {
-                            const uint32_t &questId=stringtouint32(requirementsItem->Attribute("id"),&ok);
+                            const uint32_t &questId=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(requirementsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                             if(ok)
                             {
                                 QuestRequirements questNewEntry;
                                 questNewEntry.quest=questId;
                                 questNewEntry.inverse=false;
                                 if(requirementsItem->Attribute("inverse")!=NULL)
-                                    if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(requirementsItem->Attribute("inverse"),"true"))
+                                    if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(requirementsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("inverse"))),"true"))
                                         questNewEntry.inverse=true;
                                 quest.requirements.quests.push_back(questNewEntry);
                             }
                             else
-                                std::cerr << "Unable to open the file: " << file << ", requirement quest item id is not a number " << requirementsItem->Attribute("id") << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << requirementsItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(requirementsItem) << ")" << std::endl;
+                                std::cerr << "Unable to open the file: " << file << ", requirement quest item id is not a number " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(requirementsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))) << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << requirementsItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(requirementsItem) << ")" << std::endl;
                         }
                         else
                             std::cerr << "Has attribute: %1, requirement quest item have not id attribute: child->CATCHCHALLENGER_XMLELENTVALUE(): " << requirementsItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(requirementsItem) << ")" << std::endl;
@@ -385,13 +387,13 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     {
                         if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("point")!=NULL)
                         {
-                            if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
+                            if(reputationNameToId.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))))!=reputationNameToId.cend())
                             {
-                                const int32_t &point=stringtoint32(reputationItem->Attribute("point"),&ok);
+                                const int32_t &point=stringtoint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("point"))),&ok);
                                 if(ok)
                                 {
                                     CatchChallenger::ReputationRewards reputation;
-                                    reputation.reputationId=reputationNameToId.at(reputationItem->Attribute("type"));
+                                    reputation.reputationId=reputationNameToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))));
                                     reputation.point=point;
                                     quest.rewards.reputation.push_back(reputation);
                                 }
@@ -419,25 +421,25 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                         if(rewardsItem->Attribute("id")!=NULL)
                         {
                             CatchChallenger::Quest::Item item;
-                            item.item=stringtouint32(rewardsItem->Attribute("id"),&ok);
+                            item.item=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(rewardsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                             item.quantity=1;
                             if(ok)
                             {
                                 if(CommonDatapack::commonDatapack.items.item.find(item.item)==CommonDatapack::commonDatapack.items.item.cend())
                                 {
-                                    std::cerr << "Unable to open the file: " << file << ", rewards item id is not into the item list: " << rewardsItem->Attribute("id") << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << rewardsItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(rewardsItem) << ")" << std::endl;
+                                    std::cerr << "Unable to open the file: " << file << ", rewards item id is not into the item list: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(rewardsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))) << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << rewardsItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(rewardsItem) << ")" << std::endl;
                                     return std::pair<bool,Quest>(false,quest);
                                 }
                                 if(rewardsItem->Attribute("quantity")!=NULL)
                                 {
-                                    item.quantity=stringtouint32(rewardsItem->Attribute("quantity"),&ok);
+                                    item.quantity=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(rewardsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("quantity"))),&ok);
                                     if(!ok)
                                         item.quantity=1;
                                 }
                                 quest.rewards.items.push_back(item);
                             }
                             else
-                                std::cerr << "Unable to open the file: " << file << ", rewards item id is not a number: " << rewardsItem->Attribute("id") << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << rewardsItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(rewardsItem) << ")" << std::endl;
+                                std::cerr << "Unable to open the file: " << file << ", rewards item id is not a number: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(rewardsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))) << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << rewardsItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(rewardsItem) << ")" << std::endl;
                         }
                         else
                             std::cerr << "Has not the attribute: id, rewards item have not attribute id: child->CATCHCHALLENGER_XMLELENTVALUE(): " << rewardsItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(rewardsItem) << ")" << std::endl;
@@ -456,10 +458,10 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     {
                         if(allowItem->Attribute("type")!=NULL)
                         {
-                            if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(allowItem->Attribute("type"),"clan"))
+                            if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(allowItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))),"clan"))
                                 quest.rewards.allow.push_back(CatchChallenger::ActionAllow_Clan);
                             else
-                                std::cerr << "Unable to open the file: " << file << ", allow type not understand " << allowItem->Attribute("id") << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << allowItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(allowItem) << ")" << std::endl;
+                                std::cerr << "Unable to open the file: " << file << ", allow type not understand " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(allowItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))) << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << allowItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(allowItem) << ")" << std::endl;
                         }
                         else
                             std::cerr << "Has attribute: %1, rewards item have not attribute id: child->CATCHCHALLENGER_XMLELENTVALUE(): " << allowItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(allowItem) << ")" << std::endl;
@@ -484,13 +486,13 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
         {
             if(step->Attribute("id")!=NULL)
             {
-                const uint32_t &id=stringtouint32(step->Attribute("id"),&ok);
+                const uint32_t &id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(step->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                 if(ok)
                 {
                     CatchChallenger::Quest::Step stepObject;
                     if(step->Attribute("bot")!=NULL)
                     {
-                        const std::vector<std::string> &tempStringList=stringsplit(step->Attribute("bot"),';');
+                        const std::vector<std::string> &tempStringList=stringsplit(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(step->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("bot"))),';');
                         unsigned int index=0;
                         while(index<tempStringList.size())
                         {
@@ -512,18 +514,18 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                                 if(stepItem->Attribute("id")!=NULL)
                                 {
                                     CatchChallenger::Quest::Item item;
-                                    item.item=stringtouint32(stepItem->Attribute("id"),&ok);
+                                    item.item=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(stepItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                                     item.quantity=1;
                                     if(ok)
                                     {
                                         if(CommonDatapack::commonDatapack.items.item.find(item.item)==CommonDatapack::commonDatapack.items.item.cend())
                                         {
-                                            std::cerr << "Unable to open the file: " << file << ", rewards item id is not into the item list: " << stepItem->Attribute("id") << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << stepItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(stepItem) << ")" << std::endl;
+                                            std::cerr << "Unable to open the file: " << file << ", rewards item id is not into the item list: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(stepItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))) << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << stepItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(stepItem) << ")" << std::endl;
                                             return std::pair<bool,Quest>(false,quest);
                                         }
                                         if(stepItem->Attribute("quantity")!=NULL)
                                         {
-                                            item.quantity=stringtouint32(stepItem->Attribute("quantity"),&ok);
+                                            item.quantity=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(stepItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("quantity"))),&ok);
                                             if(!ok)
                                                 item.quantity=1;
                                         }
@@ -533,7 +535,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                                             CatchChallenger::Quest::ItemMonster itemMonster;
                                             itemMonster.item=item.item;
 
-                                            const std::vector<std::string> &tempStringList=stringsplit(stepItem->Attribute("monster"),';');
+                                            const std::vector<std::string> &tempStringList=stringsplit(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(stepItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("monster"))),';');
                                             unsigned int index=0;
                                             while(index<tempStringList.size())
                                             {
@@ -543,7 +545,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                                                 index++;
                                             }
 
-                                            std::string rateString=stepItem->Attribute("rate");
+                                            std::string rateString=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(stepItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("rate")));
                                             stringreplaceOne(rateString,"%","");
                                             itemMonster.rate=stringtouint8(rateString,&ok);
                                             if(ok)
@@ -551,7 +553,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                                         }
                                     }
                                     else
-                                        std::cerr << "Unable to open the file: " << file << ", step id is not a number " << stepItem->Attribute("id") << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << step->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(step) << ")" << std::endl;
+                                        std::cerr << "Unable to open the file: " << file << ", step id is not a number " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(stepItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))) << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << step->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(step) << ")" << std::endl;
                                 }
                                 else
                                     std::cerr << "Has not the attribute: id, step have not id attribute: child->CATCHCHALLENGER_XMLELENTVALUE(): " << step->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(step) << ")" << std::endl;
@@ -570,11 +572,11 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                             {
                                 if(fightItem->Attribute("id")!=NULL)
                                 {
-                                    const uint32_t &fightId=stringtouint32(fightItem->Attribute("id"),&ok);
+                                    const uint32_t &fightId=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(fightItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                                     if(ok)
                                         stepObject.requirements.fightId.push_back(fightId);
                                     else
-                                        std::cerr << "Unable to open the file: " << file << ", step id is not a number " << fightItem->Attribute("id") << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << fightItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(fightItem) << ")" << std::endl;
+                                        std::cerr << "Unable to open the file: " << file << ", step id is not a number " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(fightItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))) << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << fightItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(fightItem) << ")" << std::endl;
                                 }
                                 else
                                     std::cerr << "Has attribute: %1, step have not id attribute: child->CATCHCHALLENGER_XMLELENTVALUE(): " << fightItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(fightItem) << ")" << std::endl;
@@ -638,8 +640,8 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
         #else
         domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif
-        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-        if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
         {
             std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
             return plants;
@@ -663,8 +665,8 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
         {
             if(plantItem->Attribute("id")!=NULL && plantItem->Attribute("itemUsed")!=NULL)
             {
-                const uint8_t &id=stringtouint8(plantItem->Attribute("id"),&ok);
-                const uint32_t &itemUsed=stringtouint32(plantItem->Attribute("itemUsed"),&ok2);
+                const uint8_t &id=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(plantItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
+                const uint32_t &itemUsed=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(plantItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("itemUsed"))),&ok2);
                 if(ok && ok2)
                 {
                     if(plants.find(id)==plants.cend())
@@ -686,22 +688,22 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                     {
                                         if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("level")!=NULL)
                                         {
-                                            if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
+                                            if(reputationNameToId.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))))!=reputationNameToId.cend())
                                             {
                                                 ReputationRequirements reputationRequirements;
-                                                std::string stringLevel=reputationItem->Attribute("level");
+                                                std::string stringLevel=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("level")));
                                                 reputationRequirements.positif=!stringStartWith(stringLevel,"-");
                                                 if(!reputationRequirements.positif)
                                                     stringLevel.erase(0,1);
                                                 reputationRequirements.level=stringtouint8(stringLevel,&ok);
                                                 if(ok)
                                                 {
-                                                    reputationRequirements.reputationId=reputationNameToId.at(reputationItem->Attribute("type"));
+                                                    reputationRequirements.reputationId=reputationNameToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))));
                                                     plant.requirements.reputation.push_back(reputationRequirements);
                                                 }
                                             }
                                             else
-                                                std::cerr << "Reputation type not found: " << reputationItem->Attribute("type") << ", have not the id, child->CATCHCHALLENGER_XMLELENTVALUE(): " << reputationItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
+                                                std::cerr << "Reputation type not found: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))) << ", have not the id, child->CATCHCHALLENGER_XMLELENTVALUE(): " << reputationItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
                                         }
                                         else
                                             std::cerr << "Unable to open the industries link file: " << file << ", have not the id, child->CATCHCHALLENGER_XMLELENTVALUE(): " << reputationItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
@@ -723,13 +725,13 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                     {
                                         if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("point")!=NULL)
                                         {
-                                            if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
+                                            if(reputationNameToId.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))))!=reputationNameToId.cend())
                                             {
                                                 ReputationRewards reputationRewards;
-                                                reputationRewards.point=stringtoint32(reputationItem->Attribute("point"),&ok);
+                                                reputationRewards.point=stringtoint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("point"))),&ok);
                                                 if(ok)
                                                 {
-                                                    reputationRewards.reputationId=reputationNameToId.at(reputationItem->Attribute("type"));
+                                                    reputationRewards.reputationId=reputationNameToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))));
                                                     plant.rewards.reputation.push_back(reputationRewards);
                                                 }
                                             }
@@ -926,8 +928,8 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
         #else
         domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif
-        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-        if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
         {
             std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
             return std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
@@ -954,7 +956,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                 uint8_t success=100;
                 if(recipeItem->Attribute("success")!=NULL)
                 {
-                    const uint8_t &tempShort=stringtouint8(recipeItem->Attribute("success"),&ok);
+                    const uint8_t &tempShort=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(recipeItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("success"))),&ok);
                     if(ok)
                     {
                         if(tempShort>100)
@@ -968,7 +970,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                 uint16_t quantity=1;
                 if(recipeItem->Attribute("quantity")!=NULL)
                 {
-                    const uint32_t &tempShort=stringtouint32(recipeItem->Attribute("quantity"),&ok);
+                    const uint32_t &tempShort=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(recipeItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("quantity"))),&ok);
                     if(ok)
                     {
                         if(tempShort>65535)
@@ -980,9 +982,9 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                         std::cerr << "preload_crafting_recipes() quantity in not an number for crafting recipe file: " << file << ", child->CATCHCHALLENGER_XMLELENTVALUE(): " << recipeItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(recipeItem) << ")" << std::endl;
                 }
 
-                const uint32_t &id=stringtouint32(recipeItem->Attribute("id"),&ok);
-                const uint32_t &itemToLearn=stringtouint32(recipeItem->Attribute("itemToLearn"),&ok2);
-                const uint32_t &doItemId=stringtouint32(recipeItem->Attribute("doItemId"),&ok3);
+                const uint32_t &id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(recipeItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
+                const uint32_t &itemToLearn=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(recipeItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("itemToLearn"))),&ok2);
+                const uint32_t &doItemId=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(recipeItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("doItemId"))),&ok3);
                 if(ok && ok2 && ok3)
                 {
                     if(crafingRecipes.find(id)==crafingRecipes.cend())
@@ -1004,22 +1006,22 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                                     {
                                         if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("level")!=NULL)
                                         {
-                                            if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
+                                            if(reputationNameToId.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))))!=reputationNameToId.cend())
                                             {
                                                 ReputationRequirements reputationRequirements;
-                                                std::string stringLevel=reputationItem->Attribute("level");
+                                                std::string stringLevel=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("level")));
                                                 reputationRequirements.positif=!stringStartWith(stringLevel,"-");
                                                 if(!reputationRequirements.positif)
                                                     stringLevel.erase(0,1);
                                                 reputationRequirements.level=stringtouint8(stringLevel,&ok);
                                                 if(ok)
                                                 {
-                                                    reputationRequirements.reputationId=reputationNameToId.at(reputationItem->Attribute("type"));
+                                                    reputationRequirements.reputationId=reputationNameToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))));
                                                     recipe.requirements.reputation.push_back(reputationRequirements);
                                                 }
                                             }
                                             else
-                                                std::cerr << "Reputation type not found: " << reputationItem->Attribute("type") << ", have not the id, child->CATCHCHALLENGER_XMLELENTVALUE(): " << reputationItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
+                                                std::cerr << "Reputation type not found: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))) << ", have not the id, child->CATCHCHALLENGER_XMLELENTVALUE(): " << reputationItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
                                         }
                                         else
                                             std::cerr << "Unable to open the industries link file: " << file << ", have not the id, child->CATCHCHALLENGER_XMLELENTVALUE(): " << reputationItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
@@ -1041,13 +1043,13 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                                     {
                                         if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("point")!=NULL)
                                         {
-                                            if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
+                                            if(reputationNameToId.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))))!=reputationNameToId.cend())
                                             {
                                                 ReputationRewards reputationRewards;
-                                                reputationRewards.point=stringtoint32(reputationItem->Attribute("point"),&ok);
+                                                reputationRewards.point=stringtoint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("point"))),&ok);
                                                 if(ok)
                                                 {
-                                                    reputationRewards.reputationId=reputationNameToId.at(reputationItem->Attribute("type"));
+                                                    reputationRewards.reputationId=reputationNameToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))));
                                                     recipe.rewards.reputation.push_back(reputationRewards);
                                                 }
                                             }
@@ -1066,9 +1068,9 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                         {
                             if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(material))
                             {
-                                if(material->Attribute("itemId")!=NULL)
+                                if(material->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("itemId"))!=NULL)
                                 {
-                                    const uint32_t &itemId=stringtouint32(material->Attribute("itemId"),&ok2);
+                                    const uint32_t &itemId=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(material->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("itemId"))),&ok2);
                                     if(!ok2)
                                     {
                                         ok=false;
@@ -1076,9 +1078,9 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                                         break;
                                     }
                                     uint16_t quantity=1;
-                                    if(material->Attribute("quantity")!=NULL)
+                                    if(material->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("quantity"))!=NULL)
                                     {
-                                        const uint32_t &tempShort=stringtouint32(material->Attribute("quantity"),&ok2);
+                                        const uint32_t &tempShort=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(material->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("quantity"))),&ok2);
                                         if(ok2)
                                         {
                                             if(tempShort>65535)
@@ -1222,8 +1224,8 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
             #else
             domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
             #endif
-            const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-            if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+            const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+            if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
             {
                 std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
                 file_index++;
@@ -1250,9 +1252,9 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                 if(industryItem->Attribute("id")!=NULL && industryItem->Attribute("time")!=NULL && industryItem->Attribute("cycletobefull")!=NULL)
                 {
                     Industry industry;
-                    const uint32_t &id=stringtouint32(industryItem->Attribute("id"),&ok);
-                    industry.time=stringtouint32(industryItem->Attribute("time"),&ok2);
-                    industry.cycletobefull=stringtouint32(industryItem->Attribute("cycletobefull"),&ok3);
+                    const uint32_t &id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(industryItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
+                    industry.time=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(industryItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("time"))),&ok2);
+                    industry.cycletobefull=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(industryItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("cycletobefull"))),&ok3);
                     if(ok && ok2 && ok3)
                     {
                         if(industries.find(id)==industries.cend())
@@ -1284,7 +1286,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                                         resource.quantity=1;
                                         if(resourceItem->Attribute("quantity")!=NULL)
                                         {
-                                            resource.quantity=stringtouint32(resourceItem->Attribute("quantity"),&ok);
+                                            resource.quantity=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(resourceItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("quantity"))),&ok);
                                             if(!ok)
                                                 std::cerr << "quantity is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << industryItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
                                         }
@@ -1292,7 +1294,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                                         {
                                             if(resourceItem->Attribute("id")!=NULL)
                                             {
-                                                resource.item=stringtouint32(resourceItem->Attribute("id"),&ok);
+                                                resource.item=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(resourceItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                                                 if(!ok)
                                                     std::cerr << "id is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << industryItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
                                                 else if(items.find(resource.item)==items.cend())
@@ -1362,7 +1364,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                                         product.quantity=1;
                                         if(productItem->Attribute("quantity")!=NULL)
                                         {
-                                            product.quantity=stringtouint32(productItem->Attribute("quantity"),&ok);
+                                            product.quantity=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(productItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("quantity"))),&ok);
                                             if(!ok)
                                                 std::cerr << "quantity is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << industryItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
                                         }
@@ -1370,7 +1372,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                                         {
                                             if(productItem->Attribute("id")!=NULL)
                                             {
-                                                product.item=stringtouint32(productItem->Attribute("id"),&ok);
+                                                product.item=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(productItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                                                 if(!ok)
                                                     std::cerr << "id is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << industryItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
                                                 else if(items.find(product.item)==items.cend())
@@ -1480,8 +1482,8 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
         #else
         domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif
-        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-        if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
         {
             std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
             return industriesLink;
@@ -1505,8 +1507,8 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
         {
             if(linkItem->Attribute("industrialrecipe")!=NULL && linkItem->Attribute("industry")!=NULL)
             {
-                const uint32_t &industry_id=stringtouint32(linkItem->Attribute("industrialrecipe"),&ok);
-                const uint32_t &factory_id=stringtouint32(linkItem->Attribute("industry"),&ok2);
+                const uint32_t &industry_id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(linkItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("industrialrecipe"))),&ok);
+                const uint32_t &factory_id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(linkItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("industry"))),&ok2);
                 if(ok && ok2)
                 {
                     if(industriesLink.find(factory_id)==industriesLink.cend())
@@ -1527,17 +1529,17 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
                                             {
                                                 if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("level")!=NULL)
                                                 {
-                                                    if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
+                                                    if(reputationNameToId.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))))!=reputationNameToId.cend())
                                                     {
                                                         ReputationRequirements reputationRequirements;
-                                                        std::string stringLevel=reputationItem->Attribute("level");
+                                                        std::string stringLevel=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("level")));
                                                         reputationRequirements.positif=!stringStartWith(stringLevel,"-");
                                                         if(!reputationRequirements.positif)
                                                             stringLevel.erase(0,1);
                                                         reputationRequirements.level=stringtouint8(stringLevel,&ok);
                                                         if(ok)
                                                         {
-                                                            reputationRequirements.reputationId=reputationNameToId.at(reputationItem->Attribute("type"));
+                                                            reputationRequirements.reputationId=reputationNameToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))));
                                                             industryLink->requirements.reputation.push_back(reputationRequirements);
                                                         }
                                                     }
@@ -1564,13 +1566,13 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
                                             {
                                                 if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("point")!=NULL)
                                                 {
-                                                    if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
+                                                    if(reputationNameToId.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))))!=reputationNameToId.cend())
                                                     {
                                                         ReputationRewards reputationRewards;
-                                                        reputationRewards.point=stringtoint32(reputationItem->Attribute("point"),&ok);
+                                                        reputationRewards.point=stringtoint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("point"))),&ok);
                                                         if(ok)
                                                         {
-                                                            reputationRewards.reputationId=reputationNameToId.at(reputationItem->Attribute("type"));
+                                                            reputationRewards.reputationId=reputationNameToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))));
                                                             industryLink->rewards.reputation.push_back(reputationRewards);
                                                         }
                                                     }
@@ -1641,8 +1643,8 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
             #else
             domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
             #endif
-            const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-            if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+            const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+            if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
             {
                 std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
                 file_index++;
@@ -1667,7 +1669,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
             {
                 if(item->Attribute("id")!=NULL)
                 {
-                    const uint32_t &id=stringtouint32(item->Attribute("id"),&ok);
+                    const uint32_t &id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                     if(ok)
                     {
                         if(items.item.find(id)==items.item.cend())
@@ -1679,7 +1681,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                 if(item->Attribute("price")!=NULL)
                                 {
                                     bool ok;
-                                    items.item[id].price=stringtouint32(item->Attribute("price"),&ok);
+                                    items.item[id].price=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("price"))),&ok);
                                     if(!ok)
                                     {
                                         std::cerr << "price is not a number, file: " << file << ", child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
@@ -1697,7 +1699,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                             {
                                 if(item->Attribute("consumeAtUse")!=NULL)
                                 {
-                                    if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(item->Attribute("consumeAtUse"),"false"))
+                                    if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("consumeAtUse"))),"false"))
                                         items.item[id].consumeAtUse=false;
                                     else
                                         items.item[id].consumeAtUse=true;
@@ -1718,7 +1720,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                         trap.bonus_rate=1.0;
                                         if(trapItem->Attribute("bonus_rate")!=NULL)
                                         {
-                                            float bonus_rate=stringtofloat(trapItem->Attribute("bonus_rate"),&ok);
+                                            float bonus_rate=stringtofloat(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(trapItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("bonus_rate"))),&ok);
                                             if(ok)
                                                 trap.bonus_rate=bonus_rate;
                                             else
@@ -1741,7 +1743,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                     {
                                         if(repelItem->Attribute("step")!=NULL)
                                         {
-                                            const uint32_t &step=stringtouint32(repelItem->Attribute("step"),&ok);
+                                            const uint32_t &step=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(repelItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("step"))),&ok);
                                             if(ok)
                                             {
                                                 if(step>0)
@@ -1771,7 +1773,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                         {
                                             if(hpItem->Attribute("add")!=NULL)
                                             {
-                                                if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(hpItem->Attribute("add"),"all"))
+                                                if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(hpItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("add"))),"all"))
                                                 {
                                                     MonsterItemEffect monsterItemEffect;
                                                     monsterItemEffect.type=MonsterItemEffectType_AddHp;
@@ -1780,10 +1782,10 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                                 }
                                                 else
                                                 {
-                                                    std::string addString=hpItem->Attribute("add");
+                                                    std::string addString=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(hpItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("add")));
                                                     if(addString.find("%")==std::string::npos)//todo this part
                                                     {
-                                                        const int32_t &add=stringtouint32(hpItem->Attribute("add"),&ok);
+                                                        const int32_t &add=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(hpItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("add"))),&ok);
                                                         if(ok)
                                                         {
                                                             if(add>0)
@@ -1816,7 +1818,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                         {
                                             if(buffItem->Attribute("remove")!=NULL)
                                             {
-                                                if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(buffItem->Attribute("remove"),"all"))
+                                                if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(buffItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("remove"))),"all"))
                                                 {
                                                     MonsterItemEffect monsterItemEffect;
                                                     monsterItemEffect.type=MonsterItemEffectType_RemoveBuff;
@@ -1825,7 +1827,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                                 }
                                                 else
                                                 {
-                                                    const int32_t &remove=stringtouint32(buffItem->Attribute("remove"),&ok);
+                                                    const int32_t &remove=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(buffItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("remove"))),&ok);
                                                     if(ok)
                                                     {
                                                         if(remove>0)
@@ -1868,7 +1870,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                     {
                                         if(levelItem->Attribute("up")!=NULL)
                                         {
-                                            const uint32_t &levelUp=stringtouint32(levelItem->Attribute("up"),&ok);
+                                            const uint32_t &levelUp=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(levelItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("up"))),&ok);
                                             if(!ok)
                                                 std::cerr << "Unable to open the file, level up is not possitive number, file: " << file << ", child->CATCHCHALLENGER_XMLELENTVALUE(): " << levelItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(levelItem) << ")" << std::endl;
                                             else if(levelUp<=0)
@@ -1954,8 +1956,8 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
         #else
         domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif
-        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-        if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
         {
             std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
             return returnVar;
@@ -1980,7 +1982,7 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
             Profile profile;
 
             if(startItem->Attribute("id")!=NULL)
-                profile.id=startItem->Attribute("id");
+                profile.id=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(startItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id")));
 
             if(idDuplicate.find(profile.id)!=idDuplicate.cend())
             {
@@ -1994,8 +1996,8 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
                 const CATCHCHALLENGER_XMLELEMENT * forcedskin = startItem->FirstChildElement("forcedskin");
 
                 std::vector<std::string> forcedskinList;
-                if(forcedskin!=NULL && CATCHCHALLENGER_XMLELENTISXMLELEMENT(forcedskin) && forcedskin->Attribute("value")!=NULL)
-                    forcedskinList=stringsplit(forcedskin->Attribute("value"),';');
+                if(forcedskin!=NULL && CATCHCHALLENGER_XMLELENTISXMLELEMENT(forcedskin) && forcedskin->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("value"))!=NULL)
+                    forcedskinList=stringsplit(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(forcedskin->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("value"))),';');
                 else
                     forcedskinList=defaultforcedskinList;
                 {
@@ -2025,7 +2027,7 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
                 const CATCHCHALLENGER_XMLELEMENT * cash = startItem->FirstChildElement("cash");
                 if(cash!=NULL && CATCHCHALLENGER_XMLELENTISXMLELEMENT(cash) && cash->Attribute("value")!=NULL)
                 {
-                    profile.cash=stringtodouble(cash->Attribute("value"),&ok);
+                    profile.cash=stringtodouble(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(cash->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("value"))),&ok);
                     if(!ok)
                     {
                         std::cerr << "Unable to open the xml file: " << file << ", cash is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
@@ -2042,12 +2044,12 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
                         Profile::Monster monster;
                         if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(monstersElement) && monstersElement->Attribute("id")!=NULL && monstersElement->Attribute("level")!=NULL && monstersElement->Attribute("captured_with")!=NULL)
                         {
-                            monster.id=stringtouint32(monstersElement->Attribute("id"),&ok);
+                            monster.id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", monster id is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
                             if(ok)
                             {
-                                monster.level=stringtouint8(monstersElement->Attribute("level"),&ok);
+                                monster.level=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("level"))),&ok);
                                 if(!ok)
                                     std::cerr << "Unable to open the xml file: " << file << ", monster level is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
                             }
@@ -2058,7 +2060,7 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
                             }
                             if(ok)
                             {
-                                monster.captured_with=stringtouint32(monstersElement->Attribute("captured_with"),&ok);
+                                monster.captured_with=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("captured_with"))),&ok);
                                 if(!ok)
                                     std::cerr << "Unable to open the xml file: " << file << ", captured_with is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
                             }
@@ -2105,19 +2107,19 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
                     Profile::Reputation reputationTemp;
                     if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(reputationElement) && reputationElement->Attribute("type")!=NULL && reputationElement->Attribute("level")!=NULL)
                     {
-                        reputationTemp.level=stringtoint8(reputationElement->Attribute("level"),&ok);
+                        reputationTemp.level=stringtoint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("level"))),&ok);
                         if(!ok)
                             std::cerr << "Unable to open the xml file: " << file << ", reputation level is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
                         if(ok)
                         {
-                            if(reputationNameToId.find(reputationElement->Attribute("type"))==reputationNameToId.cend())
+                            if(reputationNameToId.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))))==reputationNameToId.cend())
                             {
-                                std::cerr << "Unable to open the xml file: " << file << ", reputation type not found " << reputationElement->Attribute("type") << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
+                                std::cerr << "Unable to open the xml file: " << file << ", reputation type not found " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))) << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
                                 ok=false;
                             }
                             if(ok)
                             {
-                                reputationTemp.reputationDatabaseId=reputationNameToId.at(reputationElement->Attribute("type"));
+                                reputationTemp.reputationDatabaseId=reputationNameToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))));
                                 if(reputationTemp.level==0)
                                 {
                                     std::cerr << "Unable to open the xml file: " << file << ", reputation level is useless if level 0: child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
@@ -2127,7 +2129,7 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
                                 {
                                     if((-reputationTemp.level)>(int32_t)reputations.at(reputationTemp.reputationDatabaseId).reputation_negative.size())
                                     {
-                                        std::cerr << "Unable to open the xml file: " << file << ", reputation level is lower than minimal level for " << reputationElement->Attribute("type") << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
+                                        std::cerr << "Unable to open the xml file: " << file << ", reputation level is lower than minimal level for " << reputationElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type")) << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
                                         ok=false;
                                     }
                                 }
@@ -2135,7 +2137,7 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
                                 {
                                     if((reputationTemp.level)>=(int32_t)reputations.at(reputationTemp.reputationDatabaseId).reputation_positive.size())
                                     {
-                                        std::cerr << "Unable to open the xml file: " << file << ", reputation level is higther than maximal level for " << reputationElement->Attribute("type") << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
+                                        std::cerr << "Unable to open the xml file: " << file << ", reputation level is higther than maximal level for " << reputationElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type")) << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
                                         ok=false;
                                     }
                                 }
@@ -2145,7 +2147,7 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
                                 reputationTemp.point=0;
                                 if(reputationElement->Attribute("point")!=NULL)
                                 {
-                                    reputationTemp.point=stringtoint32(reputationElement->Attribute("point"),&ok);
+                                    reputationTemp.point=stringtoint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("point"))),&ok);
                                     std::cerr << "Unable to open the xml file: " << file << ", reputation point is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
                                     if(ok)
                                     {
@@ -2166,7 +2168,7 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
                     Profile::Item itemTemp;
                     if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(itemElement) && itemElement->Attribute("id")!=NULL)
                     {
-                        itemTemp.id=stringtouint32(itemElement->Attribute("id"),&ok);
+                        itemTemp.id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(itemElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                         if(!ok)
                             std::cerr << "Unable to open the xml file: " << file << ", item id is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
                         if(ok)
@@ -2174,7 +2176,7 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
                             itemTemp.quantity=0;
                             if(itemElement->Attribute("quantity")!=NULL)
                             {
-                                itemTemp.quantity=stringtouint32(itemElement->Attribute("quantity"),&ok);
+                                itemTemp.quantity=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(itemElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("quantity"))),&ok);
                                 if(!ok)
                                     std::cerr << "Unable to open the xml file: " << file << ", item quantity is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
                                 if(ok)
@@ -2250,8 +2252,8 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
         #else
         domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif
-        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-        if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
         {
             std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
             return returnVar;
@@ -2281,9 +2283,9 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
             {
                 ok=true;
                 MonstersCollision monstersCollision;
-                if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(monstersCollisionItem->Attribute("type"),"walkOn"))
+                if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersCollisionItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))),"walkOn"))
                     monstersCollision.type=MonstersCollisionType_WalkOn;
-                else if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(monstersCollisionItem->Attribute("type"),"actionOn"))
+                else if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersCollisionItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))),"actionOn"))
                     monstersCollision.type=MonstersCollisionType_ActionOn;
                 else
                 {
@@ -2293,7 +2295,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
                 if(ok)
                 {
                     if(monstersCollisionItem->Attribute("layer")!=NULL)
-                        monstersCollision.layer=monstersCollisionItem->Attribute("layer");
+                        monstersCollision.layer=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersCollisionItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("layer")));
                 }
                 if(ok)
                 {
@@ -2307,7 +2309,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
                         monstersCollision.item=0;
                         if(monstersCollisionItem->Attribute("item")!=NULL)
                         {
-                            monstersCollision.item=stringtouint32(monstersCollisionItem->Attribute("item"),&ok);
+                            monstersCollision.item=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersCollisionItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("item"))),&ok);
                             if(!ok)
                                 std::cerr << "item attribute is not a number, into file: " << file << " at line " << CATCHCHALLENGER_XMLELENTATLINE(monstersCollisionItem) << std::endl;
                             else if(items.find(monstersCollision.item)==items.cend())
@@ -2321,18 +2323,18 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
                 if(ok)
                 {
                     if(monstersCollisionItem->Attribute("tile")!=NULL)
-                        monstersCollision.tile=monstersCollisionItem->Attribute("tile");
+                        monstersCollision.tile=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersCollisionItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("tile")));
                 }
                 if(ok)
                 {
                     if(monstersCollisionItem->Attribute("background")!=NULL)
-                        monstersCollision.background=monstersCollisionItem->Attribute("background");
+                        monstersCollision.background=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersCollisionItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("background")));
                 }
                 if(ok)
                 {
                     if(monstersCollisionItem->Attribute("monsterType")!=NULL)
                     {
-                        monstersCollision.defautMonsterTypeList=stringsplit(monstersCollisionItem->Attribute("monsterType"),';');
+                        monstersCollision.defautMonsterTypeList=stringsplit(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersCollisionItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("monsterType"))),';');
                         vectorRemoveEmpty(monstersCollision.defautMonsterTypeList);
                         vectorRemoveDuplicatesForSmallList(monstersCollision.defautMonsterTypeList);
                         monstersCollision.monsterTypeList=monstersCollision.defautMonsterTypeList;
@@ -2344,14 +2346,15 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
                             {
                                 if(eventItem->Attribute("id")!=NULL && eventItem->Attribute("value")!=NULL && eventItem->Attribute("monsterType")!=NULL)
                                 {
-                                    if(eventStringToId.find(eventItem->Attribute("id"))!=eventStringToId.cend())
+                                    if(eventStringToId.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(eventItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))))!=eventStringToId.cend())
                                     {
-                                        if(eventListingToId.at(eventItem->Attribute("id")).find(eventItem->Attribute("value"))!=eventListingToId.at(eventItem->Attribute("id")).cend())
+                                        const auto & list=eventListingToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(eventItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))));
+                                        if(list.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(eventItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("value"))))!=list.cend())
                                         {
                                             MonstersCollision::MonstersCollisionEvent event;
-                                            event.event=eventStringToId.at(eventItem->Attribute("id"));
-                                            event.event_value=eventListingToId.at(eventItem->Attribute("id")).at(eventItem->Attribute("value"));
-                                            event.monsterTypeList=stringsplit(eventItem->Attribute("monsterType"),';');
+                                            event.event=eventStringToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(eventItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))));
+                                            event.event_value=eventListingToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(eventItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id")))).at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(eventItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("value"))));
+                                            event.monsterTypeList=stringsplit(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(eventItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("monsterType"))),';');
                                             if(!event.monsterTypeList.empty())
                                             {
                                                 monstersCollision.events.push_back(event);
@@ -2439,8 +2442,8 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const std::string &file)
         #else
         domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif
-        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-        if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
         {
             std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
             return returnVar;
@@ -2458,7 +2461,7 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const std::string &file)
     if(root->Attribute("zoom")!=NULL)
     {
         bool ok;
-        returnVar.zoom=stringtouint8(root->Attribute("zoom"),&ok);
+        returnVar.zoom=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(root->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("zoom"))),&ok);
         if(!ok)
         {
             returnVar.zoom=2;
@@ -2494,8 +2497,8 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
         #else
         domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif
-        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-        if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
         {
             std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
             return returnVar;
@@ -2520,7 +2523,7 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
                 std::cerr << "Have not the attribute id, into file: " << file << " at line " << CATCHCHALLENGER_XMLELENTATLINE(eventItem) << std::endl;
             else
             {
-                std::string idString=eventItem->Attribute("id");
+                std::string idString=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(eventItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id")));
                 if(idString.empty())
                     std::cerr << "Have id empty, into file: " << file << " at line " << CATCHCHALLENGER_XMLELENTATLINE(eventItem) << std::endl;
                 else
@@ -2562,8 +2565,8 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
         #else
         domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif
-        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-        if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
         {
             std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
             return shops;
@@ -2587,7 +2590,7 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
         {
             if(shopItem->Attribute("id")!=NULL)
             {
-                uint32_t id=stringtouint32(shopItem->Attribute("id"),&ok);
+                uint32_t id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(shopItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                 if(ok)
                 {
                     if(shops.find(id)==shops.cend())
@@ -2600,7 +2603,7 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
                             {
                                 if(product->Attribute("itemId")!=NULL)
                                 {
-                                    uint32_t itemId=stringtouint32(product->Attribute("itemId"),&ok);
+                                    uint32_t itemId=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(product->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("itemId"))),&ok);
                                     if(!ok)
                                         std::cerr << "preload_shop() product attribute itemId is not a number for shops file: " << file << ", child->CATCHCHALLENGER_XMLELENTVALUE(): " << shopItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(shopItem) << ")" << std::endl;
                                     else
@@ -2612,7 +2615,7 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
                                             uint32_t price=items.at(itemId).price;
                                             if(product->Attribute("overridePrice")!=NULL)
                                             {
-                                                price=stringtouint32(product->Attribute("overridePrice"),&ok);
+                                                price=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(product->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("overridePrice"))),&ok);
                                                 if(!ok)
                                                     price=items.at(itemId).price;
                                             }
@@ -2724,8 +2727,8 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInter
         #else
         domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif
-        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-        if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
         {
             std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
             return serverProfileList;
@@ -2753,7 +2756,7 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInter
             const CATCHCHALLENGER_XMLELEMENT * map = startItem->FirstChildElement("map");
             if(map!=NULL && CATCHCHALLENGER_XMLELENTISXMLELEMENT(map) && map->Attribute("file")!=NULL && map->Attribute("x")!=NULL && map->Attribute("y")!=NULL)
             {
-                serverProfile.mapString=map->Attribute("file");
+                serverProfile.mapString=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(map->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("file")));
                 if(!stringEndsWith(serverProfile.mapString,".tmx"))
                     serverProfile.mapString+=".tmx";
                 if(!CatchChallenger::FacilityLibGeneral::isFile(datapackPath+DATAPACK_BASE_PATH_MAPMAIN+mainDatapackCode+'/'+serverProfile.mapString))
@@ -2762,14 +2765,14 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInter
                     startItem = startItem->NextSiblingElement("start");
                     continue;
                 }
-                serverProfile.x=stringtouint8(map->Attribute("x"),&ok);
+                serverProfile.x=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(map->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("x"))),&ok);
                 if(!ok)
                 {
                     std::cerr << "Unable to open the xml file: " << file << ", map x is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
                     startItem = startItem->NextSiblingElement("start");
                     continue;
                 }
-                serverProfile.y=stringtouint8(map->Attribute("y"),&ok);
+                serverProfile.y=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(map->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("y"))),&ok);
                 if(!ok)
                 {
                     std::cerr << "Unable to open the xml file: " << file << ", map y is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
@@ -2785,7 +2788,7 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInter
             }
 
             if(startItem->Attribute("id")!=NULL)
-                serverProfile.id=startItem->Attribute("id");
+                serverProfile.id=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(startItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id")));
 
             if(idDuplicate.find(serverProfile.id)!=idDuplicate.cend())
             {

@@ -93,7 +93,7 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
         domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif
         const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(file);
-        if(CATCHCHALLENGER_XMLDOCUMENTRETURNISERROR(loadOkay))
+        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
         {
             std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
             return monsterDrops;
@@ -117,7 +117,7 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
         {
             if(item->Attribute(XMLCACHEDSTRING_id)!=NULL)
             {
-                const uint16_t &id=stringtouint16(item->Attribute(XMLCACHEDSTRING_id),&ok);
+                const uint16_t &id=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_id)),&ok);
                 if(!ok)
                     std::cerr << "Unable to open the xml file: " << file << ", id not a number: child.tagName(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                 else if(monsters.find(id)==monsters.cend())
@@ -140,7 +140,7 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
                                         dropVar.item=0;
                                         if(drop->Attribute(XMLCACHEDSTRING_quantity_min)!=NULL)
                                         {
-                                            dropVar.quantity_min=stringtouint32(drop->Attribute(XMLCACHEDSTRING_quantity_min),&ok);
+                                            dropVar.quantity_min=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(drop->Attribute(XMLCACHEDSTRING_quantity_min)),&ok);
                                             if(!ok)
                                                 std::cerr << "Unable to open the xml file: " << file << ", quantity_min is not a number: child.tagName(): " << drop->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
                                         }
@@ -150,7 +150,7 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
                                         {
                                             if(drop->Attribute(XMLCACHEDSTRING_quantity_max)!=NULL)
                                             {
-                                                dropVar.quantity_max=stringtouint32(drop->Attribute(XMLCACHEDSTRING_quantity_max),&ok);
+                                                dropVar.quantity_max=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(drop->Attribute(XMLCACHEDSTRING_quantity_max)),&ok);
                                                 if(!ok)
                                                     std::cerr << "Unable to open the xml file: " << file << ", quantity_max is not a number: child.tagName(): " << drop->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
                                             }
@@ -185,7 +185,7 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
                                         {
                                             if(drop->Attribute(XMLCACHEDSTRING_luck)!=NULL)
                                             {
-                                                std::string luck=drop->Attribute(XMLCACHEDSTRING_luck);
+                                                std::string luck=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(drop->Attribute(XMLCACHEDSTRING_luck));
                                                 if(!luck.empty())
                                                     if(luck.back()=='%')
                                                         luck.resize(luck.size()-1);
@@ -213,7 +213,7 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > BaseServer::loadMonsterD
                                         {
                                             if(drop->Attribute(XMLCACHEDSTRING_item)!=NULL)
                                             {
-                                                dropVar.item=stringtouint32(drop->Attribute(XMLCACHEDSTRING_item),&ok);
+                                                dropVar.item=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(drop->Attribute(XMLCACHEDSTRING_item)),&ok);
                                                 if(!ok)
                                                     std::cerr << "Unable to open the xml file: " << file << ", item is not a number: child.tagName(): " << drop->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
                                             }
