@@ -9,7 +9,6 @@ CONFIG   += console
 CONFIG   -= app_bundle
 
 DEFINES += EPOLLCATCHCHALLENGERSERVER EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION SERVERNOBUFFER
-DEFINES += TIXML_USE_STL
 
 TEMPLATE = app
 
@@ -21,11 +20,9 @@ SOURCES += main.cpp \
     ../../server/epoll/EpollSocket.cpp \
     ../../server/base/TinyXMLSettings.cpp \
     ../../general/base/FacilityLibGeneral.cpp \
-    ../../general/base/tinyXML/tinystr.cpp \
-    ../../general/base/tinyXML/tinyxml.cpp \
-    ../../general/base/tinyXML/tinyxmlerror.cpp \
-    ../../general/base/tinyXML/tinyxmlparser.cpp \
     ../../general/base/cpp11addition.cpp \
+    ../../general/base/cpp11additionstringtointc.cpp \
+    ../../general/base/cpp11additionstringtointcpp.cpp \
     ../../general/base/ProtocolParsingCheck.cpp \
     ../../general/base/ProtocolParsingGeneral.cpp \
     ../../general/base/ProtocolParsingInput.cpp \
@@ -40,10 +37,29 @@ HEADERS += \
     ../../server/base/TinyXMLSettings.h \
     ../../general/base/FacilityLibGeneral.h \
     ../../general/base/GeneralVariable.h \
-    ../../general/base/tinyXML/tinystr.h \
-    ../../general/base/tinyXML/tinyxml.h \
     ../../general/base/cpp11addition.h \
     ../../general/base/ProtocolParsing.h \
     ../../general/base/ProtocolParsingCheck.h \
     ../../general/base/PortableEndian.h \
     ../../server/epoll/EpollClient.h
+
+#choose one of:
+DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML1
+#DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
+
+defined(CATCHCHALLENGER_XLMPARSER_TINYXML1)
+{
+    DEFINES += TIXML_USE_STL
+    HEADERS += $$PWD/../../general/base/tinyXML/tinystr.h \
+        $$PWD/../../general/base/tinyXML/tinyxml.h
+
+    SOURCES += $$PWD/../../general/base/tinyXML/tinystr.cpp \
+        $$PWD/../../general/base/tinyXML/tinyxml.cpp \
+        $$PWD/../../general/base/tinyXML/tinyxmlerror.cpp \
+        $$PWD/../../general/base/tinyXML/tinyxmlparser.cpp
+}
+defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
+{
+    HEADERS += $$PWD/../../general/base/tinyXML2/tinyxml2.h
+    SOURCES += $$PWD/../../general/base/tinyXML2/tinyxml2.cpp
+}
