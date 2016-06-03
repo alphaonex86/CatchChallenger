@@ -1144,12 +1144,27 @@ bool Map_loader::loadMonsterMap(const std::string &file, std::vector<std::string
             index++;
         }
         if(caveName.empty())
-            detectedMonsterCollisionMonsterType.push_back(CACHEDSTRING_cave);
+            caveName.push_back(CACHEDSTRING_cave);
+    }
+    {
+        unsigned int index=0;
+        while(index<caveName.size())
+        {
+            const std::string &entryName=caveName.at(index);
+            if(!vectorcontainsAtLeastOne(detectedMonsterCollisionMonsterType,entryName))
+                detectedMonsterCollisionMonsterType.push_back(entryName);
+            index++;
+        }
     }
 
     //load the found monster type
     std::unordered_map<std::string/*monsterType*/,std::vector<MapMonster> > monsterTypeList;
     {
+        if(detectedMonsterCollisionMonsterType.empty())
+        {
+            std::cerr << "detectedMonsterCollisionMonsterType.empty() at " << __FILE__ << ":" << __LINE__ << ", internal error, abort()" << std::endl;
+            abort();
+        }
         unsigned int index=0;
         while(index<detectedMonsterCollisionMonsterType.size())
         {
