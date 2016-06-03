@@ -1072,13 +1072,12 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                     }
 
                     const Quest &datapackQuest=CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId);
-                    if((playerQuest.step<=0 && !playerQuest.finish_one_time) || playerQuest.step>datapackQuest.steps.size())
+                    if(playerQuest.step>datapackQuest.steps.size())
                     {
-                        normalOutput("step out of quest range, skip: "+std::to_string(questId));
-                        pos+=2;
-                        continue;
+                        normalOutput("step out of quest range "+std::to_string(playerQuest.step)+", fix for quest: "+std::to_string(questId));
+                        playerQuest.step=1;
                     }
-                    if(playerQuest.step<=0 && !playerQuest.finish_one_time)
+                    if(playerQuest.step==0 && !playerQuest.finish_one_time)
                     {
                         normalOutput("can't be to step 0 if have never finish the quest, skip: "+std::to_string(questId));
                         pos+=2;

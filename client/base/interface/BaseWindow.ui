@@ -26,11 +26,8 @@
    <string notr="true">CatchChallenger</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../resources/client-resources.qrc">
+   <iconset resource="../../../server/all-server-resources.qrc">
     <normaloff>:/images/catchchallenger.png</normaloff>:/images/catchchallenger.png</iconset>
-  </property>
-  <property name="styleSheet">
-   <string notr="true"/>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2">
    <property name="spacing">
@@ -67,11 +64,8 @@
      </property>
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
-       <property name="styleSheet">
-        <string notr="true"/>
-       </property>
        <property name="currentIndex">
-        <number>20</number>
+        <number>4</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -1203,7 +1197,7 @@ border-radius: 5px;
 }</string>
              </property>
              <property name="currentIndex">
-              <number>4</number>
+              <number>0</number>
              </property>
              <widget class="QWidget" name="tabWidgetTrainerCardPage1">
               <property name="styleSheet">
@@ -1487,9 +1481,6 @@ border-radius: 5px;
               <layout class="QHBoxLayout" name="horizontalLayout_29">
                <item>
                 <widget class="QLabel" name="labelReputation">
-                 <property name="styleSheet">
-                  <string notr="true">color: rgb(0, 0, 0);</string>
-                 </property>
                  <property name="alignment">
                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
                  </property>
@@ -1517,7 +1508,7 @@ border-radius: 5px;
                  <item>
                   <widget class="QTextBrowser" name="questDetails">
                    <property name="styleSheet">
-                    <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
+                    <string notr="true">#questDetails{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
                    </property>
                    <property name="frameShape">
                     <enum>QFrame::NoFrame</enum>
@@ -1573,7 +1564,7 @@ border-radius: 5px;
                <item>
                 <widget class="QTextBrowser" name="finishedQuests">
                  <property name="styleSheet">
-                  <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
+                  <string notr="true">#finishedQuests{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
                  </property>
                  <property name="frameShape">
                   <enum>QFrame::NoFrame</enum>
@@ -7248,9 +7239,10 @@ border-image: url(:/images/empty.png);
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
+  <include location="../../../server/all-server-resources.qrc"/>
+  <include location="../resources/client-resources-multi.qrc"/>
   <include location="../../fight/resources/client-resources-fight.qrc"/>
   <include location="../resources/client-resources.qrc"/>
-  <include location="../resources/client-resources-multi.qrc"/>
  </resources>
  <connections>
   <connection>

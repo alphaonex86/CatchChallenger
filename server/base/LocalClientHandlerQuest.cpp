@@ -1,3 +1,4 @@
+
 #include "Client.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/CommonDatapack.h"
@@ -306,7 +307,6 @@ bool Client::nextStepQuest(const Quest &quest)
         #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
         normalOutput("finish the quest: "+std::to_string(quest.id));
         #endif
-        syncDatabaseQuest();
         public_and_private_informations.quests[quest.id].step=0;
         public_and_private_informations.quests[quest.id].finish_one_time=true;
         index=0;
@@ -327,14 +327,15 @@ bool Client::nextStepQuest(const Quest &quest)
             appendAllow(quest.rewards.allow.at(index));
             index++;
         }
+        syncDatabaseQuest();
     }
     else
     {
         #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
         normalOutput("next step in the quest: "+std::to_string(quest.id));
         #endif
-        syncDatabaseQuest();
         addQuestStepDrop(quest.id,public_and_private_informations.quests.at(quest.id).step);
+        syncDatabaseQuest();
     }
     return true;
 }
@@ -348,7 +349,7 @@ bool Client::startQuest(const Quest &quest)
     }
     else
         public_and_private_informations.quests[quest.id].step=1;
-    syncDatabaseQuest();
     addQuestStepDrop(quest.id,1);
+    syncDatabaseQuest();
     return true;
 }
