@@ -47,9 +47,8 @@ public:
     std::vector<PlayerMonster> getPlayerMonster() const;
     virtual bool moveUpMonster(const uint8_t &number);
     virtual bool moveDownMonster(const uint8_t &number);
-    virtual bool removeMonster(const uint32_t &monsterId);
-    bool haveThisMonster(const uint32_t &monsterId) const;
-    PlayerMonster * monsterById(const uint32_t &monsterId);
+    virtual bool removeMonsterByPosition(const uint8_t &monsterPosition);
+    bool haveThisMonsterByPosition(const uint8_t &monsterPosition) const;
     PlayerMonster * monsterByPosition(const uint8_t &monsterPosition);
     virtual bool canEscape();
     virtual bool tryEscape();
@@ -76,7 +75,7 @@ public:
     virtual bool changeOfMonsterInFight(const uint8_t &monsterPosition);
     virtual int addBuffEffectFull(const Skill::BuffEffect &effect,PublicPlayerMonster * currentMonster,PublicPlayerMonster * otherMonster);
     virtual void removeBuffEffectFull(const Skill::BuffEffect &effect);
-    virtual bool useObjectOnMonster(const uint16_t &object, const uint32_t &monster);
+    virtual bool useObjectOnMonsterByPosition(const uint16_t &object, const uint8_t &monsterPosition);
     virtual void confirmEvolutionTo(PlayerMonster * playerMonster,const uint32_t &monster);
     virtual void hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue);
     virtual bool removeBuffOnMonster(PlayerMonster * currentMonster, const uint32_t &buffId);

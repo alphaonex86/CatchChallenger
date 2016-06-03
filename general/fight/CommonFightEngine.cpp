@@ -934,14 +934,19 @@ void CommonFightEngine::confirmEvolutionTo(PlayerMonster * playerMonster,const u
 }
 
 /// \note Object quantity verified in LocalClientHandler::useObjectOnMonster()
-bool CommonFightEngine::useObjectOnMonster(const uint16_t &object, const uint32_t &monster)
+bool CommonFightEngine::useObjectOnMonsterByPosition(const uint16_t &object, const uint8_t &monsterPosition)
 {
-    if(!haveThisMonster(monster))
+    if(!haveThisMonsterByPosition(monsterPosition))
     {
-        errorFightEngine("have not this monster: "+std::to_string(object));
+        errorFightEngine("have not this monster: "+std::to_string(monsterPosition));
         return false;
     }
-    PlayerMonster * playerMonster=monsterById(monster);
+    PlayerMonster * playerMonster=monsterByPosition(monsterPosition);
+    if(playerMonster==NULL)
+    {
+        errorFightEngine("have not this monster pointer: "+std::to_string(monsterPosition));
+        return false;
+    }
     if(genericMonsterIsKO(playerMonster))
     {
         errorFightEngine("can't be applyied on KO monster: "+std::to_string(object));
@@ -1325,44 +1330,24 @@ bool CommonFightEngine::moveDownMonster(const uint8_t &number)
     return true;
 }
 
-bool CommonFightEngine::removeMonster(const uint32_t &monsterId)
+bool CommonFightEngine::removeMonsterByPosition(const uint8_t &monsterPosition)
 {
-    unsigned int index=0;
-    while(index<public_and_private_informations.playerMonster.size())
+    if(monsterPosition>=public_and_private_informations.playerMonster.size())
+        return false;
+    else
     {
-        if(public_and_private_informations.playerMonster.at(index).id==monsterId)
-        {
-            public_and_private_informations.playerMonster.erase(public_and_private_informations.playerMonster.cbegin()+index);
-            updateCanDoFight();
-            return true;
-        }
-        index++;
+        public_and_private_informations.playerMonster.erase(public_and_private_informations.playerMonster.cbegin()+monsterPosition);
+        updateCanDoFight();
+        return true;
     }
-    return false;
 }
 
-bool CommonFightEngine::haveThisMonster(const uint32_t &monsterId) const
+bool CommonFightEngine::haveThisMonsterByPosition(const uint8_t &monsterPosition) const
 {
-    unsigned int index=0;
-    while(index<public_and_private_informations.playerMonster.size())
-    {
-        if(public_and_private_informations.playerMonster.at(index).id==monsterId)
-            return true;
-        index++;
-    }
-    return false;
-}
-
-PlayerMonster * CommonFightEngine::monsterById(const uint32_t &monsterId)
-{
-    unsigned int index=0;
-    while(index<public_and_private_informations.playerMonster.size())
-    {
-        if(public_and_private_informations.playerMonster.at(index).id==monsterId)
-            return &public_and_private_informations.playerMonster[index];
-        index++;
-    }
-    return NULL;
+    if(monsterPosition>=public_and_private_informations.playerMonster.size())
+        return false;
+    else
+        return true;
 }
 
 PlayerMonster * CommonFightEngine::monsterByPosition(const uint8_t &monsterPosition)

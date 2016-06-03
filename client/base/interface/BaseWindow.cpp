@@ -711,7 +711,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
         case ObjectType_ItemOnMonster:
         case ObjectType_ItemOnMonsterOutOfFight:
         {
-            const uint32_t monsterUniqueId=itemId;
+            const uint8_t monsterPosition=itemId;
             const uint32_t item=objectInUsing.last();
             objectInUsing.removeLast();
             if(!ok)
@@ -723,14 +723,21 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                         add_to_inventory(item,1,false);
                 break;
             }
-            const PlayerMonster &monster=*ClientFightEngine::fightEngine.monsterById(monsterUniqueId);
-            const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.at(monster.monster);
-            const DatapackClientLoader::MonsterExtra &monsterInformationsExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster);
+            const PlayerMonster * const monster=ClientFightEngine::fightEngine.monsterByPosition(monsterPosition);
+            if(monster==NULL)
+            {
+                if(CatchChallenger::CommonDatapack::commonDatapack.items.item.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.item.cend())
+                    if(CatchChallenger::CommonDatapack::commonDatapack.items.item[item].consumeAtUse)
+                        add_to_inventory(item,1,false);
+                break;
+            }
+            const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.at(monster->monster);
+            const DatapackClientLoader::MonsterExtra &monsterInformationsExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(monster->monster);
             if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.cend())
             {
                 idMonsterEvolution=0;
-                const Monster &monsterInformationsEvolution=CommonDatapack::commonDatapack.monsters.at(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.at(item).at(monster.monster));
-                const DatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.at(item).at(monster.monster));
+                const Monster &monsterInformationsEvolution=CommonDatapack::commonDatapack.monsters.at(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.at(item).at(monster->monster));
+                const DatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.at(item).at(monster->monster));
                 //create animation widget
                 if(animationWidget!=NULL)
                     delete animationWidget;
@@ -765,8 +772,14 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                     animationWidget->setSource(QUrl::fromLocalFile(datapackQmlFile));
                 else
                     animationWidget->setSource(QStringLiteral("qrc:/qml/evolution-animation.qml"));
-                CatchChallenger::Api_client_real::client->useObjectOnMonster(item,monsterUniqueId);
-                ClientFightEngine::fightEngine.useObjectOnMonster(item,monsterUniqueId);
+                CatchChallenger::Api_client_real::client->useObjectOnMonsterByPosition(item,monsterPosition);
+                if(!ClientFightEngine::fightEngine.useObjectOnMonsterByPosition(item,monsterPosition))
+                {
+                    std::cerr << "ClientFightEngine::fightEngine.useObjectOnMonsterByPosition() Bug at " << __FILE__ << ":" << __LINE__ << std::endl;
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    abort();
+                    #endif
+                }
                 load_monsters();
                 return;
             }
@@ -774,10 +787,10 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             {
                 ui->stackedWidget->setCurrentWidget(ui->page_inventory);
                 ui->inventoryUse->setText(tr("Select"));
-                if(ClientFightEngine::fightEngine.useObjectOnMonster(item,monsterUniqueId))
+                if(ClientFightEngine::fightEngine.useObjectOnMonsterByPosition(item,monsterPosition))
                 {
                     showTip(tr("Using <b>%1</b> on <b>%2</b>").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(item).name).arg(monsterInformationsExtra.name));
-                    CatchChallenger::Api_client_real::client->useObjectOnMonster(item,monsterUniqueId);
+                    CatchChallenger::Api_client_real::client->useObjectOnMonsterByPosition(item,monsterPosition);
                     load_monsters();
                     checkEvolution();
                 }
@@ -954,24 +967,16 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 break;
             }
             //get the right monster
-            unsigned int index=0;
-            while(index<playerMonster.size())
-            {
-                if(playerMonster.at(index).id==itemId)
-                {
-                    GetPrice getPrice(this,15000);
-                    getPrice.exec();
-                    if(!getPrice.isOK())
-                        break;
-                    marketPutMonsterList << playerMonster.at(index);
-                    marketPutMonsterPlaceList << index;
-                    ClientFightEngine::fightEngine.removeMonster(itemId);
-                    CatchChallenger::Api_client_real::client->putMarketMonsterByPosition(itemId,getPrice.price());
-                    marketPutCashInSuspend=getPrice.price();
-                    break;
-                }
-                index++;
-            }
+            GetPrice getPrice(this,15000);
+            getPrice.exec();
+            if(!getPrice.isOK())
+                break;
+            const uint8_t monsterPosition=itemId;
+            marketPutMonsterList << playerMonster.at(monsterPosition);
+            marketPutMonsterPlaceList << monsterPosition;
+            ClientFightEngine::fightEngine.removeMonsterByPosition(monsterPosition);
+            CatchChallenger::Api_client_real::client->putMarketMonsterByPosition(monsterPosition,getPrice.price());
+            marketPutCashInSuspend=getPrice.price();
         }
         break;
         case ObjectType_MonsterToTrade:
@@ -999,24 +1004,16 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 break;
             }
             //get the right monster
-            unsigned int index=0;
-            while(index<playerMonster.size())
-            {
-                if(playerMonster.at(index).id==itemId)
-                {
-                    tradeCurrentMonstersPosition << index;
-                    tradeCurrentMonsters << playerMonster.at(index);
-                    ClientFightEngine::fightEngine.removeMonster(itemId);
-                    CatchChallenger::Api_client_real::client->addMonsterByPosition(itemId);
-                    QListWidgetItem *item=new QListWidgetItem();
-                    item->setText(DatapackClientLoader::datapackLoader.monsterExtra.value(tradeCurrentMonsters.last().monster).name);
-                    item->setToolTip(tr("Level: %1").arg(tradeCurrentMonsters.last().level));
-                    item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.value(tradeCurrentMonsters.last().monster).front);
-                    ui->tradePlayerMonsters->addItem(item);
-                    break;
-                }
-                index++;
-            }
+            const uint8_t monsterPosition=itemId;
+            tradeCurrentMonstersPosition << monsterPosition;
+            tradeCurrentMonsters << playerMonster.at(monsterPosition);
+            ClientFightEngine::fightEngine.removeMonsterByPosition(monsterPosition);
+            CatchChallenger::Api_client_real::client->addMonsterByPosition(monsterPosition);
+            QListWidgetItem *item=new QListWidgetItem();
+            item->setText(DatapackClientLoader::datapackLoader.monsterExtra.value(tradeCurrentMonsters.last().monster).name);
+            item->setToolTip(tr("Level: %1").arg(tradeCurrentMonsters.last().level));
+            item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.value(tradeCurrentMonsters.last().monster).front);
+            ui->tradePlayerMonsters->addItem(item);
         }
         break;
         case ObjectType_Seed:
@@ -1104,13 +1101,13 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             }
             else//else it's to use on current monster
             {
-                const uint32_t &monsterUniqueId=ClientFightEngine::fightEngine.getCurrentMonster()->id;
-                if(ClientFightEngine::fightEngine.useObjectOnMonster(itemId,monsterUniqueId))
+                const uint8_t &monsterPosition=ClientFightEngine::fightEngine.getCurrentSelectedMonsterNumber();
+                if(ClientFightEngine::fightEngine.useObjectOnMonsterByPosition(itemId,monsterPosition))
                 {
                     remove_to_inventory(itemId);
                     if(CommonDatapack::commonDatapack.items.monsterItemEffect.find(itemId)!=CommonDatapack::commonDatapack.items.monsterItemEffect.cend())
                     {
-                        CatchChallenger::Api_client_real::client->useObjectOnMonster(itemId,monsterUniqueId);
+                        CatchChallenger::Api_client_real::client->useObjectOnMonsterByPosition(itemId,monsterPosition);
                         updateAttackList();
                         displayAttackProgression=0;
                         attack_quantity_changed=0;
