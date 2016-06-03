@@ -292,24 +292,25 @@ void DatapackClientLoader::parseMonstersExtra()
             item = item.nextSiblingElement(DatapackClientLoader::text_monster);
         }
 
-        auto i=CatchChallenger::CommonDatapack::commonDatapack.monsters.begin();
-        while(i!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
-        {
-            if(!DatapackClientLoader::datapackLoader.monsterExtra.contains(i->first))
-            {
-                qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i->first));
-                DatapackClientLoader::MonsterExtra monsterExtraEntry;
-                monsterExtraEntry.name=tr("Unknown");
-                monsterExtraEntry.description=tr("Unknown");
-                monsterExtraEntry.front=QPixmap(QStringLiteral(":/images/monsters/default/front.png"));
-                monsterExtraEntry.back=QPixmap(QStringLiteral(":/images/monsters/default/back.png"));
-                monsterExtraEntry.thumb=QPixmap(QStringLiteral(":/images/monsters/default/small.png"));
-                monsterExtraEntry.thumb=monsterExtraEntry.thumb.scaled(64,64);
-                DatapackClientLoader::datapackLoader.monsterExtra[i->first]=monsterExtraEntry;
-            }
-            ++i;
-        }
         file_index++;
+    }
+
+    auto i=CatchChallenger::CommonDatapack::commonDatapack.monsters.begin();
+    while(i!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
+    {
+        if(!DatapackClientLoader::datapackLoader.monsterExtra.contains(i->first))
+        {
+            qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i->first));
+            DatapackClientLoader::MonsterExtra monsterExtraEntry;
+            monsterExtraEntry.name=tr("Unknown");
+            monsterExtraEntry.description=tr("Unknown");
+            monsterExtraEntry.front=QPixmap(QStringLiteral(":/images/monsters/default/front.png"));
+            monsterExtraEntry.back=QPixmap(QStringLiteral(":/images/monsters/default/back.png"));
+            monsterExtraEntry.thumb=QPixmap(QStringLiteral(":/images/monsters/default/small.png"));
+            monsterExtraEntry.thumb=monsterExtraEntry.thumb.scaled(64,64);
+            DatapackClientLoader::datapackLoader.monsterExtra[i->first]=monsterExtraEntry;
+        }
+        ++i;
     }
 
     qDebug() << QStringLiteral("%1 monster(s) extra loaded").arg(DatapackClientLoader::datapackLoader.monsterExtra.size());
@@ -591,21 +592,22 @@ void DatapackClientLoader::parseBuffExtra()
             item = item.nextSiblingElement(DatapackClientLoader::text_buff);
         }
 
-        auto i=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.begin();
-        while(i!=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.cend())
-        {
-            if(!DatapackClientLoader::datapackLoader.monsterBuffsExtra.contains(i->first))
-            {
-                qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster buffer extra for id: %1").arg(i->first));
-                DatapackClientLoader::MonsterExtra::Buff monsterBuffExtraEntry;
-                monsterBuffExtraEntry.name=tr("Unknown");
-                monsterBuffExtraEntry.description=tr("Unknown");
-                monsterBuffExtraEntry.icon=QIcon(QStringLiteral(":/images/interface/buff.png"));
-                DatapackClientLoader::datapackLoader.monsterBuffsExtra[i->first]=monsterBuffExtraEntry;
-            }
-            ++i;
-        }
         file_index++;
+    }
+
+    auto i=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.begin();
+    while(i!=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.cend())
+    {
+        if(!DatapackClientLoader::datapackLoader.monsterBuffsExtra.contains(i->first))
+        {
+            qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster buffer extra for id: %1").arg(i->first));
+            DatapackClientLoader::MonsterExtra::Buff monsterBuffExtraEntry;
+            monsterBuffExtraEntry.name=tr("Unknown");
+            monsterBuffExtraEntry.description=tr("Unknown");
+            monsterBuffExtraEntry.icon=QIcon(QStringLiteral(":/images/interface/buff.png"));
+            DatapackClientLoader::datapackLoader.monsterBuffsExtra[i->first]=monsterBuffExtraEntry;
+        }
+        ++i;
     }
 
     qDebug() << QStringLiteral("%1 buff(s) extra loaded").arg(DatapackClientLoader::datapackLoader.monsterBuffsExtra.size());
@@ -774,20 +776,21 @@ void DatapackClientLoader::parseSkillsExtra()
             item = item.nextSiblingElement(DatapackClientLoader::text_skill);
         }
 
-        auto i=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.begin();
-        while(i!=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
-        {
-            if(!monsterSkillsExtra.contains(i->first))
-            {
-                qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster skill extra for id: %1").arg(i->first));
-                DatapackClientLoader::MonsterExtra::Skill monsterSkillExtraEntry;
-                monsterSkillExtraEntry.name=tr("Unknown");
-                monsterSkillExtraEntry.description=tr("Unknown");
-                monsterSkillsExtra[i->first]=monsterSkillExtraEntry;
-            }
-            ++i;
-        }
         file_index++;
+    }
+
+    auto i=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.begin();
+    while(i!=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
+    {
+        if(!monsterSkillsExtra.contains(i->first))
+        {
+            qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster skill extra for id: %1").arg(i->first));
+            DatapackClientLoader::MonsterExtra::Skill monsterSkillExtraEntry;
+            monsterSkillExtraEntry.name=tr("Unknown");
+            monsterSkillExtraEntry.description=tr("Unknown");
+            monsterSkillsExtra[i->first]=monsterSkillExtraEntry;
+        }
+        ++i;
     }
 
     qDebug() << QStringLiteral("%1 skill(s) extra loaded").arg(monsterSkillsExtra.size());
