@@ -910,7 +910,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         //Use object on monster
         case 0x10:
         {
-            if(size<((int)sizeof(uint16_t)+(int)sizeof(uint32_t)))
+            if(size<((int)sizeof(uint16_t)+(int)sizeof(uint8_t)))
             {
                 errorOutput("wrong remaining size for use object on monster");
                 return false;
