@@ -65,7 +65,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>4</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -594,7 +594,7 @@ border-image: url(:/images/empty.png);
               <item>
                <widget class="QLabel" name="IG_dialog_text">
                 <property name="styleSheet">
-                 <string notr="true">color: rgb(0, 0, 0);</string>
+                 <string notr="true">#IG_dialog_text{color: rgb(0, 0, 0);}</string>
                 </property>
                 <property name="textFormat">
                  <enum>Qt::RichText</enum>
@@ -747,7 +747,7 @@ color: rgb(0, 0, 0);
             </size>
            </property>
            <property name="styleSheet">
-            <string notr="true">background-image: url(:/images/interface/baroption.png);</string>
+            <string notr="true">#frame_main_display_bottom{background-image: url(:/images/interface/baroption.png);}</string>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_10">
             <property name="topMargin">
@@ -2015,7 +2015,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
+             <string notr="true">#inventory{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -2736,7 +2736,7 @@ color: rgb(0, 0, 0);</string>
            </size>
           </property>
           <property name="styleSheet">
-           <string notr="true">color: rgb(0, 0, 0);</string>
+           <string notr="true">#labelPlantDescription{color: rgb(0, 0, 0);}</string>
           </property>
           <property name="wordWrap">
            <bool>true</bool>
@@ -3022,7 +3022,7 @@ padding-bottom:3px;
            </rect>
           </property>
           <property name="styleSheet">
-           <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
+           <string notr="true">#listPlantList{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
           </property>
           <property name="frameShape">
            <enum>QFrame::NoFrame</enum>
@@ -3168,8 +3168,8 @@ border-image: url(:/images/empty.png);
            </rect>
           </property>
           <property name="styleSheet">
-           <string notr="true">background-image: url(:/images/empty.png);
-color: rgb(0, 0, 0);</string>
+           <string notr="true">#listCraftingMaterials{background-image: url(:/images/empty.png);
+color: rgb(0, 0, 0);}</string>
           </property>
           <property name="frameShape">
            <enum>QFrame::NoFrame</enum>
@@ -3264,8 +3264,8 @@ padding-bottom:3px;
            </rect>
           </property>
           <property name="styleSheet">
-           <string notr="true">background-image: url(:/images/empty.png);
-color: rgb(0, 0, 0);</string>
+           <string notr="true">#listCraftingList{background-image: url(:/images/empty.png);
+color: rgb(0, 0, 0);}</string>
           </property>
           <property name="frameShape">
            <enum>QFrame::NoFrame</enum>
@@ -3519,7 +3519,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
+             <string notr="true">#shopItemList{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -5234,7 +5234,7 @@ padding-bottom:3px;
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
+             <string notr="true">#learnAttackList{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -6143,7 +6143,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
+             <string notr="true">#factoryProducts{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -6171,7 +6171,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
+             <string notr="true">#factoryResources{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -6402,7 +6402,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
+             <string notr="true">#monsterDetailsSkills{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -6873,7 +6873,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
+             <string notr="true">#marketObject{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="iconSize">
              <size>
@@ -6892,7 +6892,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
+             <string notr="true">#marketMonster{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="iconSize">
              <size>
@@ -6911,7 +6911,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
+             <string notr="true">#marketOwnObject{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="iconSize">
              <size>
@@ -6930,7 +6930,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
+             <string notr="true">#marketOwnMonster{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="iconSize">
              <size>
@@ -7097,7 +7097,7 @@ padding-bottom:3px;
          <item>
           <widget class="QTabWidget" name="tabWidgetEncyclopedia">
            <property name="currentIndex">
-            <number>0</number>
+            <number>1</number>
            </property>
            <widget class="QWidget" name="tabEncyclopediaMonster">
             <attribute name="icon">
