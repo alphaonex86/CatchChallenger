@@ -81,7 +81,7 @@ bool CommonFightEngine::dropKOCurrentMonster()
 bool CommonFightEngine::dropKOOtherMonster()
 {
     bool otherMonsterReturn=false;
-    if(!wildMonsters.empty())
+    /*if(!wildMonsters.empty())
     {
         auto it=wildMonsters.cbegin();
         while(it!=wildMonsters.cend())
@@ -106,6 +106,35 @@ bool CommonFightEngine::dropKOOtherMonster()
                 otherMonsterReturn=true;
             }
             ++it;
+        }
+    }*/
+    //Now it's std::vector
+    if(!wildMonsters.empty())
+    {
+        unsigned int index=0;
+        while(index<wildMonsters.size())
+        {
+            const PlayerMonster &playerMonster=wildMonsters.at(index);
+            if(playerMonster.hp==0)
+            {
+                wildMonsters.erase(wildMonsters.cbegin()+index);
+                otherMonsterReturn=true;
+            }
+            index++;
+        }
+    }
+    if(!botFightMonsters.empty())
+    {
+        unsigned int index=0;
+        while(index<botFightMonsters.size())
+        {
+            const PlayerMonster &playerMonster=botFightMonsters.at(index);
+            if(playerMonster.hp==0)
+            {
+                botFightMonsters.erase(botFightMonsters.cbegin()+index);
+                otherMonsterReturn=true;
+            }
+            index++;
         }
     }
     return otherMonsterReturn;
