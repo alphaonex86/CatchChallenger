@@ -324,7 +324,7 @@ bool Map_loader::tryLoadMap(const std::string &file)
                                     else
                                         std::cerr << "Missing \"map\" properties for the border: " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << ")" << std::endl;
                                 }
-                                else if(type=="teleport_on_push" || type=="teleport_on_it" || type=="door")
+                                else if(type=="teleport on push" || type=="teleport on it" || type=="door")
                                 {
                                     if(property_text.find(CACHEDSTRING_map)!=property_text.cend() && property_text.find(CACHEDSTRING_x)!=property_text.cend() && property_text.find(CACHEDSTRING_y)!=property_text.cend())
                                     {
