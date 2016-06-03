@@ -365,7 +365,7 @@ public:
     //inventory
     void destroyObject(const uint16_t &object,const uint32_t &quantity=1);
     void useObject(const uint16_t &object);
-    void useObjectOnMonster(const uint16_t &object,const uint32_t &monster);
+    void useObjectOnMonsterByPosition(const uint16_t &object, const uint8_t &monsterPosition);
     void wareHouseStore(const qint64 &cash, const QList<QPair<uint16_t, int32_t> > &items, const QList<uint32_t> &withdrawMonsters, const QList<uint32_t> &depositeMonsters);
     void takeAnObjectOnMap();
 

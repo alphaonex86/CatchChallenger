@@ -717,7 +717,7 @@ void Api_protocol::useObject(const uint16_t &object)
     lastObjectUsed << object;
 }
 
-void Api_protocol::useObjectOnMonster(const uint16_t &object,const uint32_t &monster)
+void Api_protocol::useObjectOnMonsterByPosition(const uint16_t &object,const uint8_t &monsterPosition)
 {
     if(!is_logged)
     {
@@ -733,7 +733,7 @@ void Api_protocol::useObjectOnMonster(const uint16_t &object,const uint32_t &mon
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << object;
-    out << monster;
+    out << monsterPosition;
     is_logged=character_selected=packOutcommingData(0x10,outputData.constData(),outputData.size());
 }
 

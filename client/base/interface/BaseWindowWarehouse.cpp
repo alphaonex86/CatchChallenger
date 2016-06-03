@@ -310,17 +310,9 @@ void BaseWindow::on_warehouseValidate_clicked()
         while(index<monster_to_deposit.size())
         {
             const std::vector<PlayerMonster> &playerMonster=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster();
-            unsigned int sub_index=0;
-            while(sub_index<playerMonster.size())
-            {
-                if(playerMonster.at(sub_index).id==monster_to_deposit.at(index))
-                {
-                    warehouse_playerMonster << playerMonster.at(sub_index);
-                    CatchChallenger::ClientFightEngine::fightEngine.removeMonster(monster_to_deposit.at(index));
-                    break;
-                }
-                sub_index++;
-            }
+            const uint8_t &monsterPosition=monster_to_deposit.at(index);
+            warehouse_playerMonster << playerMonster.at(monsterPosition);
+            CatchChallenger::ClientFightEngine::fightEngine.removeMonsterByPosition(monsterPosition);
             index++;
         }
     }

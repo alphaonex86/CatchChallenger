@@ -24,7 +24,7 @@ public:
     static ClientFightEngine fightEngine;
     virtual void resetAll();
     virtual bool isInFight() const;
-    bool useObjectOnMonster(const uint16_t &object,const uint32_t &monster);
+    bool useObjectOnMonsterByPosition(const uint16_t &object, const uint8_t &monsterPosition);
     void errorFightEngine(const std::string &error);
     void messageFightEngine(const std::string &message) const;
     void addPlayerMonster(const QList<PlayerMonster> &playerMonster);
