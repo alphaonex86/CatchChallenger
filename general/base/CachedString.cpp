@@ -98,9 +98,9 @@ CachedString::CachedString()
     lookAt="lookAt";
     file="file";
     infinite="infinite";
-    text_true="text_true";
+    text_true="true";
     visible="visible";
-    text_false="text_false";
+    text_false="false";
     layer="layer";
     data="data";
     encoding="encoding";
