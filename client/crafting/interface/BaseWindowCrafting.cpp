@@ -220,22 +220,34 @@ void BaseWindow::load_crafting_inventory()
 QString BaseWindow::reputationRequirementsToText(const ReputationRequirements &reputationRequirements)
 {
     if(reputationRequirements.reputationId>=CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
-        return QStringLiteral("???");
+    {
+        std::cerr << "reputationRequirements.reputationId" << reputationRequirements.reputationId << ">=CatchChallenger::CommonDatapack::commonDatapack.reputation.size()" << CatchChallenger::CommonDatapack::commonDatapack.reputation.size() << std::endl;
+        return tr("Unknown reputation id: %1").arg(reputationRequirements.reputationId);
+    }
     const Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRequirements.reputationId);
-    if(DatapackClientLoader::datapackLoader.reputationExtra.contains(QString::fromStdString(reputation.name)))
-        return QStringLiteral("???");
+    if(!DatapackClientLoader::datapackLoader.reputationExtra.contains(QString::fromStdString(reputation.name)))
+    {
+        std::cerr << "!DatapackClientLoader::datapackLoader.reputationExtra.contains("+reputation.name+")" << std::endl;
+        return tr("Unknown reputation name: %1").arg(QString::fromStdString(reputation.name));
+    }
     const DatapackClientLoader::ReputationExtra &reputationExtra=DatapackClientLoader::datapackLoader.reputationExtra.value(QString::fromStdString(reputation.name));
     if(reputationRequirements.positif)
     {
         if(reputationRequirements.level>=reputationExtra.reputation_positive.size())
-            return QStringLiteral("???");
+        {
+            std::cerr << "No text for level "+std::to_string(reputationRequirements.level)+" for reputation "+reputationExtra.name.toStdString() << std::endl;
+            return QStringLiteral("No text for level %1 for reputation %2").arg(reputationRequirements.level).arg(reputationExtra.name);
+        }
         else
             return reputationExtra.reputation_positive.at(reputationRequirements.level);
     }
     else
     {
         if(reputationRequirements.level>=reputationExtra.reputation_negative.size())
-            return QStringLiteral("???");
+        {
+            std::cerr << "No text for level "+std::to_string(reputationRequirements.level)+" for reputation "+reputationExtra.name.toStdString() << std::endl;
+            return QStringLiteral("No text for level %1 for reputation %2").arg(reputationRequirements.level).arg(reputationExtra.name);
+        }
         else
             return reputationExtra.reputation_negative.at(reputationRequirements.level);
     }
