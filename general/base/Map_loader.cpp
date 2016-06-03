@@ -503,7 +503,7 @@ bool Map_loader::tryLoadMap(const std::string &file)
                                     std::cerr << "Unknown type: " << type
                                               << ", object_x: " << object_x
                                               << ", object_y: " << object_y
-                                              << " (moving), " << SubChild->CATCHCHALLENGER_XMLELENTVALUE()
+                                              << " (object), " << SubChild->CATCHCHALLENGER_XMLELENTVALUE()
                                               << " (line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild)
                                               << "), file: " << file
                                               << std::endl;
