@@ -1612,7 +1612,7 @@ void Client::destroyObject(const uint16_t &itemId,const uint32_t &quantity)
     removeObject(itemId,quantity);
 }
 
-bool Client::useObjectOnMonster(const uint16_t &object,const uint32_t &monster)
+bool Client::useObjectOnMonsterByPosition(const uint16_t &object, const uint8_t &monsterPosition)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("use the object: "+std::to_string(object)+" on monster "+std::to_string(monster));
@@ -1627,7 +1627,7 @@ bool Client::useObjectOnMonster(const uint16_t &object,const uint32_t &monster)
         errorOutput("have not quantity to use this object: "+std::to_string(object));
         return false;
     }
-    if(CommonFightEngine::useObjectOnMonster(object,monster))
+    if(CommonFightEngine::useObjectOnMonsterByPosition(object,monsterPosition))
     {
         if(CommonDatapack::commonDatapack.items.item.at(object).consumeAtUse)
             removeObject(object);

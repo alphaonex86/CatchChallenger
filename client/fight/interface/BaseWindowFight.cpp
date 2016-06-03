@@ -99,7 +99,16 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
     }
     uint32_t maxXp=monsterGeneralInfo.level_to_xp.at(monster.level-1);
     ui->monsterDetailsLevel->setText(tr("Level %1").arg(monster.level));
-    ui->monsterDetailsStatHeal->setText(tr("Heal: %1/%2").arg(monster.hp).arg(stat.hp));
+    #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
+    if(stat.hp>(monster.hp/2))
+        ui->monsterDetailsStatHeal->setText(tr("Heal: ")+QString("<span style=\"color:#1A8307\">%1/%2</span>").arg(monster.hp).arg(stat.hp));
+    else if(stat.hp>(monster.hp/4))
+        ui->monsterDetailsStatHeal->setText(tr("Heal: ")+QString("<span style=\"color:#B99C09\">%1/%2</span>").arg(monster.hp).arg(stat.hp));
+    else
+        ui->monsterDetailsStatHeal->setText(tr("Heal: ")+QString("<span style=\"color:#BF0303\">%1/%2</span>").arg(monster.hp).arg(stat.hp));
+    #else
+    ui->monsterDetailsStatHeal->setText(tr("Heal: ")+QString("%1/%2").arg(monster.hp).arg(stat.hp));
+    #endif
     ui->monsterDetailsStatSpeed->setText(tr("Speed: %1").arg(stat.speed));
     ui->monsterDetailsStatXp->setText(tr("Xp: %1/%2").arg(monster.remaining_xp).arg(maxXp));
     ui->monsterDetailsStatAttack->setText(tr("Attack: %1").arg(stat.attack));

@@ -675,9 +675,14 @@ void ClientFightEngine::newRandomNumber(const QByteArray &data)
 }
 
 //duplicate to have a return
-bool ClientFightEngine::useObjectOnMonster(const uint16_t &object,const uint32_t &monster)
+bool ClientFightEngine::useObjectOnMonsterByPosition(const uint16_t &object, const uint8_t &monsterPosition)
 {
-    PlayerMonster * playerMonster=monsterById(monster);
+    PlayerMonster * playerMonster=monsterByPosition(monsterPosition);
+    if(playerMonster==NULL)
+    {
+        std::cerr << "Unable to locate the monster to use the item: " << std::to_string(monsterPosition) << std::endl;
+        return false;
+    }
     if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.find(object)!=CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.cend())
     {
     }
@@ -792,5 +797,5 @@ bool ClientFightEngine::useObjectOnMonster(const uint16_t &object,const uint32_t
     else
         return false;
 
-    return CommonFightEngine::useObjectOnMonster(object,monster);
+    return CommonFightEngine::useObjectOnMonsterByPosition(object,monsterPosition);
 }

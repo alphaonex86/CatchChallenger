@@ -541,7 +541,7 @@ private:
     //inventory
     void destroyObject(const uint16_t &itemId,const uint32_t &quantity);
     void useObject(const uint8_t &query_id,const uint16_t &itemId);
-    bool useObjectOnMonster(const uint16_t &object, const uint32_t &monster);
+    bool useObjectOnMonsterByPosition(const uint16_t &object, const uint8_t &monsterPosition);
     //teleportation
     void receiveTeleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
     //shop
