@@ -916,8 +916,8 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 return false;
             }
             const uint16_t &item=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
-            const uint32_t &monsterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t))));
-            return useObjectOnMonster(item,monsterId);
+            const uint8_t &monsterPosition=data[sizeof(uint16_t)];
+            return useObjectOnMonsterByPosition(item,monsterPosition);
         }
         break;
         //use skill
