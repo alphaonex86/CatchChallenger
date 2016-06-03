@@ -2458,8 +2458,8 @@ QList<QPair<uint32_t,QString> > BaseWindow::getQuestList(const uint32_t &botId)
             }
             else
                 {}//it's another bot
-            ++i;
         }
+        ++i;
     }
     return entryList;
 }
@@ -3227,16 +3227,19 @@ bool BaseWindow::tryValidateQuestStep(bool silent)
     {
         if(!silent)
             showTip(tr("Quest not found"));
-        return false;
+        return
+                false;
     }
+    const Quest &quest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId);
 
-    if(quests.find(questId)!=quests.cend())
+    if(quests.find(questId)==quests.cend())
     {
-        if(vectorcontainsAtLeastOne(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).steps.at(0).bots,actualBot.botId)
-                && haveStartQuestRequirement(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId)))
+        //start for the first time the quest
+        if(vectorcontainsAtLeastOne(quest.steps.at(0).bots,actualBot.botId)
+                && haveStartQuestRequirement(quest))
         {
             CatchChallenger::Api_client_real::client->startQuest(questId);
-            startQuest(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId));
+            startQuest(quest);
             updateDisplayedQuests();
             return true;
         }
@@ -3249,11 +3252,13 @@ bool BaseWindow::tryValidateQuestStep(bool silent)
     }
     else if(quests.at(questId).step==0)
     {
-        if(vectorcontainsAtLeastOne(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).steps.at(0).bots,actualBot.botId)
-                && haveStartQuestRequirement(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId)))
+        //start again the quest if can be repeated
+        if(quest.repeatable &&
+                vectorcontainsAtLeastOne(quest.steps.at(0).bots,actualBot.botId)
+                && haveStartQuestRequirement(quest))
         {
             CatchChallenger::Api_client_real::client->startQuest(questId);
-            startQuest(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId));
+            startQuest(quest);
             updateDisplayedQuests();
             return true;
         }
@@ -3264,29 +3269,29 @@ bool BaseWindow::tryValidateQuestStep(bool silent)
             return false;
         }
     }
-    if(!haveNextStepQuestRequirements(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId)))
+    if(!haveNextStepQuestRequirements(quest))
     {
         if(!silent)
             showTip(tr("You don't have the requirement to continue this quest"));
         return false;
     }
-    if(quests.at(questId).step>=(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).steps.size()))
+    if(quests.at(questId).step>=(quest.steps.size()))
     {
         if(!silent)
             showTip(tr("You have finish the quest <b>%1</b>").arg(DatapackClientLoader::datapackLoader.questsExtra.value(questId).name));
         CatchChallenger::Api_client_real::client->finishQuest(questId);
-        nextStepQuest(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId));
+        nextStepQuest(quest);
         updateDisplayedQuests();
         return true;
     }
-    if(vectorcontainsAtLeastOne(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).steps.at(quests.at(questId).step).bots,actualBot.botId))
+    if(vectorcontainsAtLeastOne(quest.steps.at(quests.at(questId).step).bots,actualBot.botId))
     {
         if(!silent)
             showTip(tr("You need talk to another bot"));
         return false;
     }
     CatchChallenger::Api_client_real::client->nextQuestStep(questId);
-    nextStepQuest(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId));
+    nextStepQuest(quest);
     updateDisplayedQuests();
     return true;
 }
