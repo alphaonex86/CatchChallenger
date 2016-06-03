@@ -911,7 +911,7 @@ void MapVisualiserPlayer::parseAction()
                 else if(map_client->itemsOnMap.contains(QPair<uint8_t,uint8_t>(x,y)))
                 {
                     const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.value(QPair<uint8_t,uint8_t>(x,y));
-                    if(item.tileObject!=NULL)
+                    if(item.tileObject!=NULL && !item.infinite)
                     {
                         ObjectGroupItem::objectGroupLink[item.tileObject->objectGroup()]->removeObject(item.tileObject);
                         map_client->itemsOnMap[QPair<uint8_t,uint8_t>(x,y)].tileObject=NULL;
@@ -939,7 +939,7 @@ void MapVisualiserPlayer::parseAction()
                 else if(map_client->itemsOnMap.contains(QPair<uint8_t,uint8_t>(x,y)))
                 {
                     const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.value(QPair<uint8_t,uint8_t>(x,y));
-                    if(item.tileObject!=NULL)
+                    if(item.tileObject!=NULL && !item.infinite)
                     {
                         ObjectGroupItem::objectGroupLink[item.tileObject->objectGroup()]->removeObject(item.tileObject);
                         map_client->itemsOnMap[QPair<uint8_t,uint8_t>(x,y)].tileObject=NULL;
@@ -967,7 +967,7 @@ void MapVisualiserPlayer::parseAction()
                 else if(map_client->itemsOnMap.contains(QPair<uint8_t,uint8_t>(x,y)))
                 {
                     const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.value(QPair<uint8_t,uint8_t>(x,y));
-                    if(item.tileObject!=NULL)
+                    if(item.tileObject!=NULL && !item.infinite)
                     {
                         ObjectGroupItem::objectGroupLink[item.tileObject->objectGroup()]->removeObject(item.tileObject);
                         map_client->itemsOnMap[QPair<uint8_t,uint8_t>(x,y)].tileObject=NULL;
@@ -995,7 +995,7 @@ void MapVisualiserPlayer::parseAction()
                 else if(map_client->itemsOnMap.contains(QPair<uint8_t,uint8_t>(x,y)))
                 {
                     const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.value(QPair<uint8_t,uint8_t>(x,y));
-                    if(item.tileObject!=NULL)
+                    if(item.tileObject!=NULL && !item.infinite)
                     {
                         ObjectGroupItem::objectGroupLink[item.tileObject->objectGroup()]->removeObject(item.tileObject);
                         map_client->itemsOnMap[QPair<uint8_t,uint8_t>(x,y)].tileObject=NULL;
