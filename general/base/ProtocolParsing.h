@@ -139,6 +139,7 @@ protected:
     int8_t parseData(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
     bool parseDispatch(const char * const data,const int &size);
     inline bool isReply() const;
+    virtual void breakNeedMoreData();
     std::vector<char> header_cut;
     uint8_t flags;
     /* flags & 0x80 = have header

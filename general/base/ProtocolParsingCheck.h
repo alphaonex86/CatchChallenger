@@ -30,6 +30,7 @@ class ProtocolParsingCheck : public ProtocolParsingBase
         void errorParsingLayer(const std::string &error);
         void messageParsingLayer(const std::string &message) const;
         void moveClientFastPath(const uint8_t &previousMovedUnit,const uint8_t &direction);
+        void breakNeedMoreData();
 
         #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
         ProtocolParsing::CompressionType getCompressType() const; /// if client get server because it's check then mirror

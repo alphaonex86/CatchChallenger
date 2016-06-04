@@ -1717,7 +1717,7 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
         posOutput+=1;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(1+4);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(1);
         posOutput+=4;
 
         //type

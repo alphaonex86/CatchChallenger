@@ -1173,21 +1173,20 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
         public_and_private_informations.warehouse_playerMonster.push_back(newMonster);
         public_and_private_informations.warehouse_playerMonster.back().id=monster_id;
         position=public_and_private_informations.warehouse_playerMonster.size();
-        const std::string &queryText=PreparedDBQueryCommon::db_query_insert_warehouse_monster.compose(
+        const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster_full.compose(
                     std::to_string(monster_id),
+                    std::to_string(character_id),
+                    "2",
                     std::to_string(newMonster.hp),
                     std::to_string(newMonster.monster),
                     std::to_string(newMonster.level),
-                    std::to_string(newMonster.remaining_xp),
-                    std::to_string(newMonster.sp),
                     std::to_string(newMonster.catched_with),
                     std::to_string((uint8_t)newMonster.gender),
-                    std::to_string(newMonster.egg_step),
                     std::to_string(character_id),
                     std::to_string(position),
+                    binarytoHexa(raw_buff,sizeof(raw_buff)),
                     binarytoHexa(raw_skill,sizeof(raw_skill)),
-                    binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance)),
-                    binarytoHexa(raw_buff,sizeof(raw_buff))
+                    binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
                     );
         dbQueryWriteCommon(queryText);
     }
@@ -1196,21 +1195,20 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
         public_and_private_informations.playerMonster.push_back(newMonster);
         public_and_private_informations.playerMonster.back().id=monster_id;
         position=public_and_private_informations.playerMonster.size();
-        const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster.compose(
+        const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster_full.compose(
                     std::to_string(monster_id),
+                    std::to_string(character_id),
+                    "1",
                     std::to_string(newMonster.hp),
                     std::to_string(newMonster.monster),
                     std::to_string(newMonster.level),
-                    std::to_string(newMonster.remaining_xp),
-                    std::to_string(newMonster.sp),
                     std::to_string(newMonster.catched_with),
                     std::to_string((uint8_t)newMonster.gender),
-                    std::to_string(newMonster.egg_step),
                     std::to_string(character_id),
                     std::to_string(position),
+                    binarytoHexa(raw_buff,sizeof(raw_buff)),
                     binarytoHexa(raw_skill,sizeof(raw_skill)),
-                    binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance)),
-                    binarytoHexa(raw_buff,sizeof(raw_buff))
+                    binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
                     );
         dbQueryWriteCommon(queryText);
     }

@@ -33,6 +33,11 @@ void ProtocolParsingCheck::moveClientFastPath(const uint8_t &previousMovedUnit,c
     (void)direction;
 }
 
+void ProtocolParsingCheck::breakNeedMoreData()
+{
+    std::cerr << "ProtocolParsingCheck::breakNeedMoreData(): Break due to need more in parse data" << std::endl;
+}
+
 bool ProtocolParsingCheck::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     (void)(mainCodeType);
