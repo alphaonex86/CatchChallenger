@@ -14,6 +14,9 @@ public:
     explicit InternetUpdater();
     static InternetUpdater *internetUpdater;
     static QString getText(const QString &version);
+    #if defined(_WIN32) || defined(Q_OS_MAC)
+    static QString GetOSDisplayString();
+    #endif
 signals:
     void newUpdate(const QString &version) const;
 private:
@@ -25,9 +28,6 @@ private slots:
     void downloadFile();
     void httpFinished();
     bool versionIsNewer(const QString &version);
-    #if defined(_WIN32) || defined(Q_OS_MAC)
-    static QString GetOSDisplayString();
-    #endif
 };
 
 #endif // INTERNETUPDATER_H
