@@ -33,13 +33,13 @@ QtDatabase::~QtDatabase()
     }
 }
 
-QSqlDatabase * QtDatabase::findConnexionToOpen(const std::string &host, const std::string &dbname)
+QSqlDatabase * QtDatabase::findConnexionToOpen(const std::string &host, const std::string &dbname,const DatabaseBase::DatabaseType &typeToSearch)
 {
     unsigned int index=0;
     while(index<QtDatabase::establishedConnexionList.size())
     {
         QtDatabase::EstablishedConnexion &establishedConnexion=QtDatabase::establishedConnexionList.at(index);
-        if(establishedConnexion.host==host && establishedConnexion.dbname==dbname)
+        if(establishedConnexion.host==host && establishedConnexion.dbname==dbname && establishedConnexion.type==typeToSearch)
         {
             establishedConnexion.openCount++;
             return establishedConnexion.conn;
@@ -88,9 +88,12 @@ bool QtDatabase::syncConnect(const std::string &host, const std::string &dbname,
     #endif
     if(conn!=NULL)
         syncDisconnect();
-    conn=findConnexionToOpen(host,dbname);
+    conn=findConnexionToOpen(host,dbname,DatabaseBase::DatabaseType::Mysql);
     if(conn!=NULL)
+    {
+        databaseConnected=DatabaseBase::DatabaseType::Mysql;
         return true;
+    }
     conn = new QSqlDatabase();
     *conn = QSqlDatabase::addDatabase("QMYSQL","server"+QString::number(QtDatabase::establishedConnexionCount));
     conn->setConnectOptions("MYSQL_OPT_RECONNECT=1");
@@ -111,6 +114,7 @@ bool QtDatabase::syncConnect(const std::string &host, const std::string &dbname,
     establishedConnexion.dbname=dbname;
     establishedConnexion.host=host;
     establishedConnexion.openCount=1;
+    establishedConnexion.type=DatabaseBase::DatabaseType::Mysql;
     QtDatabase::establishedConnexionList.push_back(establishedConnexion);
     QtDatabase::establishedConnexionCount++;
 
@@ -132,9 +136,12 @@ bool QtDatabase::syncConnectSqlite(const std::string &file)
 {
     if(conn!=NULL)
         syncDisconnect();
-    conn=findConnexionToOpen(file,std::string());
+    conn=findConnexionToOpen(file,std::string(),DatabaseBase::DatabaseType::SQLite);
     if(conn!=NULL)
+    {
+        databaseConnected=DatabaseBase::DatabaseType::SQLite;
         return true;
+    }
     conn = new QSqlDatabase();
     *conn = QSqlDatabase::addDatabase("QSQLITE","server"+QString::number(QtDatabase::establishedConnexionCount));
     conn->setDatabaseName(file.c_str());
@@ -151,6 +158,7 @@ bool QtDatabase::syncConnectSqlite(const std::string &file)
     establishedConnexion.conn=conn;
     establishedConnexion.host=file;
     establishedConnexion.openCount=1;
+    establishedConnexion.type=DatabaseBase::DatabaseType::SQLite;
     QtDatabase::establishedConnexionList.push_back(establishedConnexion);
     QtDatabase::establishedConnexionCount++;
 
@@ -167,9 +175,12 @@ bool QtDatabase::syncConnectPostgresql(const std::string &host,const std::string
     #endif
     if(conn!=NULL)
         syncDisconnect();
-    conn=findConnexionToOpen(host,dbname);
+    conn=findConnexionToOpen(host,dbname,DatabaseBase::DatabaseType::PostgreSQL);
     if(conn!=NULL)
+    {
+        databaseConnected=DatabaseBase::DatabaseType::PostgreSQL;
         return true;
+    }
     conn = new QSqlDatabase();
     *conn = QSqlDatabase::addDatabase("QPSQL","server"+QString::number(QtDatabase::establishedConnexionCount));
     std::string tempString(host);
@@ -192,6 +203,7 @@ bool QtDatabase::syncConnectPostgresql(const std::string &host,const std::string
     establishedConnexion.dbname=dbname;
     establishedConnexion.host=host;
     establishedConnexion.openCount=1;
+    establishedConnexion.type=DatabaseBase::DatabaseType::PostgreSQL;
     QtDatabase::establishedConnexionList.push_back(establishedConnexion);
     QtDatabase::establishedConnexionCount++;
 
