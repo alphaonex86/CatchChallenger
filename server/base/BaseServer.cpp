@@ -385,6 +385,8 @@ bool BaseServer::initialize_the_database()
         GlobalServerData::serverPrivateVariables.db_base->syncDisconnect();
     }
     #endif
+
+
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     switch(GlobalServerData::serverSettings.database_login.tryOpenType)
     {
@@ -416,7 +418,7 @@ bool BaseServer::initialize_the_database()
         }
         else
             std::cout << "Connected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_login->databaseType())
-                      << " at " << GlobalServerData::serverSettings.database_login.host << std::endl;
+                      << " at " << GlobalServerData::serverSettings.database_login.file << std::endl;
         break;
         #endif
 
@@ -481,7 +483,7 @@ bool BaseServer::initialize_the_database()
         }
         else
             std::cout << "Connected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_base->databaseType())
-                      << " at " << GlobalServerData::serverSettings.database_base.host << std::endl;
+                      << " at " << GlobalServerData::serverSettings.database_base.file << std::endl;
         break;
         #endif
 
@@ -547,7 +549,7 @@ bool BaseServer::initialize_the_database()
         }
         else
             std::cout << "Connected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_common->databaseType())
-                      << " at " << GlobalServerData::serverSettings.database_common.host << std::endl;
+                      << " at " << GlobalServerData::serverSettings.database_common.file << std::endl;
         break;
         #endif
 
@@ -611,7 +613,7 @@ bool BaseServer::initialize_the_database()
         }
         else
             std::cout << "Connected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_server->databaseType())
-                      << " at " << GlobalServerData::serverSettings.database_server.host << std::endl;
+                      << " at " << GlobalServerData::serverSettings.database_server.file << std::endl;
         break;
         #endif
 

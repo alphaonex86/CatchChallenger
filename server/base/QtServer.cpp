@@ -45,10 +45,30 @@ QtServer::~QtServer()
         ++i;
     }
     client_list.clear();
-    delete GlobalServerData::serverPrivateVariables.db_server;
-    delete GlobalServerData::serverPrivateVariables.db_common;
-    delete GlobalServerData::serverPrivateVariables.db_base;
-    delete GlobalServerData::serverPrivateVariables.db_login;
+    if(GlobalServerData::serverPrivateVariables.db_server!=NULL)
+    {
+        GlobalServerData::serverPrivateVariables.db_server->syncDisconnect();
+        delete GlobalServerData::serverPrivateVariables.db_server;
+        GlobalServerData::serverPrivateVariables.db_server=NULL;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_common!=NULL)
+    {
+        GlobalServerData::serverPrivateVariables.db_common->syncDisconnect();
+        delete GlobalServerData::serverPrivateVariables.db_common;
+        GlobalServerData::serverPrivateVariables.db_common=NULL;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_base!=NULL)
+    {
+        GlobalServerData::serverPrivateVariables.db_base->syncDisconnect();
+        delete GlobalServerData::serverPrivateVariables.db_base;
+        GlobalServerData::serverPrivateVariables.db_base=NULL;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_login!=NULL)
+    {
+        GlobalServerData::serverPrivateVariables.db_login->syncDisconnect();
+        delete GlobalServerData::serverPrivateVariables.db_login;
+        GlobalServerData::serverPrivateVariables.db_login=NULL;
+    }
 }
 
 void QtServer::preload_the_city_capture()
