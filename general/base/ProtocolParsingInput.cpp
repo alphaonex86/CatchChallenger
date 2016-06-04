@@ -357,15 +357,20 @@ int8_t ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffe
         const int8_t &returnVar=parseData(commonBuffer,size,cursor);
         if(returnVar!=1)
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            //qDebug() << "Break due to need more in parse data";
-            #endif
+            breakNeedMoreData();
             return returnVar;
         }
     }
     //parseDispatch(); do into above function
     //dataClear();-> not return if failed or just stop parsing, then do into parseDispatch()
     return true;
+}
+
+void ProtocolParsingBase::breakNeedMoreData()
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cerr << "Break due to need more in parse data" << std::endl;
+    #endif
 }
 
 bool ProtocolParsingBase::isReply() const
