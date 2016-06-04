@@ -2,6 +2,7 @@
 #include "PlatformMacro.h"
 #include "../../general/base/GeneralVariable.h"
 #include "ClientVariable.h"
+#include "InternetUpdater.h"
 
 #include <QNetworkRequest>
 #include <QUrl>
