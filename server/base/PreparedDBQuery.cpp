@@ -25,6 +25,7 @@ StringWithReplacement PreparedDBQueryCommonForLogin::db_query_update_character_t
 //login and gameserver alone
 StringWithReplacement PreparedDBQueryCommon::db_query_delete_monster_by_id;
 StringWithReplacement PreparedDBQueryCommon::db_query_insert_monster;
+StringWithReplacement PreparedDBQueryCommon::db_query_insert_monster_full;
 
 #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
 StringWithReplacement PreparedDBQueryCommon::db_query_update_character_item;
@@ -436,6 +437,9 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_delete_monster_by_id="DELETE FROM monster WHERE id=%1";
         PreparedDBQueryCommon::db_query_insert_monster="INSERT INTO monster(id,character,place,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position,skills,skills_endurance) "
                                                        "VALUES(%1,%2,%3,%4,%5,%6,0,0,%7,%8,0,%9,%10,'\\x%11','\\x%12')";
+        /*wild catch*/
+        PreparedDBQueryCommon::db_query_insert_monster_full="INSERT INTO monster(id,character,place,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position,buffs,skills,skills_endurance) "
+                                                       "VALUES(%1,%2,%3,%4,%5,%6,0,0,%7,%8,0,%9,%10,'\\x%11','\\x%12','\\x%13')";
 
         #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
         PreparedDBQueryCommon::db_query_update_character_item="UPDATE character SET item='\\x%1' WHERE id=%2";

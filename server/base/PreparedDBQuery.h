@@ -47,6 +47,7 @@ public:
     //login and gameserver alone
     static StringWithReplacement db_query_delete_monster_by_id;
     static StringWithReplacement db_query_insert_monster;
+    static StringWithReplacement db_query_insert_monster_full;/*wild catch*/
 
     #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
     static StringWithReplacement db_query_update_character_item;
