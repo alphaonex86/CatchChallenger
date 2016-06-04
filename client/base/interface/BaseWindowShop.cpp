@@ -56,6 +56,7 @@ void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
             return;
         objectSelection(true,objectItem,tempQuantityForSell);
         showTip(tr("Selling the object..."));
+        displaySellList();
     }
 }
 
@@ -249,4 +250,5 @@ void BaseWindow::haveSellObject(const SoldStat &stat,const uint32_t &newPrice)
         break;
     }
     itemsToSell.removeFirst();
+    displaySellList();
 }
