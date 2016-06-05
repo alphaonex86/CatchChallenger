@@ -189,6 +189,7 @@ private slots:
     void show_reputation();
     void addCash(const uint32_t &cash);
     void removeCash(const uint32_t &cash);
+    void updatePlayerType();
     QPixmap getFrontSkin(const QString &skinName) const;
     QPixmap getFrontSkin(const uint32_t &skinId) const;
     QPixmap getBackSkin(const uint32_t &skinId) const;

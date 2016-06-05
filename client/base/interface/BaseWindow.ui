@@ -65,7 +65,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>0</number>
+        <number>4</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -1398,6 +1398,52 @@ border: 1px solid rgb(64, 136, 192);</string>
                          </item>
                          <item>
                           <spacer name="horizontalSpacer_7">
+                           <property name="orientation">
+                            <enum>Qt::Horizontal</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                            <size>
+                             <width>40</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                          </spacer>
+                         </item>
+                        </layout>
+                       </item>
+                       <item>
+                        <layout class="QHBoxLayout" name="horizontalLayout_63">
+                         <item>
+                          <widget class="QLabel" name="label_26">
+                           <property name="minimumSize">
+                            <size>
+                             <width>8</width>
+                             <height>8</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>8</width>
+                             <height>8</height>
+                            </size>
+                           </property>
+                           <property name="pixmap">
+                            <pixmap resource="../resources/client-resources.qrc">:/images/interface/player/point.png</pixmap>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QLabel" name="label_27">
+                           <property name="text">
+                            <string>Type:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QLabel" name="player_informations_type"/>
+                         </item>
+                         <item>
+                          <spacer name="horizontalSpacer_61">
                            <property name="orientation">
                             <enum>Qt::Horizontal</enum>
                            </property>
@@ -7240,9 +7286,9 @@ border-image: url(:/images/empty.png);
  <layoutdefault spacing="6" margin="11"/>
  <resources>
   <include location="../../../server/all-server-resources.qrc"/>
-  <include location="../resources/client-resources-multi.qrc"/>
   <include location="../../fight/resources/client-resources-fight.qrc"/>
   <include location="../resources/client-resources.qrc"/>
+  <include location="../resources/client-resources-multi.qrc"/>
  </resources>
  <connections>
   <connection>
