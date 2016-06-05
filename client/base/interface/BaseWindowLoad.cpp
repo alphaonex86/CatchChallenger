@@ -315,6 +315,30 @@ void BaseWindow::have_main_and_sub_datapack_loaded()
                  );
     updateConnectingStatus();
     updateClanDisplay();
+    updatePlayerType();
+}
+
+void BaseWindow::updatePlayerType()
+{
+    const Player_private_and_public_informations &informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    ui->player_informations_type->setText(QString());
+    ui->player_informations_type->setPixmap(QPixmap());
+    switch(informations.public_informations.type)
+    {
+        default:
+        case Player_type_normal:
+            ui->player_informations_type->setText(tr("Normal player"));
+        break;
+        case Player_type_premium:
+            ui->player_informations_type->setPixmap(QPixmap(":/images/chat/premium.png"));
+        break;
+        case Player_type_dev:
+            ui->player_informations_type->setPixmap(QPixmap(":/images/chat/developer.png"));
+        break;
+        case Player_type_gm:
+            ui->player_informations_type->setPixmap(QPixmap(":/images/chat/admin.png"));
+        break;
+    }
 }
 
 void BaseWindow::insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction)
