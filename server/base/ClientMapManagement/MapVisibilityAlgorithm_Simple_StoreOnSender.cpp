@@ -83,13 +83,13 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::insertClient()
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(this->x>=this->map->width)
             {
-                std::cerr << "x to out of map: " << this->x << " > " << this->map->width << " (" << this->map->map_file << ")" << std::endl;
+                std::cerr << "x to out of map: " << std::to_string(this->x) << " > " << std::to_string(this->map->width) << " (" << this->map->map_file << ")" << std::endl;
                 abort();
                 return;
             }
             if(this->y>=this->map->height)
             {
-                std::cerr << "y to out of map: " << this->y << " > " << this->map->height << " (" << this->map->map_file << ")" << std::endl;
+                std::cerr << "y to out of map: " << std::to_string(this->y) << " > " << std::to_string(this->map->height) << " (" << this->map->map_file << ")" << std::endl;
                 abort();
                 return;
             }

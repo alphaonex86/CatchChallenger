@@ -722,8 +722,18 @@ void BaseServer::preload_profile()
     {
         const ServerSpecProfile &serverProfile=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.at(index);
         ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(index);
+        if(GlobalServerData::serverPrivateVariables.map_list.find(serverProfile.mapString)==GlobalServerData::serverPrivateVariables.map_list.cend())
+        {
+            std::cerr << "Into the starter the map \"" << serverProfile.mapString << "\" is not found, fix it (abort)" << std::endl;
+            abort();
+        }
         serverProfileInternal.map=
                 static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.at(serverProfile.mapString));
+        if(serverProfileInternal.map==NULL)
+        {
+            std::cerr << "Into the starter the map \"" << serverProfile.mapString << "\" is not resolved, fix it (abort)" << std::endl;
+            abort();
+        }
         serverProfileInternal.x=serverProfile.x;
         serverProfileInternal.y=serverProfile.y;
         serverProfileInternal.orientation=serverProfile.orientation;

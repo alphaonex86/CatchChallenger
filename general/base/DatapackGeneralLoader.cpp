@@ -2828,6 +2828,10 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInter
                 if(!CatchChallenger::FacilityLibGeneral::isFile(datapackPath+DATAPACK_BASE_PATH_MAPMAIN+mainDatapackCode+'/'+serverProfile.mapString))
                 {
                     std::cerr << "Unable to open the xml file: " << file << ", map don't exists " << serverProfile.mapString << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
+                    {
+                        std::cerr << "Into the starter the map \"" << serverProfile.mapString << "\" is not found, fix it (abort)" << std::endl;
+                        abort();
+                    }
                     startItem = startItem->NextSiblingElement("start");
                     continue;
                 }
