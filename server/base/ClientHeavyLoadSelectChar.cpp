@@ -1187,7 +1187,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         {
             map=serverProfileInternal.map;
             x=serverProfileInternal.x;
-            x=serverProfileInternal.y;
+            y=serverProfileInternal.y;
         }
     }
     characterIsRightWithRescue(query_id,
