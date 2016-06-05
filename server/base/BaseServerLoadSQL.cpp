@@ -300,7 +300,7 @@ void BaseServer::preload_dictionary_map_return()
         const std::string &map=map_list_flat.at(index);
         if(foundMap.find(map)==foundMap.end())
         {
-            databaseMapId++;
+            databaseMapId=DictionaryServer::dictionary_map_database_to_internal.size()+1;
             std::string queryText;
             switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
             {
