@@ -667,98 +667,88 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 }
                 else
                 {
-                    if(regex_search(text,commandRegExp))
+                    std::string command;
+                    /// \warning don't use regex here, slow and do DDOS risk
+                    std::size_t found=text.find(Client::text_space);
+                    if(found!=std::string::npos)
                     {
-                        //isolate the main command (the first word)
-                        std::string command=text;
-                        std::regex_replace(command,commandRegExp,Client::text_regexresult1);
+                        command=text.substr(1,found-1);
+                        text=text.substr(found+1,text.size()-found-1);
+                    }
+                    else
+                        command=text.substr(1,text.size()-1);
 
-                        //isolate the arguements
-                        if(regex_search(text,commandRegExp))
+                    //the normal player command
+                    {
+                        if(command==Client::text_playernumber)
                         {
-                            std::regex_replace(text,commandRegExp,Client::text_regexresult2);
-                            std::regex_replace(text,isolateTheMainCommand,Client::text_regexresult1);
+                            sendBroadCastCommand(command,text);
+                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            return true;
                         }
-                        else
-                            text=std::string();
-
-                        //the normal player command
+                        else if(command==Client::text_playerlist)
                         {
-                            if(command==Client::text_playernumber)
-                            {
-                                sendBroadCastCommand(command,text);
-                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                                return true;
-                            }
-                            else if(command==Client::text_playerlist)
-                            {
-                                sendBroadCastCommand(command,text);
-                                normalOutput(Client::text_send_command_slash+command+" "+text);
-                                return true;
-                            }
-                            else if(command==Client::text_trade)
-                            {
-                                sendHandlerCommand(command,text);
-                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                                return true;
-                            }
-                            else if(command==Client::text_battle)
-                            {
-                                sendHandlerCommand(command,text);
-                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                                return true;
-                            }
+                            sendBroadCastCommand(command,text);
+                            normalOutput(Client::text_send_command_slash+command+" "+text);
+                            return true;
                         }
-                        //the admin command
-                        if(public_and_private_informations.public_informations.type==Player_type_gm || public_and_private_informations.public_informations.type==Player_type_dev)
+                        else if(command==Client::text_trade)
                         {
-                            if(command==Client::text_give)
-                            {
-                                sendHandlerCommand(command,text);
-                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                            }
-                            else if(command==Client::text_setevent)
-                            {
-                                sendHandlerCommand(command,text);
-                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                            }
-                            else if(command==Client::text_take)
-                            {
-                                sendHandlerCommand(command,text);
-                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                            }
-                            else if(command==Client::text_tp)
-                            {
-                                sendHandlerCommand(command,text);
-                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                            }
-                            else if(command==Client::text_kick)
-                            {
-                                sendBroadCastCommand(command,text);
-                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                            }
-                            else if(command==Client::text_chat)
-                            {
-                                sendBroadCastCommand(command,text);
-                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                            }
-                            else if(command==Client::text_setrights)
-                            {
-                                sendBroadCastCommand(command,text);
-                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                            }
-                            else if(command==Client::text_stop || command==Client::text_restart)
-                            {
-                                #ifndef EPOLLCATCHCHALLENGERSERVER
-                                BroadCastWithoutSender::broadCastWithoutSender.emit_serverCommand(command,text);
-                                #endif
-                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                            }
-                            else
-                            {
-                                normalOutput(Client::text_unknown_send_command_slash+command+Client::text_space+text);
-                                receiveSystemText(Client::text_unknown_send_command_slash+command+Client::text_space+text);
-                            }
+                            sendHandlerCommand(command,text);
+                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            return true;
+                        }
+                        else if(command==Client::text_battle)
+                        {
+                            sendHandlerCommand(command,text);
+                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            return true;
+                        }
+                    }
+                    //the admin command
+                    if(public_and_private_informations.public_informations.type==Player_type_gm || public_and_private_informations.public_informations.type==Player_type_dev || GlobalServerData::serverSettings.everyBodyIsRoot)
+                    {
+                        if(command==Client::text_give)
+                        {
+                            sendHandlerCommand(command,text);
+                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                        }
+                        else if(command==Client::text_setevent)
+                        {
+                            sendHandlerCommand(command,text);
+                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                        }
+                        else if(command==Client::text_take)
+                        {
+                            sendHandlerCommand(command,text);
+                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                        }
+                        else if(command==Client::text_tp)
+                        {
+                            sendHandlerCommand(command,text);
+                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                        }
+                        else if(command==Client::text_kick)
+                        {
+                            sendBroadCastCommand(command,text);
+                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                        }
+                        else if(command==Client::text_chat)
+                        {
+                            sendBroadCastCommand(command,text);
+                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                        }
+                        else if(command==Client::text_setrights)
+                        {
+                            sendBroadCastCommand(command,text);
+                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                        }
+                        else if(command==Client::text_stop || command==Client::text_restart)
+                        {
+                            #ifndef EPOLLCATCHCHALLENGERSERVER
+                            BroadCastWithoutSender::broadCastWithoutSender.emit_serverCommand(command,text);
+                            #endif
+                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
                         }
                         else
                         {
@@ -767,7 +757,10 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                         }
                     }
                     else
-                        normalOutput(Client::text_commands_seem_not_right+text);
+                    {
+                        normalOutput(Client::text_unknown_send_command_slash+command+Client::text_space+text);
+                        receiveSystemText(Client::text_unknown_send_command_slash+command+Client::text_space+text);
+                    }
                 }
             }
             if((size-pos)!=0)
