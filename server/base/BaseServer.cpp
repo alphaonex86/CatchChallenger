@@ -91,6 +91,8 @@ BaseServer::BaseServer() :
     GlobalServerData::serverPrivateVariables.common_blobversion_datapack=0;
     GlobalServerData::serverSettings.common_blobversion_datapack=0;
     GlobalServerData::serverSettings.anonymous            = false;
+    GlobalServerData::serverSettings.everyBodyIsRoot=0;
+    GlobalServerData::serverSettings.teleportIfMapNotFoundOrOutOfMap=0;
     CommonSettingsServer::commonSettingsServer.autoLearn              = false;//need useSP to false
     CommonSettingsServer::commonSettingsServer.dontSendPseudo         = false;
     CommonSettingsServer::commonSettingsServer.chat_allow_clan        = true;

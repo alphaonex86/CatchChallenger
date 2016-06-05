@@ -72,6 +72,10 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
     if(!settings->contains("maxWarehousePlayerItems"))
         settings->setValue("maxWarehousePlayerItems",150);
     #endif
+    if(!settings->contains("everyBodyIsRoot"))
+        settings->setValue("everyBodyIsRoot",false);
+    if(!settings->contains("teleportIfMapNotFoundOrOutOfMap"))
+        settings->setValue("teleportIfMapNotFoundOrOutOfMap",true);
     if(!settings->contains("server-ip"))
         settings->setValue("server-ip","");
     if(!settings->contains("common_blobversion_datapack"))

@@ -123,6 +123,8 @@ void send_settings()
     CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange		= stringtobool(settings->value("forceClientToSendAtMapChange"));
     CommonSettingsServer::commonSettingsServer.exportedXml                      = settings->value("exportedXml");
     formatedServerSettings.dontSendPlayerType                                   = stringtobool(settings->value("dontSendPlayerType"));
+    formatedServerSettings.everyBodyIsRoot                                      = stringtobool(settings->value("everyBodyIsRoot"));
+    formatedServerSettings.teleportIfMapNotFoundOrOutOfMap                       = stringtobool(settings->value("teleportIfMapNotFoundOrOutOfMap"));
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     CommonSettingsCommon::commonSettingsCommon.min_character					= stringtouint8(settings->value("min_character"));
     CommonSettingsCommon::commonSettingsCommon.max_character					= stringtouint8(settings->value("max_character"));

@@ -323,9 +323,6 @@ private:
     static const std::string text_unabletofoundtheconnectedplayertokick;
     static const std::string text_unabletofoundthisrightslevel;
 
-    static const std::regex commandRegExp;
-    static const std::regex commandRegExpWithArgs;
-    static const std::regex isolateTheMainCommand;
     static const std::string text_server_full;
     static const std::string text_slashpmspace;
     static const std::string text_slash;
