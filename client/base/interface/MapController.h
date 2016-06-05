@@ -49,6 +49,7 @@ private:
     QColor actualColor,tempColor,newColor;
     QTimer updateColorTimer;
     int updateColorIntervale;
+    QTimer updateBotTimer;
 protected slots:
     //plant
     void getPlantTimerEvent();
@@ -62,6 +63,7 @@ protected slots:
     void updateGrowing();
     void updateColor();
     void loadPlayerFromCurrentMap();
+    void updateBot();
 public slots:
     virtual void datapackParsed();
     virtual void datapackParsedMainSub();
@@ -69,6 +71,9 @@ public slots:
 private slots:
     void loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap, const uint32_t &botId, const uint8_t &x, const uint8_t &y, const QString &lookAt, const QString &skin);
 protected:
+    static QString text_random;
+    static QString text_loop;
+    static QString text_move;
     static QString text_left;
     static QString text_right;
     static QString text_top;
