@@ -8,6 +8,9 @@
 
 MapController* MapController::mapController=NULL;
 
+QString MapController::text_random=QLatin1Literal("random");
+QString MapController::text_loop=QLatin1Literal("loop");
+QString MapController::text_move=QLatin1Literal("move");
 QString MapController::text_left=QLatin1Literal("left");
 QString MapController::text_right=QLatin1Literal("right");
 QString MapController::text_top=QLatin1Literal("top");
@@ -45,6 +48,9 @@ MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,co
     updateColorTimer.setSingleShot(true);
     updateColorTimer.setInterval(50);
     connect(&updateColorTimer,&QTimer::timeout,this,&MapController::updateColor);
+    updateBotTimer.setInterval(1000);
+    updateBotTimer.start();
+    connect(&updateBotTimer,&QTimer::timeout,this,&MapController::updateBot);
 }
 
 MapController::~MapController()
@@ -98,6 +104,87 @@ void MapController::loadPlayerFromCurrentMap()
     //qreal x=rect.x()-800,y=rect.y()-600;
     //imageOver->setPos(QPointF(x,y));
     //imageOver->setPos(QPointF(-800,-600));
+}
+
+void MapController::updateBot()
+{
+    if(!player_informations_is_set)
+        return;
+    if(current_map.isEmpty())
+        return;
+    if(all_map.find(current_map)==all_map.cend())
+        return;
+    MapVisualiserThread::Map_full * currentMap=all_map.value(current_map);
+    if(currentMap==NULL)
+        return;
+    QHash<QPair<uint8_t,uint8_t>,CatchChallenger::BotDisplay>::const_iterator i = currentMap->logicalMap.botsDisplay.constBegin();
+
+    while (i != currentMap->logicalMap.botsDisplay.constEnd())
+    {
+        CatchChallenger::BotDisplay &botDisplay=currentMap->logicalMap.botsDisplay[i.key()];
+        if(botDisplay.mapObject==playerMapObject)
+        {
+            ++i;
+            continue;
+        }
+        if(botDisplay.tileset!=NULL && botDisplay.mapObject!=NULL)
+        switch(botDisplay.botMove)
+        {
+            default:
+            case CatchChallenger::BotMove::BotMove_Fixed:
+            break;
+            case CatchChallenger::BotMove::BotMove_Loop:
+            {
+                uint8_t baseTile=botDisplay.mapObject->cell().tile->id();
+                switch(baseTile)
+                {
+                    default:
+                    case 7:
+                        baseTile=10;//left
+                    break;
+                    case 1:
+                        baseTile=4;//right
+                    break;
+                    case 10:
+                        baseTile=1;//top
+                    break;
+                    case 4:
+                        baseTile=7;//bottom
+                    break;
+                }
+                Tiled::Cell cell=botDisplay.mapObject->cell();
+                cell.tile=botDisplay.tileset->tileAt(baseTile);
+                botDisplay.mapObject->setCell(cell);
+            }
+            break;
+            case CatchChallenger::BotMove::BotMove_Random:
+            {
+                uint8_t baseTile=0;
+                switch(rand()%4)
+                {
+                    default:
+                    case 0:
+                        baseTile=10;//left
+                    break;
+                    case 1:
+                        baseTile=4;//right
+                    break;
+                    case 2:
+                        baseTile=1;//top
+                    break;
+                    case 3:
+                        baseTile=7;//bottom
+                    break;
+                }
+                Tiled::Cell cell=botDisplay.mapObject->cell();
+                cell.tile=botDisplay.tileset->tileAt(baseTile);
+                botDisplay.mapObject->setCell(cell);
+            }
+            break;
+        }
+
+        ++i;
+    }
 }
 
 void MapController::connectAllSignals()
@@ -169,9 +256,40 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         qDebug() << QStringLiteral("loadBotOnTheMap(), ObjectGroupItem::objectGroupLink not contains parsedMap->objectGroup");
         return;
     }
+    CatchChallenger::BotDisplay *botDisplay=&parsedMap->logicalMap.botsDisplay[QPair<uint8_t,uint8_t>(x,y)];
+    botDisplay->botMove=CatchChallenger::BotMove::BotMove_Fixed;
     CatchChallenger::Direction direction;
     int baseTile=-1;
-    if(lookAt==MapController::text_left)
+    if(lookAt==MapController::text_random || lookAt==MapController::text_loop || lookAt==MapController::text_move)
+    {
+        switch(rand()%4)
+        {
+            default:
+            case 0:
+                baseTile=10;
+                direction=CatchChallenger::Direction_move_at_left;
+            break;
+            case 1:
+                baseTile=4;
+                direction=CatchChallenger::Direction_move_at_right;
+            break;
+            case 2:
+                baseTile=1;
+                direction=CatchChallenger::Direction_move_at_top;
+            break;
+            case 3:
+                baseTile=7;
+                direction=CatchChallenger::Direction_move_at_bottom;
+            break;
+        }
+        if(lookAt==MapController::text_random)
+            botDisplay->botMove=CatchChallenger::BotMove::BotMove_Random;
+        else if(lookAt==MapController::text_loop)
+            botDisplay->botMove=CatchChallenger::BotMove::BotMove_Loop;
+        else
+            botDisplay->botMove=CatchChallenger::BotMove::BotMove_Move;
+    }
+    else if(lookAt==MapController::text_left)
     {
         baseTile=10;
         direction=CatchChallenger::Direction_move_at_left;
@@ -194,7 +312,6 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         direction=CatchChallenger::Direction_move_at_bottom;
     }
 
-    CatchChallenger::BotDisplay *botDisplay=&parsedMap->logicalMap.botsDisplay[QPair<uint8_t,uint8_t>(x,y)];
     botDisplay->mapObject=new Tiled::MapObject();
     botDisplay->mapObject->setName("botDisplay");
     botDisplay->tileset=new Tiled::Tileset(MapController::text_bot,16,24);
@@ -477,6 +594,8 @@ void MapController::setColor(const QColor &color, const uint32_t &timeInMS)
 
 void MapController::updateColor()
 {
+    if(!player_informations_is_set)
+        return;
     int rdiff;
     {
         rdiff=newColor.red()-actualColor.red();
