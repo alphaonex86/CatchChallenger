@@ -130,6 +130,8 @@ struct GameServerSettings
     std::string datapack_basePath;
     std::string server_message;
     bool dontSendPlayerType;
+    bool teleportIfMapNotFoundOrOutOfMap;
+    bool everyBodyIsRoot;
     int32_t datapackCache;//-1 = disable, 0 = no timeout, else it's the timeout in s
 
     enum FightSync : uint8_t

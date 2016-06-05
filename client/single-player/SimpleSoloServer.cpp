@@ -142,6 +142,8 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
     formatedServerSettings.max_players=1;
     formatedServerSettings.sendPlayerNumber = false;
     formatedServerSettings.compressionType=CatchChallenger::CompressionType_None;
+    formatedServerSettings.everyBodyIsRoot                                      = true;
+    formatedServerSettings.teleportIfMapNotFoundOrOutOfMap                       = true;
 
     formatedServerSettings.database_login.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
     formatedServerSettings.database_login.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
