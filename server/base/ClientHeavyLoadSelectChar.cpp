@@ -1109,45 +1109,86 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         orientation=Orientation_bottom;
         normalOutput("Wrong orientation (not number) corrected with bottom: "+GlobalServerData::serverPrivateVariables.db_server->value(3));
     }
+    CommonMap * map;
+    uint8_t x,y;
     //all is rights
-    const uint32_t &map_database_id=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
-    if(!ok)
+    if(!GlobalServerData::serverSettings.teleportIfMapNotFoundOrOutOfMap || profileIndex>=CommonDatapack::commonDatapack.profileList.size())
     {
-        characterSelectionIsWrong(query_id,0x04,"map_database_id is not a number");
-        return;
+        const uint32_t &map_database_id=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
+        if(!ok)
+        {
+            characterSelectionIsWrong(query_id,0x04,"map_database_id is not a number");
+            return;
+        }
+        if(map_database_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
+        {
+            characterSelectionIsWrong(query_id,0x04,"map_database_id out of range");
+            return;
+        }
+        map=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(map_database_id));
+        if(map==NULL)
+        {
+            characterSelectionIsWrong(query_id,0x04,"map_database_id have not reverse: "+std::to_string(map_database_id)+", mostly due to start previously start with another mainDatapackCode");
+            return;
+        }
+        x=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
+        if(!ok)
+        {
+            characterSelectionIsWrong(query_id,0x04,"x coord is not a number");
+            return;
+        }
+        y=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok);
+        if(!ok)
+        {
+            characterSelectionIsWrong(query_id,0x04,"y coord is not a number");
+            return;
+        }
+        if(x>=map->width)
+        {
+            characterSelectionIsWrong(query_id,0x04,"x to out of map: "+std::to_string(x)+" >= "+std::to_string(map->width)+" ("+map->map_file+")");
+            return;
+        }
+        if(y>=map->height)
+        {
+            characterSelectionIsWrong(query_id,0x04,"y to out of map: "+std::to_string(y)+" >= "+std::to_string(map->height)+" ("+map->map_file+")");
+            return;
+        }
     }
-    if(map_database_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
+    else
     {
-        characterSelectionIsWrong(query_id,0x04,"map_database_id out of range");
-        return;
-    }
-    CommonMap * const map=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(map_database_id));
-    if(map==NULL)
-    {
-        characterSelectionIsWrong(query_id,0x04,"map_database_id have not reverse: "+std::to_string(map_database_id)+", mostly due to start previously start with another mainDatapackCode");
-        return;
-    }
-    const uint8_t &x=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
-    if(!ok)
-    {
-        characterSelectionIsWrong(query_id,0x04,"x coord is not a number");
-        return;
-    }
-    const uint8_t &y=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok);
-    if(!ok)
-    {
-        characterSelectionIsWrong(query_id,0x04,"y coord is not a number");
-        return;
-    }
-    if(x>=map->width)
-    {
-        characterSelectionIsWrong(query_id,0x04,"x to out of map: "+std::to_string(x)+" >= "+std::to_string(map->width)+" ("+map->map_file+")");
-        return;
-    }
-    if(y>=map->height)
-    {
-        characterSelectionIsWrong(query_id,0x04,"y to out of map: "+std::to_string(y)+" >= "+std::to_string(map->height)+" ("+map->map_file+")");
-        return;
+        bool goToFinal=false;
+        const ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex);
+        const uint32_t &map_database_id=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
+        if(!ok)
+            goToFinal=true;
+        if(!goToFinal)
+            if(map_database_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
+                goToFinal=true;
+        if(!goToFinal)
+        {
+            map=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(map_database_id));
+            if(map==NULL)
+                goToFinal=true;
+            if(!goToFinal)
+            {
+                x=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
+                if(!ok)
+                    goToFinal=true;
+                y=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok);
+                if(!ok)
+                    goToFinal=true;
+                if(x>=map->width)
+                    goToFinal=true;
+                if(y>=map->height)
+                    goToFinal=true;
+            }
+        }
+        if(goToFinal)
+        {
+            map=serverProfileInternal.map;
+            x=serverProfileInternal.x;
+            x=serverProfileInternal.y;
+        }
     }
     characterIsRightWithRescue(query_id,
         characterId,

@@ -1580,7 +1580,7 @@ void BaseServer::preload_the_skin()
 void BaseServer::preload_the_datapack()
 {
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-    std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+CACHEDSTRING_dotcoma+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
+    std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED)+";"+std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
     BaseServerMasterSendDatapack::extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     std::vector<std::string> compressedExtensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED),';');

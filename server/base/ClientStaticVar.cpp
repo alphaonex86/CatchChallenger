@@ -28,7 +28,7 @@ const std::string Client::text_commandnotunderstand="command not understand";
 const std::string Client::text_command="command: ";
 const std::string Client::text_commaspace=", ";
 const std::string Client::text_unabletofoundtheconnectedplayertokick="unable to found the connected player to kick";
-const std::string Client::text_unabletofoundthisrightslevel="unable to found this rights level: ";
+const std::string Client::text_unabletofoundthisrightslevel="Unable to found into allowed list:  \"normal\", \"premium\", \"dev\", \"gm\", this rights level: ";
 
 unsigned char Client::protocolReplyProtocolNotSupported[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size, little endian*/,0x02/*return code*/};
 unsigned char Client::protocolReplyServerFull[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size, little endian*/,0x03/*return code*/};
@@ -127,10 +127,6 @@ const std::string Client::text_male="male";
 const std::string Client::text_warehouse="warehouse";
 const std::string Client::text_wear="wear";
 const std::string Client::text_market="market";
-
-const std::regex Client::commandRegExp=std::regex("^/([a-z]+)( [^ ].*)?$");
-const std::regex Client::commandRegExpWithArgs=std::regex("^/([a-z]+)( [^ ].*)$");
-const std::regex Client::isolateTheMainCommand=std::regex("^ (.*)$");
 
 const std::string Client::text_server_full="Server full";
 const std::string Client::text_slashpmspace="/pm ";

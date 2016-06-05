@@ -365,6 +365,8 @@ void MainWindow::load_settings()
         CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters       = stringtouint32(settings->value("maxWarehousePlayerMonsters"));
         CommonSettingsCommon::commonSettingsCommon.maxPlayerItems                   = stringtouint32(settings->value("maxPlayerItems"));
         CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems          = stringtouint32(settings->value("maxWarehousePlayerItems"));
+        formatedServerSettings.everyBodyIsRoot                                      = stringtobool(settings->value("everyBodyIsRoot"));
+        formatedServerSettings.teleportIfMapNotFoundOrOutOfMap                       = stringtobool(settings->value("teleportIfMapNotFoundOrOutOfMap"));
         //connection
         formatedServerSettings.automatic_account_creation   = stringtobool(settings->value("automatic_account_creation"));
 
@@ -761,6 +763,8 @@ void MainWindow::load_settings()
     }
 
     // --------------------------------------------------
+    ui->everyBodyIsRoot->setChecked(formatedServerSettings.everyBodyIsRoot);
+    ui->teleportIfMapNotFoundOrOutOfMap->setChecked(formatedServerSettings.teleportIfMapNotFoundOrOutOfMap);
     ui->max_player->setValue(formatedServerSettings.max_players);
     ui->server_ip->setText(QString::fromStdString(formatedServerNormalSettings.server_ip));
     //ui->pvp->setChecked(settings->value(QLatin1Literal("pvp")).toBool());
@@ -988,7 +992,9 @@ void MainWindow::send_settings()
         CommonSettingsServer::commonSettingsServer.forcedSpeed					= 0;
     else
         CommonSettingsServer::commonSettingsServer.forcedSpeed					= ui->speed->value();
-    formatedServerSettings.dontSendPlayerType                       = ui->dontSendPlayerType->isChecked();
+    formatedServerSettings.dontSendPlayerType                                   = ui->dontSendPlayerType->isChecked();
+    formatedServerSettings.everyBodyIsRoot                                      = ui->everyBodyIsRoot->isChecked();
+    formatedServerSettings.teleportIfMapNotFoundOrOutOfMap                      = ui->teleportIfMapNotFoundOrOutOfMap->isChecked();
     //formatedServerSettings.announce                                 = ui->announce->isChecked();
     CommonSettingsServer::commonSettingsServer.dontSendPseudo					= ui->dontSendPseudo->isChecked();
     CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange		= ui->forceClientToSendAtMapChange->isChecked();
@@ -1880,4 +1886,16 @@ void CatchChallenger::MainWindow::on_announce_toggled(bool checked)
 void CatchChallenger::MainWindow::on_compressionLevel_valueChanged(int value)
 {
     settings->setValue("compressionLevel",value);
+}
+
+void CatchChallenger::MainWindow::on_everyBodyIsRoot_toggled(bool checked)
+{
+    (void)checked;
+    settings->setValue("everyBodyIsRoot",ui->everyBodyIsRoot->isChecked());
+}
+
+void CatchChallenger::MainWindow::on_teleportIfMapNotFoundOrOutOfMap_toggled(bool checked)
+{
+    (void)checked;
+    settings->setValue("everyBodyIsRoot",ui->everyBodyIsRoot->isChecked());
 }

@@ -858,6 +858,7 @@ public:
 
 struct ServerSpecProfile
 {
+    void * mapPointer;
     std::string mapString;
     /*COORD_TYPE*/ uint8_t x;
     /*COORD_TYPE*/ uint8_t y;
