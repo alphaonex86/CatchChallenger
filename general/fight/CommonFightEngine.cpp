@@ -142,24 +142,27 @@ bool CommonFightEngine::dropKOOtherMonster()
 
 void CommonFightEngine::healAllMonsters()
 {
+    if(CatchChallenger::CommonDatapack::commonDatapack.monsters.empty())
+        return;
     unsigned int index=0;
     while(index<public_and_private_informations.playerMonster.size())
     {
-        if(public_and_private_informations.playerMonster.at(index).egg_step==0)
+        PlayerMonster &playerMonster=public_and_private_informations.playerMonster[index];
+        if(playerMonster.egg_step==0)
         {
-            const Monster::Stat &stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(public_and_private_informations.playerMonster.at(index).monster),public_and_private_informations.playerMonster.at(index).level);
-            public_and_private_informations.playerMonster[index].hp=stat.hp;
-            public_and_private_informations.playerMonster[index].buffs.clear();
+            const Monster::Stat &stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(playerMonster.monster),playerMonster.level);
+            playerMonster.hp=stat.hp;
+            playerMonster.buffs.clear();
             unsigned int sub_index=0;
-            while(sub_index<public_and_private_informations.playerMonster.at(index).skills.size())
+            while(sub_index<playerMonster.skills.size())
             {
-                const PlayerMonster::PlayerSkill &playerSkill=public_and_private_informations.playerMonster.at(index).skills.at(sub_index);
+                const PlayerMonster::PlayerSkill &playerSkill=playerMonster.skills.at(sub_index);
                 const int &skill=playerSkill.skill;
                 const int &skillIndex=playerSkill.level-1;
                 if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.find(skill)!=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
                 {
                     const Skill &fullSkill=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(skill);
-                    public_and_private_informations.playerMonster[index].skills[sub_index].endurance=
+                    playerMonster.skills[sub_index].endurance=
                             fullSkill.level.at(skillIndex).endurance;
                 }
                 else
