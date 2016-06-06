@@ -1688,6 +1688,7 @@ void Client::characterIsRightFinalStep()
     #endif
 
     stat=ClientStat::CharacterSelected;
+    checkLoose(false);
 
     const uint8_t &query_id=selectCharacterQueryId.front();
     selectCharacterQueryId.erase(selectCharacterQueryId.begin());
@@ -2050,6 +2051,7 @@ void Client::characterIsRightFinalStep()
 
     if(this->map==NULL)
         return;
+    //need be before send monster because can be teleported for 0 hp
     put_on_the_map(
                 map,//map pointer
         x,

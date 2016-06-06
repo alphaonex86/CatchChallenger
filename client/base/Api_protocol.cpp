@@ -2230,7 +2230,7 @@ bool Api_protocol::postReplyData(const uint8_t &queryNumber, const char * const 
         //fixed size
         //send the network message
         uint32_t posOutput=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=packetCode;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
         posOutput+=1;
@@ -2245,7 +2245,7 @@ bool Api_protocol::postReplyData(const uint8_t &queryNumber, const char * const 
         //dynamic size
         //send the network message
         uint32_t posOutput=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=packetCode;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
         posOutput+=1+4;

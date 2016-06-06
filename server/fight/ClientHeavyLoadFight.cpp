@@ -291,7 +291,7 @@ void Client::loadMonsters_return()
                        if(CommonDatapack::commonDatapack.monsterSkills.find(skill.skill)==CommonDatapack::commonDatapack.monsterSkills.cend())
                        {
                            ok=false;
-                           normalOutput("skill "+std::to_string(skill.skill)+" for monsterId: "+std::to_string(playerMonster.id)+" is not found into skill list");
+                           normalOutput("skill "+std::to_string(skill.skill)+" for monsterId: "+std::to_string(playerMonster.id)+" is not found into skill list:"+binarytoHexa(skills));
                        }
                        if(ok)
                        {

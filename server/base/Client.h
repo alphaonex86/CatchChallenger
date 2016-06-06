@@ -634,7 +634,7 @@ private:
     void syncMonsterSkillAndEndurance(const PlayerMonster &monster);
     void syncMonsterEndurance(const PlayerMonster &monster);
     void syncMonsterBuff(const PlayerMonster &monster);
-    bool checkLoose();
+    bool checkLoose(bool withTeleport=true);
     bool isInBattle() const;
     bool learnSkillInternal(const uint8_t &monsterPosition,const uint32_t &skill);
     void getRandomNumberIfNeeded() const;

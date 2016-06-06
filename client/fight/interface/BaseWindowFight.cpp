@@ -1402,6 +1402,8 @@ void BaseWindow::loose()
             return;
         }
     #endif
+    if(CatchChallenger::CommonDatapack::commonDatapack.monsters.empty())
+        return;
     CatchChallenger::ClientFightEngine::fightEngine.healAllMonsters();
     CatchChallenger::ClientFightEngine::fightEngine.fightFinished();
     MapController::mapController->unblock();
@@ -1602,11 +1604,17 @@ void BaseWindow::doNextAction()
         return;
     }
 
+    if(CatchChallenger::CommonDatapack::commonDatapack.monsters.empty())
+        return;
     //if the current monster is KO
     if(CatchChallenger::ClientFightEngine::fightEngine.currentMonsterIsKO())
     {
+        if(CatchChallenger::CommonDatapack::commonDatapack.monsters.empty())
+            return;
         if(!CatchChallenger::ClientFightEngine::fightEngine.isInFight())
         {
+            if(CatchChallenger::CommonDatapack::commonDatapack.monsters.empty())
+                return;
             loose();
             return;
         }

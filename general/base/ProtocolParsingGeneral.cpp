@@ -386,7 +386,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             ProtocolParsingBase::packetFixedSize[0x0B]=0;
             ProtocolParsingBase::packetFixedSize[0x0C]=2;
             ProtocolParsingBase::packetFixedSize[0x0D]=2;
-            ProtocolParsingBase::packetFixedSize[0x0E]=4;//monster id in db
+            ProtocolParsingBase::packetFixedSize[0x0E]=1;//monster position
             ProtocolParsingBase::packetFixedSize[0x0F]=0xFE;
             ProtocolParsingBase::packetFixedSize[0x10]=0xFE;
             ProtocolParsingBase::packetFixedSize[0x11]=2;
