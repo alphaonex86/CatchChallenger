@@ -38,7 +38,6 @@ TinyXMLSettings::TinyXMLSettings(const std::string &file) :
             std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(documentBis) << std::endl;
             abort();
         }
-        return;
     }
     whereIs=document.RootElement();
     if(whereIs==NULL)
