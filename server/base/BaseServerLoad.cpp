@@ -326,6 +326,7 @@ void BaseServer::preload_the_events()
         index++;
     }
     {
+        const uint64_t &time=sFrom1970();
         auto i = GlobalServerData::serverSettings.programmedEventList.begin();
         while(i!=GlobalServerData::serverSettings.programmedEventList.end())
         {
@@ -335,26 +336,45 @@ void BaseServer::preload_the_events()
                 const Event &event=CommonDatapack::commonDatapack.events.at(index);
                 if(event.name==i->first)
                 {
-                    auto j = i->second.begin();
-                    while (j!=i->second.end())
+                    #ifdef CATCHCHALLENGER_GAMESERVER_EVENTSTARTONLOCALTIME
+                    std::map<uint64_t,uint32_t> pastEventStart;
+                    #endif
+                    const std::unordered_map<std::string/*groupName, example: day/night*/,CatchChallenger::GameServerSettings::ProgrammedEvent> &programmedEvent=i->second;
+                    auto j = programmedEvent.begin();
+                    while (j!=programmedEvent.cend())
                     {
                         // event.values is std::vector<std::string >
-                        const auto &iter = std::find(event.values.begin(), event.values.end(), j->second.value);
+                        const CatchChallenger::GameServerSettings::ProgrammedEvent &programmedEvent=j->second;
+                        const auto &iter = std::find(event.values.begin(), event.values.end(), programmedEvent.value);
                         const size_t &sub_index = std::distance(event.values.begin(), iter);
                         if(sub_index<event.values.size())
                         {
+                            uint64_t nextStart=time/(programmedEvent.cycle*60)*(programmedEvent.cycle*60);
+                            while(nextStart<=time)
+                                nextStart+=(programmedEvent.cycle*60);
+                            uint64_t previousStart=nextStart;
+                            while(nextStart>time)
+                                previousStart-=(programmedEvent.cycle*60);
+                            pastEventStart[previousStart]=sub_index;
                             #ifdef EPOLLCATCHCHALLENGERSERVER
-                            TimerEvents * const timer=new TimerEvents(index,sub_index);
-                            GlobalServerData::serverPrivateVariables.timerEvents.push_back(timer);
-                            timer->start(j->second.cycle*1000*60,j->second.offset*1000*60);
+                                TimerEvents * const timer=new TimerEvents(index,sub_index);
+                                GlobalServerData::serverPrivateVariables.timerEvents.push_back(timer);
+                                timer->start(programmedEvent.cycle*1000*60,(time-nextStart-1000));
                             #else
-                            GlobalServerData::serverPrivateVariables.timerEvents.push_back(new QtTimerEvents(j->second.offset*1000*60,j->second.cycle*1000*60,index,sub_index));
+                            GlobalServerData::serverPrivateVariables.timerEvents.push_back(new QtTimerEvents(programmedEvent.cycle*1000*60,(time-nextStart-1000),index,sub_index));
                             #endif
                         }
                         else
                             GlobalServerData::serverSettings.programmedEventList[i->first].erase(i->first);
                         ++j;
                     }
+                    #ifdef CATCHCHALLENGER_GAMESERVER_EVENTSTARTONLOCALTIME
+                    if(!pastEventStart.empty())
+                    {
+                        const uint32_t value=pastEventStart.crbegin()->second;
+                        CatchChallenger::Client::setEvent(index,value);
+                    }
+                    #endif
                     break;
                 }
                 index++;

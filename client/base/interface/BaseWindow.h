@@ -145,6 +145,7 @@ private slots:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void setEvents(const QList<QPair<uint8_t, uint8_t> > &events);
     void newEvent(const uint8_t &event,const uint8_t &event_value);
+    void forcedEvent(const uint8_t &event,const uint8_t &event_value);
 
     //player UI
     void on_pushButton_interface_bag_clicked();
