@@ -1473,9 +1473,9 @@ uint8_t Client::decreaseSkillEndurance(const uint32_t &skill)
     return newEndurance;
 }
 
-void Client::addPlayerMonster(const std::vector<PlayerMonster> &playerMonster)
+std::vector<uint8_t> Client::addPlayerMonster(const std::vector<PlayerMonster> &playerMonster)
 {
-    CommonFightEngine::addPlayerMonster(playerMonster);
+    const auto &returnVar=CommonFightEngine::addPlayerMonster(playerMonster);
     bool haveChange=false;
     uint32_t index=0;
     while(index<playerMonster.size())
@@ -1489,16 +1489,18 @@ void Client::addPlayerMonster(const std::vector<PlayerMonster> &playerMonster)
         /*if(haveChange)updateMonsterInDatabase();
     else
         updateMonsterInDatabaseAndEncyclopedia();*/
+    return returnVar;
 }
 
-void Client::addPlayerMonster(const PlayerMonster &playerMonster)
+std::vector<uint8_t> Client::addPlayerMonster(const PlayerMonster &playerMonster)
 {
-    CommonFightEngine::addPlayerMonster(playerMonster);
+    const auto &returnVar=CommonFightEngine::addPlayerMonster(playerMonster);
     if(addPlayerMonsterWithChange(playerMonster))
         updateMonsterInDatabaseEncyclopedia();
             /*if(haveChange)updateMonsterInDatabase();
         else
             updateMonsterInDatabaseAndEncyclopedia();*/
+    return returnVar;
 }
 
 bool Client::addPlayerMonsterWithChange(const PlayerMonster &playerMonster)
@@ -1541,6 +1543,25 @@ void Client::confirmEvolutionTo(PlayerMonster * playerMonster,const uint32_t &mo
                 std::to_string(playerMonster->id)
                 );
     dbQueryWriteCommon(queryText);
+    if(addToEncyclopedia(playerMonster->monster))
+        updateMonsterInDatabaseEncyclopedia();
+}
+
+bool Client::addToEncyclopedia(const uint16_t &monster)
+{
+    if(public_and_private_informations.encyclopedia_monster==NULL)
+    {
+        errorOutput("public_and_private_informations.encyclopedia_monster==NULL");
+        return false;
+    }
+    const uint16_t bittoUp=monster;
+    if(public_and_private_informations.encyclopedia_monster[bittoUp/8] & (1<<(7-bittoUp%8)))
+        return false;
+    else
+    {
+        public_and_private_informations.encyclopedia_monster[bittoUp/8]|=(1<<(7-bittoUp%8));
+        return true;
+    }
 }
 
 void Client::confirmEvolution(const uint8_t &monsterPosition)

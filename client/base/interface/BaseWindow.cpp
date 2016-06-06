@@ -521,8 +521,7 @@ void BaseWindow::tradeValidatedByTheServer()
     showTip(tr("Your trade is successfull"));
     add_to_inventory(tradeOtherObjects);
     addCash(ui->tradeOtherCash->value());
-    CatchChallenger::ClientFightEngine::fightEngine.addPlayerMonster(tradeOtherMonsters);
-    tradeEvolutionMonsters=tradeOtherMonsters;
+    tradeEvolutionMonsters=CatchChallenger::ClientFightEngine::fightEngine.addPlayerMonster(tradeOtherMonsters);
     load_monsters();
     tradeOtherObjects.clear();
     tradeCurrentObjects.clear();

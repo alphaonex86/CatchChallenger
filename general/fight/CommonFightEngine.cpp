@@ -1288,16 +1288,29 @@ void CommonFightEngine::fightFinished()
     doTurnIfChangeOfMonster=true;
 }
 
-void CommonFightEngine::addPlayerMonster(const std::vector<PlayerMonster> &playerMonster)
+std::vector<uint8_t> CommonFightEngine::addPlayerMonster(const std::vector<PlayerMonster> &playerMonster)
 {
+    std::vector<uint8_t> positionList;
+    {
+        unsigned int index=0;
+        while(index<playerMonster.size())
+        {
+            positionList.push_back(public_and_private_informations.playerMonster.size()+index);
+            index++;
+        }
+    }
     public_and_private_informations.playerMonster.insert(public_and_private_informations.playerMonster.cend(),playerMonster.cbegin(),playerMonster.cend());
     updateCanDoFight();
+    return positionList;
 }
 
-void CommonFightEngine::addPlayerMonster(const PlayerMonster &playerMonster)
+std::vector<uint8_t> CommonFightEngine::addPlayerMonster(const PlayerMonster &playerMonster)
 {
+    std::vector<uint8_t> positionList;
+    positionList.push_back(public_and_private_informations.playerMonster.size());
     public_and_private_informations.playerMonster.push_back(playerMonster);
     updateCanDoFight();
+    return positionList;
 }
 
 void CommonFightEngine::insertPlayerMonster(const uint8_t &place,const PlayerMonster &playerMonster)

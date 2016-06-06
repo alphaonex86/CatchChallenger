@@ -41,8 +41,8 @@ public:
     virtual void healAllMonsters();
     virtual bool learnSkill(PlayerMonster *monsterPlayer, const uint16_t &skill);
     virtual bool learnSkillByItem(PlayerMonster *playerMonster, const uint32_t &itemId);
-    virtual void addPlayerMonster(const std::vector<PlayerMonster> &playerMonster);
-    virtual void addPlayerMonster(const PlayerMonster &playerMonster);
+    virtual std::vector<uint8_t> addPlayerMonster(const std::vector<PlayerMonster> &playerMonster);
+    virtual std::vector<uint8_t> addPlayerMonster(const PlayerMonster &playerMonster);
     virtual void insertPlayerMonster(const uint8_t &place,const PlayerMonster &playerMonster);
     std::vector<PlayerMonster> getPlayerMonster() const;
     virtual bool moveUpMonster(const uint8_t &number);

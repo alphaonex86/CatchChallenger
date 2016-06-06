@@ -79,6 +79,8 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &
     lastTileset=defaultTileset;
     playerTileset = new Tiled::Tileset(QLatin1Literal("player"),16,24);
     playerTilesetCache[lastTileset]=playerTileset;
+
+    lastAction.restart();
 }
 
 MapVisualiserPlayer::~MapVisualiserPlayer()
@@ -888,6 +890,11 @@ void MapVisualiserPlayer::stopAndSend()
 
 void MapVisualiserPlayer::parseAction()
 {
+    {//to prevent flood and kick from server, mostly with infinite item on map
+        if(lastAction.elapsed()<400)
+            return;
+        lastAction.restart();
+    }
     CatchChallenger::CommonMap * map=&all_map.value(current_map)->logicalMap;
     uint8_t x=this->x;
     uint8_t y=this->y;
@@ -1174,6 +1181,7 @@ void MapVisualiserPlayer::resetAll()
     blocked=false;
     inMove=false;
     MapVisualiser::resetAll();
+    lastAction.restart();
     mapVisualiserThread.stopIt=true;
     mapVisualiserThread.quit();
     mapVisualiserThread.wait();

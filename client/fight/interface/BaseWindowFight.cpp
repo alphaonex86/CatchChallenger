@@ -1264,7 +1264,7 @@ void BaseWindow::checkEvolution()
             const Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
             if(evolution.type==Monster::EvolutionType_Level && evolution.level==monster->level)
             {
-                monsterEvolutionPostion=index;
+                monsterEvolutionPostion=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonsterPosition(monster);
                 const Monster &monsterInformationsEvolution=CommonDatapack::commonDatapack.monsters.at(evolution.evolveTo);
                 const DatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(evolution.evolveTo);
                 //create animation widget
@@ -1307,17 +1307,24 @@ void BaseWindow::checkEvolution()
             index++;
         }
     }
-    while(!tradeEvolutionMonsters.isEmpty())
+    while(!tradeEvolutionMonsters.empty())
     {
-        const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.at(tradeEvolutionMonsters.first().monster);
-        const DatapackClientLoader::MonsterExtra &monsterInformationsExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(tradeEvolutionMonsters.first().monster);
+        const uint8_t monsterPosition=tradeEvolutionMonsters.at(0);
+        PlayerMonster * const playerMonster=CatchChallenger::ClientFightEngine::fightEngine.monsterByPosition(monsterPosition);
+        if(playerMonster==NULL)
+        {
+            tradeEvolutionMonsters.erase(tradeEvolutionMonsters.begin());
+            continue;
+        }
+        const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.at(playerMonster->monster);
+        const DatapackClientLoader::MonsterExtra &monsterInformationsExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(playerMonster->monster);
         unsigned int index=0;
         while(index<monsterInformations.evolutions.size())
         {
             const Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
             if(evolution.type==Monster::EvolutionType_Trade)
             {
-                monsterEvolutionPostion=index;
+                monsterEvolutionPostion=monsterPosition;
                 const Monster &monsterInformationsEvolution=CommonDatapack::commonDatapack.monsters.at(evolution.evolveTo);
                 const DatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(evolution.evolveTo);
                 //create animation widget
@@ -1355,12 +1362,12 @@ void BaseWindow::checkEvolution()
                     animationWidget->setSource(QUrl::fromLocalFile(datapackQmlFile));
                 else
                     animationWidget->setSource(QStringLiteral("qrc:/qml/evolution-animation.qml"));
-                tradeEvolutionMonsters.removeFirst();
+                tradeEvolutionMonsters.erase(tradeEvolutionMonsters.begin());
                 return;
             }
             index++;
         }
-        tradeEvolutionMonsters.removeFirst();
+        tradeEvolutionMonsters.erase(tradeEvolutionMonsters.begin());
     }
 }
 

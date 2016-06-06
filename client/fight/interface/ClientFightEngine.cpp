@@ -219,45 +219,59 @@ void ClientFightEngine::resetAll()
     CommonFightEngine::resetAll();
 }
 
-void ClientFightEngine::addPlayerMonster(const QList<PlayerMonster> &playerMonster)
+std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const QList<PlayerMonster> &playerMonster)
 {
+    std::vector<uint8_t> positionList;
+    const uint8_t basePosition=public_and_private_informations.playerMonster.size();
+    Player_private_and_public_informations &informations=CatchChallenger::Api_client_real::client->get_player_informations();
     std::vector<PlayerMonster> monsterList;
     int index=0;
     while(index<playerMonster.size())
     {
         const uint16_t &monsterId=playerMonster.at(index).monster;
-        if(public_and_private_informations.encyclopedia_monster!=NULL)
-            public_and_private_informations.encyclopedia_monster[monsterId/8]|=(1<<(7-monsterId%8));
+        if(informations.encyclopedia_monster!=NULL)
+            informations.encyclopedia_monster[monsterId/8]|=(1<<(7-monsterId%8));
         else
-            std::cerr << "encyclopedia_monster is null, unable to set" << std::endl;
+            std::cerr << "ClientFightEngine::addPlayerMonster(QList): encyclopedia_monster is null, unable to set" << std::endl;
         monsterList.push_back(playerMonster.at(index));
+        positionList.push_back(basePosition+index);
         index++;
     }
     CommonFightEngine::addPlayerMonster(monsterList);
+    return positionList;
 }
 
-void ClientFightEngine::addPlayerMonster(const std::vector<PlayerMonster> &playerMonster)
+std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const std::vector<PlayerMonster> &playerMonster)
 {
+    std::vector<uint8_t> positionList;
+    const uint8_t basePosition=public_and_private_informations.playerMonster.size();
+    Player_private_and_public_informations &informations=CatchChallenger::Api_client_real::client->get_player_informations();
     unsigned int index=0;
     while(index<playerMonster.size())
     {
         const uint16_t &monsterId=playerMonster.at(index).monster;
-        if(public_and_private_informations.encyclopedia_monster!=NULL)
-            public_and_private_informations.encyclopedia_monster[monsterId/8]|=(1<<(7-monsterId%8));
+        if(informations.encyclopedia_monster!=NULL)
+            informations.encyclopedia_monster[monsterId/8]|=(1<<(7-monsterId%8));
         else
-            std::cerr << "encyclopedia_monster is null, unable to set" << std::endl;
+            std::cerr << "ClientFightEngine::addPlayerMonster(std::vector): encyclopedia_monster is null, unable to set" << std::endl;
+        positionList.push_back(basePosition+index);
         index++;
     }
     CommonFightEngine::addPlayerMonster(playerMonster);
+    return positionList;
 }
 
-void ClientFightEngine::addPlayerMonster(const PlayerMonster &playerMonster)
+std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const PlayerMonster &playerMonster)
 {
-    if(public_and_private_informations.encyclopedia_monster!=NULL)
-        public_and_private_informations.encyclopedia_monster[playerMonster.monster/8]|=(1<<(7-playerMonster.monster%8));
+    std::vector<uint8_t> positionList;
+    Player_private_and_public_informations &informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    if(informations.encyclopedia_monster!=NULL)
+        informations.encyclopedia_monster[playerMonster.monster/8]|=(1<<(7-playerMonster.monster%8));
     else
-        std::cerr << "encyclopedia_monster is null, unable to set" << std::endl;
+        std::cerr << "ClientFightEngine::addPlayerMonster(PlayerMonster): encyclopedia_monster is null, unable to set" << std::endl;
+    positionList.push_back(public_and_private_informations.playerMonster.size());
     CommonFightEngine::addPlayerMonster(playerMonster);
+    return positionList;
 }
 
 bool ClientFightEngine::internalTryEscape()
@@ -603,6 +617,28 @@ PlayerMonster * ClientFightEngine::evolutionByLevelUp()
     return &public_and_private_informations.playerMonster[monsterIndex];
 }
 
+uint8_t ClientFightEngine::getPlayerMonsterPosition(const PlayerMonster * const playerMonster)
+{
+    unsigned int index=0;
+    while(index<public_and_private_informations.playerMonster.size())
+    {
+        if(&public_and_private_informations.playerMonster.at(index)==playerMonster)
+            return index;
+        index++;
+    }
+    std::cerr << "getPlayerMonsterPosition() with not existing monster" << std::endl;
+    return 0;
+}
+
+void ClientFightEngine::addToEncyclopedia(const uint16_t &monster)
+{
+    Player_private_and_public_informations &informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    if(informations.encyclopedia_monster!=NULL)
+        informations.encyclopedia_monster[monster/8]|=(1<<(7-monster%8));
+    else
+        std::cerr << "ClientFightEngine::addPlayerMonster(PlayerMonster): encyclopedia_monster is null, unable to set" << std::endl;
+}
+
 void ClientFightEngine::confirmEvolutionByPosition(const uint8_t &monterPosition)
 {
     CatchChallenger::Api_client_real::client->confirmEvolutionByPosition(monterPosition);
@@ -614,6 +650,7 @@ void ClientFightEngine::confirmEvolutionByPosition(const uint8_t &monterPosition
         if(monsterInformations.evolutions.at(sub_index).type==Monster::EvolutionType_Level)
         {
             playerMonster.monster=monsterInformations.evolutions.at(sub_index).evolveTo;
+            addToEncyclopedia(playerMonster.monster);
             Monster::Stat stat=getStat(monsterInformations,playerMonster.level);
             if(playerMonster.hp>stat.hp)
                 playerMonster.hp=stat.hp;
