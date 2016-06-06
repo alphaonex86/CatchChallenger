@@ -282,7 +282,9 @@ void ClientFightEngine::tryCatchClient(const uint32_t &item)
     newMonster.egg_step=0;
     newMonster.gender=wildMonsters.front().gender;
     newMonster.hp=wildMonsters.front().hp;
+    #ifndef CATCHCHALLENGER_VERSION_SINGLESERVER
     newMonster.id=0;//unknown at this time
+    #endif
     newMonster.level=wildMonsters.front().level;
     newMonster.monster=wildMonsters.front().monster;
     newMonster.remaining_xp=0;
@@ -601,34 +603,26 @@ PlayerMonster * ClientFightEngine::evolutionByLevelUp()
     return &public_and_private_informations.playerMonster[monsterIndex];
 }
 
-void ClientFightEngine::confirmEvolution(const uint32_t &monterId)
+void ClientFightEngine::confirmEvolutionByPosition(const uint8_t &monterPosition)
 {
-    CatchChallenger::Api_client_real::client->confirmEvolution(monterId);
-    unsigned int index=0;
-    while(index<public_and_private_informations.playerMonster.size())
+    CatchChallenger::Api_client_real::client->confirmEvolutionByPosition(monterPosition);
+    CatchChallenger::PlayerMonster &playerMonster=public_and_private_informations.playerMonster[monterPosition];
+    const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters[playerMonster.monster];
+    unsigned int sub_index=0;
+    while(sub_index<monsterInformations.evolutions.size())
     {
-        if(public_and_private_informations.playerMonster.at(index).id==monterId)
+        if(monsterInformations.evolutions.at(sub_index).type==Monster::EvolutionType_Level)
         {
-            const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters[public_and_private_informations.playerMonster.at(index).monster];
-            unsigned int sub_index=0;
-            while(sub_index<monsterInformations.evolutions.size())
-            {
-                if(monsterInformations.evolutions.at(sub_index).type==Monster::EvolutionType_Level)
-                {
-                    public_and_private_informations.playerMonster[index].monster=monsterInformations.evolutions.at(sub_index).evolveTo;
-                    Monster::Stat stat=getStat(monsterInformations,public_and_private_informations.playerMonster[index].level);
-                    if(public_and_private_informations.playerMonster[index].hp>stat.hp)
-                        public_and_private_informations.playerMonster[index].hp=stat.hp;
-                    return;
-                }
-                sub_index++;
-            }
-            qDebug() << "Evolution not found";
+            playerMonster.monster=monsterInformations.evolutions.at(sub_index).evolveTo;
+            Monster::Stat stat=getStat(monsterInformations,playerMonster.level);
+            if(playerMonster.hp>stat.hp)
+                playerMonster.hp=stat.hp;
             return;
         }
-        index++;
+        sub_index++;
     }
-    qDebug() << "Monster for evolution not found";
+    qDebug() << "Evolution not found";
+    return;
 }
 
 //return true if change level, multiplicator do at datapack loading

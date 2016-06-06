@@ -267,14 +267,14 @@ void BaseWindow::load_monsters()
     monsters_items_graphical.clear();
     if(playerMonsters.empty())
         return;
-    const PlayerMonster * currentMonster=ClientFightEngine::fightEngine.getCurrentMonster();
+    const uint8_t &currentMonsterPosition=ClientFightEngine::fightEngine.getCurrentSelectedMonsterNumber();
     unsigned int index=0;
     while(index<playerMonsters.size())
     {
         const PlayerMonster &monster=playerMonsters.at(index);
         if(inSelection)
         {
-            if(waitedObjectType==ObjectType_MonsterToFight && monster.id==currentMonster->id)
+            if(waitedObjectType==ObjectType_MonsterToFight && index==currentMonsterPosition)
             {
                 index++;
                 continue;
@@ -1264,7 +1264,7 @@ void BaseWindow::checkEvolution()
             const Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
             if(evolution.type==Monster::EvolutionType_Level && evolution.level==monster->level)
             {
-                idMonsterEvolution=monster->id;
+                monsterEvolutionPostion=index;
                 const Monster &monsterInformationsEvolution=CommonDatapack::commonDatapack.monsters.at(evolution.evolveTo);
                 const DatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(evolution.evolveTo);
                 //create animation widget
@@ -1317,7 +1317,7 @@ void BaseWindow::checkEvolution()
             const Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
             if(evolution.type==Monster::EvolutionType_Trade)
             {
-                idMonsterEvolution=monster->id;
+                monsterEvolutionPostion=index;
                 const Monster &monsterInformationsEvolution=CommonDatapack::commonDatapack.monsters.at(evolution.evolveTo);
                 const DatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(evolution.evolveTo);
                 //create animation widget

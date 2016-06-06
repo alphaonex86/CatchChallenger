@@ -390,7 +390,7 @@ public:
     void learnSkillByPosition(const uint8_t &monsterPosition, const uint16_t &skill);
     void monsterMoveDown(const uint8_t &number);
     void monsterMoveUp(const uint8_t &number);
-    void confirmEvolution(const uint32_t &monterId);
+    void confirmEvolutionByPosition(const uint8_t &monterPosition);
 
     //quest
     void startQuest(const uint16_t &questId);
