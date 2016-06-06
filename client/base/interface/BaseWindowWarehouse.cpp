@@ -164,14 +164,16 @@ void BaseWindow::on_warehousePlayerStoredInventory_itemActivated(QListWidgetItem
 
 void BaseWindow::on_warehousePlayerMonster_itemActivated(QListWidgetItem *item)
 {
-    uint32_t id=item->data(99).toUInt();
+    int pos=ui->warehousePlayerMonster->row(item);
+    if(pos<0)
+        return;
     bool remain_valid_monster=false;
     int index=0;
     QList<PlayerMonster> warehouseMonsterOnPlayerList=warehouseMonsterOnPlayer();
     while(index<warehouseMonsterOnPlayerList.size())
     {
         const PlayerMonster &monster=warehouseMonsterOnPlayerList.at(index);
-        if(monster.id!=id && monster.egg_step==0 && monster.hp>0)
+        if(index!=pos && monster.egg_step==0 && monster.hp>0)
         {
             remain_valid_monster=true;
             break;
@@ -183,22 +185,24 @@ void BaseWindow::on_warehousePlayerMonster_itemActivated(QListWidgetItem *item)
         QMessageBox::warning(this,tr("Error"),tr("You can't deposite your last alive monster!"));
         return;
     }
-    monster_to_withdraw.removeOne(id);
-    monster_to_deposit <<  id;
+    monster_to_withdraw.removeOne(pos);
+    monster_to_deposit <<  pos;
     updateTheWareHouseContent();
 }
 
 void BaseWindow::on_warehousePlayerStoredMonster_itemActivated(QListWidgetItem *item)
 {
-    uint32_t id=item->data(99).toUInt();
+    int pos=ui->warehousePlayerMonster->row(item);
+    if(pos<0)
+        return;
     QList<PlayerMonster> warehouseMonsterOnPlayerList=warehouseMonsterOnPlayer();
     if(warehouseMonsterOnPlayerList.size()>CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
     {
         QMessageBox::warning(this,tr("Error"),tr("You can't wear more monster!"));
         return;
     }
-    monster_to_deposit.removeOne(id);
-    monster_to_withdraw <<  id;
+    monster_to_deposit.removeOne(pos);
+    monster_to_withdraw <<  pos;
     updateTheWareHouseContent();
 }
 
@@ -212,7 +216,7 @@ QList<PlayerMonster> BaseWindow::warehouseMonsterOnPlayer() const
         while(index<size)
         {
             const PlayerMonster &monster=playerMonster.at(index);
-            if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monster.monster)!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend() && !monster_to_deposit.contains(monster.id))
+            if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monster.monster)!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend() && !monster_to_deposit.contains(index))
                 warehouseMonsterOnPlayerList << monster;
             index++;
         }
@@ -223,7 +227,7 @@ QList<PlayerMonster> BaseWindow::warehouseMonsterOnPlayer() const
         while(index<size)
         {
             const PlayerMonster &monster=warehouse_playerMonster.at(index);
-            if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monster.monster)!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend() && monster_to_withdraw.contains(monster.id))
+            if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monster.monster)!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend() && monster_to_withdraw.contains(index))
                 warehouseMonsterOnPlayerList << monster;
             index++;
         }
@@ -290,10 +294,10 @@ void BaseWindow::on_warehouseValidate_clicked()
         int index=0;
         while(index<monster_to_withdraw.size())
         {
-            int sub_index=0;
-            while(sub_index<warehouse_playerMonster.size())
+            unsigned int sub_index=0;
+            while((int)sub_index<warehouse_playerMonster.size())
             {
-                if(warehouse_playerMonster.at(sub_index).id==monster_to_withdraw.at(index))
+                if(sub_index==monster_to_withdraw.at(index))
                 {
                     playerMonsterToWithdraw << warehouse_playerMonster.at(sub_index);
                     warehouse_playerMonster.removeAt(sub_index);

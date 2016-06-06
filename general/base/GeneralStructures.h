@@ -331,7 +331,9 @@ class PlayerMonster : public PublicPlayerMonster
     uint32_t egg_step;
     //in form of list to get random into the list
     std::vector<PlayerSkill> skills;
+    #ifndef CATCHCHALLENGER_VERSION_SINGLESERVER
     uint32_t id;//id into the db, only on server part, but no way to leave from here with risk of structure problem
+    #endif
     uint32_t character_origin;
 };
 

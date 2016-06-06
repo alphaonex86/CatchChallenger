@@ -128,7 +128,7 @@ void BaseWindow::resetAll()
     datapackFileSize=0;
     baseMonsterEvolution=NULL;
     targetMonsterEvolution=NULL;
-    idMonsterEvolution=0;
+    monsterEvolutionPostion=0;
     evolutionControl=NULL;
     lastPlaceDisplayed.clear();
     events.clear();
@@ -1249,8 +1249,8 @@ void BaseWindow::updateTheWareHouseContent()
                         );
                 item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).description);
                 item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).front);
-                item->setData(99,monster.id);
-                if(!monster_to_deposit.contains(monster.id) || monster_to_withdraw.contains(monster.id))
+                //item->setData(99,monster.id);
+                if(!monster_to_deposit.contains(index) || monster_to_withdraw.contains(index))
                     ui->warehousePlayerMonster->addItem(item);
                 else
                     ui->warehousePlayerStoredMonster->addItem(item);
@@ -1275,8 +1275,8 @@ void BaseWindow::updateTheWareHouseContent()
                         );
                 item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).description);
                 item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).front);
-                item->setData(99,monster.id);
-                if(!monster_to_withdraw.contains(monster.id) || monster_to_deposit.contains(monster.id))
+                //item->setData(99,monster.id);
+                if(!monster_to_withdraw.contains(index) || monster_to_deposit.contains(index))
                     ui->warehousePlayerStoredMonster->addItem(item);
                 else
                     ui->warehousePlayerMonster->addItem(item);
@@ -1340,12 +1340,9 @@ void BaseWindow::animationFinished()
             delete targetMonsterEvolution;
             targetMonsterEvolution=NULL;
         }
-        if(idMonsterEvolution!=0)
-        {
-            CatchChallenger::ClientFightEngine::fightEngine.confirmEvolution(idMonsterEvolution);
-            idMonsterEvolution=0;
-            load_monsters();
-        }
+        CatchChallenger::ClientFightEngine::fightEngine.confirmEvolutionByPosition(monsterEvolutionPostion);
+        monsterEvolutionPostion=0;
+        load_monsters();
     }
     else
         qDebug() << "Unknown animation quit";
@@ -1379,7 +1376,7 @@ void BaseWindow::evolutionCanceled()
         delete evolutionControl;
         evolutionControl=NULL;
     }
-    idMonsterEvolution=0;
+    monsterEvolutionPostion=0;
     checkEvolution();
 }
 

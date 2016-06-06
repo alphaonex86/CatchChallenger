@@ -637,7 +637,7 @@ void Api_protocol::monsterMoveUp(const uint8_t &number)
     is_logged=character_selected=packOutcommingData(0x0D,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::confirmEvolution(const uint32_t &monterId)
+void Api_protocol::confirmEvolutionByPosition(const uint8_t &monterPosition)
 {
     if(!is_logged)
     {
@@ -652,7 +652,7 @@ void Api_protocol::confirmEvolution(const uint32_t &monterId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint32_t)monterId;
+    out << (uint8_t)monterPosition;
     is_logged=character_selected=packOutcommingData(0x0F,outputData.constData(),outputData.size());
 }
 

@@ -85,7 +85,9 @@ uint16_t FacilityLib::playerMonsterToBinary(char *data,const PlayerMonster &play
 PlayerMonster FacilityLib::botFightMonsterToPlayerMonster(const BotFight::BotFightMonster &botFightMonster,const Monster::Stat &stat)
 {
     PlayerMonster tempPlayerMonster;
+    #ifndef CATCHCHALLENGER_VERSION_SINGLESERVER
     tempPlayerMonster.id=0;
+    #endif
     tempPlayerMonster.catched_with=0;
     tempPlayerMonster.egg_step=0;
     tempPlayerMonster.gender=Gender_Unknown;
