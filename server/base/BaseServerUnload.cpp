@@ -123,6 +123,7 @@ void BaseServer::unload_the_map()
         ++i;
     }
     GlobalServerData::serverPrivateVariables.map_list.clear();
+    DictionaryServer::dictionary_map_database_to_internal.clear();
     if(GlobalServerData::serverPrivateVariables.flat_map_list!=NULL)
     {
         delete GlobalServerData::serverPrivateVariables.flat_map_list;

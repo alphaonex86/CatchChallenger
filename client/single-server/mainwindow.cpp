@@ -23,9 +23,12 @@
 #endif
 
 #define SERVER_DNS_OR_IP "catchchallenger.first-world.info"
-//#define SERVER_DNS_OR_IP "localhost"
-#define SERVER_NAME tr("Official server")
 #define SERVER_PORT 42489
+
+#define SERVER_NAME tr("Official server")
+
+//#define SERVER_DNS_OR_IP "localhost"
+//#define SERVER_PORT 39034
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
