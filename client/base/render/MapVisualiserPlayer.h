@@ -7,6 +7,7 @@
 #include <QSet>
 #include <QString>
 #include <QTimer>
+#include <QTime>
 
 class MapVisualiserPlayer : public MapVisualiser
 {
@@ -80,6 +81,8 @@ protected:
     QTimer moveTimer;
     QTimer lookToMove;
     QTimer moveAnimationTimer;
+    //QTime
+    QTime lastAction;//to prevent flood
 
     //control
     QSet<int> keyPressed;

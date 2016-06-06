@@ -27,9 +27,9 @@ public:
     bool useObjectOnMonsterByPosition(const uint16_t &object, const uint8_t &monsterPosition);
     void errorFightEngine(const std::string &error);
     void messageFightEngine(const std::string &message) const;
-    void addPlayerMonster(const QList<PlayerMonster> &playerMonster);
-    void addPlayerMonster(const std::vector<PlayerMonster> &playerMonster);
-    void addPlayerMonster(const PlayerMonster &playerMonster);
+    std::vector<uint8_t> addPlayerMonster(const QList<PlayerMonster> &playerMonster);
+    std::vector<uint8_t> addPlayerMonster(const std::vector<PlayerMonster> &playerMonster);
+    std::vector<uint8_t> addPlayerMonster(const PlayerMonster &playerMonster);
     //current fight
     QList<PublicPlayerMonster> battleCurrentMonster;
     QList<uint8_t> battleStat,botMonstersStat;
@@ -64,7 +64,9 @@ public:
     void catchIsDone();
     bool doTheOtherMonsterTurn();
     PlayerMonster * evolutionByLevelUp();
+    uint8_t getPlayerMonsterPosition(const PlayerMonster * const playerMonster);
     void confirmEvolutionByPosition(const uint8_t &monterPosition);
+    void addToEncyclopedia(const uint16_t &monster);
     bool giveXPSP(int xp,int sp);
     uint32_t lastGivenXP();
     void newRandomNumber(const QByteArray &data);
