@@ -31,7 +31,12 @@ uint32_t Client::tryCapture(const uint16_t &item)
 {
     uint32_t captureSuccessId=CommonFightEngine::tryCapture(item);
     if(captureSuccessId!=0)//if success
+    {
         saveCurrentMonsterStat();
+        if(!public_and_private_informations.playerMonster.empty())
+            if(addToEncyclopedia(public_and_private_informations.playerMonster.at(public_and_private_informations.playerMonster.size()-1).monster))
+                updateMonsterInDatabaseEncyclopedia();
+    }
     else
         finishTheTurn(false);
     return captureSuccessId;
@@ -60,6 +65,7 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
         {
             errorOutput("saveMonsterStat() The monster "+std::to_string(monster.monster)+
                         " is not into the monster list ("+std::to_string(CatchChallenger::CommonDatapack::commonDatapack.monsters.size())+")");
+            abort();
             return;
         }
         Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster.monster),monster.level);
@@ -69,6 +75,7 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
                         " of current monster "+std::to_string(monster.monster)+
                         " is greater than the max "+std::to_string(currentMonsterStat.hp)
                         );
+            abort();
             return;
         }
     }
@@ -246,7 +253,7 @@ bool Client::checkKOCurrentMonsters()
     return false;
 }
 
-bool Client::checkLoose()
+bool Client::checkLoose(bool withTeleport)
 {
     if(!haveMonsters())
         return false;
@@ -259,7 +266,8 @@ bool Client::checkLoose()
         #endif
         doTurnIfChangeOfMonster=true;
         //teleport
-        teleportTo(rescue.map,rescue.x,rescue.y,rescue.orientation);
+        if(withTeleport)
+            teleportTo(rescue.map,rescue.x,rescue.y,rescue.orientation);
         //regen all the monsters
         bool tempInBattle=isInBattle();
         healAllMonsters();
@@ -1144,28 +1152,75 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
         return 0;
     }
 
-    char raw_skill[(2+1)*newMonster.skills.size()],raw_skill_endurance[1*newMonster.skills.size()];
-    //the skills
-    unsigned int sub_index=0;
-    while(sub_index<newMonster.skills.size())
+    char raw_skill_endurance[newMonster.skills.size()*(1)];
+    char raw_skill[newMonster.skills.size()*(2+1)];
     {
-        const PlayerMonster::PlayerSkill &skill=newMonster.skills.at(sub_index);
-        *reinterpret_cast<uint16_t *>(raw_skill+sub_index*(2+1))=htole16(skill.skill);
-        raw_skill[sub_index*(2+1)+2]=skill.level;
-        raw_skill_endurance[sub_index]=skill.endurance;
-        sub_index++;
+        unsigned int sub_index=0;
+        uint16_t lastSkillId=0;
+        const unsigned int &sub_size=newMonster.skills.size();
+        while(sub_index<sub_size)
+        {
+            const PlayerMonster::PlayerSkill &playerSkill=newMonster.skills.at(sub_index);
+            raw_skill_endurance[sub_index]=playerSkill.endurance;
+
+            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
+            //not ordened
+            uint16_t skillInt;
+            if(lastSkillId<=playerSkill.skill)
+            {
+                skillInt=playerSkill.skill-lastSkillId;
+                lastSkillId=playerSkill.skill;
+            }
+            else
+            {
+                skillInt=65536-lastSkillId+playerSkill.skill;
+                lastSkillId=playerSkill.skill;
+            }
+            #else
+            //ordened
+            const uint16_t &skillInt=playerSkill.skill-lastSkillId;
+            lastSkillId=playerSkill.skill;
+            #endif
+
+            *reinterpret_cast<uint16_t *>(raw_skill+sub_index*(2+1))=htole16(skillInt);
+            raw_skill[2+sub_index*(2+1)]=playerSkill.level;
+
+            sub_index++;
+        }
     }
 
     char raw_buff[(1+1+1)*newMonster.buffs.size()];
-    //the skills
-    sub_index=0;
-    while(sub_index<newMonster.buffs.size())
     {
-        const PlayerBuff &buff=newMonster.buffs.at(sub_index);
-        raw_buff[sub_index*3+0]=buff.buff;
-        raw_buff[sub_index*3+1]=buff.level;
-        raw_buff[sub_index*3+2]=buff.remainingNumberOfTurn;
-        sub_index++;
+        uint8_t lastBuffId=0;
+        uint32_t sub_index=0;
+        while(sub_index<newMonster.buffs.size())
+        {
+            const PlayerBuff &buff=newMonster.buffs.at(sub_index);
+
+            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
+            //not ordened
+            uint8_t buffInt;
+            if(lastBuffId<=buff.buff)
+            {
+                buffInt=buff.buff-lastBuffId;
+                lastBuffId=buff.buff;
+            }
+            else
+            {
+                buffInt=256-lastBuffId+buff.buff;
+                lastBuffId=buff.buff;
+            }
+            #else
+            //ordened
+            const uint8_t &buffInt=buff.buff-lastBuffId;
+            lastBuffId=buff.buff;
+            #endif
+
+            raw_buff[sub_index*3+0]=buffInt;
+            raw_buff[sub_index*3+1]=buff.level;
+            raw_buff[sub_index*3+2]=buff.remainingNumberOfTurn;
+            sub_index++;
+        }
     }
 
     if(toStorage)
