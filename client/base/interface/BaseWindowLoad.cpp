@@ -595,7 +595,7 @@ void BaseWindow::setEvents(const QList<QPair<uint8_t,uint8_t> > &events)
 
 void BaseWindow::load_event()
 {
-    if(isLogged && datapackIsParsed && haveCharacterPosition)
+    if(datapackIsParsed)
     {
         while((uint32_t)events.size()<CatchChallenger::CommonDatapack::commonDatapack.events.size())
             events.push_back(0);
@@ -605,6 +605,15 @@ void BaseWindow::load_event()
         while((uint32_t)events.size()>CatchChallenger::CommonDatapack::commonDatapack.events.size())
             events.pop_back();
         emit error("BaseWindow::load_event() event list biger than it should");
+    }
+    //set the event
+    {
+        uint8_t index=0;
+        while(index<events.size())
+        {
+            forcedEvent(index,events.at(index));
+            index++;
+        }
     }
 }
 

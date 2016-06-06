@@ -1904,7 +1904,15 @@ void BaseWindow::currentMapLoaded()
 void BaseWindow::newEvent(const uint8_t &event,const uint8_t &event_value)
 {
     if(this->events.at(event)==event_value)
+    {
+        std::cerr << "event " << event << "already set on " << event_value << std::endl;
         return;
+    }
+    forcedEvent(event,event_value);
+}
+
+void BaseWindow::forcedEvent(const uint8_t &event,const uint8_t &event_value)
+{
     if(!MapController::mapController->currentMapIsLoaded())
         return;
     const QString &type=MapController::mapController->currentMapType();
