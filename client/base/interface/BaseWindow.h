@@ -667,8 +667,9 @@ private:
     //trade
     TradeOtherStat tradeOtherStat;
     QHash<uint16_t,uint32_t> tradeOtherObjects,tradeCurrentObjects;
-    QList<CatchChallenger::PlayerMonster> tradeEvolutionMonsters,tradeOtherMonsters,tradeCurrentMonsters;
+    QList<CatchChallenger::PlayerMonster> tradeOtherMonsters,tradeCurrentMonsters;
     QList<uint8_t> tradeCurrentMonstersPosition;
+    std::vector<uint8_t> tradeEvolutionMonsters;
 
     //learn
     uint8_t monsterPositionToLearn;

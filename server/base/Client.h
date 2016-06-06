@@ -855,9 +855,10 @@ private:
     uint32_t tryCapture(const uint16_t &item);
     bool changeOfMonsterInFight(const uint8_t &monsterPosition);
     void confirmEvolutionTo(PlayerMonster * playerMonster,const uint32_t &monster);
-    void addPlayerMonster(const std::vector<PlayerMonster> &playerMonster);
-    void addPlayerMonster(const PlayerMonster &playerMonster);
+    std::vector<uint8_t> addPlayerMonster(const std::vector<PlayerMonster> &playerMonster);
+    std::vector<uint8_t> addPlayerMonster(const PlayerMonster &playerMonster);
     bool addPlayerMonsterWithChange(const PlayerMonster &playerMonster);
+    bool addToEncyclopedia(const uint16_t &monster);
 
     bool sendInventory();
 
