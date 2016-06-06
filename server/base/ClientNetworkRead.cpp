@@ -143,38 +143,37 @@ void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*CO
     //send the network reply
     ProtocolParsingBase::tempBigBufferForOutput[0x00]=0xE1;
     ProtocolParsingBase::tempBigBufferForOutput[0x01]=queryNumberList.back();
+    registerOutputQuery(queryNumberList.back(),0xE1);
+    queryNumberList.pop_back();
 
     if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
     {
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+1+1+1);//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(/*map:*/1+1+1+1);//set the dynamic size
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+0]=map->id;
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+1]=x;
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+2]=y;
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+3]=(uint8_t)orientation;
-        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,4);
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+1+4+/*map:*/1+1+1+1);
     }
     else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
     {
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+1+1+2);//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(/*map:*/2+1+1+1);//set the dynamic size
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1+4)=htole16(map->id);
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+2]=x;
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+3]=y;
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+4]=(uint8_t)orientation;
 
-        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,5);
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+1+4+/*map:*/2+1+1+1);
     }
     else
     {
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+1+1+4);//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(/*map:*/4+1+1+1);//set the dynamic size
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1+4)=htole32(map->id);
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+4]=x;
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+5]=y;
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+6]=(uint8_t)orientation;
-        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,7);
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+1+4+/*map:*/4+1+1+1);
     }
-
-    registerOutputQuery(queryNumberList.back(),0xE1);
-    queryNumberList.pop_back();
 }
 
 void Client::sendTradeRequest(char * const data,const uint32_t &size)
@@ -877,13 +876,13 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         //change monster in fight, monster id in db
         case 0x0E:
         {
-            if(size!=((int)sizeof(uint32_t)))
+            if(size!=((int)sizeof(uint8_t)))
             {
-                errorOutput("wrong remaining size for monster in fight");
+                errorOutput("wrong remaining size for monster position in fight");
                 return false;
             }
-            const uint32_t &monsterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data)));
-            return changeOfMonsterInFight(monsterId);
+            const uint8_t &monsterPosition=data[0x00];
+            return changeOfMonsterInFight(monsterPosition);
         }
         break;
         /// \todo check double validation
