@@ -1712,7 +1712,10 @@ void Api_protocol::resetAll()
     //status for the query
     token.clear();
     stageConnexion=StageConnexion::Stage1;
-    haveFirstHeader=false;
+    if(socket==NULL || socket->fakeSocket==NULL)
+        haveFirstHeader=false;
+    else
+        haveFirstHeader=true;
     haveTheServerList=false;
     haveTheLogicalGroupList=false;
     is_logged=false;
