@@ -518,7 +518,7 @@ private:
     QWidget *qQuickViewContainer;
     QmlMonsterGeneralInformations *baseMonsterEvolution;
     QmlMonsterGeneralInformations *targetMonsterEvolution;
-    uint32_t idMonsterEvolution;
+    uint8_t monsterEvolutionPostion;
     uint32_t mLastGivenXP;
     uint32_t currentMonsterLevel;
     QSet<QString> supportedImageFormats;

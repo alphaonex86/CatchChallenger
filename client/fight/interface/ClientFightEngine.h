@@ -64,7 +64,7 @@ public:
     void catchIsDone();
     bool doTheOtherMonsterTurn();
     PlayerMonster * evolutionByLevelUp();
-    void confirmEvolution(const uint32_t &monterId);
+    void confirmEvolutionByPosition(const uint8_t &monterPosition);
     bool giveXPSP(int xp,int sp);
     uint32_t lastGivenXP();
     void newRandomNumber(const QByteArray &data);
