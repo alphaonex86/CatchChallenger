@@ -1128,7 +1128,7 @@ QString MapVisualiserPlayer::currentMapType() const
     if(all_map.value(current_map)->tiledMap->properties().contains(MapVisualiserPlayer::text_type))
         if(!all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_type).isEmpty())
             return all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_type);
-    if(all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("type"))==NULL)
+    if(all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("type"))!=NULL)
         if(!all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("type"))->empty())
             return QString::fromStdString(*all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("type")));
     return QString();
