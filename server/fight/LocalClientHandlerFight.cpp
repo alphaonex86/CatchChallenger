@@ -572,30 +572,30 @@ bool Client::learnSkillInternal(const uint8_t &monsterPosition,const uint32_t &s
                                 );
                     dbQueryWriteCommon(queryText);
                 }
-                syncMonsterSkillAndEndurance(public_and_private_informations.playerMonster[index]);
-/*                        if(learn.learnSkillLevel==1)
+                if(learn.learnSkillLevel==1)
                 {
                     PlayerMonster::PlayerSkill temp;
                     temp.skill=skill;
                     temp.level=1;
                     temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(temp.skill).level.front().endurance;
                     public_and_private_informations.playerMonster[index].skills.push_back(temp);
-                    const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster_skill;
+                    /*const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster_skill;
                     stringreplaceOne(queryText,"%1",std::to_string(monsterId));
                     stringreplaceOne(queryText,"%2",std::to_string(temp.skill));
                     stringreplaceOne(queryText,"%3","1");
                     stringreplaceOne(queryText,"%4",std::to_string(temp.endurance));
-                    dbQueryWriteCommon(queryText);
+                    dbQueryWriteCommon(queryText);*/
                 }
                 else
                 {
                     public_and_private_informations.playerMonster[index].skills[sub_index2].level++;
-                    const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_skill_level;
+                    /*const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_skill_level;
                     stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.playerMonster.at(index).skills.at(sub_index2).level));
                     stringreplaceOne(queryText,"%2",std::to_string(monsterId));
                     stringreplaceOne(queryText,"%3",std::to_string(skill));
-                    dbQueryWriteCommon(queryText);
-                }*/
+                    dbQueryWriteCommon(queryText);*/
+                }
+                syncMonsterSkillAndEndurance(public_and_private_informations.playerMonster[index]);
                 return true;
             }
         }
