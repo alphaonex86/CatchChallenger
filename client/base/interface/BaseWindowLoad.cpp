@@ -1308,6 +1308,7 @@ void BaseWindow::cityCapture(const uint32_t &remainingTime,const uint8_t &type)
     if(remainingTime==0)
     {
         nextCityCatchTimer.stop();
+        std::cout << "City capture disabled" << std::endl;
         return;//disabled
     }
     nextCityCatchTimer.start(remainingTime*1000);
