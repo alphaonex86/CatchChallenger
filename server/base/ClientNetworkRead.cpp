@@ -1233,7 +1233,8 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
             return true;
         }
         break;
-        //Waiting for city caputre
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        //Waiting for city capture
         case 0x1F:
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -1251,6 +1252,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
             return true;
         }
         break;
+        #endif
         default:
             errorOutput("unknown main ident: "+std::to_string(packetCode));
             return false;

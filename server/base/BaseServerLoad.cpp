@@ -216,6 +216,7 @@ void BaseServer::preload_other()
         else
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
         #else
+        std::cout << "WARNING: City capture disabled because disabled into epoll implementation (not coded)" << std::endl;
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
         #endif
         posOutput+=4;
