@@ -299,7 +299,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_character_reputations="UPDATE `character` SET `reputations`=UNHEX('%1') WHERE `id`=%2";
         PreparedDBQueryCommon::db_query_select_clan_by_name="SELECT `id` FROM `clan` WHERE `name`='%1'";
 
-        PreparedDBQueryCommon::db_query_insert_clan="INSERT INTO `clan`(`id`,`name`,`date`) VALUES(%1,'%2',%3);";
+        PreparedDBQueryCommon::db_query_insert_clan="INSERT INTO `clan`(`id`,`name`,`cash`,`date`) VALUES(%1,'%2',0,%3);";
         PreparedDBQueryCommon::db_query_update_character_clan="UPDATE `character` SET `clan`=0 WHERE `id`=%1";
         PreparedDBQueryCommon::db_query_update_character_clan_and_leader="UPDATE `character` SET `clan`=%1,`clan_leader`=%2 WHERE `id`=%3;";
         PreparedDBQueryCommon::db_query_delete_clan="DELETE FROM `clan` WHERE `id`=%1";
@@ -409,7 +409,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_character_reputations="UPDATE character SET reputations='%1' WHERE id=%2";
         PreparedDBQueryCommon::db_query_select_clan_by_name="SELECT id FROM clan WHERE name='%1'";
 
-        PreparedDBQueryCommon::db_query_insert_clan="INSERT INTO clan(id,name,date) VALUES(%1,'%2',%3);";
+        PreparedDBQueryCommon::db_query_insert_clan="INSERT INTO clan(id,name,cash,date) VALUES(%1,'%2',0,%3);";
         PreparedDBQueryCommon::db_query_update_character_clan_to_reset="UPDATE character SET clan=0 WHERE id=%1";
         PreparedDBQueryCommon::db_query_update_character_clan_and_leader="UPDATE character SET clan=%1,clan_leader=%2 WHERE id=%3;";
         PreparedDBQueryCommon::db_query_delete_clan="DELETE FROM clan WHERE id=%1";
@@ -462,7 +462,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_character_reputations="UPDATE character SET reputations='\\x%1' WHERE id=%2";
         PreparedDBQueryCommon::db_query_select_clan_by_name="SELECT id FROM clan WHERE name='%1'";
 
-        PreparedDBQueryCommon::db_query_insert_clan="INSERT INTO clan(id,name,date) VALUES(%1,'%2',%3);";
+        PreparedDBQueryCommon::db_query_insert_clan="INSERT INTO clan(id,name,cash,date) VALUES(%1,'%2',0,%3);";
         PreparedDBQueryCommon::db_query_update_character_clan_to_reset="UPDATE character SET clan=0 WHERE id=%1";
         PreparedDBQueryCommon::db_query_update_character_clan_and_leader="UPDATE character SET clan=%1,clan_leader=%2 WHERE id=%3;";
         PreparedDBQueryCommon::db_query_delete_clan="DELETE FROM clan WHERE id=%1";

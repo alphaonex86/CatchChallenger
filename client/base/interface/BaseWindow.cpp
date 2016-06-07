@@ -2787,6 +2787,11 @@ void BaseWindow::goToBotStep(const uint8_t &step)
             showTip(tr("You can't try capture if you are not in a clan"));
             return;
         }
+        if(!nextCityCatchTimer.isActive())
+        {
+            showTip(tr("City capture disabled"));
+            return;
+        }
         QString zone=QString::fromStdString(*actualBot.step.at(step)->Attribute(std::string("zone")));
         if(DatapackClientLoader::datapackLoader.zonesExtra.contains(zone))
         {
