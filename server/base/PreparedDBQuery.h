@@ -152,9 +152,11 @@ public:
     static StringWithReplacement db_query_update_character_forserver_map;
     static StringWithReplacement db_query_insert_factory;
     static StringWithReplacement db_query_update_factory;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     static StringWithReplacement db_query_delete_city;
     static StringWithReplacement db_query_update_city_clan;
     static StringWithReplacement db_query_insert_city;
+    #endif
     static StringWithReplacement db_query_insert_monster_market_price;
     static StringWithReplacement db_query_delete_monster_market_price;
     static StringWithReplacement db_query_delete_all_item_market;

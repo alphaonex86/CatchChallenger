@@ -1,22 +1,15 @@
 #include "BaseServer.h"
-#include "GlobalServerData.h"
+/*#include "GlobalServerData.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/FacilityLibGeneral.h"
-#include "../../general/base/CommonDatapack.h"
+
 #include "../../general/base/CommonDatapackServerSpec.h"
 #include "../../general/base/DatapackGeneralLoader.h"
-#include "ClientMapManagement/MapVisibilityAlgorithm_None.h"
-#include "ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.h"
-#include "ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.h"
-#include "ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.h"
-#include "ClientMapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.h"
 #include "LocalClientHandlerWithoutSender.h"
 #include "ClientNetworkReadWithoutSender.h"
 #include "SqlFunction.h"
-#include "DictionaryServer.h"
 #include "DictionaryLogin.h"
-#include "PreparedDBQuery.h"
-#include "../../general/base/CommonSettingsCommon.h"
+#include "../../general/base/CommonDatapack.h"
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/cpp11addition.h"
 
@@ -32,7 +25,18 @@
 #include <QDateTime>
 #include <QTime>
 #include <QCryptographicHash>
-#endif
+#endif*/
+#include "../../general/base/CommonSettingsCommon.h"
+
+#include "PreparedDBQuery.h"
+#include "DictionaryLogin.h"
+#include "GlobalServerData.h"
+#include "ClientMapManagement/MapVisibilityAlgorithm_None.h"
+#include "ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.h"
+#include "ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.h"
+#include "ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.h"
+#include "ClientMapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.h"
+
 
 using namespace CatchChallenger;
 
@@ -311,21 +315,23 @@ void BaseServer::preload_finish()
 
     Map_loader::teleportConditionsUnparsed.clear();
     #endif
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     entryListZone.clear();
+    #endif
     CommonSettingsCommon::commonSettingsCommon.datapackHashBase.clear();
     CommonSettingsServer::commonSettingsServer.datapackHashServerMain.clear();
     CommonSettingsServer::commonSettingsServer.datapackHashServerSub.clear();
 }
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
 bool BaseServer::load_next_city_capture()
 {
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     GlobalServerData::serverPrivateVariables.time_city_capture=FacilityLib::nextCaptureTime(GlobalServerData::serverSettings.city);
     const int64_t &time=GlobalServerData::serverPrivateVariables.time_city_capture-QDateTime::currentMSecsSinceEpoch();
     GlobalServerData::serverPrivateVariables.timer_city_capture->start(time);
-    #endif
     return true;
 }
+#endif
 
 void BaseServer::parseJustLoadedMap(const Map_to_send &,const std::string &)
 {

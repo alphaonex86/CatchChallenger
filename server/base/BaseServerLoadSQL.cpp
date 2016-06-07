@@ -1,38 +1,48 @@
 #include "BaseServer.h"
 #include "GlobalServerData.h"
-#include "../../general/base/FacilityLib.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../../general/base/CommonDatapack.h"
-#include "../../general/base/CommonDatapackServerSpec.h"
-#include "../../general/base/DatapackGeneralLoader.h"
-#include "ClientMapManagement/MapVisibilityAlgorithm_None.h"
-#include "ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.h"
-#include "ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.h"
-#include "ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.h"
-#include "ClientMapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.h"
-#include "LocalClientHandlerWithoutSender.h"
-#include "ClientNetworkReadWithoutSender.h"
-#include "SqlFunction.h"
 #include "DictionaryServer.h"
-#include "DictionaryLogin.h"
-#include "PreparedDBQuery.h"
-#include "../../general/base/CommonSettingsCommon.h"
-#include "../../general/base/CommonSettingsServer.h"
-#include "../../general/base/cpp11addition.h"
 
-#include <vector>
-#include <time.h>
-#include <iostream>
-#include <chrono>
-#ifndef EPOLLCATCHCHALLENGERSERVER
-#include <QFile>
-#include <QTimer>
-#include <QDateTime>
-#include <QTime>
-#include <QCryptographicHash>
-#endif
+#include "../../general/base/CommonSettingsCommon.h"
 
 using namespace CatchChallenger;
+
+#ifndef EPOLLCATCHCHALLENGERSERVER
+bool BaseServer::preload_zone()
+{
+    //open and quick check the file
+    entryListZone=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_ZONE1+CommonSettingsServer::commonSettingsServer.mainDatapackCode+DATAPACK_BASE_PATH_ZONE2,CatchChallenger::FacilityLibGeneral::ListFolder::Files);
+    entryListIndex=0;
+    return preload_zone_init();
+}
+
+void BaseServer::preload_zone_static(void *object)
+{
+    static_cast<BaseServer *>(object)->preload_zone_return();
+}
+
+void BaseServer::preload_zone_return()
+{
+    #ifndef EPOLLCATCHCHALLENGERSERVER
+    if(GlobalServerData::serverPrivateVariables.db_server->next())
+    {
+        bool ok;
+        std::string zoneCodeName=entryListZone.at(entryListIndex).name;
+        stringreplaceOne(zoneCodeName,CACHEDSTRING_dotxml,"");
+        const std::string &tempString=std::string(GlobalServerData::serverPrivateVariables.db_server->value(0));
+        const uint32_t &clanId=stringtouint32(tempString,&ok);
+        if(ok)
+        {
+            GlobalServerData::serverPrivateVariables.cityStatusList[zoneCodeName].clan=clanId;
+            GlobalServerData::serverPrivateVariables.cityStatusListReverse[clanId]=zoneCodeName;
+        }
+        else
+            std::cerr << "clan id is failed to convert to number for city status" << std::endl;
+    }
+    #endif
+    GlobalServerData::serverPrivateVariables.db_server->clear();
+    entryListIndex++;
+    preload_market_monsters_sql();
+}
 
 void BaseServer::preload_zone_sql()
 {
@@ -68,6 +78,7 @@ void BaseServer::preload_zone_sql()
     }
     preload_market_monsters_sql();
 }
+#endif
 
 void BaseServer::preload_pointOnMap_sql()
 {
@@ -91,8 +102,10 @@ void BaseServer::preload_pointOnMap_sql()
         criticalDatabaseQueryFailed();return;//stop because can't do the first db access
 
         preload_the_visibility_algorithm();
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         preload_the_city_capture();
         preload_zone();
+        #endif
 
         const auto now=msFrom1970();
         std::cout << "Loaded the server static datapack into " << (now-timeDatapack) << "ms" << std::endl;
@@ -195,10 +208,12 @@ void BaseServer::preload_pointOnMap_return()
         std::cout << DictionaryServer::dictionary_pointOnMap_internal_to_database.size() << " SQL item on map dictionary" << std::endl;
 
         preload_the_visibility_algorithm();
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         if(!preload_the_city_capture())
             return;
         if(!preload_zone())
             return;
+        #endif
         const auto now = msFrom1970();
         std::cout << "Loaded the server static datapack into " << (now-timeDatapack) << "ms" << std::endl;
         timeDatapack=now;

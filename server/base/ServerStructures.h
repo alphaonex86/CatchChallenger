@@ -245,8 +245,10 @@ struct MarketItem
 
 struct Clan
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     std::string captureCityInProgress;
     std::string capturedCity;
+    #endif
     uint32_t clanId;
     std::vector<Client *> players;
 
@@ -255,6 +257,7 @@ struct Clan
     uint64_t cash;
 };
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
 struct CaptureCityValidated
 {
     std::vector<Client *> players;
@@ -263,6 +266,7 @@ struct CaptureCityValidated
     std::vector<uint16_t> botsInFight;
     std::unordered_map<uint32_t,uint16_t> clanSize;
 };
+#endif
 
 struct ServerProfileInternal
 {
@@ -320,9 +324,11 @@ struct ServerPrivateVariables
     std::atomic<unsigned int> maxClanId;
     std::atomic<unsigned int> maxMonsterId;
     #endif
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     std::unordered_map<std::string,std::vector<uint16_t> > captureFightIdListByZoneToCaptureCity;
     std::unordered_map<std::string,CityStatus> cityStatusList;
     std::unordered_map<uint32_t,std::string > cityStatusListReverse;
+    #endif
     std::unordered_set<uint32_t> tradedMonster;
     std::vector<char> randomData;
 
@@ -352,7 +358,9 @@ struct ServerPrivateVariables
     uint32_t maxAccountId;
     uint32_t maxCharacterId;
     #endif
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     uint64_t time_city_capture;
+    #endif
     std::unordered_map<uint32_t,Clan *> clanList;
 
     //map
@@ -375,10 +383,12 @@ struct ServerPrivateVariables
     std::unordered_map<uint32_t,IndustryStatus> industriesStatus;
     std::vector<uint8_t> events;
 
+    #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     //plant
     std::vector<uint32_t> plantUsedId;
     std::vector<uint32_t> plantUnusedId;
     uint32_t maxPlantId;
+    #endif
 
     //xp rate at form for level to xp: a*exp(x*b+c)+d
     struct Xp

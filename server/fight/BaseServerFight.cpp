@@ -27,7 +27,9 @@ void BaseServer::preload_monsters_drops()
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void BaseServer::load_sql_monsters_max_id()
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     std::cout << GlobalServerData::serverPrivateVariables.cityStatusList.size() << " SQL city loaded" << std::endl;
+    #endif
 
     //start to 0 due to pre incrementation before use
     GlobalServerData::serverPrivateVariables.maxMonsterId=1;
