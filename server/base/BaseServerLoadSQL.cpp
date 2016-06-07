@@ -731,7 +731,7 @@ void BaseServer::preload_market_monsters_return()
                 const Monster::Stat &stat=CommonFightEngine::getStat(CommonDatapack::commonDatapack.monsters.at(playerMonster.monster),playerMonster.level);
                 if(playerMonster.hp>stat.hp)
                 {
-                    std::cerr << "monster hp: "
+                    std::cerr << "market monster hp: "
                     << playerMonster.hp
                     << " greater than max hp "
                     << stat.hp
@@ -741,6 +741,9 @@ void BaseServer::preload_market_monsters_return()
                     << playerMonster.monster
                     << " , truncated";
                     playerMonster.hp=stat.hp;
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    abort();
+                    #endif
                 }
             }
             else
