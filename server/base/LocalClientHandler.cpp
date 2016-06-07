@@ -3125,7 +3125,7 @@ void Client::requestFight(const uint16_t &fightId)
 void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std::string &text)
 {
     //send the network reply
-    //removeFromQueryReceived(query_id);->Some time need query the database before reply
+    //removeFromQueryReceived(query_id);->Some time need query the database before reply, to check duplicate name
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
     posOutput+=1;
@@ -3726,7 +3726,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
         }
         else
         {
-            if(clan->captureCityInProgress.size()==0)
+            if(clan->captureCityInProgress.empty())
                 clan->captureCityInProgress=zoneName;
         }
         if(clan->captureCityInProgress!=zoneName)
